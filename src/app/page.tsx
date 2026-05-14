@@ -39,83 +39,169 @@ export default function LandingPage() {
 
   return (
     <div style={{ background: '#070912' }}>
-      {/* SECTION 1: Full-screen hero — image IS the design */}
-      <section style={{ position: 'relative', height: '100vh', minHeight: '600px', overflow: 'hidden' }}>
-
-        {/* Hero image — full bleed background */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/hero.jpg"
-          alt="Putopia Collective"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center center',
-            userSelect: 'none',
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* Subtle gradient at bottom so scroll indicator stays legible */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '120px',
-          background: 'linear-gradient(to top, rgba(7,9,18,0.7) 0%, transparent 100%)',
-          pointerEvents: 'none',
-        }} />
-
-        {/* Interactive button layer — positioned to match the image's button area.
-            The image is 16:9. Buttons appear at ~62% from top, centered in the
-            content area (right of 240px sidebar). */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          // Offset from left sidebar width on desktop
-          paddingLeft: 'max(240px, 15.8%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          paddingBottom: '20%',
-        }}>
-          <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <a
-              href="#apply"
-              className="btn-orange"
-              style={{ fontSize: '0.8rem', padding: '0.9rem 2.2rem', letterSpacing: '0.15em' }}
-            >
-              ◈ &nbsp;BECOME A VOYAGER
-            </a>
-            <a
-              href="/login"
-              className="btn-teal"
-              style={{ fontSize: '0.8rem', padding: '0.9rem 2.2rem', letterSpacing: '0.15em' }}
-            >
-              🔒 &nbsp;INTERNAL LOGIN
-            </a>
+      {/* SECTION 1: Full viewport landing */}
+      <section
+        className="starfield relative flex flex-col items-center justify-center min-h-screen px-6 md:px-8 overflow-hidden"
+      >
+        {/* CLASSIFIED stamp — top right */}
+        <div style={{ position: 'absolute', top: '2rem', right: '2rem', zIndex: 10 }}>
+          <div className="stamp">
+            <div style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.15em' }}>CLASSIFIED</div>
+            <div>CLEARANCE LEVEL: VOYAGER</div>
+            <div>ACCESS GRANTED</div>
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div style={{
-          position: 'absolute',
-          bottom: '1.2rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: '0.55rem',
-          letterSpacing: '0.2em',
-          color: 'rgba(139,154,181,0.5)',
-          textAlign: 'center',
-          fontFamily: 'inherit',
-        }}>
-          <div style={{ marginBottom: '2px' }}>▼</div>
-          <div>SCROLL TO APPLY</div>
+        <div
+          className="relative z-10 text-center w-full max-w-2xl"
+          style={{
+            opacity: showContent ? 1 : 0,
+            transform: showContent ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'opacity 0.7s ease, transform 0.7s ease',
+          }}
+        >
+          {/* Welcome label */}
+          <div
+            className="font-mono tracking-[0.3em] mb-2"
+            style={{ fontSize: '0.9rem', color: '#E85A00', letterSpacing: '0.3em' }}
+          >
+            WELCOME,
+          </div>
+
+          {/* Main heading */}
+          <div
+            className="font-mono font-bold glow-orange-text"
+            style={{
+              fontSize: 'clamp(3.5rem, 10vw, 6rem)',
+              color: '#E85A00',
+              letterSpacing: '0.08em',
+              lineHeight: 1.05,
+              marginBottom: '1rem',
+            }}
+          >
+            VOYAGER
+          </div>
+
+          {/* Orange hr */}
+          <div className="hr-orange" style={{ marginBottom: '1.5rem' }} />
+
+          {/* Subtitle */}
+          <p
+            className="font-mono mb-6"
+            style={{
+              fontSize: '0.75rem',
+              color: '#8A9AB5',
+              letterSpacing: '0.12em',
+              lineHeight: 1.8,
+              textTransform: 'uppercase',
+            }}
+          >
+            YOU HAVE BEEN SELECTED TO EXPLORE THE MYSTERIES OF PARALLEL WORLDS.
+          </p>
+
+          {/* Device CSS art */}
+          <div style={{
+            position: 'relative',
+            width: '320px',
+            height: '200px',
+            margin: '2rem auto',
+            background: 'linear-gradient(145deg, #1A2030, #0D1420)',
+            border: '2px solid #2A3858',
+            borderRadius: '8px',
+            boxShadow: '0 0 40px rgba(232,90,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '1rem',
+          }}>
+            {/* Left knob */}
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(145deg, #2A3858, #1A2530)', border: '2px solid #3A4868', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)', flexShrink: 0 }} />
+            {/* Center screen / glow */}
+            <div style={{
+              width: '160px',
+              height: '140px',
+              borderRadius: '50%',
+              background: 'radial-gradient(ellipse at 40% 35%, rgba(255,140,50,0.9) 0%, rgba(232,90,0,0.7) 25%, rgba(150,50,0,0.4) 55%, rgba(20,10,0,0.8) 80%, #070912 100%)',
+              border: '3px solid #3A4868',
+              boxShadow: '0 0 40px rgba(232,90,0,0.6), 0 0 80px rgba(232,90,0,0.2), inset 0 0 30px rgba(232,90,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'pulseOrange 2.5s ease-in-out infinite',
+              flexShrink: 0,
+            }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,200,100,0.9)', boxShadow: '0 0 20px rgba(255,180,50,0.8)' }} />
+            </div>
+            {/* Right knob */}
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(145deg, #2A3858, #1A2530)', border: '2px solid #3A4868', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: '8px', height: '24px', background: '#3A4868', borderRadius: '4px' }} />
+            </div>
+            {/* Bottom label */}
+            <div style={{ position: 'absolute', bottom: '0.5rem', left: '50%', transform: 'translateX(-50%)', fontSize: '0.55rem', letterSpacing: '0.1em', color: '#4A5570', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+              Internal Device for Parallel World Connection
+            </div>
+            {/* Corner brackets */}
+            {(['top', 'top', 'bottom', 'bottom'] as const).map((v, i) => {
+              const h = i % 2 === 0 ? 'left' : 'right'
+              return (
+                <div key={i} style={{
+                  position: 'absolute',
+                  [v]: '8px',
+                  [h]: '8px',
+                  width: '14px',
+                  height: '14px',
+                  borderTop: v === 'top' ? '1.5px solid rgba(232,90,0,0.5)' : 'none',
+                  borderBottom: v === 'bottom' ? '1.5px solid rgba(232,90,0,0.5)' : 'none',
+                  borderLeft: h === 'left' ? '1.5px solid rgba(232,90,0,0.5)' : 'none',
+                  borderRight: h === 'right' ? '1.5px solid rgba(232,90,0,0.5)' : 'none',
+                }} />
+              )
+            })}
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
+            <a href="#apply" className="btn-orange">
+              BECOME A VOYAGER
+            </a>
+            <a href="/login" className="btn-teal">
+              INTERNAL LOGIN
+            </a>
+          </div>
+
+          {/* Status indicators */}
+          <div className="flex justify-center gap-4 mt-8 flex-wrap">
+            <div className="flex items-center gap-2 px-3 py-1.5 border font-mono" style={{ borderColor: 'rgba(32,216,144,0.4)', background: 'rgba(32,216,144,0.06)', fontSize: '0.65rem', letterSpacing: '0.1em', color: '#20D890' }}>
+              <div className="w-1.5 h-1.5" style={{ background: '#20D890', boxShadow: '0 0 6px #20D890' }} />
+              SYSTEM ONLINE
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 border font-mono" style={{ borderColor: 'rgba(232,90,0,0.4)', background: 'rgba(232,90,0,0.06)', fontSize: '0.65rem', letterSpacing: '0.1em', color: '#E85A00' }}>
+              <div className="w-1.5 h-1.5" style={{ background: '#E85A00', boxShadow: '0 0 6px #E85A00' }} />
+              7 NODES ACTIVE
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 border font-mono" style={{ borderColor: 'rgba(0,200,200,0.4)', background: 'rgba(0,200,200,0.06)', fontSize: '0.65rem', letterSpacing: '0.1em', color: '#00C8C8' }}>
+              <div className="w-1.5 h-1.5" style={{ background: '#00C8C8', boxShadow: '0 0 6px #00C8C8' }} />
+              8 VOYAGERS
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom tagline */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '1.5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '0.6rem',
+            letterSpacing: '0.2em',
+            color: '#4A5570',
+            fontFamily: 'inherit',
+            whiteSpace: 'nowrap',
+            fontWeight: 600,
+          }}
+        >
+          PUTOPIA COLLECTIVE · EXPLORATION · DISCOVERY · UNITY
         </div>
       </section>
 
