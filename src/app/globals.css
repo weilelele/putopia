@@ -611,8 +611,14 @@ code, pre, .font-mono, kbd,
   border: 1.5px solid rgba(255,90,31,0.7); transform: rotate(45deg);
 }
 
+@keyframes deviceFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
+}
+
 .device-wrap {
   position: relative; margin: 0.5rem 0; max-width: 1020px; width: 100%;
+  animation: deviceFloat 5s ease-in-out infinite;
 }
 .device-wrap img { width: 100%; height: auto; display: block; }
 
@@ -826,10 +832,10 @@ code, pre, .font-mono, kbd,
   .deco-diamond { margin: 1rem 0 0; }
   .deco-diamond::before, .deco-diamond::after { width: 40px; }
 
-  /* Device image — constrain on mobile */
+  /* Device image — slightly larger on mobile */
   .device-wrap {
-    max-width: 88vw;
-    margin: 0.25rem auto;
+    max-width: 96vw;
+    margin: 0 auto;
   }
 
   /* CTA row — stack vertically, full width */
