@@ -4,6 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 // Custom SVG icons matching sidebar
+const HomeIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
+    <path d="M2 8L9 2L16 8V16H11V12H7V16H2V8Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+  </svg>
+)
+
 const RadarIcon = () => (
   <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
     <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1"/>
@@ -47,11 +53,11 @@ const VoteIcon = () => (
 )
 
 const BOTTOM_NAV_ITEMS = [
+  { href: '/', label: 'HOME', icon: <HomeIcon /> },
   { href: '/intel', label: 'INTEL', icon: <RadarIcon /> },
   { href: '/devices', label: 'DEVICES', icon: <ArchiveIcon /> },
   { href: '/logs', label: 'LOGS', icon: <LogsIcon /> },
   { href: '/voyagers', label: 'VOYAGERS', icon: <VoyagersIcon /> },
-  { href: '/vote', label: 'VOTE', icon: <VoteIcon /> },
 ]
 
 export function BottomNav() {
@@ -66,7 +72,7 @@ export function BottomNav() {
       }}
     >
       {BOTTOM_NAV_ITEMS.map(({ href, label, icon }) => {
-        const isActive = pathname === href || pathname.startsWith(href + '/')
+        const isActive = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/')
         return (
           <Link
             key={href}
