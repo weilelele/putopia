@@ -32,13 +32,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4" style={{ background: '#0F0A00' }}>
-      {/* Warm grid overlay */}
+    <div className="flex items-center justify-center min-h-screen px-4 starfield" style={{ background: '#070912' }}>
+      {/* Grid overlay */}
       <div
-        className="fixed inset-0 pointer-events-none opacity-5"
+        className="fixed inset-0 pointer-events-none opacity-[0.03]"
         style={{
           backgroundImage:
-            'linear-gradient(#5C4A1E 1px, transparent 1px), linear-gradient(90deg, #5C4A1E 1px, transparent 1px)',
+            'linear-gradient(#1E2840 1px, transparent 1px), linear-gradient(90deg, #1E2840 1px, transparent 1px)',
           backgroundSize: '40px 40px',
         }}
       />
@@ -46,28 +46,28 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative z-10">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="text-xs tracking-[0.3em] font-mono mb-2" style={{ color: '#7A6A40' }}>
+          <div className="text-xs tracking-[0.3em] font-mono mb-2" style={{ color: '#4A5570' }}>
             PUTOPIA COLLECTIVE
           </div>
-          <div className="text-lg font-mono tracking-widest" style={{ color: '#E8A020', textShadow: '0 0 16px rgba(232,160,32,0.3)' }}>
+          <div className="text-lg font-mono tracking-widest glow-orange-text" style={{ color: '#E85A00' }}>
             IDENTITY VERIFICATION
           </div>
-          <div className="text-xs font-mono mt-1" style={{ color: '#3D3010' }}>
+          <div className="text-xs font-mono mt-1" style={{ color: '#1E2840' }}>
             // SECURE CONNECTION ESTABLISHED
           </div>
         </div>
 
         {/* Card */}
         <div
-          className="border rounded p-6"
+          className="border p-6"
           style={{
-            background: '#221800',
-            borderColor: '#5C4A1E',
-            boxShadow: 'inset 0 1px 0 rgba(232,160,32,0.1)',
+            background: '#111525',
+            borderColor: '#1E2840',
+            boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.06)',
           }}
         >
           {/* Tabs */}
-          <div className="flex mb-6 border-b" style={{ borderColor: '#3D3010' }}>
+          <div className="flex mb-6 border-b" style={{ borderColor: '#1A2238' }}>
             {(['login', 'register'] as Tab[]).map((t) => (
               <button
                 key={t}
@@ -78,8 +78,8 @@ export default function LoginPage() {
                 )}
                 style={
                   tab === t
-                    ? { color: '#E8A020', borderColor: '#E8A020', marginBottom: '-1px' }
-                    : { color: '#7A6A40' }
+                    ? { color: '#E85A00', borderColor: '#E85A00', marginBottom: '-1px' }
+                    : { color: '#4A5570' }
                 }
               >
                 {t === 'login' ? '[ LOGIN ]' : '[ REGISTER ]'}
@@ -90,7 +90,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {tab === 'register' && (
               <div>
-                <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#7A6A40' }}>
+                <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
                   DISPLAY NAME
                 </label>
                 <input
@@ -98,16 +98,13 @@ export default function LoginPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="ALIAS_IDENTIFIER"
-                  className="w-full px-3 py-2 text-sm font-mono rounded border bg-transparent outline-none transition-colors"
-                  style={{ borderColor: '#3D3010', color: '#F5E6C8' }}
-                  onFocus={(e) => (e.target.style.borderColor = '#E8A020')}
-                  onBlur={(e) => (e.target.style.borderColor = '#3D3010')}
+                  className="input-dark"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#7A6A40' }}>
+              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
                 EMAIL ADDRESS
               </label>
               <input
@@ -115,15 +112,12 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="operative@domain.void"
-                className="w-full px-3 py-2 text-sm font-mono rounded border bg-transparent outline-none transition-colors"
-                style={{ borderColor: '#3D3010', color: '#F5E6C8' }}
-                onFocus={(e) => (e.target.style.borderColor = '#E8A020')}
-                onBlur={(e) => (e.target.style.borderColor = '#3D3010')}
+                className="input-dark"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#7A6A40' }}>
+              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
                 ACCESS CODE
               </label>
               <input
@@ -131,17 +125,14 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full px-3 py-2 text-sm font-mono rounded border bg-transparent outline-none transition-colors"
-                style={{ borderColor: '#3D3010', color: '#F5E6C8' }}
-                onFocus={(e) => (e.target.style.borderColor = '#E8A020')}
-                onBlur={(e) => (e.target.style.borderColor = '#3D3010')}
+                className="input-dark"
               />
             </div>
 
             {error && (
               <div
-                className="text-xs font-mono py-2 px-3 rounded border"
-                style={{ color: '#C43020', borderColor: 'rgba(196,48,32,0.33)', background: 'rgba(196,48,32,0.11)' }}
+                className="text-xs font-mono py-2 px-3 border"
+                style={{ color: '#E83030', borderColor: 'rgba(232,48,48,0.3)', background: 'rgba(232,48,48,0.08)' }}
               >
                 {error}
               </div>
@@ -150,21 +141,21 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 text-sm font-mono tracking-widest border transition-all duration-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderColor: '#E8A020', color: '#0F0A00', background: '#E8A020' }}
+              className="btn-orange w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ justifyContent: 'center', fontSize: '0.8rem' }}
             >
               {loading ? '> AUTHENTICATING...' : tab === 'login' ? '[ AUTHENTICATE ]' : '[ CREATE IDENTITY ]'}
             </button>
           </form>
 
-          <div className="mt-4 text-center text-xs font-mono" style={{ color: '#5C4A1E' }}>
+          <div className="mt-4 text-center text-xs font-mono" style={{ color: '#4A5570' }}>
             {tab === 'login'
               ? 'TIP: include "architect" in email for architect role'
               : 'New identity will default to VOYAGER role'}
           </div>
         </div>
 
-        <div className="mt-4 text-center text-xs font-mono" style={{ color: '#3D3010' }}>
+        <div className="mt-4 text-center text-xs font-mono" style={{ color: '#1A2238' }}>
           // ALL ACCESS ATTEMPTS ARE LOGGED //
         </div>
       </div>

@@ -2,46 +2,46 @@ import { worldData } from '@/lib/mock-data'
 
 export default function WorldsPage() {
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: '#0F0A00' }}>
+    <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
       {/* Header */}
-      <div className="mb-8 border-b pb-4" style={{ borderColor: '#5C4A1E' }}>
-        <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#7A6A40' }}>
+      <div className="mb-8 border-b pb-4" style={{ borderColor: '#1E2840' }}>
+        <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#4A5570' }}>
           ARCHIVE // WORLDS
         </div>
-        <h1 className="text-2xl font-mono font-bold tracking-wider" style={{ color: '#F5E6C8' }}>
+        <h1 className="text-2xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
           WORLDS
         </h1>
-        <div className="text-xs font-mono mt-1" style={{ color: '#7A6A40' }}>
+        <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
           World Archive // {worldData.length} discovered parallel worlds
         </div>
       </div>
 
       {/* Stats bar */}
       <div
-        className="flex gap-6 mb-8 p-4 rounded border flex-wrap"
+        className="flex gap-6 mb-8 p-4 border flex-wrap"
         style={{
-          background: '#221800',
-          borderColor: '#5C4A1E',
-          boxShadow: 'inset 0 1px 0 rgba(232,160,32,0.1)',
+          background: '#111525',
+          borderColor: '#1E2840',
+          boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)',
         }}
       >
         <div>
-          <div className="text-xl font-mono font-bold" style={{ color: '#E8A020' }}>
+          <div className="text-xl font-mono font-bold" style={{ color: '#E85A00' }}>
             {worldData.length}
           </div>
-          <div className="text-xs font-mono" style={{ color: '#7A6A40' }}>CATALOGUED</div>
+          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>CATALOGUED</div>
         </div>
         <div>
-          <div className="text-xl font-mono font-bold" style={{ color: '#4D8C3F' }}>
+          <div className="text-xl font-mono font-bold" style={{ color: '#20D890' }}>
             8
           </div>
-          <div className="text-xs font-mono" style={{ color: '#7A6A40' }}>DISCOVERERS</div>
+          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>DISCOVERERS</div>
         </div>
         <div>
-          <div className="text-xl font-mono font-bold" style={{ color: '#C4A96A' }}>
+          <div className="text-xl font-mono font-bold" style={{ color: '#00C8C8' }}>
             200+
           </div>
-          <div className="text-xs font-mono" style={{ color: '#7A6A40' }}>NODES ON RECORD</div>
+          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>NODES ON RECORD</div>
         </div>
       </div>
 
@@ -50,11 +50,11 @@ export default function WorldsPage() {
         {worldData.map((world) => (
           <div
             key={world.id}
-            className="border rounded overflow-hidden transition-all duration-200 group"
+            className="border overflow-hidden transition-all duration-200 group"
             style={{
-              background: '#221800',
-              borderColor: '#5C4A1E',
-              boxShadow: 'inset 0 1px 0 rgba(232,160,32,0.08)',
+              background: '#111525',
+              borderColor: '#1E2840',
+              boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)',
             }}
           >
             {/* Gradient image placeholder */}
@@ -64,25 +64,22 @@ export default function WorldsPage() {
                 background: `linear-gradient(135deg, ${world.gradientFrom}, ${world.gradientTo})`,
               }}
             >
-              {/* Overlay */}
               <div
                 className="absolute inset-0"
                 style={{
-                  background: 'linear-gradient(to bottom, transparent 40%, rgba(34,24,0,0.8) 100%)',
+                  background: 'linear-gradient(to bottom, transparent 40%, rgba(17,21,37,0.85) 100%)',
                 }}
               />
-              {/* Scanline effect */}
               <div
                 className="absolute inset-0 opacity-20"
                 style={{
                   backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)',
                 }}
               />
-              {/* World ID badge */}
               <div className="absolute top-2 left-2">
                 <span
-                  className="text-xs font-mono px-1.5 py-0.5 rounded"
-                  style={{ background: 'rgba(15,10,0,0.6)', color: '#7A6A40' }}
+                  className="text-xs font-mono px-1.5 py-0.5"
+                  style={{ background: 'rgba(7,9,18,0.7)', color: '#4A5570' }}
                 >
                   {world.id}
                 </span>
@@ -91,21 +88,21 @@ export default function WorldsPage() {
 
             {/* Info */}
             <div className="p-3">
-              <div className="text-sm font-mono font-semibold mb-0.5" style={{ color: '#F5E6C8' }}>
+              <div className="text-sm font-mono font-semibold mb-0.5" style={{ color: '#EDE8DE' }}>
                 {world.name}
               </div>
               <div className="text-xs font-mono mb-2" style={{ color: world.gradientTo }}>
                 {world.nameEn}
               </div>
-              <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#C4A96A' }}>
+              <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
                 {world.description}
               </p>
-              <div className="pt-2 border-t" style={{ borderColor: '#3D3010' }}>
-                <div className="text-xs font-mono" style={{ color: '#5C4A1E' }}>FIRST DISCOVERED BY</div>
-                <div className="text-xs font-mono mt-0.5" style={{ color: '#7A6A40' }}>
+              <div className="pt-2 border-t" style={{ borderColor: '#1A2238' }}>
+                <div className="text-xs font-mono" style={{ color: '#4A5570' }}>FIRST DISCOVERED BY</div>
+                <div className="text-xs font-mono mt-0.5" style={{ color: '#8A9AB5' }}>
                   {world.discoverer}
                 </div>
-                <div className="text-xs font-mono" style={{ color: '#5C4A1E' }}>
+                <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
                   {world.discoveryDate}
                 </div>
               </div>
@@ -114,7 +111,7 @@ export default function WorldsPage() {
         ))}
       </div>
 
-      <div className="mt-8 text-center text-xs font-mono" style={{ color: '#3D3010' }}>
+      <div className="mt-8 text-center text-xs font-mono" style={{ color: '#1A2238' }}>
         — WORLD ARCHIVE v2.6 — // CONTINUOUSLY UPDATED
       </div>
     </div>

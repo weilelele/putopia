@@ -24,24 +24,24 @@ export default function LogsPage() {
   const { isAtLeast } = useAuth()
 
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: '#0F0A00' }}>
+    <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
       {/* Header */}
-      <div className="mb-8 border-b pb-4 flex items-end justify-between" style={{ borderColor: '#5C4A1E' }}>
+      <div className="mb-8 border-b pb-4 flex items-end justify-between" style={{ borderColor: '#1E2840' }}>
         <div>
-          <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#7A6A40' }}>
+          <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#4A5570' }}>
             ARCHIVE // VOYAGER STORIES
           </div>
-          <h1 className="text-3xl font-mono font-bold tracking-wider" style={{ color: '#F5E6C8' }}>
+          <h1 className="text-3xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
             VOYAGER STORIES
           </h1>
-          <div className="text-xs font-mono mt-1" style={{ color: '#7A6A40' }}>
+          <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
             Field Logs // {stories.length} entries on record
           </div>
         </div>
         {isAtLeast('architect') && (
           <button
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono tracking-widest border rounded transition-all"
-            style={{ borderColor: '#E8A020', color: '#E8A020', background: 'rgba(232,160,32,0.08)' }}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono tracking-widest border transition-all"
+            style={{ borderColor: '#E85A00', color: '#E85A00', background: 'rgba(232,90,0,0.06)' }}
           >
             <Plus size={12} />
             SUBMIT LOG ENTRY
@@ -56,29 +56,28 @@ export default function LogsPage() {
           return (
             <div
               key={story.id}
-              className="story-card rounded overflow-hidden"
+              className="story-card overflow-hidden"
             >
               {/* Author bar */}
               <div
                 className="flex items-center gap-3 px-4 py-3 border-b"
-                style={{ background: '#1A1200', borderColor: '#3D3010' }}
+                style={{ background: '#0D1020', borderColor: '#1A2238' }}
               >
-                {/* Avatar */}
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
                   style={{
-                    background: 'rgba(232,160,32,0.15)',
-                    color: '#E8A020',
-                    border: '1px solid rgba(232,160,32,0.35)',
+                    background: 'rgba(232,90,0,0.12)',
+                    color: '#E85A00',
+                    border: '1px solid rgba(232,90,0,0.3)',
                   }}
                 >
                   {initials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-mono font-semibold" style={{ color: '#F5E6C8' }}>
+                  <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>
                     {story.author}
                   </div>
-                  <div className="text-xs font-mono" style={{ color: '#7A6A40' }}>
+                  <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
                     {formatDate(story.date)}
                   </div>
                 </div>
@@ -86,32 +85,30 @@ export default function LogsPage() {
 
               {/* Content */}
               <div className="px-4 py-4">
-                <h2 className="text-base font-mono font-semibold mb-3" style={{ color: '#F5E6C8' }}>
+                <h2 className="text-base font-mono font-semibold mb-3" style={{ color: '#EDE8DE' }}>
                   {story.title}
                 </h2>
-                <p className="text-sm leading-relaxed font-mono" style={{ color: '#7A6A40' }}>
+                <p className="text-sm leading-relaxed font-mono" style={{ color: '#8A9AB5' }}>
                   {story.excerpt}
                 </p>
 
-                {/* Tags */}
                 <div className="flex flex-wrap gap-2 mt-4">
                   {story.tags.map((tag) => (
                     <span
                       key={tag}
                       className="label-tag"
-                      style={{ color: '#E8A020' }}
+                      style={{ color: '#E85A00' }}
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
 
-                {/* Read more */}
-                <div className="mt-4 pt-3 border-t" style={{ borderColor: '#3D3010' }}>
+                <div className="mt-4 pt-3 border-t" style={{ borderColor: '#1A2238' }}>
                   <Link
                     href={`/logs/${story.id}`}
                     className="flex items-center gap-2 text-xs font-mono tracking-widest transition-colors"
-                    style={{ color: '#E8A020' }}
+                    style={{ color: '#E85A00' }}
                   >
                     READ FULL STORY
                     <ArrowRight size={12} />
@@ -123,7 +120,7 @@ export default function LogsPage() {
         })}
       </div>
 
-      <div className="mt-8 text-center text-xs font-mono" style={{ color: '#3D3010' }}>
+      <div className="mt-8 text-center text-xs font-mono" style={{ color: '#1A2238' }}>
         — END OF VOYAGER STORY ARCHIVE —
       </div>
     </div>

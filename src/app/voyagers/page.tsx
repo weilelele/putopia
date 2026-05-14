@@ -26,21 +26,20 @@ export default function VoyagersPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: '#0F0A00' }}>
+    <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
       {/* Header */}
-      <div className="mb-8 border-b pb-4" style={{ borderColor: '#5C4A1E' }}>
-        <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#7A6A40' }}>
+      <div className="mb-8 border-b pb-4" style={{ borderColor: '#1E2840' }}>
+        <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#4A5570' }}>
           DATABASE // VOYAGERS
         </div>
-        <h1 className="text-2xl font-mono font-bold tracking-wider" style={{ color: '#F5E6C8' }}>
+        <h1 className="text-2xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
           VOYAGERS
         </h1>
-        <div className="text-xs font-mono mt-1" style={{ color: '#7A6A40' }}>
+        <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
           Voyager Profiles // {voyagerProfiles.length} active members
         </div>
       </div>
 
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -49,7 +48,6 @@ export default function VoyagersPage() {
         onChange={handleFileChange}
       />
 
-      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {voyagerProfiles.map((voyager) => {
           const isOwn = isAtLeast('voyager') && (user.name === voyager.name || user.voyagerId === voyager.id)
@@ -58,32 +56,25 @@ export default function VoyagersPage() {
           return (
             <div
               key={voyager.id}
-              className="border rounded p-4 transition-all duration-200"
+              className="border p-4 transition-all duration-200"
               style={{
-                background: '#221800',
-                borderColor: isOwn ? voyager.avatarColor + '88' : '#5C4A1E',
+                background: '#111525',
+                borderColor: isOwn ? voyager.avatarColor + '55' : '#1E2840',
                 boxShadow: isOwn
-                  ? `0 0 12px ${voyager.avatarColor}22, inset 0 1px 0 rgba(232,160,32,0.1)`
-                  : 'inset 0 1px 0 rgba(232,160,32,0.06)',
-              }}
-              onMouseEnter={(e) => {
-                if (!isOwn) (e.currentTarget as HTMLElement).style.borderColor = '#5C4A1E'
-              }}
-              onMouseLeave={(e) => {
-                if (!isOwn) (e.currentTarget as HTMLElement).style.borderColor = '#5C4A1E'
+                  ? `0 0 12px ${voyager.avatarColor}15`
+                  : 'inset 0 1px 0 rgba(232,90,0,0.04)',
               }}
             >
               {/* Top row: avatar + name */}
               <div className="flex items-start gap-3 mb-3">
-                {/* Avatar */}
                 <div className="relative shrink-0">
                   <div
                     className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-mono font-bold overflow-hidden"
                     style={{
-                      background: avatarUrl ? 'transparent' : `${voyager.avatarColor}22`,
+                      background: avatarUrl ? 'transparent' : `${voyager.avatarColor}18`,
                       color: voyager.avatarColor,
-                      border: `2px solid ${voyager.avatarColor}55`,
-                      boxShadow: `0 0 12px ${voyager.avatarColor}22`,
+                      border: `2px solid ${voyager.avatarColor}40`,
+                      boxShadow: `0 0 10px ${voyager.avatarColor}18`,
                     }}
                   >
                     {avatarUrl ? (
@@ -96,7 +87,7 @@ export default function VoyagersPage() {
                     <button
                       onClick={() => handleAvatarClick(voyager.id)}
                       className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border transition-colors"
-                      style={{ background: '#1A1200', borderColor: '#E8A020', color: '#E8A020' }}
+                      style={{ background: '#111525', borderColor: '#E85A00', color: '#E85A00' }}
                       title="Upload photo"
                     >
                       <Camera size={10} />
@@ -106,25 +97,25 @@ export default function VoyagersPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <div className="text-sm font-mono font-semibold" style={{ color: '#F5E6C8' }}>
+                    <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>
                       {voyager.name}
                     </div>
                     {isOwn && (
                       <span
-                        className="text-xs font-mono px-1.5 py-0.5 rounded border"
-                        style={{ color: '#E8A020', borderColor: 'rgba(232,160,32,0.4)', background: 'rgba(232,160,32,0.1)' }}
+                        className="text-xs font-mono px-1.5 py-0.5 border"
+                        style={{ color: '#E85A00', borderColor: 'rgba(232,90,0,0.4)', background: 'rgba(232,90,0,0.08)' }}
                       >
                         YOU
                       </span>
                     )}
                   </div>
-                  <div className="text-xs font-mono" style={{ color: '#7A6A40' }}>{voyager.id}</div>
-                  <div className="text-xs font-mono" style={{ color: '#5C4A1E' }}>joined {voyager.joinDate}</div>
+                  <div className="text-xs font-mono" style={{ color: '#4A5570' }}>{voyager.id}</div>
+                  <div className="text-xs font-mono" style={{ color: '#4A5570' }}>joined {voyager.joinDate}</div>
                 </div>
                 {isOwn && (
                   <button
-                    className="p-1.5 rounded border transition-colors"
-                    style={{ borderColor: '#5C4A1E', color: '#7A6A40' }}
+                    className="p-1.5 border transition-colors"
+                    style={{ borderColor: '#1E2840', color: '#4A5570' }}
                     title="Edit profile"
                   >
                     <Edit size={12} />
@@ -132,13 +123,12 @@ export default function VoyagersPage() {
                 )}
               </div>
 
-              {/* Upload label under avatar for own profile */}
               {isOwn && (
                 <div className="mb-2">
                   <button
                     onClick={() => handleAvatarClick(voyager.id)}
                     className="text-xs font-mono tracking-widest transition-colors"
-                    style={{ color: '#7A6A40' }}
+                    style={{ color: '#4A5570' }}
                   >
                     {avatarUrl ? '↑ CHANGE PHOTO' : '↑ UPLOAD PHOTO'}
                   </button>
@@ -146,43 +136,43 @@ export default function VoyagersPage() {
               )}
 
               {/* Stats */}
-              <div className="flex gap-4 mb-3 py-2 border-y" style={{ borderColor: '#3D3010' }}>
+              <div className="flex gap-4 mb-3 py-2 border-y" style={{ borderColor: '#1A2238' }}>
                 <div className="text-center flex-1">
                   <div
                     className="text-xl font-mono font-bold"
-                    style={{ color: '#E8A020', textShadow: '0 0 12px rgba(232,160,32,0.5)' }}
+                    style={{ color: '#E85A00', textShadow: '0 0 10px rgba(232,90,0,0.4)' }}
                   >
                     {voyager.observationDays}
                   </div>
-                  <div className="text-[10px] font-mono" style={{ color: '#7A6A40' }}>OBS DAYS</div>
+                  <div className="text-[10px] font-mono" style={{ color: '#4A5570' }}>OBS DAYS</div>
                 </div>
-                <div className="w-px" style={{ background: '#3D3010' }} />
+                <div className="w-px" style={{ background: '#1A2238' }} />
                 <div className="text-center flex-1">
                   <div
                     className="text-xl font-mono font-bold"
-                    style={{ color: '#4D8C3F', textShadow: '0 0 12px rgba(77,140,63,0.4)' }}
+                    style={{ color: '#20D890', textShadow: '0 0 10px rgba(32,216,144,0.3)' }}
                   >
                     {voyager.worldsDiscovered}
                   </div>
-                  <div className="text-[10px] font-mono" style={{ color: '#7A6A40' }}>WORLDS</div>
+                  <div className="text-[10px] font-mono" style={{ color: '#4A5570' }}>WORLDS</div>
                 </div>
               </div>
 
               {/* Bio */}
-              <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#C4A96A' }}>
+              <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
                 {voyager.bio.length > 240 ? voyager.bio.slice(0, 240) + '…' : voyager.bio}
               </p>
 
               {/* Social links */}
               {voyager.links && Object.keys(voyager.links).length > 0 && (
-                <div className="flex gap-2 pt-2 border-t" style={{ borderColor: '#3D3010' }}>
+                <div className="flex gap-2 pt-2 border-t" style={{ borderColor: '#1A2238' }}>
                   {voyager.links.x && (
                     <a
                       href={voyager.links.x}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs font-mono transition-colors"
-                      style={{ color: '#7A6A40' }}
+                      style={{ color: '#4A5570' }}
                     >
                       <ExternalLink size={10} />
                       X
@@ -194,7 +184,7 @@ export default function VoyagersPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs font-mono transition-colors"
-                      style={{ color: '#7A6A40' }}
+                      style={{ color: '#4A5570' }}
                     >
                       <ExternalLink size={10} />
                       IG
@@ -206,7 +196,7 @@ export default function VoyagersPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs font-mono transition-colors"
-                      style={{ color: '#7A6A40' }}
+                      style={{ color: '#4A5570' }}
                     >
                       <ExternalLink size={10} />
                       LI

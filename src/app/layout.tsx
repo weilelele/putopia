@@ -22,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${geistMono.variable} h-full`}>
-      <body className="flex h-full" style={{ background: '#0F0A00' }}>
+      <body className="flex h-full" style={{ background: '#070912' }}>
         <AuthProvider>
           <Nav />
           <main className="flex-1 overflow-y-auto min-h-screen pb-16 md:pb-0">

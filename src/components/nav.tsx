@@ -4,27 +4,90 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth, UserRole } from '@/lib/auth-context'
 import { RoleBadge } from './role-badge'
-import clsx from 'clsx'
-import {
-  Radio,
-  Cpu,
-  BookOpen,
-  Users,
-  Vote,
-  Globe,
-  LogIn,
-  LogOut,
-  ChevronDown,
-} from 'lucide-react'
 import { useState } from 'react'
 
-const NAV_ITEMS = [
-  { href: '/intel', label: 'INTEL', icon: Radio },
-  { href: '/devices', label: 'DEVICES', icon: Cpu },
-  { href: '/logs', label: 'LOGS', icon: BookOpen },
-  { href: '/voyagers', label: 'VOYAGERS', icon: Users },
-  { href: '/vote', label: 'VOTE', icon: Vote },
-  { href: '/worlds', label: 'WORLDS', icon: Globe },
+// Custom SVG icons
+const RadarIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1"/>
+    <circle cx="9" cy="9" r="4" stroke="currentColor" strokeWidth="1"/>
+    <circle cx="9" cy="9" r="1.5" fill="currentColor"/>
+    <line x1="9" y1="1" x2="9" y2="17" stroke="currentColor" strokeWidth="0.75" strokeOpacity="0.5"/>
+    <line x1="1" y1="9" x2="17" y2="9" stroke="currentColor" strokeWidth="0.75" strokeOpacity="0.5"/>
+    <line x1="9" y1="9" x2="15" y2="3" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7"/>
+  </svg>
+)
+
+const ArchiveIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <rect x="2" y="2" width="14" height="14" rx="1" stroke="currentColor" strokeWidth="1"/>
+    <rect x="5" y="5" width="8" height="8" rx="0.5" stroke="currentColor" strokeWidth="1"/>
+    <circle cx="9" cy="9" r="1.5" fill="currentColor"/>
+  </svg>
+)
+
+const LogsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <rect x="3" y="1" width="12" height="16" rx="1" stroke="currentColor" strokeWidth="1"/>
+    <line x1="6" y1="6" x2="12" y2="6" stroke="currentColor" strokeWidth="1"/>
+    <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" strokeWidth="1"/>
+    <line x1="6" y1="12" x2="10" y2="12" stroke="currentColor" strokeWidth="1"/>
+  </svg>
+)
+
+const VoyagersIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <circle cx="9" cy="7" r="3.5" stroke="currentColor" strokeWidth="1"/>
+    <path d="M2 16c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+  </svg>
+)
+
+const VoteIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1"/>
+    <polyline points="5,9 8,12 13,6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+const WorldsIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1"/>
+    <ellipse cx="9" cy="9" rx="4" ry="8" stroke="currentColor" strokeWidth="1"/>
+    <line x1="1" y1="9" x2="17" y2="9" stroke="currentColor" strokeWidth="1"/>
+    <line x1="2.5" y1="5" x2="15.5" y2="5" stroke="currentColor" strokeWidth="0.75" strokeOpacity="0.6"/>
+    <line x1="2.5" y1="13" x2="15.5" y2="13" stroke="currentColor" strokeWidth="0.75" strokeOpacity="0.6"/>
+  </svg>
+)
+
+const ChevronDownIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+    <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+const LogInIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M5 2H2a1 1 0 00-1 1v6a1 1 0 001 1h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+    <path d="M8 4l2.5 2L8 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    <line x1="10.5" y1="6" x2="5" y2="6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+)
+
+const LogOutIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M7 2h3a1 1 0 011 1v6a1 1 0 01-1 1H7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+    <path d="M4 4L1.5 6 4 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    <line x1="1.5" y1="6" x2="7" y2="6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+)
+
+const navLinks = [
+  { href: '/intel', label: 'INTEL', icon: <RadarIcon /> },
+  { href: '/devices', label: 'DEVICE ARCHIVE', icon: <ArchiveIcon /> },
+  { href: '/logs', label: 'VOYAGER LOGS', icon: <LogsIcon /> },
+  { href: '/voyagers', label: 'VOYAGERS', icon: <VoyagersIcon /> },
+  { href: '/vote', label: 'VOTING HUB', icon: <VoteIcon /> },
+  { href: '/worlds', label: 'WORLD RECORDS', icon: <WorldsIcon /> },
 ]
 
 const ROLES: UserRole[] = ['guest', 'applicant', 'voyager', 'architect']
@@ -44,57 +107,84 @@ export function Nav() {
     <nav
       className="hidden md:flex flex-col w-60 shrink-0 h-screen sticky top-0"
       style={{
-        background: '#120D00',
-        borderRight: '1px solid #3D3010',
+        background: '#0D1020',
+        borderRight: '1px solid #1A2238',
       }}
     >
       {/* Logo */}
-      <div className="p-4 border-b" style={{ borderColor: '#3D3010' }}>
-        <Link href="/" className="block">
-          <div className="text-sm tracking-[0.2em] font-mono font-bold text-glow" style={{ color: '#7A6A40' }}>
-            PUTOPIA
+      <div className="p-4 border-b" style={{ borderColor: '#1A2238' }}>
+        <Link href="/" className="flex items-center gap-3">
+          {/* Radar circle logo */}
+          <div style={{ color: '#E85A00', flexShrink: 0 }}>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="14" stroke="#E85A00" strokeWidth="1.5"/>
+              <circle cx="16" cy="16" r="8" stroke="#E85A00" strokeWidth="1" strokeOpacity="0.7"/>
+              <circle cx="16" cy="16" r="3" stroke="#E85A00" strokeWidth="1" strokeOpacity="0.5"/>
+              <circle cx="16" cy="16" r="1.5" fill="#E85A00"/>
+              <line x1="16" y1="2" x2="16" y2="30" stroke="#E85A00" strokeWidth="0.75" strokeOpacity="0.4"/>
+              <line x1="2" y1="16" x2="30" y2="16" stroke="#E85A00" strokeWidth="0.75" strokeOpacity="0.4"/>
+              <line x1="16" y1="16" x2="26" y2="6" stroke="#E85A00" strokeWidth="1.2" strokeOpacity="0.8"/>
+            </svg>
           </div>
-          <div className="text-base tracking-[0.15em] font-mono font-bold text-glow" style={{ color: '#E8A020' }}>
-            // COLLECTIVE
+          <div>
+            <div className="text-sm font-mono font-bold tracking-[0.2em]" style={{ color: '#EDE8DE' }}>
+              PUTOPIA
+            </div>
+            <div className="text-xs font-mono tracking-[0.15em]" style={{ color: '#8A9AB5' }}>
+              COLLECTIVE
+            </div>
           </div>
         </Link>
-        <div className="mt-2 h-px w-full" style={{ background: 'linear-gradient(to right, #E8A02044, transparent)' }} />
+        <div className="mt-3 h-px w-full" style={{ background: 'linear-gradient(to right, rgba(232,90,0,0.5), transparent)' }} />
+      </div>
+
+      {/* Nav label */}
+      <div className="px-4 pt-4 pb-1">
+        <div className="text-[9px] tracking-[0.2em] font-mono" style={{ color: '#4A5570' }}>
+          — NAVIGATION —
+        </div>
       </div>
 
       {/* Nav Items */}
-      <div className="flex-1 py-4 overflow-y-auto">
-        <div className="px-4 mb-2 text-xs tracking-widest" style={{ color: '#5C4A1E' }}>
-          — NAVIGATION —
-        </div>
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      <div className="flex-1 py-1 overflow-y-auto">
+        {navLinks.map(({ href, label, icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link
               key={href}
               href={href}
-              className={clsx(
-                'flex items-center gap-3 mx-2 px-3 py-2 text-sm transition-all duration-150 group',
-              )}
+              className="flex items-center gap-3 mx-2 px-3 py-2.5 text-sm transition-all duration-150 group"
               style={
                 isActive
-                  ? { background: 'rgba(232,160,32,0.08)', borderLeft: '3px solid #E8A020', paddingLeft: '9px', color: '#E8A020' }
-                  : { color: '#7A6A40', borderLeft: '3px solid transparent', paddingLeft: '9px' }
+                  ? {
+                      background: 'rgba(232,90,0,0.15)',
+                      borderLeft: '3px solid #E85A00',
+                      paddingLeft: '9px',
+                      color: '#E85A00',
+                    }
+                  : {
+                      color: '#4A5570',
+                      borderLeft: '3px solid transparent',
+                      paddingLeft: '9px',
+                    }
               }
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(232,160,32,0.4)'
-                  ;(e.currentTarget as HTMLElement).style.color = '#C4A96A'
+                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(232,90,0,0.4)'
+                  ;(e.currentTarget as HTMLElement).style.color = '#8A9AB5'
+                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(232,90,0,0.05)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.borderLeftColor = 'transparent'
-                  ;(e.currentTarget as HTMLElement).style.color = '#7A6A40'
+                  ;(e.currentTarget as HTMLElement).style.color = '#4A5570'
+                  ;(e.currentTarget as HTMLElement).style.background = 'transparent'
                 }
               }}
             >
-              <Icon size={14} />
-              <div className="text-xs tracking-widest font-mono">{label}</div>
+              <span style={{ flexShrink: 0 }}>{icon}</span>
+              <span className="text-[10px] tracking-widest font-mono">{label}</span>
             </Link>
           )
         })}
@@ -102,46 +192,77 @@ export function Nav() {
 
       {/* Guest Apply CTA */}
       {user.role === 'guest' && (
-        <div style={{ margin: '0 12px 12px', padding: '12px', border: '1px solid rgba(232,160,32,0.3)', background: 'rgba(232,160,32,0.04)' }}>
-          <div style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: '#E8A020', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>◈ RECRUITMENT OPEN</div>
-          <div style={{ fontSize: '0.72rem', color: '#F5E6C8', marginBottom: '10px', lineHeight: 1.4, fontFamily: 'inherit' }}>Voyager positions available. Apply for console access.</div>
-          <Link href="/#apply" style={{ display: 'block', textAlign: 'center', fontSize: '0.65rem', letterSpacing: '0.15em', color: '#0F0A00', background: '#E8A020', padding: '6px 0', fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>
-            APPLY NOW
+        <div style={{ margin: '0 10px 10px', padding: '10px', border: '1px solid rgba(232,90,0,0.35)', background: 'rgba(232,90,0,0.04)' }}>
+          <div style={{ fontSize: '0.58rem', letterSpacing: '0.15em', color: '#E85A00', marginBottom: '5px', fontWeight: 700, textTransform: 'uppercase' }}>
+            ◈ RECRUITMENT OPEN
+          </div>
+          <div style={{ fontSize: '0.7rem', color: '#8A9AB5', marginBottom: '9px', lineHeight: 1.4, fontFamily: 'inherit' }}>
+            Voyager positions available. Apply for console access.
+          </div>
+          <Link
+            href="/#apply"
+            style={{
+              display: 'block',
+              textAlign: 'center',
+              fontSize: '0.62rem',
+              letterSpacing: '0.15em',
+              color: '#EDE8DE',
+              background: 'linear-gradient(135deg, #E85A00, #C04000)',
+              padding: '6px 0',
+              fontWeight: 700,
+              textDecoration: 'none',
+              fontFamily: 'inherit',
+              border: '1px solid rgba(232,90,0,0.5)',
+            }}
+          >
+            BECOME A VOYAGER
           </Link>
         </div>
       )}
 
       {/* Bottom section */}
-      <div className="border-t p-3" style={{ borderColor: '#3D3010' }}>
-        {/* Role info */}
-        <div className="mb-3">
-          <div className="text-[10px] tracking-widest mb-1" style={{ color: '#7A6A40' }}>CURRENT IDENTITY</div>
+      <div className="border-t p-3" style={{ borderColor: '#1A2238' }}>
+        {/* System status */}
+        <div className="mb-3 px-1">
+          <div className="text-[9px] tracking-widest mb-1.5 font-mono" style={{ color: '#4A5570' }}>
+            SYSTEM STATUS
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#20D890', boxShadow: '0 0 5px #20D890' }} />
+            <span className="text-[10px] font-mono" style={{ color: '#20D890' }}>ALL SYSTEMS NOMINAL</span>
+          </div>
+          <div className="text-[9px] font-mono mt-1" style={{ color: '#4A5570' }}>PC-1975-77.A</div>
+        </div>
+
+        {/* Current role */}
+        <div className="mb-2 px-1">
+          <div className="text-[9px] tracking-widest mb-1 font-mono" style={{ color: '#4A5570' }}>CURRENT IDENTITY</div>
           <div className="flex items-center gap-2">
             <RoleBadge />
             {user.name && (
-              <span className="text-xs truncate" style={{ color: '#7A6A40' }}>{user.name}</span>
+              <span className="text-[10px] font-mono truncate" style={{ color: '#4A5570' }}>{user.name}</span>
             )}
           </div>
         </div>
 
         {/* Role switcher (prototype) */}
-        <div className="mb-3">
-          <div className="text-[10px] tracking-widest mb-1" style={{ color: '#E8A020' }}>
+        <div className="mb-2">
+          <div className="text-[9px] tracking-widest mb-1 font-mono" style={{ color: '#E85A00', opacity: 0.6 }}>
             ⚠ PROTO: SWITCH ROLE
           </div>
           <div className="relative">
             <button
               onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-              className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded border font-mono"
-              style={{ background: '#221800', borderColor: '#5C4A1E', color: '#F5E6C8' }}
+              className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-mono"
+              style={{ background: '#111525', border: '1px solid #1E2840', color: '#8A9AB5' }}
             >
               {ROLE_LABELS[user.role]}
-              <ChevronDown size={10} />
+              <ChevronDownIcon />
             </button>
             {showRoleSwitcher && (
               <div
-                className="absolute bottom-full left-0 right-0 mb-1 rounded border overflow-hidden"
-                style={{ background: '#2E2200', borderColor: '#5C4A1E' }}
+                className="absolute bottom-full left-0 right-0 mb-1 border overflow-hidden"
+                style={{ background: '#161D30', borderColor: '#1E2840' }}
               >
                 {ROLES.map((r) => (
                   <button
@@ -150,10 +271,10 @@ export function Nav() {
                       setRole(r)
                       setShowRoleSwitcher(false)
                     }}
-                    className="w-full text-left px-2 py-1.5 text-xs font-mono transition-colors"
+                    className="w-full text-left px-2 py-1.5 text-[10px] font-mono transition-colors"
                     style={{
-                      color: r === user.role ? '#E8A020' : '#7A6A40',
-                      background: r === user.role ? 'rgba(232,160,32,0.1)' : 'transparent',
+                      color: r === user.role ? '#E85A00' : '#4A5570',
+                      background: r === user.role ? 'rgba(232,90,0,0.1)' : 'transparent',
                     }}
                   >
                     {ROLE_LABELS[r]}
@@ -168,19 +289,19 @@ export function Nav() {
         {user.role === 'guest' ? (
           <Link
             href="/login"
-            className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded border font-mono transition-colors"
-            style={{ borderColor: '#5C4A1E', color: '#7A6A40' }}
+            className="flex items-center gap-2 w-full px-2 py-1.5 text-[10px] font-mono border transition-colors"
+            style={{ borderColor: '#1E2840', color: '#4A5570' }}
           >
-            <LogIn size={12} />
-            LOGIN
+            <LogInIcon />
+            INTERNAL LOGIN
           </Link>
         ) : (
           <button
             onClick={logout}
-            className="flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded border font-mono transition-colors"
-            style={{ borderColor: '#5C4A1E', color: '#7A6A40' }}
+            className="flex items-center gap-2 w-full px-2 py-1.5 text-[10px] font-mono border transition-colors"
+            style={{ borderColor: '#1E2840', color: '#4A5570' }}
           >
-            <LogOut size={12} />
+            <LogOutIcon />
             LOGOUT
           </button>
         )}
