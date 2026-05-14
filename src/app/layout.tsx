@@ -1,13 +1,26 @@
 import type { Metadata } from 'next'
-import { Geist_Mono } from 'next/font/google'
+import { Orbitron, Raleway, DM_Mono } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
 import { Nav } from '@/components/nav'
 import { BottomNav } from '@/components/bottom-nav'
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const orbitron = Orbitron({
+  variable: '--font-orbitron',
   subsets: ['latin'],
+  weight: ['400', '600', '700', '800', '900'],
+})
+
+const raleway = Raleway({
+  variable: '--font-raleway',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+})
+
+const dmMono = DM_Mono({
+  variable: '--font-dm-mono',
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
 })
 
 export const metadata: Metadata = {
@@ -21,8 +34,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${geistMono.variable} h-full`}>
-      <body className="flex h-full" style={{ background: '#070912' }}>
+    <html lang="en" className={`${orbitron.variable} ${raleway.variable} ${dmMono.variable} h-full`}>
+      <body className="flex h-full">
         <AuthProvider>
           <Nav />
           <main className="flex-1 overflow-y-auto min-h-screen pb-16 md:pb-0">

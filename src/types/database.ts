@@ -1,5 +1,5 @@
 // Auto-generated types matching the Supabase schema.
-// Keep in sync with supabase/schema.sql
+// Keep in sync with supabase/schema.sql and supabase/schema_v2.sql
 
 export type UserRole = 'guest' | 'applicant' | 'voyager' | 'architect'
 export type VoteScope = 'public' | 'applicant' | 'voyager' | 'architect'
@@ -7,6 +7,7 @@ export type VoteType = 'single' | 'multi'
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected'
 export type DeviceStatus = 'available' | 'in_use' | 'needs_repair' | 'unknown'
 export type DeviceKnowledge = 'known' | 'unknown'
+export type IntelTag = 'NOTICE' | 'DEVICE' | 'ORG'
 
 // ---------- voyager_profiles ----------
 // Must be `type` (not `interface`) so it satisfies Record<string, unknown> in conditional checks
@@ -79,6 +80,88 @@ export type Application = {
 
 export type ApplicationInsert = Pick<Application, 'name' | 'email' | 'location' | 'reason'>
 
+// ---------- devices ----------
+export type Device = {
+  id: string
+  name: string
+  batch_id: string | null
+  knowledge: DeviceKnowledge
+  location: string
+  description: string
+  image_path: string | null
+  status: DeviceStatus | null
+  current_user_id: string | null
+  current_user_name: string | null
+  exploration_progress: number
+  created_at: string
+  updated_at: string
+}
+
+export type DeviceInsert = Omit<Device, 'created_at' | 'updated_at'>
+export type DeviceUpdate = Partial<Pick<
+  Device,
+  'name' | 'batch_id' | 'knowledge' | 'location' | 'description' | 'image_path' |
+  'status' | 'current_user_id' | 'current_user_name' | 'exploration_progress'
+>>
+
+// ---------- worlds ----------
+export type World = {
+  id: string
+  name: string
+  name_en: string
+  discoverer_id: string | null
+  discoverer_name: string
+  discovery_date: string      // ISO date (YYYY-MM-DD)
+  gradient_from: string
+  gradient_to: string
+  description: string
+  is_verified: boolean
+  created_at: string
+}
+
+export type WorldInsert = Omit<World, 'created_at'>
+export type WorldUpdate = Partial<Pick<
+  World,
+  'name' | 'name_en' | 'discoverer_id' | 'discoverer_name' | 'discovery_date' |
+  'gradient_from' | 'gradient_to' | 'description' | 'is_verified'
+>>
+
+// ---------- intel ----------
+export type Intel = {
+  id: string
+  title: string
+  content: string
+  timestamp: string           // ISO timestamp
+  tag: IntelTag
+  classified: boolean
+  created_by: string | null
+  created_at: string
+}
+
+export type IntelInsert = Omit<Intel, 'created_at'>
+export type IntelUpdate = Partial<Pick<Intel, 'title' | 'content' | 'timestamp' | 'tag' | 'classified'>>
+
+// ---------- stories ----------
+export type Story = {
+  id: string                  // URL-safe slug
+  title: string
+  author_id: string | null
+  author_name: string
+  date: string                // ISO date (YYYY-MM-DD)
+  tags: string[]
+  excerpt: string
+  content: string
+  is_published: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type StoryInsert = Omit<Story, 'created_at' | 'updated_at'>
+export type StoryUpdate = Partial<Pick<
+  Story,
+  'title' | 'author_id' | 'author_name' | 'date' | 'tags' | 'excerpt' | 'content' | 'is_published'
+>>
+
 // ---------- Supabase Database shape (for createClient generic) ----------
 export type Database = {
   public: {
@@ -107,6 +190,30 @@ export type Database = {
         Update: Partial<Pick<Application, 'status' | 'reviewed_by' | 'reviewed_at'>>
         Relationships: []
       }
+      devices: {
+        Row: Device
+        Insert: DeviceInsert
+        Update: DeviceUpdate
+        Relationships: []
+      }
+      worlds: {
+        Row: World
+        Insert: WorldInsert
+        Update: WorldUpdate
+        Relationships: []
+      }
+      intel: {
+        Row: Intel
+        Insert: IntelInsert
+        Update: IntelUpdate
+        Relationships: []
+      }
+      stories: {
+        Row: Story
+        Insert: StoryInsert
+        Update: StoryUpdate
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -117,6 +224,7 @@ export type Database = {
       application_status: ApplicationStatus
       device_status: DeviceStatus
       device_knowledge: DeviceKnowledge
+      intel_tag: IntelTag
     }
     CompositeTypes: Record<string, never>
   }
