@@ -36,7 +36,7 @@ export default function LandingPage() {
         </div>
 
         <div className="cta-row">
-          <Link href="#apply" className="cta">
+          <Link href="/apply" className="cta">
             <div className="cta-bg" />
             <div className="cta-frame" />
             <div className="cta-icon-slot">
