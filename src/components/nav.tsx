@@ -6,7 +6,6 @@ import { useAuth, UserRole } from '@/lib/auth-context'
 import { RoleBadge } from './role-badge'
 import { useState } from 'react'
 
-// Custom SVG icons
 const RadarIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
     <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1"/>
@@ -82,12 +81,12 @@ const LogOutIcon = () => (
 )
 
 const navLinks = [
-  { href: '/intel', label: 'INTEL', icon: <RadarIcon /> },
-  { href: '/devices', label: 'DEVICE ARCHIVE', icon: <ArchiveIcon /> },
-  { href: '/logs', label: 'VOYAGER LOGS', icon: <LogsIcon /> },
-  { href: '/voyagers', label: 'VOYAGERS', icon: <VoyagersIcon /> },
-  { href: '/vote', label: 'VOTING HUB', icon: <VoteIcon /> },
-  { href: '/worlds', label: 'WORLD RECORDS', icon: <WorldsIcon /> },
+  { href: '/intel',    label: 'INTEL',         icon: <RadarIcon /> },
+  { href: '/devices',  label: 'DEVICE ARCHIVE', icon: <ArchiveIcon /> },
+  { href: '/logs',     label: 'VOYAGER LOGS',   icon: <LogsIcon /> },
+  { href: '/voyagers', label: 'VOYAGERS',       icon: <VoyagersIcon /> },
+  { href: '/vote',     label: 'VOTING HUB',     icon: <VoteIcon /> },
+  { href: '/worlds',   label: 'WORLD RECORDS',  icon: <WorldsIcon /> },
 ]
 
 const ROLES: UserRole[] = ['guest', 'applicant', 'voyager', 'architect']
@@ -106,10 +105,7 @@ export function Nav() {
   return (
     <nav
       className="hidden md:flex flex-col w-60 shrink-0 h-screen sticky top-0"
-      style={{
-        background: '#0D1020',
-        borderRight: '1px solid #1A2238',
-      }}
+      style={{ background: '#0D1020', borderRight: '1px solid #1A2238' }}
     >
       {/* Logo */}
       <div className="p-4 border-b" style={{ borderColor: '#1A2238' }}>
@@ -132,27 +128,18 @@ export function Nav() {
       </div>
 
       {/* Nav Items */}
-      <div className="flex-1 py-1 overflow-y-auto">
+      <div className="py-1 overflow-y-auto">
         {navLinks.map(({ href, label, icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-3 mx-2 px-3 py-2.5 text-sm transition-all duration-150 group"
+              className="flex items-center gap-3 mx-2 px-3 py-2.5 text-sm transition-all duration-150"
               style={
                 isActive
-                  ? {
-                      background: 'rgba(232,90,0,0.15)',
-                      borderLeft: '3px solid #E85A00',
-                      paddingLeft: '9px',
-                      color: '#E85A00',
-                    }
-                  : {
-                      color: '#4A5570',
-                      borderLeft: '3px solid transparent',
-                      paddingLeft: '9px',
-                    }
+                  ? { background: 'rgba(232,90,0,0.15)', borderLeft: '3px solid #E85A00', paddingLeft: '9px', color: '#E85A00' }
+                  : { color: '#4A5570', borderLeft: '3px solid transparent', paddingLeft: '9px' }
               }
               onMouseEnter={(e) => {
                 if (!isActive) {
@@ -176,28 +163,85 @@ export function Nav() {
         })}
       </div>
 
+      {/* ── Current Identity — placed right below nav links ── */}
+      <div className="mx-2 mt-3 mb-1 border p-3" style={{ borderColor: '#1A2238', background: '#111525' }}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <RoleBadge />
+            {user.name && (
+              <span className="text-[10px] font-mono truncate" style={{ color: '#8A9AB5' }}>{user.name}</span>
+            )}
+          </div>
+          {user.role === 'guest' ? (
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-mono border transition-colors shrink-0"
+              style={{ borderColor: '#1E2840', color: '#4A5570' }}
+            >
+              <LogInIcon />
+              LOGIN
+            </Link>
+          ) : (
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-mono border transition-colors shrink-0"
+              style={{ borderColor: '#1E2840', color: '#4A5570' }}
+            >
+              <LogOutIcon />
+              LOGOUT
+            </button>
+          )}
+        </div>
+
+        {/* Proto role switcher */}
+        <div className="mt-2 relative">
+          <button
+            onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
+            className="w-full flex items-center justify-between px-2 py-1 text-[9px] font-mono"
+            style={{ background: '#0D1020', border: '1px solid #1A2238', color: '#4A5570' }}
+          >
+            <span style={{ color: '#4A5570', opacity: 0.5 }}>⚠ PROTO</span>
+            <span>{ROLE_LABELS[user.role]}</span>
+            <ChevronDownIcon />
+          </button>
+          {showRoleSwitcher && (
+            <div
+              className="absolute bottom-full left-0 right-0 mb-1 border overflow-hidden z-10"
+              style={{ background: '#161D30', borderColor: '#1E2840' }}
+            >
+              {ROLES.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => { setRole(r); setShowRoleSwitcher(false) }}
+                  className="w-full text-left px-2 py-1.5 text-[10px] font-mono transition-colors"
+                  style={{
+                    color: r === user.role ? '#E85A00' : '#4A5570',
+                    background: r === user.role ? 'rgba(232,90,0,0.1)' : 'transparent',
+                  }}
+                >
+                  {ROLE_LABELS[r]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
       {/* Guest Apply CTA */}
       {user.role === 'guest' && (
-        <div style={{ margin: '0 10px 10px', padding: '10px', border: '1px solid rgba(232,90,0,0.35)', background: 'rgba(232,90,0,0.04)' }}>
-          <div style={{ fontSize: '0.58rem', letterSpacing: '0.15em', color: '#E85A00', marginBottom: '5px', fontWeight: 700, textTransform: 'uppercase' }}>
-            ◈ RECRUITMENT OPEN
-          </div>
-          <div style={{ fontSize: '0.7rem', color: '#8A9AB5', marginBottom: '9px', lineHeight: 1.4, fontFamily: 'inherit' }}>
-            Voyager positions available. Apply for console access.
-          </div>
+        <div style={{ margin: '0 10px 12px' }}>
           <Link
             href="/#apply"
             style={{
-              display: 'block',
-              textAlign: 'center',
-              fontSize: '0.62rem',
-              letterSpacing: '0.15em',
+              display: 'block', textAlign: 'center',
+              fontSize: '0.62rem', letterSpacing: '0.15em',
               color: '#EDE8DE',
               background: 'linear-gradient(135deg, #E85A00, #C04000)',
-              padding: '6px 0',
-              fontWeight: 700,
-              textDecoration: 'none',
-              fontFamily: 'inherit',
+              padding: '8px 0', fontWeight: 700,
+              textDecoration: 'none', fontFamily: 'inherit',
               border: '1px solid rgba(232,90,0,0.5)',
             }}
           >
@@ -205,93 +249,6 @@ export function Nav() {
           </Link>
         </div>
       )}
-
-      {/* Bottom section */}
-      <div className="border-t p-3" style={{ borderColor: '#1A2238' }}>
-        {/* System status */}
-        <div className="mb-3 px-1">
-          <div className="text-[9px] tracking-widest mb-1.5 font-mono" style={{ color: '#4A5570' }}>
-            SYSTEM STATUS
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#20D890', boxShadow: '0 0 5px #20D890' }} />
-            <span className="text-[10px] font-mono" style={{ color: '#20D890' }}>ALL SYSTEMS NOMINAL</span>
-          </div>
-          <div className="text-[9px] font-mono mt-1" style={{ color: '#4A5570' }}>PC-1975-77.A</div>
-        </div>
-
-        {/* Current role */}
-        <div className="mb-2 px-1">
-          <div className="text-[9px] tracking-widest mb-1 font-mono" style={{ color: '#4A5570' }}>CURRENT IDENTITY</div>
-          <div className="flex items-center gap-2">
-            <RoleBadge />
-            {user.name && (
-              <span className="text-[10px] font-mono truncate" style={{ color: '#4A5570' }}>{user.name}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Role switcher (prototype) */}
-        <div className="mb-2">
-          <div className="text-[9px] tracking-widest mb-1 font-mono" style={{ color: '#E85A00', opacity: 0.6 }}>
-            ⚠ PROTO: SWITCH ROLE
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-              className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-mono"
-              style={{ background: '#111525', border: '1px solid #1E2840', color: '#8A9AB5' }}
-            >
-              {ROLE_LABELS[user.role]}
-              <ChevronDownIcon />
-            </button>
-            {showRoleSwitcher && (
-              <div
-                className="absolute bottom-full left-0 right-0 mb-1 border overflow-hidden"
-                style={{ background: '#161D30', borderColor: '#1E2840' }}
-              >
-                {ROLES.map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      setRole(r)
-                      setShowRoleSwitcher(false)
-                    }}
-                    className="w-full text-left px-2 py-1.5 text-[10px] font-mono transition-colors"
-                    style={{
-                      color: r === user.role ? '#E85A00' : '#4A5570',
-                      background: r === user.role ? 'rgba(232,90,0,0.1)' : 'transparent',
-                    }}
-                  >
-                    {ROLE_LABELS[r]}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Auth actions */}
-        {user.role === 'guest' ? (
-          <Link
-            href="/login"
-            className="flex items-center gap-2 w-full px-2 py-1.5 text-[10px] font-mono border transition-colors"
-            style={{ borderColor: '#1E2840', color: '#4A5570' }}
-          >
-            <LogInIcon />
-            INTERNAL LOGIN
-          </Link>
-        ) : (
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 w-full px-2 py-1.5 text-[10px] font-mono border transition-colors"
-            style={{ borderColor: '#1E2840', color: '#4A5570' }}
-          >
-            <LogOutIcon />
-            LOGOUT
-          </button>
-        )}
-      </div>
     </nav>
   )
 }

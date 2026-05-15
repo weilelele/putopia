@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getAllWorlds } from '@/lib/actions/worlds'
 
 export default async function WorldsPage() {
@@ -21,96 +22,116 @@ export default async function WorldsPage() {
       {/* Stats bar */}
       <div
         className="flex gap-6 mb-8 p-4 border flex-wrap"
-        style={{
-          background: '#111525',
-          borderColor: '#1E2840',
-          boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)',
-        }}
+        style={{ background: '#111525', borderColor: '#1E2840', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)' }}
       >
         <div>
-          <div className="text-xl font-mono font-bold" style={{ color: '#E85A00' }}>
-            {worlds.length}
-          </div>
+          <div className="text-xl font-mono font-bold" style={{ color: '#E85A00' }}>{worlds.length}</div>
           <div className="text-xs font-mono" style={{ color: '#4A5570' }}>CATALOGUED</div>
         </div>
         <div>
-          <div className="text-xl font-mono font-bold" style={{ color: '#20D890' }}>
-            8
-          </div>
+          <div className="text-xl font-mono font-bold" style={{ color: '#20D890' }}>8</div>
           <div className="text-xs font-mono" style={{ color: '#4A5570' }}>DISCOVERERS</div>
         </div>
         <div>
-          <div className="text-xl font-mono font-bold" style={{ color: '#00C8C8' }}>
-            200+
-          </div>
+          <div className="text-xl font-mono font-bold" style={{ color: '#00C8C8' }}>200+</div>
           <div className="text-xs font-mono" style={{ color: '#4A5570' }}>NODES ON RECORD</div>
         </div>
       </div>
 
       {/* World Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {worlds.map((world) => (
-          <div
-            key={world.id}
-            className="border overflow-hidden transition-all duration-200 group"
-            style={{
-              background: '#111525',
-              borderColor: '#1E2840',
-              boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)',
-            }}
-          >
-            {/* Gradient image placeholder */}
-            <div
-              className="h-32 relative transition-all duration-300"
-              style={{
-                background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})`,
-              }}
-            >
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: 'linear-gradient(to bottom, transparent 40%, rgba(17,21,37,0.85) 100%)',
-                }}
-              />
-              <div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)',
-                }}
-              />
-              <div className="absolute top-2 left-2">
-                <span
-                  className="text-xs font-mono px-1.5 py-0.5"
-                  style={{ background: 'rgba(7,9,18,0.7)', color: '#4A5570' }}
-                >
-                  {world.id}
-                </span>
-              </div>
-            </div>
+        {worlds.map((world) => {
+          // Use image if available, otherwise fall back to gradient
+          const hasImage = !!world.image_path
+          // Show English name only if it differs from the primary name
+          const showAltName = world.name_en && world.name_en !== world.name
 
-            {/* Info */}
-            <div className="p-3">
-              <div className="text-sm font-mono font-semibold mb-0.5" style={{ color: '#EDE8DE' }}>
-                {world.name}
-              </div>
-              <div className="text-xs font-mono mb-2" style={{ color: world.gradient_to }}>
-                {world.name_en}
-              </div>
-              <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
-                {world.description}
-              </p>
-              <div className="pt-2 border-t" style={{ borderColor: '#1A2238' }}>
-                <div className="text-xs font-mono" style={{ color: '#4A5570' }}>FIRST DISCOVERED BY</div>
-                <div className="text-xs font-mono mt-0.5" style={{ color: '#8A9AB5' }}>
-                  {world.discoverer_name}
+          return (
+            <div
+              key={world.id}
+              className="border overflow-hidden transition-all duration-200 group"
+              style={{ background: '#111525', borderColor: '#1E2840', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)' }}
+            >
+              {/* Hero image / gradient */}
+              <div className="h-36 relative overflow-hidden">
+                {hasImage ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={world.image_path!}
+                      alt={world.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    {/* subtle dark overlay for text legibility */}
+                    <div
+                      className="absolute inset-0"
+                      style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(17,21,37,0.9) 100%)' }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div
+                      className="w-full h-full"
+                      style={{ background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }}
+                    />
+                    <div
+                      className="absolute inset-0"
+                      style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(17,21,37,0.85) 100%)' }}
+                    />
+                    {/* scanline texture */}
+                    <div
+                      className="absolute inset-0 opacity-20"
+                      style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)' }}
+                    />
+                  </>
+                )}
+                <div className="absolute top-2 left-2">
+                  <span
+                    className="text-xs font-mono px-1.5 py-0.5"
+                    style={{ background: 'rgba(7,9,18,0.7)', color: '#4A5570' }}
+                  >
+                    {world.id}
+                  </span>
                 </div>
-                <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
-                  {world.discovery_date}
+              </div>
+
+              {/* Info */}
+              <div className="p-3">
+                <div className="text-sm font-mono font-semibold mb-0.5" style={{ color: '#EDE8DE' }}>
+                  {world.name}
+                </div>
+                {showAltName && (
+                  <div className="text-xs font-mono mb-2" style={{ color: world.gradient_to }}>
+                    {world.name_en}
+                  </div>
+                )}
+                <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
+                  {world.description}
+                </p>
+                <div className="pt-2 border-t flex items-center justify-between gap-2" style={{ borderColor: '#1A2238' }}>
+                  <div className="min-w-0">
+                    {world.discoverer_id ? (
+                      <Link
+                        href="/voyagers"
+                        className="text-xs font-mono transition-colors hover:underline truncate block"
+                        style={{ color: '#8A9AB5' }}
+                      >
+                        {world.discoverer_name}
+                      </Link>
+                    ) : world.discoverer_name ? (
+                      <span className="text-xs font-mono truncate block" style={{ color: '#8A9AB5' }}>
+                        {world.discoverer_name}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="text-xs font-mono shrink-0" style={{ color: '#4A5570' }}>
+                    {world.discovery_date}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="mt-8 text-center text-xs font-mono" style={{ color: '#1A2238' }}>

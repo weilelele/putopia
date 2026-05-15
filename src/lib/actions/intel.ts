@@ -16,10 +16,10 @@ export async function getPublicIntel() {
   return data ?? []
 }
 
-// All intel (classified + unclassified) — architect admin
+// All intel visible to current user — RLS controls classified access
 export async function getAllIntel() {
-  const admin = createAdminClient()
-  const { data } = await admin
+  const supabase = await createClient()
+  const { data } = await supabase
     .from('intel')
     .select('*')
     .order('timestamp', { ascending: false })
@@ -28,8 +28,8 @@ export async function getAllIntel() {
 }
 
 export async function getIntelById(id: string) {
-  const admin = createAdminClient()
-  const { data } = await admin
+  const supabase = await createClient()
+  const { data } = await supabase
     .from('intel')
     .select('*')
     .eq('id', id)

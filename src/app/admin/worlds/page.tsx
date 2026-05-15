@@ -16,18 +16,18 @@ const S = {
 type F = {
   id: string; name: string; name_en: string; discoverer_name: string
   discovery_date: string; gradient_from: string; gradient_to: string
-  description: string; is_verified: boolean
+  image_path: string; description: string; is_verified: boolean
 }
 
 const EMPTY: F = {
   id: '', name: '', name_en: '', discoverer_name: '',
   discovery_date: new Date().toISOString().slice(0, 10),
   gradient_from: '#E8A020', gradient_to: '#C43020',
-  description: '', is_verified: true,
+  image_path: '', description: '', is_verified: true,
 }
 
 function worldToForm(w: World): F {
-  return { id: w.id, name: w.name, name_en: w.name_en, discoverer_name: w.discoverer_name, discovery_date: w.discovery_date, gradient_from: w.gradient_from, gradient_to: w.gradient_to, description: w.description, is_verified: w.is_verified }
+  return { id: w.id, name: w.name, name_en: w.name_en, discoverer_name: w.discoverer_name, discovery_date: w.discovery_date, gradient_from: w.gradient_from, gradient_to: w.gradient_to, image_path: w.image_path ?? '', description: w.description, is_verified: w.is_verified }
 }
 
 function nextWorldId(items: World[]) {
@@ -85,6 +85,7 @@ export default function WorldsAdmin() {
       discoverer_id: null, discoverer_name: form.discoverer_name.trim(),
       discovery_date: form.discovery_date,
       gradient_from: form.gradient_from, gradient_to: form.gradient_to,
+      image_path: form.image_path.trim() || null,
       description: form.description.trim(), is_verified: form.is_verified,
     }
     const result = editId ? await updateWorld(editId, payload) : await createWorld(payload)
@@ -197,8 +198,14 @@ export default function WorldsAdmin() {
 
           {/* gradient preview */}
           <div style={{ marginBottom: '12px' }}>
-            <label style={S.label}>渐变预览</label>
+            <label style={S.label}>渐变预览（无图片时显示）</label>
             <div style={{ height: '48px', background: `linear-gradient(135deg, ${form.gradient_from}, ${form.gradient_to})`, border: '1px solid #1E2840' }} />
+          </div>
+
+          {/* image URL */}
+          <div style={{ marginBottom: '12px' }}>
+            <label style={S.label}>封面图片 URL（优先于渐变色）</label>
+            <input style={S.input} value={form.image_path} onChange={e => set('image_path', e.target.value)} placeholder="https://..." />
           </div>
 
           <div style={{ marginBottom: '16px' }}>

@@ -143,16 +143,6 @@ function VoteCard({ vote }: { vote: VoteItem }) {
           ✓ VOTE RECORDED
         </div>
       )}
-      {vote.status === 'closed' && (
-        <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
-          // VOTING PERIOD CLOSED
-        </div>
-      )}
-      {!isAtLeast('voyager') && vote.status === 'active' && (
-        <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
-          // VOYAGER+ ACCESS REQUIRED TO VOTE
-        </div>
-      )}
     </div>
   )
 }
@@ -198,7 +188,7 @@ export default function VotePage() {
             </div>
             <div className="flex-1 h-px" style={{ background: '#1A2238' }} />
           </div>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {activeVotes.map((v) => <VoteCard key={v.id} vote={v} />)}
           </div>
         </section>
@@ -213,7 +203,7 @@ export default function VotePage() {
             </div>
             <div className="flex-1 h-px" style={{ background: '#1A2238' }} />
           </div>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {closedVotes.map((v) => <VoteCard key={v.id} vote={v} />)}
           </div>
         </section>

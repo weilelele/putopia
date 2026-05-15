@@ -1,40 +1,50 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { submitApplication } from '@/lib/actions/applications'
 
 const reasons = [
-  { id: 'anomaly', tag: 'ANOMALY DETECTED', text: 'I intercepted a signal I cannot explain.' },
-  { id: 'referral', tag: 'REFERRAL', text: 'A current Voyager reached out to me directly.' },
-  { id: 'verify', tag: 'VERIFICATION SEEKER', text: 'I need to verify that my world is not the only one.' },
-  { id: 'contact', tag: 'DIRECT CONTACT', text: 'Something I witnessed through the device changed me.' },
-  { id: 'other', tag: 'OTHER', text: 'Other — I will explain in my own words.' },
+  { id: 'anomaly', label: 'ANOMALY DETECTED — I intercepted a signal I cannot explain.' },
+  { id: 'referral', label: 'REFERRAL — A current Voyager reached out to me directly.' },
+  { id: 'verify', label: 'VERIFICATION SEEKER — I need to verify my world is not the only one.' },
+  { id: 'contact', label: 'DIRECT CONTACT — Something witnessed through the device changed me.' },
+  { id: 'other', label: 'OTHER — I will explain in my own words.' },
+]
+
+const worldOptions = [
+  { id: 'new_life', label: 'A new possibility for life — a world where everything could be different.' },
+  { id: 'fantasy',  label: 'A world long imagined — one I cannot stop thinking about.' },
+  { id: 'reunion',  label: 'A precious reunion — someone or something I thought was lost.' },
+  { id: 'other',    label: 'Other — I will describe it myself.' },
 ]
 
 export default function LandingPage() {
-  const router = useRouter()
-  const [form, setForm] = useState({ name: '', email: '', location: '' })
-  const [selectedReason, setSelectedReason] = useState<string | null>(null)
-  const [otherText, setOtherText] = useState('')
+  const [form, setForm] = useState({ email: '' })
+  const [selectedReason, setSelectedReason] = useState('')
+  const [otherReasonText, setOtherReasonText] = useState('')
+  const [selectedWorld, setSelectedWorld] = useState('')
+  const [otherWorldText, setOtherWorldText] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
 
   const computedReason = selectedReason === 'other'
-    ? otherText
-    : (reasons.find(r => r.id === selectedReason)?.text ?? '')
+    ? otherReasonText
+    : (reasons.find(r => r.id === selectedReason)?.label.split(' — ')[1] ?? '')
+
+  const computedWorld = selectedWorld === 'other'
+    ? otherWorldText
+    : (worldOptions.find(w => w.id === selectedWorld)?.label ?? '')
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedReason) return
+    if (!selectedReason || !selectedWorld) return
     setError('')
     setLoading(true)
     const result = await submitApplication({
-      name: form.name,
       email: form.email,
-      location: form.location || null,
       reason: computedReason,
+      location: computedWorld,
     })
     setLoading(false)
     if (result.error) {
@@ -48,15 +58,15 @@ export default function LandingPage() {
     document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const canSubmit =
+    form.email &&
+    selectedReason &&
+    (selectedReason !== 'other' || otherReasonText.trim()) &&
+    selectedWorld &&
+    (selectedWorld !== 'other' || otherWorldText.trim())
+
   return (
     <div className="landing-root">
-      {/* CLASSIFIED stamp */}
-      <div className="classified-stamp">
-        <div className="l1">CLASSIFIED</div>
-        <div className="l2"><span className="stamp-wing" /> CLEARANCE LEVEL: VOYAGER <span className="stamp-wing" /></div>
-        <div className="l3"><span className="stamp-wing" /> ACCESS GRANTED <span className="stamp-wing" /></div>
-      </div>
-
       {/* Background layers */}
       <div className="stars-bg" />
       <div className="nebula-bg" />
@@ -82,7 +92,6 @@ export default function LandingPage() {
         </div>
 
         <div className="cta-row">
-          {/* Scroll to apply form */}
           <button onClick={scrollToApply} className="cta">
             <div className="cta-bg" />
             <div className="cta-frame" />
@@ -95,22 +104,6 @@ export default function LandingPage() {
             </div>
             <div className="cta-divider" />
             <div className="cta-label">BECOME A VOYAGER</div>
-          </button>
-
-          <button onClick={() => router.push('/login')} className="cta teal">
-            <div className="cta-bg" />
-            <div className="cta-frame" />
-            <div className="cta-icon-slot">
-              <div className="cta-icon-circle">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-                  <rect x="5" y="11" width="14" height="10" rx="1" />
-                  <path d="M8 11 V8 a4 4 0 0 1 8 0 V11" strokeLinecap="round" />
-                  <circle cx="12" cy="16" r="1.3" fill="currentColor" />
-                </svg>
-              </div>
-            </div>
-            <div className="cta-divider" />
-            <div className="cta-label">INTERNAL LOGIN</div>
           </button>
         </div>
 
@@ -142,50 +135,80 @@ export default function LandingPage() {
               </div>
 
               <form onSubmit={handleApply} className="apply-form">
-                <div className="apply-row">
-                  <div className="apply-field">
-                    <label className="apply-label">NAME</label>
-                    <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                      placeholder="Your name or alias" className="input-dark" />
-                  </div>
-                  <div className="apply-field">
-                    <label className="apply-label">EMAIL</label>
-                    <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                      placeholder="operative@domain.void" className="input-dark" />
-                  </div>
-                </div>
-
+                {/* EMAIL */}
                 <div className="apply-field">
-                  <label className="apply-label">LOCATION / REGION</label>
-                  <input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })}
-                    placeholder="City, Country" className="input-dark" />
+                  <label className="apply-label">EMAIL</label>
+                  <input
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={e => setForm({ email: e.target.value })}
+                    placeholder="operative@domain.void"
+                    className="input-dark"
+                  />
                 </div>
 
+                {/* REASON — dropdown */}
                 <div className="apply-field">
                   <label className="apply-label">REASON FOR APPLYING</label>
-                  <div className="apply-reasons">
-                    {reasons.map(r => {
-                      const sel = selectedReason === r.id
-                      return (
-                        <div key={r.id} onClick={() => setSelectedReason(r.id)} className="apply-reason" data-selected={sel}>
-                          <span className="apply-reason-tag">[{r.tag}]</span>
-                          <span className="apply-reason-text">{r.text}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
+                  <select
+                    required
+                    value={selectedReason}
+                    onChange={e => { setSelectedReason(e.target.value); setOtherReasonText('') }}
+                    className="input-dark apply-select"
+                  >
+                    <option value="" disabled>— Select a reason —</option>
+                    {reasons.map(r => (
+                      <option key={r.id} value={r.id}>{r.label}</option>
+                    ))}
+                  </select>
                   {selectedReason === 'other' && (
-                    <textarea required rows={3} maxLength={300} value={otherText}
-                      onChange={e => setOtherText(e.target.value)}
-                      placeholder="Describe your reason..." className="input-dark apply-textarea" />
+                    <textarea
+                      required
+                      rows={3}
+                      maxLength={300}
+                      value={otherReasonText}
+                      onChange={e => setOtherReasonText(e.target.value)}
+                      placeholder="Describe your reason in your own words..."
+                      className="input-dark apply-textarea"
+                    />
+                  )}
+                </div>
+
+                {/* WORLD PREFERENCE */}
+                <div className="apply-field">
+                  <label className="apply-label">WHAT KIND OF PARALLEL WORLD ARE YOU SEEKING?</label>
+                  <select
+                    required
+                    value={selectedWorld}
+                    onChange={e => { setSelectedWorld(e.target.value); setOtherWorldText('') }}
+                    className="input-dark apply-select"
+                  >
+                    <option value="" disabled>— Select a world —</option>
+                    {worldOptions.map(w => (
+                      <option key={w.id} value={w.id}>{w.label}</option>
+                    ))}
+                  </select>
+                  {selectedWorld === 'other' && (
+                    <textarea
+                      required
+                      rows={2}
+                      maxLength={200}
+                      value={otherWorldText}
+                      onChange={e => setOtherWorldText(e.target.value)}
+                      placeholder="Describe the world you are looking for..."
+                      className="input-dark apply-textarea"
+                    />
                   )}
                 </div>
 
                 {error && <div className="apply-error">{error}</div>}
 
-                <button type="submit"
-                  disabled={loading || !selectedReason || (selectedReason === 'other' && !otherText.trim())}
-                  className="btn-orange apply-submit">
+                <button
+                  type="submit"
+                  disabled={loading || !canSubmit}
+                  className="btn-orange apply-submit"
+                >
                   {loading ? '> TRANSMITTING...' : 'SUBMIT APPLICATION'}
                 </button>
               </form>

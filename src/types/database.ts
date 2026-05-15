@@ -78,7 +78,7 @@ export type Application = {
   reviewed_at: string | null
 }
 
-export type ApplicationInsert = Pick<Application, 'name' | 'email' | 'location' | 'reason'>
+export type ApplicationInsert = Pick<Application, 'email' | 'reason'> & { name?: string; location?: string | null }
 
 // ---------- devices ----------
 export type Device = {
@@ -114,6 +114,7 @@ export type World = {
   discovery_date: string      // ISO date (YYYY-MM-DD)
   gradient_from: string
   gradient_to: string
+  image_path: string | null   // uploaded world image (optional)
   description: string
   is_verified: boolean
   created_at: string
@@ -123,7 +124,7 @@ export type WorldInsert = Omit<World, 'created_at'>
 export type WorldUpdate = Partial<Pick<
   World,
   'name' | 'name_en' | 'discoverer_id' | 'discoverer_name' | 'discovery_date' |
-  'gradient_from' | 'gradient_to' | 'description' | 'is_verified'
+  'gradient_from' | 'gradient_to' | 'image_path' | 'description' | 'is_verified'
 >>
 
 // ---------- intel ----------

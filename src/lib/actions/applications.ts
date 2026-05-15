@@ -10,7 +10,7 @@ export async function submitApplication(application: ApplicationInsert) {
 
   const { error } = await supabase
     .from('applications')
-    .insert(application)
+    .insert({ name: '', ...application })
 
   if (error) return { error: error.message }
   return { error: null }

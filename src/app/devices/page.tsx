@@ -57,21 +57,28 @@ function DevicePlaceholder({ id }: { id: string }) {
   )
 }
 
-function DeviceImage({ device }: { device: Device }) {
+function DeviceImage({ device, isUnknown }: { device: Device; isUnknown: boolean }) {
+  const filterOverlay = isUnknown
+    ? 'rgba(74,85,112,0.45)'   // grey-blue tint for unknown
+    : 'rgba(32,216,144,0.08)'  // very subtle green for known
+
   if (device.image_path) {
     return (
-      <div className="w-full aspect-video overflow-hidden">
+      <div className="w-full aspect-video overflow-hidden relative">
         <img
           src={device.image_path}
           alt={device.name}
           className="w-full h-full object-cover"
+          style={{ filter: isUnknown ? 'grayscale(60%) brightness(0.75)' : 'none' }}
         />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: filterOverlay }} />
       </div>
     )
   }
   return (
-    <div className="w-full aspect-video overflow-hidden" style={{ background: '#0D1020' }}>
+    <div className="w-full aspect-video overflow-hidden relative" style={{ background: '#0D1020' }}>
       <DevicePlaceholder id={device.id} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: filterOverlay }} />
     </div>
   )
 }
@@ -103,62 +110,52 @@ export default function DevicesPage() {
       {/* UNKNOWN DEVICES */}
       <section className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <span className="label-tag" style={{ color: '#E85A00' }}>UNKNOWN</span>
+          <span className="label-tag" style={{ color: '#4A5570', borderColor: '#4A5570' }}>UNKNOWN</span>
           <div className="flex-1 h-px" style={{ background: '#1A2238' }} />
           <span className="text-xs font-mono" style={{ color: '#4A5570' }}>Uncontacted Signals</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {unknownDevices.map((device) => (
             <div
               key={device.id}
               className="border overflow-hidden"
               style={{
-                background: '#111525',
-                borderColor: '#1E2840',
-                boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)',
+                background: '#0D1020',
+                borderColor: '#1A2238',
+                opacity: 0.7,
               }}
             >
               <div className="border-b" style={{ borderColor: '#1A2238' }}>
-                <DeviceImage device={device} />
+                <DeviceImage device={device} isUnknown={true} />
               </div>
 
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
+              <div className="p-3">
+                <div className="flex items-start justify-between mb-1.5">
                   <div>
-                    <div className="text-xs font-mono" style={{ color: '#4A5570' }}>{device.id}</div>
-                    <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>{device.name}</div>
-                    {device.batch_id && (
-                      <div className="text-xs font-mono" style={{ color: '#E85A00' }}>{device.batch_id}</div>
-                    )}
+                    <div className="text-xs font-mono" style={{ color: '#1E2840' }}>{device.id}</div>
+                    <div className="text-xs font-mono font-semibold" style={{ color: '#4A5570' }}>{device.name}</div>
                   </div>
                   <div
                     className="text-xs font-mono px-1.5 py-0.5 border"
-                    style={{ color: '#E85A00', borderColor: 'rgba(232,90,0,0.3)', background: 'rgba(232,90,0,0.08)' }}
+                    style={{ color: '#4A5570', borderColor: '#1A2238', background: 'transparent' }}
                   >
                     ?
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 mb-3 text-xs font-mono" style={{ color: '#4A5570' }}>
+                <div className="flex items-center gap-1 text-xs font-mono" style={{ color: '#1E2840' }}>
                   <span>◎</span>
                   <span>{device.location}</span>
                 </div>
 
-                <p className="text-xs leading-relaxed mb-4 font-mono" style={{ color: '#8A9AB5' }}>
-                  {device.description}
-                </p>
-
-                <div>
-                  <div className="flex justify-between text-xs font-mono mb-1" style={{ color: '#4A5570' }}>
-                    <span>EXPLORATION PROGRESS</span>
-                    <span style={{ color: '#E85A00' }}>{device.exploration_progress}%</span>
+                <div className="mt-2.5">
+                  <div className="flex justify-between text-xs font-mono mb-1" style={{ color: '#1E2840' }}>
+                    <span>PROGRESS</span>
+                    <span>{device.exploration_progress}%</span>
                   </div>
                   <div className="progress-track">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${device.exploration_progress}%` }}
-                    />
+                    <div className="progress-fill" style={{ width: `${device.exploration_progress}%`, opacity: 0.4 }} />
                   </div>
                 </div>
               </div>
@@ -175,7 +172,7 @@ export default function DevicesPage() {
           <span className="text-xs font-mono" style={{ color: '#4A5570' }}>Confirmed Consoles</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {knownDevices.map((device) => {
             const statusKey = device.status ?? 'unknown'
             const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.unknown
@@ -186,71 +183,62 @@ export default function DevicesPage() {
                 style={{
                   background: '#111525',
                   borderColor: '#1E2840',
-                  boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)',
+                  boxShadow: 'inset 0 1px 0 rgba(32,216,144,0.06)',
                 }}
               >
                 <div className="border-b" style={{ borderColor: '#1A2238' }}>
-                  <DeviceImage device={device} />
+                  <DeviceImage device={device} isUnknown={false} />
                 </div>
 
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
+                <div className="p-3">
+                  <div className="flex items-start justify-between mb-1.5">
+                    <div className="min-w-0">
                       <div className="text-xs font-mono" style={{ color: '#4A5570' }}>{device.id}</div>
-                      <div className="text-base font-mono font-semibold" style={{ color: '#EDE8DE' }}>{device.name}</div>
+                      <div className="text-sm font-mono font-semibold truncate" style={{ color: '#EDE8DE' }}>{device.name}</div>
                     </div>
                     {device.status && (
                       <span
-                        className="label-tag whitespace-nowrap"
-                        style={{ color: statusStyle.color }}
+                        className="label-tag whitespace-nowrap ml-1 shrink-0"
+                        style={{ color: statusStyle.color, fontSize: '0.5rem' }}
                       >
                         {STATUS_LABELS[device.status] ?? device.status}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1.5 mb-3 text-xs font-mono" style={{ color: '#4A5570' }}>
+                  <div className="flex items-center gap-1 mb-2 text-xs font-mono" style={{ color: '#4A5570' }}>
                     <span>◎</span>
-                    <span>{device.location}</span>
+                    <span className="truncate">{device.location}</span>
                   </div>
 
-                  <p className="text-xs leading-relaxed mb-4 font-mono" style={{ color: '#8A9AB5' }}>
+                  <p className="text-xs leading-relaxed mb-3 font-mono line-clamp-3" style={{ color: '#8A9AB5' }}>
                     {device.description}
                   </p>
 
                   {device.status === 'in_use' && device.current_user_name && (
                     <div
-                      className="mb-3 px-3 py-2 border text-xs font-mono"
+                      className="mb-2 px-2 py-1 border text-xs font-mono"
                       style={{ background: 'rgba(232,90,0,0.04)', borderColor: 'rgba(232,90,0,0.2)', color: '#8A9AB5' }}
                     >
-                      <span style={{ color: '#4A5570' }}>CURRENT USER: </span>
+                      <span style={{ color: '#4A5570' }}>IN USE: </span>
                       <span>{device.current_user_name}</span>
                     </div>
                   )}
 
-                  {isAtLeast('voyager') && device.status === 'available' && (
+                  {isAtLeast('voyager') && (
                     <button
                       className="w-full py-1.5 text-xs font-mono tracking-widest border transition-all"
                       style={{ borderColor: '#20D890', color: '#20D890', background: 'rgba(32,216,144,0.06)' }}
                       onMouseEnter={(e) => {
-                        (e.target as HTMLElement).style.background = '#20D890'
-                        ;(e.target as HTMLElement).style.color = '#070912'
+                        (e.currentTarget as HTMLElement).style.background = '#20D890'
+                        ;(e.currentTarget as HTMLElement).style.color = '#070912'
                       }}
                       onMouseLeave={(e) => {
-                        (e.target as HTMLElement).style.background = 'rgba(32,216,144,0.06)'
-                        ;(e.target as HTMLElement).style.color = '#20D890'
+                        (e.currentTarget as HTMLElement).style.background = 'rgba(32,216,144,0.06)'
+                        ;(e.currentTarget as HTMLElement).style.color = '#20D890'
                       }}
                     >
                       [ APPLY FOR ACCESS ]
-                    </button>
-                  )}
-                  {isAtLeast('voyager') && device.status === 'in_use' && (
-                    <button
-                      className="w-full py-1.5 text-xs font-mono tracking-widest border opacity-40 cursor-not-allowed"
-                      style={{ borderColor: '#1A2238', color: '#4A5570' }}
-                      disabled
-                    >
-                      [ QUEUE FOR NEXT SLOT ]
                     </button>
                   )}
                 </div>
