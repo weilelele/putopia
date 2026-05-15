@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { signIn } from '@/lib/actions/auth'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   return (
@@ -30,9 +30,12 @@ function LoginPageContent() {
       return
     }
     setLoading(true)
-    const result = await signIn(email, password)
-    if (result.error) {
-      setError(`ERR: ${result.error.toUpperCase()}`)
+
+    const supabase = createClient()
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (authError) {
+      setError(`ERR: ${authError.message.toUpperCase()}`)
       setLoading(false)
     } else {
       router.push(redirect)
