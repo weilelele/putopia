@@ -7,18 +7,31 @@ import { Plus } from 'lucide-react'
 import clsx from 'clsx'
 
 const SCOPE_STYLES = {
-  ALL: { color: '#4A5570', border: '#1A2238', bg: 'transparent' },
-  VOYAGER: { color: '#E85A00', border: 'rgba(232,90,0,0.3)', bg: 'rgba(232,90,0,0.08)' },
-  ARCHITECT: { color: '#00C8C8', border: 'rgba(0,200,200,0.3)', bg: 'rgba(0,200,200,0.08)' },
+  ALL:       { color: '#4A5570', border: '#1A2238',              bg: 'transparent' },
+  APPLICANT: { color: '#8A9AB5', border: 'rgba(138,154,181,0.3)', bg: 'rgba(138,154,181,0.06)' },
+  VOYAGER:   { color: '#E85A00', border: 'rgba(232,90,0,0.3)',   bg: 'rgba(232,90,0,0.08)' },
+  ARCHITECT: { color: '#00C8C8', border: 'rgba(0,200,200,0.3)',  bg: 'rgba(0,200,200,0.08)' },
+}
+
+type VoteScope = keyof typeof SCOPE_STYLES
+
+const SCOPE_MIN_ROLE: Record<VoteScope, 'applicant' | 'voyager' | 'architect'> = {
+  ALL:       'applicant',
+  APPLICANT: 'applicant',
+  VOYAGER:   'voyager',
+  ARCHITECT: 'architect',
 }
 
 function VoteCard({ vote }: { vote: VoteItem }) {
-  const { isAtLeast } = useAuth()
+  const { user, isAtLeast } = useAuth()
   const [selected, setSelected] = useState<string[]>([])
   const [voted, setVoted] = useState(false)
 
-  const canVote = isAtLeast('voyager') && vote.status === 'active' && !voted
-  const scopeStyle = SCOPE_STYLES[vote.scope]
+  const scope = (vote.scope as VoteScope) ?? 'ALL'
+  const minRole = SCOPE_MIN_ROLE[scope]
+  const hasPermission = isAtLeast(minRole)
+  const canVote = hasPermission && vote.status === 'active' && !voted
+  const scopeStyle = SCOPE_STYLES[scope] ?? SCOPE_STYLES.ALL
 
   const toggle = (id: string) => {
     if (!canVote) return
@@ -141,6 +154,13 @@ function VoteCard({ vote }: { vote: VoteItem }) {
       {voted && (
         <div className="text-xs font-mono" style={{ color: '#20D890' }}>
           ✓ VOTE RECORDED
+        </div>
+      )}
+      {!hasPermission && vote.status === 'active' && (
+        <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
+          {user.role === 'guest'
+            ? '// LOGIN REQUIRED TO PARTICIPATE'
+            : `// ${minRole.toUpperCase()} STATUS REQUIRED`}
         </div>
       )}
     </div>

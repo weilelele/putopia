@@ -82,7 +82,7 @@ export default function VoyagersPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {voyagerProfiles.map((voyager) => {
-          const isOwn = isAtLeast('voyager') && (user.name === voyager.name || user.voyagerId === voyager.id)
+          const isOwn = isAtLeast('voyager') && (user.name === voyager.name || user.id === voyager.id)
           const avatarUrl = avatarUrls[voyager.id]
 
           return (

@@ -2,9 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth, UserRole } from '@/lib/auth-context'
+import { useAuth } from '@/lib/auth-context'
 import { RoleBadge } from './role-badge'
-import { useState } from 'react'
 
 const RadarIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -58,12 +57,6 @@ const WorldsIcon = () => (
   </svg>
 )
 
-const ChevronDownIcon = () => (
-  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-    <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-)
-
 const LogInIcon = () => (
   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
     <path d="M5 2H2a1 1 0 00-1 1v6a1 1 0 001 1h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
@@ -89,18 +82,9 @@ const navLinks = [
   { href: '/worlds',   label: 'WORLD RECORDS',  icon: <WorldsIcon /> },
 ]
 
-const ROLES: UserRole[] = ['guest', 'applicant', 'voyager', 'architect']
-const ROLE_LABELS: Record<UserRole, string> = {
-  guest: 'GUEST',
-  applicant: 'APPLICANT',
-  voyager: 'VOYAGER',
-  architect: 'ARCHITECT',
-}
-
 export function Nav() {
   const pathname = usePathname()
-  const { user, setRole, logout } = useAuth()
-  const [showRoleSwitcher, setShowRoleSwitcher] = useState(false)
+  const { user, logout } = useAuth()
 
   return (
     <nav
@@ -183,46 +167,13 @@ export function Nav() {
             </Link>
           ) : (
             <button
-              onClick={logout}
+              onClick={() => logout()}
               className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-mono border transition-colors shrink-0"
               style={{ borderColor: '#1E2840', color: '#4A5570' }}
             >
               <LogOutIcon />
               LOGOUT
             </button>
-          )}
-        </div>
-
-        {/* Proto role switcher */}
-        <div className="mt-2 relative">
-          <button
-            onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-            className="w-full flex items-center justify-between px-2 py-1 text-[9px] font-mono"
-            style={{ background: '#0D1020', border: '1px solid #1A2238', color: '#4A5570' }}
-          >
-            <span style={{ color: '#4A5570', opacity: 0.5 }}>⚠ PROTO</span>
-            <span>{ROLE_LABELS[user.role]}</span>
-            <ChevronDownIcon />
-          </button>
-          {showRoleSwitcher && (
-            <div
-              className="absolute bottom-full left-0 right-0 mb-1 border overflow-hidden z-10"
-              style={{ background: '#161D30', borderColor: '#1E2840' }}
-            >
-              {ROLES.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => { setRole(r); setShowRoleSwitcher(false) }}
-                  className="w-full text-left px-2 py-1.5 text-[10px] font-mono transition-colors"
-                  style={{
-                    color: r === user.role ? '#E85A00' : '#4A5570',
-                    background: r === user.role ? 'rgba(232,90,0,0.1)' : 'transparent',
-                  }}
-                >
-                  {ROLE_LABELS[r]}
-                </button>
-              ))}
-            </div>
           )}
         </div>
       </div>

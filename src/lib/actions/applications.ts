@@ -13,6 +13,41 @@ export async function submitApplication(application: ApplicationInsert) {
     .insert({ name: '', ...application })
 
   if (error) return { error: error.message }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://delicate-queijadas-96606c.netlify.app'
+
+  // Send invite email via Supabase Auth
+  try {
+    const admin = createAdminClient()
+    await admin.auth.admin.inviteUserByEmail(application.email, {
+      redirectTo: `${siteUrl}/auth/callback?next=/register`,
+    })
+  } catch {
+    // Invite failure doesn't block the application
+  }
+
+  // Subscribe to Beehiiv newsletter
+  const beehiivKey = process.env.BEEHIIV_API_KEY
+  const beehiivPub = process.env.BEEHIIV_PUBLICATION_ID
+  if (beehiivKey && beehiivPub) {
+    try {
+      await fetch(`https://api.beehiiv.com/v2/publications/${beehiivPub}/subscriptions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${beehiivKey}`,
+        },
+        body: JSON.stringify({
+          email: application.email,
+          reactivate_existing: false,
+          send_welcome_email: false,
+        }),
+      })
+    } catch {
+      // Newsletter subscription failure doesn't block the application
+    }
+  }
+
   return { error: null }
 }
 

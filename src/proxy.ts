@@ -33,19 +33,19 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Routes that require a logged-in user
-  const protectedPrefixes = ['/profile', '/votes', '/devices', '/voyagers', '/logs', '/worlds']
-  const isProtected = protectedPrefixes.some(p => pathname.startsWith(p))
-
-  if (isProtected && !user) {
+  // /profile requires a logged-in user
+  if (pathname.startsWith('/profile') && !user) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Architect-only routes
-  if (pathname.startsWith('/architect') && user) {
+  // /admin requires architect role
+  if (pathname.startsWith('/admin')) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
     const { data: profile } = await supabase
       .from('voyager_profiles')
       .select('role')

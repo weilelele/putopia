@@ -1,22 +1,23 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import type { UserRole } from '@/types/database'
 
-export type UserRole = 'guest' | 'applicant' | 'voyager' | 'architect'
+export type { UserRole }
 
 export interface AuthUser {
+  id?: string
   role: UserRole
   email?: string
   name?: string
-  voyagerId?: string
 }
 
 interface AuthContextType {
   user: AuthUser
-  setRole: (role: UserRole) => void
-  login: (email: string, name?: string) => void
-  logout: () => void
   isAtLeast: (role: UserRole) => boolean
+  logout: () => Promise<void>
+  loading: boolean
 }
 
 const ROLE_LEVELS: Record<UserRole, number> = {
@@ -26,56 +27,76 @@ const ROLE_LEVELS: Record<UserRole, number> = {
   architect: 3,
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+const GUEST: AuthUser = { role: 'guest' }
+
+const AuthContext = createContext<AuthContextType>({
+  user: GUEST,
+  isAtLeast: () => false,
+  logout: async () => {},
+  loading: true,
+})
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser>({ role: 'guest' })
+  const [user, setUser] = useState<AuthUser>(GUEST)
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const stored = localStorage.getItem('putopia_auth')
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored))
-      } catch {
-        // ignore
-      }
-    }
+  const loadProfile = useCallback(async (userId: string, email?: string) => {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('voyager_profiles')
+      .select('role, display_name')
+      .eq('id', userId)
+      .single()
+
+    setUser({
+      id: userId,
+      role: data?.role ?? 'applicant',
+      email,
+      name: data?.display_name ?? undefined,
+    })
   }, [])
 
-  const persist = (u: AuthUser) => {
-    setUser(u)
-    localStorage.setItem('putopia_auth', JSON.stringify(u))
-  }
+  useEffect(() => {
+    const supabase = createClient()
 
-  const setRole = (role: UserRole) => {
-    persist({ ...user, role })
-  }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadProfile(session.user.id, session.user.email).finally(() => setLoading(false))
+      } else {
+        setUser(GUEST)
+        setLoading(false)
+      }
+    })
 
-  const login = (email: string, name?: string) => {
-    // Mock: determine role from email
-    let role: UserRole = 'voyager'
-    if (email.includes('architect')) role = 'architect'
-    persist({ role, email, name: name ?? email.split('@')[0] })
-  }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        loadProfile(session.user.id, session.user.email).finally(() => setLoading(false))
+      } else {
+        setUser(GUEST)
+        setLoading(false)
+      }
+    })
 
-  const logout = () => {
-    localStorage.removeItem('putopia_auth')
-    setUser({ role: 'guest' })
-  }
+    return () => subscription.unsubscribe()
+  }, [loadProfile])
 
-  const isAtLeast = (role: UserRole) => {
+  const logout = useCallback(async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    setUser(GUEST)
+  }, [])
+
+  const isAtLeast = useCallback((role: UserRole) => {
     return ROLE_LEVELS[user.role] >= ROLE_LEVELS[role]
-  }
+  }, [user.role])
 
   return (
-    <AuthContext.Provider value={{ user, setRole, login, logout, isAtLeast }}>
+    <AuthContext.Provider value={{ user, isAtLeast, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
+  return useContext(AuthContext)
 }
