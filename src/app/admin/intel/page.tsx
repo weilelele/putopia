@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   getAllIntel, createIntel, updateIntel, deleteIntel,
 } from '@/lib/actions/intel'
+import { createClient } from '@/lib/supabase/client'
 import type { Intel, IntelTag } from '@/types/database'
 
 const S = {
@@ -18,12 +19,21 @@ const S = {
 
 const TAG_COLOR: Record<IntelTag, string> = { NOTICE: '#8A9AB5', DEVICE: '#E85A00', ORG: '#00C8C8' }
 
-type F = { id: string; title: string; content: string; timestamp: string; tag: IntelTag; classified: boolean }
+type F = {
+  id: string
+  title: string
+  content: string
+  timestamp: string
+  tag: IntelTag
+  classified: boolean
+  publisher_name: string
+}
 
 const EMPTY: F = {
   id: '', title: '', content: '',
   timestamp: new Date().toISOString().slice(0, 16),
   tag: 'NOTICE', classified: false,
+  publisher_name: '',
 }
 
 function formatTs(iso: string) {
@@ -37,45 +47,126 @@ function nextIntelId(items: Intel[]) {
 }
 
 export default function IntelAdmin() {
-  const [items, setItems]       = useState<Intel[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [form, setForm]         = useState<F>(EMPTY)
-  const [editId, setEditId]     = useState<string | null>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [saving, setSaving]     = useState(false)
-  const [msg, setMsg]           = useState<{ text: string; ok: boolean } | null>(null)
+  const [items, setItems]           = useState<Intel[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [form, setForm]             = useState<F>(EMPTY)
+  const [editId, setEditId]         = useState<string | null>(null)
+  const [showForm, setShowForm]     = useState(false)
+  const [saving, setSaving]         = useState(false)
+  const [msg, setMsg]               = useState<{ text: string; ok: boolean } | null>(null)
+  const [currentImages, setCurrentImages] = useState<string[]>([])
+  const [pendingFiles, setPendingFiles]   = useState<File[]>([])
+  const [previews, setPreviews]           = useState<string[]>([])
+  const [uploading, setUploading]         = useState(false)
+  const [defaultPublisher, setDefaultPublisher] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLDivElement>(null)
 
   const load = async () => { setLoading(true); setItems(await getAllIntel()); setLoading(false) }
   useEffect(() => { load() }, [])
 
+  // Fetch current user display name for publisher default
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase.from('voyager_profiles').select('display_name').eq('id', user.id).single()
+        .then(({ data }) => { if (data) setDefaultPublisher(data.display_name) })
+    })
+  }, [])
+
+  const resetImageState = () => {
+    setPendingFiles([])
+    setPreviews([])
+    setCurrentImages([])
+  }
+
   const openNew = () => {
-    setForm({ ...EMPTY, id: '' }) // will auto-fill on render
-    setEditId(null); setShowForm(true)
+    setForm({ ...EMPTY, id: '', publisher_name: defaultPublisher })
+    setEditId(null)
+    resetImageState()
+    setShowForm(true)
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
   const openEdit = (i: Intel) => {
-    setForm({ id: i.id, title: i.title, content: i.content, timestamp: i.timestamp.slice(0, 16), tag: i.tag, classified: i.classified })
-    setEditId(i.id); setShowForm(true)
+    setForm({
+      id: i.id, title: i.title, content: i.content,
+      timestamp: i.timestamp.slice(0, 16), tag: i.tag, classified: i.classified,
+      publisher_name: i.publisher_name ?? defaultPublisher,
+    })
+    setCurrentImages(i.images ?? [])
+    setPendingFiles([])
+    setPreviews([])
+    setEditId(i.id)
+    setShowForm(true)
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
   const set = (k: keyof F, v: string | boolean) => setForm(f => ({ ...f, [k]: v }))
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
+    setPendingFiles(prev => [...prev, ...files])
+    const newPreviews = files.map(f => URL.createObjectURL(f))
+    setPreviews(prev => [...prev, ...newPreviews])
+    e.target.value = ''
+  }
+
+  const removePending = (idx: number) => {
+    URL.revokeObjectURL(previews[idx])
+    setPendingFiles(prev => prev.filter((_, i) => i !== idx))
+    setPreviews(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const removeExisting = (url: string) => {
+    setCurrentImages(prev => prev.filter(u => u !== url))
+  }
+
+  const uploadPendingFiles = async (intelId: string): Promise<string[]> => {
+    const supabase = createClient()
+    const urls: string[] = []
+    for (const file of pendingFiles) {
+      const ext = file.name.split('.').pop() ?? 'jpg'
+      const path = `${intelId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('intel-images').upload(path, file)
+      if (!error) {
+        const { data: { publicUrl } } = supabase.storage.from('intel-images').getPublicUrl(path)
+        urls.push(publicUrl)
+      }
+    }
+    return urls
+  }
+
   const handleSave = async () => {
-    const id = (form.id.trim() || nextIntelId(items))
+    const id = form.id.trim() || nextIntelId(items)
     if (!form.title.trim()) { setMsg({ text: '标题不能为空', ok: false }); return }
-    setSaving(true); setMsg(null)
+    setSaving(true); setUploading(true); setMsg(null)
+
+    const newUrls = await uploadPendingFiles(id)
+    setUploading(false)
+    const allImages = [...currentImages, ...newUrls]
+
     const payload = {
-      id, title: form.title.trim(), content: form.content.trim(),
+      id,
+      title: form.title.trim(),
+      content: form.content.trim(),
       timestamp: new Date(form.timestamp).toISOString(),
-      tag: form.tag, classified: form.classified, created_by: null,
+      tag: form.tag,
+      classified: form.classified,
+      images: allImages,
+      publisher_name: form.publisher_name.trim() || null,
+      publisher_id: null,
+      created_by: null,
     }
     const result = editId ? await updateIntel(editId, payload) : await createIntel(payload)
     setSaving(false)
     if (result?.error) { setMsg({ text: result.error, ok: false }); return }
-    setMsg({ text: '保存成功 ✓', ok: true }); setShowForm(false); await load()
+    setMsg({ text: '保存成功 ✓', ok: true })
+    setShowForm(false)
+    resetImageState()
+    await load()
   }
 
   const handleDelete = async (id: string) => {
@@ -110,24 +201,31 @@ export default function IntelAdmin() {
                 <th style={S.th}>标题</th>
                 <th style={S.th}>类型</th>
                 <th style={S.th}>级别</th>
+                <th style={S.th}>图片</th>
+                <th style={S.th}>发布者</th>
                 <th style={S.th}>时间</th>
                 <th style={S.th}>操作</th>
               </tr>
             </thead>
             <tbody>
-              {items.length === 0 && <tr><td colSpan={6} style={{ ...S.td, textAlign: 'center', color: '#4A5570' }}>暂无数据</td></tr>}
+              {items.length === 0 && <tr><td colSpan={8} style={{ ...S.td, textAlign: 'center', color: '#4A5570' }}>暂无数据</td></tr>}
               {items.map(i => (
                 <tr key={i.id}>
                   <td style={{ ...S.td, color: '#4A5570', fontSize: '11px' }}>{i.id}</td>
-                  <td style={{ ...S.td, color: '#EDE8DE', maxWidth: '300px' }}>{i.title}</td>
-                  <td style={S.td}>
-                    <span style={{ fontSize: '11px', color: TAG_COLOR[i.tag] }}>{i.tag}</span>
-                  </td>
+                  <td style={{ ...S.td, color: '#EDE8DE', maxWidth: '240px' }}>{i.title}</td>
+                  <td style={S.td}><span style={{ fontSize: '11px', color: TAG_COLOR[i.tag] }}>{i.tag}</span></td>
                   <td style={S.td}>
                     {i.classified
                       ? <span style={{ fontSize: '11px', color: '#E83030' }}>⊘ 机密</span>
-                      : <span style={{ fontSize: '11px', color: '#4A5570' }}>公开</span>
-                    }
+                      : <span style={{ fontSize: '11px', color: '#4A5570' }}>公开</span>}
+                  </td>
+                  <td style={S.td}>
+                    <span style={{ fontSize: '11px', color: (i.images?.length ?? 0) > 0 ? '#20D890' : '#4A5570' }}>
+                      {(i.images?.length ?? 0) > 0 ? `${i.images.length} 张` : '—'}
+                    </span>
+                  </td>
+                  <td style={{ ...S.td, fontSize: '11px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {i.publisher_name ?? <span style={{ color: '#4A5570' }}>—</span>}
                   </td>
                   <td style={{ ...S.td, fontSize: '11px', whiteSpace: 'nowrap' }}>{formatTs(i.timestamp)}</td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
@@ -148,6 +246,7 @@ export default function IntelAdmin() {
             <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: '#4A5570', cursor: 'pointer', fontSize: '18px' }}>×</button>
           </div>
 
+          {/* Row 1: ID / Tag / Timestamp */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={S.label}>ID（留空则自动生成）</label>
@@ -167,23 +266,86 @@ export default function IntelAdmin() {
             </div>
           </div>
 
+          {/* Title */}
           <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>标题 *</label>
             <input style={S.input} value={form.title} onChange={e => set('title', e.target.value)} placeholder="情报标题" />
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
+          {/* Content */}
+          <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>正文内容</label>
             <textarea style={{ ...S.area, minHeight: '120px' }} value={form.content} onChange={e => set('content', e.target.value)} placeholder="情报详细内容..." />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          {/* Publisher */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={S.label}>发布者（默认为当前 Architect）</label>
+            <input style={S.input} value={form.publisher_name} onChange={e => set('publisher_name', e.target.value)} placeholder={defaultPublisher || '发布者名称'} />
+          </div>
+
+          {/* Image upload */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ ...S.label, marginBottom: '8px' }}>图片附件</label>
+
+            {/* Existing images */}
+            {currentImages.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                {currentImages.map((url, idx) => (
+                  <div key={url} style={{ position: 'relative' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #1E2840' }} />
+                    <button
+                      onClick={() => removeExisting(url)}
+                      style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pending preview */}
+            {previews.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                {previews.map((url, idx) => (
+                  <div key={idx} style={{ position: 'relative' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #E85A00', opacity: 0.8 }} />
+                    <button
+                      onClick={() => removePending(idx)}
+                      style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                    >×</button>
+                    <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(232,90,0,0.85)', color: '#fff', fontSize: '9px', padding: '1px 3px' }}>待上传</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} style={{ display: 'none' }} />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              style={{ padding: '6px 14px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid #1E2840', color: '#8A9AB5', background: '#0D1020' }}
+            >
+              + 选择图片
+            </button>
+            <span style={{ marginLeft: '10px', fontSize: '11px', color: '#4A5570' }}>
+              已保存 {currentImages.length} 张 · 待上传 {pendingFiles.length} 张
+            </span>
+          </div>
+
+          {/* Footer row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#E83030', fontSize: '13px' }}>
               <input type="checkbox" checked={form.classified} onChange={e => set('classified', e.target.checked)} />
               机密（仅 Voyager 以上可见）
             </label>
-            <button onClick={handleSave} disabled={saving} style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #E85A00', color: '#E85A00', background: saving ? 'transparent' : 'rgba(232,90,0,0.08)', opacity: saving ? 0.6 : 1 }}>
-              {saving ? '保存中...' : '保存'}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #E85A00', color: '#E85A00', background: saving ? 'transparent' : 'rgba(232,90,0,0.08)', opacity: saving ? 0.6 : 1 }}
+            >
+              {uploading ? '上传图片中...' : saving ? '保存中...' : '保存'}
             </button>
             <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid #1E2840', color: '#4A5570', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
           </div>

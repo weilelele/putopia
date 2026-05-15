@@ -135,12 +135,18 @@ export type Intel = {
   timestamp: string           // ISO timestamp
   tag: IntelTag
   classified: boolean
+  images: string[]            // array of public storage URLs
+  publisher_name: string | null
+  publisher_id: string | null // references voyager_profiles.id
   created_by: string | null
   created_at: string
 }
 
 export type IntelInsert = Omit<Intel, 'created_at'>
-export type IntelUpdate = Partial<Pick<Intel, 'title' | 'content' | 'timestamp' | 'tag' | 'classified'>>
+export type IntelUpdate = Partial<Pick<Intel,
+  'title' | 'content' | 'timestamp' | 'tag' | 'classified' |
+  'images' | 'publisher_name' | 'publisher_id'
+>>
 
 // ---------- stories ----------
 export type Story = {

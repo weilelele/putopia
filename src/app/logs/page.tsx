@@ -29,25 +29,22 @@ export default function LogsPage() {
   useEffect(() => { getPublishedStories().then(setStories) }, [])
 
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
-      {/* Header */}
-      <div className="mb-8 border-b pb-4 flex items-end justify-between" style={{ borderColor: '#1E2840' }}>
+    <div className="main">
+      <div className="top-bar">
+        <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGER LOGS</div>
+        <div className="right">
+          <div className="item">ENTRIES <span className="val">{stories.length}</span></div>
+        </div>
+      </div>
+
+      <div className="page-head">
         <div>
-          <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#4A5570' }}>
-            ARCHIVE // VOYAGER STORIES
-          </div>
-          <h1 className="text-3xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
-            VOYAGER STORIES
-          </h1>
-          <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
-            Field Logs // {stories.length} entries on record
-          </div>
+          <div className="h-eyebrow">// FIELD ARCHIVE</div>
+          <h1>VOYAGER <span className="accent">LOGS</span></h1>
+          <p className="sub">{stories.length} entries on record</p>
         </div>
         {isAtLeast('architect') && (
-          <button
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono tracking-widest border transition-all"
-            style={{ borderColor: '#E85A00', color: '#E85A00', background: 'rgba(232,90,0,0.06)' }}
-          >
+          <button className="btn-secondary" style={{ padding: '0.55rem 1.25rem', fontSize: '0.7rem' }}>
             <Plus size={12} />
             SUBMIT LOG ENTRY
           </button>
@@ -125,8 +122,9 @@ export default function LogsPage() {
         })}
       </div>
 
-      <div className="mt-8 text-center text-xs font-mono" style={{ color: '#1A2238' }}>
-        — END OF VOYAGER STORY ARCHIVE —
+      <div className="footer-bar" style={{ marginTop: '2rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>FIELD ARCHIVE</div>
       </div>
     </div>
   )

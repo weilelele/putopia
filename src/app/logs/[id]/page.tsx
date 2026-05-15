@@ -78,22 +78,18 @@ export default function StoryPage() {
 
   if (story === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#070912' }}>
-        <div className="text-xs font-mono" style={{ color: '#4A5570' }}>LOADING...</div>
+      <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
       </div>
     )
   }
 
   if (!story) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#070912' }}>
-        <div className="text-center">
-          <div className="text-2xl font-mono mb-4" style={{ color: '#E83030' }}>[ 404 ]</div>
-          <div className="text-sm font-mono mb-6" style={{ color: '#4A5570' }}>STORY NOT FOUND IN ARCHIVE</div>
-          <Link href="/logs" className="text-xs font-mono tracking-widest" style={{ color: '#E85A00' }}>
-            ← RETURN TO LOGS
-          </Link>
-        </div>
+      <div className="main" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>STORY NOT FOUND IN ARCHIVE</div>
+        <Link href="/logs" className="btn-ghost">← RETURN TO LOGS</Link>
       </div>
     )
   }
@@ -116,17 +112,14 @@ export default function StoryPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8 max-w-2xl mx-auto" style={{ background: '#070912' }}>
-      {/* Back */}
-      <div className="mb-6">
-        <Link
-          href="/logs"
-          className="flex items-center gap-2 text-xs font-mono tracking-widest transition-colors"
-          style={{ color: '#4A5570' }}
-        >
-          <ArrowLeft size={12} />
-          VOYAGER STORIES
-        </Link>
+    <div className="main">
+      <div className="top-bar">
+        <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGER LOGS <span>/</span> ENTRY</div>
+      </div>
+
+      <div style={{ maxWidth: '720px', width: '100%' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <Link href="/logs" className="btn-ghost" style={{ display: 'inline-flex' }}>← VOYAGER LOGS</Link>
       </div>
 
       {/* Story header */}
@@ -246,6 +239,12 @@ export default function StoryPage() {
           </div>
         </div>
       </form>
+      </div>
+
+      <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>PUTOPIA.COLLECTIVE</div>
+      </div>
     </div>
   )
 }

@@ -58,17 +58,19 @@ export default function VoyagersPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
-      {/* Header */}
-      <div className="mb-8 border-b pb-4" style={{ borderColor: '#1E2840' }}>
-        <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#4A5570' }}>
-          DATABASE // VOYAGERS
+    <div className="main">
+      <div className="top-bar">
+        <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGERS</div>
+        <div className="right">
+          <div className="item">MEMBERS <span className="val">{voyagerProfiles.length}</span></div>
         </div>
-        <h1 className="text-2xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
-          VOYAGERS
-        </h1>
-        <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
-          Voyager Profiles // {voyagerProfiles.length} active members
+      </div>
+
+      <div className="page-head">
+        <div>
+          <div className="h-eyebrow">// NETWORK</div>
+          <h1>ACTIVE <span className="accent">VOYAGERS</span></h1>
+          <p className="sub">Voyager Profiles — {voyagerProfiles.length} active members</p>
         </div>
       </div>
 
@@ -229,6 +231,11 @@ export default function VoyagersPage() {
             </div>
           )
         })}
+      </div>
+
+      <div className="footer-bar" style={{ marginTop: '2rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>VOYAGER REGISTRY</div>
       </div>
     </div>
   )

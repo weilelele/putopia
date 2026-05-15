@@ -174,25 +174,23 @@ export default function VotePage() {
   const closedVotes = voteData.filter((v) => v.status === 'closed')
 
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
-      {/* Header */}
-      <div className="mb-8 border-b pb-4 flex items-end justify-between" style={{ borderColor: '#1E2840' }}>
+    <div className="main">
+      <div className="top-bar">
+        <div className="crumbs">PC://CONSOLE <span>/</span> VOTING HUB</div>
+        <div className="right">
+          <div className="item">ACTIVE <span className="val">{activeVotes.length}</span></div>
+          <div className="item">CLOSED <span className="val">{closedVotes.length}</span></div>
+        </div>
+      </div>
+
+      <div className="page-head">
         <div>
-          <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#4A5570' }}>
-            SYSTEM // VOTE
-          </div>
-          <h1 className="text-2xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
-            VOTE
-          </h1>
-          <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
-            Decision Zone // {activeVotes.length} active / {closedVotes.length} closed
-          </div>
+          <div className="h-eyebrow">// DECISION ZONE</div>
+          <h1>VOTING <span className="accent">HUB</span></h1>
+          <p className="sub">{activeVotes.length} active / {closedVotes.length} closed</p>
         </div>
         {isAtLeast('voyager') && (
-          <button
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono tracking-widest border transition-all"
-            style={{ borderColor: '#E85A00', color: '#E85A00', background: 'rgba(232,90,0,0.06)' }}
-          >
+          <button className="btn-secondary" style={{ padding: '0.55rem 1.25rem', fontSize: '0.7rem' }}>
             <Plus size={12} />
             CREATE VOTE
           </button>
@@ -228,6 +226,11 @@ export default function VotePage() {
           </div>
         </section>
       )}
+
+      <div className="footer-bar" style={{ marginTop: '2rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>VOTING HUB</div>
+      </div>
     </div>
   )
 }

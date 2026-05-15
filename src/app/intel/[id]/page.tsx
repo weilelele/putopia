@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getIntelById } from '@/lib/actions/intel'
-import { ArrowLeft, Send } from 'lucide-react'
+import { Send } from 'lucide-react'
 import type { Intel } from '@/types/database'
 
-const TAG_STYLES = {
-  NOTICE: { color: '#8A9AB5' },
-  DEVICE: { color: '#E85A00' },
-  ORG: { color: '#00C8C8' },
+const TAG_COLOR: Record<string, string> = {
+  NOTICE: 'var(--color-star-dim)',
+  DEVICE: 'var(--color-nucleus)',
+  ORG:    'var(--color-nebula)',
 }
 
 interface Comment {
@@ -21,9 +21,7 @@ interface Comment {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  })
+  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
 function getInitials(name: string) {
@@ -45,152 +43,180 @@ export default function IntelDetailPage() {
 
   if (entry === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#070912' }}>
-        <div className="text-xs font-mono" style={{ color: '#4A5570' }}>LOADING...</div>
+      <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
       </div>
     )
   }
 
   if (!entry) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#070912' }}>
-        <div className="text-center">
-          <div className="text-2xl font-mono mb-4" style={{ color: '#E83030' }}>[ 404 ]</div>
-          <div className="text-sm font-mono mb-6" style={{ color: '#4A5570' }}>INTEL ENTRY NOT FOUND</div>
-          <Link href="/intel" className="text-xs font-mono tracking-widest" style={{ color: '#E85A00' }}>
-            ← RETURN TO INTEL
-          </Link>
-        </div>
+      <div className="main" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>INTEL ENTRY NOT FOUND</div>
+        <Link href="/intel" className="btn-ghost">← RETURN TO INTEL</Link>
       </div>
     )
   }
 
-  const tagColor = TAG_STYLES[entry.tag]?.color ?? '#8A9AB5'
+  const color = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
+  const hasImages = (entry.images?.length ?? 0) > 0
+  const isSingle  = entry.images?.length === 1
 
   const handleTransmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!commentText.trim()) return
-    const newComment: Comment = {
+    setComments((prev) => [...prev, {
       id: `c${Date.now()}`,
       author: 'You',
       timestamp: new Date().toISOString(),
       text: commentText.trim(),
-    }
-    setComments((prev) => [...prev, newComment])
+    }])
     setCommentText('')
     setTransmitted(true)
     setTimeout(() => setTransmitted(false), 3000)
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8 max-w-2xl mx-auto" style={{ background: '#070912' }}>
-      {/* Back */}
-      <div className="mb-6">
-        <Link
-          href="/intel"
-          className="flex items-center gap-2 text-xs font-mono tracking-widest transition-colors"
-          style={{ color: '#4A5570' }}
-        >
-          <ArrowLeft size={12} />
-          INTEL
-        </Link>
-      </div>
-
-      {/* Entry header */}
-      <div className="mb-8 border-b pb-6" style={{ borderColor: '#1E2840' }}>
-        <div className="flex items-center gap-3 mb-4">
-          <span className="label-tag" style={{ color: tagColor }}>{entry.tag}</span>
-          <span className="text-xs font-mono" style={{ color: '#4A5570' }}>{formatDate(entry.timestamp)}</span>
+    <div className="main">
+      <div className="top-bar">
+        <div className="crumbs">PC://CONSOLE <span>/</span> INTEL FEED <span>/</span> DISPATCH</div>
+        <div className="right">
+          <div className="item">ID <span className="val">{id.slice(0, 8).toUpperCase()}</span></div>
         </div>
-        <h1 className="text-xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
-          {entry.title}
-        </h1>
       </div>
 
-      {/* Content */}
-      <article className="mb-12">
-        <p className="text-sm leading-7 font-mono" style={{ color: '#8A9AB5', whiteSpace: 'pre-wrap' }}>
-          {entry.content}
-        </p>
-      </article>
+      <div style={{ maxWidth: '720px', width: '100%' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <Link href="/intel" className="btn-ghost" style={{ display: 'inline-flex' }}>← INTEL</Link>
+        </div>
 
-      {/* Divider */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="flex-1 h-px" style={{ background: '#1A2238' }} />
-        <div className="text-xs tracking-widest font-mono" style={{ color: '#4A5570' }}>TRANSMISSIONS</div>
-        <div className="flex-1 h-px" style={{ background: '#1A2238' }} />
-      </div>
-
-      {/* Comments */}
-      {comments.length > 0 && (
-        <div className="space-y-4 mb-8">
-          {comments.map((comment) => (
-            <div
-              key={comment.id}
-              className="border p-4"
-              style={{
-                background: '#111525',
-                borderColor: '#1A2238',
-                boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)',
-              }}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-bold shrink-0"
-                  style={{ background: 'rgba(138,154,181,0.12)', color: '#8A9AB5', border: '1px solid rgba(138,154,181,0.25)' }}
-                >
-                  {getInitials(comment.author)}
-                </div>
-                <span className="text-xs font-mono font-semibold" style={{ color: '#8A9AB5' }}>{comment.author}</span>
-                <span className="text-xs font-mono ml-auto" style={{ color: '#4A5570' }}>
-                  {new Date(comment.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </span>
-              </div>
-              <p className="text-sm font-mono leading-relaxed" style={{ color: '#8A9AB5' }}>
-                {comment.text}
-              </p>
+        {/* HUD frame for the intel entry */}
+        <div className="hud-frame" style={{ marginBottom: '2rem' }}>
+          <div className="hud-tick-rail hud-tick-left" />
+          <div className="hud-tick-rail hud-tick-right" />
+          <div style={{ padding: '0 1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+              <span className="label-tag" style={{ color }}>{entry.tag}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>{formatDate(entry.timestamp)}</span>
             </div>
-          ))}
-        </div>
-      )}
+            <h1 style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: '1.4rem', color: 'var(--color-star)', marginBottom: '1rem', lineHeight: 1.3 }}>
+              {entry.title}
+            </h1>
 
-      {/* Comment form */}
-      <form onSubmit={handleTransmit}>
-        <div
-          className="border p-4"
-          style={{ background: '#111525', borderColor: '#1E2840', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)' }}
-        >
-          <div className="text-xs font-mono tracking-widest mb-3" style={{ color: '#4A5570' }}>
-            TRANSMIT A MESSAGE
-          </div>
-          <textarea
-            rows={3}
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Leave a transmission..."
-            className="w-full px-3 py-2 text-sm font-mono border bg-transparent outline-none transition-colors resize-none"
-            style={{ borderColor: '#1A2238', color: '#EDE8DE' }}
-            onFocus={(e) => (e.target.style.borderColor = 'rgba(232,90,0,0.5)')}
-            onBlur={(e) => (e.target.style.borderColor = '#1A2238')}
-          />
-          <div className="flex items-center justify-between mt-3">
-            {transmitted ? (
-              <span className="text-xs font-mono" style={{ color: '#20D890' }}>✓ TRANSMISSION SENT</span>
-            ) : (
-              <span />
+            {/* Publisher */}
+            {entry.publisher_name && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.15em', color: 'var(--color-muted)' }}>PUBLISHED BY</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'var(--color-star-dim)', fontWeight: 600 }}>{entry.publisher_name}</span>
+              </div>
             )}
-            <button
-              type="submit"
-              disabled={!commentText.trim()}
-              className="flex items-center gap-2 px-4 py-1.5 text-xs font-mono tracking-widest border transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ borderColor: '#E85A00', color: '#EDE8DE', background: 'linear-gradient(135deg, #E85A00, #C04000)' }}
-            >
-              <Send size={10} />
-              TRANSMIT
-            </button>
+
+            <div className="hr-cyan" />
+            <article style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-star-dim)', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginTop: '1rem' }}>
+              {entry.content}
+            </article>
           </div>
         </div>
-      </form>
+
+        {/* Full-color images — revealed at detail level */}
+        {hasImages && (
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>
+                VISUAL ATTACHMENTS [{entry.images.length}]
+              </div>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+            </div>
+
+            {isSingle ? (
+              <div style={{ width: '100%', overflow: 'hidden', border: '1px solid var(--bd-faint)' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={entry.images[0]}
+                  alt="Intel attachment"
+                  style={{ width: '100%', height: 'auto', display: 'block' }}
+                />
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '4px' }}>
+                {entry.images.map((url, i) => (
+                  <div key={i} style={{ aspectRatio: '4/3', overflow: 'hidden', border: '1px solid var(--bd-faint)' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={url}
+                      alt={`Attachment ${i + 1}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Transmissions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>TRANSMISSIONS</div>
+          <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+        </div>
+
+        {comments.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+            {comments.map((comment) => (
+              <div key={comment.id} className="card-void">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700,
+                    background: 'rgba(34,212,224,0.08)', color: 'var(--color-nebula)',
+                    border: '1px solid var(--bd-cyan-2)', flexShrink: 0,
+                  }}>{getInitials(comment.author)}</div>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-dim)' }}>{comment.author}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-star-deep)', marginLeft: 'auto' }}>
+                    {new Date(comment.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                </div>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>{comment.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={handleTransmit}>
+          <div className="hud-frame">
+            <div style={{ padding: '0 0.5rem' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
+                TRANSMIT A MESSAGE
+              </div>
+              <textarea
+                rows={3}
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Leave a transmission..."
+                className="input-dark"
+                style={{ resize: 'none' }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem' }}>
+                {transmitted ? (
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--color-ok)' }}>✓ TRANSMISSION SENT</span>
+                ) : <span />}
+                <button type="submit" disabled={!commentText.trim()} className="btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.7rem' }}>
+                  <Send size={10} /> TRANSMIT
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>PUTOPIA.COLLECTIVE</div>
+      </div>
     </div>
   )
 }

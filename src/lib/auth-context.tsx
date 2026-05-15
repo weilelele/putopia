@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    setUser(GUEST)
+    window.location.href = '/'
   }, [])
 
   const isAtLeast = useCallback((role: UserRole) => {

@@ -38,36 +38,28 @@ function LoginPageContent() {
       setError(`ERR: ${authError.message.toUpperCase()}`)
       setLoading(false)
     } else {
-      router.push(redirect)
-      router.refresh()
+      window.location.href = redirect
     }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4" style={{ background: '#070912' }}>
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage:
-            'linear-gradient(#1E2840 1px, transparent 1px), linear-gradient(90deg, #1E2840 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
+    <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <div className="top-bar" style={{ position: 'absolute', top: 0, left: '2.5rem', right: '2.5rem' }}>
+        <div className="crumbs">PC://CONSOLE <span>/</span> AUTHENTICATION</div>
+      </div>
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="mb-8 text-center">
-          <div className="text-xs tracking-[0.3em] font-mono mb-2" style={{ color: '#4A5570' }}>
-            PUTOPIA COLLECTIVE
-          </div>
-          <div className="text-lg font-mono tracking-widest" style={{ color: '#E85A00', textShadow: '0 0 20px rgba(232,90,0,0.5)' }}>
-            IDENTITY VERIFICATION
-          </div>
-          <div className="text-xs font-mono mt-1" style={{ color: '#1E2840' }}>
-            // SECURE CONNECTION ESTABLISHED
+      <div style={{ width: '100%', maxWidth: '440px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>// IDENTITY VERIFICATION</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-nucleus)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(255,90,31,0.5)' }}>
+            AUTHENTICATE
           </div>
         </div>
 
-        <div className="border p-6" style={{ background: '#111525', borderColor: '#1E2840', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.06)' }}>
+        <div className="hud-frame">
+          <div className="hud-tick-rail hud-tick-left" />
+          <div className="hud-tick-rail hud-tick-right" />
+          <div style={{ padding: '0 1rem' }}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
@@ -113,24 +105,26 @@ function LoginPageContent() {
               {loading ? '> AUTHENTICATING...' : '[ AUTHENTICATE ]'}
             </button>
           </form>
+          </div>
         </div>
 
-        <div className="mt-5 text-center border p-4" style={{ borderColor: '#1A2238', background: 'rgba(255,90,31,0.03)' }}>
-          <div className="text-xs font-mono mb-2" style={{ color: '#4A5570' }}>
+        <div style={{ marginTop: '1.5rem', textAlign: 'center', padding: '1rem', border: '1px solid var(--bd-faint)' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: 'var(--color-star-deep)', marginBottom: '0.5rem' }}>
             NO ACTIVE CREDENTIALS?
           </div>
-          <Link
-            href="/#apply"
-            className="text-xs font-mono tracking-widest transition-colors"
-            style={{ color: '#E85A00' }}
-          >
+          <Link href="/#apply" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.15em', color: 'var(--color-nucleus)' }}>
             APPLY FOR VOYAGER STATUS →
           </Link>
         </div>
 
-        <div className="mt-4 text-center text-xs font-mono" style={{ color: '#1A2238' }}>
+        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
           // ALL ACCESS ATTEMPTS ARE LOGGED //
         </div>
+      </div>
+
+      <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>PUTOPIA.COLLECTIVE</div>
       </div>
     </div>
   )

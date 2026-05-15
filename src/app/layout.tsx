@@ -2,25 +2,25 @@ import type { Metadata } from 'next'
 import { Orbitron, Raleway, DM_Mono } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
-import { Nav } from '@/components/nav'
+import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
 
 const orbitron = Orbitron({
-  variable: '--font-orbitron',
+  variable: '--font-display',
   subsets: ['latin'],
-  weight: ['400', '600', '700', '800', '900'],
+  weight: ['700', '800', '900'],
 })
 
 const raleway = Raleway({
-  variable: '--font-raleway',
+  variable: '--font-body',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 const dmMono = DM_Mono({
-  variable: '--font-dm-mono',
+  variable: '--font-mono',
   subsets: ['latin'],
-  weight: ['300', '400', '500'],
+  weight: ['400', '500'],
 })
 
 export const metadata: Metadata = {
@@ -35,12 +35,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${orbitron.variable} ${raleway.variable} ${dmMono.variable} h-full`}>
-      <body className="flex h-full">
+      <body className="starfield flex h-full">
         <AuthProvider>
-          <Nav />
-          <main className="flex-1 overflow-y-auto min-h-screen pb-16 md:pb-0">
+          <div className="app-shell w-full">
+            <Sidebar />
             {children}
-          </main>
+          </div>
           <BottomNav />
         </AuthProvider>
       </body>

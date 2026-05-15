@@ -93,19 +93,25 @@ export default function DevicesPage() {
   const knownDevices   = devices.filter((d) => d.knowledge === 'known')
 
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
-      {/* Header */}
-      <div className="mb-8 border-b pb-4" style={{ borderColor: '#1E2840' }}>
-        <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#4A5570' }}>
-          DATABASE // DEVICES
-        </div>
-        <h1 className="text-2xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
-          DEVICES
-        </h1>
-        <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
-          Multiverse Console Registry // {unknownDevices.length} unknown / {knownDevices.length} known
+    <div className="main">
+      <div className="top-bar">
+        <div className="crumbs">PC://CONSOLE <span>/</span> DEVICE ARCHIVE</div>
+        <div className="right">
+          <div className="item">UNKNOWN <span className="val">{unknownDevices.length}</span></div>
+          <div className="item">KNOWN <span className="val">{knownDevices.length}</span></div>
         </div>
       </div>
+
+      <div className="page-head">
+        <div>
+          <div className="h-eyebrow">// ARCHIVE</div>
+          <h1>DEVICE <span className="accent">REGISTRY</span></h1>
+          <p className="sub">Multiverse Console Registry — {unknownDevices.length} unknown / {knownDevices.length} known</p>
+        </div>
+      </div>
+
+      {/* legacy spacer removed */}
+      <div style={{ display: 'contents' }}>
 
       {/* UNKNOWN DEVICES */}
       <section className="mb-10">
@@ -247,6 +253,12 @@ export default function DevicesPage() {
           })}
         </div>
       </section>
+      </div>
+
+      <div className="footer-bar" style={{ marginTop: '2rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>DEVICE ARCHIVE v3.1</div>
+      </div>
     </div>
   )
 }

@@ -66,10 +66,18 @@ export default function LandingPage() {
     (selectedWorld !== 'other' || otherWorldText.trim())
 
   return (
-    <div className="landing-root">
+    <div className="landing-main">
       {/* Background layers */}
-      <div className="stars-bg" />
       <div className="nebula-bg" />
+
+      {/* Top bar */}
+      <div className="top-bar">
+        <div className="crumbs">PC://CONSOLE <span>/</span> DASHBOARD</div>
+        <div className="right">
+          <div className="item">UTC <span className="val">{new Date().toISOString().slice(11, 19)}</span></div>
+          <div className="item">UPLINK <span className="val">ACTIVE</span></div>
+        </div>
+      </div>
 
       {/* ── Hero ── */}
       <section className="hero">
@@ -135,7 +143,6 @@ export default function LandingPage() {
               </div>
 
               <form onSubmit={handleApply} className="apply-form">
-                {/* EMAIL */}
                 <div className="apply-field">
                   <label className="apply-label">EMAIL</label>
                   <input
@@ -148,7 +155,6 @@ export default function LandingPage() {
                   />
                 </div>
 
-                {/* REASON — dropdown */}
                 <div className="apply-field">
                   <label className="apply-label">REASON FOR APPLYING</label>
                   <select
@@ -175,7 +181,6 @@ export default function LandingPage() {
                   )}
                 </div>
 
-                {/* WORLD PREFERENCE */}
                 <div className="apply-field">
                   <label className="apply-label">WHAT KIND OF PARALLEL WORLD ARE YOU SEEKING?</label>
                   <select
@@ -207,7 +212,7 @@ export default function LandingPage() {
                 <button
                   type="submit"
                   disabled={loading || !canSubmit}
-                  className="btn-orange apply-submit"
+                  className="btn-primary apply-submit"
                 >
                   {loading ? '> TRANSMITTING...' : 'SUBMIT APPLICATION'}
                 </button>
@@ -216,6 +221,12 @@ export default function LandingPage() {
           )}
         </div>
       </section>
+
+      {/* Footer bar */}
+      <div className="footer-bar" style={{ marginTop: '2rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>PUTOPIA.COLLECTIVE</div>
+      </div>
     </div>
   )
 }

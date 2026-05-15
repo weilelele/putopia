@@ -82,105 +82,100 @@ export default function RegisterPage() {
 
   if (checking) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: '#070912' }}>
-        <div className="text-xs font-mono" style={{ color: '#4A5570' }}>VERIFYING CREDENTIALS...</div>
+      <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>VERIFYING CREDENTIALS...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4" style={{ background: '#070912' }}>
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage:
-            'linear-gradient(#1E2840 1px, transparent 1px), linear-gradient(90deg, #1E2840 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
+    <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <div className="top-bar" style={{ position: 'absolute', top: 0, left: '2.5rem', right: '2.5rem' }}>
+        <div className="crumbs">PC://CONSOLE <span>/</span> IDENTITY REGISTRATION</div>
+      </div>
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="mb-8 text-center">
-          <div className="text-xs tracking-[0.3em] font-mono mb-2" style={{ color: '#4A5570' }}>
-            PUTOPIA COLLECTIVE
-          </div>
-          <div className="text-lg font-mono tracking-widest" style={{ color: '#22D4E0', textShadow: '0 0 20px rgba(34,212,224,0.4)' }}>
-            IDENTITY REGISTRATION
-          </div>
-          <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
-            // INVITATION VERIFIED — ESTABLISH YOUR IDENTITY
+      <div style={{ width: '100%', maxWidth: '440px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>// INVITATION VERIFIED</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-nebula)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(34,212,224,0.4)' }}>
+            ESTABLISH IDENTITY
           </div>
         </div>
 
-        <div className="border p-6" style={{ background: '#111525', borderColor: '#1A2E30', boxShadow: 'inset 0 1px 0 rgba(34,212,224,0.06)' }}>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
-                DISPLAY NAME
-              </label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="ALIAS_IDENTIFIER"
-                className="input-dark"
-                maxLength={40}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
-                ACCESS CODE
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="min. 8 characters"
-                className="input-dark"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
-                CONFIRM ACCESS CODE
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="repeat code"
-                className="input-dark"
-              />
-            </div>
-
-            {error && (
-              <div
-                className="text-xs font-mono py-2 px-3 border"
-                style={{ color: '#E83030', borderColor: 'rgba(232,48,48,0.3)', background: 'rgba(232,48,48,0.08)' }}
-              >
-                {error}
+        <div className="hud-frame">
+          <div className="hud-tick-rail hud-tick-left" />
+          <div className="hud-tick-rail hud-tick-right" />
+          <div style={{ padding: '0 1rem' }}>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
+                  DISPLAY NAME
+                </label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="ALIAS_IDENTIFIER"
+                  className="input-dark"
+                  maxLength={40}
+                />
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 text-xs font-mono tracking-widest font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              style={{
-                background: 'linear-gradient(180deg, rgba(34,212,224,0.25), rgba(34,212,224,0.10))',
-                border: '1px solid rgba(34,212,224,0.4)',
-                color: '#B8F4F6',
-              }}
-            >
-              {loading ? '> REGISTERING...' : '[ ESTABLISH IDENTITY ]'}
-            </button>
-          </form>
+              <div>
+                <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
+                  ACCESS CODE
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="min. 8 characters"
+                  className="input-dark"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
+                  CONFIRM ACCESS CODE
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="repeat code"
+                  className="input-dark"
+                />
+              </div>
+
+              {error && (
+                <div
+                  className="text-xs font-mono py-2 px-3 border"
+                  style={{ color: '#E83030', borderColor: 'rgba(232,48,48,0.3)', background: 'rgba(232,48,48,0.08)' }}
+                >
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-secondary w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ justifyContent: 'center', fontSize: '0.8rem' }}
+              >
+                {loading ? '> REGISTERING...' : '[ ESTABLISH IDENTITY ]'}
+              </button>
+            </form>
+          </div>
         </div>
 
-        <div className="mt-4 text-center text-xs font-mono" style={{ color: '#1A2238' }}>
+        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
           // YOUR IDENTITY WILL BE RECORDED IN THE COLLECTIVE //
         </div>
+      </div>
+
+      <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>PUTOPIA.COLLECTIVE</div>
       </div>
     </div>
   )

@@ -5,17 +5,19 @@ export default async function WorldsPage() {
   const worlds = await getAllWorlds()
 
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
-      {/* Header */}
-      <div className="mb-8 border-b pb-4" style={{ borderColor: '#1E2840' }}>
-        <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#4A5570' }}>
-          ARCHIVE // WORLDS
+    <div className="main">
+      <div className="top-bar">
+        <div className="crumbs">PC://CONSOLE <span>/</span> WORLD RECORDS</div>
+        <div className="right">
+          <div className="item">CATALOGUED <span className="val">{worlds.length}</span></div>
         </div>
-        <h1 className="text-2xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
-          WORLDS
-        </h1>
-        <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
-          World Archive // {worlds.length} discovered parallel worlds
+      </div>
+
+      <div className="page-head">
+        <div>
+          <div className="h-eyebrow">// ARCHIVE</div>
+          <h1>WORLD <span className="accent">RECORDS</span></h1>
+          <p className="sub">{worlds.length} discovered parallel worlds</p>
         </div>
       </div>
 
@@ -134,8 +136,9 @@ export default async function WorldsPage() {
         })}
       </div>
 
-      <div className="mt-8 text-center text-xs font-mono" style={{ color: '#1A2238' }}>
-        — WORLD ARCHIVE v2.6 — // CONTINUOUSLY UPDATED
+      <div className="footer-bar" style={{ marginTop: '2rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>WORLD ARCHIVE v2.6</div>
       </div>
     </div>
   )

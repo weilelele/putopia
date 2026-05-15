@@ -47,40 +47,51 @@ export default function ApplyPage() {
 
   if (submitted) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ background: '#070912' }}>
-        <div className="max-w-md w-full px-4 text-center">
-          <div className="border p-8 mb-6" style={{ background: '#111525', borderColor: '#20D890', boxShadow: '0 0 20px rgba(32,216,144,0.12)' }}>
-            <div className="text-3xl font-mono mb-4" style={{ color: '#20D890' }}>[ ✓ ]</div>
-            <div className="text-lg font-mono font-semibold mb-2" style={{ color: '#EDE8DE' }}>
-              Application Transmitted.
-            </div>
-            <div className="text-sm font-mono leading-relaxed" style={{ color: '#8A9AB5' }}>
-              We will review your application and be in contact.
-            </div>
-            <div className="mt-4 text-xs font-mono" style={{ color: '#4A5570' }}>
-              APPLICATION ID: {appId}
+      <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <div className="top-bar" style={{ position: 'absolute', top: 0, left: '2.5rem', right: '2.5rem' }}>
+          <div className="crumbs">PC://CONSOLE <span>/</span> APPLICATION <span>/</span> TRANSMITTED</div>
+        </div>
+        <div style={{ maxWidth: '440px', width: '100%', textAlign: 'center' }}>
+          <div className="hud-frame" style={{ marginBottom: '1.5rem', borderColor: 'rgba(32,216,144,0.4)', boxShadow: '0 0 20px rgba(32,216,144,0.10)' }}>
+            <div className="hud-tick-rail hud-tick-left" />
+            <div className="hud-tick-rail hud-tick-right" />
+            <div style={{ padding: '0 1rem', textAlign: 'center' }}>
+              <div className="text-3xl font-mono mb-4" style={{ color: '#20D890' }}>[ ✓ ]</div>
+              <div className="text-lg font-mono font-semibold mb-2" style={{ color: 'var(--color-star)' }}>
+                Application Transmitted.
+              </div>
+              <div className="text-sm font-mono leading-relaxed" style={{ color: 'var(--color-star-deep)' }}>
+                We will review your application and be in contact.
+              </div>
+              <div className="mt-4 text-xs font-mono" style={{ color: 'var(--color-muted)' }}>
+                APPLICATION ID: {appId}
+              </div>
             </div>
           </div>
-          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
+          <div className="text-xs font-mono" style={{ color: 'var(--color-muted)', letterSpacing: '0.2em' }}>
             // YOUR APPLICATION IS PENDING ARCHITECT REVIEW //
           </div>
+        </div>
+        <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
+          <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+          <div>PUTOPIA.COLLECTIVE</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
-      <div className="max-w-xl mx-auto">
-        <div className="mb-8 border-b pb-4" style={{ borderColor: '#1E2840' }}>
-          <div className="text-xs tracking-[0.3em] font-mono mb-1" style={{ color: '#4A5570' }}>
-            PORTAL // APPLICATION
-          </div>
-          <h1 className="text-2xl font-mono font-bold tracking-wider" style={{ color: '#EDE8DE' }}>
-            JOIN THE COLLECTIVE
-          </h1>
-          <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
-            Become a Voyager. Apply for access to a Multiverse Console.
+    <div className="main">
+      <div className="top-bar">
+        <div className="crumbs">PC://CONSOLE <span>/</span> APPLICATION</div>
+      </div>
+
+      <div style={{ maxWidth: '560px', width: '100%' }}>
+        <div className="page-head" style={{ marginBottom: '1.5rem' }}>
+          <div>
+            <div className="h-eyebrow">// PORTAL ACCESS REQUEST</div>
+            <h1>JOIN THE <span className="accent">COLLECTIVE</span></h1>
+            <p className="sub">Become a Voyager. Apply for access to a Multiverse Console.</p>
           </div>
         </div>
 
@@ -164,12 +175,17 @@ export default function ApplyPage() {
           <button
             type="submit"
             disabled={loading || !selectedReason || (selectedReason === 'other' && !otherText.trim())}
-            className="btn-orange w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ justifyContent: 'center' }}
           >
             {loading ? '> TRANSMITTING APPLICATION...' : 'SUBMIT APPLICATION'}
           </button>
         </form>
+      </div>
+
+      <div className="footer-bar" style={{ marginTop: '2rem' }}>
+        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+        <div>PUTOPIA.COLLECTIVE</div>
       </div>
     </div>
   )
