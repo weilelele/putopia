@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import type { AuthUser } from '@/lib/auth-context'
 import { RoleBadge } from './role-badge'
 
 const RadarIcon = () => (
@@ -72,6 +73,33 @@ const LogOutIcon = () => (
     <line x1="1.5" y1="6" x2="7" y2="6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
   </svg>
 )
+
+const ROLE_AVATAR_COLOR: Record<string, string> = {
+  guest:     '#3D3010',
+  applicant: '#E8A020',
+  voyager:   '#C4A96A',
+  architect: '#D4601A',
+}
+
+function Avatar({ user }: { user: AuthUser }) {
+  const color = ROLE_AVATAR_COLOR[user.role] ?? '#4A5570'
+  const initial = user.name?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? '?'
+  return (
+    <div
+      className="flex items-center justify-center shrink-0 text-[11px] font-mono font-bold"
+      style={{
+        width: 28, height: 28,
+        borderRadius: '50%',
+        border: `1px solid ${color}`,
+        color,
+        background: `${color}18`,
+        letterSpacing: 0,
+      }}
+    >
+      {user.role === 'guest' ? '?' : initial}
+    </div>
+  )
+}
 
 const navLinks = [
   { href: '/intel',    label: 'INTEL',         icon: <RadarIcon /> },
@@ -147,15 +175,18 @@ export function Nav() {
         })}
       </div>
 
-      {/* ── Current Identity — placed right below nav links ── */}
+      {/* ── Current Identity ── */}
       <div className="mx-2 mt-3 mb-1 border p-3" style={{ borderColor: '#1A2238', background: '#111525' }}>
+        {/* Row 1: avatar + name */}
+        <div className="flex items-center gap-2.5 mb-2.5">
+          <Avatar user={user} />
+          <span className="text-[10px] font-mono truncate leading-tight" style={{ color: '#EDE8DE' }}>
+            {user.name ?? (user.role === 'guest' ? 'UNKNOWN OPERATIVE' : user.email ?? '—')}
+          </span>
+        </div>
+        {/* Row 2: role badge + action */}
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <RoleBadge />
-            {user.name && (
-              <span className="text-[10px] font-mono truncate" style={{ color: '#8A9AB5' }}>{user.name}</span>
-            )}
-          </div>
+          <RoleBadge />
           {user.role === 'guest' ? (
             <Link
               href="/login"
