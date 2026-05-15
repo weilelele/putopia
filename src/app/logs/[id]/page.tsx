@@ -74,6 +74,7 @@ export default function StoryPage() {
     getStoryById(id).then((s) => {
       setStory(s ?? null)
       setComments(id === 'i-will-keep-the-secret' ? MOCK_COMMENTS : MOCK_COMMENTS_STORY2)
+      if (s) posthog.capture('log_viewed', { story_id: id, story_title: s.title, story_tags: s.tags })
     })
   }, [id])
 

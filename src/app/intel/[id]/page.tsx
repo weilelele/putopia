@@ -39,7 +39,10 @@ export default function IntelDetailPage() {
   const [transmitted, setTransmitted] = useState(false)
 
   useEffect(() => {
-    getIntelById(id).then((e) => setEntry(e ?? null))
+    getIntelById(id).then((e) => {
+      setEntry(e ?? null)
+      if (e) posthog.capture('intel_viewed', { intel_id: id, intel_tag: e.tag, intel_title: e.title })
+    })
   }, [id])
 
   if (entry === undefined) {
