@@ -113,27 +113,13 @@ export function Nav() {
     >
       {/* Logo */}
       <div className="p-4 border-b" style={{ borderColor: '#1A2238' }}>
-        <Link href="/" className="flex items-center gap-3">
-          {/* Radar circle logo */}
-          <div style={{ color: '#E85A00', flexShrink: 0 }}>
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="14" stroke="#E85A00" strokeWidth="1.5"/>
-              <circle cx="16" cy="16" r="8" stroke="#E85A00" strokeWidth="1" strokeOpacity="0.7"/>
-              <circle cx="16" cy="16" r="3" stroke="#E85A00" strokeWidth="1" strokeOpacity="0.5"/>
-              <circle cx="16" cy="16" r="1.5" fill="#E85A00"/>
-              <line x1="16" y1="2" x2="16" y2="30" stroke="#E85A00" strokeWidth="0.75" strokeOpacity="0.4"/>
-              <line x1="2" y1="16" x2="30" y2="16" stroke="#E85A00" strokeWidth="0.75" strokeOpacity="0.4"/>
-              <line x1="16" y1="16" x2="26" y2="6" stroke="#E85A00" strokeWidth="1.2" strokeOpacity="0.8"/>
-            </svg>
-          </div>
-          <div>
-            <div className="text-sm font-mono font-bold tracking-[0.2em]" style={{ color: '#EDE8DE' }}>
-              PUTOPIA
-            </div>
-            <div className="text-xs font-mono tracking-[0.15em]" style={{ color: '#8A9AB5' }}>
-              COLLECTIVE
-            </div>
-          </div>
+        <Link href="/" className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/assets/logo.png"
+            alt="Putopia Collective"
+            style={{ width: '100%', maxWidth: '176px', height: 'auto', display: 'block' }}
+          />
         </Link>
         <div className="mt-3 h-px w-full" style={{ background: 'linear-gradient(to right, rgba(232,90,0,0.5), transparent)' }} />
       </div>
