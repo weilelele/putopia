@@ -14,7 +14,7 @@ export async function submitApplication(application: ApplicationInsert) {
 
   if (error) return { error: error.message }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://delicate-queijadas-96606c.netlify.app'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://putopia-dtogto3vt-weileleles-projects.vercel.app'
 
   // Send invite email via Supabase Auth
   try {
