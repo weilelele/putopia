@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import posthog from 'posthog-js'
 
 export default function LoginPage() {
   return (
@@ -37,7 +38,10 @@ function LoginPageContent() {
     if (authError) {
       setError(`ERR: ${authError.message.toUpperCase()}`)
       setLoading(false)
+      posthog.capture('login_failed', { error: authError.message })
     } else {
+      posthog.identify(email, { email })
+      posthog.capture('user_logged_in', { email })
       window.location.href = redirect
     }
   }

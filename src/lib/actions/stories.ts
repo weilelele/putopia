@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { StoryInsert, StoryUpdate } from '@/types/database'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 // Voyager+: list all published stories
 export async function getPublishedStories() {
@@ -82,6 +83,9 @@ export async function submitStory(story: Omit<StoryInsert, 'author_id' | 'is_pub
 
   if (error) return { error: error.message, data: null }
   revalidatePath('/logs')
+  const posthog = getPostHogClient()
+  posthog.capture({ distinctId: user.id, event: 'story_submitted', properties: { story_id: data.id, title: data.title } })
+  await posthog.shutdown()
   return { error: null, data }
 }
 

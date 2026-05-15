@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import { getStoryById } from '@/lib/actions/stories'
 import { ArrowLeft, Send } from 'lucide-react'
 import type { Story } from '@/types/database'
+import posthog from 'posthog-js'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -99,6 +100,7 @@ export default function StoryPage() {
   const handleTransmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!commentText.trim()) return
+    posthog.capture('log_comment_sent', { story_id: id, story_title: story?.title })
     const newComment: Comment = {
       id: `c${Date.now()}`,
       author: 'You',

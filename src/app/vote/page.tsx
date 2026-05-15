@@ -5,6 +5,7 @@ import { voteData, VoteItem } from '@/lib/mock-data'
 import { useAuth } from '@/lib/auth-context'
 import { Plus } from 'lucide-react'
 import clsx from 'clsx'
+import posthog from 'posthog-js'
 
 const SCOPE_STYLES = {
   ALL:       { color: '#4A5570', border: '#1A2238',              bg: 'transparent' },
@@ -46,6 +47,13 @@ function VoteCard({ vote }: { vote: VoteItem }) {
 
   const handleVote = () => {
     if (selected.length === 0) return
+    posthog.capture('vote_cast', {
+      vote_id: vote.id,
+      vote_title: vote.title,
+      vote_type: vote.type,
+      vote_scope: vote.scope,
+      selected_options: selected,
+    })
     setVoted(true)
   }
 

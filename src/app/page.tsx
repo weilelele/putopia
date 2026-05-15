@@ -115,8 +115,27 @@ export default function LandingPage() {
           </button>
         </div>
 
-        <div className="footer-tag">
-          PUTOPIA COLLECTIVE <span className="dot">◆</span> EXPLORATION <span className="dot">◆</span> DISCOVERY <span className="dot">◆</span> UNITY
+
+      </section>
+
+      {/* ── Device showcase — click or scroll to apply ── */}
+      <section
+        className="device-showcase"
+        onClick={scrollToApply}
+        style={{ cursor: 'pointer' }}
+        aria-label="Click to apply"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/assets/device-desk.png"
+          alt="Multiverse Console"
+          className="device-showcase-img"
+        />
+        <div className="device-showcase-overlay">
+          <div className="device-showcase-hint">
+            <span>↓</span>
+            <span>APPLY FOR ACCESS</span>
+          </div>
         </div>
       </section>
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { VoteInsert, VoteResponseInsert } from '@/types/database'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 export async function getActiveVotes() {
   const supabase = await createClient()
@@ -71,6 +72,10 @@ export async function submitVoteResponse(response: Omit<VoteResponseInsert, 'use
 
   if (error) return { error: error.message }
   revalidatePath('/votes')
+  const distinctId = user?.id ?? (anonToken ?? 'anonymous')
+  const posthog = getPostHogClient()
+  posthog.capture({ distinctId, event: 'vote_response_submitted', properties: { vote_id: response.vote_id, selected_options: response.selected_options } })
+  await posthog.shutdown()
   return { error: null }
 }
 

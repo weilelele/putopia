@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import { getIntelById } from '@/lib/actions/intel'
 import { Send } from 'lucide-react'
 import type { Intel } from '@/types/database'
+import posthog from 'posthog-js'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -66,6 +67,7 @@ export default function IntelDetailPage() {
   const handleTransmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!commentText.trim()) return
+    posthog.capture('intel_comment_sent', { intel_id: id, intel_tag: entry?.tag })
     setComments((prev) => [...prev, {
       id: `c${Date.now()}`,
       author: 'You',

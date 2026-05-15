@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { submitApplication } from '@/lib/actions/applications'
+import posthog from 'posthog-js'
 
 const reasons = [
   { id: 'anomaly', tag: 'ANOMALY DETECTED', text: 'I intercepted a signal I cannot explain.' },
@@ -41,6 +42,10 @@ export default function ApplyPage() {
     if (result.error) {
       setError(`ERR: ${result.error}`)
     } else {
+      posthog.capture('application_submitted', {
+        reason_category: selectedReason,
+        has_location: !!form.location,
+      })
       setSubmitted(true)
     }
   }

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { ApplicationInsert, ApplicationStatus } from '@/types/database'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 export async function submitApplication(application: ApplicationInsert) {
   const supabase = await createClient()
@@ -122,5 +123,8 @@ export async function reviewApplication(
   }
 
   revalidatePath('/architect/applications')
+  const posthog = getPostHogClient()
+  posthog.capture({ distinctId: user.id, event: 'application_reviewed', properties: { application_id: applicationId, status } })
+  await posthog.shutdown()
   return { error: null }
 }

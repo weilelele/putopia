@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import posthog from 'posthog-js'
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
@@ -74,6 +75,8 @@ export default function RegisterPage() {
         observation_days: 0,
         worlds_discovered: 0,
       }, { onConflict: 'id' })
+      posthog.identify(user.id, { email: user.email, display_name: displayName.trim() })
+      posthog.capture('account_registered', { display_name: displayName.trim() })
     }
 
     router.push('/intel')
