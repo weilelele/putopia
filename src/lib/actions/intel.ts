@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { IntelInsert, IntelUpdate } from '@/types/database'
 
 // Public intel (unclassified) — accessible to all including guests
@@ -16,10 +16,10 @@ export async function getPublicIntel() {
   return data ?? []
 }
 
-// All intel (classified + unclassified) — voyager+ only; RLS enforces this
+// All intel (classified + unclassified) — architect admin
 export async function getAllIntel() {
-  const supabase = await createClient()
-  const { data } = await supabase
+  const admin = createAdminClient()
+  const { data } = await admin
     .from('intel')
     .select('*')
     .order('timestamp', { ascending: false })
@@ -28,8 +28,8 @@ export async function getAllIntel() {
 }
 
 export async function getIntelById(id: string) {
-  const supabase = await createClient()
-  const { data } = await supabase
+  const admin = createAdminClient()
+  const { data } = await admin
     .from('intel')
     .select('*')
     .eq('id', id)
@@ -38,15 +38,11 @@ export async function getIntelById(id: string) {
   return data
 }
 
-// Architect: publish a new intel entry
 export async function createIntel(entry: IntelInsert) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated', data: null }
-
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('intel')
-    .insert({ ...entry, created_by: user.id })
+    .insert(entry)
     .select()
     .single()
 
@@ -55,10 +51,9 @@ export async function createIntel(entry: IntelInsert) {
   return { error: null, data }
 }
 
-// Architect: update an intel entry
 export async function updateIntel(id: string, updates: IntelUpdate) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('intel')
     .update(updates)
     .eq('id', id)
@@ -68,10 +63,9 @@ export async function updateIntel(id: string, updates: IntelUpdate) {
   return { error: null }
 }
 
-// Architect: delete an intel entry
 export async function deleteIntel(id: string) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('intel')
     .delete()
     .eq('id', id)

@@ -1,13 +1,22 @@
 'use client'
 
-import { devices, Device } from '../../../content/devices'
+import { useState, useEffect } from 'react'
+import { getAllDevices } from '@/lib/actions/devices'
 import { useAuth } from '@/lib/auth-context'
+import type { Device } from '@/types/database'
 
 const STATUS_STYLES = {
-  AVAILABLE: { color: '#20D890', bg: 'rgba(32,216,144,0.08)', border: 'rgba(32,216,144,0.3)' },
-  'NEEDS REPAIR': { color: '#E83030', bg: 'rgba(232,48,48,0.08)', border: 'rgba(232,48,48,0.3)' },
-  'IN USE': { color: '#E85A00', bg: 'rgba(232,90,0,0.08)', border: 'rgba(232,90,0,0.3)' },
-  UNKNOWN: { color: '#4A5570', bg: 'transparent', border: '#1A2238' },
+  available:    { color: '#20D890', bg: 'rgba(32,216,144,0.08)', border: 'rgba(32,216,144,0.3)' },
+  needs_repair: { color: '#E83030', bg: 'rgba(232,48,48,0.08)', border: 'rgba(232,48,48,0.3)' },
+  in_use:       { color: '#E85A00', bg: 'rgba(232,90,0,0.08)', border: 'rgba(232,90,0,0.3)' },
+  unknown:      { color: '#4A5570', bg: 'transparent', border: '#1A2238' },
+}
+
+const STATUS_LABELS = {
+  available:    'AVAILABLE',
+  needs_repair: 'NEEDS REPAIR',
+  in_use:       'IN USE',
+  unknown:      'UNKNOWN',
 }
 
 function DevicePlaceholder({ id }: { id: string }) {
@@ -49,11 +58,11 @@ function DevicePlaceholder({ id }: { id: string }) {
 }
 
 function DeviceImage({ device }: { device: Device }) {
-  if (device.imagePath) {
+  if (device.image_path) {
     return (
       <div className="w-full aspect-video overflow-hidden">
         <img
-          src={device.imagePath}
+          src={device.image_path}
           alt={device.name}
           className="w-full h-full object-cover"
         />
@@ -69,9 +78,12 @@ function DeviceImage({ device }: { device: Device }) {
 
 export default function DevicesPage() {
   const { isAtLeast } = useAuth()
+  const [devices, setDevices] = useState<Device[]>([])
+
+  useEffect(() => { getAllDevices().then(setDevices) }, [])
 
   const unknownDevices = devices.filter((d) => d.knowledge === 'unknown')
-  const knownDevices = devices.filter((d) => d.knowledge === 'known')
+  const knownDevices   = devices.filter((d) => d.knowledge === 'known')
 
   return (
     <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
@@ -116,8 +128,8 @@ export default function DevicesPage() {
                   <div>
                     <div className="text-xs font-mono" style={{ color: '#4A5570' }}>{device.id}</div>
                     <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>{device.name}</div>
-                    {device.batchId && (
-                      <div className="text-xs font-mono" style={{ color: '#E85A00' }}>{device.batchId}</div>
+                    {device.batch_id && (
+                      <div className="text-xs font-mono" style={{ color: '#E85A00' }}>{device.batch_id}</div>
                     )}
                   </div>
                   <div
@@ -140,12 +152,12 @@ export default function DevicesPage() {
                 <div>
                   <div className="flex justify-between text-xs font-mono mb-1" style={{ color: '#4A5570' }}>
                     <span>EXPLORATION PROGRESS</span>
-                    <span style={{ color: '#E85A00' }}>{device.explorationProgress}%</span>
+                    <span style={{ color: '#E85A00' }}>{device.exploration_progress}%</span>
                   </div>
                   <div className="progress-track">
                     <div
                       className="progress-fill"
-                      style={{ width: `${device.explorationProgress}%` }}
+                      style={{ width: `${device.exploration_progress}%` }}
                     />
                   </div>
                 </div>
@@ -165,7 +177,8 @@ export default function DevicesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {knownDevices.map((device) => {
-            const statusStyle = device.status ? STATUS_STYLES[device.status] : STATUS_STYLES['AVAILABLE']
+            const statusKey = device.status ?? 'unknown'
+            const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.unknown
             return (
               <div
                 key={device.id}
@@ -188,13 +201,10 @@ export default function DevicesPage() {
                     </div>
                     {device.status && (
                       <span
-                        className={`label-tag whitespace-nowrap ${
-                          device.status === 'AVAILABLE' ? 'status-available' :
-                          device.status === 'NEEDS REPAIR' ? 'status-repair' :
-                          device.status === 'IN USE' ? 'status-inuse' : 'status-unknown'
-                        }`}
+                        className="label-tag whitespace-nowrap"
+                        style={{ color: statusStyle.color }}
                       >
-                        {device.status}
+                        {STATUS_LABELS[device.status] ?? device.status}
                       </span>
                     )}
                   </div>
@@ -208,17 +218,17 @@ export default function DevicesPage() {
                     {device.description}
                   </p>
 
-                  {device.status === 'IN USE' && device.currentUser && (
+                  {device.status === 'in_use' && device.current_user_name && (
                     <div
                       className="mb-3 px-3 py-2 border text-xs font-mono"
                       style={{ background: 'rgba(232,90,0,0.04)', borderColor: 'rgba(232,90,0,0.2)', color: '#8A9AB5' }}
                     >
                       <span style={{ color: '#4A5570' }}>CURRENT USER: </span>
-                      <span>{device.currentUser}</span>
+                      <span>{device.current_user_name}</span>
                     </div>
                   )}
 
-                  {isAtLeast('voyager') && device.status === 'AVAILABLE' && (
+                  {isAtLeast('voyager') && device.status === 'available' && (
                     <button
                       className="w-full py-1.5 text-xs font-mono tracking-widest border transition-all"
                       style={{ borderColor: '#20D890', color: '#20D890', background: 'rgba(32,216,144,0.06)' }}
@@ -234,7 +244,7 @@ export default function DevicesPage() {
                       [ APPLY FOR ACCESS ]
                     </button>
                   )}
-                  {isAtLeast('voyager') && device.status === 'IN USE' && (
+                  {isAtLeast('voyager') && device.status === 'in_use' && (
                     <button
                       className="w-full py-1.5 text-xs font-mono tracking-widest border opacity-40 cursor-not-allowed"
                       style={{ borderColor: '#1A2238', color: '#4A5570' }}

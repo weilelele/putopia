@@ -1,24 +1,23 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { DeviceInsert, DeviceUpdate } from '@/types/database'
 
 export async function getAllDevices() {
-  const supabase = await createClient()
-  const { data } = await supabase
+  const admin = createAdminClient()
+  const { data } = await admin
     .from('devices')
     .select('*')
-    .order('knowledge', { ascending: false })   // known first
+    .order('knowledge', { ascending: false })
     .order('id')
 
   return data ?? []
 }
 
 export async function getDeviceById(id: string) {
-  const supabase = await createClient()
-  const { data } = await supabase
+  const admin = createAdminClient()
+  const { data } = await admin
     .from('devices')
     .select('*')
     .eq('id', id)
@@ -27,10 +26,9 @@ export async function getDeviceById(id: string) {
   return data
 }
 
-// Architect: create a new device
 export async function createDevice(device: DeviceInsert) {
-  const supabase = await createClient()
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('devices')
     .insert(device)
     .select()
@@ -41,10 +39,9 @@ export async function createDevice(device: DeviceInsert) {
   return { error: null, data }
 }
 
-// Architect: update device info or status
 export async function updateDevice(id: string, updates: DeviceUpdate) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('devices')
     .update(updates)
     .eq('id', id)
@@ -54,9 +51,8 @@ export async function updateDevice(id: string, updates: DeviceUpdate) {
   return { error: null }
 }
 
-// Architect: assign a voyager to a known device
 export async function assignDevice(deviceId: string, voyagerId: string, voyagerName: string) {
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin
     .from('devices')
     .update({
@@ -71,9 +67,8 @@ export async function assignDevice(deviceId: string, voyagerId: string, voyagerN
   return { error: null }
 }
 
-// Architect: release a device (mark as available)
 export async function releaseDevice(deviceId: string) {
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin
     .from('devices')
     .update({
@@ -88,10 +83,9 @@ export async function releaseDevice(deviceId: string) {
   return { error: null }
 }
 
-// Architect: delete a device
 export async function deleteDevice(id: string) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('devices')
     .delete()
     .eq('id', id)
@@ -101,11 +95,8 @@ export async function deleteDevice(id: string) {
   return { error: null }
 }
 
-// Architect: upload a device image to Supabase Storage, returns the public URL
 export async function uploadDeviceImage(formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated', url: null }
+  const admin = createAdminClient()
 
   const file = formData.get('image') as File
   if (!file || file.size === 0) return { error: 'No file provided', url: null }
@@ -113,23 +104,22 @@ export async function uploadDeviceImage(formData: FormData) {
   const ext = file.name.split('.').pop() ?? 'jpg'
   const path = `${Date.now()}.${ext}`
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await admin.storage
     .from('devices')
     .upload(path, file, { upsert: true })
 
   if (uploadError) return { error: uploadError.message, url: null }
 
-  const { data: { publicUrl } } = supabase.storage
+  const { data: { publicUrl } } = admin.storage
     .from('devices')
     .getPublicUrl(path)
 
   return { error: null, url: publicUrl }
 }
 
-// Architect: update exploration progress for an unknown device
 export async function updateExplorationProgress(deviceId: string, progress: number) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('devices')
     .update({ exploration_progress: Math.min(100, Math.max(0, progress)) })
     .eq('id', deviceId)

@@ -1,9 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { stories } from '../../../content/stories'
+import { getPublishedStories } from '@/lib/actions/stories'
 import { useAuth } from '@/lib/auth-context'
 import { Plus, ArrowRight } from 'lucide-react'
+import type { Story } from '@/types/database'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -22,6 +24,9 @@ function getInitials(name: string) {
 
 export default function LogsPage() {
   const { isAtLeast } = useAuth()
+  const [stories, setStories] = useState<Story[]>([])
+
+  useEffect(() => { getPublishedStories().then(setStories) }, [])
 
   return (
     <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
@@ -52,7 +57,7 @@ export default function LogsPage() {
       {/* Stories Feed */}
       <div className="space-y-6 max-w-3xl">
         {stories.map((story) => {
-          const initials = getInitials(story.author)
+          const initials = getInitials(story.author_name)
           return (
             <div
               key={story.id}
@@ -75,7 +80,7 @@ export default function LogsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>
-                    {story.author}
+                    {story.author_name}
                   </div>
                   <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
                     {formatDate(story.date)}

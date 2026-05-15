@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { StoryInsert, StoryUpdate } from '@/types/database'
 
 // Voyager+: list all published stories
@@ -16,7 +16,7 @@ export async function getPublishedStories() {
   return data ?? []
 }
 
-// Voyager+: get one published story by slug (for detail page)
+// Voyager+: get one story by slug
 export async function getStoryById(id: string) {
   const supabase = await createClient()
   const { data } = await supabase
@@ -45,8 +45,8 @@ export async function getMyStories() {
 
 // Architect: list all stories (published + drafts)
 export async function getAllStories() {
-  const supabase = await createClient()
-  const { data } = await supabase
+  const admin = createAdminClient()
+  const { data } = await admin
     .from('stories')
     .select('*')
     .order('date', { ascending: false })
@@ -73,7 +73,8 @@ export async function submitStory(story: Omit<StoryInsert, 'author_id' | 'is_pub
     is_published: false,
   }
 
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('stories')
     .insert(insert)
     .select()
@@ -104,8 +105,8 @@ export async function updateMyStory(id: string, updates: Omit<StoryUpdate, 'is_p
 
 // Architect: publish a story
 export async function publishStory(id: string) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('stories')
     .update({ is_published: true })
     .eq('id', id)
@@ -118,8 +119,8 @@ export async function publishStory(id: string) {
 
 // Architect: unpublish a story
 export async function unpublishStory(id: string) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('stories')
     .update({ is_published: false })
     .eq('id', id)
@@ -132,8 +133,8 @@ export async function unpublishStory(id: string) {
 
 // Architect: update any story (content + metadata)
 export async function updateStory(id: string, updates: StoryUpdate) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('stories')
     .update(updates)
     .eq('id', id)
@@ -146,8 +147,8 @@ export async function updateStory(id: string, updates: StoryUpdate) {
 
 // Architect: delete a story
 export async function deleteStory(id: string) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('stories')
     .delete()
     .eq('id', id)

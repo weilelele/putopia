@@ -1,6 +1,4 @@
-'use client'
-
-import { intelData } from '@/lib/mock-data'
+import { getAllIntel } from '@/lib/actions/intel'
 
 const TAG_STYLES = {
   NOTICE: { color: '#8A9AB5', bg: 'rgba(138,154,181,0.1)', border: 'rgba(138,154,181,0.3)' },
@@ -15,7 +13,9 @@ function formatDate(iso: string) {
   })
 }
 
-export default function IntelPage() {
+export default async function IntelPage() {
+  const intel = await getAllIntel()
+
   return (
     <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
       {/* Header */}
@@ -35,7 +35,7 @@ export default function IntelPage() {
           INTEL
         </h1>
         <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
-          Known Intelligence // {intelData.length} entries on record
+          Known Intelligence // {intel.length} entries on record
         </div>
       </div>
 
@@ -54,7 +54,7 @@ export default function IntelPage() {
 
       {/* Entries */}
       <div className="space-y-4">
-        {intelData.map((entry) => {
+        {intel.map((entry) => {
           const tagStyle = TAG_STYLES[entry.tag]
           return (
             <div
@@ -66,20 +66,11 @@ export default function IntelPage() {
                 boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)',
                 borderLeft: '3px solid transparent',
               }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderLeftColor = '#E85A00'
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderLeftColor = 'transparent'
-              }}
             >
               {/* Top row */}
               <div className="flex items-start justify-between gap-4 mb-3 flex-wrap">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span
-                    className="label-tag"
-                    style={{ color: tagStyle.color }}
-                  >
+                  <span className="label-tag" style={{ color: tagStyle.color }}>
                     {entry.tag}
                   </span>
                   {entry.classified && (
@@ -115,7 +106,7 @@ export default function IntelPage() {
       </div>
 
       <div className="mt-8 text-center text-xs font-mono" style={{ color: '#1A2238' }}>
-        — END OF INTEL FEED — // LAST UPDATED: 2026-05-01 03:30 UTC
+        — END OF INTEL FEED — // LAST UPDATED: {intel[0] ? formatDate(intel[0].timestamp) : '—'}
       </div>
     </div>
   )

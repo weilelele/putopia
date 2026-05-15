@@ -1,12 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import type { WorldInsert, WorldUpdate } from '@/types/database'
 
 export async function getAllWorlds() {
-  const supabase = await createClient()
-  const { data } = await supabase
+  const admin = createAdminClient()
+  const { data } = await admin
     .from('worlds')
     .select('*')
     .order('discovery_date', { ascending: true })
@@ -15,8 +15,8 @@ export async function getAllWorlds() {
 }
 
 export async function getWorldById(id: string) {
-  const supabase = await createClient()
-  const { data } = await supabase
+  const admin = createAdminClient()
+  const { data } = await admin
     .from('worlds')
     .select('*')
     .eq('id', id)
@@ -25,13 +25,9 @@ export async function getWorldById(id: string) {
   return data
 }
 
-// Architect: create a new world record
 export async function createWorld(world: WorldInsert) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Not authenticated', data: null }
-
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from('worlds')
     .insert(world)
     .select()
@@ -42,10 +38,9 @@ export async function createWorld(world: WorldInsert) {
   return { error: null, data }
 }
 
-// Architect: update a world record
 export async function updateWorld(id: string, updates: WorldUpdate) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('worlds')
     .update(updates)
     .eq('id', id)
@@ -55,10 +50,9 @@ export async function updateWorld(id: string, updates: WorldUpdate) {
   return { error: null }
 }
 
-// Architect: delete a world record
 export async function deleteWorld(id: string) {
-  const supabase = await createClient()
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { error } = await admin
     .from('worlds')
     .delete()
     .eq('id', id)

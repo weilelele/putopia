@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { stories } from '../../../../content/stories'
+import { getStoryById } from '@/lib/actions/stories'
 import { ArrowLeft, Send } from 'lucide-react'
+import type { Story } from '@/types/database'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -62,13 +63,26 @@ function getInitials(name: string) {
 export default function StoryPage() {
   const params = useParams()
   const id = params?.id as string
-  const story = stories.find((s) => s.id === id)
 
-  const [comments, setComments] = useState<Comment[]>(
-    id === 'i-will-keep-the-secret' ? MOCK_COMMENTS : MOCK_COMMENTS_STORY2
-  )
+  const [story, setStory] = useState<Story | null | undefined>(undefined)
+  const [comments, setComments] = useState<Comment[]>([])
   const [commentText, setCommentText] = useState('')
   const [transmitted, setTransmitted] = useState(false)
+
+  useEffect(() => {
+    getStoryById(id).then((s) => {
+      setStory(s ?? null)
+      setComments(id === 'i-will-keep-the-secret' ? MOCK_COMMENTS : MOCK_COMMENTS_STORY2)
+    })
+  }, [id])
+
+  if (story === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#070912' }}>
+        <div className="text-xs font-mono" style={{ color: '#4A5570' }}>LOADING...</div>
+      </div>
+    )
+  }
 
   if (!story) {
     return (
@@ -138,10 +152,10 @@ export default function StoryPage() {
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
             style={{ background: 'rgba(232,90,0,0.12)', color: '#E85A00', border: '1px solid rgba(232,90,0,0.3)' }}
           >
-            {getInitials(story.author)}
+            {getInitials(story.author_name)}
           </div>
           <div>
-            <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>{story.author}</div>
+            <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>{story.author_name}</div>
             <div className="text-xs font-mono" style={{ color: '#4A5570' }}>{formatDate(story.date)}</div>
           </div>
         </div>

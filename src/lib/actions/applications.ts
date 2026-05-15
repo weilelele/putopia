@@ -71,7 +71,7 @@ export async function reviewApplication(
       .single()
 
     if (app?.email) {
-      const admin = await createAdminClient()
+      const admin = createAdminClient()
       // Find the auth user by email and promote their profile
       const { data: users } = await admin.auth.admin.listUsers()
       const authUser = users?.users?.find(u => u.email === app.email)

@@ -1,6 +1,8 @@
-import { worldData } from '@/lib/mock-data'
+import { getAllWorlds } from '@/lib/actions/worlds'
 
-export default function WorldsPage() {
+export default async function WorldsPage() {
+  const worlds = await getAllWorlds()
+
   return (
     <div className="min-h-screen p-6 md:p-8" style={{ background: '#070912' }}>
       {/* Header */}
@@ -12,7 +14,7 @@ export default function WorldsPage() {
           WORLDS
         </h1>
         <div className="text-xs font-mono mt-1" style={{ color: '#4A5570' }}>
-          World Archive // {worldData.length} discovered parallel worlds
+          World Archive // {worlds.length} discovered parallel worlds
         </div>
       </div>
 
@@ -27,7 +29,7 @@ export default function WorldsPage() {
       >
         <div>
           <div className="text-xl font-mono font-bold" style={{ color: '#E85A00' }}>
-            {worldData.length}
+            {worlds.length}
           </div>
           <div className="text-xs font-mono" style={{ color: '#4A5570' }}>CATALOGUED</div>
         </div>
@@ -47,7 +49,7 @@ export default function WorldsPage() {
 
       {/* World Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {worldData.map((world) => (
+        {worlds.map((world) => (
           <div
             key={world.id}
             className="border overflow-hidden transition-all duration-200 group"
@@ -61,7 +63,7 @@ export default function WorldsPage() {
             <div
               className="h-32 relative transition-all duration-300"
               style={{
-                background: `linear-gradient(135deg, ${world.gradientFrom}, ${world.gradientTo})`,
+                background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})`,
               }}
             >
               <div
@@ -91,8 +93,8 @@ export default function WorldsPage() {
               <div className="text-sm font-mono font-semibold mb-0.5" style={{ color: '#EDE8DE' }}>
                 {world.name}
               </div>
-              <div className="text-xs font-mono mb-2" style={{ color: world.gradientTo }}>
-                {world.nameEn}
+              <div className="text-xs font-mono mb-2" style={{ color: world.gradient_to }}>
+                {world.name_en}
               </div>
               <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
                 {world.description}
@@ -100,10 +102,10 @@ export default function WorldsPage() {
               <div className="pt-2 border-t" style={{ borderColor: '#1A2238' }}>
                 <div className="text-xs font-mono" style={{ color: '#4A5570' }}>FIRST DISCOVERED BY</div>
                 <div className="text-xs font-mono mt-0.5" style={{ color: '#8A9AB5' }}>
-                  {world.discoverer}
+                  {world.discoverer_name}
                 </div>
                 <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
-                  {world.discoveryDate}
+                  {world.discovery_date}
                 </div>
               </div>
             </div>
