@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getPublishedStories } from '@/lib/actions/stories'
 import { useAuth } from '@/lib/auth-context'
+import { SectionTracker } from '@/components/section-tracker'
 import { Plus, ArrowRight } from 'lucide-react'
 import type { Story } from '@/types/database'
 
@@ -30,6 +31,7 @@ export default function LogsPage() {
 
   return (
     <div className="main">
+      <SectionTracker section="logs" />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGER LOGS</div>
         <div className="right">

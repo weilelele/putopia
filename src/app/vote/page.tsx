@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { voteData, VoteItem } from '@/lib/mock-data'
 import { useAuth } from '@/lib/auth-context'
+import { SectionTracker } from '@/components/section-tracker'
 import { Plus } from 'lucide-react'
 import clsx from 'clsx'
 import posthog from 'posthog-js'
@@ -183,6 +184,7 @@ export default function VotePage() {
 
   return (
     <div className="main">
+      <SectionTracker section="vote" />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> VOTING HUB</div>
         <div className="right">

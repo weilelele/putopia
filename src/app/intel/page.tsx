@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getAllIntel } from '@/lib/actions/intel'
 import { useEffect, useState } from 'react'
 import type { Intel } from '@/types/database'
+import { SectionTracker } from '@/components/section-tracker'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -119,6 +120,7 @@ export default function IntelPage() {
 
   return (
     <div className="main">
+      <SectionTracker section="intel" />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> INTEL FEED</div>
         <div className="right">

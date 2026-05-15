@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { voyagerProfiles } from '@/lib/mock-data'
 import { useAuth } from '@/lib/auth-context'
+import { SectionTracker } from '@/components/section-tracker'
 import { Edit, Camera } from 'lucide-react'
 
 // Platform SVG icons — styled to match site palette, native shapes preserved
@@ -59,6 +60,7 @@ export default function VoyagersPage() {
 
   return (
     <div className="main">
+      <SectionTracker section="voyagers" />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGERS</div>
         <div className="right">

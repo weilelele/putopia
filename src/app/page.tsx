@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { submitApplication } from '@/lib/actions/applications'
+import { SectionTracker } from '@/components/section-tracker'
 
 const reasons = [
   { id: 'anomaly', label: 'ANOMALY DETECTED — I intercepted a signal I cannot explain.' },
@@ -67,6 +68,7 @@ export default function LandingPage() {
 
   return (
     <div className="landing-main">
+      <SectionTracker section="dashboard" />
       {/* Background layers */}
       <div className="nebula-bg" />
 

@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import { getAllWorlds } from '@/lib/actions/worlds'
+import { SectionTracker } from '@/components/section-tracker'
 
 export default async function WorldsPage() {
   const worlds = await getAllWorlds()
 
   return (
     <div className="main">
+      <SectionTracker section="worlds" />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> WORLD RECORDS</div>
         <div className="right">

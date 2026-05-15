@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { getAllDevices } from '@/lib/actions/devices'
 import { useAuth } from '@/lib/auth-context'
 import type { Device } from '@/types/database'
+import { SectionTracker } from '@/components/section-tracker'
 
 const STATUS_STYLES = {
   available:    { color: '#20D890', bg: 'rgba(32,216,144,0.08)', border: 'rgba(32,216,144,0.3)' },
@@ -94,6 +95,7 @@ export default function DevicesPage() {
 
   return (
     <div className="main">
+      <SectionTracker section="devices" />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> DEVICE ARCHIVE</div>
         <div className="right">
