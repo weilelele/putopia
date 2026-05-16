@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { submitApplication } from '@/lib/actions/applications'
 import { getAllDevices } from '@/lib/actions/devices'
 import { getPublicIntel } from '@/lib/actions/intel'
@@ -77,7 +78,6 @@ function DevicePlaceholder({ id }: { id: string }) {
 }
 
 function DevicePreviewCard({ device }: { device: Device }) {
-  const isUnknown = device.knowledge === 'unknown'
   const statusKey = (device.status ?? 'unknown') as keyof typeof STATUS_STYLES
   const style = STATUS_STYLES[statusKey] ?? STATUS_STYLES.unknown
 
@@ -91,47 +91,45 @@ function DevicePreviewCard({ device }: { device: Device }) {
         flexDirection: 'column',
       }}
     >
-      <div style={{ aspectRatio: '4/3', overflow: 'hidden', position: 'relative', background: '#0A0D18' }}>
+      <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18' }}>
         {device.image_path ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={device.image_path}
-            alt={device.name}
-            style={{
-              width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-              filter: isUnknown ? 'grayscale(1) brightness(0.5)' : undefined,
-            }}
-          />
+          <img src={device.image_path} alt={device.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
           <DevicePlaceholder id={device.id} />
         )}
-        {isUnknown && (
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: 'var(--color-star-deep)',
-          }}>
-            [ UNCLASSIFIED ]
+      </div>
+      <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--color-star-deep)', letterSpacing: '0.15em' }}>
+              {device.id}
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-star)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {device.name}
+            </div>
+          </div>
+          {device.status && (
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.12em', whiteSpace: 'nowrap', flexShrink: 0,
+              color: style.color, border: `1px solid ${style.border}`, padding: '0.1rem 0.35rem',
+            }}>
+              {STATUS_LABELS[statusKey] ?? statusKey}
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-star-deep)' }}>
+          <span>◎</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{device.location}</span>
+        </div>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#8A9AB5', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {device.description}
+        </p>
+        {device.status === 'in_use' && device.current_user_name && (
+          <div style={{ marginTop: '0.25rem', padding: '0.2rem 0.5rem', border: '1px solid rgba(232,90,0,0.2)', background: 'rgba(232,90,0,0.04)', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: '#8A9AB5' }}>
+            <span style={{ color: '#4A5570' }}>IN USE: </span>{device.current_user_name}
           </div>
         )}
-      </div>
-      <div style={{ padding: '0.75rem', flex: 1 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--color-star-deep)', letterSpacing: '0.15em', marginBottom: '0.3rem' }}>
-          {device.id}
-        </div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-star)', marginBottom: '0.5rem' }}>
-          {device.name}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.15em',
-            color: style.color, border: `1px solid ${style.border}`, padding: '0.1rem 0.35rem',
-          }}>
-            {STATUS_LABELS[statusKey] ?? statusKey}
-          </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--color-star-deep)', letterSpacing: '0.1em' }}>
-            {device.location}
-          </span>
-        </div>
       </div>
     </div>
   )
@@ -142,12 +140,22 @@ function IntelPreviewCard({ entry }: { entry: Intel }) {
   const hasImage = (entry.images?.length ?? 0) > 0
 
   return (
-    <div
+    <Link
+      href={`/intel/${entry.id}`}
+      className="block transition-all duration-150"
       style={{
         background: 'var(--color-void)',
         border: '1px solid var(--bd-faint)',
         borderLeft: `3px solid ${color}`,
         overflow: 'hidden',
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.background = 'var(--color-void-2)'
+        ;(e.currentTarget as HTMLElement).style.borderColor = color
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.background = 'var(--color-void)'
+        ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--bd-faint)'
       }}
     >
       {hasImage && (
@@ -171,10 +179,13 @@ function IntelPreviewCard({ entry }: { entry: Intel }) {
           {entry.title}
         </h3>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>
-          {entry.content.length > 100 ? entry.content.slice(0, 100) + '…' : entry.content}
+          {entry.content.length > 120 ? entry.content.slice(0, 120) + '…' : entry.content}
         </p>
+        <div style={{ marginTop: '0.75rem', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.18em', color, opacity: 0.7 }}>
+          READ MORE →
+        </div>
       </div>
-    </div>
+    </Link>
   )
 }
 
@@ -285,17 +296,19 @@ export default function LandingPage() {
       {/* ── Known Devices ── */}
       {devices.length > 0 && (
         <section style={{ padding: '3rem 2.5rem 2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>
-              KNOWN DEVICES
+          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>
+                KNOWN DEVICES
+              </div>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
             </div>
-            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
-            {devices.map((device) => (
-              <DevicePreviewCard key={device.id} device={device} />
-            ))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+              {devices.map((device) => (
+                <DevicePreviewCard key={device.id} device={device} />
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -303,17 +316,19 @@ export default function LandingPage() {
       {/* ── Latest Intel ── */}
       {latestIntel.length > 0 && (
         <section style={{ padding: '1rem 2.5rem 2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: 'var(--color-star-dim)' }}>
-              LATEST INTEL
+          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: 'var(--color-star-dim)' }}>
+                LATEST INTEL
+              </div>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
             </div>
-            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-            {latestIntel.map((entry) => (
-              <IntelPreviewCard key={entry.id} entry={entry} />
-            ))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+              {latestIntel.map((entry) => (
+                <IntelPreviewCard key={entry.id} entry={entry} />
+              ))}
+            </div>
           </div>
         </section>
       )}
