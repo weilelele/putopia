@@ -5,8 +5,11 @@ import Link from 'next/link'
 import { submitApplication } from '@/lib/actions/applications'
 import { getAllDevices } from '@/lib/actions/devices'
 import { getPublicIntel } from '@/lib/actions/intel'
+import { getLatestFeed } from '@/lib/actions/dashboard-feed'
+import { CommsFeed } from '@/components/comms-feed'
 import { SectionTracker } from '@/components/section-tracker'
 import type { Device, Intel } from '@/types/database'
+import type { FeedLine } from '@/lib/actions/dashboard-feed'
 
 const reasons = [
   { id: 'anomaly', label: 'ANOMALY DETECTED — I intercepted a signal I cannot explain.' },
@@ -200,10 +203,12 @@ export default function LandingPage() {
   const [error, setError] = useState('')
   const [devices, setDevices] = useState<Device[]>([])
   const [latestIntel, setLatestIntel] = useState<Intel[]>([])
+  const [feedLines, setFeedLines] = useState<FeedLine[]>([])
 
   useEffect(() => {
     getAllDevices().then((d) => setDevices(d.filter((dev) => dev.knowledge === 'known').slice(0, 3)))
     getPublicIntel().then((intel) => setLatestIntel(intel.slice(0, 2)))
+    getLatestFeed().then((f) => { if (f?.lines?.length) setFeedLines(f.lines) })
   }, [])
 
   const computedReason = selectedReason === 'other'
@@ -271,10 +276,12 @@ export default function LandingPage() {
 
         <div className="deco-diamond"><span /></div>
 
-        <div className="device-wrap">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/device.png" alt="Multiverse Console" />
-        </div>
+        {/* ── COMMS FEED ── */}
+        {feedLines.length > 0 && (
+          <div style={{ width: '100%', maxWidth: '480px', margin: '1.25rem auto 0' }}>
+            <CommsFeed lines={feedLines} />
+          </div>
+        )}
 
         <div className="cta-row">
           <button onClick={scrollToApply} className="cta">

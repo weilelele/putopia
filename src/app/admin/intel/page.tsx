@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   getAllIntel, createIntel, updateIntel, deleteIntel,
 } from '@/lib/actions/intel'
+import { generateAndSaveFeed, getLatestFeed } from '@/lib/actions/dashboard-feed'
 import { createClient } from '@/lib/supabase/client'
 import type { Intel, IntelTag } from '@/types/database'
 
@@ -59,11 +60,17 @@ export default function IntelAdmin() {
   const [previews, setPreviews]           = useState<string[]>([])
   const [uploading, setUploading]         = useState(false)
   const [defaultPublisher, setDefaultPublisher] = useState('')
+  const [feedGenerating, setFeedGenerating] = useState(false)
+  const [feedMsg, setFeedMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [feedLastGenerated, setFeedLastGenerated] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLDivElement>(null)
 
   const load = async () => { setLoading(true); setItems(await getAllIntel()); setLoading(false) }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    getLatestFeed().then(f => { if (f?.generated_at) setFeedLastGenerated(f.generated_at) })
+  }, [])
 
   // Fetch current user display name for publisher default
   useEffect(() => {
@@ -351,6 +358,43 @@ export default function IntelAdmin() {
           </div>
         </div>
       )}
+
+      {/* ── Dashboard Feed Regenerate ── */}
+      <div style={{ ...S.card, marginTop: '24px', borderColor: '#1A3040' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <div style={{ color: '#22D4E0', fontSize: '11px', letterSpacing: '0.25em', marginBottom: '4px' }}>UPLINK // DASHBOARD FEED</div>
+            <div style={{ color: '#8A9AB5', fontSize: '12px', fontFamily: 'monospace' }}>
+              {feedLastGenerated
+                ? `Last generated: ${new Date(feedLastGenerated).toLocaleString()}`
+                : 'No feed generated yet'}
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              setFeedGenerating(true)
+              setFeedMsg(null)
+              const res = await generateAndSaveFeed()
+              setFeedGenerating(false)
+              if (res.error) {
+                setFeedMsg({ text: res.error, ok: false })
+              } else {
+                setFeedMsg({ text: 'Feed generated successfully', ok: true })
+                if (res.feed?.generated_at) setFeedLastGenerated(res.feed.generated_at)
+              }
+            }}
+            disabled={feedGenerating}
+            style={{ padding: '8px 20px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.2em', cursor: feedGenerating ? 'not-allowed' : 'pointer', border: '1px solid #22D4E0', color: '#22D4E0', background: 'rgba(34,212,224,0.06)', opacity: feedGenerating ? 0.5 : 1 }}
+          >
+            {feedGenerating ? 'GENERATING...' : 'REGENERATE FEED'}
+          </button>
+        </div>
+        {feedMsg && (
+          <div style={{ marginTop: '10px', padding: '6px 10px', background: feedMsg.ok ? 'rgba(32,216,144,0.08)' : 'rgba(232,48,48,0.08)', border: `1px solid ${feedMsg.ok ? '#20D890' : '#E83030'}`, color: feedMsg.ok ? '#20D890' : '#E83030', fontSize: '12px', fontFamily: 'monospace' }}>
+            {feedMsg.text}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

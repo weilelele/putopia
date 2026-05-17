@@ -67,10 +67,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const navItems = [
-    { href: '/admin/stories', label: 'STORIES' },
-    { href: '/admin/devices', label: 'DEVICES' },
-    { href: '/admin/intel',   label: 'INTEL'   },
-    { href: '/admin/worlds',  label: 'WORLDS'  },
+    { href: '/admin/stories',     label: 'STORIES'  },
+    { href: '/admin/devices',     label: 'DEVICES'  },
+    { href: '/admin/intel',       label: 'INTEL'    },
+    { href: '/admin/worlds',      label: 'WORLDS'   },
+    { href: '/admin/create-news', label: 'AI NEWS'  },
   ]
 
   return (

@@ -845,6 +845,153 @@ code, pre, kbd { font-family: var(--font-mono); }
    LANDING PAGE — hero, device, CTA, apply section
    ============================================================ */
 
+/* ── COMMS FEED (dashboard hero typewriter) ── */
+.comms-feed-wrap {
+  position: relative;
+  width: 100%;
+  background: rgba(11,15,23,0.7);
+  border: 1.5px solid var(--bd-cyan);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 18px) 0,
+    100% 18px,
+    100% 100%,
+    18px 100%,
+    0 calc(100% - 18px)
+  );
+}
+
+/* + corner markers */
+.comms-feed-wrap::before,
+.comms-feed-wrap::after {
+  content: '+';
+  position: absolute;
+  font-family: var(--font-mono);
+  color: var(--color-nebula);
+  font-size: 0.9rem;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 2;
+}
+.comms-feed-wrap::before { top: 4px;    left: 8px;  }
+.comms-feed-wrap::after  { bottom: 4px; right: 8px; }
+
+/* tick rails */
+.comms-feed-wrap .comms-tick-left,
+.comms-feed-wrap .comms-tick-right {
+  position: absolute;
+  top: 14%; bottom: 14%;
+  width: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 2;
+}
+.comms-feed-wrap .comms-tick-left  { left: 6px; }
+.comms-feed-wrap .comms-tick-right { right: 6px; }
+.comms-feed-wrap .comms-tick-left::before,
+.comms-feed-wrap .comms-tick-right::before {
+  content: '';
+  flex: 1;
+  background-image: repeating-linear-gradient(
+    180deg,
+    var(--color-nucleus) 0, var(--color-nucleus) 2px,
+    transparent 2px, transparent 8px
+  );
+  width: 100%;
+  opacity: 0.5;
+}
+
+.comms-feed-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(34,212,224,0.12);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.comms-feed-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-nebula);
+  box-shadow: 0 0 8px rgba(34,212,224,0.7);
+  flex-shrink: 0;
+  animation: feedDotPulse 1.6s ease-in-out infinite;
+}
+@keyframes feedDotPulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+.comms-feed-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.28em;
+  color: var(--color-nebula);
+}
+
+.comms-feed-date {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  color: var(--color-star-deep);
+}
+
+.comms-feed-lines {
+  padding: 0.85rem 1rem 0.9rem;
+  height: min(240px, 42vh);   /* fixed height — box stays same size while typing */
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #1E2840 transparent;
+  text-align: left;           /* override hero centering */
+}
+.comms-feed-lines::-webkit-scrollbar { width: 2px; }
+.comms-feed-lines::-webkit-scrollbar-thumb { background: #1E2840; border-radius: 2px; }
+
+/* Grid layout: fixed ts column + text column — ensures proper alignment */
+.comms-feed-line {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  column-gap: 0.6rem;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.75;
+  color: var(--color-star-dim);
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
+.comms-feed-line:last-child { margin-bottom: 0; }
+
+.comms-feed-ts {
+  font-size: 0.6rem;
+  color: #2A3A58;
+  letter-spacing: 0.04em;
+  padding-top: 0.08em;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* text column — block so wrapping stays in its grid cell, left-aligned */
+.comms-feed-text { display: block; text-align: left; }
+
+/* highlighted names */
+.feed-hi-device  { color: #C07040; }
+.feed-hi-voyager { color: var(--color-nebula); }
+
+/* blinking cursor */
+.comms-feed-cursor {
+  display: inline-block;
+  width: 7px; height: 0.8em;
+  background: var(--color-nebula);
+  vertical-align: middle;
+  margin-left: 2px;
+  animation: feedCursorBlink 0.75s step-end infinite;
+}
+@keyframes feedCursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
 
 .landing-main {
   position: relative;
