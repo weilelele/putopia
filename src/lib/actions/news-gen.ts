@@ -1,6 +1,6 @@
 'use server'
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import Groq from 'groq-sdk'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { VoyagerProfile } from '@/types/database'
 
@@ -10,17 +10,16 @@ export type GeneratedNews = {
   imagePrompt: string
 }
 
-// 生成新闻草稿（Gemini API）
+// 生成新闻草稿（Groq — Llama 3.3 70B）
 export async function generateNews(
   idea: string,
   persona: Pick<VoyagerProfile, 'display_name' | 'bio' | 'location'>
 ): Promise<{ data: GeneratedNews | null; error: string | null }> {
-  if (!process.env.GEMINI_API_KEY) {
-    return { data: null, error: '请在 .env.local 中配置 GEMINI_API_KEY' }
+  if (!process.env.GROQ_API_KEY) {
+    return { data: null, error: '请在 .env.local 中配置 GROQ_API_KEY' }
   }
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
   const personaLines = [
     `姓名：${persona.display_name}`,
@@ -47,8 +46,14 @@ ${idea}
 {"title":"...","content":"...","imagePrompt":"..."}`
 
   try {
-    const result = await model.generateContent(prompt)
-    const raw = result.response.text().trim()
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 1024,
+      temperature: 0.8,
+    })
+
+    const raw = completion.choices[0]?.message?.content?.trim() ?? ''
 
     // 提取 JSON（防止模型输出多余内容或代码块包裹）
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
