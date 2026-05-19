@@ -158,6 +158,7 @@ export type Story = {
   tags: string[]
   excerpt: string
   content: string
+  youtube_id: string | null   // YouTube video ID (e.g. "dQw4w9WgXcQ")
   is_published: boolean
   created_at: string
   updated_at: string
@@ -166,7 +167,7 @@ export type Story = {
 export type StoryInsert = Omit<Story, 'created_at' | 'updated_at'>
 export type StoryUpdate = Partial<Pick<
   Story,
-  'title' | 'author_id' | 'author_name' | 'date' | 'tags' | 'excerpt' | 'content' | 'is_published'
+  'title' | 'author_id' | 'author_name' | 'date' | 'tags' | 'excerpt' | 'content' | 'youtube_id' | 'is_published'
 >>
 
 // ---------- Supabase Database shape (for createClient generic) ----------

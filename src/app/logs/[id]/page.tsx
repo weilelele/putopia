@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { YouTubeEmbed } from '@next/third-parties/google'
 import { getStoryById } from '@/lib/actions/stories'
 import { ArrowLeft, Send } from 'lucide-react'
 import type { Story } from '@/types/database'
@@ -156,6 +157,13 @@ export default function StoryPage() {
           </div>
         </div>
       </div>
+
+      {/* YouTube video */}
+      {story.youtube_id && (
+        <div style={{ marginBottom: '2rem' }}>
+          <YouTubeEmbed videoid={story.youtube_id} style="width:100%;border-radius:2px" playlabel={`Play: ${story.title}`} />
+        </div>
+      )}
 
       {/* Story body */}
       <article className="mb-12 space-y-5">

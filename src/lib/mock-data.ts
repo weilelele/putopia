@@ -22,6 +22,7 @@ export interface Device {
   usedByName?: string
 }
 
+/** @deprecated voyagerProfiles removed — use getAllVoyagers() from @/lib/actions/profile */
 export interface VoyagerProfile {
   id: string
   name: string
@@ -197,7 +198,8 @@ export const deviceData: Device[] = [
   },
 ]
 
-// VOYAGER PROFILES
+// VOYAGER PROFILES — replaced by real DB via getAllVoyagers()
+// Kept as empty array so any remaining imports don't break at build time
 export const voyagerProfiles: VoyagerProfile[] = [
   {
     id: 'VOY-001',

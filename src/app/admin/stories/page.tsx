@@ -19,12 +19,12 @@ const S = {
 
 type F = {
   id: string; title: string; author_name: string; date: string
-  tags: string; excerpt: string; content: string; is_published: boolean
+  tags: string; excerpt: string; content: string; youtube_id: string; is_published: boolean
 }
 
 const EMPTY: F = {
   id: '', title: '', author_name: '', date: new Date().toISOString().slice(0, 10),
-  tags: '', excerpt: '', content: '', is_published: false,
+  tags: '', excerpt: '', content: '', youtube_id: '', is_published: false,
 }
 
 function toSlug(s: string) {
@@ -32,7 +32,7 @@ function toSlug(s: string) {
 }
 
 function storyToForm(s: Story): F {
-  return { ...s, tags: s.tags.join(', ') }
+  return { ...s, tags: s.tags.join(', '), youtube_id: s.youtube_id ?? '' }
 }
 
 // ── component ──────────────────────────────────────────────────────────────
@@ -79,6 +79,7 @@ export default function StoriesAdmin() {
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
       excerpt: form.excerpt.trim(),
       content: form.content,
+      youtube_id: form.youtube_id.trim() || null,
       is_published: form.is_published,
     }
     const result = editId
@@ -215,6 +216,11 @@ export default function StoriesAdmin() {
           <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>标签（逗号分隔）</label>
             <input style={S.input} value={form.tags} onChange={e => set('tags', e.target.value)} placeholder="FIRST CONTACT, DISCOVERY, PERSONAL" />
+          </div>
+
+          <div style={{ marginBottom: '12px' }}>
+            <label style={S.label}>YouTube 视频 ID（可选）</label>
+            <input style={S.input} value={form.youtube_id} onChange={e => set('youtube_id', e.target.value)} placeholder="例：dQw4w9WgXcQ（URL 中 v= 后面的部分）" />
           </div>
 
           <div style={{ marginBottom: '12px' }}>

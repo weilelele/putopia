@@ -67,9 +67,9 @@ export async function getAllVoyagers() {
   const supabase = await createClient()
   const { data } = await supabase
     .from('voyager_profiles')
-    .select('id, display_name, bio, avatar_url, location, role, observation_days, worlds_discovered, joined_at')
+    .select('*')
     .in('role', ['voyager', 'architect'])
-    .order('joined_at', { ascending: false })
+    .order('joined_at', { ascending: true })
 
   return data ?? []
 }
