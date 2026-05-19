@@ -29,7 +29,8 @@ export type VoyagerProfile = {
 
 export type VoyagerProfileUpdate = Partial<Pick<
   VoyagerProfile,
-  'display_name' | 'bio' | 'avatar_url' | 'social_x' | 'social_instagram' | 'social_linkedin' | 'location'
+  | 'display_name' | 'bio' | 'avatar_url' | 'social_x' | 'social_instagram' | 'social_linkedin'
+  | 'location' | 'observation_days' | 'worlds_discovered'
 >>
 
 // ---------- votes ----------
@@ -163,6 +164,8 @@ export type Story = {
   created_at: string
   updated_at: string
 }
+
+export type StoryWithAvatar = Story & { author_avatar_url: string | null }
 
 export type StoryInsert = Omit<Story, 'created_at' | 'updated_at'>
 export type StoryUpdate = Partial<Pick<

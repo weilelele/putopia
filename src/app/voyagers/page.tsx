@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { getAllVoyagers } from '@/lib/actions/profile'
+import { getAllVoyagers, updateProfile, uploadAvatar } from '@/lib/actions/profile'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
-import { Camera } from 'lucide-react'
+import { Camera, X as XClose } from 'lucide-react'
 import type { VoyagerProfile, UserRole } from '@/types/database'
 
 // ── Platform icons ─────────────────────────────────────────────────────────
@@ -34,41 +34,117 @@ function accentColor(name: string): string {
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
   return ACCENT_COLORS[Math.abs(hash) % ACCENT_COLORS.length]
 }
-
 function getInitials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
-
 function formatJoinDate(iso: string): string {
   return new Date(iso).toISOString().slice(0, 10)
 }
+
+// ── Edit form type ─────────────────────────────────────────────────────────
+type EditForm = {
+  display_name: string
+  location: string
+  bio: string
+  social_x: string
+  social_instagram: string
+  social_linkedin: string
+  observation_days: string
+  worlds_discovered: string
+}
+
+function profileToForm(v: VoyagerProfile): EditForm {
+  return {
+    display_name:     v.display_name,
+    location:         v.location ?? '',
+    bio:              v.bio ?? '',
+    social_x:         v.social_x ?? '',
+    social_instagram: v.social_instagram ?? '',
+    social_linkedin:  v.social_linkedin ?? '',
+    observation_days: String(v.observation_days),
+    worlds_discovered: String(v.worlds_discovered),
+  }
+}
+
+const BIO_LIMIT = 280
 
 // ── Page ───────────────────────────────────────────────────────────────────
 export default function VoyagersPage() {
   const { user, isAtLeast } = useAuth()
   const [voyagers, setVoyagers] = useState<VoyagerProfile[]>([])
   const [loading, setLoading] = useState(true)
-  const [localAvatars, setLocalAvatars] = useState<Record<string, string>>({})
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [uploadingFor, setUploadingFor] = useState<string | null>(null)
+
+  // ── Edit modal state ───────────────────────────────────────────────────
+  const [editing, setEditing] = useState<VoyagerProfile | null>(null)
+  const [form, setForm] = useState<EditForm | null>(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const modalFileRef = useRef<HTMLInputElement>(null)
+
+  const refresh = async () => {
+    const data = await getAllVoyagers()
+    setVoyagers(data)
+  }
 
   useEffect(() => {
     getAllVoyagers().then(data => { setVoyagers(data); setLoading(false) })
   }, [])
 
-  const handleAvatarClick = (voyagerId: string) => {
-    setUploadingFor(voyagerId)
-    fileInputRef.current?.click()
+  const openEdit = (v: VoyagerProfile) => {
+    setEditing(v)
+    setForm(profileToForm(v))
+    setAvatarFile(null)
+    setAvatarPreview(null)
+    setSaveMsg(null)
   }
+  const closeEdit = () => { setEditing(null); setForm(null) }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file && uploadingFor) {
-      const url = URL.createObjectURL(file)
-      setLocalAvatars(prev => ({ ...prev, [uploadingFor]: url }))
-    }
+    if (!file) return
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
     if (e.target) e.target.value = ''
   }
+
+  const handleSave = async () => {
+    if (!form || !editing) return
+    setSaving(true); setSaveMsg(null)
+
+    // 1. Upload avatar if changed
+    if (avatarFile) {
+      const fd = new FormData()
+      fd.append('avatar', avatarFile)
+      const { error } = await uploadAvatar(fd)
+      if (error) { setSaveMsg({ text: `Avatar upload failed: ${error}`, ok: false }); setSaving(false); return }
+    }
+
+    // 2. Update profile fields
+    const result = await updateProfile({
+      display_name:      form.display_name.trim() || editing.display_name,
+      location:          form.location.trim() || null,
+      bio:               form.bio.slice(0, BIO_LIMIT) || null,
+      social_x:          form.social_x.trim()         || null,
+      social_instagram:  form.social_instagram.trim() || null,
+      social_linkedin:   form.social_linkedin.trim()  || null,
+      observation_days:  Math.max(0, parseInt(form.observation_days)  || 0),
+      worlds_discovered: Math.max(0, parseInt(form.worlds_discovered) || 0),
+    })
+
+    setSaving(false)
+    if (result?.error) {
+      setSaveMsg({ text: result.error, ok: false })
+    } else {
+      setSaveMsg({ text: 'Saved ✓', ok: true })
+      await refresh()
+      setTimeout(() => { closeEdit() }, 600)
+    }
+  }
+
+  const setF = (k: keyof EditForm, v: string) =>
+    setForm(f => f ? { ...f, [k]: v } : f)
 
   const architects     = voyagers.filter(v => v.role === 'architect')
   const activeVoyagers = voyagers.filter(v => v.role === 'voyager')
@@ -93,8 +169,6 @@ export default function VoyagersPage() {
         </div>
       </div>
 
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-
       {loading ? (
         <div style={{ color: '#4A5570', fontFamily: 'monospace', fontSize: '13px', padding: '60px 0', textAlign: 'center', letterSpacing: '0.15em' }}>
           LOADING REGISTRY...
@@ -109,7 +183,7 @@ export default function VoyagersPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {architects.map(v => (
                   <VoyagerCard key={v.id} voyager={v} user={user} isAtLeast={isAtLeast}
-                    localAvatars={localAvatars} onAvatarClick={handleAvatarClick} isArchitect />
+                    onEditClick={openEdit} isArchitect />
                 ))}
               </div>
             </section>
@@ -123,7 +197,7 @@ export default function VoyagersPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {activeVoyagers.map(v => (
                   <VoyagerCard key={v.id} voyager={v} user={user} isAtLeast={isAtLeast}
-                    localAvatars={localAvatars} onAvatarClick={handleAvatarClick} />
+                    onEditClick={openEdit} />
                 ))}
               </div>
             </section>
@@ -135,39 +209,176 @@ export default function VoyagersPage() {
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
         <div>VOYAGER REGISTRY</div>
       </div>
+
+      {/* ── Edit Modal ── */}
+      {editing && form && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(5,8,18,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+          onClick={closeEdit}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#0D1020', border: '1px solid #E85A00', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', fontFamily: 'monospace' }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ color: '#E85A00', fontSize: '11px', letterSpacing: '0.25em' }}>// EDIT PROFILE</div>
+              <button onClick={closeEdit} style={{ background: 'none', border: 'none', color: '#4A5570', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+                <XClose size={16} />
+              </button>
+            </div>
+
+            {/* Avatar */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <div
+                  onClick={() => modalFileRef.current?.click()}
+                  style={{
+                    width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', cursor: 'pointer',
+                    background: avatarPreview || editing.avatar_url ? 'transparent' : `${accentColor(editing.display_name)}18`,
+                    border: `2px solid ${accentColor(editing.display_name)}60`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: accentColor(editing.display_name), fontSize: '20px', fontWeight: 'bold',
+                  }}
+                >
+                  {(avatarPreview || editing.avatar_url)
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={avatarPreview ?? editing.avatar_url!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : getInitials(editing.display_name)}
+                </div>
+                <div
+                  onClick={() => modalFileRef.current?.click()}
+                  style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '24px', height: '24px', borderRadius: '50%', background: '#111525', border: '1px solid #E85A00', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#E85A00' }}
+                >
+                  <Camera size={11} />
+                </div>
+              </div>
+              <input ref={modalFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
+            </div>
+
+            {/* Fields */}
+            <FieldGroup>
+              <Field label="DISPLAY NAME">
+                <input style={FIELD_INPUT} value={form.display_name} onChange={e => setF('display_name', e.target.value)} />
+              </Field>
+              <Field label="LOCATION">
+                <input style={FIELD_INPUT} value={form.location} onChange={e => setF('location', e.target.value)} placeholder="City, Country" />
+              </Field>
+            </FieldGroup>
+
+            <Field label={`BIO (${form.bio.length} / ${BIO_LIMIT})`}>
+              <textarea
+                style={{ ...FIELD_INPUT, minHeight: '80px', resize: 'vertical' }}
+                value={form.bio}
+                maxLength={BIO_LIMIT}
+                onChange={e => setF('bio', e.target.value)}
+                placeholder="A short description of your role in the Collective..."
+              />
+              {form.bio.length >= BIO_LIMIT && (
+                <div style={{ color: '#E83030', fontSize: '10px', marginTop: '3px', letterSpacing: '0.05em' }}>Character limit reached</div>
+              )}
+            </Field>
+
+            <div style={{ color: '#4A5570', fontSize: '10px', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// SOCIAL LINKS</div>
+            <FieldGroup>
+              <Field label="X / TWITTER (full URL)">
+                <input style={FIELD_INPUT} value={form.social_x} onChange={e => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
+              </Field>
+              <Field label="INSTAGRAM (full URL)">
+                <input style={FIELD_INPUT} value={form.social_instagram} onChange={e => setF('social_instagram', e.target.value)} placeholder="https://instagram.com/yourhandle" />
+              </Field>
+              <Field label="LINKEDIN (full URL)">
+                <input style={FIELD_INPUT} value={form.social_linkedin} onChange={e => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
+              </Field>
+            </FieldGroup>
+
+            <div style={{ color: '#4A5570', fontSize: '10px', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// FIELD DATA</div>
+            <FieldGroup cols={2}>
+              <Field label="OBSERVATION DAYS">
+                <input style={FIELD_INPUT} type="number" min="0" value={form.observation_days} onChange={e => setF('observation_days', e.target.value)} />
+              </Field>
+              <Field label="WORLDS DISCOVERED">
+                <input style={FIELD_INPUT} type="number" min="0" value={form.worlds_discovered} onChange={e => setF('worlds_discovered', e.target.value)} />
+              </Field>
+            </FieldGroup>
+
+            {saveMsg && (
+              <div style={{ marginBottom: '12px', padding: '7px 10px', background: saveMsg.ok ? 'rgba(32,216,144,0.08)' : 'rgba(232,48,48,0.08)', border: `1px solid ${saveMsg.ok ? '#20D890' : '#E83030'}`, color: saveMsg.ok ? '#20D890' : '#E83030', fontSize: '12px', letterSpacing: '0.05em' }}>
+                {saveMsg.text}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
+              <button onClick={closeEdit} style={{ padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.1em', cursor: 'pointer', background: 'none', border: '1px solid #1E2840', color: '#4A5570' }}>
+                CANCEL
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #E85A00', color: '#E85A00', background: saving ? 'transparent' : 'rgba(232,90,0,0.08)', opacity: saving ? 0.6 : 1 }}
+              >
+                {saving ? 'SAVING...' : 'SAVE'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Small form helpers ─────────────────────────────────────────────────────
+const FIELD_INPUT: React.CSSProperties = {
+  width: '100%', background: '#111525', border: '1px solid #1E2840', color: '#EDE8DE',
+  padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none',
+  boxSizing: 'border-box',
+}
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={{ display: 'block', color: '#4A5570', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '4px' }}>{label}</label>
+      {children}
+    </div>
+  )
+}
+function FieldGroup({ cols = 1, children }: { cols?: number; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '10px', marginBottom: '10px' }}>
+      {children}
     </div>
   )
 }
 
 // ── Card component ─────────────────────────────────────────────────────────
 function VoyagerCard({
-  voyager, user, isAtLeast, localAvatars, onAvatarClick, isArchitect = false,
+  voyager, user, isAtLeast, onEditClick, isArchitect = false,
 }: {
   voyager: VoyagerProfile
   user: { id?: string } | null
   isAtLeast: (role: UserRole) => boolean
-  localAvatars: Record<string, string>
-  onAvatarClick: (id: string) => void
+  onEditClick: (v: VoyagerProfile) => void
   isArchitect?: boolean
 }) {
-  const color     = accentColor(voyager.display_name)
-  const initStr   = getInitials(voyager.display_name)
-  const isOwn     = isAtLeast('voyager') && user?.id === voyager.id
-  const avatarSrc = localAvatars[voyager.id] ?? voyager.avatar_url ?? null
+  const color    = accentColor(voyager.display_name)
+  const initStr  = getInitials(voyager.display_name)
+  const isOwn    = isAtLeast('voyager') && user?.id === voyager.id
+  const avatarSrc = voyager.avatar_url ?? null
 
   const links = [
     voyager.social_x         && { key: 'x',  icon: <XIcon />,         href: voyager.social_x },
-    voyager.social_instagram  && { key: 'ig', icon: <InstagramIcon />,  href: voyager.social_instagram },
-    voyager.social_linkedin   && { key: 'li', icon: <LinkedInIcon />,   href: voyager.social_linkedin },
+    voyager.social_instagram && { key: 'ig', icon: <InstagramIcon />,  href: voyager.social_instagram },
+    voyager.social_linkedin  && { key: 'li', icon: <LinkedInIcon />,   href: voyager.social_linkedin },
   ].filter(Boolean) as { key: string; icon: React.ReactNode; href: string }[]
 
   return (
     <div
+      onClick={isOwn ? () => onEditClick(voyager) : undefined}
       className="border p-4 transition-all duration-200"
       style={{
         background: '#111525',
         borderColor: isOwn ? `${color}55` : isArchitect ? 'rgba(232,90,0,0.18)' : '#1E2840',
         boxShadow: isOwn ? `0 0 12px ${color}15` : 'inset 0 1px 0 rgba(232,90,0,0.04)',
+        cursor: isOwn ? 'pointer' : 'default',
       }}
     >
       {/* Avatar + name row */}
@@ -183,13 +394,12 @@ function VoyagerCard({
               : initStr}
           </div>
           {isOwn && (
-            <button
-              onClick={() => onAvatarClick(voyager.id)}
+            <div
               className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border"
               style={{ background: '#111525', borderColor: '#E85A00', color: '#E85A00' }}
             >
               <Camera size={10} />
-            </button>
+            </div>
           )}
         </div>
 
@@ -235,18 +445,19 @@ function VoyagerCard({
         </div>
       </div>
 
-      {/* Bio */}
+      {/* Bio — 240 char display limit */}
       <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
         {voyager.bio
           ? (voyager.bio.length > 240 ? voyager.bio.slice(0, 240) + '…' : voyager.bio)
           : '—'}
       </p>
 
-      {/* Social links */}
+      {/* Social links — stop card click from propagating */}
       {links.length > 0 && (
         <div className="flex gap-3 pt-2 border-t" style={{ borderColor: '#1A2238' }}>
           {links.map(({ key, icon, href }) => (
             <a key={key} href={href} target="_blank" rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
               className="flex items-center justify-center w-7 h-7 border transition-colors"
               style={{ borderColor: '#1E2840', color: '#4A5570', borderRadius: '2px' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(242,240,230,0.2)'; (e.currentTarget as HTMLElement).style.color = '#8A9AB5' }}

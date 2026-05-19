@@ -30,6 +30,7 @@ export async function updateProfile(updates: VoyagerProfileUpdate) {
 
   if (error) return { error: error.message }
   revalidatePath('/profile')
+  revalidatePath('/voyagers')
   return { error: null }
 }
 
@@ -72,4 +73,17 @@ export async function getAllVoyagers() {
     .order('joined_at', { ascending: true })
 
   return data ?? []
+}
+
+export async function searchMembers(query: string) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('voyager_profiles')
+    .select('id, display_name, role')
+    .in('role', ['voyager', 'architect'])
+    .ilike('display_name', `%${query}%`)
+    .order('display_name')
+    .limit(10)
+
+  return (data ?? []) as { id: string; display_name: string; role: string }[]
 }
