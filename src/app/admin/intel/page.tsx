@@ -7,6 +7,7 @@ import {
 import { generateAndSaveFeed, getLatestFeed } from '@/lib/actions/dashboard-feed'
 import { createClient } from '@/lib/supabase/client'
 import type { Intel, IntelTag } from '@/types/database'
+import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 const S = {
   card:  { background: '#111525', border: '1px solid #1E2840', padding: '20px', marginBottom: '16px' },
@@ -28,13 +29,14 @@ type F = {
   tag: IntelTag
   classified: boolean
   publisher_name: string
+  publisher_id: string | null
 }
 
 const EMPTY: F = {
   id: '', title: '', content: '',
   timestamp: new Date().toISOString().slice(0, 16),
   tag: 'NOTICE', classified: false,
-  publisher_name: '',
+  publisher_name: '', publisher_id: null,
 }
 
 function formatTs(iso: string) {
@@ -101,6 +103,7 @@ export default function IntelAdmin() {
       id: i.id, title: i.title, content: i.content,
       timestamp: i.timestamp.slice(0, 16), tag: i.tag, classified: i.classified,
       publisher_name: i.publisher_name ?? defaultPublisher,
+      publisher_id: i.publisher_id ?? null,
     })
     setCurrentImages(i.images ?? [])
     setPendingFiles([])
@@ -110,7 +113,8 @@ export default function IntelAdmin() {
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
-  const set = (k: keyof F, v: string | boolean) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k: keyof F, v: string | boolean | null) => setForm(f => ({ ...f, [k]: v }))
+  const setPublisher = (v: MemberValue) => setForm(f => ({ ...f, publisher_id: v?.id ?? null, publisher_name: v?.name ?? '' }))
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
@@ -164,7 +168,7 @@ export default function IntelAdmin() {
       classified: form.classified,
       images: allImages,
       publisher_name: form.publisher_name.trim() || null,
-      publisher_id: null,
+      publisher_id: form.publisher_id,
       created_by: null,
     }
     const result = editId ? await updateIntel(editId, payload) : await createIntel(payload)
@@ -287,8 +291,11 @@ export default function IntelAdmin() {
 
           {/* Publisher */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={S.label}>发布者（默认为当前 Architect）</label>
-            <input style={S.input} value={form.publisher_name} onChange={e => set('publisher_name', e.target.value)} placeholder={defaultPublisher || '发布者名称'} />
+            <MemberPicker
+              label="发布者"
+              value={form.publisher_id ? { id: form.publisher_id, name: form.publisher_name } : null}
+              onChange={setPublisher}
+            />
           </div>
 
           {/* Image upload */}

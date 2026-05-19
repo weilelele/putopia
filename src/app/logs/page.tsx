@@ -6,7 +6,7 @@ import { getPublishedStories } from '@/lib/actions/stories'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
 import { Plus, ArrowRight } from 'lucide-react'
-import type { Story } from '@/types/database'
+import type { StoryWithAvatar } from '@/types/database'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -25,7 +25,7 @@ function getInitials(name: string) {
 
 export default function LogsPage() {
   const { isAtLeast } = useAuth()
-  const [stories, setStories] = useState<Story[]>([])
+  const [stories, setStories] = useState<StoryWithAvatar[]>([])
 
   useEffect(() => { getPublishedStories().then(setStories) }, [])
 
@@ -67,16 +67,26 @@ export default function LogsPage() {
                 className="flex items-center gap-3 px-4 py-3 border-b"
                 style={{ background: '#0D1020', borderColor: '#1A2238' }}
               >
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
-                  style={{
-                    background: 'rgba(232,90,0,0.12)',
-                    color: '#E85A00',
-                    border: '1px solid rgba(232,90,0,0.3)',
-                  }}
-                >
-                  {initials}
-                </div>
+                {story.author_avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={story.author_avatar_url}
+                    alt={story.author_name}
+                    className="w-9 h-9 rounded-full shrink-0"
+                    style={{ objectFit: 'cover', border: '1px solid rgba(232,90,0,0.3)' }}
+                  />
+                ) : (
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
+                    style={{
+                      background: 'rgba(232,90,0,0.12)',
+                      color: '#E85A00',
+                      border: '1px solid rgba(232,90,0,0.3)',
+                    }}
+                  >
+                    {initials}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>
                     {story.author_name}

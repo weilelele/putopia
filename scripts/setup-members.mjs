@@ -196,21 +196,28 @@ async function uploadAvatar(userId, imageBuffer) {
 async function createMember(member) {
   console.log(`\n▸ ${member.display_name} (${member.role}) — ${member.location}`)
 
-  // 1. Create auth user
+  // 1. Create auth user (or fetch existing if already created)
+  let userId
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: member.email,
     password: randomUUID(),
     email_confirm: true,
   })
   if (authError) {
-    if (authError.message.includes('already')) {
-      console.log(`  ⚠ Email already exists, skipping: ${member.email}`)
-      return
+    if (authError.message.toLowerCase().includes('already')) {
+      // Fetch existing user ID
+      const { data: listData } = await supabase.auth.admin.listUsers()
+      const existing = listData?.users?.find(u => u.email === member.email)
+      if (!existing) { console.error(`  ✗ Could not find existing user for ${member.email}`); return }
+      userId = existing.id
+      console.log(`  ↩ Already exists, using ID: ${userId}`)
+    } else {
+      throw new Error(`Auth error: ${authError.message}`)
     }
-    throw new Error(`Auth error: ${authError.message}`)
+  } else {
+    userId = authData.user.id
+    console.log(`  ✓ Auth user created: ${userId}`)
   }
-  const userId = authData.user.id
-  console.log(`  ✓ Auth user created: ${userId}`)
 
   // 2. Generate & upload avatar
   let avatarUrl = null
@@ -223,8 +230,8 @@ async function createMember(member) {
     console.log(`  ⚠ Avatar failed (${err.message}), continuing without avatar`)
   }
 
-  // 3. Create voyager_profile
-  const { error: profileError } = await supabase.from('voyager_profiles').insert({
+  // 3. Upsert voyager_profile (auth trigger may have pre-created an empty row)
+  const { error: profileError } = await supabase.from('voyager_profiles').upsert({
     id: userId,
     display_name: member.display_name,
     bio: member.bio,

@@ -5,6 +5,7 @@ import {
   getAllDevices, createDevice, updateDevice, deleteDevice, uploadDeviceImage,
 } from '@/lib/actions/devices'
 import type { Device } from '@/types/database'
+import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 const S = {
   card:  { background: '#111525', border: '1px solid #1E2840', padding: '20px', marginBottom: '16px' },
@@ -19,21 +20,21 @@ const S = {
 type F = {
   id: string; name: string; batch_id: string; knowledge: 'known' | 'unknown'
   location: string; description: string; image_path: string
-  status: string; current_user_name: string; exploration_progress: number
+  status: string; current_user_id: string | null; current_user_name: string; exploration_progress: number
 }
 
 const EMPTY: F = {
   id: '', name: '', batch_id: '', knowledge: 'known',
   location: '', description: '', image_path: '',
-  status: 'available', current_user_name: '', exploration_progress: 0,
+  status: 'available', current_user_id: null, current_user_name: '', exploration_progress: 0,
 }
 
 function deviceToForm(d: Device): F {
   return {
     id: d.id, name: d.name, batch_id: d.batch_id ?? '', knowledge: d.knowledge,
     location: d.location, description: d.description, image_path: d.image_path ?? '',
-    status: d.status ?? 'available', current_user_name: d.current_user_name ?? '',
-    exploration_progress: d.exploration_progress,
+    status: d.status ?? 'available', current_user_id: d.current_user_id ?? null,
+    current_user_name: d.current_user_name ?? '', exploration_progress: d.exploration_progress,
   }
 }
 
@@ -126,7 +127,8 @@ export default function DevicesAdmin() {
 
   const openNew  = () => { setForm(EMPTY); setEditId(null); setShowForm(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }
   const openEdit = (d: Device) => { setForm(deviceToForm(d)); setEditId(d.id); setShowForm(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }
-  const set = (k: keyof F, v: string | number) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k: keyof F, v: string | number | null) => setForm(f => ({ ...f, [k]: v }))
+  const setCurrentUser = (v: MemberValue) => setForm(f => ({ ...f, current_user_id: v?.id ?? null, current_user_name: v?.name ?? '' }))
 
   const handleSave = async () => {
     if (!form.id.trim() || !form.name.trim()) { setMsg({ text: 'ID 和名称不能为空', ok: false }); return }
@@ -139,7 +141,7 @@ export default function DevicesAdmin() {
       description: form.description.trim(),
       image_path: form.image_path || null,
       status: form.knowledge === 'known' ? (form.status as Device['status']) : null,
-      current_user_id: null,
+      current_user_id: form.knowledge === 'known' && form.status === 'in_use' ? form.current_user_id : null,
       current_user_name: form.knowledge === 'known' && form.status === 'in_use' ? form.current_user_name.trim() || null : null,
       exploration_progress: form.knowledge === 'unknown' ? Number(form.exploration_progress) : 0,
     }
@@ -288,10 +290,11 @@ export default function DevicesAdmin() {
                 </select>
               </div>
               {form.status === 'in_use' && (
-                <div>
-                  <label style={S.label}>当前使用者</label>
-                  <input style={S.input} value={form.current_user_name} onChange={e => set('current_user_name', e.target.value)} placeholder="Voyager X" />
-                </div>
+                <MemberPicker
+                  label="当前使用者"
+                  value={form.current_user_id ? { id: form.current_user_id, name: form.current_user_name } : null}
+                  onChange={setCurrentUser}
+                />
               )}
             </div>
           )}

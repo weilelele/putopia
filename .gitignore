@@ -43,3 +43,6 @@ next-env.d.ts
 # Local Netlify folder
 .netlify
 .env.local
+
+# Supabase CLI temp files
+supabase/.temp/

@@ -5,6 +5,7 @@ import {
   getAllStories, updateStory, submitStory, publishStory, unpublishStory, deleteStory,
 } from '@/lib/actions/stories'
 import type { Story } from '@/types/database'
+import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 // ── shared styles ──────────────────────────────────────────────────────────
 const S = {
@@ -18,12 +19,12 @@ const S = {
 }
 
 type F = {
-  id: string; title: string; author_name: string; date: string
+  id: string; title: string; author_name: string; author_id: string | null; date: string
   tags: string; excerpt: string; content: string; youtube_id: string; is_published: boolean
 }
 
 const EMPTY: F = {
-  id: '', title: '', author_name: '', date: new Date().toISOString().slice(0, 10),
+  id: '', title: '', author_name: '', author_id: null, date: new Date().toISOString().slice(0, 10),
   tags: '', excerpt: '', content: '', youtube_id: '', is_published: false,
 }
 
@@ -32,7 +33,7 @@ function toSlug(s: string) {
 }
 
 function storyToForm(s: Story): F {
-  return { ...s, tags: s.tags.join(', '), youtube_id: s.youtube_id ?? '' }
+  return { ...s, tags: s.tags.join(', '), youtube_id: s.youtube_id ?? '', author_id: s.author_id }
 }
 
 // ── component ──────────────────────────────────────────────────────────────
@@ -64,7 +65,8 @@ export default function StoriesAdmin() {
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
-  const set = (k: keyof F, v: string | boolean) => setForm(f => ({ ...f, [k]: v }))
+  const set = (k: keyof F, v: string | boolean | null) => setForm(f => ({ ...f, [k]: v }))
+  const setAuthor = (v: MemberValue) => setForm(f => ({ ...f, author_id: v?.id ?? null, author_name: v?.name ?? '' }))
 
   const handleSave = async () => {
     if (!form.id.trim() || !form.title.trim()) {
@@ -74,6 +76,7 @@ export default function StoriesAdmin() {
     const payload = {
       id: form.id.trim(),
       title: form.title.trim(),
+      author_id: form.author_id,
       author_name: form.author_name.trim(),
       date: form.date,
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -207,10 +210,11 @@ export default function StoriesAdmin() {
               <label style={S.label}>标题 *</label>
               <input style={S.input} value={form.title} onChange={e => set('title', e.target.value)} placeholder="故事标题" />
             </div>
-            <div>
-              <label style={S.label}>作者名</label>
-              <input style={S.input} value={form.author_name} onChange={e => set('author_name', e.target.value)} placeholder="Voyager X" />
-            </div>
+            <MemberPicker
+              label="作者"
+              value={form.author_id ? { id: form.author_id, name: form.author_name } : null}
+              onChange={setAuthor}
+            />
           </div>
 
           <div style={{ marginBottom: '12px' }}>

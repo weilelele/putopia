@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation'
 import { YouTubeEmbed } from '@next/third-parties/google'
 import { getStoryById } from '@/lib/actions/stories'
 import { ArrowLeft, Send } from 'lucide-react'
-import type { Story } from '@/types/database'
+import type { StoryWithAvatar } from '@/types/database'
 import posthog from 'posthog-js'
 
 function formatDate(iso: string) {
@@ -66,7 +66,7 @@ export default function StoryPage() {
   const params = useParams()
   const id = params?.id as string
 
-  const [story, setStory] = useState<Story | null | undefined>(undefined)
+  const [story, setStory] = useState<StoryWithAvatar | null | undefined>(undefined)
   const [comments, setComments] = useState<Comment[]>([])
   const [commentText, setCommentText] = useState('')
   const [transmitted, setTransmitted] = useState(false)
@@ -145,12 +145,22 @@ export default function StoryPage() {
         </h1>
 
         <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
-            style={{ background: 'rgba(232,90,0,0.12)', color: '#E85A00', border: '1px solid rgba(232,90,0,0.3)' }}
-          >
-            {getInitials(story.author_name)}
-          </div>
+          {story.author_avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={story.author_avatar_url}
+              alt={story.author_name}
+              className="w-8 h-8 rounded-full shrink-0"
+              style={{ objectFit: 'cover', border: '1px solid rgba(232,90,0,0.3)' }}
+            />
+          ) : (
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
+              style={{ background: 'rgba(232,90,0,0.12)', color: '#E85A00', border: '1px solid rgba(232,90,0,0.3)' }}
+            >
+              {getInitials(story.author_name)}
+            </div>
+          )}
           <div>
             <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>{story.author_name}</div>
             <div className="text-xs font-mono" style={{ color: '#4A5570' }}>{formatDate(story.date)}</div>

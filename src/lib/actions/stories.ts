@@ -5,28 +5,55 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { StoryInsert, StoryUpdate } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
 
-// Voyager+: list all published stories
+// Voyager+: list all published stories (with author avatar)
 export async function getPublishedStories() {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data: stories } = await supabase
     .from('stories')
     .select('*')
     .eq('is_published', true)
     .order('date', { ascending: false })
 
-  return data ?? []
+  if (!stories?.length) return []
+
+  const authorIds = [...new Set(stories.filter(s => s.author_id).map(s => s.author_id!))]
+  const avatarMap: Record<string, string | null> = {}
+  if (authorIds.length) {
+    const { data: profiles } = await supabase
+      .from('voyager_profiles')
+      .select('id, avatar_url')
+      .in('id', authorIds)
+    profiles?.forEach(p => { avatarMap[p.id] = p.avatar_url })
+  }
+
+  return stories.map(s => ({
+    ...s,
+    author_avatar_url: s.author_id ? (avatarMap[s.author_id] ?? null) : null,
+  }))
 }
 
-// Voyager+: get one story by slug
+// Voyager+: get one story by slug (with author avatar)
 export async function getStoryById(id: string) {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data: story } = await supabase
     .from('stories')
     .select('*')
     .eq('id', id)
     .single()
 
-  return data
+  if (!story) return null
+
+  let author_avatar_url: string | null = null
+  if (story.author_id) {
+    const { data: profile } = await supabase
+      .from('voyager_profiles')
+      .select('avatar_url')
+      .eq('id', story.author_id)
+      .single()
+    author_avatar_url = profile?.avatar_url ?? null
+  }
+
+  return { ...story, author_avatar_url }
 }
 
 // Voyager: get their own stories (published + drafts)
