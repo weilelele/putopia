@@ -75,7 +75,7 @@ export default function CreateNewsPage() {
       display_name: selectedPersona.display_name,
       bio: selectedPersona.bio,
       location: selectedPersona.location,
-    })
+    }, tag)
 
     setGenerating(false)
 
