@@ -22,10 +22,21 @@ const S = {
 
 const TAG_LABELS: Record<IntelTag, string> = { ORG: 'ORG — 组织', NOTICE: 'NOTICE — 通知', DEVICE: 'DEVICE — 设备' }
 
-// Pollinations 图片 URL（三个不同 seed）
+// Putopia 固定风格后缀 — 每张图都强制应用，保证视觉一致性
+const STYLE_SUFFIX = [
+  'cinematic still frame',
+  'deep void background',
+  'single dramatic light source amber or cyan',
+  'no people no text no typography',
+  'dark science fiction aesthetic',
+  'subtle film grain',
+  'high detail sharp focus',
+].join(', ')
+
+// Pollinations 图片 URL（预览尺寸 800×420，生成快）
 function pollinationsUrl(prompt: string, seed: number) {
-  const full = `${prompt}, dark space background, high quality, cinematic, atmospheric`
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=1200&height=630&seed=${seed}&nologo=true&model=flux`
+  const full = `${prompt}, ${STYLE_SUFFIX}`
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=800&height=420&seed=${seed}&nologo=true&model=flux`
 }
 
 // ── 阶段类型 ─────────────────────────────────────────────────────────────
@@ -51,6 +62,7 @@ export default function CreateNewsPage() {
   const [imageUrls, setImageUrls]   = useState<string[]>([])
   const [selectedImg, setSelectedImg] = useState<string | null>(null)
   const [imgErrors, setImgErrors]   = useState<boolean[]>([false, false, false])
+  const [imgLoaded, setImgLoaded]   = useState<boolean[]>([false, false, false])
 
   // 发布阶段
   const [publishing, setPublishing] = useState(false)
@@ -91,6 +103,7 @@ export default function CreateNewsPage() {
     setImageUrls(urls)
     setSelectedImg(null)
     setImgErrors([false, false, false])
+    setImgLoaded([false, false, false])
     setPhase('review')
   }
 
@@ -289,48 +302,68 @@ export default function CreateNewsPage() {
 
           {/* 配图选择 */}
           <div style={S.card}>
-            <label style={{ ...S.label, marginBottom: '12px' }}>配图（点击选择，或跳过）</label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <label style={{ ...S.label, marginBottom: 0 }}>配图（点击选择，或跳过）</label>
+              <span style={{ fontSize: '11px', color: '#4A5570' }}>
+                {imgLoaded.filter(Boolean).length} / 3 已加载
+              </span>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
               {imageUrls.map((url, i) => (
                 <div
                   key={i}
-                  onClick={() => !imgErrors[i] && setSelectedImg(selectedImg === url ? null : url)}
+                  onClick={() => imgLoaded[i] && !imgErrors[i] && setSelectedImg(selectedImg === url ? null : url)}
                   style={{
-                    cursor: imgErrors[i] ? 'default' : 'pointer',
+                    cursor: imgLoaded[i] && !imgErrors[i] ? 'pointer' : 'default',
                     border: selectedImg === url ? '2px solid #22D4E0' : '2px solid #1E2840',
-                    position: 'relative', aspectRatio: '1200/630', overflow: 'hidden',
+                    position: 'relative', aspectRatio: '800/420', overflow: 'hidden',
                     background: '#0D1020',
                   }}
                 >
-                  {imgErrors[i] ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#4A5570', fontSize: '11px', flexDirection: 'column', gap: '6px' }}>
-                      <span style={{ fontSize: '20px' }}>⊘</span>
+                  {/* 骨架屏：加载中 */}
+                  {!imgLoaded[i] && !imgErrors[i] && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <div style={{ width: '28px', height: '28px', border: '2px solid #1E2840', borderTop: '2px solid #22D4E0', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                      <span style={{ fontSize: '10px', color: '#4A5570', letterSpacing: '0.1em' }}>GENERATING</span>
+                    </div>
+                  )}
+
+                  {/* 加载失败 */}
+                  {imgErrors[i] && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#4A5570', fontSize: '11px' }}>
+                      <span style={{ fontSize: '18px' }}>⊘</span>
                       <span>加载失败</span>
                     </div>
-                  ) : (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={url}
-                        alt={`备选图 ${i + 1}`}
-                        onError={() => setImgErrors(prev => { const n = [...prev]; n[i] = true; return n })}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      />
-                      {selectedImg === url && (
-                        <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#22D4E0', color: '#0D1020', fontSize: '11px', padding: '2px 6px', fontFamily: 'monospace' }}>✓ 已选</div>
-                      )}
-                    </>
                   )}
-                  <div style={{ position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(0,0,0,0.7)', color: '#4A5570', fontSize: '10px', padding: '2px 6px', fontFamily: 'monospace' }}>
-                    图 {i + 1}
+
+                  {/* 图片本体（始终挂载，onLoad 后显示） */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={`备选图 ${i + 1}`}
+                    onLoad={() => setImgLoaded(prev => { const n = [...prev]; n[i] = true; return n })}
+                    onError={() => { setImgErrors(prev => { const n = [...prev]; n[i] = true; return n }); setImgLoaded(prev => { const n = [...prev]; n[i] = true; return n }) }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: imgLoaded[i] && !imgErrors[i] ? 1 : 0, transition: 'opacity 0.3s' }}
+                  />
+
+                  {/* 已选标记 */}
+                  {selectedImg === url && (
+                    <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#22D4E0', color: '#0D1020', fontSize: '10px', padding: '2px 6px', fontFamily: 'monospace' }}>✓ 已选</div>
+                  )}
+
+                  {/* 图片序号 */}
+                  <div style={{ position: 'absolute', bottom: '5px', left: '6px', background: 'rgba(0,0,0,0.7)', color: '#4A5570', fontSize: '10px', padding: '1px 5px', fontFamily: 'monospace' }}>
+                    {imgLoaded[i] && !imgErrors[i] ? `图 ${i + 1}` : '...'}
                   </div>
                 </div>
               ))}
             </div>
             <div style={{ marginTop: '8px', fontSize: '11px', color: '#4A5570' }}>
-              图片由 Pollinations.ai (Flux) 生成 · 加载可能需要 15-30 秒 · 可不选图直接发布
+              Pollinations.ai (Flux) · 可不选图直接发布
             </div>
           </div>
+
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
           {/* 操作区 */}
           {publishError && (
