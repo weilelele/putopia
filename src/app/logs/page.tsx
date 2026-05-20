@@ -97,6 +97,36 @@ export default function LogsPage() {
                 </div>
               </div>
 
+              {/* YouTube thumbnail */}
+              {story.youtube_id && (
+                <div style={{ position: 'relative', width: '100%', height: '180px', overflow: 'hidden', borderBottom: '1px solid #1A2238' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://img.youtube.com/vi/${story.youtube_id}/maxresdefault.jpg`}
+                    alt={story.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${story.youtube_id}/hqdefault.jpg`
+                    }}
+                  />
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(to bottom, transparent 40%, rgba(11,15,23,0.55) 100%)',
+                  }} />
+                  <div style={{
+                    position: 'absolute', bottom: '10px', right: '10px',
+                    background: 'rgba(11,15,23,0.82)',
+                    border: '1px solid rgba(232,90,0,0.5)',
+                    color: '#E85A00',
+                    fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.12em',
+                    padding: '3px 8px',
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                  }}>
+                    ▶ VIDEO
+                  </div>
+                </div>
+              )}
+
               {/* Content */}
               <div className="px-4 py-4">
                 <h2 className="text-base font-mono font-semibold mb-3" style={{ color: '#EDE8DE' }}>
