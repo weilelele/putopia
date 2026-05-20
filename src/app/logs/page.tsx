@@ -99,49 +99,55 @@ export default function LogsPage() {
                 </div>
               </div>
 
-              {/* YouTube thumbnail */}
-              {story.youtube_id && (
-                <div style={{ position: 'relative', width: '100%', height: '180px', overflow: 'hidden', borderBottom: '1px solid #1A2238' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://img.youtube.com/vi/${story.youtube_id}/maxresdefault.jpg`}
-                    alt={story.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${story.youtube_id}/hqdefault.jpg`
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'linear-gradient(to bottom, transparent 40%, rgba(11,15,23,0.55) 100%)',
-                  }} />
-                  <div style={{
-                    position: 'absolute', bottom: '10px', right: '10px',
-                    background: 'rgba(11,15,23,0.82)',
-                    border: '1px solid rgba(232,90,0,0.5)',
-                    color: '#E85A00',
-                    fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.12em',
-                    padding: '3px 8px',
-                    display: 'flex', alignItems: 'center', gap: '5px',
-                  }}>
-                    ▶ VIDEO
+              {/* Thumbnail + Content: stacked on mobile, side-by-side on desktop */}
+              <div className={story.youtube_id ? 'md:flex md:flex-row-reverse' : ''}>
+
+                {/* YouTube thumbnail — right on desktop, top on mobile */}
+                {story.youtube_id && (
+                  <div
+                    className="md:shrink-0 border-b md:border-b-0 md:border-l"
+                    style={{ borderColor: '#1A2238', width: undefined }}
+                  >
+                    <div className="md:w-52" style={{ position: 'relative' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`https://img.youtube.com/vi/${story.youtube_id}/maxresdefault.jpg`}
+                        alt={story.title}
+                        style={{ width: '100%', height: 'auto', display: 'block' }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${story.youtube_id}/hqdefault.jpg`
+                        }}
+                      />
+                      <div style={{
+                        position: 'absolute', bottom: '8px', right: '8px',
+                        background: 'rgba(11,15,23,0.82)',
+                        border: '1px solid rgba(232,90,0,0.5)',
+                        color: '#E85A00',
+                        fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.12em',
+                        padding: '3px 7px',
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                      }}>
+                        ▶ VIDEO
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Text content */}
+                <div className="px-4 py-4 flex-1 min-w-0">
+                  <h2 className="text-base font-mono font-semibold mb-3" style={{ color: '#EDE8DE' }}>
+                    {story.title}
+                  </h2>
+                  <p className="text-sm leading-relaxed font-mono" style={{ color: '#8A9AB5' }}>
+                    {story.excerpt}
+                  </p>
+
+                  <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: '#1A2238', color: '#E85A00' }}>
+                    READ FULL STORY
+                    <ArrowRight size={12} />
                   </div>
                 </div>
-              )}
 
-              {/* Content */}
-              <div className="px-4 py-4">
-                <h2 className="text-base font-mono font-semibold mb-3" style={{ color: '#EDE8DE' }}>
-                  {story.title}
-                </h2>
-                <p className="text-sm leading-relaxed font-mono" style={{ color: '#8A9AB5' }}>
-                  {story.excerpt}
-                </p>
-
-                <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: '#1A2238', color: '#E85A00' }}>
-                  READ FULL STORY
-                  <ArrowRight size={12} />
-                </div>
               </div>
             </Link>
           )
