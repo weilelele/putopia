@@ -58,9 +58,11 @@ export default function LogsPage() {
         {stories.map((story) => {
           const initials = getInitials(story.author_name)
           return (
-            <div
+            <Link
               key={story.id}
-              className="story-card overflow-hidden"
+              href={`/logs/${story.id}`}
+              className="story-card overflow-hidden block"
+              style={{ textDecoration: 'none' }}
             >
               {/* Author bar */}
               <div
@@ -136,30 +138,12 @@ export default function LogsPage() {
                   {story.excerpt}
                 </p>
 
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {story.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="label-tag"
-                      style={{ color: '#E85A00' }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-4 pt-3 border-t" style={{ borderColor: '#1A2238' }}>
-                  <Link
-                    href={`/logs/${story.id}`}
-                    className="flex items-center gap-2 text-xs font-mono tracking-widest transition-colors"
-                    style={{ color: '#E85A00' }}
-                  >
-                    READ FULL STORY
-                    <ArrowRight size={12} />
-                  </Link>
+                <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: '#1A2238', color: '#E85A00' }}>
+                  READ FULL STORY
+                  <ArrowRight size={12} />
                 </div>
               </div>
-            </div>
+            </Link>
           )
         })}
       </div>
