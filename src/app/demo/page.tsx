@@ -172,7 +172,7 @@ function VideoSection() {
 
       {/* ── Video ── */}
       <video
-        src="/assets/device-reel.mov"
+        src="/assets/device-reel.mp4"
         autoPlay muted loop playsInline
         style={{
           width: '100%', display: 'block',
