@@ -524,6 +524,30 @@ code, pre, kbd { font-family: var(--font-mono); }
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }
 }
+
+/* Video retro-futuristic overlay animations */
+@keyframes videoSweep {
+  0%   { top: -2px; opacity: 0; }
+  2%   { opacity: 1; }
+  98%  { opacity: 0.6; }
+  100% { top: 100%; opacity: 0; }
+}
+@keyframes videoFlicker {
+  0%,100% { opacity: 0; }
+  89%     { opacity: 0; }
+  90%     { opacity: 0.04; }
+  91%     { opacity: 0; }
+  95%     { opacity: 0; }
+  96%     { opacity: 0.03; }
+  97%     { opacity: 0; }
+}
+@keyframes videoJitter {
+  0%,100% { transform: translateX(0); }
+  92%     { transform: translateX(0); }
+  93%     { transform: translateX(-1.5px); }
+  94%     { transform: translateX(1px); }
+  95%     { transform: translateX(0); }
+}
 .scan-line { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .scan-line::after {
   content: '';

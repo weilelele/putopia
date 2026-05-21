@@ -8,7 +8,7 @@ const navItems = [
   {
     group: 'Console',
     items: [
-      { href: '/',         label: 'Dashboard',      icon: <IconStar /> },
+      { href: '/console',   label: 'Dashboard',      icon: <IconStar /> },
       { href: '/intel',    label: 'Intel Feed',      icon: <IconMail /> },
       { href: '/devices',  label: 'Device Archive',  icon: <IconDevice /> },
     ],
@@ -29,7 +29,7 @@ export function Sidebar() {
   const { user, logout } = useAuth()
 
   const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/')
+    href === '/console' ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
 
   return (
     <aside className="sidebar">
@@ -68,7 +68,7 @@ export function Sidebar() {
       </div>
 
       {user.role === 'guest' && (
-        <Link href="/#apply" className="sidebar-apply">BECOME A VOYAGER</Link>
+        <Link href="/" className="sidebar-apply">BECOME A VOYAGER</Link>
       )}
 
       <div className="sidebar-status">

@@ -71,7 +71,7 @@ const DotsIcon = () => (
 )
 
 const PRIMARY_NAV = [
-  { href: '/',        label: 'HOME',     icon: <HomeIcon /> },
+  { href: '/console', label: 'HOME',     icon: <HomeIcon /> },
   { href: '/intel',   label: 'INTEL',    icon: <RadarIcon /> },
   { href: '/devices', label: 'DEVICES',  icon: <ArchiveIcon /> },
   { href: '/logs',    label: 'LOGS',     icon: <LogsIcon /> },
@@ -133,7 +133,7 @@ export function BottomNav() {
         style={{ background: '#0D1020', borderColor: '#1A2238' }}
       >
         {PRIMARY_NAV.map(({ href, label, icon }) => {
-          const isActive = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/')
+          const isActive = href === '/console' ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
           return (
             <Link
               key={href}

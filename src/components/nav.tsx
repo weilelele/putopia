@@ -121,7 +121,7 @@ export function Nav() {
     >
       {/* Logo */}
       <div className="p-4 border-b" style={{ borderColor: '#1A2238' }}>
-        <Link href="/" className="flex items-center">
+        <Link href="/console" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/logo.png"

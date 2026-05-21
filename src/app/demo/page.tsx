@@ -10,7 +10,7 @@ import { submitApplication } from '@/lib/actions/applications'
 type Step = 'q1' | 'q2' | 'cta' | 'success'
 
 /* ─── Root ───────────────────────────────────────── */
-export default function HomePage() {
+export default function OnboardingDemo() {
   return <Suspense><OnboardingInner /></Suspense>
 }
 
@@ -26,12 +26,10 @@ function OnboardingInner() {
   const [submitting, setSubmitting]       = useState(false)
   const [showTransition, setShowTransition] = useState(false)
 
-  /* ?preview resets flag; otherwise redirect to console if already registered */
+  /* ?preview — clears the registered flag so the full flow can be re-experienced */
   useEffect(() => {
     if (params.get('preview') !== null) {
       localStorage.removeItem('putopia_voyager_registered')
-    } else if (localStorage.getItem('putopia_voyager_registered')) {
-      window.location.replace('/console')
     }
   }, [params])
 
@@ -77,11 +75,11 @@ function OnboardingInner() {
       alignItems: 'center', justifyContent: 'center',
     }}>
 
-      {/* Scan transition fires after identity confirmation */}
+      {/* Static transition fires after identity confirmation */}
       {showTransition && (
         <ScanTransition onComplete={() => {
           localStorage.setItem('putopia_voyager_registered', '1')
-          window.location.href = '/console'
+          window.location.href = '/'
         }} />
       )}
 
@@ -128,6 +126,15 @@ function OnboardingInner() {
         <SuccessScreen />
       )}
 
+      {/* Dev indicator */}
+      <div style={{
+        position: 'fixed', bottom: 12, right: 14,
+        fontFamily: 'var(--font-mono)', fontSize: '0.45rem',
+        letterSpacing: '0.22em', color: 'rgba(242,240,230,0.1)',
+        zIndex: 10000, pointerEvents: 'none',
+      }}>
+        DEMO // {step.toUpperCase()}
+      </div>
     </div>
   )
 }  // end OnboardingInner
@@ -300,6 +307,8 @@ function Q1Card({ value, onChange, touched, onContinue }: {
     </div>
   )
 }
+
+/* FlameSlider is now imported from @/components/flame-slider */
 
 /* ─────────────────────────────────────────────────────
    Q2 — WORLD CHOICE (uses shared WorldChoiceCards)
@@ -528,7 +537,7 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 99999 }}>
 
-      {/* Dim the current page */}
+      {/* Dim the current demo page */}
       <div style={{
         position: 'absolute', inset: 0,
         background: 'rgba(5,8,16,0.70)',
@@ -581,14 +590,14 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
 }
 
 /* ─────────────────────────────────────────────────────
-   SUCCESS — redirects to console after 3s
+   SUCCESS — redirects to main site after 3s
 ───────────────────────────────────────────────────── */
 function SuccessScreen() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     const t1 = setTimeout(() => setVisible(true), 60)
-    const t2 = setTimeout(() => { window.location.href = '/console' }, 3200)
+    const t2 = setTimeout(() => { window.location.href = '/' }, 3200)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
 
