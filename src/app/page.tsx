@@ -64,6 +64,9 @@ function OnboardingInner() {
     })
     // Brief "TRANSMITTING..." beat before scan fires
     await new Promise(r => setTimeout(r, 200))
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'Lead')
+    }
     setShowTransition(true)
   }
 
