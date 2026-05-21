@@ -183,11 +183,13 @@ export default function ConsolePage() {
   const [devices, setDevices] = useState<Device[]>([])
   const [latestIntel, setLatestIntel] = useState<Intel[]>([])
   const [feedLines, setFeedLines] = useState<FeedLine[]>([])
+  const [isRegistered, setIsRegistered] = useState(false)
 
   useEffect(() => {
     getAllDevices().then((d) => setDevices(d.filter((dev) => dev.knowledge === 'known').slice(0, 3)))
     getPublicIntel().then((intel) => setLatestIntel(intel.slice(0, 2)))
     getLatestFeed().then((f) => { if (f?.lines?.length) setFeedLines(f.lines) })
+    if (localStorage.getItem('putopia_voyager_registered')) setIsRegistered(true)
   }, [])
 
   return (
@@ -226,21 +228,7 @@ export default function ConsolePage() {
         )}
 
         <div className="cta-row">
-          {user.role === 'guest' ? (
-            <Link href="/" className="cta" style={{ textDecoration: 'none' }}>
-              <div className="cta-bg" />
-              <div className="cta-frame" />
-              <div className="cta-icon-slot">
-                <div className="cta-icon-circle">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,90,31,0.15)" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              </div>
-              <div className="cta-divider" />
-              <div className="cta-label">BECOME A VOYAGER</div>
-            </Link>
-          ) : (
+          {isRegistered || user.role !== 'guest' ? (
             <Link href="/login" className="cta" style={{ textDecoration: 'none' }}>
               <div className="cta-bg" />
               <div className="cta-frame" />
@@ -255,6 +243,20 @@ export default function ConsolePage() {
               </div>
               <div className="cta-divider" />
               <div className="cta-label">LOGIN COLLECTIVE</div>
+            </Link>
+          ) : (
+            <Link href="/" className="cta" style={{ textDecoration: 'none' }}>
+              <div className="cta-bg" />
+              <div className="cta-frame" />
+              <div className="cta-icon-slot">
+                <div className="cta-icon-circle">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,90,31,0.15)" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+              <div className="cta-divider" />
+              <div className="cta-label">BECOME A VOYAGER</div>
             </Link>
           )}
         </div>
