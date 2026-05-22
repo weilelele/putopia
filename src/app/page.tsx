@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import posthog from 'posthog-js'
 import { FlameSlider, WorldChoiceCards, WORLD_OPTIONS, beliefToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
 
@@ -35,6 +36,14 @@ function OnboardingInner() {
     }
   }, [params])
 
+  useEffect(() => {
+    if (params.get('preview') !== null) return
+    if (!localStorage.getItem('putopia_voyager_registered')) {
+      posthog.capture('onboarding_started')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   /* Animated step transition */
   const goTo = useCallback((next: Step) => {
     setExiting(true)
@@ -48,6 +57,7 @@ function OnboardingInner() {
 
   const handleQ2Select = (id: string) => {
     setEmotion(id)
+    posthog.capture('onboarding_q2_completed', { world_selected: id })
     setTimeout(() => goTo('cta'), 380)   // brief pause so user sees selection highlight
   }
 
@@ -62,6 +72,7 @@ function OnboardingInner() {
       reason:   beliefToReason(belief),
       location: worldText,
     })
+    posthog.capture('onboarding_email_submitted', { belief_value: belief, world_selected: emotion })
     // Brief "TRANSMITTING..." beat before scan fires
     await new Promise(r => setTimeout(r, 200))
     if (typeof window !== 'undefined' && (window as any).fbq) {
@@ -107,7 +118,12 @@ function OnboardingInner() {
                   value={belief}
                   onChange={handleSlider}
                   touched={beliefTouched}
-                  onContinue={() => { if (beliefTouched) goTo('q2') }}
+                  onContinue={() => {
+                    if (beliefTouched) {
+                      posthog.capture('onboarding_q1_completed', { belief_value: belief })
+                      goTo('q2')
+                    }
+                  }}
                 />
               )}
 

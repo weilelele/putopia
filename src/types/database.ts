@@ -60,6 +60,7 @@ export type VoteResponse = {
   user_id: string | null      // null for anonymous public votes
   anon_token: string | null   // browser fingerprint for public votes
   selected_options: string[]  // array of VoteOption ids
+  voter_name: string | null   // denormalized display_name from voyager_profiles
   created_at: string
 }
 
@@ -223,6 +224,35 @@ export type Database = {
         Row: Story
         Insert: StoryInsert
         Update: StoryUpdate
+        Relationships: []
+      }
+      funnel_snapshots: {
+        Row: {
+          id: string
+          run_id: string
+          captured_at: string
+          version_tag: string | null
+          step_key: string
+          step_label: string
+          step_order: number
+          count_all_time: number
+          count_30d: number
+        }
+        Insert: {
+          run_id: string
+          captured_at?: string
+          version_tag?: string | null
+          step_key: string
+          step_label: string
+          step_order: number
+          count_all_time: number
+          count_30d: number
+        }
+        Update: Partial<{
+          version_tag: string | null
+          count_all_time: number
+          count_30d: number
+        }>
         Relationships: []
       }
     }
