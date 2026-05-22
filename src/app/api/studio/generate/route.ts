@@ -142,8 +142,25 @@ VOICE:
 • Vocabulary to draw from: signal, frequency, Voyager, Console, parallel world, observation, quantum, transmission, fold, node, uplink, coordinates, anomaly, classified, dispatch.
 
 PLATFORM RULES:
-• Instagram: 2–5 sentences. Atmospheric, immersive. Natural line breaks for rhythm. End with 4–8 tightly relevant hashtags on a new line. No hashtag spam.
-• X/Twitter: ≤ 280 characters. One sharp, complete idea. Hashtags only if they genuinely add. Punchy — reads like a signal intercept.
+
+• Instagram [English]
+  2–5 sentences. Atmospheric, immersive. Natural line breaks for rhythm.
+  End with 4–8 tightly relevant hashtags on a new line. No hashtag spam.
+  Examples of good hashtags: #MultiverseCollective #ParallelWorlds #VoyagerLog #SignalDetected
+
+• X / Twitter [English]
+  ≤ 280 characters. One sharp, complete idea. Reads like a signal intercept.
+  Hashtags only if they genuinely add something — never forced.
+  No thread format. One transmission, one thought.
+
+• 小红书 / RED [中文]
+  语言：全程中文，可适当保留组织专有名词英文原文（如 Multiverse Console、Voyager）。
+  标题：15–20 字。直接、有吸引力，可带疑问句或情绪钩子，像在召唤某类特定的人。
+  正文：150–300 字，分 3–4 段，每段 2–3 句，段落间空一行。
+  Emoji：每段开头或结尾可用 1 个 emoji 增加节奏感，不要堆砌（全文不超过 6 个）。
+  语气：比英文平台更个人化、感性——像 Voyager 在真实分享一次探索体验或感悟，而不是发公告。
+  话题标签：结尾另起一行，3–6 个，格式 #平行世界 #多元宇宙 #探索者 等，可中英混搭。
+  不要出现："小编"、"大家好"、"点赞收藏"等营销套话。
 
 IMAGE PROMPT RULES (for LovArt / Midjourney):
 • Be specific and directed — shot type, lighting setup, color palette, mood, texture.
@@ -161,9 +178,11 @@ IMAGE PROMPT RULES (for LovArt / Midjourney):
     '',
     'Return ONLY a single valid JSON object — no markdown, no explanation:',
     '{',
-    '  "instagram": "full caption with hashtags",',
-    '  "twitter": "tweet text, max 280 chars",',
-    '  "image_prompt": "full detailed LovArt/Midjourney prompt (100-200 words)",',
+    '  "instagram": "full English caption with hashtags (empty string if not requested)",',
+    '  "twitter": "English tweet, max 280 chars (empty string if not requested)",',
+    '  "xiaohongshu_title": "中文标题，15-20字 (empty string if not requested)",',
+    '  "xiaohongshu_body": "中文正文，分段，含话题标签 (empty string if not requested)",',
+    '  "image_prompt": "full detailed LovArt/Midjourney prompt in English (100-200 words)",',
     '  "image_prompt_short": "condensed 20-word version for quick preview"',
     '}',
   ].filter(s => s !== undefined).join('\n')
@@ -208,10 +227,12 @@ IMAGE PROMPT RULES (for LovArt / Midjourney):
     `https://image.pollinations.ai/prompt/${previewPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${Date.now()}`
 
   return NextResponse.json({
-    instagram:          parsed.instagram          ?? '',
-    twitter:            parsed.twitter            ?? '',
-    image_prompt:       parsed.image_prompt       ?? '',
-    image_prompt_short: parsed.image_prompt_short ?? '',
+    instagram:          parsed.instagram           ?? '',
+    twitter:            parsed.twitter             ?? '',
+    xiaohongshu_title:  parsed.xiaohongshu_title  ?? '',
+    xiaohongshu_body:   parsed.xiaohongshu_body   ?? '',
+    image_prompt:       parsed.image_prompt        ?? '',
+    image_prompt_short: parsed.image_prompt_short  ?? '',
     pollinations_url:   pollinationsUrl,
     // expose usage for debugging (cache hit/miss)
     _usage: {

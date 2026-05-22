@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 /* ─── Types ──────────────────────────────────────────────── */
-type Platform = 'instagram' | 'twitter'
+type Platform = 'instagram' | 'twitter' | 'xiaohongshu'
 
 const CONTENT_TYPES = [
   { value: 'intel_dispatch',  label: 'INTEL DISPATCH',   desc: 'Org announcement or update' },
@@ -27,6 +27,8 @@ interface Props {
 interface GenerateResult {
   instagram:          string
   twitter:            string
+  xiaohongshu_title:  string
+  xiaohongshu_body:   string
   image_prompt:       string
   image_prompt_short: string
   pollinations_url:   string
@@ -91,26 +93,50 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
 
         {/* Platforms */}
         <Section label="PLATFORM">
-          <div style={{ display: 'flex', gap: 6 }}>
-            {(['instagram', 'twitter'] as Platform[]).map(p => {
-              const active = platforms.includes(p)
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {/* EN platforms */}
+            <div style={{ display: 'flex', gap: 5 }}>
+              {(['instagram', 'twitter'] as Platform[]).map(p => {
+                const active = platforms.includes(p)
+                return (
+                  <button
+                    key={p}
+                    onClick={() => togglePlatform(p)}
+                    style={{
+                      flex: 1, padding: '8px 0',
+                      fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em',
+                      background: active ? 'rgba(255,90,31,0.1)' : 'transparent',
+                      border: `1px solid ${active ? 'rgba(255,90,31,0.45)' : 'var(--bd-faint)'}`,
+                      color: active ? 'var(--color-star)' : 'var(--color-star-deep)',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                    }}
+                  >
+                    {p === 'instagram' ? 'INSTAGRAM' : 'X / TWITTER'}
+                  </button>
+                )
+              })}
+            </div>
+            {/* CN platform */}
+            {(() => {
+              const active = platforms.includes('xiaohongshu')
               return (
                 <button
-                  key={p}
-                  onClick={() => togglePlatform(p)}
+                  onClick={() => togglePlatform('xiaohongshu')}
                   style={{
-                    flex: 1, padding: '9px 0',
-                    fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.2em',
-                    background: active ? 'rgba(255,90,31,0.1)' : 'transparent',
-                    border: `1px solid ${active ? 'rgba(255,90,31,0.45)' : 'var(--bd-faint)'}`,
+                    width: '100%', padding: '8px 0',
+                    fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em',
+                    background: active ? 'rgba(255,30,60,0.1)' : 'transparent',
+                    border: `1px solid ${active ? 'rgba(255,30,60,0.5)' : 'var(--bd-faint)'}`,
                     color: active ? 'var(--color-star)' : 'var(--color-star-deep)',
                     cursor: 'pointer', transition: 'all 0.15s',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                   }}
                 >
-                  {p === 'instagram' ? 'INSTAGRAM' : 'X / TWITTER'}
+                  <span>小红书 / RED</span>
+                  <span style={{ fontSize: 8, opacity: 0.55, letterSpacing: '0.05em' }}>中文</span>
                 </button>
               )
-            })}
+            })()}
           </div>
         </Section>
 
@@ -315,6 +341,52 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                 onCopy={() => copyText(result.twitter, 'tw')}
                 isCopied={copied === 'tw'}
               />
+            )}
+
+            {/* 小红书 */}
+            {platforms.includes('xiaohongshu') && result.xiaohongshu_title && (
+              <div style={{
+                border: '1px solid var(--bd-faint)',
+                borderLeft: '3px solid rgba(255,30,60,0.7)',
+                background: 'var(--color-void)',
+              }}>
+                <div style={{
+                  padding: '10px 14px', borderBottom: '1px solid var(--bd-faint)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <span style={{ fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,30,60,0.85)' }}>
+                    小红书 / RED
+                  </span>
+                  <CopyBtn
+                    onCopy={() => copyText(`${result.xiaohongshu_title}\n\n${result.xiaohongshu_body}`, 'xhs')}
+                    isCopied={copied === 'xhs'}
+                  />
+                </div>
+                {/* Title */}
+                <div style={{
+                  padding: '12px 14px 4px',
+                  fontSize: 13, fontWeight: 700,
+                  color: 'var(--color-star)', lineHeight: 1.5,
+                  fontFamily: 'var(--font-body)',
+                }}>
+                  {result.xiaohongshu_title}
+                </div>
+                {/* Body */}
+                <div style={{
+                  padding: '6px 14px 10px',
+                  fontSize: 12, color: 'var(--color-star-dim)',
+                  lineHeight: 1.9, whiteSpace: 'pre-wrap',
+                  fontFamily: 'var(--font-body)',
+                }}>
+                  {result.xiaohongshu_body}
+                </div>
+                <div style={{
+                  padding: '0 14px 10px',
+                  fontSize: 8, letterSpacing: '0.1em', color: 'var(--color-star-deep)',
+                }}>
+                  标题 {result.xiaohongshu_title.length} 字 · 正文 {result.xiaohongshu_body.length} 字
+                </div>
+              </div>
             )}
 
             {/* Image Prompt */}
