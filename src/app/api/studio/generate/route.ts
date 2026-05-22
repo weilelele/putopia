@@ -169,28 +169,28 @@ IMAGE PROMPT RULES (for LovArt / Midjourney):
 • Avoid: generic "space background", white backgrounds, cartoonish, stock-photo feel.`
 
   /* ── User message (not cached — changes per request) ── */
+  const requestedPlatforms = platforms.join(', ')
   const userMessage = [
     refContent ? `${refContent}\n\n` : '',
     `CONTENT TYPE: ${contentType.replace(/_/g, ' ').toUpperCase()}`,
-    `TARGET PLATFORMS: ${platforms.join(', ')}`,
+    `REQUESTED PLATFORMS: ${requestedPlatforms}`,
     '',
     `BRIEF:\n${brief.trim()}`,
     '',
-    'Return ONLY a single valid JSON object — no markdown, no explanation:',
-    '{',
-    '  "instagram": "full English caption with hashtags (empty string if not requested)",',
-    '  "twitter": "English tweet, max 280 chars (empty string if not requested)",',
-    '  "xiaohongshu_title": "中文标题，15-20字 (empty string if not requested)",',
-    '  "xiaohongshu_body": "中文正文，分段，含话题标签 (empty string if not requested)",',
-    '  "image_prompt": "full detailed LovArt/Midjourney prompt in English (100-200 words)",',
-    '  "image_prompt_short": "condensed 20-word version for quick preview"',
-    '}',
-  ].filter(s => s !== undefined).join('\n')
+    'Respond with ONLY a valid JSON object — no markdown fences, no explanation, nothing else.',
+    'Required keys and rules:',
+    `  "instagram"         — English caption + hashtags. Write content ONLY if "instagram" is in REQUESTED PLATFORMS, otherwise "".`,
+    `  "twitter"           — English tweet, strictly ≤ 280 characters. Write content ONLY if "twitter" is in REQUESTED PLATFORMS, otherwise "".`,
+    `  "xiaohongshu_title" — Chinese title, 15–20 characters. Write content ONLY if "xiaohongshu" is in REQUESTED PLATFORMS, otherwise "".`,
+    `  "xiaohongshu_body"  — Chinese body with paragraph breaks and #话题 tags. Write content ONLY if "xiaohongshu" is in REQUESTED PLATFORMS, otherwise "".`,
+    `  "image_prompt"      — Full LovArt/Midjourney prompt in English, 100–200 words. Always required.`,
+    `  "image_prompt_short"— One concise English sentence, ≤ 20 words, describing the image. Always required.`,
+  ].filter(Boolean).join('\n')
 
   /* ── Call Claude with prompt caching ── */
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-5',
-    max_tokens: 1600,
+    max_tokens: 4096,
     system: [
       {
         type: 'text',
@@ -206,17 +206,27 @@ IMAGE PROMPT RULES (for LovArt / Midjourney):
 
   /* ── Parse response ── */
   const raw = response.content[0].type === 'text' ? response.content[0].text : ''
-  const jsonMatch = raw.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) {
-    console.error('Claude response unparseable:', raw)
-    return NextResponse.json({ error: 'Failed to parse model response' }, { status: 500 })
+
+  // Detect truncation before attempting parse
+  if (response.stop_reason === 'max_tokens') {
+    console.error('[studio] Response truncated. stop_reason=max_tokens. raw length:', raw.length)
+    return NextResponse.json({ error: 'Response was too long and got cut off. Try selecting fewer platforms.' }, { status: 500 })
+  }
+
+  // Extract JSON — grab from first { to last } to handle any surrounding text
+  const start = raw.indexOf('{')
+  const end   = raw.lastIndexOf('}')
+  if (start === -1 || end === -1 || end <= start) {
+    console.error('[studio] No JSON object found. raw:', raw.slice(0, 500))
+    return NextResponse.json({ error: 'Model did not return valid JSON. Please try again.' }, { status: 500 })
   }
 
   let parsed: Record<string, string>
   try {
-    parsed = JSON.parse(jsonMatch[0])
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON in model response' }, { status: 500 })
+    parsed = JSON.parse(raw.slice(start, end + 1))
+  } catch (e) {
+    console.error('[studio] JSON.parse failed:', e, '\nraw slice:', raw.slice(start, end + 1).slice(0, 600))
+    return NextResponse.json({ error: 'Could not parse model response as JSON. Please try again.' }, { status: 500 })
   }
 
   /* ── Build Pollinations URL for draft preview ── */
