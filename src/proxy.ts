@@ -41,8 +41,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // /admin requires architect role
-  if (pathname.startsWith('/admin')) {
+  // /admin and /studio both require architect role
+  if (pathname.startsWith('/admin') || pathname.startsWith('/studio')) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
@@ -53,7 +53,7 @@ export async function proxy(request: NextRequest) {
       .single()
 
     if (profile?.role !== 'architect') {
-      return NextResponse.redirect(new URL('/', request.url))
+      return NextResponse.redirect(new URL('/console', request.url))
     }
   }
 

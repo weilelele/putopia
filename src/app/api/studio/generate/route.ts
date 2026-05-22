@@ -1,0 +1,224 @@
+import { NextRequest, NextResponse } from 'next/server'
+import Anthropic from '@anthropic-ai/sdk'
+import { createAdminClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
+import type { Database } from '@/types/database'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+/* ─── Auth guard ─────────────────────────────────────────── */
+async function verifyArchitect() {
+  const cookieStore = await cookies()
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
+  )
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin
+    .from('voyager_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  return profile?.role === 'architect' ? user : null
+}
+
+/* ─── POST /api/studio/generate ─────────────────────────── */
+export async function POST(request: NextRequest) {
+  const user = await verifyArchitect()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { brief, platforms, contentType, referenceId } = await request.json() as {
+    brief: string
+    platforms: string[]
+    contentType: string
+    referenceId?: string
+  }
+
+  if (!brief?.trim() || !platforms?.length) {
+    return NextResponse.json({ error: 'brief and platforms are required' }, { status: 400 })
+  }
+
+  const admin = createAdminClient()
+
+  /* ── Fetch knowledge base ── */
+  const [{ data: intelRows }, { data: worldRows }, { data: deviceRows }] = await Promise.all([
+    admin.from('intel')
+      .select('title, content, tag')
+      .eq('classified', false)
+      .order('timestamp', { ascending: false })
+      .limit(8),
+    admin.from('worlds')
+      .select('name, description, discoverer_name, discovery_date')
+      .order('created_at', { ascending: false })
+      .limit(10),
+    admin.from('devices')
+      .select('name, location, description, knowledge, status')
+      .eq('knowledge', 'known')
+      .limit(6),
+  ])
+
+  /* ── Fetch optional reference entry ── */
+  let refContent = ''
+  if (referenceId) {
+    if (referenceId.startsWith('w-')) {
+      // World reference
+      const wid = referenceId.slice(2)
+      const { data: w } = await admin.from('worlds').select('name, description, discoverer_name, discovery_date').eq('id', wid).single()
+      if (w) refContent = `REFERENCE — PARALLEL WORLD:\nName: ${w.name}\nDiscovered by: ${w.discoverer_name} on ${w.discovery_date}\n${w.description}`
+    } else if (referenceId.startsWith('d-')) {
+      // Device reference
+      const did = referenceId.slice(2)
+      const { data: d } = await admin.from('devices').select('name, location, description, knowledge, status').eq('id', did).single()
+      if (d) refContent = `REFERENCE — DEVICE:\nName: ${d.name}\nLocation: ${d.location}\nStatus: ${d.knowledge} / ${d.status ?? 'unknown'}\n${d.description}`
+    } else {
+      // Intel reference
+      const { data: intel } = await admin.from('intel').select('title, content, tag').eq('id', referenceId).single()
+      if (intel) refContent = `REFERENCE — INTEL [${intel.tag}]:\n${intel.title}\n${intel.content}`
+    }
+  }
+
+  /* ── Build knowledge base string ── */
+  const intelSection = (intelRows ?? [])
+    .map(e => `[${e.tag}] ${e.title}\n${e.content}`)
+    .join('\n\n---\n\n')
+
+  const worldsSection = (worldRows ?? [])
+    .map(w => `${w.name} — ${w.description} (first contact: ${w.discoverer_name}, ${w.discovery_date})`)
+    .join('\n')
+
+  const devicesSection = (deviceRows ?? [])
+    .map(d => `${d.name} @ ${d.location} [${d.status ?? 'unknown'}] — ${d.description}`)
+    .join('\n')
+
+  /* ══════════════════════════════════════════════════════
+     SYSTEM PROMPT — marked for Anthropic Prompt Caching
+     This block is re-used across every generation request.
+     The knowledge base rarely changes, so cache hit rate
+     will be high after the first call.
+  ══════════════════════════════════════════════════════ */
+  const systemPrompt = `You are the official social media voice of Multiverse Collective — a decentralized, centuries-old organization that explores parallel worlds and works to preserve stability across timelines and the current world.
+
+━━ ORGANIZATION ━━
+
+MISSION: Actively explore parallel worlds. Maintain harmony and stability in the current world.
+
+ROLES:
+• Voyager — holds a Multiverse Console; observes and interacts with parallel worlds
+• Architect — establishes new world connections; develops Console expansion modules
+
+CORE DEVICE — Multiverse Console (MC):
+A mysterious parallel-world communication device. ~20 units believed to exist globally. Origin unknown (likely transmitted from another world via quantum energy). Functions: spatial signal detection across frequency bands · quantum energy discharge · transtemporal audio transmission · inner voice reception from intelligent life in other worlds. Modular: accepts energy cartridges and expansion attachments. Each unit carries traces of its previous operators.
+
+KEY LORE:
+• The current world's data overload is damaging parallel world connections, destabilizing human emotion globally
+• Connections between worlds determine each world's stability — more connections = more order and vitality
+• Each Console passed between operators carries embedded memories of prior users
+• Establishing a world connection creates a stabilizing energy field around the operator
+• Parallel Collective branches likely exist in other worlds but cannot yet communicate with each other
+
+━━ KNOWLEDGE BASE ━━
+
+RECENT INTEL:
+${intelSection}
+
+DISCOVERED PARALLEL WORLDS:
+${worldsSection}
+
+KNOWN ACTIVE DEVICES:
+${devicesSection}
+
+━━ WRITING RULES ━━
+
+VOICE:
+• Cryptic but grounded. Poetic but never purple or vague.
+• Authoritative — like a transmission from inside the operation, not a press release.
+• Every word earns its place. No filler. No exclamation marks unless the moment truly demands it.
+• Vocabulary to draw from: signal, frequency, Voyager, Console, parallel world, observation, quantum, transmission, fold, node, uplink, coordinates, anomaly, classified, dispatch.
+
+PLATFORM RULES:
+• Instagram: 2–5 sentences. Atmospheric, immersive. Natural line breaks for rhythm. End with 4–8 tightly relevant hashtags on a new line. No hashtag spam.
+• X/Twitter: ≤ 280 characters. One sharp, complete idea. Hashtags only if they genuinely add. Punchy — reads like a signal intercept.
+
+IMAGE PROMPT RULES (for LovArt / Midjourney):
+• Be specific and directed — shot type, lighting setup, color palette, mood, texture.
+• Putopia aesthetic: void-dark backgrounds (#050810 deep space), retro-futuristic analog hardware, nebula cyan (#22D4E0) and nucleus orange (#FF5A1F) accent lighting, CRT displays with scan-line grain, cosmic scale, cinematic depth of field.
+• Style references: Blade Runner 2049 color grading, retro NASA control room aesthetics, Lo-fi sci-fi hardware photography.
+• Avoid: generic "space background", white backgrounds, cartoonish, stock-photo feel.`
+
+  /* ── User message (not cached — changes per request) ── */
+  const userMessage = [
+    refContent ? `${refContent}\n\n` : '',
+    `CONTENT TYPE: ${contentType.replace(/_/g, ' ').toUpperCase()}`,
+    `TARGET PLATFORMS: ${platforms.join(', ')}`,
+    '',
+    `BRIEF:\n${brief.trim()}`,
+    '',
+    'Return ONLY a single valid JSON object — no markdown, no explanation:',
+    '{',
+    '  "instagram": "full caption with hashtags",',
+    '  "twitter": "tweet text, max 280 chars",',
+    '  "image_prompt": "full detailed LovArt/Midjourney prompt (100-200 words)",',
+    '  "image_prompt_short": "condensed 20-word version for quick preview"',
+    '}',
+  ].filter(s => s !== undefined).join('\n')
+
+  /* ── Call Claude with prompt caching ── */
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-5',
+    max_tokens: 1600,
+    system: [
+      {
+        type: 'text',
+        text: systemPrompt,
+        // Cache the knowledge base — invalidates only when DB content changes
+        cache_control: { type: 'ephemeral' },
+      },
+    ],
+    messages: [
+      { role: 'user', content: userMessage },
+    ],
+  })
+
+  /* ── Parse response ── */
+  const raw = response.content[0].type === 'text' ? response.content[0].text : ''
+  const jsonMatch = raw.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) {
+    console.error('Claude response unparseable:', raw)
+    return NextResponse.json({ error: 'Failed to parse model response' }, { status: 500 })
+  }
+
+  let parsed: Record<string, string>
+  try {
+    parsed = JSON.parse(jsonMatch[0])
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON in model response' }, { status: 500 })
+  }
+
+  /* ── Build Pollinations URL for draft preview ── */
+  const previewPrompt = encodeURIComponent(
+    `${parsed.image_prompt_short ?? 'retro futuristic parallel world device'}, dark void space background, nebula cyan and deep orange lighting, cinematic, photorealistic, no text, no logo`
+  )
+  const pollinationsUrl =
+    `https://image.pollinations.ai/prompt/${previewPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${Date.now()}`
+
+  return NextResponse.json({
+    instagram:          parsed.instagram          ?? '',
+    twitter:            parsed.twitter            ?? '',
+    image_prompt:       parsed.image_prompt       ?? '',
+    image_prompt_short: parsed.image_prompt_short ?? '',
+    pollinations_url:   pollinationsUrl,
+    // expose usage for debugging (cache hit/miss)
+    _usage: {
+      input_tokens:              response.usage.input_tokens,
+      output_tokens:             response.usage.output_tokens,
+      cache_creation_input_tokens: (response.usage as unknown as Record<string, number>).cache_creation_input_tokens ?? 0,
+      cache_read_input_tokens:     (response.usage as unknown as Record<string, number>).cache_read_input_tokens     ?? 0,
+    },
+  })
+}
