@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { getAllIntel } from '@/lib/actions/intel'
 import { useEffect, useState } from 'react'
-import type { Intel } from '@/types/database'
+import type { IntelWithAvatar } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
 
 const TAG_COLOR: Record<string, string> = {
@@ -12,111 +12,146 @@ const TAG_COLOR: Record<string, string> = {
   ORG:    'var(--color-nebula)',
 }
 
-// CSS filter that tints images toward the nucleus orange brand color
-const BRAND_FILTER = 'grayscale(0.6) sepia(1) saturate(2.2) hue-rotate(-20deg) brightness(0.82)'
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  })
+}
 
-function IntelCard({ entry }: { entry: Intel }) {
-  const color = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
-  const hasImages = (entry.images?.length ?? 0) > 0
-  const isSingle  = entry.images?.length === 1
+function getInitials(name: string) {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+}
+
+function IntelCard({ entry }: { entry: IntelWithAvatar }) {
+  const color     = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
+  const hasImage  = (entry.images?.length ?? 0) > 0
+  const extraImgs = (entry.images?.length ?? 0) - 1
+  const name      = entry.publisher_name ?? 'PUTOPIA COLLECTIVE'
 
   return (
     <Link
       href={`/intel/${entry.id}`}
-      className="block transition-all duration-150"
-      style={{
-        background: 'var(--color-void)',
-        border: '1px solid var(--bd-faint)',
-        borderLeft: `3px solid ${color}`,
-        overflow: 'hidden',
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = color
-        ;(e.currentTarget as HTMLElement).style.background = 'var(--color-void-2)'
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--bd-faint)'
-        ;(e.currentTarget as HTMLElement).style.background = 'var(--color-void)'
-      }}
+      className="block"
+      style={{ textDecoration: 'none', marginBottom: '12px' }}
     >
-      {/* Image area */}
-      {hasImages && (
-        isSingle ? (
-          <div style={{ width: '100%', aspectRatio: '16/7', overflow: 'hidden' }}>
+      <div
+        style={{ background: '#111525', border: '1px solid #1E2840', overflow: 'hidden', transition: 'border-color 0.15s' }}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = color)}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = '#1E2840')}
+      >
+        {/* Publisher bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: '#0D1020', borderBottom: '1px solid #1A2238' }}>
+
+          {/* Avatar */}
+          {entry.publisher_avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={entry.publisher_avatar_url}
+              alt={name}
+              style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(138,154,181,0.25)' }}
+            />
+          ) : (
+            <div style={{
+              width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+              background: `${color}18`, border: `1px solid ${color}50`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, color,
+            }}>
+              {getInitials(name)}
+            </div>
+          )}
+
+          {/* Name + date */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: '#EDE8DE', fontFamily: 'monospace', fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {name}
+            </div>
+            <div style={{ color: '#4A5570', fontFamily: 'monospace', fontSize: '11px' }}>
+              {formatDate(entry.timestamp)}
+            </div>
+          </div>
+
+          {/* Tag badge */}
+          <span style={{
+            fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.12em',
+            color, border: `1px solid ${color}60`, padding: '2px 8px', flexShrink: 0,
+          }}>
+            {entry.tag}
+          </span>
+
+        </div>
+
+        {/* Content row: text left, image right */}
+        <div style={{ display: 'flex', alignItems: 'stretch' }}>
+
+          {/* Text */}
+          <div style={{ flex: 1, padding: '14px 16px', minWidth: 0 }}>
+            <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '0.9rem', color: '#EDE8DE', marginBottom: '8px', lineHeight: 1.4 }}>
+              {entry.title}
+            </h2>
+            <p style={{ fontFamily: 'monospace', fontSize: '12px', color: '#8A9AB5', lineHeight: 1.7, margin: 0 }}>
+              {entry.content.length > 140 ? entry.content.slice(0, 140) + '…' : entry.content}
+            </p>
+            <div style={{ marginTop: '12px', fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.16em', color, opacity: 0.8 }}>
+              READ MORE →
+            </div>
+          </div>
+
+          {/* Image (desktop: right column, mobile: hidden to keep feed tight) */}
+          {hasImage && (
+            <div style={{ width: '140px', flexShrink: 0, borderLeft: '1px solid #1A2238', position: 'relative' }} className="hidden sm:block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={entry.images[0]}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+              {extraImgs > 0 && (
+                <div style={{
+                  position: 'absolute', bottom: 6, right: 6,
+                  background: 'rgba(11,15,23,0.82)', border: '1px solid #1E2840',
+                  color: '#8A9AB5', fontFamily: 'monospace', fontSize: '10px',
+                  padding: '2px 6px', letterSpacing: '0.08em',
+                }}>
+                  +{extraImgs}
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+
+        {/* Mobile image strip — shown only on small screens when image exists */}
+        {hasImage && (
+          <div className="block sm:hidden" style={{ borderTop: '1px solid #1A2238', position: 'relative' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={entry.images[0]}
               alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover', filter: BRAND_FILTER, display: 'block' }}
+              style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '160px', objectFit: 'cover' }}
             />
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px', width: '100%' }}>
-            {entry.images.slice(0, 3).map((url, i) => (
-              <div key={i} style={{ aspectRatio: '1', overflow: 'hidden', position: 'relative' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={url}
-                  alt=""
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', filter: BRAND_FILTER, display: 'block' }}
-                />
-                {/* Show count on last visible tile if more than 3 */}
-                {i === 2 && entry.images.length > 3 && (
-                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(7,9,18,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-star)', letterSpacing: '0.1em' }}>
-                    +{entry.images.length - 3}
-                  </div>
-                )}
+            {extraImgs > 0 && (
+              <div style={{
+                position: 'absolute', bottom: 6, right: 6,
+                background: 'rgba(11,15,23,0.82)', border: '1px solid #1E2840',
+                color: '#8A9AB5', fontFamily: 'monospace', fontSize: '10px',
+                padding: '2px 6px',
+              }}>
+                +{extraImgs}
               </div>
-            ))}
-          </div>
-        )
-      )}
-
-      {/* Content */}
-      <div style={{ padding: '1rem' }}>
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span className="label-tag" style={{ color }}>{entry.tag}</span>
-            {(entry.images?.length ?? 0) > 0 && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.15em', color: 'var(--color-star-deep)', border: '1px solid var(--bd-faint)', padding: '0.1rem 0.4rem' }}>
-                {entry.images.length} IMG
-              </span>
             )}
-          </div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--color-star-deep)', letterSpacing: '0.15em' }}>
-            {new Date(entry.timestamp).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}
-          </span>
-        </div>
-
-        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-star)', marginBottom: '0.5rem', lineHeight: 1.4 }}>
-          {entry.title}
-        </h2>
-
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>
-          {entry.content.length > 120 ? entry.content.slice(0, 120) + '…' : entry.content}
-        </p>
-
-        {entry.publisher_name && (
-          <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.12em', color: 'var(--color-muted)' }}>BY</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.1em', color: 'var(--color-star-deep)' }}>{entry.publisher_name}</span>
           </div>
         )}
 
-        <div style={{ marginTop: '0.75rem', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.18em', color, opacity: 0.7 }}>
-          READ MORE →
-        </div>
       </div>
     </Link>
   )
 }
 
 export default function IntelPage() {
-  const [intel, setIntel] = useState<Intel[]>([])
+  const [intel, setIntel] = useState<IntelWithAvatar[]>([])
 
-  useEffect(() => {
-    getAllIntel().then(setIntel)
-  }, [])
+  useEffect(() => { getAllIntel().then(data => setIntel(data as IntelWithAvatar[])) }, [])
 
   return (
     <div className="main">
@@ -138,15 +173,16 @@ export default function IntelPage() {
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           {(['NOTICE', 'DEVICE', 'ORG'] as const).map((tag) => (
             <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: TAG_COLOR[tag] }} />
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: TAG_COLOR[tag] }} />
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.18em', color: TAG_COLOR[tag] }}>{tag}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem', flex: 1 }}>
-        {intel.map((entry) => <IntelCard key={entry.id} entry={entry} />)}
+      {/* Feed */}
+      <div style={{ maxWidth: '720px', width: '100%' }}>
+        {intel.map(entry => <IntelCard key={entry.id} entry={entry} />)}
       </div>
 
       <div className="footer-bar" style={{ marginTop: '2rem' }}>

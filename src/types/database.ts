@@ -2,7 +2,6 @@
 // Keep in sync with supabase/schema.sql and supabase/schema_v2.sql
 
 export type UserRole = 'guest' | 'applicant' | 'voyager' | 'architect'
-export type VoteScope = 'public' | 'applicant' | 'voyager' | 'architect'
 export type VoteType = 'single' | 'multi'
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected'
 export type DeviceStatus = 'available' | 'in_use' | 'needs_repair' | 'unknown'
@@ -44,7 +43,7 @@ export type Vote = {
   title: string
   description: string | null
   type: VoteType
-  scope: VoteScope
+  scope: UserRole[]           // array of roles allowed to participate
   options: VoteOption[]
   is_active: boolean
   created_by: string | null   // voyager_profile id
@@ -166,6 +165,7 @@ export type Story = {
 }
 
 export type StoryWithAvatar = Story & { author_avatar_url: string | null }
+export type IntelWithAvatar = Intel & { publisher_avatar_url: string | null }
 
 export type StoryInsert = Omit<Story, 'created_at' | 'updated_at'>
 export type StoryUpdate = Partial<Pick<
@@ -230,7 +230,6 @@ export type Database = {
     Functions: Record<string, never>
     Enums: {
       user_role: UserRole
-      vote_scope: VoteScope
       vote_type: VoteType
       application_status: ApplicationStatus
       device_status: DeviceStatus

@@ -19,12 +19,27 @@ export async function getPublicIntel() {
 // All intel visible to current user — RLS controls classified access
 export async function getAllIntel() {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data: items } = await supabase
     .from('intel')
     .select('*')
     .order('timestamp', { ascending: false })
 
-  return data ?? []
+  if (!items?.length) return []
+
+  const publisherIds = [...new Set(items.filter(i => i.publisher_id).map(i => i.publisher_id!))]
+  const avatarMap: Record<string, string | null> = {}
+  if (publisherIds.length) {
+    const { data: profiles } = await supabase
+      .from('voyager_profiles')
+      .select('id, avatar_url')
+      .in('id', publisherIds)
+    profiles?.forEach(p => { avatarMap[p.id] = p.avatar_url })
+  }
+
+  return items.map(i => ({
+    ...i,
+    publisher_avatar_url: i.publisher_id ? (avatarMap[i.publisher_id] ?? null) : null,
+  }))
 }
 
 export async function getIntelById(id: string) {
