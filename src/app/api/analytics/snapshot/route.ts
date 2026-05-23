@@ -95,13 +95,14 @@ export async function GET(request: NextRequest) {
 
   const runId = randomUUID()
   const steps = [
-    { key: 'homepage_visit',             label: 'Homepage Visit',     order: 1, all: pageviewAllTime[0]?.[0] ?? 0, d30: pageview30d[0]?.[0] ?? 0 },
-    { key: 'onboarding_started',         label: 'Onboarding Started', order: 2, all: byEvent(allTimeRows, 'onboarding_started'),      d30: byEvent(window30dRows, 'onboarding_started') },
-    { key: 'onboarding_q1_completed',    label: 'Q1 Completed',       order: 3, all: byEvent(allTimeRows, 'onboarding_q1_completed'), d30: byEvent(window30dRows, 'onboarding_q1_completed') },
-    { key: 'onboarding_q2_completed',    label: 'Q2 Completed',       order: 4, all: byEvent(allTimeRows, 'onboarding_q2_completed'), d30: byEvent(window30dRows, 'onboarding_q2_completed') },
-    { key: 'onboarding_email_submitted', label: 'Email Submitted',    order: 5, all: emailAll,  d30: email30d },
-    { key: 'registered',                 label: 'Account Registered', order: 6, all: regAll ?? 0, d30: reg30d ?? 0 },
-    { key: 'voyager',                    label: 'Became Voyager',     order: 7, all: voyAll ?? 0, d30: voy30d ?? 0 },
+    // step 0: traffic reference — shown above the funnel, excluded from conversion rates
+    { key: 'homepage_visit',             label: 'Homepage (traffic ref)', order: 0, all: pageviewAllTime[0]?.[0] ?? 0, d30: pageview30d[0]?.[0] ?? 0 },
+    // funnel steps 1–5: conversion rates calculated relative to step 1
+    { key: 'onboarding_started',         label: 'Onboarding Started', order: 1, all: byEvent(allTimeRows, 'onboarding_started'),      d30: byEvent(window30dRows, 'onboarding_started') },
+    { key: 'onboarding_q1_completed',    label: 'Q1 Completed',       order: 2, all: byEvent(allTimeRows, 'onboarding_q1_completed'), d30: byEvent(window30dRows, 'onboarding_q1_completed') },
+    { key: 'onboarding_q2_completed',    label: 'Q2 Completed',       order: 3, all: byEvent(allTimeRows, 'onboarding_q2_completed'), d30: byEvent(window30dRows, 'onboarding_q2_completed') },
+    { key: 'onboarding_email_submitted', label: 'Email Submitted',    order: 4, all: emailAll,  d30: email30d },
+    { key: 'registered',                 label: 'Account Registered', order: 5, all: regAll ?? 0, d30: reg30d ?? 0 },
   ]
 
   const { error } = await supabase.from('funnel_snapshots').insert(

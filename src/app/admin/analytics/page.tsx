@@ -27,16 +27,14 @@ type Run = {
 async function getLatestRuns(limit = 10): Promise<Run[]> {
   const supabase = createAdminClient()
 
-  // Fetch the most recent `limit` distinct run_ids
   const { data: recent } = await supabase
     .from('funnel_snapshots')
     .select('run_id, captured_at, version_tag')
     .order('captured_at', { ascending: false })
-    .limit(limit * 7) // up to 7 steps per run
+    .limit(limit * 6)
 
   if (!recent?.length) return []
 
-  // Deduplicate by run_id (preserve insertion order = newest first)
   const seen = new Set<string>()
   const runs: { run_id: string; captured_at: string; version_tag: string | null }[] = []
   for (const row of recent) {
@@ -47,7 +45,6 @@ async function getLatestRuns(limit = 10): Promise<Run[]> {
     }
   }
 
-  // Fetch all steps for those run_ids
   const runIds = runs.map(r => r.run_id)
   const { data: steps } = await supabase
     .from('funnel_snapshots')
@@ -66,18 +63,39 @@ function pct(a: number, b: number) {
   return `${Math.round((a / b) * 100)}%`
 }
 
-function FunnelBar({ count, max, color = ACCENT }: { count: number; max: number; color?: string }) {
+function TrafficRef({ count, count30d }: { count: number; count30d: number }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '0.75rem 1rem', background: '#070c1a', border: `1px solid ${BORDER}`, marginBottom: '0.5rem' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: MUTED }}>
+        HOMEPAGE TRAFFIC (去重浏览器)
+      </div>
+      <div style={{ fontFamily: 'monospace', fontSize: 13, color: DIM }}>
+        {count.toLocaleString()} <span style={{ fontSize: 9, color: MUTED }}>all-time</span>
+      </div>
+      <div style={{ fontFamily: 'monospace', fontSize: 11, color: MUTED }}>
+        {count30d.toLocaleString()} <span style={{ fontSize: 9 }}>30d</span>
+      </div>
+      <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginLeft: 'auto' }}>
+        ↓ 不计入漏斗转化率
+      </div>
+    </div>
+  )
+}
+
+function FunnelBar({ count, max }: { count: number; max: number }) {
   const w = max > 0 ? Math.round((count / max) * 100) : 0
   return (
     <div style={{ flex: 1, background: '#111525', height: 6, borderRadius: 1 }}>
-      <div style={{ width: `${w}%`, height: '100%', background: color, transition: 'width 0.4s ease' }} />
+      <div style={{ width: `${w}%`, height: '100%', background: ACCENT, transition: 'width 0.4s ease' }} />
     </div>
   )
 }
 
 function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
-  const steps = [...run.steps].sort((a, b) => a.step_order - b.step_order)
-  const maxCount = steps[0]?.count_all_time ?? 1
+  const allSteps  = [...run.steps].sort((a, b) => a.step_order - b.step_order)
+  const trafficRef = allSteps.find(s => s.step_order === 0)
+  const funnelSteps = allSteps.filter(s => s.step_order > 0)
+  const maxCount  = funnelSteps[0]?.count_all_time ?? 1
 
   return (
     <div style={{ background: CARD_BG, border: `1px solid ${isLatest ? ACCENT : BORDER}`, padding: '1.25rem 1.5rem', borderRadius: 2 }}>
@@ -97,23 +115,32 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
         )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-        {steps.map((step, i) => {
-          const prev = steps[i - 1]
-          const rate = prev ? pct(step.count_all_time, prev.count_all_time) : null
+      {/* Traffic reference — above the funnel */}
+      {trafficRef && (
+        <TrafficRef count={trafficRef.count_all_time} count30d={trafficRef.count_30d} />
+      )}
+
+      {/* Funnel steps — conversion rates relative to step 1 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.75rem' }}>
+        {funnelSteps.map((step, i) => {
+          const prev = funnelSteps[i - 1]
+          const stepRate  = prev ? pct(step.count_all_time, prev.count_all_time) : null
+          const totalRate = i > 0 ? pct(step.count_all_time, funnelSteps[0].count_all_time) : null
           return (
             <div key={step.step_key}>
-              {rate && (
-                <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: '0.1em', color: MUTED, paddingLeft: '0.5rem', marginBottom: '0.25rem' }}>
-                  ↓ {rate}
+              {stepRate && (
+                <div style={{ display: 'flex', gap: '0.75rem', paddingLeft: '0.5rem', marginBottom: '0.25rem' }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>↓ {stepRate} (上一步)</div>
+                  {totalRate && <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#2A3550' }}>/ {totalRate} (总)</div>}
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.15em', color: DIM, width: 180, flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.15em', color: i === 0 ? STAR : DIM, width: 180, flexShrink: 0 }}>
+                  {i === 0 && <span style={{ color: ACCENT, marginRight: 4 }}>▶</span>}
                   {step.step_label.toUpperCase()}
                 </div>
                 <FunnelBar count={step.count_all_time} max={maxCount} />
-                <div style={{ fontFamily: 'monospace', fontSize: 11, color: STAR, width: 48, textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 11, color: i === 0 ? STAR : STAR, width: 48, textAlign: 'right', flexShrink: 0 }}>
                   {step.count_all_time.toLocaleString()}
                 </div>
                 <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, width: 52, textAlign: 'right', flexShrink: 0 }}>
@@ -124,37 +151,53 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
           )
         })}
       </div>
+
+      {/* Overall CVR badge */}
+      {funnelSteps.length >= 2 && (
+        <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: '1.5rem' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED }}>
+            OVERALL CVR (Onboarding → Email)
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 12, color: ACCENT, fontWeight: 700 }}>
+            {pct(
+              funnelSteps.find(s => s.step_key === 'onboarding_email_submitted')?.count_all_time ?? 0,
+              funnelSteps[0].count_all_time
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
+const HISTORY_KEYS   = ['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_email_submitted', 'registered']
+const HISTORY_LABELS = ['Started', 'Q1', 'Q2', 'Email', 'Reg.']
+
 function HistoryTable({ runs }: { runs: Run[] }) {
   if (runs.length < 2) return null
-  const stepKeys = ['homepage_visit', 'onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_email_submitted', 'registered', 'voyager']
-  const stepNames = ['Visit', 'Started', 'Q1', 'Q2', 'Email', 'Reg.', 'Voyager']
 
   return (
     <div style={{ marginTop: '2rem' }}>
       <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
-        // CONVERSION RATE HISTORY (all-time, visit → email)
+        // HISTORY — overall CVR (Onboarding Started → Email)
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 10 }}>
           <thead>
             <tr>
-              <th style={{ textAlign: 'left', padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>DATE</th>
-              <th style={{ textAlign: 'left', padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>VER</th>
-              {stepNames.map(n => (
-                <th key={n} style={{ textAlign: 'right', padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>{n}</th>
+              <th style={{ textAlign: 'left',  padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>DATE</th>
+              <th style={{ textAlign: 'left',  padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>VER</th>
+              {HISTORY_LABELS.map(l => (
+                <th key={l} style={{ textAlign: 'right', padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>{l}</th>
               ))}
-              <th style={{ textAlign: 'right', padding: '6px 12px', color: ACCENT, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>TOTAL CVR</th>
+              <th style={{ textAlign: 'right', padding: '6px 12px', color: ACCENT, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>CVR</th>
             </tr>
           </thead>
           <tbody>
             {runs.map((run, ri) => {
               const byKey = Object.fromEntries(run.steps.map(s => [s.step_key, s.count_all_time]))
-              const topCount = byKey['homepage_visit'] ?? 0
-              const emailCount = byKey['onboarding_email_submitted'] ?? 0
+              const top   = byKey['onboarding_started'] ?? 0
+              const email = byKey['onboarding_email_submitted'] ?? 0
               return (
                 <tr key={run.run_id} style={{ background: ri === 0 ? 'rgba(232,90,0,0.03)' : 'transparent' }}>
                   <td style={{ padding: '6px 12px', color: ri === 0 ? STAR : DIM, borderBottom: `1px solid ${BORDER}` }}>
@@ -163,13 +206,13 @@ function HistoryTable({ runs }: { runs: Run[] }) {
                   <td style={{ padding: '6px 12px', color: OK_COLOR, borderBottom: `1px solid ${BORDER}` }}>
                     {run.version_tag ?? '—'}
                   </td>
-                  {stepKeys.map(k => (
+                  {HISTORY_KEYS.map(k => (
                     <td key={k} style={{ textAlign: 'right', padding: '6px 12px', color: DIM, borderBottom: `1px solid ${BORDER}` }}>
                       {(byKey[k] ?? 0).toLocaleString()}
                     </td>
                   ))}
                   <td style={{ textAlign: 'right', padding: '6px 12px', color: ACCENT, fontWeight: 600, borderBottom: `1px solid ${BORDER}` }}>
-                    {pct(emailCount, topCount)}
+                    {pct(email, top)}
                   </td>
                 </tr>
               )
@@ -195,7 +238,7 @@ export default async function AnalyticsPage() {
             CONVERSION FUNNEL
           </h1>
           <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, marginTop: '0.4rem' }}>
-            Homepage → Onboarding → Email → Voyager · all-time unique users
+            Onboarding Started → Q1 → Q2 → Email → Registered · all-time unique users
           </div>
         </div>
         <RefreshButton />
@@ -204,10 +247,7 @@ export default async function AnalyticsPage() {
       {runs.length === 0 ? (
         <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, padding: '2rem', textAlign: 'center' }}>
           <div style={{ fontFamily: 'monospace', fontSize: 11, color: DIM, lineHeight: 2 }}>
-            No snapshots yet.<br />
-            <span style={{ color: MUTED }}>The cron runs daily at 09:00 UTC.<br />
-            Or trigger manually:</span>{' '}
-            <code style={{ color: ACCENT }}>GET /api/analytics/snapshot</code>
+            No snapshots yet. Click <span style={{ color: ACCENT }}>CAPTURE NOW</span> to generate the first one.
           </div>
         </div>
       ) : (
@@ -230,8 +270,8 @@ export default async function AnalyticsPage() {
       )}
 
       <div style={{ marginTop: '2rem', fontFamily: 'monospace', fontSize: 9, color: MUTED, lineHeight: 2 }}>
-        // To tag a version: <code style={{ color: ACCENT }}>GET /api/analytics/snapshot?version_tag=v1.2</code><br />
-        // Cron: daily 09:00 UTC · Data sources: PostHog (steps 1–5) + Supabase (steps 6–7)
+        // Tag a version: <code style={{ color: ACCENT }}>GET /api/analytics/snapshot?version_tag=v1.2</code><br />
+        // Cron: daily 09:00 UTC · PostHog (steps 1–4, cookie去重) + Supabase (step 5)
       </div>
     </div>
   )
