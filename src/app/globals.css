@@ -541,6 +541,8 @@ code, pre, kbd { font-family: var(--font-mono); }
   96%     { opacity: 0.03; }
   97%     { opacity: 0; }
 }
+@keyframes cursorBlink { 50% { opacity: 0; } }
+
 @keyframes videoJitter {
   0%,100% { transform: translateX(0); }
   92%     { transform: translateX(0); }

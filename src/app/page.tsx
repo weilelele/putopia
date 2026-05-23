@@ -26,6 +26,8 @@ function OnboardingInner() {
   const [email, setEmail]                 = useState('')
   const [submitting, setSubmitting]       = useState(false)
   const [showTransition, setShowTransition] = useState(false)
+  const [showConfirm, setShowConfirm]     = useState(false)
+  const [awaitClick, setAwaitClick]       = useState(false)
 
   /* ?preview resets flag; otherwise redirect to console if already registered */
   useEffect(() => {
@@ -73,23 +75,34 @@ function OnboardingInner() {
       location: worldText,
     })
     posthog.capture('onboarding_email_submitted', { belief_value: belief, world_selected: emotion })
-    // Brief "TRANSMITTING..." beat before scan fires
+    // Brief "TRANSMITTING..." beat before confirm screen appears
     await new Promise(r => setTimeout(r, 200))
     if (typeof window !== 'undefined' && (window as any).fbq) {
       (window as any).fbq('track', 'Lead')
     }
-    setShowTransition(true)
+    setShowConfirm(true)
+    // Enable click-anywhere to trigger scan after lines have appeared
+    setTimeout(() => setAwaitClick(true), 1500)
   }
 
   return (
     /* Full-screen overlay — covers sidebar + bottom-nav */
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'var(--color-deep-2)',
-      overflowY: 'auto',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-    }}>
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'var(--color-deep-2)',
+        overflowY: 'auto',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        cursor: awaitClick ? 'pointer' : 'default',
+      }}
+      onClick={() => {
+        if (awaitClick && !showTransition) {
+          setAwaitClick(false)
+          setShowTransition(true)
+        }
+      }}
+    >
 
       {/* Scan transition fires after identity confirmation */}
       {showTransition && (
@@ -137,6 +150,8 @@ function OnboardingInner() {
                   setEmail={setEmail}
                   submitting={submitting}
                   onSubmit={handleSubmit}
+                  showConfirm={showConfirm}
+                  awaitClick={awaitClick}
                 />
               )}
 
@@ -345,12 +360,14 @@ function Q2Card({ selected, onSelect }: { selected: string; onSelect: (id: strin
 /* ─────────────────────────────────────────────────────
    CTA CARD — affirmation first, then form staggered in
 ───────────────────────────────────────────────────── */
-function CtaCard({ email, setEmail, submitting, onSubmit }: {
+function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClick }: {
   email: string; setEmail: (v: string) => void
   submitting: boolean; onSubmit: (e: React.FormEvent) => void
+  showConfirm: boolean; awaitClick: boolean
 }) {
   const [showSecondLine, setShowSecondLine] = useState(false)
   const [showForm, setShowForm]             = useState(false)
+  const [confirmLines, setConfirmLines]     = useState([false, false, false, false])
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -362,8 +379,26 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
 
+  // Stagger confirm lines in when showConfirm flips true
+  useEffect(() => {
+    if (!showConfirm) return
+    const delays = [0, 300, 580, 950]
+    const timers = delays.map((d, i) =>
+      setTimeout(() => setConfirmLines(prev => {
+        const next = [...prev]; next[i] = true; return next
+      }), d)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [showConfirm])
+
+  const lineStyle = (visible: boolean): React.CSSProperties => ({
+    opacity:    visible ? 1 : 0,
+    transform:  visible ? 'translateY(0)' : 'translateY(8px)',
+    transition: 'opacity 0.4s ease, transform 0.4s ease',
+  })
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', position: 'relative' }}>
 
       {/* Affirmation — staggered lines */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -461,6 +496,63 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
           </button>
 
         </form>
+      </div>
+
+      {/* ── Inbox confirm overlay — slides in over the form ── */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'var(--color-deep-2)',
+        display: 'flex', flexDirection: 'column', gap: '1.1rem',
+        justifyContent: 'center',
+        padding: '0.25rem 0',
+        opacity:    showConfirm ? 1 : 0,
+        pointerEvents: showConfirm ? 'none' : 'none', // click passes through to wrapper
+        transition: 'opacity 0.35s ease',
+      }}>
+        {/* SIGNAL TRANSMITTED. */}
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: '0.48rem',
+          letterSpacing: '0.42em', color: 'var(--color-nebula)',
+          ...lineStyle(confirmLines[0]),
+        }}>
+          SIGNAL TRANSMITTED.
+        </div>
+
+        {/* Check your email inbox. */}
+        <div style={{
+          fontFamily: 'var(--font-body)', fontWeight: 700,
+          fontSize: '1.35rem', lineHeight: 1.4, color: 'var(--color-star)',
+          ...lineStyle(confirmLines[1]),
+        }}>
+          Check your email inbox.
+        </div>
+
+        {/* Body */}
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
+          color: 'rgba(242,240,230,0.55)', lineHeight: 1.75,
+          ...lineStyle(confirmLines[2]),
+        }}>
+          Your key to the Collective<br />has been dispatched.
+        </div>
+
+        {/* Tap hint */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
+          fontFamily: 'var(--font-mono)', fontSize: '0.58rem',
+          letterSpacing: '0.18em', color: 'rgba(34,212,224,0.6)',
+          marginTop: '0.5rem',
+          ...lineStyle(confirmLines[3]),
+        }}>
+          <span style={{ width: 18, height: 1, background: 'rgba(34,212,224,0.4)', display: 'inline-block', flexShrink: 0 }} />
+          Tap to enter the inner sanctum.
+          <span style={{
+            display: 'inline-block', width: 7, height: '1em',
+            background: 'var(--color-nebula)', verticalAlign: 'middle',
+            marginLeft: 3, opacity: awaitClick ? 0.7 : 0,
+            animation: awaitClick ? 'cursorBlink 1.1s step-end infinite' : 'none',
+          }} />
+        </div>
       </div>
 
     </div>
