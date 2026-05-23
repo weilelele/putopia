@@ -30,3 +30,5 @@ CREATE POLICY "funnel_snapshots_select_architect"
       WHERE id = auth.uid() AND role = 'architect'
     )
   );
+
+GRANT ALL ON public.funnel_snapshots TO service_role, authenticated, anon;
