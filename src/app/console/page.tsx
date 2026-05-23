@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { getAllDevices } from '@/lib/actions/devices'
 import { getPublicIntel } from '@/lib/actions/intel'
 import { getLatestFeed } from '@/lib/actions/dashboard-feed'
+import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actions/votes'
 import { CommsFeed } from '@/components/comms-feed'
+import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
-import type { Device, Intel } from '@/types/database'
+import type { Device, Intel, Vote } from '@/types/database'
 import type { FeedLine } from '@/lib/actions/dashboard-feed'
 
 
@@ -184,12 +187,24 @@ export default function ConsolePage() {
   const [latestIntel, setLatestIntel] = useState<Intel[]>([])
   const [feedLines, setFeedLines] = useState<FeedLine[]>([])
   const [isRegistered, setIsRegistered] = useState(false)
+  const [latestVotes, setLatestVotes] = useState<Vote[]>([])
+  const [voteTallies, setVoteTallies] = useState<Record<string, Record<string, number>>>({})
+  const [myVoteResponses, setMyVoteResponses] = useState<{ vote_id: string; selected_options: string[] }[]>([])
 
   useEffect(() => {
     getAllDevices().then((d) => setDevices(d.filter((dev) => dev.knowledge === 'known').slice(0, 3)))
     getPublicIntel().then((intel) => setLatestIntel(intel.slice(0, 2)))
     getLatestFeed().then((f) => { if (f?.lines?.length) setFeedLines(f.lines) })
     if (localStorage.getItem('putopia_voyager_registered')) setIsRegistered(true)
+    getAllVotes().then(async (votes) => {
+      const active = votes.filter((v) => v.is_active).slice(0, 2)
+      setLatestVotes(active)
+      if (active.length > 0) {
+        const tallies = await getVoteResultsBulk(active.map((v) => v.id))
+        setVoteTallies(tallies)
+      }
+    })
+    getMyVoteResponses().then(setMyVoteResponses)
   }, [])
 
   return (
@@ -229,7 +244,9 @@ export default function ConsolePage() {
 
         <div className="cta-row">
           {isRegistered || user.role !== 'guest' ? (
-            <Link href="/login" className="cta" style={{ textDecoration: 'none' }}>
+            <Link href="/login" className="cta" style={{ textDecoration: 'none' }}
+              onClick={() => posthog.capture('console_login_clicked')}
+            >
               <div className="cta-bg" />
               <div className="cta-frame" />
               <div className="cta-icon-slot">
@@ -297,6 +314,45 @@ export default function ConsolePage() {
               {latestIntel.map((entry) => (
                 <IntelPreviewCard key={entry.id} entry={entry} />
               ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Active Votes ── */}
+      {latestVotes.length > 0 && (
+        <section style={{ padding: '1rem 2.5rem 2rem' }}>
+          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: '#20D890' }}>
+                ● ACTIVE VOTES
+              </div>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+              {latestVotes.map((vote) => {
+                const myResp = myVoteResponses.find((r) => r.vote_id === vote.id)
+                return (
+                  <VoteCard
+                    key={vote.id}
+                    vote={vote}
+                    hasVoted={!!myResp}
+                    mySelections={myResp?.selected_options ?? []}
+                    tally={voteTallies[vote.id] ?? {}}
+                  />
+                )
+              })}
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <Link
+                href="/vote"
+                style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: '#4A5570' }}
+                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = '#20D890')}
+                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = '#4A5570')}
+              >
+                VIEW ALL VOTES →
+              </Link>
             </div>
           </div>
         </section>

@@ -7,6 +7,7 @@ const POSTHOG_EVENTS = [
   'onboarding_q1_completed',
   'onboarding_q2_completed',
   'onboarding_email_submitted',
+  'console_login_clicked',
 ]
 
 async function queryPostHog(sql: string): Promise<number[][]> {
@@ -103,6 +104,8 @@ export async function GET(request: NextRequest) {
     { key: 'onboarding_q2_completed',    label: 'Q2 Completed',       order: 3, all: byEvent(allTimeRows, 'onboarding_q2_completed'), d30: byEvent(window30dRows, 'onboarding_q2_completed') },
     { key: 'onboarding_email_submitted', label: 'Email Submitted',    order: 4, all: emailAll,  d30: email30d },
     { key: 'registered',                 label: 'Account Registered', order: 5, all: regAll ?? 0, d30: reg30d ?? 0 },
+    // Retention: separate from acquisition funnel
+    { key: 'console_login_clicked',      label: 'Returned to Login',  order: 6, all: byEvent(allTimeRows, 'console_login_clicked'), d30: byEvent(window30dRows, 'console_login_clicked') },
   ]
 
   const { error } = await supabase.from('funnel_snapshots').insert(

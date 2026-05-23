@@ -83,9 +83,11 @@ function TrafficRef({ count, count30d }: { count: number; count30d: number }) {
 }
 
 // PostHog-tracked steps (accumulate from today onward)
-const POSTHOG_KEYS = new Set(['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed'])
+const POSTHOG_KEYS   = new Set(['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed'])
 // Supabase-backed steps (full historical data)
-const SUPABASE_KEYS = new Set(['onboarding_email_submitted', 'registered'])
+const SUPABASE_KEYS  = new Set(['onboarding_email_submitted', 'registered'])
+// Retention step — shown separately below the funnel
+const RETENTION_KEYS = new Set(['console_login_clicked'])
 
 function FunnelBar({ count, max, color = ACCENT }: { count: number; max: number; color?: string }) {
   const w = max > 0 ? Math.min(Math.round((count / max) * 100), 100) : 0
@@ -129,13 +131,52 @@ function StepRow({ step, prev, maxCount, color = ACCENT }: {
   )
 }
 
+function RetentionCard({ step, registered }: { step: SnapshotRow; registered: number }) {
+  const rate = registered > 0 ? Math.round((step.count_all_time / registered) * 100) : 0
+  return (
+    <div style={{ marginTop: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(34,212,224,0.03)', border: '1px solid rgba(34,212,224,0.15)', borderRadius: 2 }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: '#1A4A50', marginBottom: '0.75rem' }}>
+        RETENTION · RETURNING USERS
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' }}>
+            CONSOLE → LOGIN COLLECTIVE 点击
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 22, color: '#22D4E0', fontWeight: 700, lineHeight: 1 }}>
+            {step.count_all_time.toLocaleString()}
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' }}>
+            30d: {step.count_30d}
+          </div>
+        </div>
+        {registered > 0 && (
+          <div style={{ borderLeft: `1px solid rgba(34,212,224,0.15)`, paddingLeft: '1.5rem' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' }}>
+              回归率（登录 / 注册用户）
+            </div>
+            <div style={{ fontFamily: 'monospace', fontSize: 22, color: '#22D4E0', fontWeight: 700, lineHeight: 1 }}>
+              {rate}%
+            </div>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' }}>
+              {step.count_all_time} / {registered} 已注册用户
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
-  const allSteps   = [...run.steps].sort((a, b) => a.step_order - b.step_order)
-  const trafficRef = allSteps.find(s => s.step_order === 0)
-  const phSteps    = allSteps.filter(s => POSTHOG_KEYS.has(s.step_key))
-  const sbSteps    = allSteps.filter(s => SUPABASE_KEYS.has(s.step_key))
-  const phMax      = phSteps[0]?.count_all_time || 1
-  const sbMax      = sbSteps[0]?.count_all_time || 1
+  const allSteps     = [...run.steps].sort((a, b) => a.step_order - b.step_order)
+  const trafficRef   = allSteps.find(s => s.step_order === 0)
+  const phSteps      = allSteps.filter(s => POSTHOG_KEYS.has(s.step_key))
+  const sbSteps      = allSteps.filter(s => SUPABASE_KEYS.has(s.step_key))
+  const retentionStep = allSteps.find(s => RETENTION_KEYS.has(s.step_key))
+  const phMax        = phSteps[0]?.count_all_time || 1
+  const sbMax        = sbSteps[0]?.count_all_time || 1
+  const registeredCount = sbSteps.find(s => s.step_key === 'registered')?.count_all_time ?? 0
 
   return (
     <div style={{ background: CARD_BG, border: `1px solid ${isLatest ? ACCENT : BORDER}`, padding: '1.25rem 1.5rem', borderRadius: 2 }}>
@@ -184,6 +225,11 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
           <StepRow key={step.step_key} step={step} prev={sbSteps[i - 1]} maxCount={sbMax} color='#22D4E0' />
         ))}
       </div>
+
+      {/* Retention */}
+      {retentionStep && (
+        <RetentionCard step={retentionStep} registered={registeredCount} />
+      )}
 
       {/* CVR summary */}
       <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
