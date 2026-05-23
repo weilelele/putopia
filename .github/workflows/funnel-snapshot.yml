@@ -1,0 +1,16 @@
+name: Funnel Snapshot
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'   # every 12 hours: 00:00 and 12:00 UTC
+  workflow_dispatch:           # allow manual trigger from GitHub UI
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture funnel snapshot
+        run: |
+          curl -sf \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/analytics/snapshot"
