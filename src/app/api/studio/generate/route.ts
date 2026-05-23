@@ -5,7 +5,12 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { Database } from '@/types/database'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+// Lazy getter — reads env var at request time, not at module load time.
+// Module-level init causes "Could not resolve authentication method" in
+// Next.js App Router because env vars aren't injected yet when the module loads.
+function getAnthropic() {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+}
 
 /* ─── Auth guard ─────────────────────────────────────────── */
 async function verifyArchitect() {
@@ -198,7 +203,7 @@ IMAGE PROMPT RULES (for LovArt / Midjourney):
   ].filter(Boolean).join('\n')
 
   /* ── Call Claude with prompt caching ── */
-  const response = await anthropic.messages.create({
+  const response = await getAnthropic().messages.create({
     model: 'claude-sonnet-4-5',
     max_tokens: 4096,
     system: [
