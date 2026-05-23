@@ -45,6 +45,8 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
   const [error,       setError]       = useState('')
   const [copied,      setCopied]      = useState<string | null>(null)
   const [imgLoaded,   setImgLoaded]   = useState(false)
+  const [imgError,    setImgError]    = useState(false)
+  const [imgKey,      setImgKey]      = useState(0)   // increment to force reload
 
   const togglePlatform = (p: Platform) =>
     setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])
@@ -61,6 +63,8 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
     setError('')
     setResult(null)
     setImgLoaded(false)
+    setImgError(false)
+    setImgKey(k => k + 1)
 
     try {
       const res = await fetch('/api/studio/generate', {
@@ -417,44 +421,94 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                   marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8,
                 }}>
                   <span>DRAFT PREVIEW</span>
-                  <span style={{ opacity: 0.45 }}>— Pollinations.ai · flux model · free</span>
+                  <span style={{ opacity: 0.45 }}>— Pollinations.ai · flux model · free · ~20s</span>
                 </div>
 
                 {/* Image container */}
-                <div style={{ position: 'relative', maxWidth: 320 }}>
-                  {!imgLoaded && (
+                <div style={{ position: 'relative', maxWidth: 380 }}>
+
+                  {/* Loading state */}
+                  {!imgLoaded && !imgError && (
                     <div style={{
                       width: '100%', aspectRatio: '1',
                       background: 'var(--color-deep)',
                       border: '1px solid var(--bd-faint)',
                       display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'center', gap: 8,
+                      alignItems: 'center', justifyContent: 'center', gap: 10,
                     }}>
                       <ScanLine small />
                       <div style={{ fontSize: 8, letterSpacing: '0.2em', color: 'var(--color-star-deep)' }}>
-                        RENDERING...
+                        RENDERING IMAGE...
+                      </div>
+                      <div style={{ fontSize: 7, letterSpacing: '0.12em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
+                        usually takes 15–30 seconds
                       </div>
                     </div>
                   )}
+
+                  {/* Error state */}
+                  {imgError && (
+                    <div style={{
+                      width: '100%', aspectRatio: '1',
+                      background: 'var(--color-deep)',
+                      border: '1px solid rgba(232,48,48,0.2)',
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center', gap: 10,
+                    }}>
+                      <div style={{ fontSize: 8, letterSpacing: '0.15em', color: 'var(--color-fault)' }}>
+                        PREVIEW UNAVAILABLE
+                      </div>
+                      <button
+                        onClick={() => { setImgError(false); setImgLoaded(false); setImgKey(k => k + 1) }}
+                        style={{
+                          fontSize: 8, letterSpacing: '0.15em', padding: '4px 12px',
+                          fontFamily: 'var(--font-mono)',
+                          background: 'transparent',
+                          border: '1px solid var(--bd-faint)',
+                          color: 'var(--color-star-deep)', cursor: 'pointer',
+                        }}
+                      >
+                        RETRY
+                      </button>
+                    </div>
+                  )}
+
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
+                    key={imgKey}
                     src={result.pollinations_url}
                     alt="AI draft preview"
-                    onLoad={() => setImgLoaded(true)}
-                    onError={() => setImgLoaded(true)}
+                    onLoad={() => { setImgLoaded(true); setImgError(false) }}
+                    onError={() => { setImgError(true); setImgLoaded(false) }}
                     style={{
-                      width: '100%', maxWidth: 320,
-                      display: imgLoaded ? 'block' : 'none',
+                      width: '100%', maxWidth: 380,
+                      display: imgLoaded && !imgError ? 'block' : 'none',
                       filter: 'contrast(1.04) saturate(0.92)',
                     }}
                   />
                 </div>
 
+                {/* Actions row */}
                 <div style={{
-                  marginTop: 10, fontSize: 8, letterSpacing: '0.15em',
-                  color: 'var(--color-star-deep)', lineHeight: 1.8,
+                  marginTop: 10, display: 'flex', alignItems: 'center',
+                  justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
                 }}>
-                  → Copy the full prompt above into LovArt for production quality
+                  <div style={{ fontSize: 8, letterSpacing: '0.13em', color: 'var(--color-star-deep)', lineHeight: 1.7 }}>
+                    → Paste the <strong style={{ color: 'var(--color-ok)' }}>full prompt above</strong> into LovArt for production quality
+                  </div>
+                  {imgLoaded && (
+                    <button
+                      onClick={() => { setImgLoaded(false); setImgError(false); setImgKey(k => k + 1) }}
+                      style={{
+                        fontSize: 8, letterSpacing: '0.15em', padding: '3px 10px',
+                        fontFamily: 'var(--font-mono)', flexShrink: 0,
+                        background: 'transparent', border: '1px solid var(--bd-faint)',
+                        color: 'var(--color-star-deep)', cursor: 'pointer',
+                      }}
+                    >
+                      ↺ REGENERATE
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

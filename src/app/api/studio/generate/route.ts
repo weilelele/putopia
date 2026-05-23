@@ -160,22 +160,31 @@ PLATFORM RULES:
 
 • Instagram [English]
   2–5 sentences. Atmospheric, immersive. Natural line breaks for rhythm.
-  End with 4–8 tightly relevant hashtags on a new line. No hashtag spam.
-  Examples of good hashtags: #MultiverseCollective #ParallelWorlds #VoyagerLog #SignalDetected
+  Hashtag strategy — pick from these tiers, total 7–10 tags:
+    HIGH VOLUME (pick 2–3, drives discovery): #scifiart #mystery #alternativereality
+      #quantumphysics #multiverse #spaceart #sciencefiction #conspiracy #paranormal
+    MID TIER (pick 3–4, engaged community): #paralleldimensions #dimensionalshift
+      #quantumreality #secretsociety #hiddenworld #collectiveconsciousness
+      #interdimensional #cosmicmystery #alternateuniverse #voidaesthetic
+    BRAND (pick 1–2, always include): #MultiverseCollective #VoyagerLog
+  Do NOT make up hashtags that have no real audience. Choose from the lists above.
 
 • X / Twitter [English]
   ≤ 280 characters. One sharp, complete idea. Reads like a signal intercept.
-  Hashtags only if they genuinely add something — never forced.
-  No thread format. One transmission, one thought.
+  Hashtags: 0–2 maximum. Only add one if it meaningfully helps reach (e.g. #scifi #mystery).
+  Most tweets should have zero hashtags — the copy carries the weight.
 
 • 小红书 / RED [中文]
-  语言：全程中文，可适当保留组织专有名词英文原文（如 Multiverse Console、Voyager）。
-  标题：15–20 字。直接、有吸引力，可带疑问句或情绪钩子，像在召唤某类特定的人。
+  语言：全程中文，可保留专有名词英文原文（Multiverse Console、Voyager）。
+  标题：15–20 字，抓人，可有悬念或情绪钩子，像在召唤某类特定的人。
   正文：150–300 字，分 3–4 段，每段 2–3 句，段落间空一行。
-  Emoji：每段开头或结尾可用 1 个 emoji 增加节奏感，不要堆砌（全文不超过 6 个）。
-  语气：比英文平台更个人化、感性——像 Voyager 在真实分享一次探索体验或感悟，而不是发公告。
-  话题标签：结尾另起一行，3–6 个，格式 #平行世界 #多元宇宙 #探索者 等，可中英混搭。
-  不要出现："小编"、"大家好"、"点赞收藏"等营销套话。
+  Emoji：每段 1 个，全文不超过 5 个，点缀而非堆砌。
+  语气：个人化、感性，像 Voyager 真实分享探索体验，不是公告。
+  话题标签策略 — 结尾另起一行，共 5–8 个：
+    高流量（选 2–3）：#科幻 #平行宇宙 #神秘事件 #宇宙 #量子力学 #未解之谜
+    中等（选 2–3）：#平行世界 #维度旅行 #意识探索 #赛博朋克 #科幻美学 #神秘组织
+    品牌（必选 1–2）：#多元宇宙集合体 #旅行者日志
+  禁止："小编"、"大家好"、"点赞收藏"、自创无人搜索的标签。
 
 IMAGE PROMPT RULES (for LovArt / Midjourney):
 • Be specific and directed — shot type, lighting setup, color palette, mood, texture.
