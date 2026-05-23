@@ -30,6 +30,16 @@ async function verifyArchitect() {
 
 /* ─── POST /api/studio/generate ─────────────────────────── */
 export async function POST(request: NextRequest) {
+  try {
+    return await handleGenerate(request)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[studio] Unhandled error:', msg)
+    return NextResponse.json({ error: `Server error: ${msg}` }, { status: 500 })
+  }
+}
+
+async function handleGenerate(request: NextRequest) {
   const user = await verifyArchitect()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -252,4 +262,4 @@ IMAGE PROMPT RULES (for LovArt / Midjourney):
       cache_read_input_tokens:     (response.usage as unknown as Record<string, number>).cache_read_input_tokens     ?? 0,
     },
   })
-}
+}  // end handleGenerate
