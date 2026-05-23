@@ -12,6 +12,8 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
     }
+    const errorCode = (error as { code?: string }).code ?? 'auth_failed'
+    return NextResponse.redirect(`${origin}/?error=auth_failed&error_code=${errorCode}`)
   }
 
   // Auth failed — redirect home with error param

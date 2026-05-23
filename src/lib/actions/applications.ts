@@ -15,18 +15,6 @@ export async function submitApplication(application: ApplicationInsert) {
 
   if (error) return { error: error.message }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://putopia-dtogto3vt-weileleles-projects.vercel.app'
-
-  // Send invite email via Supabase Auth
-  try {
-    const admin = createAdminClient()
-    await admin.auth.admin.inviteUserByEmail(application.email, {
-      redirectTo: `${siteUrl}/auth/callback?next=/register`,
-    })
-  } catch {
-    // Invite failure doesn't block the application
-  }
-
   // Subscribe to Beehiiv newsletter
   const beehiivKey = process.env.BEEHIIV_API_KEY
   const beehiivPub = process.env.BEEHIIV_PUBLICATION_ID
@@ -98,7 +86,7 @@ export async function reviewApplication(
 
   if (error) return { error: error.message }
 
-  // If approved, upgrade the applicant's role using service role key
+  // If approved, send invite email and upgrade the applicant's role
   if (status === 'approved') {
     const { data: app } = await supabase
       .from('applications')
@@ -108,6 +96,17 @@ export async function reviewApplication(
 
     if (app?.email) {
       const admin = createAdminClient()
+
+      // Send a fresh invite so the link isn't expired by the time the user clicks it
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://putopia-dtogto3vt-weileleles-projects.vercel.app'
+      try {
+        await admin.auth.admin.inviteUserByEmail(app.email, {
+          redirectTo: `${siteUrl}/auth/callback?next=/register`,
+        })
+      } catch {
+        // Invite failure doesn't block the approval
+      }
+
       // Find the auth user by email and promote their profile
       const { data: users } = await admin.auth.admin.listUsers()
       const authUser = users?.users?.find(u => u.email === app.email)
