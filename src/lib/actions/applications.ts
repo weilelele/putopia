@@ -97,11 +97,15 @@ export async function reviewApplication(
     if (app?.email) {
       const admin = createAdminClient()
 
-      // Send a fresh invite so the link isn't expired by the time the user clicks it
+      // Send a fresh invite so the link isn't expired by the time the user clicks it.
+      // redirectTo is used by the Supabase email template as {{ .RedirectTo }}; the
+      // template must be customised in the Supabase dashboard to use token_hash format:
+      //   {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next={{ .RedirectTo }}
+      // This prevents email-scanner prefetchers from consuming the OTP before the user clicks.
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://putopia-dtogto3vt-weileleles-projects.vercel.app'
       try {
         await admin.auth.admin.inviteUserByEmail(app.email, {
-          redirectTo: `${siteUrl}/auth/callback?next=/register`,
+          redirectTo: `${siteUrl}/register`,
         })
       } catch {
         // Invite failure doesn't block the approval
