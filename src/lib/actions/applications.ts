@@ -15,16 +15,17 @@ export async function submitApplication(application: ApplicationInsert) {
 
   if (error) return { error: error.message }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://putopia-dtogto3vt-weileleles-projects.vercel.app'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://voyager.putopia.studio'
 
   // Send invite email via Supabase Auth
   try {
     const admin = createAdminClient()
-    await admin.auth.admin.inviteUserByEmail(application.email, {
+    const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(application.email, {
       redirectTo: `${siteUrl}/auth/callback?next=/register`,
     })
-  } catch {
-    // Invite failure doesn't block the application
+    if (inviteError) console.error('[submitApplication] inviteUserByEmail failed:', inviteError.message)
+  } catch (err) {
+    console.error('[submitApplication] inviteUserByEmail threw:', err)
   }
 
   // Subscribe to Beehiiv newsletter
