@@ -78,7 +78,8 @@ export async function generateAndSaveFeed(): Promise<{ error: string | null; fee
       .order('updated_at', { ascending: false })
       .limit(8),
     admin.from('voyager_profiles')
-      .select('id, display_name, avatar_url, joined_at')
+      .select('id, display_name, avatar_url, role, joined_at')
+      .in('role', ['voyager', 'architect'])   // applicants and guests never appear
       .gte('joined_at', since)
       .order('joined_at', { ascending: false })
       .limit(6),
@@ -117,9 +118,10 @@ export async function generateAndSaveFeed(): Promise<{ error: string | null; fee
     })
   }
 
-  // New voyagers
+  // New Voyagers and Architects
   for (const v of voyagers ?? []) {
-    const text = trunc(`Voyager ${v.display_name} joined the Collective`, 80)
+    const roleLabel = v.role === 'architect' ? 'Architect' : 'Voyager'
+    const text = trunc(`${roleLabel} ${v.display_name} joined the Collective`, 80)
     candidates.push({
       ts: fmtTs(v.joined_at),
       text,
