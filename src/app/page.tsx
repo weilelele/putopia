@@ -81,8 +81,8 @@ function OnboardingInner() {
       (window as any).fbq('track', 'Lead')
     }
     setShowConfirm(true)
-    // Enable click-anywhere to trigger scan after lines have appeared
-    setTimeout(() => setAwaitClick(true), 1500)
+    // Enable click-anywhere to trigger scan after all lines have appeared
+    setTimeout(() => setAwaitClick(true), 2400)
   }
 
   return (
@@ -94,15 +94,15 @@ function OnboardingInner() {
         overflowY: 'auto',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        cursor: awaitClick ? 'pointer' : 'default',
-      }}
-      onClick={() => {
-        if (awaitClick && !showTransition) {
-          setAwaitClick(false)
-          setShowTransition(true)
-        }
       }}
     >
+      {/* Transparent click-capture layer — guaranteed full-screen when awaiting tap */}
+      {awaitClick && !showTransition && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 99998, cursor: 'pointer' }}
+          onClick={() => { setAwaitClick(false); setShowTransition(true) }}
+        />
+      )}
 
       {/* Scan transition fires after identity confirmation */}
       {showTransition && (
@@ -382,7 +382,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
   // Stagger confirm lines in when showConfirm flips true
   useEffect(() => {
     if (!showConfirm) return
-    const delays = [0, 300, 580, 950]
+    const delays = [0, 550, 1100, 1750]
     const timers = delays.map((d, i) =>
       setTimeout(() => setConfirmLines(prev => {
         const next = [...prev]; next[i] = true; return next
@@ -628,7 +628,7 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
       if (linear < 1) {
         rafId = requestAnimationFrame(animate)
       } else {
-        setTimeout(() => callbackRef.current(), 320)
+        setTimeout(() => callbackRef.current(), 1800)
       }
     }
 
