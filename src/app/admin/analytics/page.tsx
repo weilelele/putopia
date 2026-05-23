@@ -82,90 +82,128 @@ function TrafficRef({ count, count30d }: { count: number; count30d: number }) {
   )
 }
 
-function FunnelBar({ count, max }: { count: number; max: number }) {
-  const w = max > 0 ? Math.round((count / max) * 100) : 0
+// PostHog-tracked steps (accumulate from today onward)
+const POSTHOG_KEYS = new Set(['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed'])
+// Supabase-backed steps (full historical data)
+const SUPABASE_KEYS = new Set(['onboarding_email_submitted', 'registered'])
+
+function FunnelBar({ count, max, color = ACCENT }: { count: number; max: number; color?: string }) {
+  const w = max > 0 ? Math.min(Math.round((count / max) * 100), 100) : 0
   return (
     <div style={{ flex: 1, background: '#111525', height: 6, borderRadius: 1 }}>
-      <div style={{ width: `${w}%`, height: '100%', background: ACCENT, transition: 'width 0.4s ease' }} />
+      <div style={{ width: `${w}%`, height: '100%', background: color, transition: 'width 0.4s ease' }} />
+    </div>
+  )
+}
+
+function StepRow({ step, prev, maxCount, color = ACCENT }: {
+  step: SnapshotRow; prev?: SnapshotRow; maxCount: number; color?: string
+}) {
+  // Only show conversion rate within the same data source
+  const sameSource = prev && (
+    (POSTHOG_KEYS.has(step.step_key) && POSTHOG_KEYS.has(prev.step_key)) ||
+    (SUPABASE_KEYS.has(step.step_key) && SUPABASE_KEYS.has(prev.step_key))
+  )
+  const stepRate = sameSource ? pct(step.count_all_time, prev!.count_all_time) : null
+
+  return (
+    <div>
+      {prev && (
+        <div style={{ paddingLeft: '0.5rem', marginBottom: '0.25rem', fontFamily: 'monospace', fontSize: 9, color: stepRate ? MUTED : '#1E2840' }}>
+          {stepRate ? `↓ ${stepRate}` : '↓'}
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.12em', color: DIM, width: 180, flexShrink: 0 }}>
+          {step.step_label.toUpperCase()}
+        </div>
+        <FunnelBar count={step.count_all_time} max={maxCount} color={color} />
+        <div style={{ fontFamily: 'monospace', fontSize: 11, color: STAR, width: 48, textAlign: 'right', flexShrink: 0 }}>
+          {step.count_all_time.toLocaleString()}
+        </div>
+        <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, width: 52, textAlign: 'right', flexShrink: 0 }}>
+          30d: {step.count_30d}
+        </div>
+      </div>
     </div>
   )
 }
 
 function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
-  const allSteps  = [...run.steps].sort((a, b) => a.step_order - b.step_order)
+  const allSteps   = [...run.steps].sort((a, b) => a.step_order - b.step_order)
   const trafficRef = allSteps.find(s => s.step_order === 0)
-  const funnelSteps = allSteps.filter(s => s.step_order > 0)
-  const maxCount  = funnelSteps[0]?.count_all_time ?? 1
+  const phSteps    = allSteps.filter(s => POSTHOG_KEYS.has(s.step_key))
+  const sbSteps    = allSteps.filter(s => SUPABASE_KEYS.has(s.step_key))
+  const phMax      = phSteps[0]?.count_all_time || 1
+  const sbMax      = sbSteps[0]?.count_all_time || 1
 
   return (
     <div style={{ background: CARD_BG, border: `1px solid ${isLatest ? ACCENT : BORDER}`, padding: '1.25rem 1.5rem', borderRadius: 2 }}>
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
         <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.25em', color: isLatest ? ACCENT : MUTED }}>
           {new Date(run.captured_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
         </div>
         {run.version_tag && (
-          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: '0.15em', color: OK_COLOR, background: 'rgba(32,216,144,0.1)', border: '1px solid rgba(32,216,144,0.25)', padding: '2px 8px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, color: OK_COLOR, background: 'rgba(32,216,144,0.1)', border: '1px solid rgba(32,216,144,0.25)', padding: '2px 8px' }}>
             {run.version_tag}
           </div>
         )}
         {isLatest && (
-          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: '0.15em', color: ACCENT, background: 'rgba(232,90,0,0.08)', border: '1px solid rgba(232,90,0,0.25)', padding: '2px 8px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, color: ACCENT, background: 'rgba(232,90,0,0.08)', border: '1px solid rgba(232,90,0,0.25)', padding: '2px 8px' }}>
             LATEST
           </div>
         )}
       </div>
 
-      {/* Traffic reference — above the funnel */}
-      {trafficRef && (
-        <TrafficRef count={trafficRef.count_all_time} count30d={trafficRef.count_30d} />
-      )}
+      {/* Traffic reference */}
+      {trafficRef && <TrafficRef count={trafficRef.count_all_time} count30d={trafficRef.count_30d} />}
 
-      {/* Funnel steps — conversion rates relative to step 1 */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.75rem' }}>
-        {funnelSteps.map((step, i) => {
-          const prev = funnelSteps[i - 1]
-          const stepRate  = prev ? pct(step.count_all_time, prev.count_all_time) : null
-          const totalRate = i > 0 ? pct(step.count_all_time, funnelSteps[0].count_all_time) : null
-          return (
-            <div key={step.step_key}>
-              {stepRate && (
-                <div style={{ display: 'flex', gap: '0.75rem', paddingLeft: '0.5rem', marginBottom: '0.25rem' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>↓ {stepRate} (上一步)</div>
-                  {totalRate && <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#2A3550' }}>/ {totalRate} (总)</div>}
-                </div>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.15em', color: i === 0 ? STAR : DIM, width: 180, flexShrink: 0 }}>
-                  {i === 0 && <span style={{ color: ACCENT, marginRight: 4 }}>▶</span>}
-                  {step.step_label.toUpperCase()}
-                </div>
-                <FunnelBar count={step.count_all_time} max={maxCount} />
-                <div style={{ fontFamily: 'monospace', fontSize: 11, color: i === 0 ? STAR : STAR, width: 48, textAlign: 'right', flexShrink: 0 }}>
-                  {step.count_all_time.toLocaleString()}
-                </div>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, width: 52, textAlign: 'right', flexShrink: 0 }}>
-                  30d: {step.count_30d}
-                </div>
-              </div>
-            </div>
-          )
-        })}
+      {/* Section A: PostHog events (accumulating from today) */}
+      <div style={{ marginTop: '0.75rem' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: '#2A3A5A', marginBottom: '0.5rem' }}>
+          ONBOARDING INTERACTION · POSTHOG · 从今日起积累
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {phSteps.map((step, i) => (
+            <StepRow key={step.step_key} step={step} prev={phSteps[i - 1]} maxCount={phMax} />
+          ))}
+        </div>
       </div>
 
-      {/* Overall CVR badge */}
-      {funnelSteps.length >= 2 && (
-        <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: '1.5rem' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED }}>
-            OVERALL CVR (Onboarding → Email)
+      {/* Divider */}
+      <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
+        <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#2A3A5A', letterSpacing: '0.2em' }}>SUPABASE · 完整历史数据</div>
+        <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
+      </div>
+
+      {/* Section B: Supabase data (full history) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {sbSteps.map((step, i) => (
+          <StepRow key={step.step_key} step={step} prev={sbSteps[i - 1]} maxCount={sbMax} color='#22D4E0' />
+        ))}
+      </div>
+
+      {/* CVR summary */}
+      <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+        {phSteps.length >= 2 && (
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Q1→Q2</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 12, color: ACCENT, fontWeight: 700 }}>
+              {pct(phSteps[phSteps.length - 1]?.count_all_time ?? 0, phSteps[0].count_all_time)}
+            </div>
           </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 12, color: ACCENT, fontWeight: 700 }}>
-            {pct(
-              funnelSteps.find(s => s.step_key === 'onboarding_email_submitted')?.count_all_time ?? 0,
-              funnelSteps[0].count_all_time
-            )}
+        )}
+        {sbSteps.length >= 2 && (
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Email→注册</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#22D4E0', fontWeight: 700 }}>
+              {pct(sbSteps[sbSteps.length - 1]?.count_all_time ?? 0, sbSteps[0].count_all_time)}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
