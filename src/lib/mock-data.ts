@@ -52,18 +52,6 @@ export interface LogEntry {
   tags: string[]
 }
 
-export interface VoteItem {
-  id: string
-  title: string
-  description: string
-  type: 'single' | 'multi'
-  options: { id: string; label: string; count: number }[]
-  scope: 'ALL' | 'VOYAGER' | 'ARCHITECT'
-  status: 'active' | 'closed'
-  endsAt: string
-  totalVotes: number
-}
-
 export interface World {
   id: string
   name: string
@@ -349,73 +337,6 @@ export const logEntries: LogEntry[] = [
     title: 'High-Dimensional Signal Analysis: Fourth Breakthrough Record',
     excerpt: 'My training in physics taught me to let numbers speak, but this record left me speechless. When the signal from the 47th node fully unfolded, I saw a world whose physical constants were almost identical to ours — with one critical difference: the speed of light there is 0.003% slower than ours. What does this mean? I need time to think...',
     tags: ['HIGH-DIM SIGNAL', 'PHYSICS CONSTANT', 'MIRROR-7'],
-  },
-]
-
-// VOTE DATA
-export const voteData: VoteItem[] = [
-  {
-    id: 'VOTE-001',
-    title: 'Q4 Priority Exploration Region — New Devices',
-    description: 'Vote for the geographic region the Collective should prioritize for exploration next quarter. The result will influence resource allocation and Voyager deployment plans.',
-    type: 'single',
-    options: [
-      { id: 'a', label: 'Southeast Asia (Vietnam / Thailand / Malaysia)', count: 14 },
-      { id: 'b', label: 'Middle East (Turkey / Iran border region)', count: 9 },
-      { id: 'c', label: 'Arctic Circle (Greenland / Svalbard)', count: 21 },
-      { id: 'd', label: 'South America (Patagonia region)', count: 7 },
-    ],
-    scope: 'ALL',
-    status: 'active',
-    endsAt: '2026-05-31',
-    totalVotes: 51,
-  },
-  {
-    id: 'VOTE-002',
-    title: 'New Member Log Publishing Rights — Policy Adjustment',
-    description: 'Current rules require a Voyager to wait at least 30 days before publishing logs. Should this be reduced to 15 days with an Architect review mechanism?',
-    type: 'single',
-    options: [
-      { id: 'a', label: 'Approve — reduce to 15 days (with review)', count: 18 },
-      { id: 'b', label: 'Maintain current 30-day rule', count: 11 },
-      { id: 'c', label: 'Further discussion needed before voting', count: 6 },
-    ],
-    scope: 'VOYAGER',
-    status: 'active',
-    endsAt: '2026-05-20',
-    totalVotes: 35,
-  },
-  {
-    id: 'VOTE-003',
-    title: '2026 Annual Collective Gathering — Format',
-    description: 'Multi-select: choose the activity formats you would like included in the annual gathering.',
-    type: 'multi',
-    options: [
-      { id: 'a', label: 'Live-streamed joint observation session', count: 29 },
-      { id: 'b', label: 'In-person device open day', count: 24 },
-      { id: 'c', label: 'Voyager story sharing event', count: 31 },
-      { id: 'd', label: 'New member meetup', count: 19 },
-      { id: 'e', label: 'Technical workshop (device operation training)', count: 16 },
-    ],
-    scope: 'ALL',
-    status: 'closed',
-    endsAt: '2026-03-15',
-    totalVotes: 119,
-  },
-  {
-    id: 'VOTE-004',
-    title: 'Architect Council Expansion Proposal',
-    description: 'The current Architect Council has 5 members. This proposal suggests adding 2 seats, selected preferentially from Voyagers with the most observation days. Architects only.',
-    type: 'single',
-    options: [
-      { id: 'a', label: 'Approve the proposal', count: 3 },
-      { id: 'b', label: 'Reject the proposal', count: 1 },
-      { id: 'c', label: 'Submit revised version for re-vote', count: 1 },
-    ],
-    scope: 'ARCHITECT',
-    status: 'closed',
-    endsAt: '2026-04-01',
-    totalVotes: 5,
   },
 ]
 
