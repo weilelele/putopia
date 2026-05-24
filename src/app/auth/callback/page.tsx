@@ -3,8 +3,6 @@
 import { Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { EmailOtpType } from '@supabase/supabase-js'
-
 function AuthCallbackInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -13,7 +11,7 @@ function AuthCallbackInner() {
     const supabase = createClient()
     const code = searchParams.get('code')
     const token_hash = searchParams.get('token_hash')
-    const type = searchParams.get('type') as EmailOtpType | null
+    const type = searchParams.get('type')
     const next = searchParams.get('next') ?? '/'
 
     async function handle() {
@@ -25,7 +23,8 @@ function AuthCallbackInner() {
 
       // Email OTP flow (token_hash in query string)
       if (token_hash && type) {
-        const { error } = await supabase.auth.verifyOtp({ token_hash, type })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await supabase.auth.verifyOtp({ token_hash, type: type as any })
         if (!error) { router.replace(next); return }
       }
 
