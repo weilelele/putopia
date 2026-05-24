@@ -85,7 +85,7 @@ function TrafficRef({ count, count30d }: { count: number; count30d: number }) {
 // PostHog-tracked steps (accumulate from today onward)
 const POSTHOG_KEYS   = new Set(['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed'])
 // Supabase-backed steps (full historical data)
-const SUPABASE_KEYS  = new Set(['onboarding_email_submitted', 'registered'])
+const SUPABASE_KEYS  = new Set(['onboarding_email_submitted', 'invite_link_clicked', 'registered'])
 // Retention step — shown separately below the funnel
 const RETENTION_KEYS = new Set(['console_login_clicked'])
 
@@ -241,21 +241,46 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
             </div>
           </div>
         )}
-        {sbSteps.length >= 2 && (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Email→注册</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#22D4E0', fontWeight: 700 }}>
-              {pct(sbSteps[sbSteps.length - 1]?.count_all_time ?? 0, sbSteps[0].count_all_time)}
-            </div>
-          </div>
-        )}
+        {(() => {
+          const emailStep   = sbSteps.find(s => s.step_key === 'onboarding_email_submitted')
+          const clickedStep = sbSteps.find(s => s.step_key === 'invite_link_clicked')
+          const regStep     = sbSteps.find(s => s.step_key === 'registered')
+          return (
+            <>
+              {emailStep && clickedStep && (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Email→链接点击</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#22D4E0', fontWeight: 700 }}>
+                    {pct(clickedStep.count_all_time, emailStep.count_all_time)}
+                  </div>
+                </div>
+              )}
+              {clickedStep && regStep && (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>点击→注册完成</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#22D4E0', fontWeight: 700 }}>
+                    {pct(regStep.count_all_time, clickedStep.count_all_time)}
+                  </div>
+                </div>
+              )}
+              {emailStep && regStep && (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Email→注册总转化</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#22D4E0', fontWeight: 700 }}>
+                    {pct(regStep.count_all_time, emailStep.count_all_time)}
+                  </div>
+                </div>
+              )}
+            </>
+          )
+        })()}
       </div>
     </div>
   )
 }
 
-const HISTORY_KEYS   = ['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_email_submitted', 'registered']
-const HISTORY_LABELS = ['Started', 'Q1', 'Q2', 'Email', 'Reg.']
+const HISTORY_KEYS   = ['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_email_submitted', 'invite_link_clicked', 'registered']
+const HISTORY_LABELS = ['Started', 'Q1', 'Q2', 'Email', 'Clicked', 'Reg.']
 
 function HistoryTable({ runs }: { runs: Run[] }) {
   if (runs.length < 2) return null
@@ -322,7 +347,7 @@ export default async function AnalyticsPage() {
             CONVERSION FUNNEL
           </h1>
           <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, marginTop: '0.4rem' }}>
-            Onboarding Started → Q1 → Q2 → Email → Registered · all-time unique users
+            Onboarding Started → Q1 → Q2 → Email → Link Clicked → Registered · all-time unique users
           </div>
         </div>
         <RefreshButton />

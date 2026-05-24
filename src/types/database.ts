@@ -22,7 +22,8 @@ export type VoyagerProfile = {
   role: UserRole
   observation_days: number
   worlds_discovered: number
-  joined_at: string           // ISO timestamp
+  joined_at: string           // ISO timestamp — set on invite (trigger), NOT on registration
+  registered_at: string | null // set when user completes /register (password + display name)
   updated_at: string
 }
 
@@ -180,7 +181,7 @@ export type Database = {
     Tables: {
       voyager_profiles: {
         Row: VoyagerProfile
-        Insert: Omit<VoyagerProfile, 'joined_at' | 'updated_at'>
+        Insert: Omit<VoyagerProfile, 'joined_at' | 'registered_at' | 'updated_at'>
         Update: VoyagerProfileUpdate
         Relationships: []
       }

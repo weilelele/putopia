@@ -74,6 +74,7 @@ export default function RegisterPage() {
         role: 'applicant',
         observation_days: 0,
         worlds_discovered: 0,
+        registered_at: new Date().toISOString(),
       }, { onConflict: 'id' })
       posthog.identify(user.id, { email: user.email, display_name: displayName.trim() })
       posthog.capture('account_registered', { display_name: displayName.trim() })
