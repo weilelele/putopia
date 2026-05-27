@@ -238,7 +238,7 @@ async function runSync() {
   // 1. Get current HEAD commit SHA
   const refData   = await gh(`/repos/${repo}/git/ref/heads/main`)
   const headSha   = refData.object.sha
-  const treeData  = await gh(`/repos/${repo}/git/commit/${headSha}`)
+  const treeData  = await gh(`/repos/${repo}/git/commits/${headSha}`)
   const baseTree  = treeData.tree.sha
 
   // 2. Create blobs for each file
