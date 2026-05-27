@@ -1,0 +1,32 @@
+name: Wiki Sync
+
+on:
+  schedule:
+    # Daily at 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # allow manual trigger from GitHub UI
+
+jobs:
+  sync:
+    name: Sync Supabase → GitHub Wiki
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Trigger wiki sync
+        run: |
+          response=$(curl -s -o /tmp/body.json -w "%{http_code}" \
+            -X POST \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.PUTOPIA_URL }}/api/wiki/sync")
+
+          echo "HTTP status: $response"
+          cat /tmp/body.json
+
+          if [ "$response" != "200" ]; then
+            echo "Sync failed with status $response"
+            exit 1
+          fi
+
+          echo "Sync complete."

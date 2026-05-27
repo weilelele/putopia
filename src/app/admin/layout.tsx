@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import Link from 'next/link'
 import type { Database } from '@/types/database'
+import WikiSyncButton from './WikiSyncButton'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -110,8 +111,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ))}
         </nav>
 
-        <div style={{ marginLeft: 'auto', fontSize: '11px', color: '#4A5570' }}>
-          {profile.display_name}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <WikiSyncButton />
+          <span style={{ fontSize: '11px', color: '#4A5570' }}>{profile.display_name}</span>
         </div>
       </div>
 
