@@ -19,7 +19,7 @@ jobs:
             -X POST \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json" \
-            "${{ secrets.PUTOPIA_URL }}/api/wiki/sync")
+            "${{ secrets.SITE_URL }}/api/wiki/sync")
 
           echo "HTTP status: $response"
           cat /tmp/body.json
