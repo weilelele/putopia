@@ -47,8 +47,7 @@ export default async function WorldsPage() {
         {worlds.map((world) => {
           // Use image if available, otherwise fall back to gradient
           const hasImage = !!world.image_path
-          // Show English name only if it differs from the primary name
-          const showAltName = world.name_en && world.name_en !== world.name
+          const displayName = world.name_en || world.name
 
           return (
             <div
@@ -102,13 +101,8 @@ export default async function WorldsPage() {
               {/* Info */}
               <div className="p-3">
                 <div className="text-sm font-mono font-semibold mb-0.5" style={{ color: '#EDE8DE' }}>
-                  {world.name}
+                  {displayName}
                 </div>
-                {showAltName && (
-                  <div className="text-xs font-mono mb-2" style={{ color: world.gradient_to }}>
-                    {world.name_en}
-                  </div>
-                )}
                 <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
                   {world.description}
                 </p>
