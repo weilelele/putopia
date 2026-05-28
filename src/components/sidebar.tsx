@@ -24,9 +24,17 @@ const navItems = [
   },
 ]
 
+const LockIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, opacity: 0.4 }}>
+    <rect x="2" y="5" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
+    <path d="M4 5V3.5a2 2 0 1 1 4 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+)
+
 export function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const isGuest = user.role === 'guest'
 
   const isActive = (href: string) =>
     href === '/console' ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
@@ -41,16 +49,35 @@ export function Sidebar() {
       {navItems.map(({ group, items }) => (
         <div key={group}>
           <div className="nav-label">// {group}</div>
-          {items.map(({ href, label, icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`nav-item ${isActive(href) ? 'active' : ''}`}
-            >
-              {icon}
-              {label}
-            </Link>
-          ))}
+          {items.map(({ href, label, icon }) => {
+            const isDashboard = href === '/console'
+            const locked = isGuest && !isDashboard
+
+            if (locked) {
+              return (
+                <div
+                  key={href}
+                  className="nav-item"
+                  title="Request access to unlock"
+                  style={{ opacity: 0.28, cursor: 'default', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>{icon}{label}</span>
+                  <LockIcon />
+                </div>
+              )
+            }
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`nav-item ${isActive(href) ? 'active' : ''}`}
+              >
+                {icon}
+                {label}
+              </Link>
+            )
+          })}
         </div>
       ))}
 
@@ -68,7 +95,7 @@ export function Sidebar() {
       </div>
 
       {user.role === 'guest' && (
-        <Link href="/" className="sidebar-apply">BECOME A VOYAGER</Link>
+        <Link href="/" className="sidebar-apply">REQUEST ACCESS</Link>
       )}
 
       <div className="sidebar-status">

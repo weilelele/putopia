@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
 
 const HomeIcon = () => (
   <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
@@ -86,6 +87,8 @@ const MORE_NAV = [
 export function BottomNav() {
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
+  const { user } = useAuth()
+  const isGuest = user.role === 'guest'
 
   const isMoreActive = MORE_NAV.some(
     (item) => pathname === item.href || pathname.startsWith(item.href + '/')
@@ -106,6 +109,18 @@ export function BottomNav() {
           >
             {MORE_NAV.map(({ href, label, icon }) => {
               const isActive = pathname === href || pathname.startsWith(href + '/')
+              if (isGuest) {
+                return (
+                  <div
+                    key={href}
+                    className="flex items-center gap-4 px-6 py-4"
+                    style={{ color: '#2A3248', borderBottom: '1px solid #1A2238', cursor: 'default' }}
+                  >
+                    {icon}
+                    <span className="font-mono text-xs tracking-widest">{label}</span>
+                  </div>
+                )
+              }
               return (
                 <Link
                   key={href}
@@ -133,7 +148,23 @@ export function BottomNav() {
         style={{ background: '#0D1020', borderColor: '#1A2238' }}
       >
         {PRIMARY_NAV.map(({ href, label, icon }) => {
-          const isActive = href === '/console' ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
+          const isHome = href === '/console'
+          const isActive = isHome ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
+          const locked = isGuest && !isHome
+
+          if (locked) {
+            return (
+              <div
+                key={href}
+                className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5"
+                style={{ color: '#1E2838', cursor: 'default' }}
+              >
+                {icon}
+                <span className="font-mono" style={{ fontSize: '9px', letterSpacing: '0.06em' }}>{label}</span>
+              </div>
+            )
+          }
+
           return (
             <Link
               key={href}

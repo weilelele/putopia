@@ -33,6 +33,33 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // Smart routing for root /
+  // Ad links (with UTM params) are transparently forwarded to /new so the
+  // existing campaign URLs never need to change.
+  if (pathname === '/') {
+    if (user) {
+      return NextResponse.redirect(new URL('/console', request.url))
+    }
+    const qs = request.nextUrl.searchParams.toString()
+    if (qs) {
+      // Preserve all query params (UTM, preview, etc.)
+      return NextResponse.redirect(new URL('/new?' + qs, request.url))
+    }
+    return NextResponse.redirect(new URL('/console', request.url))
+  }
+
+  // Logged-in users visiting /new don't need to re-onboard
+  if (pathname === '/new' && user) {
+    return NextResponse.redirect(new URL('/console', request.url))
+  }
+
+  // Category listing pages require a logged-in user
+  // Guests can access individual content pages (e.g. /intel/[id]) but not the root listings
+  const GUEST_BLOCKED = ['/intel', '/devices', '/worlds', '/voyagers', '/vote', '/logs']
+  if (!user && GUEST_BLOCKED.some(p => pathname === p || pathname === p + '/')) {
+    return NextResponse.redirect(new URL('/console', request.url))
+  }
+
   // /profile requires a logged-in user
   if (pathname.startsWith('/profile') && !user) {
     const loginUrl = request.nextUrl.clone()

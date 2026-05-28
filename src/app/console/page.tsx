@@ -8,10 +8,11 @@ import { getAllDevices } from '@/lib/actions/devices'
 import { getPublicIntel } from '@/lib/actions/intel'
 import { getLatestFeed } from '@/lib/actions/dashboard-feed'
 import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actions/votes'
+import { getAllWorlds } from '@/lib/actions/worlds'
 import { CommsFeed } from '@/components/comms-feed'
 import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
-import type { Device, Intel, Vote } from '@/types/database'
+import type { Device, Intel, Vote, World } from '@/types/database'
 import type { FeedLine } from '@/lib/actions/dashboard-feed'
 
 
@@ -136,10 +137,8 @@ function IntelPreviewCard({ entry }: { entry: Intel }) {
       href={`/intel/${entry.id}`}
       className="block transition-all duration-150"
       style={{
-        background: 'var(--color-void)',
-        border: '1px solid var(--bd-faint)',
-        borderLeft: `3px solid ${color}`,
-        overflow: 'hidden',
+        background: 'var(--color-void)', border: '1px solid var(--bd-faint)',
+        borderLeft: `3px solid ${color}`, overflow: 'hidden',
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.background = 'var(--color-void-2)'
@@ -153,11 +152,7 @@ function IntelPreviewCard({ entry }: { entry: Intel }) {
       {hasImage && (
         <div style={{ width: '100%', aspectRatio: '16/7', overflow: 'hidden' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={entry.images[0]}
-            alt=""
-            style={{ width: '100%', height: '100%', objectFit: 'cover', filter: BRAND_FILTER, display: 'block' }}
-          />
+          <img src={entry.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: BRAND_FILTER, display: 'block' }} />
         </div>
       )}
       <div style={{ padding: '1rem' }}>
@@ -181,21 +176,227 @@ function IntelPreviewCard({ entry }: { entry: Intel }) {
   )
 }
 
+/* ─── World Preview Card ─────────────────────────────────── */
+function WorldPreviewCard({ world }: { world: World }) {
+  const hasImage = !!world.image_path
+  const showAltName = world.name_en && world.name_en !== world.name
+
+  return (
+    <div style={{ display: 'block', overflow: 'hidden' }}>
+      {/* Gradient / image header */}
+      <div style={{ height: 80, position: 'relative', overflow: 'hidden' }}>
+        {hasImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={world.image_path!} alt={world.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(17,21,37,0.85) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px)', opacity: 0.3 }} />
+        <span style={{ position: 'absolute', top: 6, left: 8, fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: '#4A5570', background: 'rgba(7,9,18,0.7)', padding: '1px 5px' }}>
+          {world.id}
+        </span>
+      </div>
+
+      {/* Info */}
+      <div style={{ padding: '0.65rem 0.75rem', background: '#111525', border: '1px solid #1E2840', borderTop: 'none' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#EDE8DE', marginBottom: showAltName ? 2 : 6 }}>
+          {world.name}
+        </div>
+        {showAltName && (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: world.gradient_to, marginBottom: 6 }}>
+            {world.name_en}
+          </div>
+        )}
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: '#8A9AB5', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {world.description}
+        </p>
+        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid #1A2238', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#8A9AB5' }}>{world.discoverer_name}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#4A5570' }}>{world.discovery_date}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Guest Hero — Open Broadcast ──────────────────────── */
+const HERO_LINES = [
+  { delay: 80 },   // channel label
+  { delay: 400 },  // "WELCOME, GUEST."
+  { delay: 900 },  // paragraph 1
+  { delay: 1500 }, // paragraph 2
+  { delay: 2200 }, // italic sign-off
+]
+
+function GuestHero({ feedLines }: { feedLines: FeedLine[] }) {
+  const [shown, setShown] = useState(HERO_LINES.map(() => false))
+
+  useEffect(() => {
+    const timers = HERO_LINES.map(({ delay }, i) =>
+      setTimeout(() => setShown(prev => { const n = [...prev]; n[i] = true; return n }), delay)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  const line = (i: number): React.CSSProperties => ({
+    opacity:   shown[i] ? 1 : 0,
+    transform: shown[i] ? 'translateY(0)' : 'translateY(10px)',
+    transition: 'opacity 0.55s ease, transform 0.55s ease',
+  })
+
+  return (
+    <section className="hero">
+      {/* Channel label */}
+      <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', marginBottom: '2rem', ...line(0) }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.28em', color: 'var(--color-ok)' }}>
+          ● OPEN TRANSMISSION
+        </span>
+        <span style={{ color: 'var(--color-star-deep)', fontFamily: 'var(--font-mono)', fontSize: '0.52rem' }}>/</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.28em', color: 'var(--color-star-deep)' }}>
+          UNCLASSIFIED
+        </span>
+      </div>
+
+      {/* Greeting + narrative — each line reveals in sequence */}
+      <div style={{ maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '1.1rem', textAlign: 'center' }}>
+        <div style={{
+          fontFamily: 'var(--font-display)', fontWeight: 700,
+          fontSize: 'clamp(1.1rem, 2.5vh, 1.5rem)', letterSpacing: '0.12em',
+          color: 'var(--color-star)', ...line(1),
+        }}>
+          WELCOME, GUEST.
+        </div>
+        <p style={{
+          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.85rem, 1.5vh, 0.97rem)',
+          lineHeight: 1.85, color: 'var(--color-star-dim)', margin: 0, ...line(2),
+        }}>
+          Whether by accident or design — you've found your way into the internal network of the Multiverse Collective.
+        </p>
+        <p style={{
+          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.85rem, 1.5vh, 0.97rem)',
+          lineHeight: 1.85, color: 'var(--color-star-dim)', margin: 0, ...line(3),
+        }}>
+          Here you will find our latest dispatches, and our most enigmatic instrument —{' '}
+          <span style={{ color: 'var(--color-nebula)', fontFamily: 'var(--font-mono)', fontSize: '0.88em' }}>Multiverse Console</span>
+          {' '}— a device built to reach into parallel worlds and observe what lies beyond.
+        </p>
+        <p style={{
+          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.8rem, 1.4vh, 0.9rem)',
+          lineHeight: 1.8, color: 'rgba(242,240,230,0.4)', margin: 0, fontStyle: 'italic', ...line(4),
+        }}>
+          If you'd like to know more, you're welcome to apply.
+        </p>
+      </div>
+
+      {/* CommsFeed — always rendered to avoid layout shift; key remounts when data arrives */}
+      <div style={{ width: '100%', maxWidth: '480px', margin: '1.75rem auto 0' }}>
+        <CommsFeed key={feedLines.length > 0 ? 'loaded' : 'empty'} lines={feedLines} />
+      </div>
+
+      <div className="cta-row" style={{ marginTop: '1.25rem' }}>
+        <Link href="/new" className="cta" style={{ textDecoration: 'none', width: 'clamp(150px, 22vw, 220px)', height: 'clamp(44px, 5.5vh, 52px)' }}
+          onClick={() => posthog.capture('workspace_request_access_clicked')}
+        >
+          <div className="cta-bg" />
+          <div className="cta-frame" />
+          <div className="cta-icon-slot" style={{ width: 'clamp(44px, 5.5vh, 52px)' }}>
+            <div className="cta-icon-circle" style={{ width: 32, height: 32 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,90,31,0.15)" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+          <div className="cta-divider" />
+          <div className="cta-label" style={{ fontSize: '0.62rem', letterSpacing: '0.18em' }}>REQUEST ACCESS</div>
+        </Link>
+        <Link href="/login" className="cta teal" style={{ textDecoration: 'none', width: 'clamp(120px, 16vw, 180px)', height: 'clamp(44px, 5.5vh, 52px)' }}
+          onClick={() => posthog.capture('workspace_login_clicked')}
+        >
+          <div className="cta-bg" />
+          <div className="cta-frame" />
+          <div className="cta-icon-slot" style={{ width: 'clamp(44px, 5.5vh, 52px)' }}>
+            <div className="cta-icon-circle" style={{ width: 32, height: 32 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="10 17 15 12 10 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </div>
+          </div>
+          <div className="cta-divider" />
+          <div className="cta-label" style={{ fontSize: '0.62rem', letterSpacing: '0.18em' }}>LOGIN</div>
+        </Link>
+      </div>
+    </section>
+  )
+}
+
+/* ─── Auth Hero — Welcome Voyager ──────────────────────── */
+function AuthHero({ user, feedLines }: { user: { role: string; name?: string }; feedLines: FeedLine[] }) {
+  const isApplicant = user.role === 'applicant'
+
+  return (
+    <section className="hero">
+      <div className="eyebrow">WELCOME,</div>
+      <h1 className="hero-title">
+        <span className="sparkle sparkle-l">✦</span>
+        VOYAGER
+        <span className="sparkle sparkle-r">✦</span>
+      </h1>
+      <p className="hero-subtitle">
+        YOU HAVE BEEN SELECTED TO EXPLORE<br />
+        THE MYSTERIES OF PARALLEL WORLDS.
+      </p>
+
+      <div className="deco-diamond"><span /></div>
+
+      {feedLines.length > 0 && (
+        <div style={{ width: '100%', maxWidth: '480px', margin: '1.25rem auto 0' }}>
+          <CommsFeed lines={feedLines} />
+        </div>
+      )}
+
+      {/* Activate Voyager — shown to applicants who haven't been promoted yet */}
+      {isApplicant && (
+        <div className="cta-row">
+          <Link href="/activate" className="cta" style={{ textDecoration: 'none' }}
+            onClick={() => posthog.capture('activate_voyager_clicked')}
+          >
+            <div className="cta-bg" />
+            <div className="cta-frame" />
+            <div className="cta-icon-slot">
+              <div className="cta-icon-circle">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,90,31,0.15)" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+            <div className="cta-divider" />
+            <div className="cta-label">ACTIVATE VOYAGER</div>
+          </Link>
+        </div>
+      )}
+    </section>
+  )
+}
+
+/* ─── Page ──────────────────────────────────────────────── */
 export default function ConsolePage() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const [devices, setDevices] = useState<Device[]>([])
   const [latestIntel, setLatestIntel] = useState<Intel[]>([])
   const [feedLines, setFeedLines] = useState<FeedLine[]>([])
-  const [isRegistered, setIsRegistered] = useState(false)
   const [latestVotes, setLatestVotes] = useState<Vote[]>([])
   const [voteTallies, setVoteTallies] = useState<Record<string, Record<string, number>>>({})
   const [myVoteResponses, setMyVoteResponses] = useState<{ vote_id: string; selected_options: string[] }[]>([])
+  const [latestWorlds, setLatestWorlds] = useState<World[]>([])
 
   useEffect(() => {
     getAllDevices().then((d) => setDevices(d.filter((dev) => dev.knowledge === 'known').slice(0, 3)))
     getPublicIntel().then((intel) => setLatestIntel(intel.slice(0, 2)))
     getLatestFeed().then((f) => { if (f?.lines?.length) setFeedLines(f.lines) })
-    if (localStorage.getItem('putopia_voyager_registered')) setIsRegistered(true)
+    getAllWorlds().then((w) => setLatestWorlds([...w].reverse().slice(0, 3)))
     getAllVotes().then(async (votes) => {
       const active = votes.filter((v) => v.is_active).slice(0, 2)
       setLatestVotes(active)
@@ -207,77 +408,34 @@ export default function ConsolePage() {
     getMyVoteResponses().then(setMyVoteResponses)
   }, [])
 
+  const isGuest = !loading && user.role === 'guest'
+
   return (
     <div className="landing-main">
       <SectionTracker section="dashboard" />
       <div className="nebula-bg" />
 
       <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> DASHBOARD</div>
+        <div className="crumbs">
+          {isGuest
+            ? <>PC://WORKSPACE <span>/</span> PUBLIC CHANNEL</>
+            : <>PC://CONSOLE <span>/</span> DASHBOARD</>
+          }
+        </div>
         <div className="right">
           <div className="item">UTC <span className="val">{new Date().toISOString().slice(11, 19)}</span></div>
           <div className="item">UPLINK <span className="val">ACTIVE</span></div>
         </div>
       </div>
 
-      {/* ── Hero ── */}
-      <section className="hero">
-        <div className="eyebrow">WELCOME,</div>
-        <h1 className="hero-title">
-          <span className="sparkle sparkle-l">✦</span>
-          VOYAGER
-          <span className="sparkle sparkle-r">✦</span>
-        </h1>
-        <p className="hero-subtitle">
-          YOU HAVE BEEN SELECTED TO EXPLORE<br />
-          THE MYSTERIES OF PARALLEL WORLDS.
-        </p>
-
-        <div className="deco-diamond"><span /></div>
-
-        {/* ── COMMS FEED ── */}
-        {feedLines.length > 0 && (
-          <div style={{ width: '100%', maxWidth: '480px', margin: '1.25rem auto 0' }}>
-            <CommsFeed lines={feedLines} />
-          </div>
-        )}
-
-        <div className="cta-row">
-          {isRegistered || user.role !== 'guest' ? (
-            <Link href="/login" className="cta" style={{ textDecoration: 'none' }}
-              onClick={() => posthog.capture('console_login_clicked')}
-            >
-              <div className="cta-bg" />
-              <div className="cta-frame" />
-              <div className="cta-icon-slot">
-                <div className="cta-icon-circle">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    <polyline points="10 17 15 12 10 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  </svg>
-                </div>
-              </div>
-              <div className="cta-divider" />
-              <div className="cta-label">LOGIN COLLECTIVE</div>
-            </Link>
-          ) : (
-            <Link href="/" className="cta" style={{ textDecoration: 'none' }}>
-              <div className="cta-bg" />
-              <div className="cta-frame" />
-              <div className="cta-icon-slot">
-                <div className="cta-icon-circle">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,90,31,0.15)" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              </div>
-              <div className="cta-divider" />
-              <div className="cta-label">BECOME A VOYAGER</div>
-            </Link>
-          )}
-        </div>
-      </section>
+      {/* ── Hero: conditional on auth state ── */}
+      {loading ? (
+        <section className="hero" style={{ flex: 1 }} />
+      ) : isGuest ? (
+        <GuestHero feedLines={feedLines} />
+      ) : (
+        <AuthHero user={user} feedLines={feedLines} />
+      )}
 
       {/* ── Known Devices ── */}
       {devices.length > 0 && (
@@ -319,6 +477,26 @@ export default function ConsolePage() {
         </section>
       )}
 
+      {/* ── Worlds ── */}
+      {latestWorlds.length > 0 && (
+        <section style={{ padding: '1rem 2.5rem 2rem' }}>
+          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: 'var(--color-nebula)' }}>
+                WORLD RECORDS
+              </div>
+              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+              {latestWorlds.map((world) => (
+                <WorldPreviewCard key={world.id} world={world} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Active Votes ── */}
       {latestVotes.length > 0 && (
         <section style={{ padding: '1rem 2.5rem 2rem' }}>
@@ -343,16 +521,6 @@ export default function ConsolePage() {
                   />
                 )
               })}
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <Link
-                href="/vote"
-                style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: '#4A5570' }}
-                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = '#20D890')}
-                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = '#4A5570')}
-              >
-                VIEW ALL VOTES →
-              </Link>
             </div>
           </div>
         </section>

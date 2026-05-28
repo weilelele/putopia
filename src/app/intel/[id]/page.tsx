@@ -7,6 +7,7 @@ import { getIntelById } from '@/lib/actions/intel'
 import { Send } from 'lucide-react'
 import type { Intel } from '@/types/database'
 import posthog from 'posthog-js'
+import { useAuth } from '@/lib/auth-context'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -32,6 +33,10 @@ function getInitials(name: string) {
 export default function IntelDetailPage() {
   const params = useParams()
   const id = params?.id as string
+  const { user } = useAuth()
+  const isGuest = user.role === 'guest'
+  const backHref = isGuest ? '/console' : '/intel'
+  const backLabel = isGuest ? '← DASHBOARD' : '← INTEL'
 
   const [entry, setEntry] = useState<Intel | null | undefined>(undefined)
   const [comments, setComments] = useState<Comment[]>([])
@@ -58,7 +63,7 @@ export default function IntelDetailPage() {
       <div className="main" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>INTEL ENTRY NOT FOUND</div>
-        <Link href="/intel" className="btn-ghost">← RETURN TO INTEL</Link>
+        <Link href={backHref} className="btn-ghost">← RETURN</Link>
       </div>
     )
   }
@@ -85,7 +90,12 @@ export default function IntelDetailPage() {
   return (
     <div className="main">
       <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> INTEL FEED <span>/</span> DISPATCH</div>
+        <div className="crumbs">
+          {isGuest
+            ? <>PC://WORKSPACE <span>/</span> DISPATCH</>
+            : <>PC://CONSOLE <span>/</span> INTEL FEED <span>/</span> DISPATCH</>
+          }
+        </div>
         <div className="right">
           <div className="item">ID <span className="val">{id.slice(0, 8).toUpperCase()}</span></div>
         </div>
@@ -93,7 +103,7 @@ export default function IntelDetailPage() {
 
       <div style={{ maxWidth: '720px', width: '100%' }}>
         <div style={{ marginBottom: '1.5rem' }}>
-          <Link href="/intel" className="btn-ghost" style={{ display: 'inline-flex' }}>← INTEL</Link>
+          <Link href={backHref} className="btn-ghost" style={{ display: 'inline-flex' }}>{backLabel}</Link>
         </div>
 
         {/* HUD frame for the intel entry */}
