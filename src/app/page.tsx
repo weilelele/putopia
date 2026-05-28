@@ -7,6 +7,33 @@ import posthog from 'posthog-js'
 import { FlameSlider, WorldChoiceCards, WORLD_OPTIONS, beliefToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
 
+/* ─── Email Providers ────────────────────────────── */
+const EMAIL_PROVIDERS: Record<string, { name: string; url: string }> = {
+  'gmail.com':      { name: 'Gmail',        url: 'https://mail.google.com/mail/' },
+  'googlemail.com': { name: 'Gmail',        url: 'https://mail.google.com/mail/' },
+  'outlook.com':    { name: 'Outlook',      url: 'https://outlook.live.com/' },
+  'hotmail.com':    { name: 'Outlook',      url: 'https://outlook.live.com/' },
+  'live.com':       { name: 'Outlook',      url: 'https://outlook.live.com/' },
+  'msn.com':        { name: 'Outlook',      url: 'https://outlook.live.com/' },
+  'yahoo.com':      { name: 'Yahoo Mail',   url: 'https://mail.yahoo.com/' },
+  'ymail.com':      { name: 'Yahoo Mail',   url: 'https://mail.yahoo.com/' },
+  'icloud.com':     { name: 'iCloud Mail',  url: 'https://www.icloud.com/mail' },
+  'me.com':         { name: 'iCloud Mail',  url: 'https://www.icloud.com/mail' },
+  'mac.com':        { name: 'iCloud Mail',  url: 'https://www.icloud.com/mail' },
+  'qq.com':         { name: 'QQ 邮箱',      url: 'https://mail.qq.com/' },
+  'foxmail.com':    { name: 'Foxmail',      url: 'https://mail.qq.com/' },
+  '163.com':        { name: '网易邮箱',     url: 'https://mail.163.com/' },
+  '126.com':        { name: '网易邮箱',     url: 'https://mail.126.com/' },
+  'yeah.net':       { name: '网易邮箱',     url: 'https://mail.yeah.net/' },
+  'proton.me':      { name: 'Proton Mail',  url: 'https://mail.proton.me/' },
+  'protonmail.com': { name: 'Proton Mail',  url: 'https://mail.proton.me/' },
+}
+
+function getEmailProvider(email: string) {
+  const domain = email.split('@')[1]?.toLowerCase()
+  return domain ? (EMAIL_PROVIDERS[domain] ?? null) : null
+}
+
 /* ─── Types ──────────────────────────────────────── */
 type Step = 'q1' | 'q2' | 'cta' | 'success'
 
@@ -28,20 +55,33 @@ function OnboardingInner() {
   const [showTransition, setShowTransition] = useState(false)
   const [showConfirm, setShowConfirm]     = useState(false)
   const [awaitClick, setAwaitClick]       = useState(false)
+  const [pendingEmail, setPendingEmail]   = useState<string | null>(null)
 
-  /* ?preview resets flag; otherwise redirect to console if already registered */
+  /* ?preview resets flags; otherwise check registered → console, or pending → inbox screen */
   useEffect(() => {
     if (params.get('preview') !== null) {
       localStorage.removeItem('putopia_voyager_registered')
-    } else if (localStorage.getItem('putopia_voyager_registered')) {
-      window.location.replace('/console')
+      localStorage.removeItem('putopia_pending_email')
+      return
     }
+    if (localStorage.getItem('putopia_voyager_registered')) {
+      window.location.replace('/console')
+      return
+    }
+    const pending = localStorage.getItem('putopia_pending_email')
+    if (pending) setPendingEmail(pending)
   }, [params])
 
   useEffect(() => {
     if (params.get('preview') !== null) return
     if (!localStorage.getItem('putopia_voyager_registered')) {
-      posthog.capture('onboarding_started')
+      const sp = new URLSearchParams(window.location.search)
+      posthog.capture('onboarding_started', {
+        utm_source:   sp.get('utm_source')   ?? undefined,
+        utm_medium:   sp.get('utm_medium')   ?? undefined,
+        utm_campaign: sp.get('utm_campaign') ?? undefined,
+        utm_content:  sp.get('utm_content')  ?? undefined,
+      })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -53,6 +93,9 @@ function OnboardingInner() {
   }, [])
 
   const handleSlider = (v: number) => {
+    if (!beliefTouched) {
+      posthog.capture('onboarding_slider_touched', { initial_value: v })
+    }
     setBelief(v)
     if (!beliefTouched) setBeliefTouched(true)
   }
@@ -74,6 +117,8 @@ function OnboardingInner() {
       reason:   beliefToReason(belief),
       location: worldText,
     })
+    // Persist email so returning users skip onboarding and land on the inbox screen
+    localStorage.setItem('putopia_pending_email', email)
     posthog.capture('onboarding_email_submitted', { belief_value: belief, world_selected: emotion })
     // Brief "TRANSMITTING..." beat before confirm screen appears
     await new Promise(r => setTimeout(r, 200))
@@ -83,6 +128,39 @@ function OnboardingInner() {
     setShowConfirm(true)
     // Enable click-anywhere to trigger scan after all lines have appeared
     setTimeout(() => setAwaitClick(true), 2400)
+  }
+
+  /* ── Returning user: already submitted email, hasn't completed /register ── */
+  if (pendingEmail) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'var(--color-deep-2)',
+        overflowY: 'auto',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div style={{ width: '100%', maxWidth: 480, padding: '0 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          <VideoSection />
+          <PendingInboxScreen
+            email={pendingEmail}
+            onStartOver={() => {
+              localStorage.removeItem('putopia_pending_email')
+              setPendingEmail(null)
+            }}
+            onEnter={() => {
+              setShowTransition(true)
+            }}
+          />
+        </div>
+        {showTransition && (
+          <ScanTransition onComplete={() => {
+            localStorage.setItem('putopia_voyager_registered', '1')
+            window.location.href = '/console'
+          }} />
+        )}
+      </div>
+    )
   }
 
   return (
@@ -367,8 +445,9 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
 }) {
   const [showSecondLine, setShowSecondLine] = useState(false)
   const [showForm, setShowForm]             = useState(false)
-  const [confirmLines, setConfirmLines]     = useState([false, false, false, false])
+  const [confirmLines, setConfirmLines]     = useState([false, false, false, false, false])
   const inputRef = useRef<HTMLInputElement>(null)
+  const provider = email ? getEmailProvider(email) : null
 
   useEffect(() => {
     const t1 = setTimeout(() => setShowSecondLine(true), 700)
@@ -382,7 +461,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
   // Stagger confirm lines in when showConfirm flips true
   useEffect(() => {
     if (!showConfirm) return
-    const delays = [0, 550, 1100, 1750]
+    const delays = [0, 550, 1100, 1750, 2100]
     const timers = delays.map((d, i) =>
       setTimeout(() => setConfirmLines(prev => {
         const next = [...prev]; next[i] = true; return next
@@ -553,6 +632,39 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
             animation: awaitClick ? 'cursorBlink 1.1s step-end infinite' : 'none',
           }} />
         </div>
+
+        {/* Email provider shortcut */}
+        {provider && (
+          <div style={{ ...lineStyle(confirmLines[4]), pointerEvents: 'auto' }}>
+            <a
+              href={provider.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
+                fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
+                letterSpacing: '0.14em', color: 'var(--color-star)',
+                border: '1px solid rgba(242,240,230,0.15)',
+                padding: '0.55rem 1rem',
+                background: 'rgba(242,240,230,0.04)',
+                textDecoration: 'none',
+                transition: 'border-color 0.2s, background 0.2s',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = 'rgba(242,240,230,0.35)'
+                el.style.background  = 'rgba(242,240,230,0.08)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = 'rgba(242,240,230,0.15)'
+                el.style.background  = 'rgba(242,240,230,0.04)'
+              }}
+            >
+              Open {provider.name} <span style={{ opacity: 0.5 }}>↗</span>
+            </a>
+          </div>
+        )}
       </div>
 
     </div>
@@ -733,6 +845,175 @@ function SuccessScreen() {
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.48rem', letterSpacing: '0.2em', color: 'rgba(242,240,230,0.18)' }}>
         Redirecting...
       </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────
+   PENDING INBOX SCREEN
+   Shown when user returns to / after submitting email
+   but before completing /register.
+───────────────────────────────────────────────────── */
+function PendingInboxScreen({
+  email,
+  onStartOver,
+  onEnter,
+}: {
+  email: string
+  onStartOver: () => void
+  onEnter: () => void
+}) {
+  const [visible, setVisible] = useState(false)
+  const provider = getEmailProvider(email)
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 60)
+    return () => clearTimeout(t)
+  }, [])
+
+  const fadeIn: React.CSSProperties = {
+    opacity:   visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(12px)',
+    transition: 'opacity 0.5s ease, transform 0.5s ease',
+  }
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', gap: '1.5rem',
+      ...fadeIn,
+    }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)', fontSize: '0.48rem',
+          letterSpacing: '0.42em', color: 'var(--color-nebula)',
+        }}>
+          SIGNAL TRANSMITTED.
+        </div>
+        <h2 style={{
+          fontFamily: 'var(--font-body)', fontWeight: 700,
+          fontSize: '1.35rem', lineHeight: 1.4,
+          color: 'var(--color-star)', margin: 0,
+        }}>
+          Check your inbox.
+        </h2>
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: '0.7rem',
+          color: 'rgba(242,240,230,0.45)', lineHeight: 1.75, margin: 0,
+        }}>
+          Your activation key has been dispatched to:
+        </p>
+        {/* Email pill + provider button — same row, same height */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
+            color: 'var(--color-star)',
+            border: '1px solid rgba(34,212,224,0.25)',
+            background: 'rgba(34,212,224,0.05)',
+            padding: '0.4rem 0.8rem',
+            letterSpacing: '0.04em',
+          }}>
+            {email}
+          </div>
+
+          {provider && (
+            <a
+              href={provider.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
+                letterSpacing: '0.04em', color: 'var(--color-nucleus)',
+                border: '1px solid rgba(255,90,31,0.35)',
+                background: 'rgba(255,90,31,0.07)',
+                padding: '0.4rem 0.8rem',
+                textDecoration: 'none',
+                transition: 'border-color 0.2s, background 0.2s',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = 'rgba(255,90,31,0.6)'
+                el.style.background  = 'rgba(255,90,31,0.13)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = 'rgba(255,90,31,0.35)'
+                el.style.background  = 'rgba(255,90,31,0.07)'
+              }}
+            >
+              Open {provider.name} <span style={{ opacity: 0.5 }}>↗</span>
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: 'rgba(255,90,31,0.12)' }} />
+
+      {/* Actions */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+
+        {/* Unknown provider: generic nudge */}
+        {!provider && (
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: '0.65rem',
+            color: 'rgba(242,240,230,0.4)', lineHeight: 1.7,
+            border: '1px solid rgba(242,240,230,0.08)',
+            padding: '0.8rem 1rem',
+          }}>
+            Open your email client and look for a message from Putopia Collective.
+          </div>
+        )}
+
+        {/* Enter collective — secondary */}
+        <button
+          onClick={onEnter}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: '0.5rem',
+            fontFamily: 'var(--font-mono)', fontSize: '0.62rem',
+            letterSpacing: '0.14em', color: 'rgba(242,240,230,0.55)',
+            padding: '0.75rem 1.5rem',
+            background: 'transparent',
+            border: '1px solid rgba(242,240,230,0.1)',
+            cursor: 'pointer',
+            transition: 'color 0.2s, border-color 0.2s',
+          }}
+          onMouseEnter={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.color = 'rgba(242,240,230,0.85)'
+            el.style.borderColor = 'rgba(242,240,230,0.22)'
+          }}
+          onMouseLeave={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.color = 'rgba(242,240,230,0.55)'
+            el.style.borderColor = 'rgba(242,240,230,0.1)'
+          }}
+        >
+          Enter the workspace directly <span style={{ opacity: 0.5 }}>→</span>
+        </button>
+      </div>
+
+      {/* Start over — tertiary text link */}
+      <div style={{ textAlign: 'center' }}>
+        <button
+          onClick={onStartOver}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontFamily: 'var(--font-mono)', fontSize: '0.55rem',
+            letterSpacing: '0.18em', color: 'rgba(242,240,230,0.25)',
+            textDecoration: 'underline', textUnderlineOffset: 3,
+            transition: 'color 0.2s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(242,240,230,0.5)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(242,240,230,0.25)' }}
+        >
+          Use a different email
+        </button>
+      </div>
+
     </div>
   )
 }
