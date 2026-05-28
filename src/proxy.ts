@@ -48,11 +48,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/console', request.url))
   }
 
-  // Logged-in users visiting /new don't need to re-onboard
-  if (pathname === '/new' && user) {
-    return NextResponse.redirect(new URL('/console', request.url))
-  }
-
   // Category listing pages require a logged-in user
   // Guests can access individual content pages (e.g. /intel/[id]) but not the root listings
   const GUEST_BLOCKED = ['/intel', '/devices', '/worlds', '/voyagers', '/vote', '/logs']

@@ -64,10 +64,6 @@ function OnboardingInner() {
       localStorage.removeItem('putopia_pending_email')
       return
     }
-    if (localStorage.getItem('putopia_voyager_registered')) {
-      window.location.replace('/console')
-      return
-    }
     const pending = localStorage.getItem('putopia_pending_email')
     if (pending) setPendingEmail(pending)
   }, [params])
