@@ -50,13 +50,14 @@ export default async function WorldsPage() {
           const displayName = world.name_en || world.name
 
           return (
-            <div
+            <a
               key={world.id}
+              href={`/worlds/${encodeURIComponent(world.id)}`}
               className="border overflow-hidden transition-all duration-200 group"
-              style={{ background: '#111525', borderColor: '#1E2840', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)' }}
+              style={{ background: '#111525', borderColor: '#1E2840', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)', textDecoration: 'none', display: 'block' }}
             >
               {/* Hero image / gradient */}
-              <div className="h-36 relative overflow-hidden">
+              <div className="h-52 relative overflow-hidden">
                 {hasImage ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -127,7 +128,7 @@ export default async function WorldsPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </a>
           )
         })}
       </div>

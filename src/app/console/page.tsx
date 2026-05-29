@@ -179,15 +179,16 @@ function IntelPreviewCard({ entry }: { entry: Intel }) {
 /* ─── World Preview Card ─────────────────────────────────── */
 function WorldPreviewCard({ world }: { world: World }) {
   const hasImage = !!world.image_path
-  const showAltName = world.name_en && world.name_en !== world.name
+  const displayName = world.name_en || world.name
+  const showAltName = false
 
   return (
-    <div style={{ display: 'block', overflow: 'hidden' }}>
+    <Link href={`/worlds/${encodeURIComponent(world.id)}`} style={{ display: 'block', overflow: 'hidden', textDecoration: 'none' }}>
       {/* Gradient / image header */}
-      <div style={{ height: 80, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ height: 110, position: 'relative', overflow: 'hidden' }}>
         {hasImage ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={world.image_path!} alt={world.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src={world.image_path!} alt={world.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.4s ease' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
         )}
@@ -196,18 +197,16 @@ function WorldPreviewCard({ world }: { world: World }) {
         <span style={{ position: 'absolute', top: 6, left: 8, fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: '#4A5570', background: 'rgba(7,9,18,0.7)', padding: '1px 5px' }}>
           {world.id}
         </span>
+        <span style={{ position: 'absolute', bottom: 8, right: 8, fontFamily: 'var(--font-mono)', fontSize: '0.48rem', letterSpacing: '0.12em', color: 'rgba(232,160,32,0.8)' }}>
+          VIEW →
+        </span>
       </div>
 
       {/* Info */}
       <div style={{ padding: '0.65rem 0.75rem', background: '#111525', border: '1px solid #1E2840', borderTop: 'none' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#EDE8DE', marginBottom: showAltName ? 2 : 6 }}>
-          {world.name}
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#EDE8DE', marginBottom: 6 }}>
+          {displayName}
         </div>
-        {showAltName && (
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: world.gradient_to, marginBottom: 6 }}>
-            {world.name_en}
-          </div>
-        )}
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: '#8A9AB5', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {world.description}
         </p>
@@ -216,7 +215,7 @@ function WorldPreviewCard({ world }: { world: World }) {
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#4A5570' }}>{world.discovery_date}</span>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
 
@@ -295,7 +294,7 @@ function GuestHero({ feedLines }: { feedLines: FeedLine[] }) {
       </div>
 
       <div className="cta-row" style={{ marginTop: '1.25rem' }}>
-        <Link href="/new" className="cta" style={{ textDecoration: 'none', width: 'clamp(150px, 22vw, 220px)', height: 'clamp(44px, 5.5vh, 52px)' }}
+        <Link href="/new" className="cta" style={{ textDecoration: 'none' }}
           onClick={() => posthog.capture('workspace_request_access_clicked')}
         >
           <div className="cta-bg" />
@@ -310,7 +309,7 @@ function GuestHero({ feedLines }: { feedLines: FeedLine[] }) {
           <div className="cta-divider" />
           <div className="cta-label" style={{ fontSize: '0.62rem', letterSpacing: '0.18em' }}>REQUEST ACCESS</div>
         </Link>
-        <Link href="/login" className="cta teal" style={{ textDecoration: 'none', width: 'clamp(120px, 16vw, 180px)', height: 'clamp(44px, 5.5vh, 52px)' }}
+        <Link href="/login" className="cta teal" style={{ textDecoration: 'none' }}
           onClick={() => posthog.capture('workspace_login_clicked')}
         >
           <div className="cta-bg" />
