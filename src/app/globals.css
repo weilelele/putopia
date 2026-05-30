@@ -1389,6 +1389,10 @@ code, pre, kbd { font-family: var(--font-mono); }
 
   .footer-tag { white-space: normal; font-size: 0.55rem; letter-spacing: 0.2em; }
 
+  .console-two-col { grid-template-columns: 1fr !important; }
+  .console-device-col { order: 1; }
+  .console-feed-col { order: 2; }
+
   .apply-section { padding: 3rem 1.25rem 2rem; }
   .apply-title { font-size: 1.4rem; }
 

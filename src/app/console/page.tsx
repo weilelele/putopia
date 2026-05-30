@@ -11,11 +11,18 @@ import { getPublicIntel } from '@/lib/actions/intel'
 import { getLatestFeed } from '@/lib/actions/dashboard-feed'
 import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actions/votes'
 import { getAllWorlds } from '@/lib/actions/worlds'
+import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { CommsFeed } from '@/components/comms-feed'
 import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
-import type { Device, Intel, Vote, World } from '@/types/database'
+import type { Device, Intel, Vote, World, McFunction, McFunctionStatus } from '@/types/database'
 import type { FeedLine } from '@/lib/actions/dashboard-feed'
+
+const STATUS_META: Record<McFunctionStatus, { label: string; color: string }> = {
+  active:         { label: 'ACTIVE', color: '#22D890' },
+  in_development: { label: 'DEV',    color: '#FF5A1F' },
+  unknown:        { label: '???',    color: '#4A5570' },
+}
 
 
 const STATUS_STYLES = {
@@ -230,8 +237,17 @@ const HERO_LINES = [
   { delay: 2200 }, // italic sign-off
 ]
 
-function GuestHero({ feedLines, newHref }: { feedLines: FeedLine[]; newHref: string }) {
+function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[]; newHref: string; mcFunctions: McFunction[] }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     const timers = HERO_LINES.map(({ delay }, i) =>
@@ -290,49 +306,53 @@ function GuestHero({ feedLines, newHref }: { feedLines: FeedLine[]; newHref: str
         </p>
       </div>
 
-      {/* Two-column panel: Status feed + Device intro */}
-      <div style={{ width: '100%', maxWidth: '900px', margin: '1.75rem auto 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        {/* Left — CommsFeed */}
-        <CommsFeed key={feedLines.length > 0 ? 'loaded' : 'empty'} lines={feedLines} />
+      {/* MC Unit panel — full width */}
+      <div style={{ width: '100%', maxWidth: '900px', margin: '1.75rem auto 0', border: '1px solid #1E2840', background: '#0D1020', overflow: 'hidden' }}>
+        {/* Header bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: '#090D1A', borderBottom: '1px solid #1E2840' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.2em', color: 'var(--color-nebula)' }}>// MULTIVERSE CONSOLE</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', color: '#4A5570', letterSpacing: '0.1em' }}>MC-SERIES</span>
+        </div>
 
-        {/* Right — Device intro */}
-        <div style={{ border: '1px solid #1E2840', background: '#0D1020', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          {/* Header bar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: '#090D1A', borderBottom: '1px solid #1E2840' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.15em', color: 'var(--color-nebula)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>// MC UNIT</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', color: '#4A5570', letterSpacing: '0.1em', flexShrink: 0 }}>MC-SERIES</span>
-          </div>
-
+        {/* Content: image left, functions right — stacked on mobile */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
           {/* Device image */}
-          <div style={{ position: 'relative', borderBottom: '1px solid #1E2840' }}>
+          <div style={{ borderRight: isMobile ? 'none' : '1px solid #1E2840', borderBottom: isMobile ? '1px solid #1E2840' : 'none' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/assets/device-desk.png"
-              alt="Multiverse Console"
-              style={{ width: '100%', height: '160px', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
-            />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(9,13,26,0.7) 100%)', pointerEvents: 'none' }} />
+            <img src="/assets/device-desk.png" alt="Multiverse Console" style={{ width: '100%', height: 'auto', display: 'block' }} />
           </div>
 
           {/* Confirmed functions */}
-          <div style={{ padding: '10px 12px', flex: 1 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '8px' }}>CONFIRMED FUNCTIONS</div>
-            {[
-              { name: 'Spatial Signal Detection', desc: 'Locate parallel worlds across the frequency spectrum' },
-              { name: 'Transtemporal Audio', desc: 'Transmit & receive sound between worlds' },
-              { name: 'Quantum Energy Discharge', desc: 'Send a pulse into a target world via energy cartridge' },
-              { name: 'Inner Voice Reception', desc: 'Capture thoughts and whispers from intelligent life' },
-            ].map((fn) => (
-              <div key={fn.name} style={{ display: 'flex', gap: '8px', marginBottom: '7px', alignItems: 'flex-start' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: 'var(--color-nucleus)', marginTop: '2px', flexShrink: 0 }}>▸</span>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-star-dim)', fontWeight: 600 }}>{fn.name}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.54rem', color: '#4A5570', lineHeight: 1.5 }}>{fn.desc}</div>
-                </div>
-              </div>
-            ))}
-            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #1A2238', fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: '#4A5570', letterSpacing: '0.1em' }}>
-              + UNKNOWN FUNCTIONS UNDER ACTIVE RESEARCH
+          <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '14px' }}>
+              CONFIRMED FUNCTIONS
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {mcFunctions.length > 0 ? mcFunctions.map(fn => {
+                const meta = STATUS_META[fn.status]
+                return (
+                  <div key={fn.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color, boxShadow: `0 0 6px ${meta.color}80`, flexShrink: 0, display: 'inline-block' }} />
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--color-star-dim)' }}>{fn.name}</span>
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.14em', color: meta.color }}>
+                      {meta.label}
+                    </span>
+                  </div>
+                )
+              }) : (
+                // fallback while loading
+                ['Spatial Detection', 'Audio Relay', 'Quantum Discharge', 'Inner Voice'].map(name => (
+                  <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#1E2840', flexShrink: 0, display: 'inline-block' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#2A3450' }}>{name}</span>
+                  </div>
+                ))
+              )}
+            </div>
+            <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #1A2238', fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: '#4A5570', letterSpacing: '0.12em' }}>
+              + MORE FUNCTIONS UNDER ACTIVE RESEARCH
             </div>
           </div>
         </div>
@@ -461,12 +481,14 @@ function ConsoleInner() {
   const [voteTallies, setVoteTallies] = useState<Record<string, Record<string, number>>>({})
   const [myVoteResponses, setMyVoteResponses] = useState<{ vote_id: string; selected_options: string[] }[]>([])
   const [latestWorlds, setLatestWorlds] = useState<World[]>([])
+  const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
 
   useEffect(() => {
     getAllDevices().then((d) => setDevices(d.filter((dev) => dev.knowledge === 'known').slice(0, 3)))
     getPublicIntel().then((intel) => setLatestIntel(intel.slice(0, 2)))
     getLatestFeed().then((f) => { if (f?.lines?.length) setFeedLines(f.lines) })
     getAllWorlds().then((w) => setLatestWorlds([...w].reverse().slice(0, 3)))
+    getMcFunctions().then((fns) => setMcFunctions(fns as McFunction[]))
     getAllVotes().then(async (votes) => {
       const active = votes.filter((v) => v.is_active).slice(0, 2)
       setLatestVotes(active)
@@ -502,7 +524,7 @@ function ConsoleInner() {
       {loading ? (
         <section className="hero" style={{ flex: 1 }} />
       ) : isGuest ? (
-        <GuestHero feedLines={feedLines} newHref={newHref} />
+        <GuestHero feedLines={feedLines} newHref={newHref} mcFunctions={mcFunctions} />
       ) : (
         <AuthHero user={user} feedLines={feedLines} />
       )}

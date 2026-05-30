@@ -165,6 +165,20 @@ export type IntelUpdate = Partial<Pick<Intel,
   'images' | 'publisher_name' | 'publisher_id'
 >>
 
+// ---------- mc_functions ----------
+export type McFunctionStatus = 'active' | 'in_development' | 'unknown'
+
+export type McFunction = {
+  id: string
+  name: string
+  status: McFunctionStatus
+  sort_order: number
+  created_at: string
+}
+
+export type McFunctionInsert = Omit<McFunction, 'id' | 'created_at'>
+export type McFunctionUpdate = Partial<Pick<McFunction, 'name' | 'status' | 'sort_order'>>
+
 // ---------- stories ----------
 export type Story = {
   id: string                  // URL-safe slug
