@@ -17,7 +17,7 @@ export async function createMcFunction(fn: McFunctionInsert) {
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('mc_functions')
-    .insert(fn)
+    .insert(fn as never)
     .select()
     .single()
   if (error) return { error: error.message, data: null }
@@ -30,7 +30,7 @@ export async function updateMcFunction(id: string, updates: McFunctionUpdate) {
   const admin = createAdminClient()
   const { error } = await admin
     .from('mc_functions')
-    .update(updates)
+    .update(updates as never)
     .eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/console')

@@ -55,7 +55,7 @@ export default function McConfigPage() {
     const maxOrder = fns.reduce((m, f) => Math.max(m, f.sort_order), 0)
     const result = await createMcFunction({ name: newName.trim(), status: newStatus, sort_order: maxOrder + 1 })
     if (result.error) { setError(result.error); setAdding(false); return }
-    setFns(prev => [...prev, result.data as McFunction])
+    setFns(prev => [...prev, result.data as unknown as McFunction])
     setNewName('')
     setNewStatus('active')
     setAdding(false)
