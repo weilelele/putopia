@@ -237,9 +237,26 @@ const HERO_LINES = [
   { delay: 2200 }, // italic sign-off
 ]
 
+function useFnAnimation(count: number) {
+  const [readyIdx, setReadyIdx] = useState(-1)
+
+  useEffect(() => {
+    setReadyIdx(-1)
+    const timers: ReturnType<typeof setTimeout>[] = []
+    for (let i = 0; i < count; i++) {
+      timers.push(setTimeout(() => setReadyIdx(i), 300 + i * 160))
+    }
+    return () => timers.forEach(clearTimeout)
+  }, [count])
+
+  return { readyIdx }
+}
+
 function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[]; newHref: string; mcFunctions: McFunction[] }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
   const [isMobile, setIsMobile] = useState(false)
+
+  const { readyIdx } = useFnAnimation(mcFunctions.length)
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
@@ -316,45 +333,46 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
           </div>
 
           {/* Confirmed functions */}
-          <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'auto' : '260px' }}>
+          <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'auto' : '260px', position: 'relative' }}>
             {/* Section label */}
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.28em', color: '#4A5570', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid #151E30' }}>
               CONFIRMED FUNCTIONS
             </div>
 
-            {/* Function rows */}
+            {/* Function rows — flicker boot sequence */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              {mcFunctions.length > 0 ? mcFunctions.map(fn => {
+              {mcFunctions.length > 0 ? mcFunctions.map((fn, i) => {
                 const meta = STATUS_META[fn.status]
+                const visible = i <= readyIdx
                 return (
                   <div key={fn.id} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '10px 0', borderBottom: '1px solid #0D1220',
+                    opacity: visible ? 1 : 0,
+                    animation: visible ? 'fnFlicker 0.55s ease-out forwards' : 'none',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{
                         width: 6, height: 6, borderRadius: '50%',
-                        background: meta.color,
-                        boxShadow: `0 0 7px ${meta.color}`,
+                        background: visible ? meta.color : '#1E2840',
+                        boxShadow: visible ? `0 0 7px ${meta.color}` : 'none',
                         flexShrink: 0, display: 'inline-block',
+                        transition: 'background 0.3s, box-shadow 0.3s',
                       }} />
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-star-dim)', letterSpacing: '0.02em' }}>
                         {fn.name}
                       </span>
                     </div>
-                    <span style={{
-                      fontFamily: 'var(--font-mono)', fontSize: '0.48rem',
-                      letterSpacing: '0.18em', color: meta.color, opacity: 0.9,
-                    }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.48rem', letterSpacing: '0.18em', color: meta.color, opacity: 0.9 }}>
                       {meta.label}
                     </span>
                   </div>
                 )
               }) : (
-                ['—', '—', '—', '—'].map((_, i) => (
+                Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #0D1220', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#151E30', flexShrink: 0, display: 'inline-block' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#1A2438', letterSpacing: '0.02em' }}>——————————</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#1A2438' }}>——————————</span>
                   </div>
                 ))
               )}

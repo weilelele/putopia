@@ -1166,6 +1166,17 @@ code, pre, kbd { font-family: var(--font-mono); }
 .device-wrap::before { left: -1.5rem; }
 .device-wrap::after  { right: -1.5rem; }
 
+/* MC Unit function row animations */
+@keyframes fnFlicker {
+  0%   { opacity: 0; filter: brightness(4) saturate(0); }
+  8%   { opacity: 1; filter: brightness(3) saturate(0.3); }
+  18%  { opacity: 0.4; filter: brightness(1); }
+  28%  { opacity: 1; filter: brightness(2) saturate(0.6); }
+  45%  { opacity: 0.7; filter: brightness(1); }
+  60%  { opacity: 1; filter: brightness(1.4); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+
 .cta-row {
   display: flex;
   gap: 1.5rem;
