@@ -78,9 +78,24 @@ export type Application = {
   created_at: string
   reviewed_by: string | null
   reviewed_at: string | null
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  utm_content: string | null
+  fbclid: string | null
+  landing_page_variant: string | null
 }
 
-export type ApplicationInsert = Pick<Application, 'email' | 'reason'> & { name?: string; location?: string | null }
+export type ApplicationInsert = Pick<Application, 'email' | 'reason'> & {
+  name?: string
+  location?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  utm_content?: string | null
+  fbclid?: string | null
+  landing_page_variant?: string | null
+}
 
 // ---------- devices ----------
 export type Device = {

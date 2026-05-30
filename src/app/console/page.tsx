@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
@@ -228,7 +230,7 @@ const HERO_LINES = [
   { delay: 2200 }, // italic sign-off
 ]
 
-function GuestHero({ feedLines }: { feedLines: FeedLine[] }) {
+function GuestHero({ feedLines, newHref }: { feedLines: FeedLine[]; newHref: string }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
 
   useEffect(() => {
@@ -261,19 +263,19 @@ function GuestHero({ feedLines }: { feedLines: FeedLine[] }) {
       <div style={{ maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '1.1rem', textAlign: 'center' }}>
         <div style={{
           fontFamily: 'var(--font-display)', fontWeight: 700,
-          fontSize: 'clamp(1.1rem, 2.5vh, 1.5rem)', letterSpacing: '0.12em',
+          fontSize: 'clamp(1.5rem, 3.5vh, 2.2rem)', letterSpacing: '0.12em',
           color: 'var(--color-star)', ...line(1),
         }}>
           WELCOME, GUEST.
         </div>
         <p style={{
-          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.85rem, 1.5vh, 0.97rem)',
+          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.95rem, 1.8vh, 1.08rem)',
           lineHeight: 1.85, color: 'var(--color-star-dim)', margin: 0, ...line(2),
         }}>
           Whether by accident or design — you've found your way into the internal network of the Multiverse Collective.
         </p>
         <p style={{
-          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.85rem, 1.5vh, 0.97rem)',
+          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.95rem, 1.8vh, 1.08rem)',
           lineHeight: 1.85, color: 'var(--color-star-dim)', margin: 0, ...line(3),
         }}>
           Here you will find our latest dispatches, and our most enigmatic instrument —{' '}
@@ -281,20 +283,63 @@ function GuestHero({ feedLines }: { feedLines: FeedLine[] }) {
           {' '}— a device built to reach into parallel worlds and observe what lies beyond.
         </p>
         <p style={{
-          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.8rem, 1.4vh, 0.9rem)',
+          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.88rem, 1.5vh, 0.97rem)',
           lineHeight: 1.8, color: 'rgba(242,240,230,0.4)', margin: 0, fontStyle: 'italic', ...line(4),
         }}>
           If you'd like to know more, you're welcome to apply.
         </p>
       </div>
 
-      {/* CommsFeed — always rendered to avoid layout shift; key remounts when data arrives */}
-      <div style={{ width: '100%', maxWidth: '480px', margin: '1.75rem auto 0' }}>
+      {/* Two-column panel: Status feed + Device intro */}
+      <div style={{ width: '100%', maxWidth: '900px', margin: '1.75rem auto 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        {/* Left — CommsFeed */}
         <CommsFeed key={feedLines.length > 0 ? 'loaded' : 'empty'} lines={feedLines} />
+
+        {/* Right — Device intro */}
+        <div style={{ border: '1px solid #1E2840', background: '#0D1020', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {/* Header bar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: '#090D1A', borderBottom: '1px solid #1E2840' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.15em', color: 'var(--color-nebula)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>// MC UNIT</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', color: '#4A5570', letterSpacing: '0.1em', flexShrink: 0 }}>MC-SERIES</span>
+          </div>
+
+          {/* Device image */}
+          <div style={{ position: 'relative', borderBottom: '1px solid #1E2840' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/device-desk.png"
+              alt="Multiverse Console"
+              style={{ width: '100%', height: '160px', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(9,13,26,0.7) 100%)', pointerEvents: 'none' }} />
+          </div>
+
+          {/* Confirmed functions */}
+          <div style={{ padding: '10px 12px', flex: 1 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '8px' }}>CONFIRMED FUNCTIONS</div>
+            {[
+              { name: 'Spatial Signal Detection', desc: 'Locate parallel worlds across the frequency spectrum' },
+              { name: 'Transtemporal Audio', desc: 'Transmit & receive sound between worlds' },
+              { name: 'Quantum Energy Discharge', desc: 'Send a pulse into a target world via energy cartridge' },
+              { name: 'Inner Voice Reception', desc: 'Capture thoughts and whispers from intelligent life' },
+            ].map((fn) => (
+              <div key={fn.name} style={{ display: 'flex', gap: '8px', marginBottom: '7px', alignItems: 'flex-start' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: 'var(--color-nucleus)', marginTop: '2px', flexShrink: 0 }}>▸</span>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-star-dim)', fontWeight: 600 }}>{fn.name}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.54rem', color: '#4A5570', lineHeight: 1.5 }}>{fn.desc}</div>
+                </div>
+              </div>
+            ))}
+            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #1A2238', fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: '#4A5570', letterSpacing: '0.1em' }}>
+              + UNKNOWN FUNCTIONS UNDER ACTIVE RESEARCH
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="cta-row" style={{ marginTop: '1.25rem' }}>
-        <Link href="/new" className="cta" style={{ textDecoration: 'none' }}
+        <Link href={newHref} className="cta" style={{ textDecoration: 'none' }}
           onClick={() => posthog.capture('workspace_request_access_clicked')}
         >
           <div className="cta-bg" />
@@ -382,7 +427,33 @@ function AuthHero({ user, feedLines }: { user: { role: string; name?: string }; 
 
 /* ─── Page ──────────────────────────────────────────────── */
 export default function ConsolePage() {
+  return <Suspense><ConsoleInner /></Suspense>
+}
+
+function ConsoleInner() {
   const { user, loading } = useAuth()
+  const searchParams = useSearchParams()
+  const utmTracked = useRef(false)
+
+  useEffect(() => {
+    if (utmTracked.current) return
+    utmTracked.current = true
+    const sp = new URLSearchParams(window.location.search)
+    const utm_source = sp.get('utm_source')
+    if (utm_source) {
+      posthog.capture('console_page_viewed', {
+        utm_source,
+        utm_medium:           sp.get('utm_medium')   ?? undefined,
+        utm_campaign:         sp.get('utm_campaign') ?? undefined,
+        utm_content:          sp.get('utm_content')  ?? undefined,
+        fbclid:               sp.get('fbclid')       ?? undefined,
+        landing_page_variant: sp.get('variant')      ?? undefined,
+      })
+    }
+  }, [])
+
+  // Preserve UTM params when forwarding to /new
+  const newHref = searchParams.toString() ? `/new?${searchParams.toString()}` : '/new'
   const [devices, setDevices] = useState<Device[]>([])
   const [latestIntel, setLatestIntel] = useState<Intel[]>([])
   const [feedLines, setFeedLines] = useState<FeedLine[]>([])
@@ -431,7 +502,7 @@ export default function ConsolePage() {
       {loading ? (
         <section className="hero" style={{ flex: 1 }} />
       ) : isGuest ? (
-        <GuestHero feedLines={feedLines} />
+        <GuestHero feedLines={feedLines} newHref={newHref} />
       ) : (
         <AuthHero user={user} feedLines={feedLines} />
       )}

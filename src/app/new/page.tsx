@@ -108,10 +108,17 @@ function OnboardingInner() {
     setSubmitting(true)
     // Submit to the shared applications table
     const worldText = WORLD_OPTIONS.find(w => w.id === emotion)?.text ?? emotion
+    const sp = new URLSearchParams(window.location.search)
     await submitApplication({
       email,
-      reason:   beliefToReason(belief),
-      location: worldText,
+      reason:               beliefToReason(belief),
+      location:             worldText,
+      utm_source:           sp.get('utm_source')           ?? null,
+      utm_medium:           sp.get('utm_medium')           ?? null,
+      utm_campaign:         sp.get('utm_campaign')         ?? null,
+      utm_content:          sp.get('utm_content')          ?? null,
+      fbclid:               sp.get('fbclid')               ?? null,
+      landing_page_variant: sp.get('variant')              ?? null,
     })
     // Persist email so returning users skip onboarding and land on the inbox screen
     localStorage.setItem('putopia_pending_email', email)
