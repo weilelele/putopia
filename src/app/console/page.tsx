@@ -305,7 +305,6 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
         {/* Header bar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: '#090D1A', borderBottom: '1px solid #1E2840' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.2em', color: 'var(--color-nebula)' }}>// MULTIVERSE CONSOLE</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', color: '#4A5570', letterSpacing: '0.1em' }}>MC-SERIES</span>
         </div>
 
         {/* Content: image left, functions right — stacked on mobile */}
@@ -317,65 +316,86 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
           </div>
 
           {/* Confirmed functions */}
-          <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '14px' }}>
+          <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'auto' : '260px' }}>
+            {/* Section label */}
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.28em', color: '#4A5570', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid #151E30' }}>
               CONFIRMED FUNCTIONS
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+            {/* Function rows */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               {mcFunctions.length > 0 ? mcFunctions.map(fn => {
                 const meta = STATUS_META[fn.status]
                 return (
-                  <div key={fn.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color, boxShadow: `0 0 6px ${meta.color}80`, flexShrink: 0, display: 'inline-block' }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--color-star-dim)' }}>{fn.name}</span>
+                  <div key={fn.id} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 0', borderBottom: '1px solid #0D1220',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: meta.color,
+                        boxShadow: `0 0 7px ${meta.color}`,
+                        flexShrink: 0, display: 'inline-block',
+                      }} />
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-star-dim)', letterSpacing: '0.02em' }}>
+                        {fn.name}
+                      </span>
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.14em', color: meta.color }}>
+                    <span style={{
+                      fontFamily: 'var(--font-mono)', fontSize: '0.48rem',
+                      letterSpacing: '0.18em', color: meta.color, opacity: 0.9,
+                    }}>
                       {meta.label}
                     </span>
                   </div>
                 )
               }) : (
-                // fallback while loading
-                ['Spatial Detection', 'Audio Relay', 'Quantum Discharge', 'Inner Voice'].map(name => (
-                  <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#1E2840', flexShrink: 0, display: 'inline-block' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#2A3450' }}>{name}</span>
+                ['—', '—', '—', '—'].map((_, i) => (
+                  <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #0D1220', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#151E30', flexShrink: 0, display: 'inline-block' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#1A2438', letterSpacing: '0.02em' }}>——————————</span>
                   </div>
                 ))
               )}
             </div>
-            <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #1A2238', fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: '#4A5570', letterSpacing: '0.12em' }}>
+
+            {/* Footer */}
+            <div style={{ marginTop: '14px', fontFamily: 'var(--font-mono)', fontSize: '0.45rem', color: '#283048', letterSpacing: '0.16em', textAlign: 'right' }}>
               + MORE FUNCTIONS UNDER ACTIVE RESEARCH
             </div>
           </div>
         </div>
       </div>
 
-      <div className="cta-row" style={{ marginTop: '1.25rem', maxWidth: '560px', width: '100%' }}>
-        <Link href={newHref} className="cta" style={{ textDecoration: 'none' }}
+      {/* CTA row — always horizontal, equal-width buttons */}
+      <div style={{
+        display: 'flex', gap: '1rem', marginTop: '1.25rem',
+        width: '100%', maxWidth: '620px',
+      }}>
+        <Link href={newHref} className="cta" style={{ textDecoration: 'none', flex: '1 1 0', width: 'auto', minWidth: 0 }}
           onClick={() => posthog.capture('workspace_request_access_clicked')}
         >
           <div className="cta-bg" />
           <div className="cta-frame" />
-          <div className="cta-icon-slot" style={{ width: 'clamp(44px, 5.5vh, 52px)' }}>
-            <div className="cta-icon-circle" style={{ width: 32, height: 32 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <div className="cta-icon-slot" style={{ width: 44, flexShrink: 0 }}>
+            <div className="cta-icon-circle" style={{ width: 30, height: 30 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,90,31,0.15)" strokeLinejoin="round" />
               </svg>
             </div>
           </div>
           <div className="cta-divider" />
-          <div className="cta-label" style={{ fontSize: '0.62rem', letterSpacing: '0.18em' }}>REQUEST ACCESS</div>
+          <div className="cta-label" style={{ fontSize: 'clamp(0.6rem, 1.3vw, 0.75rem)', letterSpacing: '0.16em' }}>REQUEST ACCESS</div>
         </Link>
-        <Link href="/login" className="cta teal" style={{ textDecoration: 'none' }}
+        <Link href="/login" className="cta teal" style={{ textDecoration: 'none', flex: '1 1 0', width: 'auto', minWidth: 0 }}
           onClick={() => posthog.capture('workspace_login_clicked')}
         >
           <div className="cta-bg" />
           <div className="cta-frame" />
-          <div className="cta-icon-slot" style={{ width: 'clamp(44px, 5.5vh, 52px)' }}>
-            <div className="cta-icon-circle" style={{ width: 32, height: 32 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <div className="cta-icon-slot" style={{ width: 44, flexShrink: 0 }}>
+            <div className="cta-icon-circle" style={{ width: 30, height: 30 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 <polyline points="10 17 15 12 10 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -383,7 +403,7 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
             </div>
           </div>
           <div className="cta-divider" />
-          <div className="cta-label" style={{ fontSize: '0.62rem', letterSpacing: '0.18em' }}>LOGIN</div>
+          <div className="cta-label" style={{ fontSize: 'clamp(0.6rem, 1.3vw, 0.75rem)', letterSpacing: '0.16em' }}>LOGIN</div>
         </Link>
       </div>
     </section>

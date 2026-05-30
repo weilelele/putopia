@@ -1178,7 +1178,7 @@ code, pre, kbd { font-family: var(--font-mono); }
 .cta {
   --col: 255, 90, 31; --txt: var(--color-star);
   position: relative; display: flex; align-items: stretch;
-  width: clamp(160px, 30vw, 260px); height: clamp(52px, 7vh, 68px); cursor: pointer;
+  width: clamp(160px, 30vw, 260px); height: 54px; cursor: pointer;
   text-decoration: none; font-family: inherit;
   background: transparent; border: none; padding: 0;
   color: var(--txt); transition: transform 0.2s;
