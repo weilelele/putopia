@@ -298,12 +298,6 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
           <span style={{ color: 'var(--color-nebula)', fontFamily: 'var(--font-mono)', fontSize: '0.88em' }}>Multiverse Console</span>
           {' '}— a device built to reach into parallel worlds and observe what lies beyond.
         </p>
-        <p style={{
-          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.88rem, 1.5vh, 0.97rem)',
-          lineHeight: 1.8, color: 'rgba(242,240,230,0.4)', margin: 0, fontStyle: 'italic', ...line(4),
-        }}>
-          If you'd like to know more, you're welcome to apply.
-        </p>
       </div>
 
       {/* MC Unit panel — full width */}
@@ -358,7 +352,7 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
         </div>
       </div>
 
-      <div className="cta-row" style={{ marginTop: '1.25rem' }}>
+      <div className="cta-row" style={{ marginTop: '1.25rem', maxWidth: '560px', width: '100%' }}>
         <Link href={newHref} className="cta" style={{ textDecoration: 'none' }}
           onClick={() => posthog.capture('workspace_request_access_clicked')}
         >
