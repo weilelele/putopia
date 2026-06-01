@@ -1,61 +1,189 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { RefreshButton } from './refresh-button'
 
-const ACCENT   = '#E85A00'
-const MUTED    = '#4A5570'
-const DIM      = '#8A9AB5'
-const STAR     = '#EDE8DE'
-const CARD_BG  = '#0D1020'
-const BORDER   = '#1E2840'
-const OK_COLOR = '#20D890'
+// ── Style tokens ──────────────────────────────────────────────────────────────
+const ACCENT  = '#E85A00'
+const MUTED   = '#4A5570'
+const DIM     = '#8A9AB5'
+const STAR    = '#EDE8DE'
+const CARD_BG = '#0D1020'
+const BORDER  = '#1E2840'
+const OK      = '#20D890'
+const CYAN    = '#22D4E0'
 
-type SnapshotRow = {
-  step_key: string
-  step_label: string
-  step_order: number
-  count_all_time: number
-  count_30d: number
+// ── Types ─────────────────────────────────────────────────────────────────────
+type DayStats = {
+  date: string
+  started: number
+  q1: number
+  q2: number
+  email: number
+  invite_sent: number
+  invite_clicked: number
+  registered: number
 }
 
-type Run = {
-  run_id: string
-  captured_at: string
-  version_tag: string | null
-  steps: SnapshotRow[]
+type SbTotals = {
+  email: number
+  invite_sent: number
+  invite_clicked: number
+  registered: number
 }
 
-async function getLatestRuns(limit = 10): Promise<Run[]> {
+// ── PostHog helper ────────────────────────────────────────────────────────────
+async function queryPostHog(sql: string): Promise<unknown[][]> {
+  const apiKey   = process.env.POSTHOG_PERSONAL_API_KEY
+  const project  = process.env.POSTHOG_PROJECT_ID
+  const apiHost  = process.env.POSTHOG_API_HOST ?? 'https://us.posthog.com'
+  if (!apiKey || !project) return []
+  try {
+    const res = await fetch(`${apiHost}/api/projects/${project}/query`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: { kind: 'HogQLQuery', query: sql } }),
+      signal: AbortSignal.timeout(15_000),
+      cache: 'no-store',
+    })
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.results ?? []
+  } catch {
+    return []
+  }
+}
+
+const PH_EVENTS = `'onboarding_started','onboarding_q1_completed','onboarding_q2_completed','onboarding_email_submitted','console_login_clicked'`
+
+function utmClause(utm: string) {
+  const safe = utm.replace(/'/g, "''")
+  return `AND person_id IN (
+    SELECT DISTINCT person_id FROM events
+    WHERE event = 'onboarding_started' AND properties.utm_source = '${safe}'
+  )`
+}
+
+async function getUTMSources(): Promise<string[]> {
+  const rows = await queryPostHog(`
+    SELECT DISTINCT properties.utm_source
+    FROM events
+    WHERE event = 'onboarding_started'
+      AND properties.utm_source IS NOT NULL
+      AND properties.utm_source != ''
+    LIMIT 20
+  `)
+  return (rows as [string][]).map(r => r[0]).filter(Boolean).sort()
+}
+
+// Returns Map<date 'YYYY-MM-DD', Map<eventName, count>>
+async function getPostHogDailyData(days: number, utm: string | null) {
+  const filter = utm ? utmClause(utm) : ''
+  const rows = await queryPostHog(`
+    SELECT toDate(timestamp) AS day, event, count(DISTINCT person_id) AS cnt
+    FROM events
+    WHERE event IN (${PH_EVENTS})
+      AND toDate(timestamp) >= today() - ${days}
+      ${filter}
+    GROUP BY day, event
+    ORDER BY day DESC, event
+  `)
+  const map = new Map<string, Map<string, number>>()
+  for (const r of rows as [string, string, number][]) {
+    if (!map.has(r[0])) map.set(r[0], new Map())
+    map.get(r[0])!.set(r[1], Number(r[2]))
+  }
+  return map
+}
+
+// Returns Map<eventName, all-time count>
+async function getPostHogAllTime(utm: string | null) {
+  const filter = utm ? utmClause(utm) : ''
+  const rows = await queryPostHog(`
+    SELECT event, count(DISTINCT person_id) AS cnt
+    FROM events
+    WHERE event IN (${PH_EVENTS})
+      ${filter}
+    GROUP BY event
+  `)
+  const map = new Map<string, number>()
+  for (const [ev, cnt] of rows as [string, number][]) map.set(ev, Number(cnt))
+  return map
+}
+
+// Returns Map<date, per-day Supabase counts>
+async function getSupabaseDailyData(days: number): Promise<Map<string, SbTotals>> {
   const supabase = createAdminClient()
+  const cutoff   = new Date(Date.now() - days * 86_400_000).toISOString()
 
-  const { data: recent } = await supabase
-    .from('funnel_snapshots')
-    .select('run_id, captured_at, version_tag')
-    .order('captured_at', { ascending: false })
-    .limit(limit * 6)
+  const [{ data: apps }, { data: profiles }, clickedRes] = await Promise.all([
+    supabase.from('applications').select('created_at').gte('created_at', cutoff),
+    supabase.from('voyager_profiles').select('joined_at, registered_at').neq('role', 'architect').gte('joined_at', cutoff),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).rpc('count_confirmed_auth_users_by_day', { days_back: days }),
+  ])
 
-  if (!recent?.length) return []
-
-  const seen = new Set<string>()
-  const runs: { run_id: string; captured_at: string; version_tag: string | null }[] = []
-  for (const row of recent) {
-    if (!seen.has(row.run_id)) {
-      seen.add(row.run_id)
-      runs.push(row)
-      if (runs.length === limit) break
-    }
+  const byDate = new Map<string, SbTotals>()
+  const ensure = (d: string) => {
+    if (!byDate.has(d)) byDate.set(d, { email: 0, invite_sent: 0, invite_clicked: 0, registered: 0 })
+    return byDate.get(d)!
   }
 
-  const runIds = runs.map(r => r.run_id)
-  const { data: steps } = await supabase
-    .from('funnel_snapshots')
-    .select('run_id, step_key, step_label, step_order, count_all_time, count_30d')
-    .in('run_id', runIds)
-    .order('step_order', { ascending: true })
+  for (const a of (apps ?? [])) ensure(a.created_at.slice(0, 10)).email++
+  for (const p of (profiles ?? [])) {
+    ensure(p.joined_at.slice(0, 10)).invite_sent++
+    if (p.registered_at) ensure(p.registered_at.slice(0, 10)).registered++
+  }
+  if (Array.isArray(clickedRes?.data)) {
+    for (const { day, cnt } of clickedRes.data as { day: string; cnt: number }[]) {
+      ensure(day).invite_clicked = Number(cnt)
+    }
+  }
+  return byDate
+}
 
-  return runs.map(run => ({
-    ...run,
-    steps: (steps ?? []).filter(s => s.run_id === run.run_id),
-  }))
+async function getSupabaseAllTime(): Promise<SbTotals> {
+  const supabase = createAdminClient()
+  const [
+    { count: email },
+    { count: invite_sent },
+    { count: registered },
+    { data: invite_clicked },
+  ] = await Promise.all([
+    supabase.from('applications').select('*', { count: 'exact', head: true }),
+    supabase.from('voyager_profiles').select('*', { count: 'exact', head: true }).neq('role', 'architect'),
+    supabase.from('voyager_profiles').select('*', { count: 'exact', head: true }).not('registered_at', 'is', null),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).rpc('count_confirmed_auth_users'),
+  ])
+  return {
+    email:          email ?? 0,
+    invite_sent:    invite_sent ?? 0,
+    registered:     registered ?? 0,
+    invite_clicked: (invite_clicked as number | null) ?? 0,
+  }
+}
+
+function buildDayStats(
+  phData: Map<string, Map<string, number>>,
+  sbData: Map<string, SbTotals>,
+  days: number,
+): DayStats[] {
+  const result: DayStats[] = []
+  for (let i = 0; i < days; i++) {
+    const date = new Date(Date.now() - i * 86_400_000).toISOString().slice(0, 10)
+    const ph   = phData.get(date)
+    const sb   = sbData.get(date) ?? { email: 0, invite_sent: 0, invite_clicked: 0, registered: 0 }
+    result.push({
+      date,
+      started:        ph?.get('onboarding_started') ?? 0,
+      q1:             ph?.get('onboarding_q1_completed') ?? 0,
+      q2:             ph?.get('onboarding_q2_completed') ?? 0,
+      email:          Math.max(ph?.get('onboarding_email_submitted') ?? 0, sb.email),
+      invite_sent:    sb.invite_sent,
+      invite_clicked: sb.invite_clicked,
+      registered:     sb.registered,
+    })
+  }
+  return result
 }
 
 function pct(a: number, b: number) {
@@ -63,324 +191,299 @@ function pct(a: number, b: number) {
   return `${Math.round((a / b) * 100)}%`
 }
 
-function TrafficRef({ count, count30d }: { count: number; count30d: number }) {
+// ── UTM filter pills ──────────────────────────────────────────────────────────
+function UTMFilter({ sources, current }: { sources: string[]; current: string | null }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '0.75rem 1rem', background: '#070c1a', border: `1px solid ${BORDER}`, marginBottom: '0.5rem' }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: MUTED }}>
-        HOMEPAGE TRAFFIC (去重浏览器)
+    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.5rem' }}>
+      <span style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, letterSpacing: '0.2em' }}>SOURCE</span>
+      {[null, ...sources].map(s => {
+        const active = s === current
+        return (
+          <a
+            key={s ?? '_all_'}
+            href={s ? `?utm=${encodeURIComponent(s)}` : '?'}
+            style={{
+              fontFamily: 'monospace',
+              fontSize: 8,
+              letterSpacing: '0.15em',
+              padding: '2px 8px',
+              border: `1px solid ${active ? ACCENT : BORDER}`,
+              color: active ? ACCENT : DIM,
+              background: active ? 'rgba(232,90,0,0.08)' : 'transparent',
+              textDecoration: 'none',
+            }}
+          >
+            {s?.toUpperCase() ?? 'ALL'}
+          </a>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Today card ────────────────────────────────────────────────────────────────
+function TodayCard({ row }: { row: DayStats }) {
+  const cells: { label: string; val: number; color: string }[] = [
+    { label: 'STARTED',  val: row.started,        color: ACCENT },
+    { label: 'Q1',       val: row.q1,             color: ACCENT },
+    { label: 'Q2',       val: row.q2,             color: ACCENT },
+    { label: 'EMAIL',    val: row.email,           color: STAR   },
+    { label: 'SENT',     val: row.invite_sent,     color: CYAN   },
+    { label: 'CLICKED',  val: row.invite_clicked,  color: CYAN   },
+    { label: 'REG',      val: row.registered,      color: OK     },
+  ]
+  return (
+    <div style={{ background: CARD_BG, border: `1px solid ${ACCENT}`, padding: '1rem 1.25rem', borderRadius: 2 }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: ACCENT, marginBottom: '0.75rem' }}>
+        TODAY · {row.date} (UTC)
       </div>
-      <div style={{ fontFamily: 'monospace', fontSize: 13, color: DIM }}>
-        {count.toLocaleString()} <span style={{ fontSize: 9, color: MUTED }}>all-time</span>
-      </div>
-      <div style={{ fontFamily: 'monospace', fontSize: 11, color: MUTED }}>
-        {count30d.toLocaleString()} <span style={{ fontSize: 9 }}>30d</span>
-      </div>
-      <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginLeft: 'auto' }}>
-        ↓ 不计入漏斗转化率
+      <div style={{ display: 'flex', gap: '1.75rem', flexWrap: 'wrap' }}>
+        {cells.map(({ label, val, color }) => (
+          <div key={label}>
+            <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, letterSpacing: '0.2em', marginBottom: '0.2rem' }}>
+              {label}
+            </div>
+            <div style={{ fontFamily: 'monospace', fontSize: 24, color: val ? color : MUTED, fontWeight: 700, lineHeight: 1 }}>
+              {val || '—'}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-// PostHog-tracked steps (accumulate from today onward)
-const POSTHOG_KEYS   = new Set(['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed'])
-// Supabase-backed steps (full historical data)
-const SUPABASE_KEYS  = new Set(['onboarding_email_submitted', 'invite_link_clicked', 'registered'])
-// Retention step — shown separately below the funnel
-const RETENTION_KEYS = new Set(['console_login_clicked'])
+// ── Daily table ───────────────────────────────────────────────────────────────
+type ColDef = { label: string; key: keyof Omit<DayStats, 'date'>; sb: boolean }
+const COLS: ColDef[] = [
+  { label: 'STARTED',  key: 'started',        sb: false },
+  { label: 'Q1',       key: 'q1',             sb: false },
+  { label: 'Q2',       key: 'q2',             sb: false },
+  { label: 'EMAIL',    key: 'email',           sb: false },
+  { label: 'SENT',     key: 'invite_sent',     sb: true  },
+  { label: 'CLICKED',  key: 'invite_clicked',  sb: true  },
+  { label: 'REG',      key: 'registered',      sb: true  },
+]
 
-function FunnelBar({ count, max, color = ACCENT }: { count: number; max: number; color?: string }) {
-  const w = max > 0 ? Math.min(Math.round((count / max) * 100), 100) : 0
+function DailyTable({ rows, utmActive }: { rows: DayStats[]; utmActive: boolean }) {
+  const th = (label: string, right = false, color = MUTED) => ({
+    textAlign: right ? 'right' as const : 'left' as const,
+    padding: '5px 10px',
+    color,
+    letterSpacing: '0.12em',
+    borderBottom: `1px solid ${BORDER}`,
+    fontFamily: 'monospace',
+    fontSize: 9,
+    fontWeight: 400,
+  })
+
   return (
-    <div style={{ flex: 1, background: '#111525', height: 6, borderRadius: 1 }}>
-      <div style={{ width: `${w}%`, height: '100%', background: color, transition: 'width 0.4s ease' }} />
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={th('DATE')}>DATE</th>
+            {COLS.map(c => (
+              <th key={c.key} style={th(c.label, true, utmActive && c.sb ? '#2A3A5A' : MUTED)}>
+                {c.label}
+              </th>
+            ))}
+            <th style={th('CVR', true, ACCENT)}>CVR</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(row => (
+            <tr key={row.date}>
+              <td style={{ padding: '5px 10px', color: DIM, borderBottom: `1px solid ${BORDER}`, fontFamily: 'monospace', fontSize: 10 }}>
+                {row.date.slice(5)}
+              </td>
+              {COLS.map(c => {
+                const v = row[c.key]
+                return (
+                  <td key={c.key} style={{ textAlign: 'right', padding: '5px 10px', borderBottom: `1px solid ${BORDER}`, fontFamily: 'monospace', fontSize: 10, color: utmActive && c.sb ? '#2A3A5A' : v ? STAR : MUTED }}>
+                    {v || '—'}
+                  </td>
+                )
+              })}
+              <td style={{ textAlign: 'right', padding: '5px 10px', borderBottom: `1px solid ${BORDER}`, fontFamily: 'monospace', fontSize: 10, color: ACCENT, fontWeight: 600 }}>
+                {pct(row.email, row.started)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {utmActive && (
+        <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, marginTop: '0.5rem' }}>
+          * SENT / CLICKED / REG 来自 Supabase，不支持 UTM 过滤，显示全量数据
+        </div>
+      )}
     </div>
   )
 }
 
-function StepRow({ step, prev, maxCount, color = ACCENT }: {
-  step: SnapshotRow; prev?: SnapshotRow; maxCount: number; color?: string
+// ── All-time funnel ───────────────────────────────────────────────────────────
+function AllTimeFunnel({
+  phAll,
+  sbAll,
+  utmActive,
+}: {
+  phAll: Map<string, number>
+  sbAll: SbTotals
+  utmActive: boolean
 }) {
-  // Only show conversion rate within the same data source
-  const sameSource = prev && (
-    (POSTHOG_KEYS.has(step.step_key) && POSTHOG_KEYS.has(prev.step_key)) ||
-    (SUPABASE_KEYS.has(step.step_key) && SUPABASE_KEYS.has(prev.step_key))
-  )
-  const stepRate = sameSource ? pct(step.count_all_time, prev!.count_all_time) : null
+  const started   = phAll.get('onboarding_started') ?? 0
+  const q1        = phAll.get('onboarding_q1_completed') ?? 0
+  const q2        = phAll.get('onboarding_q2_completed') ?? 0
+  const phEmail   = phAll.get('onboarding_email_submitted') ?? 0
+  const email     = utmActive ? phEmail : Math.max(phEmail, sbAll.email)
+  const consoleLg = phAll.get('console_login_clicked') ?? 0
+
+  type Step = { label: string; val: number; color: string; sb: boolean }
+  const steps: Step[] = [
+    { label: 'Onboarding Started', val: started,              color: ACCENT, sb: false },
+    { label: 'Q1 Completed',       val: q1,                   color: ACCENT, sb: false },
+    { label: 'Q2 Completed',       val: q2,                   color: ACCENT, sb: false },
+    { label: 'Email Submitted',    val: email,                color: STAR,   sb: false },
+    { label: 'Invite Sent',        val: sbAll.invite_sent,    color: CYAN,   sb: true  },
+    { label: 'Invite Clicked',     val: sbAll.invite_clicked, color: CYAN,   sb: true  },
+    { label: 'Registered',         val: sbAll.registered,     color: OK,     sb: true  },
+  ]
+  const maxVal = steps[0]?.val || 1
 
   return (
     <div>
-      {prev && (
-        <div style={{ paddingLeft: '0.5rem', marginBottom: '0.25rem', fontFamily: 'monospace', fontSize: 9, color: stepRate ? MUTED : '#1E2840' }}>
-          {stepRate ? `↓ ${stepRate}` : '↓'}
-        </div>
-      )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.12em', color: DIM, width: 180, flexShrink: 0 }}>
-          {step.step_label.toUpperCase()}
-        </div>
-        <FunnelBar count={step.count_all_time} max={maxCount} color={color} />
-        <div style={{ fontFamily: 'monospace', fontSize: 11, color: STAR, width: 48, textAlign: 'right', flexShrink: 0 }}>
-          {step.count_all_time.toLocaleString()}
-        </div>
-        <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, width: 52, textAlign: 'right', flexShrink: 0 }}>
-          30d: {step.count_30d}
-        </div>
-      </div>
-    </div>
-  )
-}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+        {steps.map((step, i) => {
+          const prev = steps[i - 1]
+          const crossSource = prev && step.sb !== prev.sb
+          const rate = !crossSource && prev ? pct(step.val, prev.val) : null
+          const barW = Math.min(Math.round((step.val / maxVal) * 100), 100)
+          const dim  = utmActive && step.sb
 
-function RetentionCard({ step, registered }: { step: SnapshotRow; registered: number }) {
-  const rate = registered > 0 ? Math.round((step.count_all_time / registered) * 100) : 0
-  return (
-    <div style={{ marginTop: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(34,212,224,0.03)', border: '1px solid rgba(34,212,224,0.15)', borderRadius: 2 }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: '#1A4A50', marginBottom: '0.75rem' }}>
-        RETENTION · RETURNING USERS
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' }}>
-            CONSOLE → LOGIN COLLECTIVE 点击
-          </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 22, color: '#22D4E0', fontWeight: 700, lineHeight: 1 }}>
-            {step.count_all_time.toLocaleString()}
-          </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' }}>
-            30d: {step.count_30d}
-          </div>
-        </div>
-        {registered > 0 && (
-          <div style={{ borderLeft: `1px solid rgba(34,212,224,0.15)`, paddingLeft: '1.5rem' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' }}>
-              回归率（登录 / 注册用户）
-            </div>
-            <div style={{ fontFamily: 'monospace', fontSize: 22, color: '#22D4E0', fontWeight: 700, lineHeight: 1 }}>
-              {rate}%
-            </div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' }}>
-              {step.count_all_time} / {registered} 已注册用户
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
-  const allSteps     = [...run.steps].sort((a, b) => a.step_order - b.step_order)
-  const trafficRef   = allSteps.find(s => s.step_order === 0)
-  const phSteps      = allSteps.filter(s => POSTHOG_KEYS.has(s.step_key))
-  const sbSteps      = allSteps.filter(s => SUPABASE_KEYS.has(s.step_key))
-  const retentionStep = allSteps.find(s => RETENTION_KEYS.has(s.step_key))
-  const phMax        = phSteps[0]?.count_all_time || 1
-  const sbMax        = sbSteps[0]?.count_all_time || 1
-  const registeredCount = sbSteps.find(s => s.step_key === 'registered')?.count_all_time ?? 0
-
-  return (
-    <div style={{ background: CARD_BG, border: `1px solid ${isLatest ? ACCENT : BORDER}`, padding: '1.25rem 1.5rem', borderRadius: 2 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.25em', color: isLatest ? ACCENT : MUTED }}>
-          {new Date(run.captured_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-        </div>
-        {run.version_tag && (
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: OK_COLOR, background: 'rgba(32,216,144,0.1)', border: '1px solid rgba(32,216,144,0.25)', padding: '2px 8px' }}>
-            {run.version_tag}
-          </div>
-        )}
-        {isLatest && (
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: ACCENT, background: 'rgba(232,90,0,0.08)', border: '1px solid rgba(232,90,0,0.25)', padding: '2px 8px' }}>
-            LATEST
-          </div>
-        )}
-      </div>
-
-      {/* Traffic reference */}
-      {trafficRef && <TrafficRef count={trafficRef.count_all_time} count30d={trafficRef.count_30d} />}
-
-      {/* Section A: PostHog events (accumulating from today) */}
-      <div style={{ marginTop: '0.75rem' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: '#2A3A5A', marginBottom: '0.5rem' }}>
-          ONBOARDING INTERACTION · POSTHOG · 从今日起积累
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {phSteps.map((step, i) => (
-            <StepRow key={step.step_key} step={step} prev={phSteps[i - 1]} maxCount={phMax} />
-          ))}
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
-        <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#2A3A5A', letterSpacing: '0.2em' }}>SUPABASE · 完整历史数据</div>
-        <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
-      </div>
-
-      {/* Section B: Supabase data (full history) */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {sbSteps.map((step, i) => (
-          <StepRow key={step.step_key} step={step} prev={sbSteps[i - 1]} maxCount={sbMax} color='#22D4E0' />
-        ))}
-      </div>
-
-      {/* Retention */}
-      {retentionStep && (
-        <RetentionCard step={retentionStep} registered={registeredCount} />
-      )}
-
-      {/* CVR summary */}
-      <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-        {phSteps.length >= 2 && (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Q1→Q2</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 12, color: ACCENT, fontWeight: 700 }}>
-              {pct(phSteps[phSteps.length - 1]?.count_all_time ?? 0, phSteps[0].count_all_time)}
-            </div>
-          </div>
-        )}
-        {(() => {
-          const emailStep   = sbSteps.find(s => s.step_key === 'onboarding_email_submitted')
-          const clickedStep = sbSteps.find(s => s.step_key === 'invite_link_clicked')
-          const regStep     = sbSteps.find(s => s.step_key === 'registered')
           return (
-            <>
-              {emailStep && clickedStep && (
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Email→链接点击</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#22D4E0', fontWeight: 700 }}>
-                    {pct(clickedStep.count_all_time, emailStep.count_all_time)}
-                  </div>
+            <div key={step.label} style={{ opacity: dim ? 0.4 : 1 }}>
+              {prev && (
+                <div style={{ fontFamily: 'monospace', fontSize: 8, color: rate ? MUTED : BORDER, paddingLeft: '0.5rem', marginBottom: '0.2rem' }}>
+                  {rate ? `↓ ${rate}` : '↓'}
                 </div>
               )}
-              {clickedStep && regStep && (
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>点击→注册完成</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#22D4E0', fontWeight: 700 }}>
-                    {pct(regStep.count_all_time, clickedStep.count_all_time)}
-                  </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 9, color: DIM, width: 170, flexShrink: 0, letterSpacing: '0.1em' }}>
+                  {step.label.toUpperCase()}
                 </div>
-              )}
-              {emailStep && regStep && (
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Email→注册总转化</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#22D4E0', fontWeight: 700 }}>
-                    {pct(regStep.count_all_time, emailStep.count_all_time)}
-                  </div>
+                <div style={{ flex: 1, background: '#111525', height: 5, borderRadius: 1 }}>
+                  <div style={{ width: `${barW}%`, height: '100%', background: step.color }} />
                 </div>
-              )}
-            </>
+                <div style={{ fontFamily: 'monospace', fontSize: 14, color: STAR, width: 64, textAlign: 'right', flexShrink: 0, fontWeight: 700 }}>
+                  {step.val.toLocaleString()}
+                </div>
+              </div>
+            </div>
           )
-        })()}
+        })}
+      </div>
+
+      {/* Summary metrics */}
+      <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: '2.5rem', flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, letterSpacing: '0.15em' }}>OVERALL CVR</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 20, color: ACCENT, fontWeight: 700, lineHeight: 1.2 }}>
+            {pct(email, started)}
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED }}>Started → Email</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, letterSpacing: '0.15em' }}>EMAIL DELIVERY</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 20, color: CYAN, fontWeight: 700, lineHeight: 1.2 }}>
+            {pct(sbAll.invite_sent, sbAll.email)}
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED }}>Submitted → Sent</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, letterSpacing: '0.15em' }}>SENT → REG</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 20, color: OK, fontWeight: 700, lineHeight: 1.2 }}>
+            {pct(sbAll.registered, sbAll.invite_sent)}
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED }}>Invite Sent → Registered</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, letterSpacing: '0.15em' }}>RETENTION</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 20, color: CYAN, fontWeight: 700, lineHeight: 1.2 }}>
+            {consoleLg.toLocaleString()}
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED }}>
+            Console logins · 回归率 {pct(consoleLg, sbAll.registered)}
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-const HISTORY_KEYS   = ['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_email_submitted', 'invite_link_clicked', 'registered']
-const HISTORY_LABELS = ['Started', 'Q1', 'Q2', 'Email', 'Clicked', 'Reg.']
+// ── Page ──────────────────────────────────────────────────────────────────────
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ utm?: string }>
+}) {
+  const { utm: utmRaw } = await searchParams
+  const utmSource = utmRaw?.trim() || null
+  const DAYS = 15 // today + 14 previous days
 
-function HistoryTable({ runs }: { runs: Run[] }) {
-  if (runs.length < 2) return null
+  const [phDaily, sbDaily, phAllTime, sbAllTime, utmSources] = await Promise.all([
+    getPostHogDailyData(DAYS, utmSource),
+    getSupabaseDailyData(DAYS),
+    getPostHogAllTime(utmSource),
+    getSupabaseAllTime(),
+    getUTMSources(),
+  ])
 
-  return (
-    <div style={{ marginTop: '2rem' }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
-        // HISTORY — overall CVR (Onboarding Started → Email)
-      </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 10 }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left',  padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>DATE</th>
-              <th style={{ textAlign: 'left',  padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>VER</th>
-              {HISTORY_LABELS.map(l => (
-                <th key={l} style={{ textAlign: 'right', padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>{l}</th>
-              ))}
-              <th style={{ textAlign: 'right', padding: '6px 12px', color: ACCENT, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>CVR</th>
-            </tr>
-          </thead>
-          <tbody>
-            {runs.map((run, ri) => {
-              const byKey = Object.fromEntries(run.steps.map(s => [s.step_key, s.count_all_time]))
-              const top   = byKey['onboarding_started'] ?? 0
-              const email = byKey['onboarding_email_submitted'] ?? 0
-              return (
-                <tr key={run.run_id} style={{ background: ri === 0 ? 'rgba(232,90,0,0.03)' : 'transparent' }}>
-                  <td style={{ padding: '6px 12px', color: ri === 0 ? STAR : DIM, borderBottom: `1px solid ${BORDER}` }}>
-                    {new Date(run.captured_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })}
-                  </td>
-                  <td style={{ padding: '6px 12px', color: OK_COLOR, borderBottom: `1px solid ${BORDER}` }}>
-                    {run.version_tag ?? '—'}
-                  </td>
-                  {HISTORY_KEYS.map(k => (
-                    <td key={k} style={{ textAlign: 'right', padding: '6px 12px', color: DIM, borderBottom: `1px solid ${BORDER}` }}>
-                      {(byKey[k] ?? 0).toLocaleString()}
-                    </td>
-                  ))}
-                  <td style={{ textAlign: 'right', padding: '6px 12px', color: ACCENT, fontWeight: 600, borderBottom: `1px solid ${BORDER}` }}>
-                    {pct(email, top)}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-export default async function AnalyticsPage() {
-  const runs = await getLatestRuns(10)
+  const allDays   = buildDayStats(phDaily, sbDaily, DAYS)
+  const todayRow  = allDays[0]
+  const pastRows  = allDays.slice(1)
 
   return (
-    <div style={{ maxWidth: 900 }}>
+    <div style={{ maxWidth: 960 }}>
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <div>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.5rem' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.4rem' }}>
             // ONBOARDING FUNNEL
           </div>
           <h1 style={{ fontFamily: 'monospace', fontSize: 18, letterSpacing: '0.15em', color: STAR, margin: 0 }}>
             CONVERSION FUNNEL
           </h1>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, marginTop: '0.4rem' }}>
-            Onboarding Started → Q1 → Q2 → Email → Link Clicked → Registered · all-time unique users
-          </div>
+          <UTMFilter sources={utmSources} current={utmSource} />
         </div>
         <RefreshButton />
       </div>
 
-      {runs.length === 0 ? (
-        <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, padding: '2rem', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: 11, color: DIM, lineHeight: 2 }}>
-            No snapshots yet. Click <span style={{ color: ACCENT }}>CAPTURE NOW</span> to generate the first one.
-          </div>
+      {/* Today */}
+      {todayRow && (
+        <div style={{ marginBottom: '1rem' }}>
+          <TodayCard row={todayRow} />
         </div>
-      ) : (
-        <>
-          <RunFunnel run={runs[0]} isLatest={true} />
-          <HistoryTable runs={runs} />
-          {runs.length > 1 && (
-            <div style={{ marginTop: '2rem' }}>
-              <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
-                // PREVIOUS RUNS
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {runs.slice(1).map(run => (
-                  <RunFunnel key={run.run_id} run={run} isLatest={false} />
-                ))}
-              </div>
-            </div>
-          )}
-        </>
       )}
 
-      <div style={{ marginTop: '2rem', fontFamily: 'monospace', fontSize: 9, color: MUTED, lineHeight: 2 }}>
-        // Tag a version: <code style={{ color: ACCENT }}>GET /api/analytics/snapshot?version_tag=v1.2</code><br />
-        // Cron: daily 09:00 UTC · PostHog (steps 1–4, cookie去重) + Supabase (step 5)
+      {/* Daily breakdown */}
+      <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, padding: '1rem 1.25rem', borderRadius: 2, marginBottom: '1rem' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: MUTED, marginBottom: '0.75rem' }}>
+          // DAILY · PREVIOUS {DAYS - 1} DAYS (UTC)
+        </div>
+        <DailyTable rows={pastRows} utmActive={!!utmSource} />
+      </div>
+
+      {/* All-time */}
+      <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, padding: '1rem 1.25rem', borderRadius: 2 }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: MUTED, marginBottom: '1rem' }}>
+          // ALL-TIME TOTALS{utmSource ? ` · UTM SOURCE: ${utmSource.toUpperCase()}` : ''}
+        </div>
+        <AllTimeFunnel phAll={phAllTime} sbAll={sbAllTime} utmActive={!!utmSource} />
+      </div>
+
+      <div style={{ marginTop: '1.5rem', fontFamily: 'monospace', fontSize: 8, color: MUTED, lineHeight: 2 }}>
+        // Snapshot: <code style={{ color: ACCENT }}>GET /api/analytics/snapshot?version_tag=v1.x</code><br />
+        // Cron: daily 09:00 UTC · SENT/CLICKED/REG from Supabase (not UTM-filtered) · INVITE SENT = voyager_profiles.joined_at
       </div>
     </div>
   )
