@@ -14,7 +14,7 @@ interface MemberPickerProps {
 
 const ROLE_COLOR: Record<string, string> = {
   architect: '#E8A020',
-  voyager: '#E85A00',
+  voyager: '#E85D04',
 }
 
 export function MemberPicker({ label, value, onChange, inputStyle }: MemberPickerProps) {
@@ -27,9 +27,9 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
 
   const baseInput: React.CSSProperties = {
     width: '100%',
-    background: '#0D1020',
+    background: '#0F1430',
     border: '1px solid rgba(255,107,53,0.16)',
-    color: '#EDE8DE',
+    color: '#F5F5F5',
     padding: '7px 10px',
     fontFamily: 'var(--font-mono)',
     fontSize: 'var(--fs-label)',
@@ -79,7 +79,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
 
   const labelStyle: React.CSSProperties = {
     display: 'block',
-    color: '#4A5570',
+    color: 'rgba(245,245,245,0.35)',
     fontSize: 'var(--fs-caption)',
     letterSpacing: '0.1em',
     marginBottom: '4px',
@@ -95,19 +95,19 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: '#0D1020',
-          border: '1px solid rgba(232,90,0,0.4)',
+          background: '#0F1430',
+          border: '1px solid rgba(232,93,4,0.4)',
           padding: '6px 10px',
           ...inputStyle,
         }}>
-          <span style={{ color: '#E85A00', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)' }}>✓</span>
-          <span style={{ color: '#EDE8DE', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', flex: 1 }}>
+          <span style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)' }}>✓</span>
+          <span style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', flex: 1 }}>
             {value.name}
           </span>
           <button
             type="button"
             onClick={clear}
-            style={{ background: 'none', border: 'none', color: '#4A5570', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '0 2px', lineHeight: 1 }}
+            style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '0 2px', lineHeight: 1 }}
           >×</button>
         </div>
       ) : (
@@ -117,7 +117,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="输入名字搜索成员..."
-          onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(232,90,0,0.5)' }}
+          onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(232,93,4,0.5)' }}
           onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,107,53,0.16)' }}
           autoComplete="off"
         />
@@ -130,19 +130,19 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           top: 'calc(100% + 2px)',
           left: 0,
           right: 0,
-          background: '#111525',
+          background: '#151B3A',
           border: '1px solid rgba(255,107,53,0.16)',
           zIndex: 100,
           maxHeight: '200px',
           overflowY: 'auto',
         }}>
           {loading && (
-            <div style={{ padding: '8px 12px', color: '#4A5570', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
+            <div style={{ padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
               搜索中...
             </div>
           )}
           {!loading && results.length === 0 && (
-            <div style={{ padding: '8px 12px', color: '#4A5570', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
+            <div style={{ padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
               未找到匹配成员
             </div>
           )}
@@ -156,20 +156,20 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
                 gap: '10px',
                 padding: '8px 12px',
                 cursor: 'pointer',
-                borderBottom: '1px solid #0D1020',
+                borderBottom: '1px solid #0F1430',
               }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,107,53,0.16)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#EDE8DE', flex: 1 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#F5F5F5', flex: 1 }}>
                 {m.display_name}
               </span>
               <span style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: 'var(--fs-caption)',
                 letterSpacing: '0.1em',
-                color: ROLE_COLOR[m.role] ?? '#8A9AB5',
-                border: `1px solid ${ROLE_COLOR[m.role] ?? '#8A9AB5'}`,
+                color: ROLE_COLOR[m.role] ?? 'rgba(245,245,245,0.55)',
+                border: `1px solid ${ROLE_COLOR[m.role] ?? 'rgba(245,245,245,0.55)'}`,
                 padding: '1px 5px',
                 opacity: 0.8,
               }}>

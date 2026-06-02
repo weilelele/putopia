@@ -73,7 +73,7 @@ export function FlameSlider({ value, onChange }: {
           {/* Flame fill */}
           <div style={{
             position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`,
-            background: 'linear-gradient(90deg, #6B1200, #C8401A, #FF5A1F, #FF8C20, #FFB830)',
+            background: 'linear-gradient(90deg, #6B1200, #C8401A, #FF6B35, #FF8C20, #FFB830)',
             boxShadow: `0 0 ${glowPx}px rgba(255,90,31,${glowAlph}), 0 0 ${glowPx * 2}px rgba(255,90,31,${glowAlph * 0.4})`,
             transition: 'width 0.08s ease, box-shadow 0.15s ease',
             pointerEvents: 'none',
@@ -84,7 +84,7 @@ export function FlameSlider({ value, onChange }: {
             transform: 'translate(-50%, -50%)',
             width: 22, height: 22, borderRadius: '50%',
             background: value > 0
-              ? 'radial-gradient(circle at 38% 38%, #FFE0A0, #FF8C20, #FF5A1F)'
+              ? 'radial-gradient(circle at 38% 38%, #FFE0A0, #FF8C20, #FF6B35)'
               : 'rgba(36,41,56,0.95)',
             border: `1.5px solid ${value > 0 ? 'rgba(255,180,60,0.75)' : 'rgba(242,240,230,0.18)'}`,
             boxShadow: value > 0

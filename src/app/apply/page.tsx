@@ -100,9 +100,9 @@ export default function ApplyPage() {
           </div>
         </div>
 
-        <div className="mb-6 p-4 border text-xs font-mono leading-relaxed" style={{ background: 'rgba(232,90,0,0.04)', borderColor: 'rgba(232,90,0,0.25)', color: '#E85A00' }}>
+        <div className="mb-6 p-4 border text-xs font-mono leading-relaxed" style={{ background: 'rgba(232,93,4,0.04)', borderColor: 'rgba(232,93,4,0.25)', color: '#E85D04' }}>
           <div className="font-semibold mb-1">⚠ NOTICE TO APPLICANTS</div>
-          <div style={{ color: '#8A9AB5' }}>
+          <div style={{ color: 'rgba(245,245,245,0.55)' }}>
             All application information will be reviewed by the Architect Council. Upon successful admission,
             you will become a Multiverse Collective Voyager with device access and log publishing rights.
           </div>
@@ -110,7 +110,7 @@ export default function ApplyPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>NAME</label>
+            <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>NAME</label>
             <input
               type="text" required value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -119,7 +119,7 @@ export default function ApplyPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>EMAIL</label>
+            <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>EMAIL</label>
             <input
               type="email" required value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -128,7 +128,7 @@ export default function ApplyPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>LOCATION / REGION</label>
+            <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>LOCATION / REGION</label>
             <input
               type="text" value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
@@ -137,7 +137,7 @@ export default function ApplyPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-mono tracking-widest mb-2" style={{ color: '#4A5570' }}>REASON FOR APPLYING</label>
+            <label className="block text-xs font-mono tracking-widest mb-2" style={{ color: 'rgba(245,245,245,0.35)' }}>REASON FOR APPLYING</label>
             <div className="space-y-2">
               {reasons.map((r) => {
                 const isSelected = selectedReason === r.id
@@ -147,14 +147,14 @@ export default function ApplyPage() {
                     onClick={() => setSelectedReason(r.id)}
                     className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all"
                     style={{
-                      border: isSelected ? '1px solid #E85A00' : '1px solid rgba(255,107,53,0.16)',
-                      background: isSelected ? 'rgba(232,90,0,0.06)' : '#0D1020',
+                      border: isSelected ? '1px solid #E85D04' : '1px solid rgba(255,107,53,0.16)',
+                      background: isSelected ? 'rgba(232,93,4,0.06)' : '#0F1430',
                     }}
                   >
-                    <span className="shrink-0 font-mono font-bold" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: isSelected ? '#E85A00' : '#4A5570', minWidth: '110px' }}>
+                    <span className="shrink-0 font-mono font-bold" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: isSelected ? '#E85D04' : 'rgba(245,245,245,0.35)', minWidth: '110px' }}>
                       [{r.tag}]
                     </span>
-                    <span className="text-xs font-mono" style={{ color: isSelected ? '#EDE8DE' : '#8A9AB5' }}>
+                    <span className="text-xs font-mono" style={{ color: isSelected ? '#F5F5F5' : 'rgba(245,245,245,0.55)' }}>
                       {r.text}
                     </span>
                   </div>

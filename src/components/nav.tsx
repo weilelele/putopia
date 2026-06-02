@@ -82,7 +82,7 @@ const ROLE_AVATAR_COLOR: Record<string, string> = {
 }
 
 function Avatar({ user }: { user: AuthUser }) {
-  const color = ROLE_AVATAR_COLOR[user.role] ?? '#4A5570'
+  const color = ROLE_AVATAR_COLOR[user.role] ?? 'rgba(245,245,245,0.35)'
   const initial = user.name?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? '?'
   return (
     <div
@@ -117,7 +117,7 @@ export function Nav() {
   return (
     <nav
       className="hidden md:flex flex-col w-60 shrink-0 h-screen sticky top-0"
-      style={{ background: '#0D1020', borderRight: '1px solid rgba(255,107,53,0.16)' }}
+      style={{ background: '#0F1430', borderRight: '1px solid rgba(255,107,53,0.16)' }}
     >
       {/* Logo */}
       <div className="p-4 border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
@@ -129,12 +129,12 @@ export function Nav() {
             style={{ width: '100%', maxWidth: '176px', height: 'auto', display: 'block' }}
           />
         </Link>
-        <div className="mt-3 h-px w-full" style={{ background: 'linear-gradient(to right, rgba(232,90,0,0.5), transparent)' }} />
+        <div className="mt-3 h-px w-full" style={{ background: 'linear-gradient(to right, rgba(232,93,4,0.5), transparent)' }} />
       </div>
 
       {/* Nav label */}
       <div className="px-4 pt-4 pb-1">
-        <div className="text-xs tracking-[0.2em] font-mono" style={{ color: '#4A5570' }}>
+        <div className="text-xs tracking-[0.2em] font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
           — NAVIGATION —
         </div>
       </div>
@@ -150,20 +150,20 @@ export function Nav() {
               className="flex items-center gap-3 mx-2 px-3 py-2.5 text-sm transition-all duration-150"
               style={
                 isActive
-                  ? { background: 'rgba(232,90,0,0.15)', borderLeft: '3px solid #E85A00', paddingLeft: '9px', color: '#E85A00' }
-                  : { color: '#4A5570', borderLeft: '3px solid transparent', paddingLeft: '9px' }
+                  ? { background: 'rgba(232,93,4,0.15)', borderLeft: '3px solid #E85D04', paddingLeft: '9px', color: '#E85D04' }
+                  : { color: 'rgba(245,245,245,0.35)', borderLeft: '3px solid transparent', paddingLeft: '9px' }
               }
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(232,90,0,0.4)'
-                  ;(e.currentTarget as HTMLElement).style.color = '#8A9AB5'
-                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(232,90,0,0.05)'
+                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(232,93,4,0.4)'
+                  ;(e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.55)'
+                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(232,93,4,0.05)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.borderLeftColor = 'transparent'
-                  ;(e.currentTarget as HTMLElement).style.color = '#4A5570'
+                  ;(e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.35)'
                   ;(e.currentTarget as HTMLElement).style.background = 'transparent'
                 }
               }}
@@ -176,11 +176,11 @@ export function Nav() {
       </div>
 
       {/* ── Current Identity ── */}
-      <div className="mx-2 mt-3 mb-1 border p-3" style={{ borderColor: 'rgba(255,107,53,0.16)', background: '#111525' }}>
+      <div className="mx-2 mt-3 mb-1 border p-3" style={{ borderColor: 'rgba(255,107,53,0.16)', background: '#151B3A' }}>
         {/* Row 1: avatar + name */}
         <div className="flex items-center gap-2.5 mb-2.5">
           <Avatar user={user} />
-          <span className="text-xs font-mono truncate leading-tight" style={{ color: '#EDE8DE' }}>
+          <span className="text-xs font-mono truncate leading-tight" style={{ color: '#F5F5F5' }}>
             {user.name ?? (user.role === 'guest' ? 'UNKNOWN OPERATIVE' : user.email ?? '—')}
           </span>
         </div>
@@ -191,7 +191,7 @@ export function Nav() {
             <Link
               href="/login"
               className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono border transition-colors shrink-0"
-              style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570' }}
+              style={{ borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)' }}
             >
               <LogInIcon />
               LOGIN
@@ -200,7 +200,7 @@ export function Nav() {
             <button
               onClick={() => logout()}
               className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono border transition-colors shrink-0"
-              style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570' }}
+              style={{ borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)' }}
             >
               <LogOutIcon />
               LOGOUT
@@ -220,11 +220,11 @@ export function Nav() {
             style={{
               display: 'block', textAlign: 'center',
               fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
-              color: '#EDE8DE',
-              background: 'linear-gradient(135deg, #E85A00, #C04000)',
+              color: '#F5F5F5',
+              background: 'linear-gradient(135deg, #E85D04, #C04000)',
               padding: '8px 0', fontWeight: 700,
               textDecoration: 'none', fontFamily: 'inherit',
-              border: '1px solid rgba(232,90,0,0.5)',
+              border: '1px solid rgba(232,93,4,0.5)',
             }}
           >
             BECOME A VOYAGER

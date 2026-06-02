@@ -8,13 +8,13 @@ import type { Device } from '@/types/database'
 import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 const S = {
-  card:  { background: '#111525', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
-  th:    { textAlign: 'left' as const, padding: '8px 12px', color: '#4A5570', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
-  td:    { padding: '8px 12px', color: '#8A9AB5', borderBottom: '1px solid #0D1020', verticalAlign: 'middle' as const, fontSize: '13px' },
-  label: { display: 'block', color: '#4A5570', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:  { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
-  sel:   { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
+  card:  { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
+  th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
+  td:    { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'middle' as const, fontSize: '13px' },
+  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
 }
 
 type F = {
@@ -70,8 +70,8 @@ function ImageZone({ value, onChange, active }: { value: string; onChange: (url:
     <div>
       <div
         style={{
-          border: '1px dashed #1E2840',
-          background: '#0D1020',
+          border: '1px dashed #151B3A',
+          background: '#0F1430',
           minHeight: '120px',
           display: 'flex',
           alignItems: 'center',
@@ -89,19 +89,19 @@ function ImageZone({ value, onChange, active }: { value: string; onChange: (url:
           <img src={value} alt="device" style={{ maxHeight: '160px', maxWidth: '100%', objectFit: 'cover' }} />
         ) : (
           <>
-            <div style={{ color: '#4A5570', fontSize: '12px' }}>点击选择图片</div>
-            <div style={{ color: '#1E2840', fontSize: '11px' }}>或直接 Ctrl+V 粘贴</div>
+            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '12px' }}>点击选择图片</div>
+            <div style={{ color: '#151B3A', fontSize: '11px' }}>或直接 Ctrl+V 粘贴</div>
           </>
         )}
         {uploading && (
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(7,9,18,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E85A00', fontSize: '12px' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(7,9,18,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E85D04', fontSize: '12px' }}>
             上传中...
           </div>
         )}
       </div>
       {value && (
         <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-          <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: '#4A5570', cursor: 'pointer', fontFamily: 'monospace', fontSize: '11px', padding: '3px 10px' }}>更换图片</button>
+          <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontFamily: 'monospace', fontSize: '11px', padding: '3px 10px' }}>更换图片</button>
           <button onClick={() => onChange('')} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '11px' }}>移除</button>
         </div>
       )}
@@ -158,17 +158,17 @@ export default function DevicesAdmin() {
     await deleteDevice(id); await load()
   }
 
-  const STATUS_COLOR: Record<string, string> = { available: '#20D890', in_use: '#E85A00', needs_repair: '#E83030', unknown: '#4A5570' }
+  const STATUS_COLOR: Record<string, string> = { available: '#20D890', in_use: '#E85D04', needs_repair: '#E83030', unknown: 'rgba(245,245,245,0.35)' }
   const STATUS_LABEL: Record<string, string> = { available: 'AVAILABLE', in_use: 'IN USE', needs_repair: 'NEEDS REPAIR', unknown: 'UNKNOWN' }
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <div style={{ color: '#4A5570', fontSize: '11px', letterSpacing: '0.3em' }}>ADMIN // DEVICES</div>
-          <div style={{ color: '#EDE8DE', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>设备管理</div>
+          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.3em' }}>ADMIN // DEVICES</div>
+          <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>设备管理</div>
         </div>
-        <button onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #E85A00', color: '#E85A00', background: 'rgba(232,90,0,0.08)' }}>
+        <button onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #E85D04', color: '#E85D04', background: 'rgba(232,93,4,0.08)' }}>
           + 新增设备
         </button>
       </div>
@@ -181,7 +181,7 @@ export default function DevicesAdmin() {
 
       {/* table */}
       <div style={S.card}>
-        {loading ? <div style={{ color: '#4A5570', padding: '20px', textAlign: 'center' }}>加载中...</div> : (
+        {loading ? <div style={{ color: 'rgba(245,245,245,0.35)', padding: '20px', textAlign: 'center' }}>加载中...</div> : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr>
@@ -195,20 +195,20 @@ export default function DevicesAdmin() {
               </tr>
             </thead>
             <tbody>
-              {items.length === 0 && <tr><td colSpan={7} style={{ ...S.td, textAlign: 'center', color: '#4A5570' }}>暂无数据</td></tr>}
+              {items.length === 0 && <tr><td colSpan={7} style={{ ...S.td, textAlign: 'center', color: 'rgba(245,245,245,0.35)' }}>暂无数据</td></tr>}
               {items.map(d => (
                 <tr key={d.id}>
                   <td style={S.td}>
                     {d.image_path
                       // eslint-disable-next-line @next/next/no-img-element
                       ? <img src={d.image_path} alt="" style={{ width: '60px', height: '40px', objectFit: 'cover', display: 'block' }} />
-                      : <div style={{ width: '60px', height: '40px', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)' }} />
+                      : <div style={{ width: '60px', height: '40px', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)' }} />
                     }
                   </td>
-                  <td style={{ ...S.td, color: '#4A5570', fontSize: '11px' }}>{d.id}</td>
-                  <td style={{ ...S.td, color: '#EDE8DE' }}>{d.name}</td>
+                  <td style={{ ...S.td, color: 'rgba(245,245,245,0.35)', fontSize: '11px' }}>{d.id}</td>
+                  <td style={{ ...S.td, color: '#F5F5F5' }}>{d.name}</td>
                   <td style={S.td}>
-                    <span style={{ fontSize: '11px', color: d.knowledge === 'known' ? '#20D890' : '#E85A00' }}>
+                    <span style={{ fontSize: '11px', color: d.knowledge === 'known' ? '#20D890' : '#E85D04' }}>
                       {d.knowledge.toUpperCase()}
                     </span>
                   </td>
@@ -220,11 +220,11 @@ export default function DevicesAdmin() {
                       </span>
                     )}
                     {d.knowledge === 'unknown' && (
-                      <span style={{ fontSize: '11px', color: '#E85A00' }}>{d.exploration_progress}%</span>
+                      <span style={{ fontSize: '11px', color: '#E85D04' }}>{d.exploration_progress}%</span>
                     )}
                   </td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
-                    <button onClick={() => openEdit(d)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#E85A00', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>编辑</button>
+                    <button onClick={() => openEdit(d)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#E85D04', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>编辑</button>
                     <button onClick={() => handleDelete(d.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>删除</button>
                   </td>
                 </tr>
@@ -236,10 +236,10 @@ export default function DevicesAdmin() {
 
       {/* edit form */}
       {showForm && (
-        <div ref={formRef} style={{ ...S.card, border: '1px solid #E85A00' }}>
+        <div ref={formRef} style={{ ...S.card, border: '1px solid #E85D04' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ color: '#E85A00', fontSize: '12px', letterSpacing: '0.2em' }}>{editId ? `编辑: ${editId}` : '新增设备'}</div>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: '#4A5570', cursor: 'pointer', fontSize: '18px' }}>×</button>
+            <div style={{ color: '#E85D04', fontSize: '12px', letterSpacing: '0.2em' }}>{editId ? `编辑: ${editId}` : '新增设备'}</div>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '18px' }}>×</button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
@@ -308,7 +308,7 @@ export default function DevicesAdmin() {
                   onChange={e => set('exploration_progress', Number(e.target.value))}
                   style={{ flex: 1 }}
                 />
-                <span style={{ color: '#E85A00', fontSize: '13px', minWidth: '36px' }}>{form.exploration_progress}%</span>
+                <span style={{ color: '#E85D04', fontSize: '13px', minWidth: '36px' }}>{form.exploration_progress}%</span>
               </div>
             </div>
           )}
@@ -323,10 +323,10 @@ export default function DevicesAdmin() {
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={handleSave} disabled={saving} style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #E85A00', color: '#E85A00', background: saving ? 'transparent' : 'rgba(232,90,0,0.08)', opacity: saving ? 0.6 : 1 }}>
+            <button onClick={handleSave} disabled={saving} style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #E85D04', color: '#E85D04', background: saving ? 'transparent' : 'rgba(232,93,4,0.08)', opacity: saving ? 0.6 : 1 }}>
               {saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: '#4A5570', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
           </div>
         </div>
       )}

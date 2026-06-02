@@ -86,7 +86,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
       {closedVotes.length > 0 && (
         <section>
           <div className="flex items-center gap-3 mb-4">
-            <div className="text-xs font-mono tracking-widest" style={{ color: '#4A5570' }}>
+            <div className="text-xs font-mono tracking-widest" style={{ color: 'rgba(245,245,245,0.35)' }}>
               ○ CLOSED VOTES
             </div>
             <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
@@ -107,10 +107,10 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
 
       {votes.length === 0 && (
         <div className="text-center py-16">
-          <div className="text-xs font-mono tracking-widest mb-2" style={{ color: '#4A5570' }}>
+          <div className="text-xs font-mono tracking-widest mb-2" style={{ color: 'rgba(245,245,245,0.35)' }}>
             // NO VOTES FOUND
           </div>
-          <p className="text-xs font-mono" style={{ color: '#4A5570' }}>
+          <p className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
             No votes have been created yet.
           </p>
         </div>

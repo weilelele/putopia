@@ -1,12 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { RefreshButton } from './refresh-button'
 
-const ACCENT   = '#E85A00'
-const MUTED    = '#4A5570'
-const DIM      = '#8A9AB5'
-const STAR     = '#EDE8DE'
-const CARD_BG  = '#0D1020'
-const BORDER   = '#1E2840'
+const ACCENT   = '#E85D04'
+const MUTED    = 'rgba(245,245,245,0.35)'
+const DIM      = 'rgba(245,245,245,0.55)'
+const STAR     = '#F5F5F5'
+const CARD_BG  = '#0F1430'
+const BORDER   = '#151B3A'
 const OK_COLOR = '#20D890'
 
 type SnapshotRow = {
@@ -94,7 +94,7 @@ const AD_REF_KEYS    = new Set(['ad_landing'])
 function FunnelBar({ count, max, color = ACCENT }: { count: number; max: number; color?: string }) {
   const w = max > 0 ? Math.min(Math.round((count / max) * 100), 100) : 0
   return (
-    <div style={{ flex: 1, background: '#111525', height: 6, borderRadius: 1 }}>
+    <div style={{ flex: 1, background: '#151B3A', height: 6, borderRadius: 1 }}>
       <div style={{ width: `${w}%`, height: '100%', background: color, transition: 'width 0.4s ease' }} />
     </div>
   )
@@ -113,7 +113,7 @@ function StepRow({ step, prev, maxCount, color = ACCENT }: {
   return (
     <div>
       {prev && (
-        <div style={{ paddingLeft: '0.5rem', marginBottom: '0.25rem', fontFamily: 'monospace', fontSize: 9, color: stepRate ? MUTED : '#1E2840' }}>
+        <div style={{ paddingLeft: '0.5rem', marginBottom: '0.25rem', fontFamily: 'monospace', fontSize: 9, color: stepRate ? MUTED : '#151B3A' }}>
           {stepRate ? `↓ ${stepRate}` : '↓'}
         </div>
       )}
@@ -237,14 +237,14 @@ function BeforeAfterComparison({ steps }: { steps: SnapshotRow[] }) {
                   {row.label.toUpperCase()}{row.postOnly ? ' *' : ''}
                 </div>
                 {/* Before bar */}
-                <div style={{ background: '#111525', height: 6, borderRadius: 1, opacity: row.postOnly ? 0.2 : 1 }}>
+                <div style={{ background: '#151B3A', height: 6, borderRadius: 1, opacity: row.postOnly ? 0.2 : 1 }}>
                   <div style={{ width: `${preBarW}%`, height: '100%', background: DIM }} />
                 </div>
                 <div style={{ fontFamily: 'monospace', fontSize: 10, color: row.postOnly ? MUTED : STAR, textAlign: 'right' }}>
                   {row.postOnly ? '—' : row.pre.toLocaleString()}
                 </div>
                 {/* After bar */}
-                <div style={{ background: '#111525', height: 6, borderRadius: 1 }}>
+                <div style={{ background: '#151B3A', height: 6, borderRadius: 1 }}>
                   <div style={{ width: `${postBarW}%`, height: '100%', background: row.postOnly ? OK_COLOR : ACCENT }} />
                 </div>
                 <div style={{ fontFamily: 'monospace', fontSize: 10, color: STAR, textAlign: 'right' }}>
@@ -287,7 +287,7 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
           </div>
         )}
         {isLatest && (
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: ACCENT, background: 'rgba(232,90,0,0.08)', border: '1px solid rgba(232,90,0,0.25)', padding: '2px 8px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, color: ACCENT, background: 'rgba(232,93,4,0.08)', border: '1px solid rgba(232,93,4,0.25)', padding: '2px 8px' }}>
             LATEST
           </div>
         )}
@@ -427,7 +427,7 @@ function HistoryTable({ runs }: { runs: Run[] }) {
               const top   = byKey['onboarding_started'] ?? 0
               const email = byKey['onboarding_email_submitted'] ?? 0
               return (
-                <tr key={run.run_id} style={{ background: ri === 0 ? 'rgba(232,90,0,0.03)' : 'transparent' }}>
+                <tr key={run.run_id} style={{ background: ri === 0 ? 'rgba(232,93,4,0.03)' : 'transparent' }}>
                   <td style={{ padding: '6px 12px', color: ri === 0 ? STAR : DIM, borderBottom: `1px solid ${BORDER}` }}>
                     {new Date(run.captured_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })}
                   </td>

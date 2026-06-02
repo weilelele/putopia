@@ -105,7 +105,7 @@ export function BottomNav() {
           />
           <div
             className="fixed bottom-[57px] left-0 right-0 z-50 md:hidden border-t"
-            style={{ background: '#0D1020', borderColor: 'rgba(255,107,53,0.16)' }}
+            style={{ background: '#0F1430', borderColor: 'rgba(255,107,53,0.16)' }}
           >
             {MORE_NAV.map(({ href, label, icon }) => {
               const isActive = pathname === href || pathname.startsWith(href + '/')
@@ -128,8 +128,8 @@ export function BottomNav() {
                   onClick={() => setMoreOpen(false)}
                   className="flex items-center gap-4 px-6 py-4 transition-all"
                   style={{
-                    color: isActive ? '#E85A00' : '#4A5570',
-                    background: isActive ? 'rgba(232,90,0,0.06)' : 'transparent',
+                    color: isActive ? '#E85D04' : 'rgba(245,245,245,0.35)',
+                    background: isActive ? 'rgba(232,93,4,0.06)' : 'transparent',
                     borderBottom: '1px solid rgba(255,107,53,0.16)',
                   }}
                 >
@@ -145,7 +145,7 @@ export function BottomNav() {
       {/* Primary nav bar */}
       <nav
         className="flex md:hidden fixed bottom-0 left-0 right-0 border-t z-50"
-        style={{ background: '#0D1020', borderColor: 'rgba(255,107,53,0.16)' }}
+        style={{ background: '#0F1430', borderColor: 'rgba(255,107,53,0.16)' }}
       >
         {PRIMARY_NAV.map(({ href, label, icon }) => {
           const isHome = href === '/console'
@@ -171,8 +171,8 @@ export function BottomNav() {
               href={href}
               className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
               style={{
-                color: isActive ? '#E85A00' : '#4A5570',
-                background: isActive ? 'rgba(232,90,0,0.08)' : 'transparent',
+                color: isActive ? '#E85D04' : 'rgba(245,245,245,0.35)',
+                background: isActive ? 'rgba(232,93,4,0.08)' : 'transparent',
               }}
             >
               {icon}
@@ -186,8 +186,8 @@ export function BottomNav() {
           onClick={() => setMoreOpen(!moreOpen)}
           className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
           style={{
-            color: isMoreActive || moreOpen ? '#E85A00' : '#4A5570',
-            background: isMoreActive || moreOpen ? 'rgba(232,90,0,0.08)' : 'transparent',
+            color: isMoreActive || moreOpen ? '#E85D04' : 'rgba(245,245,245,0.35)',
+            background: isMoreActive || moreOpen ? 'rgba(232,93,4,0.08)' : 'transparent',
           }}
         >
           <DotsIcon />

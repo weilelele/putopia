@@ -51,14 +51,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (profile.role !== 'architect') {
     return (
       <div style={{ background: '#070912', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace' }}>
-        <div style={{ background: '#111525', border: '1px solid #E83030', padding: '32px', maxWidth: '480px', textAlign: 'center' }}>
+        <div style={{ background: '#151B3A', border: '1px solid #E83030', padding: '32px', maxWidth: '480px', textAlign: 'center' }}>
           <div style={{ color: '#E83030', fontSize: '12px', letterSpacing: '0.2em', marginBottom: '12px' }}>⊘ ACCESS DENIED</div>
-          <div style={{ color: '#8A9AB5', fontSize: '13px', marginBottom: '8px' }}>
-            账号 <span style={{ color: '#EDE8DE' }}>{user.email}</span> 当前角色：<span style={{ color: '#EDE8DE' }}>{profile.role}</span>
+          <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: '13px', marginBottom: '8px' }}>
+            账号 <span style={{ color: '#F5F5F5' }}>{user.email}</span> 当前角色：<span style={{ color: '#F5F5F5' }}>{profile.role}</span>
           </div>
-          <div style={{ color: '#4A5570', fontSize: '12px', lineHeight: 1.8 }}>
+          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '12px', lineHeight: 1.8 }}>
             在 Supabase SQL Editor 执行：<br />
-            <code style={{ color: '#E85A00', fontSize: '11px' }}>
+            <code style={{ color: '#E85D04', fontSize: '11px' }}>
               UPDATE voyager_profiles SET role = &apos;architect&apos; WHERE id = &apos;{user.id}&apos;;
             </code>
           </div>
@@ -81,13 +81,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div style={{ background: '#070912', height: '100vh', overflowY: 'auto', fontFamily: 'monospace' }}>
       <div style={{
         borderBottom: '1px solid rgba(255,107,53,0.16)',
-        background: '#0D1020',
+        background: '#0F1430',
         padding: '0 24px',
         display: 'flex',
         alignItems: 'center',
         gap: '32px',
       }}>
-        <div style={{ padding: '14px 0', color: '#E85A00', fontSize: '12px', letterSpacing: '0.3em', whiteSpace: 'nowrap' }}>
+        <div style={{ padding: '14px 0', color: '#E85D04', fontSize: '12px', letterSpacing: '0.3em', whiteSpace: 'nowrap' }}>
           PUTOPIA ◆ ADMIN
         </div>
 
@@ -101,7 +101,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 padding: '14px 20px',
                 fontSize: '11px',
                 letterSpacing: '0.2em',
-                color: '#8A9AB5',
+                color: 'rgba(245,245,245,0.55)',
                 textDecoration: 'none',
                 borderBottom: '2px solid transparent',
               }}
@@ -114,7 +114,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '20px' }}>
           <WikiSyncButton />
-          <span style={{ fontSize: '11px', color: '#4A5570' }}>{profile.display_name}</span>
+          <span style={{ fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>{profile.display_name}</span>
         </div>
       </div>
 
@@ -122,7 +122,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {children}
       </main>
 
-      <style>{`.admin-tab:hover { color: #EDE8DE !important; }`}</style>
+      <style>{`.admin-tab:hover { color: #F5F5F5 !important; }`}</style>
     </div>
   )
 }

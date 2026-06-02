@@ -133,14 +133,14 @@ export default function StoryPage() {
             <span
               key={tag}
               className="text-xs font-mono px-2 py-0.5 border tracking-widest uppercase"
-              style={{ color: '#E85A00', borderColor: 'rgba(255,107,53,0.16)', background: 'rgba(232,90,0,0.06)' }}
+              style={{ color: '#E85D04', borderColor: 'rgba(255,107,53,0.16)', background: 'rgba(232,93,4,0.06)' }}
             >
               {tag}
             </span>
           ))}
         </div>
 
-        <h1 className="text-2xl font-mono font-bold tracking-wider mb-4" style={{ color: '#EDE8DE' }}>
+        <h1 className="text-2xl font-mono font-bold tracking-wider mb-4" style={{ color: '#F5F5F5' }}>
           {story.title}
         </h1>
 
@@ -151,19 +151,19 @@ export default function StoryPage() {
               src={story.author_avatar_url}
               alt={story.author_name}
               className="w-8 h-8 rounded-full shrink-0"
-              style={{ objectFit: 'cover', border: '1px solid rgba(232,90,0,0.3)' }}
+              style={{ objectFit: 'cover', border: '1px solid rgba(232,93,4,0.3)' }}
             />
           ) : (
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
-              style={{ background: 'rgba(232,90,0,0.12)', color: '#E85A00', border: '1px solid rgba(232,90,0,0.3)' }}
+              style={{ background: 'rgba(232,93,4,0.12)', color: '#E85D04', border: '1px solid rgba(232,93,4,0.3)' }}
             >
               {getInitials(story.author_name)}
             </div>
           )}
           <div>
-            <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>{story.author_name}</div>
-            <div className="text-xs font-mono" style={{ color: '#4A5570' }}>{formatDate(story.date)}</div>
+            <div className="text-sm font-mono font-semibold" style={{ color: '#F5F5F5' }}>{story.author_name}</div>
+            <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>{formatDate(story.date)}</div>
           </div>
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function StoryPage() {
       {/* Story body */}
       <article className="mb-12 space-y-5">
         {paragraphs.map((para, i) => (
-          <p key={i} className="text-sm leading-7 font-mono" style={{ color: '#8A9AB5' }}>
+          <p key={i} className="text-sm leading-7 font-mono" style={{ color: 'rgba(245,245,245,0.55)' }}>
             {para}
           </p>
         ))}
@@ -187,7 +187,7 @@ export default function StoryPage() {
       {/* Divider */}
       <div className="flex items-center gap-4 mb-8">
         <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-        <div className="text-xs tracking-widest font-mono" style={{ color: '#4A5570' }}>TRANSMISSIONS</div>
+        <div className="text-xs tracking-widest font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>TRANSMISSIONS</div>
         <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
       </div>
 
@@ -198,24 +198,24 @@ export default function StoryPage() {
             key={comment.id}
             className="border p-4"
             style={{
-              background: '#111525',
+              background: '#151B3A',
               borderColor: 'rgba(255,107,53,0.16)',
-              boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)',
+              boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
             }}
           >
             <div className="flex items-center gap-2 mb-2">
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
-                style={{ background: 'rgba(138,154,181,0.12)', color: '#8A9AB5', border: '1px solid rgba(138,154,181,0.25)' }}
+                style={{ background: 'rgba(138,154,181,0.12)', color: 'rgba(245,245,245,0.55)', border: '1px solid rgba(138,154,181,0.25)' }}
               >
                 {getInitials(comment.author)}
               </div>
-              <span className="text-xs font-mono font-semibold" style={{ color: '#8A9AB5' }}>{comment.author}</span>
-              <span className="text-xs font-mono ml-auto" style={{ color: '#4A5570' }}>
+              <span className="text-xs font-mono font-semibold" style={{ color: 'rgba(245,245,245,0.55)' }}>{comment.author}</span>
+              <span className="text-xs font-mono ml-auto" style={{ color: 'rgba(245,245,245,0.35)' }}>
                 {new Date(comment.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
             </div>
-            <p className="text-sm font-mono leading-relaxed" style={{ color: '#8A9AB5' }}>
+            <p className="text-sm font-mono leading-relaxed" style={{ color: 'rgba(245,245,245,0.55)' }}>
               {comment.text}
             </p>
           </div>
@@ -226,9 +226,9 @@ export default function StoryPage() {
       <form onSubmit={handleTransmit}>
         <div
           className="border p-4"
-          style={{ background: '#111525', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)' }}
+          style={{ background: '#151B3A', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.05)' }}
         >
-          <div className="text-xs font-mono tracking-widest mb-3" style={{ color: '#4A5570' }}>
+          <div className="text-xs font-mono tracking-widest mb-3" style={{ color: 'rgba(245,245,245,0.35)' }}>
             TRANSMIT A MESSAGE
           </div>
           <textarea
@@ -237,8 +237,8 @@ export default function StoryPage() {
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Leave a transmission for this Voyager..."
             className="w-full px-3 py-2 text-sm font-mono border bg-transparent outline-none transition-colors resize-none"
-            style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#EDE8DE' }}
-            onFocus={(e) => (e.target.style.borderColor = 'rgba(232,90,0,0.5)')}
+            style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#F5F5F5' }}
+            onFocus={(e) => (e.target.style.borderColor = 'rgba(232,93,4,0.5)')}
             onBlur={(e) => (e.target.style.borderColor = 'rgba(255,107,53,0.16)')}
           />
           <div className="flex items-center justify-between mt-3">
@@ -252,7 +252,7 @@ export default function StoryPage() {
               type="submit"
               disabled={!commentText.trim()}
               className="flex items-center gap-2 px-4 py-1.5 text-xs font-mono tracking-widest border transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ borderColor: '#E85A00', color: '#EDE8DE', background: 'linear-gradient(135deg, #E85A00, #C04000)' }}
+              style={{ borderColor: '#E85D04', color: '#F5F5F5', background: 'linear-gradient(135deg, #E85D04, #C04000)' }}
             >
               <Send size={10} />
               TRANSMIT

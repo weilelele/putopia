@@ -9,8 +9,8 @@ import { SectionTracker } from '@/components/section-tracker'
 const STATUS_STYLES = {
   available:    { color: '#20D890', bg: 'rgba(32,216,144,0.08)', border: 'rgba(32,216,144,0.3)' },
   needs_repair: { color: '#E83030', bg: 'rgba(232,48,48,0.08)', border: 'rgba(232,48,48,0.3)' },
-  in_use:       { color: '#E85A00', bg: 'rgba(232,90,0,0.08)', border: 'rgba(232,90,0,0.3)' },
-  unknown:      { color: '#4A5570', bg: 'transparent', border: 'rgba(255,107,53,0.16)' },
+  in_use:       { color: '#E85D04', bg: 'rgba(232,93,4,0.08)', border: 'rgba(232,93,4,0.3)' },
+  unknown:      { color: 'rgba(245,245,245,0.35)', bg: 'transparent', border: 'rgba(255,107,53,0.16)' },
 }
 
 const STATUS_LABELS = {
@@ -36,7 +36,7 @@ function DevicePlaceholder({ id }: { id: string }) {
       xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', height: '100%' }}
     >
-      <rect width="160" height="120" fill="#0D1020" />
+      <rect width="160" height="120" fill="#0F1430" />
       {[20, 40, 60, 80, 100, 120, 140].map((x) => (
         <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
@@ -48,8 +48,8 @@ function DevicePlaceholder({ id }: { id: string }) {
       <circle cx={cx} cy={cy} r="4" fill={`hsl(${hue1},70%,50%)`} opacity="0.8" />
       <line x1={lineX} y1="10" x2={lineX + 20} y2="110" stroke={`hsl(${hue2},50%,40%)`} strokeWidth="1" opacity="0.4" />
       <line x1={lineX + 10} y1="10" x2={lineX + 30} y2="110" stroke={`hsl(${hue2},50%,40%)`} strokeWidth="0.5" opacity="0.3" />
-      <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#E85A00" strokeWidth="0.8" opacity="0.5" />
-      <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#E85A00" strokeWidth="0.8" opacity="0.5" />
+      <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#E85D04" strokeWidth="0.8" opacity="0.5" />
+      <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#E85D04" strokeWidth="0.8" opacity="0.5" />
       <path d="M5,5 L5,15 M5,5 L15,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
       <path d="M155,5 L155,15 M155,5 L145,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
       <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
@@ -77,7 +77,7 @@ function DeviceImage({ device, isUnknown }: { device: Device; isUnknown: boolean
     )
   }
   return (
-    <div className="w-full aspect-video overflow-hidden relative" style={{ background: '#0D1020' }}>
+    <div className="w-full aspect-video overflow-hidden relative" style={{ background: '#0F1430' }}>
       <DevicePlaceholder id={device.id} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: filterOverlay }} />
     </div>
@@ -118,9 +118,9 @@ export default function DevicesPage() {
       {/* UNKNOWN DEVICES */}
       <section className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <span className="label-tag" style={{ color: '#4A5570', borderColor: '#4A5570' }}>UNKNOWN</span>
+          <span className="label-tag" style={{ color: 'rgba(245,245,245,0.35)', borderColor: 'rgba(245,245,245,0.35)' }}>UNKNOWN</span>
           <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-          <span className="text-xs font-mono" style={{ color: '#4A5570' }}>Uncontacted Signals</span>
+          <span className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>Uncontacted Signals</span>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -129,7 +129,7 @@ export default function DevicesPage() {
               key={device.id}
               className="border overflow-hidden"
               style={{
-                background: '#0D1020',
+                background: '#0F1430',
                 borderColor: 'rgba(255,107,53,0.16)',
                 opacity: 0.7,
               }}
@@ -142,11 +142,11 @@ export default function DevicesPage() {
                 <div className="flex items-start justify-between mb-1.5">
                   <div>
                     <div className="text-xs font-mono" style={{ color: 'rgba(255,107,53,0.28)' }}>{device.id}</div>
-                    <div className="text-xs font-mono font-semibold" style={{ color: '#4A5570' }}>{device.name}</div>
+                    <div className="text-xs font-mono font-semibold" style={{ color: 'rgba(245,245,245,0.35)' }}>{device.name}</div>
                   </div>
                   <div
                     className="text-xs font-mono px-1.5 py-0.5 border"
-                    style={{ color: '#4A5570', borderColor: 'rgba(255,107,53,0.16)', background: 'transparent' }}
+                    style={{ color: 'rgba(245,245,245,0.35)', borderColor: 'rgba(255,107,53,0.16)', background: 'transparent' }}
                   >
                     ?
                   </div>
@@ -177,7 +177,7 @@ export default function DevicesPage() {
         <div className="flex items-center gap-3 mb-4">
           <span className="label-tag" style={{ color: '#20D890' }}>KNOWN</span>
           <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-          <span className="text-xs font-mono" style={{ color: '#4A5570' }}>Confirmed Consoles</span>
+          <span className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>Confirmed Consoles</span>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -189,7 +189,7 @@ export default function DevicesPage() {
                 key={device.id}
                 className="border overflow-hidden"
                 style={{
-                  background: '#111525',
+                  background: '#151B3A',
                   borderColor: 'rgba(255,107,53,0.16)',
                   boxShadow: 'inset 0 1px 0 rgba(32,216,144,0.06)',
                 }}
@@ -201,8 +201,8 @@ export default function DevicesPage() {
                 <div className="p-3">
                   <div className="flex items-start justify-between mb-1.5">
                     <div className="min-w-0">
-                      <div className="text-xs font-mono" style={{ color: '#4A5570' }}>{device.id}</div>
-                      <div className="text-sm font-mono font-semibold truncate" style={{ color: '#EDE8DE' }}>{device.name}</div>
+                      <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>{device.id}</div>
+                      <div className="text-sm font-mono font-semibold truncate" style={{ color: '#F5F5F5' }}>{device.name}</div>
                     </div>
                     {device.status && (
                       <span
@@ -214,21 +214,21 @@ export default function DevicesPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 mb-2 text-xs font-mono" style={{ color: '#4A5570' }}>
+                  <div className="flex items-center gap-1 mb-2 text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
                     <span>◎</span>
                     <span className="truncate">{device.location}</span>
                   </div>
 
-                  <p className="text-xs leading-relaxed mb-3 font-mono line-clamp-3" style={{ color: '#8A9AB5' }}>
+                  <p className="text-xs leading-relaxed mb-3 font-mono line-clamp-3" style={{ color: 'rgba(245,245,245,0.55)' }}>
                     {device.description}
                   </p>
 
                   {device.status === 'in_use' && device.current_user_name && (
                     <div
                       className="mb-2 px-2 py-1 border text-xs font-mono"
-                      style={{ background: 'rgba(232,90,0,0.04)', borderColor: 'rgba(232,90,0,0.2)', color: '#8A9AB5' }}
+                      style={{ background: 'rgba(232,93,4,0.04)', borderColor: 'rgba(232,93,4,0.2)', color: 'rgba(245,245,245,0.55)' }}
                     >
-                      <span style={{ color: '#4A5570' }}>IN USE: </span>
+                      <span style={{ color: 'rgba(245,245,245,0.35)' }}>IN USE: </span>
                       <span>{device.current_user_name}</span>
                     </div>
                   )}

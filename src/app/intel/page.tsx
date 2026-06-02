@@ -35,12 +35,12 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
       style={{ textDecoration: 'none', marginBottom: '12px' }}
     >
       <div
-        style={{ background: '#111525', border: '1px solid rgba(255,107,53,0.16)', overflow: 'hidden', transition: 'border-color 0.15s' }}
+        style={{ background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', overflow: 'hidden', transition: 'border-color 0.15s' }}
         onMouseEnter={e => (e.currentTarget.style.borderColor = color)}
         onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,107,53,0.16)')}
       >
         {/* Publisher bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: '#0D1020', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: '#0F1430', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
 
           {/* Avatar */}
           {entry.publisher_avatar_url ? (
@@ -63,10 +63,10 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
 
           {/* Name + date */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ color: '#EDE8DE', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {name}
             </div>
-            <div style={{ color: '#4A5570', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)' }}>
+            <div style={{ color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)' }}>
               {formatDate(entry.timestamp)}
             </div>
           </div>
@@ -86,10 +86,10 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
 
           {/* Text */}
           <div style={{ flex: 1, padding: '14px 16px', minWidth: 0 }}>
-            <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', color: '#EDE8DE', marginBottom: '8px', lineHeight: 1.4 }}>
+            <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', color: '#F5F5F5', marginBottom: '8px', lineHeight: 1.4 }}>
               {entry.title}
             </h2>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#8A9AB5', lineHeight: 1.7, margin: 0 }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.7, margin: 0 }}>
               {entry.content.length > 140 ? entry.content.slice(0, 140) + '…' : entry.content}
             </p>
             <div style={{ marginTop: '12px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color, opacity: 0.8 }}>
@@ -110,7 +110,7 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
                 <div style={{
                   position: 'absolute', bottom: 6, right: 6,
                   background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(255,107,53,0.16)',
-                  color: '#8A9AB5', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+                  color: 'rgba(245,245,245,0.55)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
                   padding: '2px 6px', letterSpacing: '0.08em',
                 }}>
                   +{extraImgs}
@@ -134,7 +134,7 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
               <div style={{
                 position: 'absolute', bottom: 6, right: 6,
                 background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(255,107,53,0.16)',
-                color: '#8A9AB5', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+                color: 'rgba(245,245,245,0.55)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
                 padding: '2px 6px',
               }}>
                 +{extraImgs}

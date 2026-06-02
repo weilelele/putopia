@@ -26,19 +26,19 @@ export default async function WorldsPage() {
       {/* Stats bar */}
       <div
         className="flex gap-6 mb-8 p-4 border flex-wrap"
-        style={{ background: '#111525', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)' }}
+        style={{ background: '#151B3A', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.05)' }}
       >
         <div>
-          <div className="text-xl font-mono font-bold" style={{ color: '#E85A00' }}>{worlds.length}</div>
-          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>CATALOGUED</div>
+          <div className="text-xl font-mono font-bold" style={{ color: '#E85D04' }}>{worlds.length}</div>
+          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>CATALOGUED</div>
         </div>
         <div>
           <div className="text-xl font-mono font-bold" style={{ color: '#20D890' }}>8</div>
-          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>DISCOVERERS</div>
+          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>DISCOVERERS</div>
         </div>
         <div>
           <div className="text-xl font-mono font-bold" style={{ color: '#FF6B35' }}>200+</div>
-          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>NODES ON RECORD</div>
+          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>NODES ON RECORD</div>
         </div>
       </div>
 
@@ -54,7 +54,7 @@ export default async function WorldsPage() {
               key={world.id}
               href={`/worlds/${encodeURIComponent(world.id)}`}
               className="border overflow-hidden transition-all duration-200 group"
-              style={{ background: '#111525', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)', textDecoration: 'none', display: 'block' }}
+              style={{ background: '#151B3A', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)', textDecoration: 'none', display: 'block' }}
             >
               {/* Hero image / gradient */}
               <div className="h-52 relative overflow-hidden">
@@ -92,7 +92,7 @@ export default async function WorldsPage() {
                 <div className="absolute top-2 left-2">
                   <span
                     className="text-xs font-mono px-1.5 py-0.5"
-                    style={{ background: 'rgba(7,9,18,0.7)', color: '#4A5570' }}
+                    style={{ background: 'rgba(7,9,18,0.7)', color: 'rgba(245,245,245,0.35)' }}
                   >
                     {world.id}
                   </span>
@@ -101,10 +101,10 @@ export default async function WorldsPage() {
 
               {/* Info */}
               <div className="p-3">
-                <div className="text-sm font-mono font-semibold mb-0.5" style={{ color: '#EDE8DE' }}>
+                <div className="text-sm font-mono font-semibold mb-0.5" style={{ color: '#F5F5F5' }}>
                   {displayName}
                 </div>
-                <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
+                <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: 'rgba(245,245,245,0.55)' }}>
                   {world.description}
                 </p>
                 <div className="pt-2 border-t flex items-center justify-between gap-2" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
@@ -113,17 +113,17 @@ export default async function WorldsPage() {
                       <Link
                         href="/voyagers"
                         className="text-xs font-mono transition-colors hover:underline truncate block"
-                        style={{ color: '#8A9AB5' }}
+                        style={{ color: 'rgba(245,245,245,0.55)' }}
                       >
                         {world.discoverer_name}
                       </Link>
                     ) : world.discoverer_name ? (
-                      <span className="text-xs font-mono truncate block" style={{ color: '#8A9AB5' }}>
+                      <span className="text-xs font-mono truncate block" style={{ color: 'rgba(245,245,245,0.55)' }}>
                         {world.discoverer_name}
                       </span>
                     ) : null}
                   </div>
-                  <div className="text-xs font-mono shrink-0" style={{ color: '#4A5570' }}>
+                  <div className="text-xs font-mono shrink-0" style={{ color: 'rgba(245,245,245,0.35)' }}>
                     {world.discovery_date}
                   </div>
                 </div>

@@ -17,9 +17,9 @@ const SCOPE_OPTIONS: { value: UserRole; label: string; desc: string }[] = [
 ]
 
 const S = {
-  label: { display: 'block', color: '#4A5570', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', boxSizing: 'border-box' } as const,
-  area:  { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as const,
+  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', boxSizing: 'border-box' } as const,
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as const,
 }
 
 export function CreateVoteModal({ onClose, onCreated }: Props) {
@@ -86,15 +86,15 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
     >
       <div
         className="relative w-full max-w-lg mx-4 border p-6 overflow-y-auto"
-        style={{ background: '#111525', borderColor: 'rgba(255,107,53,0.16)', maxHeight: '90vh' }}
+        style={{ background: '#151B3A', borderColor: 'rgba(255,107,53,0.16)', maxHeight: '90vh' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="text-xs font-mono tracking-widest mb-1" style={{ color: '#4A5570' }}>// NEW VOTE</div>
-            <h2 className="text-xl font-mono font-semibold" style={{ color: '#EDE8DE' }}>CREATE VOTE</h2>
+            <div className="text-xs font-mono tracking-widest mb-1" style={{ color: 'rgba(245,245,245,0.35)' }}>// NEW VOTE</div>
+            <h2 className="text-xl font-mono font-semibold" style={{ color: '#F5F5F5' }}>CREATE VOTE</h2>
           </div>
-          <button onClick={onClose} style={{ color: '#4A5570' }} className="hover:text-[#EDE8DE] transition-colors">
+          <button onClick={onClose} style={{ color: 'rgba(245,245,245,0.35)' }} className="hover:text-[#F5F5F5] transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -137,8 +137,8 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                     className="flex-1 text-xs font-mono py-1.5 border tracking-widest transition-all"
                     style={
                       type === t
-                        ? { borderColor: '#E85A00', color: '#EDE8DE', background: 'rgba(232,90,0,0.15)' }
-                        : { borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570', background: 'transparent' }
+                        ? { borderColor: '#E85D04', color: '#F5F5F5', background: 'rgba(232,93,4,0.15)' }
+                        : { borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', background: 'transparent' }
                     }
                   >
                     {t === 'single' ? 'SINGLE' : 'MULTI'}
@@ -172,8 +172,8 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                     className="flex-1 text-xs font-mono py-1.5 px-2 border tracking-widest transition-all"
                     style={
                       active
-                        ? { borderColor: '#E85A00', color: '#EDE8DE', background: 'rgba(232,90,0,0.15)' }
-                        : { borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570', background: 'transparent' }
+                        ? { borderColor: '#E85D04', color: '#F5F5F5', background: 'rgba(232,93,4,0.15)' }
+                        : { borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', background: 'transparent' }
                     }
                   >
                     {label}
@@ -182,7 +182,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
               })}
             </div>
             {scope.length > 0 && (
-              <p className="text-xs font-mono mt-1.5" style={{ color: '#4A5570' }}>
+              <p className="text-xs font-mono mt-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                 {scope.length === 3
                   ? '— open to all members'
                   : `— ${scope.map((r) => r.charAt(0).toUpperCase() + r.slice(1)).join(' + ')} only`}
@@ -196,7 +196,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
             <div className="space-y-2">
               {options.map((opt, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs font-mono w-6 text-right shrink-0" style={{ color: '#4A5570' }}>
+                  <span className="text-xs font-mono w-6 text-right shrink-0" style={{ color: 'rgba(245,245,245,0.35)' }}>
                     {String.fromCharCode(65 + i)}.
                   </span>
                   <input
@@ -211,9 +211,9 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                       type="button"
                       onClick={() => removeOption(i)}
                       className="shrink-0 transition-colors"
-                      style={{ color: '#4A5570' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = '#E85A00')}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = '#4A5570')}
+                      style={{ color: 'rgba(245,245,245,0.35)' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = '#E85D04')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,245,245,0.35)')}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -226,9 +226,9 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                 type="button"
                 onClick={addOption}
                 className="mt-2 flex items-center gap-1.5 text-xs font-mono tracking-widest transition-colors"
-                style={{ color: '#4A5570' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = '#8A9AB5')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = '#4A5570')}
+                style={{ color: 'rgba(245,245,245,0.35)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(245,245,245,0.55)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,245,245,0.35)')}
               >
                 <Plus size={12} /> ADD OPTION
               </button>
@@ -236,7 +236,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
           </div>
 
           {error && (
-            <div className="text-xs font-mono" style={{ color: '#E85A00' }}>✗ {error}</div>
+            <div className="text-xs font-mono" style={{ color: '#E85D04' }}>✗ {error}</div>
           )}
 
           {/* Actions */}

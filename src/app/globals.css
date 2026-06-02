@@ -16,10 +16,10 @@
   --color-nebula:     #E85D04;
   --color-nebula-2:   #FF8A5C;
   --color-nebula-3:   #B5430A;
-  --color-cream:      #F5F5DC;   /* off-white / beige (VI secondary) */
-  --color-star:       #F5F5F5;   /* off-white body text */
-  --color-star-dim:   #B9B7AE;
-  --color-star-deep:  #6E6B5E;
+  --color-cream:      #F5F5F5;   /* OFF WHITE (brand) — was beige, aligned */
+  --color-star:       #F5F5F5;   /* OFF WHITE — primary text */
+  --color-star-dim:   rgba(245,245,245,0.55);  /* muted = white @ opacity (no grey) */
+  --color-star-deep:  rgba(245,245,245,0.35);  /* faint  = white @ opacity */
   --color-void:       #13182E;   /* panel surface */
   --color-void-2:     #1B2140;
   --color-deep:       #0A0E27;   /* deep space blue — page bg */
@@ -29,6 +29,24 @@
   --color-ok:         #20D890;
   --color-warn:       #FFB020;
   --color-fault:      #E83030;
+
+  /* ============================================================
+     SEMANTIC TOKENS — Brand Color Palette (brand-guidelines.png p.03)
+     Brand layer = 3 oranges + deep space blue + off white (NO grey).
+     Signal layer = ok/warn/fault, status-only, never brand/structure.
+     ============================================================ */
+  --bg-base:    #0A0E27;   /* DEEP SPACE BLUE — page background */
+  --bg-panel:   #0F1430;   /* elevated surface (panels/inputs) */
+  --bg-card:    #151B3A;   /* card surface (above panel) */
+  --tx-primary: #F5F5F5;   /* OFF WHITE — body text */
+  --tx-muted:   rgba(245,245,245,0.55);  /* secondary text */
+  --tx-faint:   rgba(245,245,245,0.35);  /* faint text / icon */
+  --or-retro:   #FF6B35;   /* RETRO ORANGE — primary / logo / active / CTA */
+  --or-burnt:   #E85D04;   /* BURNT ORANGE — hover / border / divider / accent */
+  --or-deep:    #DC2F02;   /* DEEP ORANGE  — pressed / gradient-bottom / emphasis */
+  --sig-ok:     #20D890;   /* status: active / success */
+  --sig-warn:   #E8A020;   /* status: warning / Architect role */
+  --sig-fault:  #E83030;   /* status: error */
 
   /* Type — monospace primary (Space Mono) */
   --font-display: var(--font-mono), 'SF Mono', ui-monospace, monospace;
@@ -81,7 +99,7 @@
 html, body { height: 100%; margin: 0; padding: 0; }
 
 body {
-  background-color: #000;
+  background-color: var(--bg-base);
   color: var(--color-star);
   font-family: var(--font-body);
   font-weight: 400;
@@ -131,7 +149,7 @@ code, pre, kbd { font-family: var(--font-mono); }
 .bg-void { background: var(--color-void); }
 
 .starfield {
-  background: #000;
+  background: var(--bg-base);
   position: relative;
 }
 
@@ -951,11 +969,11 @@ code, pre, kbd { font-family: var(--font-mono); }
   overflow-y: auto;
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: #1E2840 transparent;
+  scrollbar-color: #151B3A transparent;
   text-align: left;           /* override hero centering */
 }
 .comms-feed-lines::-webkit-scrollbar { width: 2px; }
-.comms-feed-lines::-webkit-scrollbar-thumb { background: #1E2840; border-radius: 2px; }
+.comms-feed-lines::-webkit-scrollbar-thumb { background: #151B3A; border-radius: 2px; }
 
 /* Grid layout: fixed ts column + text column — ensures proper alignment */
 .comms-feed-line {

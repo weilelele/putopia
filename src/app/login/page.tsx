@@ -66,7 +66,7 @@ function LoginPageContent() {
           <div style={{ padding: '0 1rem' }}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
+              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                 EMAIL ADDRESS
               </label>
               <input
@@ -79,7 +79,7 @@ function LoginPageContent() {
             </div>
 
             <div>
-              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: '#4A5570' }}>
+              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                 ACCESS CODE
               </label>
               <input

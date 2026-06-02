@@ -67,7 +67,7 @@ export default function LogsPage() {
               {/* Author bar */}
               <div
                 className="flex items-center gap-3 px-4 py-3 border-b"
-                style={{ background: '#0D1020', borderColor: 'rgba(255,107,53,0.16)' }}
+                style={{ background: '#0F1430', borderColor: 'rgba(255,107,53,0.16)' }}
               >
                 {story.author_avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -75,25 +75,25 @@ export default function LogsPage() {
                     src={story.author_avatar_url}
                     alt={story.author_name}
                     className="w-9 h-9 rounded-full shrink-0"
-                    style={{ objectFit: 'cover', border: '1px solid rgba(232,90,0,0.3)' }}
+                    style={{ objectFit: 'cover', border: '1px solid rgba(232,93,4,0.3)' }}
                   />
                 ) : (
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
                     style={{
-                      background: 'rgba(232,90,0,0.12)',
-                      color: '#E85A00',
-                      border: '1px solid rgba(232,90,0,0.3)',
+                      background: 'rgba(232,93,4,0.12)',
+                      color: '#E85D04',
+                      border: '1px solid rgba(232,93,4,0.3)',
                     }}
                   >
                     {initials}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>
+                  <div className="text-sm font-mono font-semibold" style={{ color: '#F5F5F5' }}>
                     {story.author_name}
                   </div>
-                  <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
+                  <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
                     {formatDate(story.date)}
                   </div>
                 </div>
@@ -121,8 +121,8 @@ export default function LogsPage() {
                       <div style={{
                         position: 'absolute', bottom: '8px', right: '8px',
                         background: 'rgba(11,15,23,0.82)',
-                        border: '1px solid rgba(232,90,0,0.5)',
-                        color: '#E85A00',
+                        border: '1px solid rgba(232,93,4,0.5)',
+                        color: '#E85D04',
                         fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
                         padding: '3px 7px',
                         display: 'flex', alignItems: 'center', gap: '4px',
@@ -135,14 +135,14 @@ export default function LogsPage() {
 
                 {/* Text content */}
                 <div className="px-4 py-4 flex-1 min-w-0">
-                  <h2 className="text-xl font-mono font-semibold mb-3" style={{ color: '#EDE8DE' }}>
+                  <h2 className="text-xl font-mono font-semibold mb-3" style={{ color: '#F5F5F5' }}>
                     {story.title}
                   </h2>
-                  <p className="text-sm leading-relaxed font-mono" style={{ color: '#8A9AB5' }}>
+                  <p className="text-sm leading-relaxed font-mono" style={{ color: 'rgba(245,245,245,0.55)' }}>
                     {story.excerpt}
                   </p>
 
-                  <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#E85A00' }}>
+                  <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#E85D04' }}>
                     READ FULL STORY
                     <ArrowRight size={12} />
                   </div>

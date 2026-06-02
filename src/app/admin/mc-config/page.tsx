@@ -6,9 +6,9 @@ import type { McFunction, McFunctionStatus } from '@/types/database'
 import { Plus, Trash2, GripVertical } from 'lucide-react'
 
 const STATUS_OPTIONS: { value: McFunctionStatus; label: string; color: string }[] = [
-  { value: 'active',         label: '生效',   color: '#22D890' },
-  { value: 'in_development', label: '开发中', color: '#FF5A1F' },
-  { value: 'unknown',        label: '未知',   color: '#4A5570' },
+  { value: 'active',         label: '生效',   color: '#20D890' },
+  { value: 'in_development', label: '开发中', color: '#FF6B35' },
+  { value: 'unknown',        label: '未知',   color: 'rgba(245,245,245,0.35)' },
 ]
 
 function statusMeta(s: McFunctionStatus) {
@@ -98,10 +98,10 @@ export default function McConfigPage() {
                       display: 'grid', gridTemplateColumns: '20px 1fr 160px 32px',
                       gap: '0.75rem', alignItems: 'center',
                       padding: '0.55rem 0.75rem',
-                      background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)',
+                      background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)',
                       opacity: saving === fn.id ? 0.6 : 1, transition: 'opacity 0.2s',
                     }}>
-                      <GripVertical size={14} style={{ color: '#4A5570', cursor: 'grab' }} />
+                      <GripVertical size={14} style={{ color: 'rgba(245,245,245,0.35)', cursor: 'grab' }} />
 
                       {/* Name */}
                       <input
@@ -125,7 +125,7 @@ export default function McConfigPage() {
                               letterSpacing: '0.08em', padding: '3px 8px',
                               border: `1px solid ${fn.status === opt.value ? opt.color : 'rgba(255,107,53,0.16)'}`,
                               background: fn.status === opt.value ? `${opt.color}18` : 'transparent',
-                              color: fn.status === opt.value ? opt.color : '#4A5570',
+                              color: fn.status === opt.value ? opt.color : 'rgba(245,245,245,0.35)',
                               cursor: 'pointer', transition: 'all 0.15s',
                             }}
                           >
@@ -137,7 +137,7 @@ export default function McConfigPage() {
                       {/* Delete */}
                       <button
                         onClick={() => handleDelete(fn.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4A5570', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,245,245,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -159,7 +159,7 @@ export default function McConfigPage() {
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <div style={{ flex: 1, minWidth: 180 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#4A5570', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>NAME</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>NAME</div>
                 <input
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
@@ -170,7 +170,7 @@ export default function McConfigPage() {
                 />
               </div>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#4A5570', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>STATUS</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>STATUS</div>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
                   {STATUS_OPTIONS.map(opt => (
                     <button
@@ -181,7 +181,7 @@ export default function McConfigPage() {
                         letterSpacing: '0.08em', padding: '5px 10px',
                         border: `1px solid ${newStatus === opt.value ? opt.color : 'rgba(255,107,53,0.16)'}`,
                         background: newStatus === opt.value ? `${opt.color}18` : 'transparent',
-                        color: newStatus === opt.value ? opt.color : '#4A5570',
+                        color: newStatus === opt.value ? opt.color : 'rgba(245,245,245,0.35)',
                         cursor: 'pointer', transition: 'all 0.15s',
                       }}
                     >

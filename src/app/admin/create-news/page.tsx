@@ -8,11 +8,11 @@ import type { GeneratedNews } from '@/lib/actions/news-gen'
 
 // ── 样式常量（与现有 admin 风格一致）─────────────────────────────────────
 const S = {
-  card:  { background: '#111525', border: '1px solid rgba(255,107,53,0.16)', padding: '24px', marginBottom: '16px' } as React.CSSProperties,
-  label: { display: 'block', color: '#4A5570', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '6px' } as React.CSSProperties,
-  input: { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
-  area:  { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as React.CSSProperties,
-  sel:   { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' } as React.CSSProperties,
+  card:  { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '24px', marginBottom: '16px' } as React.CSSProperties,
+  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '6px' } as React.CSSProperties,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as React.CSSProperties,
+  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' } as React.CSSProperties,
   btn:   (color: string, dim?: boolean) => ({
     padding: '9px 22px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em',
     cursor: dim ? 'not-allowed' : 'pointer', border: `1px solid ${color}`, color,
@@ -158,11 +158,11 @@ export default function CreateNewsPage() {
       {/* 页头 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
         <div>
-          <div style={{ color: '#4A5570', fontSize: '11px', letterSpacing: '0.3em' }}>ADMIN // AI NEWS</div>
-          <div style={{ color: '#EDE8DE', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>AI 情报生成</div>
+          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.3em' }}>ADMIN // AI NEWS</div>
+          <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>AI 情报生成</div>
         </div>
         {phase !== 'input' && (
-          <button onClick={handleReset} style={S.btn('#4A5570')}>← 重新开始</button>
+          <button onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>← 重新开始</button>
         )}
       </div>
 
@@ -173,14 +173,14 @@ export default function CreateNewsPage() {
             <div style={{
               width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center',
               justifyContent: 'center', fontSize: '11px', fontFamily: 'monospace',
-              background: phase === p ? '#E85A00' : ((['input','review','done'].indexOf(phase) > i) ? '#1E2840' : '#0D1020'),
-              border: `1px solid ${phase === p ? '#E85A00' : 'rgba(255,107,53,0.16)'}`,
-              color: phase === p ? '#fff' : '#4A5570',
+              background: phase === p ? '#E85D04' : ((['input','review','done'].indexOf(phase) > i) ? '#151B3A' : '#0F1430'),
+              border: `1px solid ${phase === p ? '#E85D04' : 'rgba(255,107,53,0.16)'}`,
+              color: phase === p ? '#fff' : 'rgba(245,245,245,0.35)',
             }}>{i + 1}</div>
-            <span style={{ fontSize: '11px', color: phase === p ? '#EDE8DE' : '#4A5570', letterSpacing: '0.08em' }}>
+            <span style={{ fontSize: '11px', color: phase === p ? '#F5F5F5' : 'rgba(245,245,245,0.35)', letterSpacing: '0.08em' }}>
               {p === 'input' ? '输入 Idea' : p === 'review' ? '审核草稿' : '发布完成'}
             </span>
-            {i < 2 && <span style={{ color: '#1E2840', marginLeft: '4px' }}>──</span>}
+            {i < 2 && <span style={{ color: '#151B3A', marginLeft: '4px' }}>──</span>}
           </div>
         ))}
       </div>
@@ -189,10 +189,10 @@ export default function CreateNewsPage() {
       {phase === 'input' && (
         <div style={S.card}>
           {loading ? (
-            <div style={{ color: '#4A5570', textAlign: 'center', padding: '20px' }}>加载成员列表...</div>
+            <div style={{ color: 'rgba(245,245,245,0.35)', textAlign: 'center', padding: '20px' }}>加载成员列表...</div>
           ) : architects.length === 0 ? (
             <div style={{ color: '#E83030', fontSize: '13px', padding: '16px', background: 'rgba(232,48,48,0.08)', border: '1px solid rgba(232,48,48,0.3)' }}>
-              暂无 Architect 成员。请先运行 <code style={{ color: '#E85A00' }}>node scripts/create-architect.mjs</code> 创建虚拟成员。
+              暂无 Architect 成员。请先运行 <code style={{ color: '#E85D04' }}>node scripts/create-architect.mjs</code> 创建虚拟成员。
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -207,7 +207,7 @@ export default function CreateNewsPage() {
                   ))}
                 </select>
                 {selectedPersona?.bio && (
-                  <div style={{ marginTop: '8px', padding: '8px 10px', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#4A5570', fontSize: '12px', lineHeight: 1.6 }}>
+                  <div style={{ marginTop: '8px', padding: '8px 10px', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', fontSize: '12px', lineHeight: 1.6 }}>
                     {selectedPersona.bio}
                   </div>
                 )}
@@ -232,7 +232,7 @@ export default function CreateNewsPage() {
                   onChange={e => setIdea(e.target.value)}
                   placeholder="写下你的组织故事灵感，几句话即可。&#10;&#10;例如：本周我们新增了两名来自东亚的 Voyager，他们分别持有 Unit 031 和 Unit 032。这标志着我们在亚洲的观测网络进一步扩张。"
                 />
-                <div style={{ marginTop: '4px', fontSize: '11px', color: '#4A5570' }}>{idea.length} 字</div>
+                <div style={{ marginTop: '4px', fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>{idea.length} 字</div>
               </div>
 
               {genError && (
@@ -250,7 +250,7 @@ export default function CreateNewsPage() {
                   {generating ? '✦ 生成中...' : '✦ AI 生成草稿'}
                 </button>
                 {generating && (
-                  <span style={{ marginLeft: '12px', fontSize: '11px', color: '#4A5570' }}>
+                  <span style={{ marginLeft: '12px', fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>
                     正在调用 Claude，通常需要 5-10 秒...
                   </span>
                 )}
@@ -271,15 +271,15 @@ export default function CreateNewsPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={selectedPersona.avatar_url} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,107,53,0.16)' }} />
               ) : (
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#1E2840', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF6B35', fontSize: '14px', fontFamily: 'monospace' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#151B3A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF6B35', fontSize: '14px', fontFamily: 'monospace' }}>
                   {selectedPersona.display_name[0]}
                 </div>
               )}
               <div>
-                <div style={{ color: '#EDE8DE', fontSize: '13px' }}>{selectedPersona.display_name}</div>
-                <div style={{ color: '#4A5570', fontSize: '11px', letterSpacing: '0.06em' }}>ARCHITECT · {tag}</div>
+                <div style={{ color: '#F5F5F5', fontSize: '13px' }}>{selectedPersona.display_name}</div>
+                <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.06em' }}>ARCHITECT · {tag}</div>
               </div>
-              <div style={{ marginLeft: 'auto', fontSize: '11px', color: '#4A5570' }}>
+              <div style={{ marginLeft: 'auto', fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>
                 以此身份发布
               </div>
             </div>
@@ -295,8 +295,8 @@ export default function CreateNewsPage() {
           <div style={S.card}>
             <label style={S.label}>正文（可编辑）</label>
             <textarea style={{ ...S.area, minHeight: '160px' }} value={editContent} onChange={e => setEditContent(e.target.value)} />
-            <div style={{ marginTop: '6px', fontSize: '11px', color: '#4A5570' }}>
-              {editContent.length} 字 · 配图提示词：<span style={{ color: '#4A5570', fontStyle: 'italic' }}>{generated.imagePrompt}</span>
+            <div style={{ marginTop: '6px', fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>
+              {editContent.length} 字 · 配图提示词：<span style={{ color: 'rgba(245,245,245,0.35)', fontStyle: 'italic' }}>{generated.imagePrompt}</span>
             </div>
           </div>
 
@@ -304,7 +304,7 @@ export default function CreateNewsPage() {
           <div style={S.card}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <label style={{ ...S.label, marginBottom: 0 }}>配图（点击选择，或跳过）</label>
-              <span style={{ fontSize: '11px', color: '#4A5570' }}>
+              <span style={{ fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>
                 {imgLoaded.filter(Boolean).length} / 3 已加载
               </span>
             </div>
@@ -317,20 +317,20 @@ export default function CreateNewsPage() {
                     cursor: imgLoaded[i] && !imgErrors[i] ? 'pointer' : 'default',
                     border: selectedImg === url ? '2px solid #FF6B35' : '2px solid rgba(255,107,53,0.16)',
                     position: 'relative', aspectRatio: '800/420', overflow: 'hidden',
-                    background: '#0D1020',
+                    background: '#0F1430',
                   }}
                 >
                   {/* 骨架屏：加载中 */}
                   {!imgLoaded[i] && !imgErrors[i] && (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                       <div style={{ width: '28px', height: '28px', border: '2px solid rgba(255,107,53,0.16)', borderTop: '2px solid #FF6B35', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                      <span style={{ fontSize: '10px', color: '#4A5570', letterSpacing: '0.1em' }}>GENERATING</span>
+                      <span style={{ fontSize: '10px', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.1em' }}>GENERATING</span>
                     </div>
                   )}
 
                   {/* 加载失败 */}
                   {imgErrors[i] && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', color: '#4A5570', fontSize: '11px' }}>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'rgba(245,245,245,0.35)', fontSize: '11px' }}>
                       <span style={{ fontSize: '18px' }}>⊘</span>
                       <span>加载失败</span>
                     </div>
@@ -348,17 +348,17 @@ export default function CreateNewsPage() {
 
                   {/* 已选标记 */}
                   {selectedImg === url && (
-                    <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#FF6B35', color: '#0D1020', fontSize: '10px', padding: '2px 6px', fontFamily: 'monospace' }}>✓ 已选</div>
+                    <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#FF6B35', color: '#0F1430', fontSize: '10px', padding: '2px 6px', fontFamily: 'monospace' }}>✓ 已选</div>
                   )}
 
                   {/* 图片序号 */}
-                  <div style={{ position: 'absolute', bottom: '5px', left: '6px', background: 'rgba(0,0,0,0.7)', color: '#4A5570', fontSize: '10px', padding: '1px 5px', fontFamily: 'monospace' }}>
+                  <div style={{ position: 'absolute', bottom: '5px', left: '6px', background: 'rgba(0,0,0,0.7)', color: 'rgba(245,245,245,0.35)', fontSize: '10px', padding: '1px 5px', fontFamily: 'monospace' }}>
                     {imgLoaded[i] && !imgErrors[i] ? `图 ${i + 1}` : '...'}
                   </div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: '8px', fontSize: '11px', color: '#4A5570' }}>
+            <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>
               Pollinations.ai (Flux) · 可不选图直接发布
             </div>
           </div>
@@ -376,14 +376,14 @@ export default function CreateNewsPage() {
             <button
               onClick={handlePublish}
               disabled={publishing || !editTitle.trim() || !editContent.trim()}
-              style={S.btn('#E85A00', publishing || !editTitle.trim() || !editContent.trim())}
+              style={S.btn('#E85D04', publishing || !editTitle.trim() || !editContent.trim())}
             >
               {publishing ? '发布中...' : '▶ 发布情报'}
             </button>
-            <button onClick={handleReset} style={S.btn('#4A5570')}>
+            <button onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
               ↺ 重新生成
             </button>
-            <span style={{ fontSize: '11px', color: '#4A5570' }}>
+            <span style={{ fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>
               {!selectedImg ? '未选图片，将以无图发布' : '已选 1 张配图'}
             </span>
           </div>
@@ -394,15 +394,15 @@ export default function CreateNewsPage() {
       {phase === 'done' && (
         <div style={{ ...S.card, borderColor: '#20D890', textAlign: 'center', padding: '40px 24px' }}>
           <div style={{ color: '#20D890', fontSize: '28px', marginBottom: '12px' }}>✓</div>
-          <div style={{ color: '#EDE8DE', fontSize: '16px', marginBottom: '8px' }}>情报发布成功</div>
-          <div style={{ color: '#4A5570', fontSize: '12px', marginBottom: '24px' }}>
-            ID: <span style={{ color: '#E85A00' }}>{publishedId}</span> · 以 {selectedPersona?.display_name} 身份发布
+          <div style={{ color: '#F5F5F5', fontSize: '16px', marginBottom: '8px' }}>情报发布成功</div>
+          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '12px', marginBottom: '24px' }}>
+            ID: <span style={{ color: '#E85D04' }}>{publishedId}</span> · 以 {selectedPersona?.display_name} 身份发布
           </div>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href="/intel" target="_blank" style={{ ...S.btn('#FF6B35'), textDecoration: 'none', display: 'inline-block' }}>
               查看情报页 →
             </a>
-            <button onClick={handleReset} style={S.btn('#4A5570')}>
+            <button onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
               + 再创建一条
             </button>
           </div>

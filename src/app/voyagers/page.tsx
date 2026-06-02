@@ -27,7 +27,7 @@ const LinkedInIcon = () => (
 // ── Deterministic accent color from display_name ───────────────────────────
 const ACCENT_COLORS = [
   '#E8A020', '#D4601A', '#FF8A5C', '#FFB020',
-  '#C43020', '#C4A96A', '#B5430A', '#FF6B35', '#E85A00',
+  '#C43020', '#C4A96A', '#B5430A', '#FF6B35', '#E85D04',
 ]
 function accentColor(name: string): string {
   let hash = 0
@@ -170,14 +170,14 @@ export default function VoyagersPage() {
       </div>
 
       {loading ? (
-        <div style={{ color: '#4A5570', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '60px 0', textAlign: 'center', letterSpacing: '0.15em' }}>
+        <div style={{ color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '60px 0', textAlign: 'center', letterSpacing: '0.15em' }}>
           LOADING REGISTRY...
         </div>
       ) : (
         <>
           {architects.length > 0 && (
             <section style={{ marginBottom: '2.5rem' }}>
-              <div style={{ color: '#4A5570', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
+              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
                 // ARCHITECT COUNCIL
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -191,7 +191,7 @@ export default function VoyagersPage() {
 
           {activeVoyagers.length > 0 && (
             <section>
-              <div style={{ color: '#4A5570', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
+              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
                 // ACTIVE VOYAGERS
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -218,12 +218,12 @@ export default function VoyagersPage() {
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ background: '#0D1020', border: '1px solid #E85A00', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', fontFamily: 'var(--font-mono)' }}
+            style={{ background: '#0F1430', border: '1px solid #E85D04', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', fontFamily: 'var(--font-mono)' }}
           >
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div style={{ color: '#E85A00', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>// EDIT PROFILE</div>
-              <button onClick={closeEdit} style={{ background: 'none', border: 'none', color: '#4A5570', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+              <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>// EDIT PROFILE</div>
+              <button onClick={closeEdit} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
                 <XClose size={16} />
               </button>
             </div>
@@ -248,7 +248,7 @@ export default function VoyagersPage() {
                 </div>
                 <div
                   onClick={() => modalFileRef.current?.click()}
-                  style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '24px', height: '24px', borderRadius: '50%', background: '#111525', border: '1px solid #E85A00', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#E85A00' }}
+                  style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '24px', height: '24px', borderRadius: '50%', background: '#151B3A', border: '1px solid #E85D04', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#E85D04' }}
                 >
                   <Camera size={11} />
                 </div>
@@ -279,7 +279,7 @@ export default function VoyagersPage() {
               )}
             </Field>
 
-            <div style={{ color: '#4A5570', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// SOCIAL LINKS</div>
+            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// SOCIAL LINKS</div>
             <FieldGroup>
               <Field label="X / TWITTER (full URL)">
                 <input style={FIELD_INPUT} value={form.social_x} onChange={e => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
@@ -292,7 +292,7 @@ export default function VoyagersPage() {
               </Field>
             </FieldGroup>
 
-            <div style={{ color: '#4A5570', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// FIELD DATA</div>
+            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// FIELD DATA</div>
             <FieldGroup cols={2}>
               <Field label="OBSERVATION DAYS">
                 <input style={FIELD_INPUT} type="number" min="0" value={form.observation_days} onChange={e => setF('observation_days', e.target.value)} />
@@ -330,14 +330,14 @@ export default function VoyagersPage() {
 
 // ── Small form helpers ─────────────────────────────────────────────────────
 const FIELD_INPUT: React.CSSProperties = {
-  width: '100%', background: '#111525', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE',
+  width: '100%', background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5',
   padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', outline: 'none',
   boxSizing: 'border-box',
 }
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label style={{ display: 'block', color: '#4A5570', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', marginBottom: '4px' }}>{label}</label>
+      <label style={{ display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', marginBottom: '4px' }}>{label}</label>
       {children}
     </div>
   )
@@ -376,9 +376,9 @@ function VoyagerCard({
       onClick={isOwn ? () => onEditClick(voyager) : undefined}
       className="border p-4 transition-all duration-200"
       style={{
-        background: '#111525',
-        borderColor: isOwn ? `${color}55` : isArchitect ? 'rgba(232,90,0,0.18)' : 'rgba(255,107,53,0.16)',
-        boxShadow: isOwn ? `0 0 12px ${color}15` : 'inset 0 1px 0 rgba(232,90,0,0.04)',
+        background: '#151B3A',
+        borderColor: isOwn ? `${color}55` : isArchitect ? 'rgba(232,93,4,0.18)' : 'rgba(255,107,53,0.16)',
+        boxShadow: isOwn ? `0 0 12px ${color}15` : 'inset 0 1px 0 rgba(232,93,4,0.04)',
         cursor: isOwn ? 'pointer' : 'default',
       }}
     >
@@ -397,7 +397,7 @@ function VoyagerCard({
           {isOwn && (
             <div
               className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border"
-              style={{ background: '#111525', borderColor: '#E85A00', color: '#E85A00' }}
+              style={{ background: '#151B3A', borderColor: '#E85D04', color: '#E85D04' }}
             >
               <Camera size={10} />
             </div>
@@ -406,11 +406,11 @@ function VoyagerCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-mono font-semibold" style={{ color: '#EDE8DE' }}>
+            <span className="text-sm font-mono font-semibold" style={{ color: '#F5F5F5' }}>
               {voyager.display_name}
             </span>
             {isOwn && (
-              <span className="text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#E85A00', borderColor: 'rgba(232,90,0,0.4)', background: 'rgba(232,90,0,0.08)' }}>
+              <span className="text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#E85D04', borderColor: 'rgba(232,93,4,0.4)', background: 'rgba(232,93,4,0.08)' }}>
                 YOU
               </span>
             )}
@@ -421,9 +421,9 @@ function VoyagerCard({
             )}
           </div>
           {voyager.location && (
-            <div className="text-xs font-mono mt-0.5" style={{ color: '#4A5570' }}>{voyager.location}</div>
+            <div className="text-xs font-mono mt-0.5" style={{ color: 'rgba(245,245,245,0.35)' }}>{voyager.location}</div>
           )}
-          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>
+          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
             joined {formatJoinDate(voyager.joined_at)}
           </div>
         </div>
@@ -432,22 +432,22 @@ function VoyagerCard({
       {/* Stats */}
       <div className="flex gap-4 mb-3 py-2 border-y" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
         <div className="text-center flex-1">
-          <div className="text-xl font-mono font-bold" style={{ color: '#E85A00', textShadow: '0 0 10px rgba(232,90,0,0.4)' }}>
+          <div className="text-xl font-mono font-bold" style={{ color: '#E85D04', textShadow: '0 0 10px rgba(232,93,4,0.4)' }}>
             {voyager.observation_days}
           </div>
-          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>OBS DAYS</div>
+          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>OBS DAYS</div>
         </div>
         <div className="w-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
         <div className="text-center flex-1">
           <div className="text-xl font-mono font-bold" style={{ color: '#20D890', textShadow: '0 0 10px rgba(32,216,144,0.3)' }}>
             {voyager.worlds_discovered}
           </div>
-          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>WORLDS</div>
+          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>WORLDS</div>
         </div>
       </div>
 
       {/* Bio — 240 char display limit */}
-      <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
+      <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: 'rgba(245,245,245,0.55)' }}>
         {voyager.bio
           ? (voyager.bio.length > 240 ? voyager.bio.slice(0, 240) + '…' : voyager.bio)
           : '—'}
@@ -460,9 +460,9 @@ function VoyagerCard({
             <a key={key} href={href} target="_blank" rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
               className="flex items-center justify-center w-7 h-7 border transition-colors"
-              style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570', borderRadius: '2px' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(242,240,230,0.2)'; (e.currentTarget as HTMLElement).style.color = '#8A9AB5' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)'; (e.currentTarget as HTMLElement).style.color = '#4A5570' }}
+              style={{ borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', borderRadius: '2px' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(242,240,230,0.2)'; (e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.55)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)'; (e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.35)' }}
             >
               {icon}
             </a>
