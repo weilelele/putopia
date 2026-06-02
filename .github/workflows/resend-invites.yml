@@ -1,0 +1,20 @@
+name: Resend Failed Invites
+
+# One-off recovery drip for the ~139 invites that failed to send (rate-limit spike
+# around 2026-05-22..05-30). Sends 3 per run, every 2 hours → ~4 days to drain.
+# SAFE TO DELETE once the recovery panel shows 0 pending.
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'   # every 2 hours
+  workflow_dispatch:         # allow manual trigger from GitHub UI
+
+jobs:
+  resend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send next invite batch
+        run: |
+          curl -sf \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/admin/resend-invites?count=3"
