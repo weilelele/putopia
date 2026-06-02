@@ -1,6 +1,6 @@
 -- schema_v13.sql
--- Add per-day confirmed auth users helper for daily analytics breakdown
 
+-- Add per-day confirmed auth users helper for daily analytics breakdown
 CREATE OR REPLACE FUNCTION public.count_confirmed_auth_users_by_day(days_back integer)
 RETURNS TABLE(day date, cnt bigint)
 LANGUAGE sql
@@ -19,3 +19,10 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.count_confirmed_auth_users_by_day(integer) TO service_role;
+
+-- Add submission_count for dedup tracking; normalize email to lowercase
+alter table public.applications
+  add column if not exists submission_count integer not null default 1;
+
+-- Normalize existing emails to lowercase
+update public.applications set email = lower(email) where email != lower(email);

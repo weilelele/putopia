@@ -84,6 +84,7 @@ export type Application = {
   utm_content: string | null
   fbclid: string | null
   landing_page_variant: string | null
+  submission_count: number
 }
 
 export type ApplicationInsert = Pick<Application, 'email' | 'reason'> & {

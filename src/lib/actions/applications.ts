@@ -9,11 +9,33 @@ import { getPostHogClient } from '@/lib/posthog-server'
 export async function submitApplication(application: ApplicationInsert) {
   const supabase = await createClient()
 
-  const { error } = await supabase
-    .from('applications')
-    .insert({ name: '', ...application })
+  const normalizedEmail = (application.email ?? '').trim().toLowerCase()
 
-  if (error) return { error: error.message }
+  // Check for existing row to increment submission_count rather than duplicating
+  const { data: existing } = await supabase
+    .from('applications')
+    .select('id, submission_count')
+    .eq('email', normalizedEmail)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .single()
+
+  let error: string | null = null
+
+  if (existing) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateError } = await (supabase.from('applications') as any)
+      .update({ submission_count: (existing.submission_count ?? 1) + 1 })
+      .eq('id', existing.id)
+    if (updateError) error = (updateError as { message: string }).message
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: insertError } = await (supabase.from('applications') as any)
+      .insert({ name: '', ...application, email: normalizedEmail, submission_count: 1 })
+    if (insertError) error = (insertError as { message: string }).message
+  }
+
+  if (error) return { error }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://voyager.putopia.studio'
 

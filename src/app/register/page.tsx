@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
+import { getFirstTouch } from '@/lib/utm'
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
@@ -76,8 +77,16 @@ export default function RegisterPage() {
         worlds_discovered: 0,
         registered_at: new Date().toISOString(),
       }, { onConflict: 'id' })
+      const utm = getFirstTouch()
       posthog.identify(user.id, { email: user.email, display_name: displayName.trim() })
-      posthog.capture('account_registered', { display_name: displayName.trim() })
+      posthog.capture('account_registered', {
+        display_name:  displayName.trim(),
+        utm_source:    utm.utm_source   ?? undefined,
+        utm_medium:    utm.utm_medium   ?? undefined,
+        utm_campaign:  utm.utm_campaign ?? undefined,
+        utm_content:   utm.utm_content  ?? undefined,
+        fbclid:        utm.fbclid       ?? undefined,
+      })
     }
 
     router.push('/intel')
@@ -101,7 +110,7 @@ export default function RegisterPage() {
       <div style={{ width: '100%', maxWidth: '440px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>// INVITATION VERIFIED</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-nebula)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(34,212,224,0.4)' }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-nebula)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(232,93,4,0.4)' }}>
             ESTABLISH IDENTITY
           </div>
         </div>
