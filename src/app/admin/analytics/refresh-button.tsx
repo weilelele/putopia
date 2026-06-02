@@ -28,7 +28,7 @@ export function RefreshButton() {
         color: loading ? '#4A5570' : '#E85A00',
         background: 'transparent',
         border: '1px solid',
-        borderColor: loading ? '#1E2840' : 'rgba(232,90,0,0.4)',
+        borderColor: loading ? 'rgba(255,107,53,0.16)' : 'rgba(232,90,0,0.4)',
         padding: '6px 14px',
         cursor: loading ? 'default' : 'pointer',
         transition: 'all 0.2s',

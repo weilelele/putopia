@@ -10,16 +10,16 @@ import type { Intel, IntelTag } from '@/types/database'
 import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 const S = {
-  card:  { background: '#111525', border: '1px solid #1E2840', padding: '20px', marginBottom: '16px' },
-  th:    { textAlign: 'left' as const, padding: '8px 12px', color: '#4A5570', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid #1A2238', whiteSpace: 'nowrap' as const },
+  card:  { background: '#111525', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
+  th:    { textAlign: 'left' as const, padding: '8px 12px', color: '#4A5570', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
   td:    { padding: '8px 12px', color: '#8A9AB5', borderBottom: '1px solid #0D1020', verticalAlign: 'top' as const, fontSize: '13px' },
   label: { display: 'block', color: '#4A5570', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:  { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
-  sel:   { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
+  input: { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:  { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  sel:   { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
 }
 
-const TAG_COLOR: Record<IntelTag, string> = { NOTICE: '#8A9AB5', DEVICE: '#E85A00', ORG: '#00C8C8' }
+const TAG_COLOR: Record<IntelTag, string> = { NOTICE: '#8A9AB5', DEVICE: '#E85A00', ORG: '#E8A020' }
 
 type F = {
   id: string
@@ -308,7 +308,7 @@ export default function IntelAdmin() {
                 {currentImages.map((url, idx) => (
                   <div key={url} style={{ position: 'relative' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #1E2840' }} />
+                    <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid rgba(255,107,53,0.16)' }} />
                     <button
                       onClick={() => removeExisting(url)}
                       style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
@@ -339,7 +339,7 @@ export default function IntelAdmin() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              style={{ padding: '6px 14px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid #1E2840', color: '#8A9AB5', background: '#0D1020' }}
+              style={{ padding: '6px 14px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid rgba(255,107,53,0.16)', color: '#8A9AB5', background: '#0D1020' }}
             >
               + 选择图片
             </button>
@@ -361,7 +361,7 @@ export default function IntelAdmin() {
             >
               {uploading ? '上传图片中...' : saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid #1E2840', color: '#4A5570', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: '#4A5570', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
           </div>
         </div>
       )}
@@ -370,7 +370,7 @@ export default function IntelAdmin() {
       <div style={{ ...S.card, marginTop: '24px', borderColor: '#1A3040' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ color: '#22D4E0', fontSize: '11px', letterSpacing: '0.25em', marginBottom: '4px' }}>UPLINK // DASHBOARD FEED</div>
+            <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.25em', marginBottom: '4px' }}>UPLINK // DASHBOARD FEED</div>
             <div style={{ color: '#8A9AB5', fontSize: '12px', fontFamily: 'monospace' }}>
               {feedLastGenerated
                 ? `Last generated: ${new Date(feedLastGenerated).toLocaleString()}`
@@ -391,7 +391,7 @@ export default function IntelAdmin() {
               }
             }}
             disabled={feedGenerating}
-            style={{ padding: '8px 20px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.2em', cursor: feedGenerating ? 'not-allowed' : 'pointer', border: '1px solid #22D4E0', color: '#22D4E0', background: 'rgba(34,212,224,0.06)', opacity: feedGenerating ? 0.5 : 1 }}
+            style={{ padding: '8px 20px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.2em', cursor: feedGenerating ? 'not-allowed' : 'pointer', border: '1px solid #FF6B35', color: '#FF6B35', background: 'rgba(232,93,4,0.06)', opacity: feedGenerating ? 0.5 : 1 }}
           >
             {feedGenerating ? 'GENERATING...' : 'REGENERATE FEED'}
           </button>

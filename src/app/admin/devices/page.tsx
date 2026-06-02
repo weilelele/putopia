@@ -8,13 +8,13 @@ import type { Device } from '@/types/database'
 import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 const S = {
-  card:  { background: '#111525', border: '1px solid #1E2840', padding: '20px', marginBottom: '16px' },
-  th:    { textAlign: 'left' as const, padding: '8px 12px', color: '#4A5570', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid #1A2238', whiteSpace: 'nowrap' as const },
+  card:  { background: '#111525', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
+  th:    { textAlign: 'left' as const, padding: '8px 12px', color: '#4A5570', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
   td:    { padding: '8px 12px', color: '#8A9AB5', borderBottom: '1px solid #0D1020', verticalAlign: 'middle' as const, fontSize: '13px' },
   label: { display: 'block', color: '#4A5570', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:  { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
-  sel:   { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
+  input: { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:  { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  sel:   { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
 }
 
 type F = {
@@ -101,7 +101,7 @@ function ImageZone({ value, onChange, active }: { value: string; onChange: (url:
       </div>
       {value && (
         <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-          <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid #1E2840', color: '#4A5570', cursor: 'pointer', fontFamily: 'monospace', fontSize: '11px', padding: '3px 10px' }}>更换图片</button>
+          <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: '#4A5570', cursor: 'pointer', fontFamily: 'monospace', fontSize: '11px', padding: '3px 10px' }}>更换图片</button>
           <button onClick={() => onChange('')} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '11px' }}>移除</button>
         </div>
       )}
@@ -202,7 +202,7 @@ export default function DevicesAdmin() {
                     {d.image_path
                       // eslint-disable-next-line @next/next/no-img-element
                       ? <img src={d.image_path} alt="" style={{ width: '60px', height: '40px', objectFit: 'cover', display: 'block' }} />
-                      : <div style={{ width: '60px', height: '40px', background: '#0D1020', border: '1px solid #1A2238' }} />
+                      : <div style={{ width: '60px', height: '40px', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)' }} />
                     }
                   </td>
                   <td style={{ ...S.td, color: '#4A5570', fontSize: '11px' }}>{d.id}</td>
@@ -326,7 +326,7 @@ export default function DevicesAdmin() {
             <button onClick={handleSave} disabled={saving} style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #E85A00', color: '#E85A00', background: saving ? 'transparent' : 'rgba(232,90,0,0.08)', opacity: saving ? 0.6 : 1 }}>
               {saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid #1E2840', color: '#4A5570', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: '#4A5570', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
           </div>
         </div>
       )}

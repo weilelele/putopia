@@ -26,7 +26,7 @@ export default async function WorldsPage() {
       {/* Stats bar */}
       <div
         className="flex gap-6 mb-8 p-4 border flex-wrap"
-        style={{ background: '#111525', borderColor: '#1E2840', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)' }}
+        style={{ background: '#111525', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.05)' }}
       >
         <div>
           <div className="text-xl font-mono font-bold" style={{ color: '#E85A00' }}>{worlds.length}</div>
@@ -37,7 +37,7 @@ export default async function WorldsPage() {
           <div className="text-xs font-mono" style={{ color: '#4A5570' }}>DISCOVERERS</div>
         </div>
         <div>
-          <div className="text-xl font-mono font-bold" style={{ color: '#00C8C8' }}>200+</div>
+          <div className="text-xl font-mono font-bold" style={{ color: '#FF6B35' }}>200+</div>
           <div className="text-xs font-mono" style={{ color: '#4A5570' }}>NODES ON RECORD</div>
         </div>
       </div>
@@ -54,7 +54,7 @@ export default async function WorldsPage() {
               key={world.id}
               href={`/worlds/${encodeURIComponent(world.id)}`}
               className="border overflow-hidden transition-all duration-200 group"
-              style={{ background: '#111525', borderColor: '#1E2840', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)', textDecoration: 'none', display: 'block' }}
+              style={{ background: '#111525', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,90,0,0.04)', textDecoration: 'none', display: 'block' }}
             >
               {/* Hero image / gradient */}
               <div className="h-52 relative overflow-hidden">
@@ -107,7 +107,7 @@ export default async function WorldsPage() {
                 <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: '#8A9AB5' }}>
                   {world.description}
                 </p>
-                <div className="pt-2 border-t flex items-center justify-between gap-2" style={{ borderColor: '#1A2238' }}>
+                <div className="pt-2 border-t flex items-center justify-between gap-2" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
                   <div className="min-w-0">
                     {world.discoverer_id ? (
                       <Link

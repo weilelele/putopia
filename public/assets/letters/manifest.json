@@ -1,0 +1,222 @@
+{
+ "imgW": 3699,
+ "imgH": 1020,
+ "rows": {
+  "1": {
+   "word": "MULTIVERSE",
+   "y0": 131,
+   "y1": 511,
+   "rowHeight": 380,
+   "cells": [
+    {
+     "i": 0,
+     "ch": "M",
+     "file": "/assets/letters/r1-00-M.png",
+     "x": 175,
+     "y": 131,
+     "w": 287,
+     "h": 380
+    },
+    {
+     "i": 1,
+     "ch": "U",
+     "file": "/assets/letters/r1-01-U.png",
+     "x": 566,
+     "y": 131,
+     "w": 256,
+     "h": 380
+    },
+    {
+     "i": 2,
+     "ch": "L",
+     "file": "/assets/letters/r1-02-L.png",
+     "x": 928,
+     "y": 131,
+     "w": 242,
+     "h": 380
+    },
+    {
+     "i": 3,
+     "ch": "T",
+     "file": "/assets/letters/r1-03-T.png",
+     "x": 1252,
+     "y": 131,
+     "w": 258,
+     "h": 380
+    },
+    {
+     "i": 4,
+     "ch": "I",
+     "file": "/assets/letters/r1-04-I.png",
+     "x": 1624,
+     "y": 131,
+     "w": 197,
+     "h": 380
+    },
+    {
+     "i": 5,
+     "ch": "V",
+     "file": "/assets/letters/r1-05-V.png",
+     "x": 1925,
+     "y": 131,
+     "w": 271,
+     "h": 380
+    },
+    {
+     "i": 6,
+     "ch": "E",
+     "file": "/assets/letters/r1-06-E.png",
+     "x": 2294,
+     "y": 131,
+     "w": 252,
+     "h": 380
+    },
+    {
+     "i": 7,
+     "ch": "R",
+     "file": "/assets/letters/r1-07-R.png",
+     "x": 2645,
+     "y": 131,
+     "w": 264,
+     "h": 380
+    },
+    {
+     "i": 8,
+     "ch": "S",
+     "file": "/assets/letters/r1-08-S.png",
+     "x": 3001,
+     "y": 131,
+     "w": 257,
+     "h": 380
+    },
+    {
+     "i": 9,
+     "ch": "E",
+     "file": "/assets/letters/r1-09-E.png",
+     "x": 3360,
+     "y": 131,
+     "w": 253,
+     "h": 380
+    }
+   ],
+   "pool": [
+    "/assets/letters/r1-00-M.png",
+    "/assets/letters/r1-01-U.png",
+    "/assets/letters/r1-02-L.png",
+    "/assets/letters/r1-03-T.png",
+    "/assets/letters/r1-04-I.png",
+    "/assets/letters/r1-05-V.png",
+    "/assets/letters/r1-06-E.png",
+    "/assets/letters/r1-07-R.png",
+    "/assets/letters/r1-08-S.png"
+   ]
+  },
+  "2": {
+   "word": "COLLECTIVE",
+   "y0": 608,
+   "y1": 993,
+   "rowHeight": 385,
+   "cells": [
+    {
+     "i": 0,
+     "ch": "C",
+     "file": "/assets/letters/r2-00-C.png",
+     "x": 188,
+     "y": 608,
+     "w": 256,
+     "h": 385
+    },
+    {
+     "i": 1,
+     "ch": "O",
+     "file": "/assets/letters/r2-01-O.png",
+     "x": 545,
+     "y": 608,
+     "w": 256,
+     "h": 385
+    },
+    {
+     "i": 2,
+     "ch": "L",
+     "file": "/assets/letters/r2-02-L.png",
+     "x": 920,
+     "y": 608,
+     "w": 243,
+     "h": 385
+    },
+    {
+     "i": 3,
+     "ch": "L",
+     "file": "/assets/letters/r2-03-L.png",
+     "x": 1257,
+     "y": 608,
+     "w": 242,
+     "h": 385
+    },
+    {
+     "i": 4,
+     "ch": "E",
+     "file": "/assets/letters/r2-04-E.png",
+     "x": 1600,
+     "y": 608,
+     "w": 253,
+     "h": 385
+    },
+    {
+     "i": 5,
+     "ch": "C",
+     "file": "/assets/letters/r2-05-C.png",
+     "x": 1950,
+     "y": 608,
+     "w": 257,
+     "h": 385
+    },
+    {
+     "i": 6,
+     "ch": "T",
+     "file": "/assets/letters/r2-06-T.png",
+     "x": 2305,
+     "y": 608,
+     "w": 257,
+     "h": 385
+    },
+    {
+     "i": 7,
+     "ch": "I",
+     "file": "/assets/letters/r2-07-I.png",
+     "x": 2681,
+     "y": 608,
+     "w": 196,
+     "h": 385
+    },
+    {
+     "i": 8,
+     "ch": "V",
+     "file": "/assets/letters/r2-08-V.png",
+     "x": 2989,
+     "y": 608,
+     "w": 270,
+     "h": 385
+    },
+    {
+     "i": 9,
+     "ch": "E",
+     "file": "/assets/letters/r2-09-E.png",
+     "x": 3358,
+     "y": 608,
+     "w": 255,
+     "h": 385
+    }
+   ],
+   "pool": [
+    "/assets/letters/r2-00-C.png",
+    "/assets/letters/r2-01-O.png",
+    "/assets/letters/r2-02-L.png",
+    "/assets/letters/r2-04-E.png",
+    "/assets/letters/r2-06-T.png",
+    "/assets/letters/r2-07-I.png",
+    "/assets/letters/r2-08-V.png"
+   ]
+  }
+ }
+}

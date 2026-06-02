@@ -41,9 +41,17 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/putopia-logo.png" alt="Putopia Collective" />
+      <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+        <img
+          src="/assets/vi-icon.png"
+          alt=""
+          style={{ height: 36, width: 'auto', display: 'block', flexShrink: 0 }}
+        />
+        <img
+          src="/assets/vi-wordmark.png"
+          alt="Multiverse Collective"
+          style={{ height: 30, width: 'auto', display: 'block' }}
+        />
       </div>
 
       {navItems.map(({ group, items }) => (

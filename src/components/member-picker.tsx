@@ -13,7 +13,7 @@ interface MemberPickerProps {
 }
 
 const ROLE_COLOR: Record<string, string> = {
-  architect: '#22D4E0',
+  architect: '#E8A020',
   voyager: '#E85A00',
 }
 
@@ -28,11 +28,11 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
   const baseInput: React.CSSProperties = {
     width: '100%',
     background: '#0D1020',
-    border: '1px solid #1E2840',
+    border: '1px solid rgba(255,107,53,0.16)',
     color: '#EDE8DE',
     padding: '7px 10px',
-    fontFamily: 'monospace',
-    fontSize: '13px',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 'var(--fs-label)',
     outline: 'none',
     boxSizing: 'border-box',
     ...inputStyle,
@@ -80,7 +80,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
   const labelStyle: React.CSSProperties = {
     display: 'block',
     color: '#4A5570',
-    fontSize: '11px',
+    fontSize: 'var(--fs-caption)',
     letterSpacing: '0.1em',
     marginBottom: '4px',
   }
@@ -100,14 +100,14 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           padding: '6px 10px',
           ...inputStyle,
         }}>
-          <span style={{ color: '#E85A00', fontSize: '11px', fontFamily: 'monospace' }}>✓</span>
-          <span style={{ color: '#EDE8DE', fontFamily: 'monospace', fontSize: '13px', flex: 1 }}>
+          <span style={{ color: '#E85A00', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)' }}>✓</span>
+          <span style={{ color: '#EDE8DE', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', flex: 1 }}>
             {value.name}
           </span>
           <button
             type="button"
             onClick={clear}
-            style={{ background: 'none', border: 'none', color: '#4A5570', cursor: 'pointer', fontFamily: 'monospace', fontSize: '13px', padding: '0 2px', lineHeight: 1 }}
+            style={{ background: 'none', border: 'none', color: '#4A5570', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '0 2px', lineHeight: 1 }}
           >×</button>
         </div>
       ) : (
@@ -118,7 +118,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           onChange={e => setQuery(e.target.value)}
           placeholder="输入名字搜索成员..."
           onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(232,90,0,0.5)' }}
-          onBlur={e => { (e.target as HTMLInputElement).style.borderColor = '#1E2840' }}
+          onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,107,53,0.16)' }}
           autoComplete="off"
         />
       )}
@@ -131,18 +131,18 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           left: 0,
           right: 0,
           background: '#111525',
-          border: '1px solid #1E2840',
+          border: '1px solid rgba(255,107,53,0.16)',
           zIndex: 100,
           maxHeight: '200px',
           overflowY: 'auto',
         }}>
           {loading && (
-            <div style={{ padding: '8px 12px', color: '#4A5570', fontFamily: 'monospace', fontSize: '12px' }}>
+            <div style={{ padding: '8px 12px', color: '#4A5570', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
               搜索中...
             </div>
           )}
           {!loading && results.length === 0 && (
-            <div style={{ padding: '8px 12px', color: '#4A5570', fontFamily: 'monospace', fontSize: '12px' }}>
+            <div style={{ padding: '8px 12px', color: '#4A5570', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
               未找到匹配成员
             </div>
           )}
@@ -158,15 +158,15 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
                 cursor: 'pointer',
                 borderBottom: '1px solid #0D1020',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#1A2238')}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,107,53,0.16)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
-              <span style={{ fontFamily: 'monospace', fontSize: '13px', color: '#EDE8DE', flex: 1 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#EDE8DE', flex: 1 }}>
                 {m.display_name}
               </span>
               <span style={{
-                fontFamily: 'monospace',
-                fontSize: '10px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--fs-caption)',
                 letterSpacing: '0.1em',
                 color: ROLE_COLOR[m.role] ?? '#8A9AB5',
                 border: `1px solid ${ROLE_COLOR[m.role] ?? '#8A9AB5'}`,

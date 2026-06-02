@@ -98,7 +98,7 @@ export default function McConfigPage() {
                       display: 'grid', gridTemplateColumns: '20px 1fr 160px 32px',
                       gap: '0.75rem', alignItems: 'center',
                       padding: '0.55rem 0.75rem',
-                      background: '#0D1020', border: '1px solid #1E2840',
+                      background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)',
                       opacity: saving === fn.id ? 0.6 : 1, transition: 'opacity 0.2s',
                     }}>
                       <GripVertical size={14} style={{ color: '#4A5570', cursor: 'grab' }} />
@@ -123,7 +123,7 @@ export default function McConfigPage() {
                             style={{
                               fontFamily: 'var(--font-mono)', fontSize: '0.52rem',
                               letterSpacing: '0.08em', padding: '3px 8px',
-                              border: `1px solid ${fn.status === opt.value ? opt.color : '#1E2840'}`,
+                              border: `1px solid ${fn.status === opt.value ? opt.color : 'rgba(255,107,53,0.16)'}`,
                               background: fn.status === opt.value ? `${opt.color}18` : 'transparent',
                               color: fn.status === opt.value ? opt.color : '#4A5570',
                               cursor: 'pointer', transition: 'all 0.15s',
@@ -179,7 +179,7 @@ export default function McConfigPage() {
                       style={{
                         fontFamily: 'var(--font-mono)', fontSize: '0.55rem',
                         letterSpacing: '0.08em', padding: '5px 10px',
-                        border: `1px solid ${newStatus === opt.value ? opt.color : '#1E2840'}`,
+                        border: `1px solid ${newStatus === opt.value ? opt.color : 'rgba(255,107,53,0.16)'}`,
                         background: newStatus === opt.value ? `${opt.color}18` : 'transparent',
                         color: newStatus === opt.value ? opt.color : '#4A5570',
                         cursor: 'pointer', transition: 'all 0.15s',

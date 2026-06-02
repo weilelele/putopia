@@ -30,7 +30,7 @@ export default function WikiSyncButton() {
   }
 
   const label   = state === 'syncing' ? 'SYNCING…' : state === 'done' ? '✓ SYNCED' : state === 'error' ? '✗ FAILED' : 'SYNC WIKI'
-  const color   = state === 'done' ? '#22D4E0' : state === 'error' ? '#E83030' : '#E85A00'
+  const color   = state === 'done' ? '#FF6B35' : state === 'error' ? '#E83030' : '#E85A00'
   const opacity = state === 'syncing' ? 0.6 : 1
 
   return (

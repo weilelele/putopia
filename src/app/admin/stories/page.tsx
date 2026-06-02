@@ -9,12 +9,12 @@ import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 // ── shared styles ──────────────────────────────────────────────────────────
 const S = {
-  card:    { background: '#111525', border: '1px solid #1E2840', padding: '20px', marginBottom: '16px' },
-  th:      { textAlign: 'left' as const, padding: '8px 12px', color: '#4A5570', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid #1A2238', whiteSpace: 'nowrap' as const },
+  card:    { background: '#111525', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
+  th:      { textAlign: 'left' as const, padding: '8px 12px', color: '#4A5570', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
   td:      { padding: '8px 12px', color: '#8A9AB5', borderBottom: '1px solid #0D1020', verticalAlign: 'top' as const, fontSize: '13px' },
   label:   { display: 'block', color: '#4A5570', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input:   { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:    { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  input:   { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:    { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
   row:     { display: 'grid', gap: '12px', marginBottom: '12px' } as const,
 }
 
@@ -155,7 +155,7 @@ export default function StoriesAdmin() {
                   <td style={S.td}>{s.author_name}</td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>{s.date}</td>
                   <td style={S.td}>
-                    <span style={{ fontSize: '11px', padding: '2px 8px', border: '1px solid', color: s.is_published ? '#20D890' : '#4A5570', borderColor: s.is_published ? 'rgba(32,216,144,0.4)' : '#1E2840' }}>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', border: '1px solid', color: s.is_published ? '#20D890' : '#4A5570', borderColor: s.is_published ? 'rgba(32,216,144,0.4)' : 'rgba(255,107,53,0.16)' }}>
                       {s.is_published ? 'PUBLISHED' : 'DRAFT'}
                     </span>
                   </td>
@@ -250,7 +250,7 @@ export default function StoriesAdmin() {
             >
               {saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid #1E2840', color: '#4A5570', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: '#4A5570', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
           </div>
         </div>
       )}

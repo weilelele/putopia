@@ -372,10 +372,10 @@ function Q1Card({ value, onChange, touched, onContinue }: {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.38em', color: 'var(--color-nucleus)', opacity: 0.65 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.38em', color: 'var(--color-nucleus)', opacity: 0.65 }}>
           01 / 02
         </div>
-        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '1.05rem', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
           How strongly do you feel that another version of your life exists right now?
         </h2>
       </div>
@@ -394,7 +394,7 @@ function Q1Card({ value, onChange, touched, onContinue }: {
             background: touched ? 'rgba(255,90,31,0.08)' : 'transparent',
             border: `1px solid ${touched ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
             color: touched ? 'var(--color-star)' : 'var(--color-star-dim)',
-            fontFamily: 'var(--font-display)', fontSize: '0.68rem', letterSpacing: '0.2em',
+            fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em',
             padding: '0.75rem 1.5rem', cursor: touched ? 'pointer' : 'default',
             transition: 'all 0.2s ease',
             display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -427,10 +427,10 @@ function Q2Card({ selected, onSelect }: { selected: string; onSelect: (id: strin
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.38em', color: 'var(--color-nebula)', opacity: 0.65 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.38em', color: 'var(--color-nebula)', opacity: 0.65 }}>
           02 / 02
         </div>
-        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '1.05rem', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
           Which parallel world are you most hoping to find?
         </h2>
       </div>
@@ -489,7 +489,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <p style={{
           fontFamily: 'var(--font-body)', fontWeight: 700,
-          fontSize: '1.35rem', lineHeight: 1.5,
+          fontSize: 'var(--fs-title)', lineHeight: 1.5,
           color: 'var(--color-star)', margin: 0,
           animation: 'fadeInUp 0.5s ease forwards',
         }}>
@@ -497,7 +497,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
         </p>
         <p style={{
           fontFamily: 'var(--font-body)', fontWeight: 500,
-          fontSize: '1.05rem', lineHeight: 1.6,
+          fontSize: 'var(--fs-body)', lineHeight: 1.6,
           color: 'var(--color-star-dim)', margin: 0,
           opacity: showSecondLine ? 1 : 0,
           transform: showSecondLine ? 'translateY(0)' : 'translateY(10px)',
@@ -520,7 +520,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
 
         {/* Invitation text */}
         <p style={{
-          fontFamily: 'var(--font-body)', fontSize: '0.92rem',
+          fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',
           color: 'rgba(242,240,230,0.55)', lineHeight: 1.75, margin: 0,
         }}>
           Leave your email below. We will invite you into our collective and assign you access to a Multiverse Console.
@@ -531,7 +531,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
             <label style={{
-              fontFamily: 'var(--font-mono)', fontSize: '0.5rem',
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
               letterSpacing: '0.3em', color: 'var(--color-star-deep)',
             }}>
               YOUR EMAIL
@@ -558,7 +558,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
               background:  email && !submitting ? 'rgba(255,90,31,0.1)' : 'transparent',
               border:      `1px solid ${email && !submitting ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
               color:       email && !submitting ? 'var(--color-star)' : 'rgba(242,240,230,0.35)',
-              fontFamily:  'var(--font-display)', fontSize: '0.72rem', letterSpacing: '0.15em',
+              fontFamily:  'var(--font-display)', fontSize: 'var(--fs-label)', letterSpacing: '0.15em',
               cursor:      email && !submitting ? 'pointer' : 'default',
               transition:  'all 0.2s ease',
               boxShadow:   email && !submitting ? '0 0 20px rgba(255,90,31,0.08)' : 'none',
@@ -596,7 +596,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
       }}>
         {/* SIGNAL TRANSMITTED. */}
         <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: '0.48rem',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
           letterSpacing: '0.42em', color: 'var(--color-nebula)',
           ...lineStyle(confirmLines[0]),
         }}>
@@ -606,7 +606,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
         {/* Check your email inbox. */}
         <div style={{
           fontFamily: 'var(--font-body)', fontWeight: 700,
-          fontSize: '1.35rem', lineHeight: 1.4, color: 'var(--color-star)',
+          fontSize: 'var(--fs-title)', lineHeight: 1.4, color: 'var(--color-star)',
           ...lineStyle(confirmLines[1]),
         }}>
           Check your email inbox.
@@ -614,7 +614,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
 
         {/* Body */}
         <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
           color: 'rgba(242,240,230,0.55)', lineHeight: 1.75,
           ...lineStyle(confirmLines[2]),
         }}>
@@ -624,7 +624,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
         {/* Tap hint */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '0.5rem',
-          fontFamily: 'var(--font-mono)', fontSize: '0.58rem',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
           letterSpacing: '0.18em', color: 'rgba(232,93,4,0.6)',
           marginTop: '0.5rem',
           ...lineStyle(confirmLines[3]),
@@ -648,7 +648,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
               rel="noopener noreferrer"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
-                fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
+                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
                 letterSpacing: '0.14em', color: 'var(--color-star)',
                 border: '1px solid rgba(242,240,230,0.15)',
                 padding: '0.55rem 1rem',
@@ -775,13 +775,13 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
           gap: '1.1rem', textAlign: 'center',
         }}
       >
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.4em', color: 'rgba(232,93,4,0.75)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.4em', color: 'rgba(232,93,4,0.75)' }}>
           WELCOME,
         </div>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', letterSpacing: '0.14em', color: 'var(--color-nucleus)', lineHeight: 1 }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display)', letterSpacing: '0.14em', color: 'var(--color-nucleus)', lineHeight: 1 }}>
           VOYAGER
         </div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.18em', color: 'rgba(242,240,230,0.4)', lineHeight: 1.8, marginTop: '0.25rem' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(242,240,230,0.4)', lineHeight: 1.8, marginTop: '0.25rem' }}>
           YOU HAVE BEEN SELECTED TO EXPLORE<br />
           THE MYSTERIES OF PARALLEL WORLDS.
         </div>
@@ -835,20 +835,20 @@ function SuccessScreen() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: '0 0 28px rgba(32,216,144,0.14)',
       }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', color: 'var(--color-ok)' }}>✓</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-h3)', color: 'var(--color-ok)' }}>✓</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', maxWidth: 340 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.4em', color: 'var(--color-ok)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.4em', color: 'var(--color-ok)' }}>
           COORDINATES RECEIVED
         </div>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', letterSpacing: '0.15em', color: 'var(--color-star)', margin: 0 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-body)', letterSpacing: '0.15em', color: 'var(--color-star)', margin: 0 }}>
           WELCOME, VOYAGER.
         </h2>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.66rem', color: 'rgba(242,240,230,0.4)', lineHeight: 1.7, margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(242,240,230,0.4)', lineHeight: 1.7, margin: 0 }}>
           Entering the collective now.
         </p>
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.48rem', letterSpacing: '0.2em', color: 'rgba(242,240,230,0.18)' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'rgba(242,240,230,0.18)' }}>
         Redirecting...
       </div>
     </div>
@@ -892,20 +892,20 @@ function PendingInboxScreen({
       {/* Header */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
         <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: '0.48rem',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
           letterSpacing: '0.42em', color: 'var(--color-nebula)',
         }}>
           SIGNAL TRANSMITTED.
         </div>
         <h2 style={{
           fontFamily: 'var(--font-body)', fontWeight: 700,
-          fontSize: '1.35rem', lineHeight: 1.4,
+          fontSize: 'var(--fs-title)', lineHeight: 1.4,
           color: 'var(--color-star)', margin: 0,
         }}>
           Check your inbox.
         </h2>
         <p style={{
-          fontFamily: 'var(--font-mono)', fontSize: '0.7rem',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
           color: 'rgba(242,240,230,0.45)', lineHeight: 1.75, margin: 0,
         }}>
           Your activation key has been dispatched to:
@@ -913,7 +913,7 @@ function PendingInboxScreen({
         {/* Email pill + provider button — same row, same height */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
+            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
             color: 'var(--color-star)',
             border: '1px solid rgba(232,93,4,0.25)',
             background: 'rgba(232,93,4,0.05)',
@@ -930,7 +930,7 @@ function PendingInboxScreen({
               rel="noopener noreferrer"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
+                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
                 letterSpacing: '0.04em', color: 'var(--color-nucleus)',
                 border: '1px solid rgba(255,90,31,0.35)',
                 background: 'rgba(255,90,31,0.07)',
@@ -964,12 +964,12 @@ function PendingInboxScreen({
         {/* Unknown provider: generic nudge */}
         {!provider && (
           <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: '0.65rem',
+            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
             color: 'rgba(242,240,230,0.4)', lineHeight: 1.7,
             border: '1px solid rgba(242,240,230,0.08)',
             padding: '0.8rem 1rem',
           }}>
-            Open your email client and look for a message from Putopia Collective.
+            Open your email client and look for a message from Multiverse Collective.
           </div>
         )}
 
@@ -979,7 +979,7 @@ function PendingInboxScreen({
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             gap: '0.5rem',
-            fontFamily: 'var(--font-mono)', fontSize: '0.62rem',
+            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
             letterSpacing: '0.14em', color: 'rgba(242,240,230,0.55)',
             padding: '0.75rem 1.5rem',
             background: 'transparent',
@@ -1008,7 +1008,7 @@ function PendingInboxScreen({
           onClick={onStartOver}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            fontFamily: 'var(--font-mono)', fontSize: '0.55rem',
+            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
             letterSpacing: '0.18em', color: 'rgba(242,240,230,0.25)',
             textDecoration: 'underline', textUnderlineOffset: 3,
             transition: 'color 0.2s',

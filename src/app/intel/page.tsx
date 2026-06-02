@@ -35,12 +35,12 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
       style={{ textDecoration: 'none', marginBottom: '12px' }}
     >
       <div
-        style={{ background: '#111525', border: '1px solid #1E2840', overflow: 'hidden', transition: 'border-color 0.15s' }}
+        style={{ background: '#111525', border: '1px solid rgba(255,107,53,0.16)', overflow: 'hidden', transition: 'border-color 0.15s' }}
         onMouseEnter={e => (e.currentTarget.style.borderColor = color)}
-        onMouseLeave={e => (e.currentTarget.style.borderColor = '#1E2840')}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,107,53,0.16)')}
       >
         {/* Publisher bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: '#0D1020', borderBottom: '1px solid #1A2238' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: '#0D1020', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
 
           {/* Avatar */}
           {entry.publisher_avatar_url ? (
@@ -55,7 +55,7 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
               width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
               background: `${color}18`, border: `1px solid ${color}50`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, color,
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, color,
             }}>
               {getInitials(name)}
             </div>
@@ -63,17 +63,17 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
 
           {/* Name + date */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ color: '#EDE8DE', fontFamily: 'monospace', fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ color: '#EDE8DE', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {name}
             </div>
-            <div style={{ color: '#4A5570', fontFamily: 'monospace', fontSize: '11px' }}>
+            <div style={{ color: '#4A5570', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)' }}>
               {formatDate(entry.timestamp)}
             </div>
           </div>
 
           {/* Tag badge */}
           <span style={{
-            fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.12em',
+            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
             color, border: `1px solid ${color}60`, padding: '2px 8px', flexShrink: 0,
           }}>
             {entry.tag}
@@ -86,20 +86,20 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
 
           {/* Text */}
           <div style={{ flex: 1, padding: '14px 16px', minWidth: 0 }}>
-            <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '0.9rem', color: '#EDE8DE', marginBottom: '8px', lineHeight: 1.4 }}>
+            <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', color: '#EDE8DE', marginBottom: '8px', lineHeight: 1.4 }}>
               {entry.title}
             </h2>
-            <p style={{ fontFamily: 'monospace', fontSize: '12px', color: '#8A9AB5', lineHeight: 1.7, margin: 0 }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#8A9AB5', lineHeight: 1.7, margin: 0 }}>
               {entry.content.length > 140 ? entry.content.slice(0, 140) + '…' : entry.content}
             </p>
-            <div style={{ marginTop: '12px', fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.16em', color, opacity: 0.8 }}>
+            <div style={{ marginTop: '12px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color, opacity: 0.8 }}>
               READ MORE →
             </div>
           </div>
 
           {/* Image (desktop: right column, mobile: hidden to keep feed tight) */}
           {hasImage && (
-            <div style={{ width: '140px', flexShrink: 0, borderLeft: '1px solid #1A2238', position: 'relative' }} className="hidden sm:block">
+            <div style={{ width: '140px', flexShrink: 0, borderLeft: '1px solid rgba(255,107,53,0.16)', position: 'relative' }} className="hidden sm:block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={entry.images[0]}
@@ -109,8 +109,8 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
               {extraImgs > 0 && (
                 <div style={{
                   position: 'absolute', bottom: 6, right: 6,
-                  background: 'rgba(11,15,23,0.82)', border: '1px solid #1E2840',
-                  color: '#8A9AB5', fontFamily: 'monospace', fontSize: '10px',
+                  background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(255,107,53,0.16)',
+                  color: '#8A9AB5', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
                   padding: '2px 6px', letterSpacing: '0.08em',
                 }}>
                   +{extraImgs}
@@ -123,7 +123,7 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
 
         {/* Mobile image strip — shown only on small screens when image exists */}
         {hasImage && (
-          <div className="block sm:hidden" style={{ borderTop: '1px solid #1A2238', position: 'relative' }}>
+          <div className="block sm:hidden" style={{ borderTop: '1px solid rgba(255,107,53,0.16)', position: 'relative' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={entry.images[0]}
@@ -133,8 +133,8 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
             {extraImgs > 0 && (
               <div style={{
                 position: 'absolute', bottom: 6, right: 6,
-                background: 'rgba(11,15,23,0.82)', border: '1px solid #1E2840',
-                color: '#8A9AB5', fontFamily: 'monospace', fontSize: '10px',
+                background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(255,107,53,0.16)',
+                color: '#8A9AB5', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
                 padding: '2px 6px',
               }}>
                 +{extraImgs}
@@ -174,7 +174,7 @@ export default function IntelPage() {
           {(['NOTICE', 'DEVICE', 'ORG'] as const).map((tag) => (
             <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: TAG_COLOR[tag] }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.18em', color: TAG_COLOR[tag] }}>{tag}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: TAG_COLOR[tag] }}>{tag}</span>
             </div>
           ))}
         </div>

@@ -7,10 +7,10 @@ import type { Vote, UserRole } from '@/types/database'
 import clsx from 'clsx'
 
 const ROLE_STYLE: Record<UserRole, { color: string; border: string; bg: string }> = {
-  guest:     { color: '#4A5570', border: '#1A2238',               bg: 'transparent' },
+  guest:     { color: '#4A5570', border: 'rgba(255,107,53,0.16)',               bg: 'transparent' },
   applicant: { color: '#8A9AB5', border: 'rgba(138,154,181,0.3)', bg: 'rgba(138,154,181,0.06)' },
   voyager:   { color: '#E85A00', border: 'rgba(232,90,0,0.3)',    bg: 'rgba(232,90,0,0.08)' },
-  architect: { color: '#00C8C8', border: 'rgba(0,200,200,0.3)',   bg: 'rgba(0,200,200,0.08)' },
+  architect: { color: '#E8A020', border: 'rgba(232,160,32,0.3)',  bg: 'rgba(232,160,32,0.08)' },
 }
 
 const ALL_ROLES: UserRole[] = ['applicant', 'voyager', 'architect']
@@ -105,7 +105,7 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
       className="border p-5"
       style={{
         background: '#111525',
-        borderColor: isActive ? '#1E2840' : '#1A2238',
+        borderColor: isActive ? 'rgba(255,107,53,0.16)' : 'rgba(255,107,53,0.16)',
         opacity: isActive ? 1 : 0.75,
         boxShadow: isActive ? 'inset 0 1px 0 rgba(232,90,0,0.05)' : 'none',
       }}
@@ -119,7 +119,7 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
             style={
               isActive
                 ? { color: '#20D890', borderColor: 'rgba(32,216,144,0.3)', background: 'rgba(32,216,144,0.08)' }
-                : { color: '#4A5570', borderColor: '#1A2238', background: 'transparent' }
+                : { color: '#4A5570', borderColor: 'rgba(255,107,53,0.16)', background: 'transparent' }
             }
           >
             {isActive ? '● ACTIVE' : '○ CLOSED'}
@@ -132,7 +132,7 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
         )}
       </div>
 
-      <h2 className="text-base font-mono font-semibold mb-2" style={{ color: '#EDE8DE' }}>
+      <h2 className="text-xl font-mono font-semibold mb-2" style={{ color: '#EDE8DE' }}>
         {vote.title}
       </h2>
       {vote.description && (
@@ -162,7 +162,7 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
                   <div
                     className="w-3 h-3 border shrink-0"
                     style={{
-                      borderColor: isSelected ? '#E85A00' : '#1A2238',
+                      borderColor: isSelected ? '#E85A00' : 'rgba(255,107,53,0.16)',
                       background: isSelected ? '#E85A00' : 'transparent',
                     }}
                   />
@@ -173,10 +173,10 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
                     {pct}%
                   </span>
                 </div>
-                <div className="h-1 ml-5 overflow-hidden" style={{ background: '#1A2238' }}>
+                <div className="h-1 ml-5 overflow-hidden" style={{ background: 'rgba(255,107,53,0.16)' }}>
                   <div
                     className="h-full transition-all"
-                    style={{ width: `${pct}%`, background: isSelected ? '#E85A00' : '#1E2840' }}
+                    style={{ width: `${pct}%`, background: isSelected ? '#E85A00' : 'rgba(255,107,53,0.28)' }}
                   />
                 </div>
               </button>
@@ -190,8 +190,8 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
         <button
           onClick={handleVote}
           disabled={selected.length === 0 || submitting}
-          className="px-4 py-1.5 text-xs font-mono tracking-widest border transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-          style={{ borderColor: '#E85A00', color: '#EDE8DE', background: 'linear-gradient(135deg, #E85A00, #C04000)' }}
+          className="btn-primary"
+          style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}
         >
           {submitting ? '[ SENDING... ]' : '[ CAST VOTE ]'}
         </button>

@@ -105,7 +105,7 @@ export function BottomNav() {
           />
           <div
             className="fixed bottom-[57px] left-0 right-0 z-50 md:hidden border-t"
-            style={{ background: '#0D1020', borderColor: '#1A2238' }}
+            style={{ background: '#0D1020', borderColor: 'rgba(255,107,53,0.16)' }}
           >
             {MORE_NAV.map(({ href, label, icon }) => {
               const isActive = pathname === href || pathname.startsWith(href + '/')
@@ -114,7 +114,7 @@ export function BottomNav() {
                   <div
                     key={href}
                     className="flex items-center gap-4 px-6 py-4"
-                    style={{ color: '#2A3248', borderBottom: '1px solid #1A2238', cursor: 'default' }}
+                    style={{ color: '#2A3248', borderBottom: '1px solid rgba(255,107,53,0.16)', cursor: 'default' }}
                   >
                     {icon}
                     <span className="font-mono text-xs tracking-widest">{label}</span>
@@ -130,7 +130,7 @@ export function BottomNav() {
                   style={{
                     color: isActive ? '#E85A00' : '#4A5570',
                     background: isActive ? 'rgba(232,90,0,0.06)' : 'transparent',
-                    borderBottom: '1px solid #1A2238',
+                    borderBottom: '1px solid rgba(255,107,53,0.16)',
                   }}
                 >
                   {icon}
@@ -145,7 +145,7 @@ export function BottomNav() {
       {/* Primary nav bar */}
       <nav
         className="flex md:hidden fixed bottom-0 left-0 right-0 border-t z-50"
-        style={{ background: '#0D1020', borderColor: '#1A2238' }}
+        style={{ background: '#0D1020', borderColor: 'rgba(255,107,53,0.16)' }}
       >
         {PRIMARY_NAV.map(({ href, label, icon }) => {
           const isHome = href === '/console'
@@ -160,7 +160,7 @@ export function BottomNav() {
                 style={{ color: '#1E2838', cursor: 'default' }}
               >
                 {icon}
-                <span className="font-mono" style={{ fontSize: '9px', letterSpacing: '0.06em' }}>{label}</span>
+                <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
               </div>
             )
           }
@@ -176,7 +176,7 @@ export function BottomNav() {
               }}
             >
               {icon}
-              <span className="font-mono" style={{ fontSize: '9px', letterSpacing: '0.06em' }}>{label}</span>
+              <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
             </Link>
           )
         })}
@@ -191,7 +191,7 @@ export function BottomNav() {
           }}
         >
           <DotsIcon />
-          <span className="font-mono" style={{ fontSize: '9px', letterSpacing: '0.06em' }}>MORE</span>
+          <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>MORE</span>
         </button>
       </nav>
     </>

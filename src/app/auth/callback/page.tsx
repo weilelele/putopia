@@ -47,7 +47,7 @@ function AuthCallbackInner() {
 
   return (
     <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>
         VERIFYING CREDENTIALS...
       </div>
     </div>

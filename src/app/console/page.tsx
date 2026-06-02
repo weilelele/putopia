@@ -15,6 +15,7 @@ import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { CommsFeed } from '@/components/comms-feed'
 import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
+import { FlipWordmark } from '@/components/flip-wordmark'
 import type { Device, Intel, Vote, World, McFunction, McFunctionStatus } from '@/types/database'
 import type { FeedLine } from '@/lib/actions/dashboard-feed'
 
@@ -29,7 +30,7 @@ const STATUS_STYLES = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
   needs_repair: { color: '#E83030', border: 'rgba(232,48,48,0.3)' },
   in_use:       { color: '#E85A00', border: 'rgba(232,90,0,0.3)' },
-  unknown:      { color: '#4A5570', border: '#1A2238' },
+  unknown:      { color: '#4A5570', border: 'rgba(255,107,53,0.16)' },
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -60,10 +61,10 @@ function DevicePlaceholder({ id }: { id: string }) {
     <svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
       <rect width="160" height="120" fill="#0D1020" />
       {[20, 40, 60, 80, 100, 120, 140].map((x) => (
-        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="#1A2238" strokeWidth="0.5" opacity="0.5" />
+        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       {[20, 40, 60, 80, 100].map((y) => (
-        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="#1A2238" strokeWidth="0.5" opacity="0.5" />
+        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       <circle cx={cx} cy={cy} r={r1} fill="none" stroke={`hsl(${hue1},60%,45%)`} strokeWidth="1" opacity="0.6" />
       <circle cx={cx} cy={cy} r={r2} fill="none" stroke={`hsl(${hue1},60%,55%)`} strokeWidth="0.8" opacity="0.5" />
@@ -71,10 +72,10 @@ function DevicePlaceholder({ id }: { id: string }) {
       <line x1={lineX} y1="10" x2={lineX + 20} y2="110" stroke={`hsl(${hue2},50%,40%)`} strokeWidth="1" opacity="0.4" />
       <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#E85A00" strokeWidth="0.8" opacity="0.5" />
       <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#E85A00" strokeWidth="0.8" opacity="0.5" />
-      <path d="M5,5 L5,15 M5,5 L15,5" stroke="#1E2840" strokeWidth="1.5" fill="none" />
-      <path d="M155,5 L155,15 M155,5 L145,5" stroke="#1E2840" strokeWidth="1.5" fill="none" />
-      <path d="M5,115 L5,105 M5,115 L15,115" stroke="#1E2840" strokeWidth="1.5" fill="none" />
-      <path d="M155,115 L155,105 M155,115 L145,115" stroke="#1E2840" strokeWidth="1.5" fill="none" />
+      <path d="M5,5 L5,15 M5,5 L15,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,5 L155,15 M155,5 L145,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,115 L155,105 M155,115 L145,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
     </svg>
   )
 }
@@ -104,31 +105,31 @@ function DevicePreviewCard({ device }: { device: Device }) {
       <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--color-star-deep)', letterSpacing: '0.15em' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.15em' }}>
               {device.id}
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-star)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: 'var(--color-star)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {device.name}
             </div>
           </div>
           {device.status && (
             <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.12em', whiteSpace: 'nowrap', flexShrink: 0,
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', whiteSpace: 'nowrap', flexShrink: 0,
               color: style.color, border: `1px solid ${style.border}`, padding: '0.1rem 0.35rem',
             }}>
               {STATUS_LABELS[statusKey] ?? statusKey}
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-star-deep)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)' }}>
           <span>◎</span>
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{device.location}</span>
         </div>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#8A9AB5', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#8A9AB5', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {device.description}
         </p>
         {device.status === 'in_use' && device.current_user_name && (
-          <div style={{ marginTop: '0.25rem', padding: '0.2rem 0.5rem', border: '1px solid rgba(232,90,0,0.2)', background: 'rgba(232,90,0,0.04)', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: '#8A9AB5' }}>
+          <div style={{ marginTop: '0.25rem', padding: '0.2rem 0.5rem', border: '1px solid rgba(232,90,0,0.2)', background: 'rgba(232,90,0,0.04)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#8A9AB5' }}>
             <span style={{ color: '#4A5570' }}>IN USE: </span>{device.current_user_name}
           </div>
         )}
@@ -167,17 +168,17 @@ function IntelPreviewCard({ entry }: { entry: Intel }) {
       <div style={{ padding: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
           <span className="label-tag" style={{ color }}>{entry.tag}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-star-deep)', letterSpacing: '0.15em' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.15em' }}>
             {new Date(entry.timestamp).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}
           </span>
         </div>
-        <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-star)', marginBottom: '0.4rem', lineHeight: 1.4 }}>
+        <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', color: 'var(--color-star)', marginBottom: '0.4rem', lineHeight: 1.4 }}>
           {entry.title}
         </h3>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>
           {entry.content.length > 120 ? entry.content.slice(0, 120) + '…' : entry.content}
         </p>
-        <div style={{ marginTop: '0.75rem', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.18em', color, opacity: 0.7 }}>
+        <div style={{ marginTop: '0.75rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color, opacity: 0.7 }}>
           READ MORE →
         </div>
       </div>
@@ -203,25 +204,25 @@ function WorldPreviewCard({ world }: { world: World }) {
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(17,21,37,0.85) 100%)' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px)', opacity: 0.3 }} />
-        <span style={{ position: 'absolute', top: 6, left: 8, fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: '#4A5570', background: 'rgba(7,9,18,0.7)', padding: '1px 5px' }}>
+        <span style={{ position: 'absolute', top: 6, left: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#4A5570', background: 'rgba(7,9,18,0.7)', padding: '1px 5px' }}>
           {world.id}
         </span>
-        <span style={{ position: 'absolute', bottom: 8, right: 8, fontFamily: 'var(--font-mono)', fontSize: '0.48rem', letterSpacing: '0.12em', color: 'rgba(232,160,32,0.8)' }}>
+        <span style={{ position: 'absolute', bottom: 8, right: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'rgba(232,160,32,0.8)' }}>
           VIEW →
         </span>
       </div>
 
       {/* Info */}
-      <div style={{ padding: '0.65rem 0.75rem', background: '#111525', border: '1px solid #1E2840', borderTop: 'none' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 600, color: '#EDE8DE', marginBottom: 6 }}>
+      <div style={{ padding: '0.65rem 0.75rem', background: '#111525', border: '1px solid rgba(255,107,53,0.16)', borderTop: 'none' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: '#EDE8DE', marginBottom: 6 }}>
           {displayName}
         </div>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: '#8A9AB5', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#8A9AB5', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {world.description}
         </p>
-        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid #1A2238', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#8A9AB5' }}>{world.discoverer_name}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#4A5570' }}>{world.discovery_date}</span>
+        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid rgba(255,107,53,0.16)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#8A9AB5' }}>{world.discoverer_name}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#4A5570' }}>{world.discovery_date}</span>
         </div>
       </div>
     </Link>
@@ -281,14 +282,32 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
 
   return (
     <section className="hero">
-      {/* Channel label */}
-      <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', marginBottom: '2rem', ...line(0) }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.28em', color: 'var(--color-ok)' }}>
-          ● OPEN TRANSMISSION
-        </span>
-        <span style={{ color: 'var(--color-star-deep)', fontFamily: 'var(--font-mono)', fontSize: '0.52rem' }}>/</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.52rem', letterSpacing: '0.28em', color: 'var(--color-star-deep)' }}>
-          UNCLASSIFIED
+      {/* Brand wordmark — split-flap flip → spread to official lockup */}
+      <div
+        style={{
+          width: '100%',
+          textAlign: 'center',
+          margin: '0 0 1.75rem',
+          filter: 'drop-shadow(0 0 32px rgba(255,107,53,0.45)) drop-shadow(0 0 64px rgba(255,107,53,0.18))',
+          ...line(0),
+        }}
+      >
+        <FlipWordmark maxWidth={560} fill={0.78} />
+      </div>
+
+      {/* Emblem + tagline */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', marginBottom: '2rem', ...line(0) }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/assets/vi-icon.png"
+          alt="Multiverse Collective"
+          style={{
+            width: '165px', height: 'auto', display: 'block',
+            filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',
+          }}
+        />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', letterSpacing: '0.34em', color: 'var(--color-star-dim)' }}>
+          EXPLORE PARALLEL WORLDS
         </span>
       </div>
 
@@ -296,38 +315,38 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
       <div style={{ maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '1.1rem', textAlign: 'center' }}>
         <div style={{
           fontFamily: 'var(--font-display)', fontWeight: 700,
-          fontSize: 'clamp(1.5rem, 3.5vh, 2.2rem)', letterSpacing: '0.12em',
+          fontSize: 'var(--fs-h2)', letterSpacing: '0.12em',
           color: 'var(--color-star)', ...line(1),
         }}>
           WELCOME, GUEST.
         </div>
         <p style={{
-          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.95rem, 1.8vh, 1.08rem)',
+          fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',
           lineHeight: 1.85, color: 'var(--color-star-dim)', margin: 0, ...line(2),
         }}>
           Whether by accident or design — you've found your way into the internal network of the Multiverse Collective.
         </p>
         <p style={{
-          fontFamily: 'var(--font-body)', fontSize: 'clamp(0.95rem, 1.8vh, 1.08rem)',
+          fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',
           lineHeight: 1.85, color: 'var(--color-star-dim)', margin: 0, ...line(3),
         }}>
           Here you will find our latest dispatches, and our most enigmatic instrument —{' '}
-          <span style={{ color: 'var(--color-nebula)', fontFamily: 'var(--font-mono)', fontSize: '0.88em' }}>Multiverse Console</span>
+          <span style={{ color: 'var(--color-nebula)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>Multiverse Console</span>
           {' '}— a device built to reach into parallel worlds and observe what lies beyond.
         </p>
       </div>
 
       {/* MC Unit panel — full width */}
-      <div style={{ width: '100%', maxWidth: '900px', margin: '1.75rem auto 0', border: '1px solid #1E2840', background: '#0D1020', overflow: 'hidden' }}>
+      <div style={{ width: '100%', maxWidth: '900px', margin: '1.75rem auto 0', border: '1px solid rgba(255,107,53,0.16)', background: '#0D1020', overflow: 'hidden' }}>
         {/* Header bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: '#090D1A', borderBottom: '1px solid #1E2840' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.2em', color: 'var(--color-nebula)' }}>// MULTIVERSE CONSOLE</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: '#090D1A', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-nebula)' }}>// MULTIVERSE CONSOLE</span>
         </div>
 
         {/* Content: image left, functions right — stacked on mobile */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
           {/* Device image */}
-          <div style={{ borderRight: isMobile ? 'none' : '1px solid #1E2840', borderBottom: isMobile ? '1px solid #1E2840' : 'none' }}>
+          <div style={{ borderRight: isMobile ? 'none' : '1px solid rgba(255,107,53,0.16)', borderBottom: isMobile ? '1px solid rgba(255,107,53,0.16)' : 'none' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/device-desk.png" alt="Multiverse Console" style={{ width: '100%', height: 'auto', display: 'block' }} />
           </div>
@@ -335,7 +354,7 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
           {/* Confirmed functions */}
           <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'auto' : '260px', position: 'relative' }}>
             {/* Section label */}
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.28em', color: '#4A5570', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid #151E30' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: '#4A5570', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
               CONFIRMED FUNCTIONS
             </div>
 
@@ -354,16 +373,16 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{
                         width: 6, height: 6, borderRadius: '50%',
-                        background: visible ? meta.color : '#1E2840',
+                        background: visible ? meta.color : 'rgba(255,107,53,0.28)',
                         boxShadow: visible ? `0 0 7px ${meta.color}` : 'none',
                         flexShrink: 0, display: 'inline-block',
                         transition: 'background 0.3s, box-shadow 0.3s',
                       }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-star-dim)', letterSpacing: '0.02em' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', letterSpacing: '0.02em' }}>
                         {fn.name}
                       </span>
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.48rem', letterSpacing: '0.18em', color: meta.color, opacity: 0.9 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: meta.color, opacity: 0.9 }}>
                       {meta.label}
                     </span>
                   </div>
@@ -372,14 +391,14 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
                 Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #0D1220', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#151E30', flexShrink: 0, display: 'inline-block' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#1A2438' }}>——————————</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#1A2438' }}>——————————</span>
                   </div>
                 ))
               )}
             </div>
 
             {/* Footer */}
-            <div style={{ marginTop: '14px', fontFamily: 'var(--font-mono)', fontSize: '0.45rem', color: '#283048', letterSpacing: '0.16em', textAlign: 'right' }}>
+            <div style={{ marginTop: '14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#283048', letterSpacing: '0.16em', textAlign: 'right' }}>
               + MORE FUNCTIONS UNDER ACTIVE RESEARCH
             </div>
           </div>
@@ -391,37 +410,23 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
         display: 'flex', gap: '1rem', marginTop: '1.25rem',
         width: '100%', maxWidth: '620px',
       }}>
-        <Link href={newHref} className="cta" style={{ textDecoration: 'none', flex: '1 1 0', width: 'auto', minWidth: 0 }}
+        <Link href={newHref} className="btn-primary" style={{ flex: '1 1 0', minWidth: 0, justifyContent: 'center', padding: '1rem 1.5rem' }}
           onClick={() => posthog.capture('workspace_request_access_clicked')}
         >
-          <div className="cta-bg" />
-          <div className="cta-frame" />
-          <div className="cta-icon-slot" style={{ width: 44, flexShrink: 0 }}>
-            <div className="cta-icon-circle" style={{ width: 30, height: 30 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,90,31,0.15)" strokeLinejoin="round" />
-              </svg>
-            </div>
-          </div>
-          <div className="cta-divider" />
-          <div className="cta-label" style={{ fontSize: 'clamp(0.6rem, 1.3vw, 0.75rem)', letterSpacing: '0.16em' }}>REQUEST ACCESS</div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
+            <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,255,255,0.25)" strokeLinejoin="round" />
+          </svg>
+          REQUEST ACCESS
         </Link>
-        <Link href="/login" className="cta teal" style={{ textDecoration: 'none', flex: '1 1 0', width: 'auto', minWidth: 0 }}
+        <Link href="/login" className="btn-secondary" style={{ flex: '1 1 0', minWidth: 0, justifyContent: 'center', padding: '1rem 1.5rem' }}
           onClick={() => posthog.capture('workspace_login_clicked')}
         >
-          <div className="cta-bg" />
-          <div className="cta-frame" />
-          <div className="cta-icon-slot" style={{ width: 44, flexShrink: 0 }}>
-            <div className="cta-icon-circle" style={{ width: 30, height: 30 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="10 17 15 12 10 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
-            </div>
-          </div>
-          <div className="cta-divider" />
-          <div className="cta-label" style={{ fontSize: 'clamp(0.6rem, 1.3vw, 0.75rem)', letterSpacing: '0.16em' }}>LOGIN</div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <polyline points="10 17 15 12 10 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          LOGIN
         </Link>
       </div>
     </section>
@@ -456,20 +461,13 @@ function AuthHero({ user, feedLines }: { user: { role: string; name?: string }; 
       {/* Activate Voyager — shown to applicants who haven't been promoted yet */}
       {isApplicant && (
         <div className="cta-row">
-          <Link href="/activate" className="cta" style={{ textDecoration: 'none' }}
+          <Link href="/activate" className="btn-primary" style={{ padding: '1rem 2.25rem' }}
             onClick={() => posthog.capture('activate_voyager_clicked')}
           >
-            <div className="cta-bg" />
-            <div className="cta-frame" />
-            <div className="cta-icon-slot">
-              <div className="cta-icon-circle">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,90,31,0.15)" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-            <div className="cta-divider" />
-            <div className="cta-label">ACTIVATE VOYAGER</div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
+              <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,255,255,0.25)" strokeLinejoin="round" />
+            </svg>
+            ACTIVATE VOYAGER
           </Link>
         </div>
       )}
@@ -567,7 +565,7 @@ function ConsoleInner() {
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>
                 KNOWN DEVICES
               </div>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
@@ -587,7 +585,7 @@ function ConsoleInner() {
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: 'var(--color-star-dim)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-star-dim)' }}>
                 LATEST INTEL
               </div>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
@@ -607,7 +605,7 @@ function ConsoleInner() {
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: 'var(--color-nebula)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-nebula)' }}>
                 WORLD RECORDS
               </div>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
@@ -627,7 +625,7 @@ function ConsoleInner() {
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.3em', color: '#20D890' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: '#20D890' }}>
                 ● ACTIVE VOTES
               </div>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
@@ -652,7 +650,7 @@ function ConsoleInner() {
 
       <div className="footer-bar" style={{ marginTop: '2rem' }}>
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>PUTOPIA.COLLECTIVE</div>
+        <div>MULTIVERSE.COLLECTIVE</div>
       </div>
     </div>
   )

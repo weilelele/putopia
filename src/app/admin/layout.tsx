@@ -80,7 +80,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div style={{ background: '#070912', height: '100vh', overflowY: 'auto', fontFamily: 'monospace' }}>
       <div style={{
-        borderBottom: '1px solid #1E2840',
+        borderBottom: '1px solid rgba(255,107,53,0.16)',
         background: '#0D1020',
         padding: '0 24px',
         display: 'flex',

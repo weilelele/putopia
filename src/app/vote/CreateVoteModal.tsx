@@ -17,9 +17,9 @@ const SCOPE_OPTIONS: { value: UserRole; label: string; desc: string }[] = [
 ]
 
 const S = {
-  label: { display: 'block', color: '#4A5570', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' } as const,
-  area:  { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as const,
+  label: { display: 'block', color: '#4A5570', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
+  input: { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', boxSizing: 'border-box' } as const,
+  area:  { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as const,
 }
 
 export function CreateVoteModal({ onClose, onCreated }: Props) {
@@ -86,13 +86,13 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
     >
       <div
         className="relative w-full max-w-lg mx-4 border p-6 overflow-y-auto"
-        style={{ background: '#111525', borderColor: '#1E2840', maxHeight: '90vh' }}
+        style={{ background: '#111525', borderColor: 'rgba(255,107,53,0.16)', maxHeight: '90vh' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="text-xs font-mono tracking-widest mb-1" style={{ color: '#4A5570' }}>// NEW VOTE</div>
-            <h2 className="text-base font-mono font-semibold" style={{ color: '#EDE8DE' }}>CREATE VOTE</h2>
+            <h2 className="text-xl font-mono font-semibold" style={{ color: '#EDE8DE' }}>CREATE VOTE</h2>
           </div>
           <button onClick={onClose} style={{ color: '#4A5570' }} className="hover:text-[#EDE8DE] transition-colors">
             <X size={18} />
@@ -138,7 +138,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                     style={
                       type === t
                         ? { borderColor: '#E85A00', color: '#EDE8DE', background: 'rgba(232,90,0,0.15)' }
-                        : { borderColor: '#1E2840', color: '#4A5570', background: 'transparent' }
+                        : { borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570', background: 'transparent' }
                     }
                   >
                     {t === 'single' ? 'SINGLE' : 'MULTI'}
@@ -173,7 +173,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                     style={
                       active
                         ? { borderColor: '#E85A00', color: '#EDE8DE', background: 'rgba(232,90,0,0.15)' }
-                        : { borderColor: '#1E2840', color: '#4A5570', background: 'transparent' }
+                        : { borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570', background: 'transparent' }
                     }
                   >
                     {label}
@@ -240,20 +240,20 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t" style={{ borderColor: '#1A2238' }}>
+          <div className="flex items-center justify-end gap-3 pt-2 border-t" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-1.5 text-xs font-mono tracking-widest border transition-all"
-              style={{ borderColor: '#1E2840', color: '#4A5570', background: 'transparent' }}
+              className="btn-ghost"
+              style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}
             >
               [ CANCEL ]
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-1.5 text-xs font-mono tracking-widest border transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ borderColor: '#E85A00', color: '#EDE8DE', background: 'linear-gradient(135deg, #E85A00, #C04000)' }}
+              className="btn-primary"
+              style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}
             >
               {saving ? '[ CREATING... ]' : '[ CREATE VOTE ]'}
             </button>

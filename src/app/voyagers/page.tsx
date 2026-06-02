@@ -26,8 +26,8 @@ const LinkedInIcon = () => (
 
 // ── Deterministic accent color from display_name ───────────────────────────
 const ACCENT_COLORS = [
-  '#E8A020', '#D4601A', '#22D4E0', '#20D890',
-  '#C43020', '#C4A96A', '#4D8C3F', '#9B7FE8', '#E85A00',
+  '#E8A020', '#D4601A', '#FF8A5C', '#FFB020',
+  '#C43020', '#C4A96A', '#B5430A', '#FF6B35', '#E85A00',
 ]
 function accentColor(name: string): string {
   let hash = 0
@@ -170,14 +170,14 @@ export default function VoyagersPage() {
       </div>
 
       {loading ? (
-        <div style={{ color: '#4A5570', fontFamily: 'monospace', fontSize: '13px', padding: '60px 0', textAlign: 'center', letterSpacing: '0.15em' }}>
+        <div style={{ color: '#4A5570', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '60px 0', textAlign: 'center', letterSpacing: '0.15em' }}>
           LOADING REGISTRY...
         </div>
       ) : (
         <>
           {architects.length > 0 && (
             <section style={{ marginBottom: '2.5rem' }}>
-              <div style={{ color: '#4A5570', fontSize: '11px', fontFamily: 'monospace', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid #1E2840' }}>
+              <div style={{ color: '#4A5570', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
                 // ARCHITECT COUNCIL
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -191,7 +191,7 @@ export default function VoyagersPage() {
 
           {activeVoyagers.length > 0 && (
             <section>
-              <div style={{ color: '#4A5570', fontSize: '11px', fontFamily: 'monospace', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid #1E2840' }}>
+              <div style={{ color: '#4A5570', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
                 // ACTIVE VOYAGERS
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -218,11 +218,11 @@ export default function VoyagersPage() {
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ background: '#0D1020', border: '1px solid #E85A00', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', fontFamily: 'monospace' }}
+            style={{ background: '#0D1020', border: '1px solid #E85A00', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', fontFamily: 'var(--font-mono)' }}
           >
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div style={{ color: '#E85A00', fontSize: '11px', letterSpacing: '0.25em' }}>// EDIT PROFILE</div>
+              <div style={{ color: '#E85A00', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>// EDIT PROFILE</div>
               <button onClick={closeEdit} style={{ background: 'none', border: 'none', color: '#4A5570', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
                 <XClose size={16} />
               </button>
@@ -238,7 +238,7 @@ export default function VoyagersPage() {
                     background: avatarPreview || editing.avatar_url ? 'transparent' : `${accentColor(editing.display_name)}18`,
                     border: `2px solid ${accentColor(editing.display_name)}60`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: accentColor(editing.display_name), fontSize: '20px', fontWeight: 'bold',
+                    color: accentColor(editing.display_name), fontSize: 'var(--fs-title)', fontWeight: 'bold',
                   }}
                 >
                   {(avatarPreview || editing.avatar_url)
@@ -275,11 +275,11 @@ export default function VoyagersPage() {
                 placeholder="A short description of your role in the Collective..."
               />
               {form.bio.length >= BIO_LIMIT && (
-                <div style={{ color: '#E83030', fontSize: '10px', marginTop: '3px', letterSpacing: '0.05em' }}>Character limit reached</div>
+                <div style={{ color: '#E83030', fontSize: 'var(--fs-caption)', marginTop: '3px', letterSpacing: '0.05em' }}>Character limit reached</div>
               )}
             </Field>
 
-            <div style={{ color: '#4A5570', fontSize: '10px', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// SOCIAL LINKS</div>
+            <div style={{ color: '#4A5570', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// SOCIAL LINKS</div>
             <FieldGroup>
               <Field label="X / TWITTER (full URL)">
                 <input style={FIELD_INPUT} value={form.social_x} onChange={e => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
@@ -292,7 +292,7 @@ export default function VoyagersPage() {
               </Field>
             </FieldGroup>
 
-            <div style={{ color: '#4A5570', fontSize: '10px', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// FIELD DATA</div>
+            <div style={{ color: '#4A5570', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// FIELD DATA</div>
             <FieldGroup cols={2}>
               <Field label="OBSERVATION DAYS">
                 <input style={FIELD_INPUT} type="number" min="0" value={form.observation_days} onChange={e => setF('observation_days', e.target.value)} />
@@ -303,19 +303,20 @@ export default function VoyagersPage() {
             </FieldGroup>
 
             {saveMsg && (
-              <div style={{ marginBottom: '12px', padding: '7px 10px', background: saveMsg.ok ? 'rgba(32,216,144,0.08)' : 'rgba(232,48,48,0.08)', border: `1px solid ${saveMsg.ok ? '#20D890' : '#E83030'}`, color: saveMsg.ok ? '#20D890' : '#E83030', fontSize: '12px', letterSpacing: '0.05em' }}>
+              <div style={{ marginBottom: '12px', padding: '7px 10px', background: saveMsg.ok ? 'rgba(32,216,144,0.08)' : 'rgba(232,48,48,0.08)', border: `1px solid ${saveMsg.ok ? '#20D890' : '#E83030'}`, color: saveMsg.ok ? '#20D890' : '#E83030', fontSize: 'var(--fs-label)', letterSpacing: '0.05em' }}>
                 {saveMsg.text}
               </div>
             )}
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
-              <button onClick={closeEdit} style={{ padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.1em', cursor: 'pointer', background: 'none', border: '1px solid #1E2840', color: '#4A5570' }}>
+              <button onClick={closeEdit} className="btn-ghost" style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}>
                 CANCEL
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #E85A00', color: '#E85A00', background: saving ? 'transparent' : 'rgba(232,90,0,0.08)', opacity: saving ? 0.6 : 1 }}
+                className="btn-secondary"
+                style={{ padding: '0.5rem 1.4rem', fontSize: 'var(--fs-caption)', opacity: saving ? 0.5 : 1 }}
               >
                 {saving ? 'SAVING...' : 'SAVE'}
               </button>
@@ -329,14 +330,14 @@ export default function VoyagersPage() {
 
 // ── Small form helpers ─────────────────────────────────────────────────────
 const FIELD_INPUT: React.CSSProperties = {
-  width: '100%', background: '#111525', border: '1px solid #1E2840', color: '#EDE8DE',
-  padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none',
+  width: '100%', background: '#111525', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE',
+  padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', outline: 'none',
   boxSizing: 'border-box',
 }
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label style={{ display: 'block', color: '#4A5570', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '4px' }}>{label}</label>
+      <label style={{ display: 'block', color: '#4A5570', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', marginBottom: '4px' }}>{label}</label>
       {children}
     </div>
   )
@@ -376,7 +377,7 @@ function VoyagerCard({
       className="border p-4 transition-all duration-200"
       style={{
         background: '#111525',
-        borderColor: isOwn ? `${color}55` : isArchitect ? 'rgba(232,90,0,0.18)' : '#1E2840',
+        borderColor: isOwn ? `${color}55` : isArchitect ? 'rgba(232,90,0,0.18)' : 'rgba(255,107,53,0.16)',
         boxShadow: isOwn ? `0 0 12px ${color}15` : 'inset 0 1px 0 rgba(232,90,0,0.04)',
         cursor: isOwn ? 'pointer' : 'default',
       }}
@@ -414,7 +415,7 @@ function VoyagerCard({
               </span>
             )}
             {isArchitect && (
-              <span className="text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#22D4E0', borderColor: 'rgba(34,212,224,0.35)', background: 'rgba(34,212,224,0.06)' }}>
+              <span className="text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#E8A020', borderColor: 'rgba(232,160,32,0.35)', background: 'rgba(232,160,32,0.06)' }}>
                 ARCHITECT
               </span>
             )}
@@ -429,19 +430,19 @@ function VoyagerCard({
       </div>
 
       {/* Stats */}
-      <div className="flex gap-4 mb-3 py-2 border-y" style={{ borderColor: '#1A2238' }}>
+      <div className="flex gap-4 mb-3 py-2 border-y" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
         <div className="text-center flex-1">
           <div className="text-xl font-mono font-bold" style={{ color: '#E85A00', textShadow: '0 0 10px rgba(232,90,0,0.4)' }}>
             {voyager.observation_days}
           </div>
-          <div className="text-[10px] font-mono" style={{ color: '#4A5570' }}>OBS DAYS</div>
+          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>OBS DAYS</div>
         </div>
-        <div className="w-px" style={{ background: '#1A2238' }} />
+        <div className="w-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
         <div className="text-center flex-1">
           <div className="text-xl font-mono font-bold" style={{ color: '#20D890', textShadow: '0 0 10px rgba(32,216,144,0.3)' }}>
             {voyager.worlds_discovered}
           </div>
-          <div className="text-[10px] font-mono" style={{ color: '#4A5570' }}>WORLDS</div>
+          <div className="text-xs font-mono" style={{ color: '#4A5570' }}>WORLDS</div>
         </div>
       </div>
 
@@ -454,14 +455,14 @@ function VoyagerCard({
 
       {/* Social links — stop card click from propagating */}
       {links.length > 0 && (
-        <div className="flex gap-3 pt-2 border-t" style={{ borderColor: '#1A2238' }}>
+        <div className="flex gap-3 pt-2 border-t" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
           {links.map(({ key, icon, href }) => (
             <a key={key} href={href} target="_blank" rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
               className="flex items-center justify-center w-7 h-7 border transition-colors"
-              style={{ borderColor: '#1E2840', color: '#4A5570', borderRadius: '2px' }}
+              style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570', borderRadius: '2px' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(242,240,230,0.2)'; (e.currentTarget as HTMLElement).style.color = '#8A9AB5' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1E2840'; (e.currentTarget as HTMLElement).style.color = '#4A5570' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)'; (e.currentTarget as HTMLElement).style.color = '#4A5570' }}
             >
               {icon}
             </a>

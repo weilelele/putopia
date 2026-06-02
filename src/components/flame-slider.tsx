@@ -111,7 +111,7 @@ export function FlameSlider({ value, onChange }: {
               transition: 'background 0.12s',
             }} />
             <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.05em',
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.05em',
               color: i <= value && value > 0
                 ? `rgba(255,${140 - i * 5},32,0.85)`
                 : 'rgba(242,240,230,0.25)',
@@ -125,7 +125,7 @@ export function FlameSlider({ value, onChange }: {
 
       {/* Live reading */}
       <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: '0.56rem', letterSpacing: '0.18em',
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
         color: 'rgba(255,140,32,0.65)',
         minHeight: '1.2rem',
         transition: 'opacity 0.25s ease',
@@ -153,11 +153,11 @@ export function WorldChoiceCards({ selected, onSelect }: {
             key={opt.id}
             onClick={() => onSelect(opt.id)}
             style={{
-              background:  isSelected ? 'rgba(34,212,224,0.07)' : 'transparent',
-              border:      `1px solid ${isSelected ? 'rgba(34,212,224,0.4)' : 'rgba(242,240,230,0.08)'}`,
+              background:  isSelected ? 'rgba(232,93,4,0.07)' : 'transparent',
+              border:      `1px solid ${isSelected ? 'rgba(232,93,4,0.4)' : 'rgba(242,240,230,0.08)'}`,
               borderLeft:  `3px solid ${isSelected ? 'var(--color-nebula)' : 'transparent'}`,
               color:       isSelected ? 'var(--color-star)' : 'var(--color-star-dim)',
-              fontFamily:  'var(--font-body)', fontSize: '0.92rem', fontWeight: 500,
+              fontFamily:  'var(--font-body)', fontSize: 'var(--fs-body)', fontWeight: 500,
               textAlign:   'left', padding: '1rem 1.1rem',
               cursor:      'pointer', lineHeight: 1.45,
               transition:  'all 0.15s ease',

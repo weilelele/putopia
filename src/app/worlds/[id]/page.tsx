@@ -58,7 +58,7 @@ export default function WorldDetailPage() {
   if (world === undefined) {
     return (
       <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
       </div>
     )
   }
@@ -66,8 +66,8 @@ export default function WorldDetailPage() {
   if (!world) {
     return (
       <div className="main" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>WORLD ENTRY NOT FOUND</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>WORLD ENTRY NOT FOUND</div>
         <Link href={backHref} className="btn-ghost">← RETURN</Link>
       </div>
     )
@@ -113,21 +113,21 @@ export default function WorldDetailPage() {
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(11,15,23,0.85) 100%)', pointerEvents: 'none' }} />
           {/* ID badge */}
           <div style={{ position: 'absolute', top: 12, left: 12 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.15em', background: 'rgba(7,9,18,0.75)', color: 'var(--color-star-deep)', padding: '3px 8px', border: '1px solid var(--bd-faint)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', background: 'rgba(7,9,18,0.75)', color: 'var(--color-star-deep)', padding: '3px 8px', border: '1px solid var(--bd-faint)' }}>
               {world.id}
             </span>
           </div>
           {/* Verified badge */}
           {world.is_verified && (
             <div style={{ position: 'absolute', top: 12, right: 12 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.12em', background: 'rgba(34,212,224,0.15)', color: 'var(--color-nebula)', padding: '3px 8px', border: '1px solid rgba(34,212,224,0.3)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', background: 'rgba(232,93,4,0.15)', color: 'var(--color-nebula)', padding: '3px 8px', border: '1px solid rgba(232,93,4,0.3)' }}>
                 ✓ VERIFIED
               </span>
             </div>
           )}
           {/* Title overlay at bottom */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem 1.25rem' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}>
               {displayName}
             </div>
           </div>
@@ -140,23 +140,23 @@ export default function WorldDetailPage() {
           <div style={{ padding: '0 1rem' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.18em', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>DISCOVERED BY</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>DISCOVERED BY</div>
                 {world.discoverer_id ? (
-                  <Link href="/voyagers" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--color-nebula)', textDecoration: 'none', fontWeight: 600 }}>
+                  <Link href="/voyagers" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-nebula)', textDecoration: 'none', fontWeight: 600 }}>
                     {world.discoverer_name}
                   </Link>
                 ) : (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--color-star-dim)', fontWeight: 600 }}>{world.discoverer_name || '—'}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', fontWeight: 600 }}>{world.discoverer_name || '—'}</div>
                 )}
               </div>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.18em', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>DISCOVERY DATE</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--color-star-dim)' }}>{world.discovery_date}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>DISCOVERY DATE</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)' }}>{world.discovery_date}</div>
               </div>
               {world.name !== world.name_en && world.name && (
                 <div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.18em', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>LOCAL DESIGNATION</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--color-star-dim)' }}>{world.name}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>LOCAL DESIGNATION</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)' }}>{world.name}</div>
                 </div>
               )}
             </div>
@@ -168,9 +168,9 @@ export default function WorldDetailPage() {
           <div className="hud-tick-rail hud-tick-left" />
           <div className="hud-tick-rail hud-tick-right" />
           <div style={{ padding: '0 1rem' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>FIELD NOTES</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>FIELD NOTES</div>
             <div className="hr-cyan" />
-            <article style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--color-star-dim)', lineHeight: 1.85, whiteSpace: 'pre-wrap', marginTop: '1rem' }}>
+            <article style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.85, whiteSpace: 'pre-wrap', marginTop: '1rem' }}>
               {world.description}
             </article>
           </div>
@@ -179,7 +179,7 @@ export default function WorldDetailPage() {
         {/* Transmissions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
           <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>TRANSMISSIONS</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>TRANSMISSIONS</div>
           <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
         </div>
 
@@ -191,16 +191,16 @@ export default function WorldDetailPage() {
                   <div style={{
                     width: 28, height: 28, borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700,
-                    background: 'rgba(34,212,224,0.08)', color: 'var(--color-nebula)',
+                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700,
+                    background: 'rgba(232,93,4,0.08)', color: 'var(--color-nebula)',
                     border: '1px solid var(--bd-cyan-2)', flexShrink: 0,
                   }}>{getInitials(comment.author)}</div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-dim)' }}>{comment.author}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-star-deep)', marginLeft: 'auto' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)' }}>{comment.author}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginLeft: 'auto' }}>
                     {new Date(comment.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>{comment.text}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>{comment.text}</p>
               </div>
             ))}
           </div>
@@ -209,7 +209,7 @@ export default function WorldDetailPage() {
         <form onSubmit={handleTransmit}>
           <div className="hud-frame">
             <div style={{ padding: '0 0.5rem' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
                 TRANSMIT A MESSAGE
               </div>
               <textarea
@@ -222,9 +222,9 @@ export default function WorldDetailPage() {
               />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem' }}>
                 {transmitted ? (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--color-ok)' }}>✓ TRANSMISSION SENT</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-ok)' }}>✓ TRANSMISSION SENT</span>
                 ) : <span />}
-                <button type="submit" disabled={!commentText.trim()} className="btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.7rem' }}>
+                <button type="submit" disabled={!commentText.trim()} className="btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: 'var(--fs-caption)' }}>
                   <Send size={10} /> TRANSMIT
                 </button>
               </div>

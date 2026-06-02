@@ -96,7 +96,7 @@ export default function RegisterPage() {
   if (checking) {
     return (
       <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>VERIFYING CREDENTIALS...</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>VERIFYING CREDENTIALS...</div>
       </div>
     )
   }
@@ -110,7 +110,7 @@ export default function RegisterPage() {
       <div style={{ width: '100%', maxWidth: '440px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>// INVITATION VERIFIED</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-nebula)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(232,93,4,0.4)' }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 900, color: 'var(--color-nebula)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(232,93,4,0.4)' }}>
             ESTABLISH IDENTITY
           </div>
         </div>
@@ -173,7 +173,7 @@ export default function RegisterPage() {
                 type="submit"
                 disabled={loading}
                 className="btn-secondary w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ justifyContent: 'center', fontSize: '0.8rem' }}
+                style={{ justifyContent: 'center', fontSize: 'var(--fs-label)' }}
               >
                 {loading ? '> REGISTERING...' : '[ ESTABLISH IDENTITY ]'}
               </button>
@@ -181,7 +181,7 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
+        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
           // YOUR IDENTITY WILL BE RECORDED IN THE COLLECTIVE //
         </div>
       </div>

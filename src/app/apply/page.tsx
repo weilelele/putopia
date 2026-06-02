@@ -104,7 +104,7 @@ export default function ApplyPage() {
           <div className="font-semibold mb-1">⚠ NOTICE TO APPLICANTS</div>
           <div style={{ color: '#8A9AB5' }}>
             All application information will be reviewed by the Architect Council. Upon successful admission,
-            you will become a Putopia Collective Voyager with device access and log publishing rights.
+            you will become a Multiverse Collective Voyager with device access and log publishing rights.
           </div>
         </div>
 
@@ -147,11 +147,11 @@ export default function ApplyPage() {
                     onClick={() => setSelectedReason(r.id)}
                     className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all"
                     style={{
-                      border: isSelected ? '1px solid #E85A00' : '1px solid #1A2238',
+                      border: isSelected ? '1px solid #E85A00' : '1px solid rgba(255,107,53,0.16)',
                       background: isSelected ? 'rgba(232,90,0,0.06)' : '#0D1020',
                     }}
                   >
-                    <span className="shrink-0 font-mono font-bold" style={{ fontSize: '0.55rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: isSelected ? '#E85A00' : '#4A5570', minWidth: '110px' }}>
+                    <span className="shrink-0 font-mono font-bold" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: isSelected ? '#E85A00' : '#4A5570', minWidth: '110px' }}>
                       [{r.tag}]
                     </span>
                     <span className="text-xs font-mono" style={{ color: isSelected ? '#EDE8DE' : '#8A9AB5' }}>

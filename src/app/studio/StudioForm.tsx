@@ -615,12 +615,12 @@ function ScanLine({ small }: { small?: boolean }) {
   return (
     <div style={{
       width: size, height: size,
-      border: '1px solid rgba(34,212,224,0.2)',
+      border: '1px solid rgba(232,93,4,0.2)',
       position: 'relative', overflow: 'hidden',
     }}>
       <div style={{
         position: 'absolute', left: 0, right: 0, height: 1,
-        background: 'linear-gradient(90deg, transparent, rgba(34,212,224,0.8), transparent)',
+        background: 'linear-gradient(90deg, transparent, rgba(232,93,4,0.8), transparent)',
         animation: 'studioScan 1.4s linear infinite',
       }} />
       <style>{`

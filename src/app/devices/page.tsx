@@ -10,7 +10,7 @@ const STATUS_STYLES = {
   available:    { color: '#20D890', bg: 'rgba(32,216,144,0.08)', border: 'rgba(32,216,144,0.3)' },
   needs_repair: { color: '#E83030', bg: 'rgba(232,48,48,0.08)', border: 'rgba(232,48,48,0.3)' },
   in_use:       { color: '#E85A00', bg: 'rgba(232,90,0,0.08)', border: 'rgba(232,90,0,0.3)' },
-  unknown:      { color: '#4A5570', bg: 'transparent', border: '#1A2238' },
+  unknown:      { color: '#4A5570', bg: 'transparent', border: 'rgba(255,107,53,0.16)' },
 }
 
 const STATUS_LABELS = {
@@ -38,10 +38,10 @@ function DevicePlaceholder({ id }: { id: string }) {
     >
       <rect width="160" height="120" fill="#0D1020" />
       {[20, 40, 60, 80, 100, 120, 140].map((x) => (
-        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="#1A2238" strokeWidth="0.5" opacity="0.5" />
+        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       {[20, 40, 60, 80, 100].map((y) => (
-        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="#1A2238" strokeWidth="0.5" opacity="0.5" />
+        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       <circle cx={cx} cy={cy} r={r1} fill="none" stroke={`hsl(${hue1},60%,45%)`} strokeWidth="1" opacity="0.6" />
       <circle cx={cx} cy={cy} r={r2} fill="none" stroke={`hsl(${hue1},60%,55%)`} strokeWidth="0.8" opacity="0.5" />
@@ -50,10 +50,10 @@ function DevicePlaceholder({ id }: { id: string }) {
       <line x1={lineX + 10} y1="10" x2={lineX + 30} y2="110" stroke={`hsl(${hue2},50%,40%)`} strokeWidth="0.5" opacity="0.3" />
       <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#E85A00" strokeWidth="0.8" opacity="0.5" />
       <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#E85A00" strokeWidth="0.8" opacity="0.5" />
-      <path d="M5,5 L5,15 M5,5 L15,5" stroke="#1E2840" strokeWidth="1.5" fill="none" />
-      <path d="M155,5 L155,15 M155,5 L145,5" stroke="#1E2840" strokeWidth="1.5" fill="none" />
-      <path d="M5,115 L5,105 M5,115 L15,115" stroke="#1E2840" strokeWidth="1.5" fill="none" />
-      <path d="M155,115 L155,105 M155,115 L145,115" stroke="#1E2840" strokeWidth="1.5" fill="none" />
+      <path d="M5,5 L5,15 M5,5 L15,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,5 L155,15 M155,5 L145,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,115 L155,105 M155,115 L145,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
     </svg>
   )
 }
@@ -119,7 +119,7 @@ export default function DevicesPage() {
       <section className="mb-10">
         <div className="flex items-center gap-3 mb-4">
           <span className="label-tag" style={{ color: '#4A5570', borderColor: '#4A5570' }}>UNKNOWN</span>
-          <div className="flex-1 h-px" style={{ background: '#1A2238' }} />
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
           <span className="text-xs font-mono" style={{ color: '#4A5570' }}>Uncontacted Signals</span>
         </div>
 
@@ -130,35 +130,35 @@ export default function DevicesPage() {
               className="border overflow-hidden"
               style={{
                 background: '#0D1020',
-                borderColor: '#1A2238',
+                borderColor: 'rgba(255,107,53,0.16)',
                 opacity: 0.7,
               }}
             >
-              <div className="border-b" style={{ borderColor: '#1A2238' }}>
+              <div className="border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
                 <DeviceImage device={device} isUnknown={true} />
               </div>
 
               <div className="p-3">
                 <div className="flex items-start justify-between mb-1.5">
                   <div>
-                    <div className="text-xs font-mono" style={{ color: '#1E2840' }}>{device.id}</div>
+                    <div className="text-xs font-mono" style={{ color: 'rgba(255,107,53,0.28)' }}>{device.id}</div>
                     <div className="text-xs font-mono font-semibold" style={{ color: '#4A5570' }}>{device.name}</div>
                   </div>
                   <div
                     className="text-xs font-mono px-1.5 py-0.5 border"
-                    style={{ color: '#4A5570', borderColor: '#1A2238', background: 'transparent' }}
+                    style={{ color: '#4A5570', borderColor: 'rgba(255,107,53,0.16)', background: 'transparent' }}
                   >
                     ?
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-xs font-mono" style={{ color: '#1E2840' }}>
+                <div className="flex items-center gap-1 text-xs font-mono" style={{ color: 'rgba(255,107,53,0.28)' }}>
                   <span>◎</span>
                   <span>{device.location}</span>
                 </div>
 
                 <div className="mt-2.5">
-                  <div className="flex justify-between text-xs font-mono mb-1" style={{ color: '#1E2840' }}>
+                  <div className="flex justify-between text-xs font-mono mb-1" style={{ color: 'rgba(255,107,53,0.28)' }}>
                     <span>PROGRESS</span>
                     <span>{device.exploration_progress}%</span>
                   </div>
@@ -176,7 +176,7 @@ export default function DevicesPage() {
       <section>
         <div className="flex items-center gap-3 mb-4">
           <span className="label-tag" style={{ color: '#20D890' }}>KNOWN</span>
-          <div className="flex-1 h-px" style={{ background: '#1A2238' }} />
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
           <span className="text-xs font-mono" style={{ color: '#4A5570' }}>Confirmed Consoles</span>
         </div>
 
@@ -190,11 +190,11 @@ export default function DevicesPage() {
                 className="border overflow-hidden"
                 style={{
                   background: '#111525',
-                  borderColor: '#1E2840',
+                  borderColor: 'rgba(255,107,53,0.16)',
                   boxShadow: 'inset 0 1px 0 rgba(32,216,144,0.06)',
                 }}
               >
-                <div className="border-b" style={{ borderColor: '#1A2238' }}>
+                <div className="border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
                   <DeviceImage device={device} isUnknown={false} />
                 </div>
 
@@ -207,7 +207,7 @@ export default function DevicesPage() {
                     {device.status && (
                       <span
                         className="label-tag whitespace-nowrap ml-1 shrink-0"
-                        style={{ color: statusStyle.color, fontSize: '0.5rem' }}
+                        style={{ color: statusStyle.color, fontSize: 'var(--fs-caption)' }}
                       >
                         {STATUS_LABELS[device.status] ?? device.status}
                       </span>

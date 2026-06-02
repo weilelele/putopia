@@ -55,7 +55,7 @@ function LoginPageContent() {
       <div style={{ width: '100%', maxWidth: '440px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>// IDENTITY VERIFICATION</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-nucleus)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(255,90,31,0.5)' }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 900, color: 'var(--color-nucleus)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(255,90,31,0.5)' }}>
             AUTHENTICATE
           </div>
         </div>
@@ -104,7 +104,7 @@ function LoginPageContent() {
               type="submit"
               disabled={loading}
               className="btn-orange w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ justifyContent: 'center', fontSize: '0.8rem' }}
+              style={{ justifyContent: 'center', fontSize: 'var(--fs-label)' }}
             >
               {loading ? '> AUTHENTICATING...' : '[ AUTHENTICATE ]'}
             </button>
@@ -113,15 +113,15 @@ function LoginPageContent() {
         </div>
 
         <div style={{ marginTop: '1.5rem', textAlign: 'center', padding: '1rem', border: '1px solid var(--bd-faint)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: 'var(--color-star-deep)', marginBottom: '0.5rem' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', marginBottom: '0.5rem' }}>
             NO ACTIVE CREDENTIALS?
           </div>
-          <Link href="/#apply" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.15em', color: 'var(--color-nucleus)' }}>
+          <Link href="/#apply" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-nucleus)' }}>
             APPLY FOR VOYAGER STATUS →
           </Link>
         </div>
 
-        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
+        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
           // ALL ACCESS ATTEMPTS ARE LOGGED //
         </div>
       </div>

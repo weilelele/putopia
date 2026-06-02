@@ -20,8 +20,8 @@ export default function PreviewPage() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: '0.55rem',
-        letterSpacing: '0.4em', color: 'rgba(34,212,224,0.5)',
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+        letterSpacing: '0.4em', color: 'rgba(232,93,4,0.5)',
       }}>
         RESETTING SIGNAL...
       </div>

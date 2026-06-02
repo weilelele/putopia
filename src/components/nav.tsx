@@ -86,7 +86,7 @@ function Avatar({ user }: { user: AuthUser }) {
   const initial = user.name?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? '?'
   return (
     <div
-      className="flex items-center justify-center shrink-0 text-[11px] font-mono font-bold"
+      className="flex items-center justify-center shrink-0 text-xs font-mono font-bold"
       style={{
         width: 28, height: 28,
         borderRadius: '50%',
@@ -117,15 +117,15 @@ export function Nav() {
   return (
     <nav
       className="hidden md:flex flex-col w-60 shrink-0 h-screen sticky top-0"
-      style={{ background: '#0D1020', borderRight: '1px solid #1A2238' }}
+      style={{ background: '#0D1020', borderRight: '1px solid rgba(255,107,53,0.16)' }}
     >
       {/* Logo */}
-      <div className="p-4 border-b" style={{ borderColor: '#1A2238' }}>
+      <div className="p-4 border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
         <Link href="/console" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/logo.png"
-            alt="Putopia Collective"
+            alt="Multiverse Collective"
             style={{ width: '100%', maxWidth: '176px', height: 'auto', display: 'block' }}
           />
         </Link>
@@ -134,7 +134,7 @@ export function Nav() {
 
       {/* Nav label */}
       <div className="px-4 pt-4 pb-1">
-        <div className="text-[9px] tracking-[0.2em] font-mono" style={{ color: '#4A5570' }}>
+        <div className="text-xs tracking-[0.2em] font-mono" style={{ color: '#4A5570' }}>
           — NAVIGATION —
         </div>
       </div>
@@ -169,18 +169,18 @@ export function Nav() {
               }}
             >
               <span style={{ flexShrink: 0 }}>{icon}</span>
-              <span className="text-[10px] tracking-widest font-mono">{label}</span>
+              <span className="text-xs tracking-widest font-mono">{label}</span>
             </Link>
           )
         })}
       </div>
 
       {/* ── Current Identity ── */}
-      <div className="mx-2 mt-3 mb-1 border p-3" style={{ borderColor: '#1A2238', background: '#111525' }}>
+      <div className="mx-2 mt-3 mb-1 border p-3" style={{ borderColor: 'rgba(255,107,53,0.16)', background: '#111525' }}>
         {/* Row 1: avatar + name */}
         <div className="flex items-center gap-2.5 mb-2.5">
           <Avatar user={user} />
-          <span className="text-[10px] font-mono truncate leading-tight" style={{ color: '#EDE8DE' }}>
+          <span className="text-xs font-mono truncate leading-tight" style={{ color: '#EDE8DE' }}>
             {user.name ?? (user.role === 'guest' ? 'UNKNOWN OPERATIVE' : user.email ?? '—')}
           </span>
         </div>
@@ -190,8 +190,8 @@ export function Nav() {
           {user.role === 'guest' ? (
             <Link
               href="/login"
-              className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-mono border transition-colors shrink-0"
-              style={{ borderColor: '#1E2840', color: '#4A5570' }}
+              className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono border transition-colors shrink-0"
+              style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570' }}
             >
               <LogInIcon />
               LOGIN
@@ -199,8 +199,8 @@ export function Nav() {
           ) : (
             <button
               onClick={() => logout()}
-              className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-mono border transition-colors shrink-0"
-              style={{ borderColor: '#1E2840', color: '#4A5570' }}
+              className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono border transition-colors shrink-0"
+              style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#4A5570' }}
             >
               <LogOutIcon />
               LOGOUT
@@ -219,7 +219,7 @@ export function Nav() {
             href="/#apply"
             style={{
               display: 'block', textAlign: 'center',
-              fontSize: '0.62rem', letterSpacing: '0.15em',
+              fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
               color: '#EDE8DE',
               background: 'linear-gradient(135deg, #E85A00, #C04000)',
               padding: '8px 0', fontWeight: 700,

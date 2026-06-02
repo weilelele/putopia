@@ -8,11 +8,11 @@ import type { GeneratedNews } from '@/lib/actions/news-gen'
 
 // ── 样式常量（与现有 admin 风格一致）─────────────────────────────────────
 const S = {
-  card:  { background: '#111525', border: '1px solid #1E2840', padding: '24px', marginBottom: '16px' } as React.CSSProperties,
+  card:  { background: '#111525', border: '1px solid rgba(255,107,53,0.16)', padding: '24px', marginBottom: '16px' } as React.CSSProperties,
   label: { display: 'block', color: '#4A5570', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '6px' } as React.CSSProperties,
-  input: { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
-  area:  { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as React.CSSProperties,
-  sel:   { width: '100%', background: '#0D1020', border: '1px solid #1E2840', color: '#EDE8DE', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' } as React.CSSProperties,
+  input: { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
+  area:  { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as React.CSSProperties,
+  sel:   { width: '100%', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#EDE8DE', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' } as React.CSSProperties,
   btn:   (color: string, dim?: boolean) => ({
     padding: '9px 22px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em',
     cursor: dim ? 'not-allowed' : 'pointer', border: `1px solid ${color}`, color,
@@ -174,7 +174,7 @@ export default function CreateNewsPage() {
               width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center',
               justifyContent: 'center', fontSize: '11px', fontFamily: 'monospace',
               background: phase === p ? '#E85A00' : ((['input','review','done'].indexOf(phase) > i) ? '#1E2840' : '#0D1020'),
-              border: `1px solid ${phase === p ? '#E85A00' : '#1E2840'}`,
+              border: `1px solid ${phase === p ? '#E85A00' : 'rgba(255,107,53,0.16)'}`,
               color: phase === p ? '#fff' : '#4A5570',
             }}>{i + 1}</div>
             <span style={{ fontSize: '11px', color: phase === p ? '#EDE8DE' : '#4A5570', letterSpacing: '0.08em' }}>
@@ -207,7 +207,7 @@ export default function CreateNewsPage() {
                   ))}
                 </select>
                 {selectedPersona?.bio && (
-                  <div style={{ marginTop: '8px', padding: '8px 10px', background: '#0D1020', border: '1px solid #1A2238', color: '#4A5570', fontSize: '12px', lineHeight: 1.6 }}>
+                  <div style={{ marginTop: '8px', padding: '8px 10px', background: '#0D1020', border: '1px solid rgba(255,107,53,0.16)', color: '#4A5570', fontSize: '12px', lineHeight: 1.6 }}>
                     {selectedPersona.bio}
                   </div>
                 )}
@@ -245,7 +245,7 @@ export default function CreateNewsPage() {
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  style={S.btn('#22D4E0', generating)}
+                  style={S.btn('#FF6B35', generating)}
                 >
                   {generating ? '✦ 生成中...' : '✦ AI 生成草稿'}
                 </button>
@@ -265,13 +265,13 @@ export default function CreateNewsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           {/* 发布者信息 */}
-          <div style={{ ...S.card, borderColor: '#22D4E0', paddingTop: '14px', paddingBottom: '14px' }}>
+          <div style={{ ...S.card, borderColor: '#FF6B35', paddingTop: '14px', paddingBottom: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {selectedPersona.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={selectedPersona.avatar_url} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #1E2840' }} />
+                <img src={selectedPersona.avatar_url} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,107,53,0.16)' }} />
               ) : (
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#1E2840', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22D4E0', fontSize: '14px', fontFamily: 'monospace' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#1E2840', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF6B35', fontSize: '14px', fontFamily: 'monospace' }}>
                   {selectedPersona.display_name[0]}
                 </div>
               )}
@@ -315,7 +315,7 @@ export default function CreateNewsPage() {
                   onClick={() => imgLoaded[i] && !imgErrors[i] && setSelectedImg(selectedImg === url ? null : url)}
                   style={{
                     cursor: imgLoaded[i] && !imgErrors[i] ? 'pointer' : 'default',
-                    border: selectedImg === url ? '2px solid #22D4E0' : '2px solid #1E2840',
+                    border: selectedImg === url ? '2px solid #FF6B35' : '2px solid rgba(255,107,53,0.16)',
                     position: 'relative', aspectRatio: '800/420', overflow: 'hidden',
                     background: '#0D1020',
                   }}
@@ -323,7 +323,7 @@ export default function CreateNewsPage() {
                   {/* 骨架屏：加载中 */}
                   {!imgLoaded[i] && !imgErrors[i] && (
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                      <div style={{ width: '28px', height: '28px', border: '2px solid #1E2840', borderTop: '2px solid #22D4E0', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                      <div style={{ width: '28px', height: '28px', border: '2px solid rgba(255,107,53,0.16)', borderTop: '2px solid #FF6B35', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                       <span style={{ fontSize: '10px', color: '#4A5570', letterSpacing: '0.1em' }}>GENERATING</span>
                     </div>
                   )}
@@ -348,7 +348,7 @@ export default function CreateNewsPage() {
 
                   {/* 已选标记 */}
                   {selectedImg === url && (
-                    <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#22D4E0', color: '#0D1020', fontSize: '10px', padding: '2px 6px', fontFamily: 'monospace' }}>✓ 已选</div>
+                    <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#FF6B35', color: '#0D1020', fontSize: '10px', padding: '2px 6px', fontFamily: 'monospace' }}>✓ 已选</div>
                   )}
 
                   {/* 图片序号 */}
@@ -399,7 +399,7 @@ export default function CreateNewsPage() {
             ID: <span style={{ color: '#E85A00' }}>{publishedId}</span> · 以 {selectedPersona?.display_name} 身份发布
           </div>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="/intel" target="_blank" style={{ ...S.btn('#22D4E0'), textDecoration: 'none', display: 'inline-block' }}>
+            <a href="/intel" target="_blank" style={{ ...S.btn('#FF6B35'), textDecoration: 'none', display: 'inline-block' }}>
               查看情报页 →
             </a>
             <button onClick={handleReset} style={S.btn('#4A5570')}>

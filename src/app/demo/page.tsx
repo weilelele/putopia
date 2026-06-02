@@ -129,7 +129,7 @@ function OnboardingInner() {
       {/* Dev indicator */}
       <div style={{
         position: 'fixed', bottom: 12, right: 14,
-        fontFamily: 'var(--font-mono)', fontSize: '0.45rem',
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
         letterSpacing: '0.22em', color: 'rgba(242,240,230,0.1)',
         zIndex: 10000, pointerEvents: 'none',
       }}>
@@ -197,15 +197,15 @@ function VideoSection() {
       {/* ── Layer 3: Cyan inset glow — screen edge bleed ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
-        boxShadow: 'inset 0 0 35px rgba(34,212,224,0.07), inset 0 0 70px rgba(34,212,224,0.03)',
+        boxShadow: 'inset 0 0 35px rgba(232,93,4,0.07), inset 0 0 70px rgba(232,93,4,0.03)',
       }} />
 
       {/* ── Layer 4: Sweeping scan line ── */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 4 }}>
         <div style={{
           position: 'absolute', left: 0, right: 0, height: 2,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(34,212,224,0.35) 30%, rgba(34,212,224,0.65) 50%, rgba(34,212,224,0.35) 70%, transparent 100%)',
-          boxShadow: '0 0 8px rgba(34,212,224,0.4), 0 0 20px rgba(34,212,224,0.15)',
+          background: 'linear-gradient(90deg, transparent 0%, rgba(232,93,4,0.35) 30%, rgba(232,93,4,0.65) 50%, rgba(232,93,4,0.35) 70%, transparent 100%)',
+          boxShadow: '0 0 8px rgba(232,93,4,0.4), 0 0 20px rgba(232,93,4,0.15)',
           animation: 'videoSweep 5s linear infinite',
         }} />
       </div>
@@ -261,10 +261,10 @@ function Q1Card({ value, onChange, touched, onContinue }: {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.38em', color: 'var(--color-nucleus)', opacity: 0.65 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.38em', color: 'var(--color-nucleus)', opacity: 0.65 }}>
           01 / 02
         </div>
-        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '1.05rem', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
           How strongly do you feel that another version of your life exists right now?
         </h2>
       </div>
@@ -283,7 +283,7 @@ function Q1Card({ value, onChange, touched, onContinue }: {
             background: touched ? 'rgba(255,90,31,0.08)' : 'transparent',
             border: `1px solid ${touched ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
             color: touched ? 'var(--color-star)' : 'var(--color-star-dim)',
-            fontFamily: 'var(--font-display)', fontSize: '0.68rem', letterSpacing: '0.2em',
+            fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em',
             padding: '0.75rem 1.5rem', cursor: touched ? 'pointer' : 'default',
             transition: 'all 0.2s ease',
             display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -318,10 +318,10 @@ function Q2Card({ selected, onSelect }: { selected: string; onSelect: (id: strin
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.38em', color: 'var(--color-nebula)', opacity: 0.65 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.38em', color: 'var(--color-nebula)', opacity: 0.65 }}>
           02 / 02
         </div>
-        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: '1.05rem', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
           Which parallel world are you most hoping to find?
         </h2>
       </div>
@@ -359,7 +359,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <p style={{
           fontFamily: 'var(--font-body)', fontWeight: 700,
-          fontSize: '1.35rem', lineHeight: 1.5,
+          fontSize: 'var(--fs-title)', lineHeight: 1.5,
           color: 'var(--color-star)', margin: 0,
           animation: 'fadeInUp 0.5s ease forwards',
         }}>
@@ -367,7 +367,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
         </p>
         <p style={{
           fontFamily: 'var(--font-body)', fontWeight: 500,
-          fontSize: '1.05rem', lineHeight: 1.6,
+          fontSize: 'var(--fs-body)', lineHeight: 1.6,
           color: 'var(--color-star-dim)', margin: 0,
           opacity: showSecondLine ? 1 : 0,
           transform: showSecondLine ? 'translateY(0)' : 'translateY(10px)',
@@ -390,7 +390,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
 
         {/* Invitation text */}
         <p style={{
-          fontFamily: 'var(--font-body)', fontSize: '0.92rem',
+          fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',
           color: 'rgba(242,240,230,0.55)', lineHeight: 1.75, margin: 0,
         }}>
           Leave your email below. We will invite you into our collective and assign you access to a Multiverse Console.
@@ -401,7 +401,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
             <label style={{
-              fontFamily: 'var(--font-mono)', fontSize: '0.5rem',
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
               letterSpacing: '0.3em', color: 'var(--color-star-deep)',
             }}>
               YOUR EMAIL
@@ -428,7 +428,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
               background:  email && !submitting ? 'rgba(255,90,31,0.1)' : 'transparent',
               border:      `1px solid ${email && !submitting ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
               color:       email && !submitting ? 'var(--color-star)' : 'rgba(242,240,230,0.35)',
-              fontFamily:  'var(--font-display)', fontSize: '0.72rem', letterSpacing: '0.15em',
+              fontFamily:  'var(--font-display)', fontSize: 'var(--fs-label)', letterSpacing: '0.15em',
               cursor:      email && !submitting ? 'pointer' : 'default',
               transition:  'all 0.2s ease',
               boxShadow:   email && !submitting ? '0 0 20px rgba(255,90,31,0.08)' : 'none',
@@ -555,13 +555,13 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
           gap: '1.1rem', textAlign: 'center',
         }}
       >
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', letterSpacing: '0.4em', color: 'rgba(34,212,224,0.75)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.4em', color: 'rgba(232,93,4,0.75)' }}>
           WELCOME,
         </div>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.5rem, 8vw, 4.5rem)', letterSpacing: '0.14em', color: 'var(--color-nucleus)', lineHeight: 1 }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display)', letterSpacing: '0.14em', color: 'var(--color-nucleus)', lineHeight: 1 }}>
           VOYAGER
         </div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.18em', color: 'rgba(242,240,230,0.4)', lineHeight: 1.8, marginTop: '0.25rem' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(242,240,230,0.4)', lineHeight: 1.8, marginTop: '0.25rem' }}>
           YOU HAVE BEEN SELECTED TO EXPLORE<br />
           THE MYSTERIES OF PARALLEL WORLDS.
         </div>
@@ -573,8 +573,8 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
           ref={beamRef}
           style={{
             position: 'absolute', left: 0, right: 0, top: '-4px', height: 4,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(34,212,224,0.25) 10%, rgba(34,212,224,1) 50%, rgba(34,212,224,0.25) 90%, transparent 100%)',
-            boxShadow: '0 0 24px rgba(34,212,224,1), 0 0 80px rgba(34,212,224,0.65), 0 0 160px rgba(34,212,224,0.25), 0 12px 60px rgba(34,212,224,0.18)',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(232,93,4,0.25) 10%, rgba(232,93,4,1) 50%, rgba(232,93,4,0.25) 90%, transparent 100%)',
+            boxShadow: '0 0 24px rgba(232,93,4,1), 0 0 80px rgba(232,93,4,0.65), 0 0 160px rgba(232,93,4,0.25), 0 12px 60px rgba(232,93,4,0.18)',
           }}
         />
       </div>
@@ -615,20 +615,20 @@ function SuccessScreen() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: '0 0 28px rgba(32,216,144,0.14)',
       }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', color: 'var(--color-ok)' }}>✓</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-h3)', color: 'var(--color-ok)' }}>✓</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', maxWidth: 340 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '0.4em', color: 'var(--color-ok)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.4em', color: 'var(--color-ok)' }}>
           COORDINATES RECEIVED
         </div>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', letterSpacing: '0.15em', color: 'var(--color-star)', margin: 0 }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-body)', letterSpacing: '0.15em', color: 'var(--color-star)', margin: 0 }}>
           WELCOME, VOYAGER.
         </h2>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.66rem', color: 'rgba(242,240,230,0.4)', lineHeight: 1.7, margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(242,240,230,0.4)', lineHeight: 1.7, margin: 0 }}>
           Entering the collective now.
         </p>
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.48rem', letterSpacing: '0.2em', color: 'rgba(242,240,230,0.18)' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'rgba(242,240,230,0.18)' }}>
         Redirecting...
       </div>
     </div>

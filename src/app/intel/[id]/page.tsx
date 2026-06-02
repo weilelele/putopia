@@ -53,7 +53,7 @@ export default function IntelDetailPage() {
   if (entry === undefined) {
     return (
       <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
       </div>
     )
   }
@@ -61,8 +61,8 @@ export default function IntelDetailPage() {
   if (!entry) {
     return (
       <div className="main" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>INTEL ENTRY NOT FOUND</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>INTEL ENTRY NOT FOUND</div>
         <Link href={backHref} className="btn-ghost">← RETURN</Link>
       </div>
     )
@@ -113,22 +113,22 @@ export default function IntelDetailPage() {
           <div style={{ padding: '0 1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
               <span className="label-tag" style={{ color }}>{entry.tag}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>{formatDate(entry.timestamp)}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>{formatDate(entry.timestamp)}</span>
             </div>
-            <h1 style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: '1.4rem', color: 'var(--color-star)', marginBottom: '1rem', lineHeight: 1.3 }}>
+            <h1 style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'var(--fs-h3)', color: 'var(--color-star)', marginBottom: '1rem', lineHeight: 1.3 }}>
               {entry.title}
             </h1>
 
             {/* Publisher */}
             {entry.publisher_name && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', letterSpacing: '0.15em', color: 'var(--color-muted)' }}>PUBLISHED BY</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'var(--color-star-dim)', fontWeight: 600 }}>{entry.publisher_name}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-muted)' }}>PUBLISHED BY</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: 'var(--color-star-dim)', fontWeight: 600 }}>{entry.publisher_name}</span>
               </div>
             )}
 
             <div className="hr-cyan" />
-            <article style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-star-dim)', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginTop: '1rem' }}>
+            <article style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginTop: '1rem' }}>
               {entry.content}
             </article>
           </div>
@@ -139,7 +139,7 @@ export default function IntelDetailPage() {
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>
                 VISUAL ATTACHMENTS [{entry.images.length}]
               </div>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
@@ -174,7 +174,7 @@ export default function IntelDetailPage() {
         {/* Transmissions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
           <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>TRANSMISSIONS</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>TRANSMISSIONS</div>
           <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
         </div>
 
@@ -186,16 +186,16 @@ export default function IntelDetailPage() {
                   <div style={{
                     width: 28, height: 28, borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700,
-                    background: 'rgba(34,212,224,0.08)', color: 'var(--color-nebula)',
+                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700,
+                    background: 'rgba(232,93,4,0.08)', color: 'var(--color-nebula)',
                     border: '1px solid var(--bd-cyan-2)', flexShrink: 0,
                   }}>{getInitials(comment.author)}</div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-dim)' }}>{comment.author}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-star-deep)', marginLeft: 'auto' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)' }}>{comment.author}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginLeft: 'auto' }}>
                     {new Date(comment.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>{comment.text}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>{comment.text}</p>
               </div>
             ))}
           </div>
@@ -204,7 +204,7 @@ export default function IntelDetailPage() {
         <form onSubmit={handleTransmit}>
           <div className="hud-frame">
             <div style={{ padding: '0 0.5rem' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
                 TRANSMIT A MESSAGE
               </div>
               <textarea
@@ -217,9 +217,9 @@ export default function IntelDetailPage() {
               />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem' }}>
                 {transmitted ? (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--color-ok)' }}>✓ TRANSMISSION SENT</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-ok)' }}>✓ TRANSMISSION SENT</span>
                 ) : <span />}
-                <button type="submit" disabled={!commentText.trim()} className="btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.7rem' }}>
+                <button type="submit" disabled={!commentText.trim()} className="btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: 'var(--fs-caption)' }}>
                   <Send size={10} /> TRANSMIT
                 </button>
               </div>

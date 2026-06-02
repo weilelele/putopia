@@ -46,7 +46,7 @@ export default function LogsPage() {
           <p className="sub">{stories.length} entries on record</p>
         </div>
         {isAtLeast('architect') && (
-          <button className="btn-secondary" style={{ padding: '0.55rem 1.25rem', fontSize: '0.7rem' }}>
+          <button className="btn-secondary" style={{ padding: '0.55rem 1.25rem', fontSize: 'var(--fs-caption)' }}>
             <Plus size={12} />
             SUBMIT LOG ENTRY
           </button>
@@ -67,7 +67,7 @@ export default function LogsPage() {
               {/* Author bar */}
               <div
                 className="flex items-center gap-3 px-4 py-3 border-b"
-                style={{ background: '#0D1020', borderColor: '#1A2238' }}
+                style={{ background: '#0D1020', borderColor: 'rgba(255,107,53,0.16)' }}
               >
                 {story.author_avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -106,7 +106,7 @@ export default function LogsPage() {
                 {story.youtube_id && (
                   <div
                     className="md:shrink-0 border-b md:border-b-0 md:border-l"
-                    style={{ borderColor: '#1A2238', width: undefined }}
+                    style={{ borderColor: 'rgba(255,107,53,0.16)', width: undefined }}
                   >
                     <div className="md:w-52" style={{ position: 'relative' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -123,7 +123,7 @@ export default function LogsPage() {
                         background: 'rgba(11,15,23,0.82)',
                         border: '1px solid rgba(232,90,0,0.5)',
                         color: '#E85A00',
-                        fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.12em',
+                        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
                         padding: '3px 7px',
                         display: 'flex', alignItems: 'center', gap: '4px',
                       }}>
@@ -135,14 +135,14 @@ export default function LogsPage() {
 
                 {/* Text content */}
                 <div className="px-4 py-4 flex-1 min-w-0">
-                  <h2 className="text-base font-mono font-semibold mb-3" style={{ color: '#EDE8DE' }}>
+                  <h2 className="text-xl font-mono font-semibold mb-3" style={{ color: '#EDE8DE' }}>
                     {story.title}
                   </h2>
                   <p className="text-sm leading-relaxed font-mono" style={{ color: '#8A9AB5' }}>
                     {story.excerpt}
                   </p>
 
-                  <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: '#1A2238', color: '#E85A00' }}>
+                  <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#E85A00' }}>
                     READ FULL STORY
                     <ArrowRight size={12} />
                   </div>

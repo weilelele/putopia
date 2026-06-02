@@ -1,31 +1,19 @@
 import type { Metadata } from 'next'
-import { Orbitron, Raleway, DM_Mono } from 'next/font/google'
+import { Space_Mono } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
 import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
 
-const orbitron = Orbitron({
-  variable: '--font-display',
-  subsets: ['latin'],
-  weight: ['700', '800', '900'],
-})
-
-const raleway = Raleway({
-  variable: '--font-body',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-})
-
-const dmMono = DM_Mono({
+const spaceMono = Space_Mono({
   variable: '--font-mono',
   subsets: ['latin'],
-  weight: ['400', '500'],
+  weight: ['400', '700'],
 })
 
 export const metadata: Metadata = {
-  title: 'PUTOPIA // COLLECTIVE — Internal Platform',
+  title: 'MULTIVERSE COLLECTIVE — Explore Parallel Worlds',
   description: 'Classified internal workspace. Authorized personnel only.',
 }
 
@@ -35,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${orbitron.variable} ${raleway.variable} ${dmMono.variable} h-full`}>
+    <html lang="en" className={`${spaceMono.variable} h-full`}>
       <body className="starfield flex h-full">
         <Script id="meta-pixel" strategy="afterInteractive">{`
           !function(f,b,e,v,n,t,s)

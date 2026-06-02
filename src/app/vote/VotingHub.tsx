@@ -50,7 +50,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
         {isAtLeast('architect') && (
           <button
             className="btn-secondary"
-            style={{ padding: '0.55rem 1.25rem', fontSize: '0.7rem' }}
+            style={{ padding: '0.55rem 1.25rem', fontSize: 'var(--fs-caption)' }}
             onClick={() => setShowCreate(true)}
           >
             <Plus size={12} />
@@ -66,7 +66,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
             <div className="text-xs font-mono tracking-widest" style={{ color: '#20D890' }}>
               ● ACTIVE VOTES
             </div>
-            <div className="flex-1 h-px" style={{ background: '#1A2238' }} />
+            <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {activeVotes.map((v) => (
@@ -89,7 +89,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
             <div className="text-xs font-mono tracking-widest" style={{ color: '#4A5570' }}>
               ○ CLOSED VOTES
             </div>
-            <div className="flex-1 h-px" style={{ background: '#1A2238' }} />
+            <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {closedVotes.map((v) => (
