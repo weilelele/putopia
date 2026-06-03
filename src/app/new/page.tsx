@@ -8,6 +8,9 @@ import { getFirstTouch } from '@/lib/utm'
 import { FlameSlider, WorldChoiceCards, WORLD_OPTIONS, beliefToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
 
+/* ─── Onboarding Version ─────────────────────────── */
+const ONBOARDING_VERSION = 'v2'
+
 /* ─── Email Providers ────────────────────────────── */
 const EMAIL_PROVIDERS: Record<string, { name: string; url: string }> = {
   'gmail.com':      { name: 'Gmail',        url: 'https://mail.google.com/mail/' },
@@ -74,11 +77,12 @@ function OnboardingInner() {
     if (!localStorage.getItem('putopia_voyager_registered')) {
       const utm = getFirstTouch()
       posthog.capture('onboarding_started', {
-        utm_source:   utm.utm_source   ?? undefined,
-        utm_medium:   utm.utm_medium   ?? undefined,
-        utm_campaign: utm.utm_campaign ?? undefined,
-        utm_content:  utm.utm_content  ?? undefined,
-        fbclid:       utm.fbclid       ?? undefined,
+        utm_source:        utm.utm_source   ?? undefined,
+        utm_medium:        utm.utm_medium   ?? undefined,
+        utm_campaign:      utm.utm_campaign ?? undefined,
+        utm_content:       utm.utm_content  ?? undefined,
+        fbclid:            utm.fbclid       ?? undefined,
+        onboarding_version: ONBOARDING_VERSION,
       })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,7 +96,7 @@ function OnboardingInner() {
 
   const handleSlider = (v: number) => {
     if (!beliefTouched) {
-      posthog.capture('onboarding_slider_touched', { initial_value: v })
+      posthog.capture('onboarding_slider_touched', { initial_value: v, onboarding_version: ONBOARDING_VERSION })
     }
     setBelief(v)
     if (!beliefTouched) setBeliefTouched(true)
@@ -100,7 +104,7 @@ function OnboardingInner() {
 
   const handleQ2Select = (id: string) => {
     setEmotion(id)
-    posthog.capture('onboarding_q2_completed', { world_selected: id })
+    posthog.capture('onboarding_q2_completed', { world_selected: id, onboarding_version: ONBOARDING_VERSION })
     setTimeout(() => goTo('cta'), 380)   // brief pause so user sees selection highlight
   }
 
@@ -134,6 +138,7 @@ function OnboardingInner() {
       fbclid:       utm.fbclid       ?? undefined,
       belief_value: belief,
       world_selected: emotion,
+      onboarding_version: ONBOARDING_VERSION,
     })
     // Brief "TRANSMITTING..." beat before confirm screen appears
     await new Promise(r => setTimeout(r, 200))
@@ -217,7 +222,7 @@ function OnboardingInner() {
                   touched={beliefTouched}
                   onContinue={() => {
                     if (beliefTouched) {
-                      posthog.capture('onboarding_q1_completed', { belief_value: belief })
+                      posthog.capture('onboarding_q1_completed', { belief_value: belief, onboarding_version: ONBOARDING_VERSION })
                       goTo('q2')
                     }
                   }}
@@ -523,7 +528,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
           fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',
           color: 'rgba(242,240,230,0.55)', lineHeight: 1.75, margin: 0,
         }}>
-          Leave your email below. We will invite you into our collective and assign you access to a Multiverse Console.
+          Leave your email below to apply for your seat in our collective and secure your Multiverse Console.
         </p>
 
         {/* Form */}

@@ -5,6 +5,10 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { FlameSlider, WorldChoiceCards, WORLD_OPTIONS, beliefToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
+import posthog from 'posthog-js'
+
+/* ─── Onboarding Version ─────────────────────────── */
+const ONBOARDING_VERSION = 'v2'
 
 /* ─── Types ──────────────────────────────────────── */
 type Step = 'q1' | 'q2' | 'cta' | 'success'
@@ -59,6 +63,9 @@ function OnboardingInner() {
       email,
       reason:   beliefToReason(belief),
       location: worldText,
+    })
+    posthog.capture('waitlist_submitted', {
+      onboarding_version: ONBOARDING_VERSION,
     })
     // Brief "TRANSMITTING..." beat before scan fires
     await new Promise(r => setTimeout(r, 200))
@@ -393,7 +400,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
           fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',
           color: 'rgba(242,240,230,0.55)', lineHeight: 1.75, margin: 0,
         }}>
-          Leave your email below. We will invite you into our collective and assign you access to a Multiverse Console.
+          Leave your email below to apply for your seat in our collective and secure your Multiverse Console.
         </p>
 
         {/* Form */}
