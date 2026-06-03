@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { Vote, UserRole, VoteInsert, VoteResponseInsert } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
+import { logActivity } from './activity-events'
 
 // Converts legacy single-string scope (pre-schema_v8) to UserRole[]
 function normalizeScope(scope: unknown): UserRole[] {
@@ -54,6 +55,12 @@ export async function createVote(vote: VoteInsert) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated', data: null }
 
+  const { data: profile } = await supabase
+    .from('voyager_profiles')
+    .select('display_name, role')
+    .eq('id', user.id)
+    .single()
+
   const { data, error } = await supabase
     .from('votes')
     .insert({ ...vote, created_by: user.id })
@@ -62,6 +69,18 @@ export async function createVote(vote: VoteInsert) {
 
   if (error) return { error: error.message, data: null }
   revalidatePath('/vote')
+
+  logActivity({
+    actor_id:    user.id,
+    actor_name:  profile?.display_name ?? 'Unknown',
+    actor_role:  profile?.role ?? 'voyager',
+    event_type:  'vote_opened',
+    target_id:   data.id,
+    target_title: vote.title,
+    target_href: '/vote',
+    group_key:   `vote-${data.id}`,
+  })
+
   return { error: null, data }
 }
 
@@ -69,16 +88,24 @@ export async function submitVoteResponse(response: Omit<VoteResponseInsert, 'use
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Fetch display_name to denormalize into the response row
+  // Fetch display_name + role + vote question in parallel
   let voterName: string | null = null
+  let voterRole = 'voyager'
+  let voteQuestion: string | null = null
+
+  const fetches: Promise<void>[] = []
+
   if (user) {
-    const { data: profile } = await supabase
-      .from('voyager_profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .single()
-    voterName = profile?.display_name ?? null
+    fetches.push(
+      supabase.from('voyager_profiles').select('display_name, role').eq('id', user.id).single()
+        .then(({ data: p }) => { voterName = p?.display_name ?? null; voterRole = p?.role ?? 'voyager' }) as Promise<void>
+    )
   }
+  fetches.push(
+    supabase.from('votes').select('title').eq('id', response.vote_id).single()
+      .then(({ data: v }) => { voteQuestion = (v as { title?: string } | null)?.title ?? null }) as Promise<void>
+  )
+  await Promise.all(fetches)
 
   const insert: VoteResponseInsert = {
     ...response,
@@ -93,6 +120,21 @@ export async function submitVoteResponse(response: Omit<VoteResponseInsert, 'use
 
   if (error) return { error: error.message }
   revalidatePath('/vote')
+
+  if (user) {
+    logActivity({
+      actor_id:    user.id,
+      actor_name:  voterName ?? 'Unknown',
+      actor_role:  voterRole,
+      event_type:  'vote_cast',
+      target_id:   response.vote_id,
+      target_title: voteQuestion ?? undefined,
+      target_href: '/vote',
+      vote_option: response.selected_options?.[0] ?? undefined,
+      group_key:   `vote-${response.vote_id}`,
+    })
+  }
+
   const distinctId = user?.id ?? (anonToken ?? 'anonymous')
   const posthog = getPostHogClient()
   posthog.capture({ distinctId, event: 'vote_response_submitted', properties: { vote_id: response.vote_id, selected_options: response.selected_options } })

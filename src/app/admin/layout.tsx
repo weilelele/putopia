@@ -77,6 +77,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: '/admin/create-news', label: 'AI NEWS'  },
     { href: '/admin/votes',       label: 'VOTES'    },
     { href: '/admin/analytics',   label: 'FUNNEL'   },
+    { href: '/admin/activity',    label: 'ACTIVITY' },
   ]
 
   return (

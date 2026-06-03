@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { IntelInsert, IntelUpdate } from '@/types/database'
+import { logActivity } from './activity-events'
 
 // Public intel (unclassified) — accessible to all including guests
 export async function getPublicIntel() {
@@ -63,11 +64,27 @@ export async function createIntel(entry: IntelInsert) {
 
   if (error) return { error: error.message, data: null }
   revalidatePath('/intel')
+
+  logActivity({
+    actor_id:    entry.publisher_id ?? null,
+    actor_name:  entry.publisher_name ?? 'Unknown',
+    actor_role:  'architect',
+    event_type:  'intel_published',
+    target_id:   data.id,
+    target_title: entry.title,
+    target_image: entry.images?.[0] ?? undefined,
+    target_href: `/intel/${data.id}`,
+  })
+
   return { error: null, data }
 }
 
 export async function updateIntel(id: string, updates: IntelUpdate) {
   const admin = createAdminClient()
+
+  // Fetch current record for snapshot data
+  const { data: existing } = await admin.from('intel').select('title, images, publisher_id, publisher_name').eq('id', id).single()
+
   const { error } = await admin
     .from('intel')
     .update(updates)
@@ -75,6 +92,18 @@ export async function updateIntel(id: string, updates: IntelUpdate) {
 
   if (error) return { error: error.message }
   revalidatePath('/intel')
+
+  logActivity({
+    actor_id:    existing?.publisher_id ?? null,
+    actor_name:  existing?.publisher_name ?? 'Unknown',
+    actor_role:  'architect',
+    event_type:  'intel_updated',
+    target_id:   id,
+    target_title: updates.title ?? existing?.title,
+    target_image: (updates.images ?? existing?.images)?.[0] ?? undefined,
+    target_href: `/intel/${id}`,
+  })
+
   return { error: null }
 }
 

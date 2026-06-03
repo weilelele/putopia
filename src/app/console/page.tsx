@@ -8,16 +8,16 @@ import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { getAllDevices } from '@/lib/actions/devices'
 import { getPublicIntel } from '@/lib/actions/intel'
-import { getLatestFeed } from '@/lib/actions/dashboard-feed'
 import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actions/votes'
 import { getAllWorlds } from '@/lib/actions/worlds'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
-import { CommsFeed } from '@/components/comms-feed'
+import { getActivityFeed } from '@/lib/actions/activity-events'
+import { ActivityFeed } from '@/components/activity-feed'
 import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import type { Device, Intel, Vote, World, McFunction, McFunctionStatus } from '@/types/database'
-import type { FeedLine } from '@/lib/actions/dashboard-feed'
+import type { ActivityEvent } from '@/lib/actions/activity-events'
 
 const STATUS_META: Record<McFunctionStatus, { label: string; color: string }> = {
   active:         { label: 'ACTIVE', color: '#20D890' },
@@ -138,6 +138,64 @@ function DevicePreviewCard({ device }: { device: Device }) {
   )
 }
 
+/* ─── Unknown Device Preview Card (greyed, uncontacted signal) ─── */
+function UnknownDevicePreviewCard({ device }: { device: Device }) {
+  return (
+    <div
+      style={{
+        background: '#0F1430',
+        border: '1px solid var(--bd-faint)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        opacity: 0.7,
+      }}
+    >
+      <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18' }}>
+        {device.image_path ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={device.image_path} alt={device.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'grayscale(60%) brightness(0.75)' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', filter: 'grayscale(60%) brightness(0.75)' }}>
+            <DevicePlaceholder id={device.id} />
+          </div>
+        )}
+      </div>
+      <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,107,53,0.28)', letterSpacing: '0.15em' }}>
+              {device.id}
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: 'rgba(245,245,245,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {device.name}
+            </div>
+          </div>
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap', flexShrink: 0,
+            color: 'rgba(245,245,245,0.35)', border: '1px solid var(--bd-faint)', padding: '0.1rem 0.4rem',
+          }}>
+            ?
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,107,53,0.28)' }}>
+          <span>◎</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{device.location}</span>
+        </div>
+        <div style={{ marginTop: 'auto', paddingTop: '0.4rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,107,53,0.28)', marginBottom: '0.25rem' }}>
+            <span>PROGRESS</span>
+            <span>{device.exploration_progress}%</span>
+          </div>
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${device.exploration_progress}%`, opacity: 0.4 }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function IntelPreviewCard({ entry }: { entry: Intel }) {
   const color = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
   const hasImage = (entry.images?.length ?? 0) > 0
@@ -253,7 +311,7 @@ function useFnAnimation(count: number) {
   return { readyIdx }
 }
 
-function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[]; newHref: string; mcFunctions: McFunction[] }) {
+function GuestHero({ newHref, mcFunctions }: { newHref: string; mcFunctions: McFunction[] }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
   const [isMobile, setIsMobile] = useState(false)
 
@@ -434,7 +492,7 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
 }
 
 /* ─── Auth Hero — Welcome Voyager ──────────────────────── */
-function AuthHero({ user, feedLines }: { user: { role: string; name?: string }; feedLines: FeedLine[] }) {
+function AuthHero({ user, activityEvents }: { user: { role: string; name?: string }; activityEvents: ActivityEvent[] }) {
   const isApplicant = user.role === 'applicant'
 
   return (
@@ -452,9 +510,9 @@ function AuthHero({ user, feedLines }: { user: { role: string; name?: string }; 
 
       <div className="deco-diamond"><span /></div>
 
-      {feedLines.length > 0 && (
-        <div style={{ width: '100%', maxWidth: '480px', margin: '1.25rem auto 0' }}>
-          <CommsFeed lines={feedLines} />
+      {activityEvents.length > 0 && (
+        <div style={{ width: '100%', maxWidth: '560px', margin: '1.25rem auto 0' }}>
+          <ActivityFeed events={activityEvents} />
         </div>
       )}
 
@@ -506,7 +564,7 @@ function ConsoleInner() {
   const newHref = searchParams.toString() ? `/new?${searchParams.toString()}` : '/new'
   const [devices, setDevices] = useState<Device[]>([])
   const [latestIntel, setLatestIntel] = useState<Intel[]>([])
-  const [feedLines, setFeedLines] = useState<FeedLine[]>([])
+  const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([])
   const [latestVotes, setLatestVotes] = useState<Vote[]>([])
   const [voteTallies, setVoteTallies] = useState<Record<string, Record<string, number>>>({})
   const [myVoteResponses, setMyVoteResponses] = useState<{ vote_id: string; selected_options: string[] }[]>([])
@@ -514,9 +572,13 @@ function ConsoleInner() {
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
 
   useEffect(() => {
-    getAllDevices().then((d) => setDevices(d.filter((dev) => dev.knowledge === 'known').slice(0, 3)))
+    getAllDevices().then((all) => {
+      const unknown = all.filter((dev) => dev.knowledge === 'unknown').slice(0, 1)
+      const known = all.filter((dev) => dev.knowledge === 'known').slice(0, 2)
+      setDevices([...unknown, ...known])
+    })
     getPublicIntel().then((intel) => setLatestIntel(intel.slice(0, 2)))
-    getLatestFeed().then((f) => { if (f?.lines?.length) setFeedLines(f.lines) })
+    getActivityFeed(7).then(setActivityEvents)
     getAllWorlds().then((w) => setLatestWorlds([...w].reverse().slice(0, 3)))
     getMcFunctions().then((fns) => setMcFunctions(fns as McFunction[]))
     getAllVotes().then(async (votes) => {
@@ -554,25 +616,27 @@ function ConsoleInner() {
       {loading ? (
         <section className="hero" style={{ flex: 1 }} />
       ) : isGuest ? (
-        <GuestHero feedLines={feedLines} newHref={newHref} mcFunctions={mcFunctions} />
+        <GuestHero newHref={newHref} mcFunctions={mcFunctions} />
       ) : (
-        <AuthHero user={user} feedLines={feedLines} />
+        <AuthHero user={user} activityEvents={activityEvents} />
       )}
 
-      {/* ── Known Devices ── */}
+      {/* ── Devices (unknown + known) ── */}
       {devices.length > 0 && (
         <section style={{ padding: '3rem 2.5rem 2rem' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>
-                KNOWN DEVICES
+                DEVICE REGISTRY
               </div>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
               {devices.map((device) => (
-                <DevicePreviewCard key={device.id} device={device} />
+                device.knowledge === 'unknown'
+                  ? <UnknownDevicePreviewCard key={device.id} device={device} />
+                  : <DevicePreviewCard key={device.id} device={device} />
               ))}
             </div>
           </div>

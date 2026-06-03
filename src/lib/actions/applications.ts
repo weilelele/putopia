@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { ApplicationInsert, ApplicationStatus } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
+import { logActivity } from './activity-events'
 
 export async function submitApplication(application: ApplicationInsert) {
   const supabase = await createClient()
@@ -141,6 +142,22 @@ export async function reviewApplication(
         await (admin.from('voyager_profiles') as any)
           .update({ role: 'voyager' })
           .eq('id', authUser.id)
+
+        // Fetch display_name for the activity log
+        const { data: promoted } = await admin
+          .from('voyager_profiles')
+          .select('display_name')
+          .eq('id', authUser.id)
+          .single()
+
+        logActivity({
+          actor_id:   authUser.id,
+          actor_name: promoted?.display_name ?? authUser.email ?? 'Unknown',
+          actor_role: 'voyager',
+          event_type: 'member_joined',
+          target_id:  authUser.id,
+          target_href: '/voyagers',
+        })
       }
     }
   }
