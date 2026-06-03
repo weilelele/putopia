@@ -54,3 +54,7 @@ create policy "service role full access"
   to service_role
   using (true)
   with check (true);
+
+-- Explicit grants (RLS alone doesn't grant table-level access)
+grant all   on public.activity_events to service_role;
+grant select on public.activity_events to authenticated;

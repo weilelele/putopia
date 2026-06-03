@@ -34,6 +34,22 @@ export type VoyagerProfileUpdate = Partial<Pick<
   | 'location' | 'observation_days' | 'worlds_discovered'
 >>
 
+// ---------- comments ----------
+// Persistent comment threads. Generic: one table backs device / intel / world threads.
+export type CommentSubjectType = 'device' | 'intel' | 'world'
+
+export type Comment = {
+  id: string
+  created_at: string
+  subject_type: CommentSubjectType
+  subject_id: string
+  author_id: string | null
+  author_name: string
+  author_avatar_url: string | null
+  body: string
+  is_visible: boolean
+}
+
 // ---------- votes ----------
 export type VoteOption = {
   id: string
@@ -210,6 +226,55 @@ export type StoryUpdate = Partial<Pick<
 export type Database = {
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          id: string
+          created_at: string
+          actor_id: string | null
+          actor_name: string
+          actor_role: string
+          actor_socials: { platform: string; url: string }[]
+          event_type: string
+          target_id: string | null
+          target_title: string | null
+          target_image: string | null
+          target_href: string | null
+          vote_option: string | null
+          group_key: string | null
+          is_visible: boolean
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          actor_id?: string | null
+          actor_name: string
+          actor_role: string
+          actor_socials?: { platform: string; url: string }[]
+          event_type: string
+          target_id?: string | null
+          target_title?: string | null
+          target_image?: string | null
+          target_href?: string | null
+          vote_option?: string | null
+          group_key?: string | null
+          is_visible?: boolean
+        }
+        Update: Partial<{
+          actor_id: string | null
+          actor_name: string
+          actor_role: string
+          actor_socials: { platform: string; url: string }[]
+          event_type: string
+          target_id: string | null
+          target_title: string | null
+          target_image: string | null
+          target_href: string | null
+          vote_option: string | null
+          group_key: string | null
+          is_visible: boolean
+        }>
+        Relationships: []
+      }
       voyager_profiles: {
         Row: VoyagerProfile
         Insert: Omit<VoyagerProfile, 'joined_at' | 'registered_at' | 'updated_at'>

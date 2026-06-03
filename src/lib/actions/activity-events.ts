@@ -40,11 +40,10 @@ export type ActivityEvent = ActivityEventInsert & {
 export async function logActivity(event: ActivityEventInsert): Promise<void> {
   try {
     const admin = createAdminClient()
-    await (admin.from('activity_events' as never) as ReturnType<typeof admin.from>)
-      .insert({
-        ...event,
-        actor_socials: event.actor_socials ?? [],
-      })
+    await admin.from('activity_events').insert({
+      ...event,
+      actor_socials: event.actor_socials ?? [],
+    })
   } catch {
     // intentionally silent — feed log should never block primary operations
   }
@@ -56,13 +55,14 @@ export async function getActivityFeed(days = 7): Promise<ActivityEvent[]> {
   const admin = createAdminClient()
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
-  const { data } = await (admin.from('activity_events' as never) as ReturnType<typeof admin.from>)
+  const { data, error } = await admin.from('activity_events')
     .select('*')
     .eq('is_visible', true)
     .gte('created_at', since)
     .order('created_at', { ascending: false })
     .limit(50)
 
+  if (error) console.error('[getActivityFeed]', error.message)
   return (data ?? []) as ActivityEvent[]
 }
 
@@ -70,11 +70,12 @@ export async function getActivityFeed(days = 7): Promise<ActivityEvent[]> {
 
 export async function getActivityFeedAdmin(): Promise<ActivityEvent[]> {
   const admin = createAdminClient()
-  const { data } = await (admin.from('activity_events' as never) as ReturnType<typeof admin.from>)
+  const { data, error } = await admin.from('activity_events')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(200)
 
+  if (error) console.error('[getActivityFeedAdmin]', error.message)
   return (data ?? []) as ActivityEvent[]
 }
 
@@ -82,7 +83,7 @@ export async function getActivityFeedAdmin(): Promise<ActivityEvent[]> {
 
 export async function setActivityEventVisibility(id: string, visible: boolean) {
   const admin = createAdminClient()
-  const { error } = await (admin.from('activity_events' as never) as ReturnType<typeof admin.from>)
+  const { error } = await admin.from('activity_events')
     .update({ is_visible: visible })
     .eq('id', id)
 
@@ -96,7 +97,7 @@ export async function setActivityEventVisibility(id: string, visible: boolean) {
 
 export async function deleteActivityEvent(id: string) {
   const admin = createAdminClient()
-  const { error } = await (admin.from('activity_events' as never) as ReturnType<typeof admin.from>)
+  const { error } = await admin.from('activity_events')
     .delete()
     .eq('id', id)
 
