@@ -41,7 +41,7 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+      <Link href="/console" className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
         <img
           src="/assets/vi-icon.png"
           alt=""
@@ -52,7 +52,7 @@ export function Sidebar() {
           alt="Multiverse Collective"
           style={{ height: 30, width: 'auto', display: 'block' }}
         />
-      </div>
+      </Link>
 
       {navItems.map(({ group, items }) => (
         <div key={group}>

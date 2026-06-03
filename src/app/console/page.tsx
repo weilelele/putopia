@@ -287,12 +287,12 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
         style={{
           width: '100%',
           textAlign: 'center',
-          margin: '0 0 1.75rem',
+          margin: 'clamp(1.25rem, 5vh, 3rem) 0 1.75rem',
           filter: 'drop-shadow(0 0 32px rgba(255,107,53,0.45)) drop-shadow(0 0 64px rgba(255,107,53,0.18))',
           ...line(0),
         }}
       >
-        <FlipWordmark maxWidth={560} fill={0.78} />
+        <FlipWordmark maxWidth={616} fill={0.858} />
       </div>
 
       {/* Emblem + tagline */}
@@ -315,7 +315,7 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
       <div style={{ maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '1.1rem', textAlign: 'center' }}>
         <div style={{
           fontFamily: 'var(--font-display)', fontWeight: 700,
-          fontSize: 'var(--fs-h2)', letterSpacing: '0.12em',
+          fontSize: 'clamp(1.4rem, 6.5vw, 2rem)', letterSpacing: '0.12em', whiteSpace: 'nowrap',
           color: 'var(--color-star)', ...line(1),
         }}>
           WELCOME, GUEST.
@@ -407,10 +407,10 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
 
       {/* CTA row — always horizontal, equal-width buttons */}
       <div style={{
-        display: 'flex', gap: '1rem', marginTop: '1.25rem',
+        display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.25rem',
         width: '100%', maxWidth: '620px',
       }}>
-        <Link href={newHref} className="btn-primary" style={{ flex: '1 1 0', minWidth: 0, justifyContent: 'center', padding: '1rem 1.5rem' }}
+        <Link href={newHref} className="btn-primary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
           onClick={() => posthog.capture('workspace_request_access_clicked')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
@@ -418,7 +418,7 @@ function GuestHero({ feedLines, newHref, mcFunctions }: { feedLines: FeedLine[];
           </svg>
           REQUEST ACCESS
         </Link>
-        <Link href="/login" className="btn-secondary" style={{ flex: '1 1 0', minWidth: 0, justifyContent: 'center', padding: '1rem 1.5rem' }}
+        <Link href="/login" className="btn-secondary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
           onClick={() => posthog.capture('workspace_login_clicked')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>

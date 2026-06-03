@@ -75,11 +75,11 @@ const PRIMARY_NAV = [
   { href: '/console', label: 'HOME',     icon: <HomeIcon /> },
   { href: '/intel',   label: 'INTEL',    icon: <RadarIcon /> },
   { href: '/devices', label: 'DEVICES',  icon: <ArchiveIcon /> },
-  { href: '/logs',    label: 'LOGS',     icon: <LogsIcon /> },
   { href: '/voyagers',label: 'VOYAGERS', icon: <VoyagersIcon /> },
 ]
 
 const MORE_NAV = [
+  { href: '/logs',   label: 'VOYAGER LOGS',   icon: <LogsIcon /> },
   { href: '/vote',   label: 'VOTING HUB',     icon: <VoteIcon /> },
   { href: '/worlds', label: 'WORLD RECORDS',  icon: <WorldsIcon /> },
 ]
@@ -104,8 +104,16 @@ export function BottomNav() {
             onClick={() => setMoreOpen(false)}
           />
           <div
-            className="fixed bottom-[57px] left-0 right-0 z-50 md:hidden border-t"
-            style={{ background: '#0F1430', borderColor: 'rgba(255,107,53,0.16)' }}
+            className="fixed left-3 right-3 z-50 md:hidden border overflow-hidden"
+            style={{
+              bottom: 'calc(82px + env(safe-area-inset-bottom))',
+              background: 'rgba(15,20,48,0.92)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderColor: 'rgba(255,107,53,0.16)',
+              borderRadius: '16px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+            }}
           >
             {MORE_NAV.map(({ href, label, icon }) => {
               const isActive = pathname === href || pathname.startsWith(href + '/')
@@ -144,8 +152,17 @@ export function BottomNav() {
 
       {/* Primary nav bar */}
       <nav
-        className="flex md:hidden fixed bottom-0 left-0 right-0 border-t z-50"
-        style={{ background: '#0F1430', borderColor: 'rgba(255,107,53,0.16)' }}
+        className="flex md:hidden fixed left-3 right-3 z-50"
+        style={{
+          bottom: 'calc(14px + env(safe-area-inset-bottom))',
+          background: 'rgba(15,20,48,0.82)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,107,53,0.16)',
+          borderRadius: '18px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.45), 0 0 16px rgba(232,93,4,0.10)',
+          padding: '6px',
+        }}
       >
         {PRIMARY_NAV.map(({ href, label, icon }) => {
           const isHome = href === '/console'
@@ -172,7 +189,8 @@ export function BottomNav() {
               className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
               style={{
                 color: isActive ? '#E85D04' : 'rgba(245,245,245,0.35)',
-                background: isActive ? 'rgba(232,93,4,0.08)' : 'transparent',
+                background: isActive ? 'rgba(232,93,4,0.14)' : 'transparent',
+                borderRadius: '12px',
               }}
             >
               {icon}
@@ -187,7 +205,8 @@ export function BottomNav() {
           className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
           style={{
             color: isMoreActive || moreOpen ? '#E85D04' : 'rgba(245,245,245,0.35)',
-            background: isMoreActive || moreOpen ? 'rgba(232,93,4,0.08)' : 'transparent',
+            background: isMoreActive || moreOpen ? 'rgba(232,93,4,0.14)' : 'transparent',
+            borderRadius: '12px',
           }}
         >
           <DotsIcon />
