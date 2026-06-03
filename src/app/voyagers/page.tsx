@@ -67,6 +67,8 @@ function profileToForm(v: VoyagerProfile): EditForm {
 }
 
 const BIO_LIMIT = 280
+const DEFAULT_BATCH = 'Original Batch'
+const BATCH_COLLAPSE = 6
 
 // ── Page ───────────────────────────────────────────────────────────────────
 export default function VoyagersPage() {
@@ -82,6 +84,13 @@ export default function VoyagersPage() {
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const modalFileRef = useRef<HTMLInputElement>(null)
+
+  // ── Batch selector state ────────────────────────────────────────────────
+  const [activeBatch, setActiveBatch] = useState<string | null>(null)
+  const [batchExpanded, setBatchExpanded] = useState(false)
+  const batchRailRef = useRef<HTMLDivElement>(null)
+  const selectBatch = (label: string) => { setActiveBatch(label); setBatchExpanded(false) }
+  const scrollRail = (dir: number) => batchRailRef.current?.scrollBy({ left: dir * 240, behavior: 'smooth' })
 
   const refresh = async () => {
     const data = await getAllVoyagers()
@@ -149,6 +158,20 @@ export default function VoyagersPage() {
   const architects     = voyagers.filter(v => v.role === 'architect')
   const activeVoyagers = voyagers.filter(v => v.role === 'voyager')
 
+  // ── Group active voyagers into batches (preserve join-order appearance) ──
+  const batchMap = new Map<string, VoyagerProfile[]>()
+  for (const v of activeVoyagers) {
+    const label = v.batch_label || DEFAULT_BATCH
+    if (!batchMap.has(label)) batchMap.set(label, [])
+    batchMap.get(label)!.push(v)
+  }
+  const batches = [...batchMap.entries()].map(([label, members]) => ({ label, members }))
+  const currentLabel = batches.find(b => b.label === activeBatch)?.label ?? batches[0]?.label
+  const currentBatch = batches.find(b => b.label === currentLabel)
+  const currentMembers = currentBatch?.members ?? []
+  const shownMembers = batchExpanded ? currentMembers : currentMembers.slice(0, BATCH_COLLAPSE)
+  const hasMoreBatchMembers = currentMembers.length > BATCH_COLLAPSE
+
   return (
     <div className="main">
       <SectionTracker section="voyagers" />
@@ -191,15 +214,64 @@ export default function VoyagersPage() {
 
           {activeVoyagers.length > 0 && (
             <section>
-              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
-                // ACTIVE VOYAGERS
+              <style>{`.batch-rail::-webkit-scrollbar{display:none}.batch-rail{scrollbar-width:none}`}</style>
+
+              {/* Batch selector — horizontal scroll rail */}
+              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '0.75rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
+                // BATCHES
               </div>
+
+              <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+                {batches.length > 1 && (
+                  <>
+                    <button onClick={() => scrollRail(-1)} aria-label="scroll left" className="hidden md:flex" style={railArrow('left')}>‹</button>
+                    <button onClick={() => scrollRail(1)} aria-label="scroll right" className="hidden md:flex" style={railArrow('right')}>›</button>
+                    <div className="hidden md:block" style={railFade('left')} />
+                    <div className="hidden md:block" style={railFade('right')} />
+                  </>
+                )}
+                <div ref={batchRailRef} className="batch-rail" style={{ display: 'flex', gap: '0.6rem', overflowX: 'auto', padding: '2px 0', scrollBehavior: 'smooth' }}>
+                  {batches.map(b => {
+                    const isActive = b.label === currentLabel
+                    return (
+                      <button
+                        key={b.label}
+                        onClick={() => selectBatch(b.label)}
+                        style={{
+                          flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.5rem',
+                          padding: '0.55rem 0.9rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
+                          background: isActive ? 'rgba(232,93,4,0.12)' : '#151B3A',
+                          color: isActive ? '#E85D04' : 'rgba(245,245,245,0.55)',
+                          border: `1px solid ${isActive ? '#E85D04' : 'rgba(255,107,53,0.16)'}`,
+                          boxShadow: isActive ? '0 0 12px rgba(232,93,4,0.18)' : 'none',
+                          cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s',
+                        }}
+                      >
+                        {b.label}
+                        <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: '999px', background: isActive ? 'rgba(232,93,4,0.2)' : 'rgba(245,245,245,0.08)', color: isActive ? '#FF8A5C' : 'rgba(245,245,245,0.45)' }}>
+                          {b.members.length}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Selected batch members — full cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {activeVoyagers.map(v => (
+                {shownMembers.map(v => (
                   <VoyagerCard key={v.id} voyager={v} user={user} isAtLeast={isAtLeast}
                     onEditClick={openEdit} />
                 ))}
               </div>
+
+              {hasMoreBatchMembers && (
+                <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+                  <button onClick={() => setBatchExpanded(e => !e)} className="btn-ghost" style={{ fontSize: 'var(--fs-caption)' }}>
+                    {batchExpanded ? '▲ COLLAPSE' : `▼ SHOW ALL (${currentMembers.length})`}
+                  </button>
+                </div>
+              )}
             </section>
           )}
         </>
@@ -348,6 +420,22 @@ function FieldGroup({ cols = 1, children }: { cols?: number; children: React.Rea
       {children}
     </div>
   )
+}
+
+// ── Batch rail helpers ─────────────────────────────────────────────────────
+function railArrow(side: 'left' | 'right'): React.CSSProperties {
+  return {
+    position: 'absolute', top: '50%', transform: 'translateY(-50%)', [side]: '-4px', zIndex: 3,
+    width: 28, height: 28, borderRadius: '50%', alignItems: 'center', justifyContent: 'center',
+    background: 'rgba(15,20,48,0.92)', border: '1px solid rgba(255,107,53,0.3)',
+    color: '#E85D04', fontFamily: 'var(--font-mono)', fontSize: '1rem', lineHeight: 1, cursor: 'pointer',
+  }
+}
+function railFade(side: 'left' | 'right'): React.CSSProperties {
+  return {
+    position: 'absolute', top: 0, bottom: 0, [side]: 0, width: 40, zIndex: 2, pointerEvents: 'none',
+    background: `linear-gradient(to ${side === 'left' ? 'right' : 'left'}, var(--bg-base, #0A0E27), transparent)`,
+  }
 }
 
 // ── Card component ─────────────────────────────────────────────────────────

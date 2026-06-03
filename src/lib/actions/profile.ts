@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { VoyagerProfileUpdate } from '@/types/database'
 
 export async function getMyProfile() {
@@ -73,6 +73,33 @@ export async function getAllVoyagers() {
     .order('joined_at', { ascending: true })
 
   return data ?? []
+}
+
+// Architect-only: reassign a voyager's batch (writes past RLS via service role).
+export async function setVoyagerBatch(voyagerId: string, batchLabel: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: me } = await supabase
+    .from('voyager_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (me?.role !== 'architect') return { error: 'Forbidden' }
+
+  const label = batchLabel.trim() || 'Original Batch'
+  const admin = createAdminClient()
+  // batch_label is admin-managed, not in the RLS-restricted VoyagerProfileUpdate type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin.from('voyager_profiles') as any)
+    .update({ batch_label: label })
+    .eq('id', voyagerId)
+
+  if (error) return { error: error.message }
+  revalidatePath('/voyagers')
+  revalidatePath('/admin/voyagers')
+  return { error: null }
 }
 
 export async function searchMembers(query: string) {
