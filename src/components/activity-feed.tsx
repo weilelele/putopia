@@ -18,11 +18,22 @@ function relTs(iso: string) {
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
-function Avatar({ name, role, size = 36 }: { name: string; role: string; size?: number }) {
+function Avatar({ name, role, avatarUrl, size = 36 }: { name: string; role: string; avatarUrl?: string | null; size?: number }) {
   const initials = name.slice(0, 2).toUpperCase()
   const isArch   = role === 'architect'
   const color    = isArch ? '#FF6B35' : '#FF8A5C'
   const border   = isArch ? 'rgba(255,107,53,0.55)' : 'rgba(255,138,92,0.4)'
+
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={avatarUrl} alt={name} style={{
+        width: size, height: size, borderRadius: '50%', flexShrink: 0,
+        border: `1.5px solid ${border}`, objectFit: 'cover', display: 'block',
+      }} />
+    )
+  }
+
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -41,7 +52,7 @@ function AvatarStack({ events }: { events: ActivityEvent[] }) {
     <div style={{ display: 'flex', width: 36, justifyContent: 'flex-start' }}>
       {events.slice(0, 4).map((e, i) => (
         <span key={e.id} style={{ marginLeft: i === 0 ? 0 : -8, zIndex: events.length - i, position: 'relative' }}>
-          <Avatar name={e.actor_name} role={e.actor_role} size={20} />
+          <Avatar name={e.actor_name} role={e.actor_role} avatarUrl={e.actor_avatar_url} size={20} />
         </span>
       ))}
     </div>
@@ -91,7 +102,7 @@ function FeedRow({ event }: { event: ActivityEvent }) {
     >
       {/* Avatar + thread line */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }}>
-        <Avatar name={event.actor_name} role={event.actor_role} size={36} />
+        <Avatar name={event.actor_name} role={event.actor_role} avatarUrl={event.actor_avatar_url} size={36} />
         <div style={{ width: 1, flex: 1, minHeight: 8, background: 'var(--bd-faint)' }} />
       </div>
 

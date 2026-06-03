@@ -29,9 +29,10 @@ export interface ActivityEventInsert {
 }
 
 export type ActivityEvent = ActivityEventInsert & {
-  id:         string
-  created_at: string
-  is_visible: boolean
+  id:              string
+  created_at:      string
+  is_visible:      boolean
+  actor_avatar_url?: string | null
 }
 
 // ─── Write (called from other action files) ───────────────────────────────────
@@ -63,7 +64,18 @@ export async function getActivityFeed(days = 7): Promise<ActivityEvent[]> {
     .limit(50)
 
   if (error) console.error('[getActivityFeed]', error.message)
-  return (data ?? []) as ActivityEvent[]
+  const events = (data ?? []) as ActivityEvent[]
+
+  // Batch-fetch latest avatar_url for all actors
+  const actorIds = [...new Set(events.map(e => e.actor_id).filter(Boolean))] as string[]
+  if (actorIds.length > 0) {
+    const { data: profiles } = await admin.from('voyager_profiles')
+      .select('id, avatar_url')
+      .in('id', actorIds)
+    const avatarMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.avatar_url]))
+    return events.map(e => ({ ...e, actor_avatar_url: e.actor_id ? (avatarMap[e.actor_id] ?? null) : null }))
+  }
+  return events
 }
 
 // ─── Admin: list all (including hidden) ──────────────────────────────────────
