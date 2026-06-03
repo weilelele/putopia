@@ -169,7 +169,7 @@ function FeedRow({ event }: { event: ActivityEvent }) {
 
 // ─── Vote group ───────────────────────────────────────────────────────────────
 
-function VoteGroup({ opener, casts }: { opener: ActivityEvent | undefined; casts: ActivityEvent[] }) {
+function VoteGroup({ casts }: { casts: ActivityEvent[] }) {
   const [expanded, setExpanded] = useState(false)
 
   const tally: Record<string, number> = {}
@@ -181,8 +181,6 @@ function VoteGroup({ opener, casts }: { opener: ActivityEvent | undefined; casts
 
   return (
     <div>
-      {opener && <FeedRow event={opener} />}
-
       {!expanded && casts.length > 0 && (
         <button
           onClick={() => setExpanded(true)}
@@ -190,7 +188,7 @@ function VoteGroup({ opener, casts }: { opener: ActivityEvent | undefined; casts
             width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
             padding: '0.75rem 1rem', background: 'transparent', border: 'none',
             borderBottom: '1px solid var(--bd-faint)',
-            borderTop: opener ? '1px solid var(--bd-faint)' : 'none',
+            borderTop: 'none',
             cursor: 'pointer', textAlign: 'left',
           }}
           onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
@@ -247,39 +245,30 @@ function VoteGroup({ opener, casts }: { opener: ActivityEvent | undefined; casts
 
 type DisplayItem =
   | { kind: 'single'; event: ActivityEvent }
-  | { kind: 'group'; opener: ActivityEvent | undefined; casts: ActivityEvent[] }
+  | { kind: 'group'; casts: ActivityEvent[] }
 
 function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
   const items: DisplayItem[] = []
-  const groups: Record<string, { opener?: ActivityEvent; casts: ActivityEvent[] }> = {}
+  const groups: Record<string, ActivityEvent[]> = {}
 
   for (const ev of events) {
-    if (!ev.group_key) {
+    // vote_opened is always its own standalone row — never grouped with casts
+    if (!ev.group_key || ev.event_type === 'vote_opened') {
       items.push({ kind: 'single', event: ev })
       continue
     }
+    // vote_cast: collect into a group keyed by group_key
     if (!groups[ev.group_key]) {
-      groups[ev.group_key] = { casts: [] }
-      items.push({ kind: 'group', opener: undefined, casts: groups[ev.group_key].casts })
+      groups[ev.group_key] = []
+      items.push({ kind: 'group', casts: groups[ev.group_key] })
     }
-    const key = ev.group_key
-    if (ev.event_type === 'vote_opened') {
-      groups[key].opener = ev
-      const item = items.find(i => i.kind === 'group' && i.casts === groups[key].casts)
-      if (item && item.kind === 'group') item.opener = ev
-    } else {
-      groups[key].casts.push(ev)
-    }
+    groups[ev.group_key].push(ev)
   }
 
-  // Sort by most-recent timestamp: groups use their newest cast (or opener if no casts)
+  // Sort by most-recent timestamp: groups use their newest cast's time
   return items.sort((a, b) => {
-    const tsA = a.kind === 'single'
-      ? a.event.created_at
-      : (a.casts[0]?.created_at ?? a.opener?.created_at ?? '')
-    const tsB = b.kind === 'single'
-      ? b.event.created_at
-      : (b.casts[0]?.created_at ?? b.opener?.created_at ?? '')
+    const tsA = a.kind === 'single' ? a.event.created_at : (a.casts[0]?.created_at ?? '')
+    const tsB = b.kind === 'single' ? b.event.created_at : (b.casts[0]?.created_at ?? '')
     return tsB.localeCompare(tsA)
   })
 }
@@ -304,7 +293,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#20D890', boxShadow: '0 0 6px #20D890', display: 'inline-block' }} />
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-dim)' }}>
-            LIVE FEED
+            STATUS UPDATES
           </span>
         </div>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)' }}>
@@ -316,7 +305,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
       {displayList.map((item, i) =>
         item.kind === 'single'
           ? <FeedRow key={item.event.id} event={item.event} />
-          : <VoteGroup key={`group-${i}`} opener={item.opener} casts={item.casts} />
+          : <VoteGroup key={`group-${i}`} casts={item.casts} />
       )}
     </div>
   )
