@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { getAllWorlds, createWorld, updateWorld, deleteWorld } from '@/lib/actions/worlds'
 import type { World } from '@/types/database'
+import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 const S = {
   card:  { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
@@ -14,20 +15,20 @@ const S = {
 }
 
 type F = {
-  id: string; name: string; name_en: string; discoverer_name: string
+  id: string; name: string; name_en: string; discoverer_name: string; discoverer_id: string | null
   discovery_date: string; gradient_from: string; gradient_to: string
   image_path: string; description: string; is_verified: boolean
 }
 
 const EMPTY: F = {
-  id: '', name: '', name_en: '', discoverer_name: '',
+  id: '', name: '', name_en: '', discoverer_name: '', discoverer_id: null,
   discovery_date: new Date().toISOString().slice(0, 10),
   gradient_from: '#E8A020', gradient_to: '#C43020',
   image_path: '', description: '', is_verified: true,
 }
 
 function worldToForm(w: World): F {
-  return { id: w.id, name: w.name, name_en: w.name_en, discoverer_name: w.discoverer_name, discovery_date: w.discovery_date, gradient_from: w.gradient_from, gradient_to: w.gradient_to, image_path: w.image_path ?? '', description: w.description, is_verified: w.is_verified }
+  return { id: w.id, name: w.name, name_en: w.name_en, discoverer_name: w.discoverer_name, discoverer_id: w.discoverer_id, discovery_date: w.discovery_date, gradient_from: w.gradient_from, gradient_to: w.gradient_to, image_path: w.image_path ?? '', description: w.description, is_verified: w.is_verified }
 }
 
 function nextWorldId(items: World[]) {
@@ -75,14 +76,16 @@ export default function WorldsAdmin() {
   const openNew  = () => { setForm(EMPTY); setEditId(null); setShowForm(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }
   const openEdit = (w: World) => { setForm(worldToForm(w)); setEditId(w.id); setShowForm(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }
   const set = (k: keyof F, v: string | boolean) => setForm(f => ({ ...f, [k]: v }))
+  const setDiscoverer = (v: MemberValue) => setForm(f => ({ ...f, discoverer_id: v?.id ?? null, discoverer_name: v?.name ?? '' }))
 
   const handleSave = async () => {
     const id = form.id.trim() || nextWorldId(items)
     if (!form.name.trim()) { setMsg({ text: '名称不能为空', ok: false }); return }
+    if (!form.discoverer_name.trim()) { setMsg({ text: '请选择或输入发现者姓名', ok: false }); return }
     setSaving(true); setMsg(null)
     const payload = {
       id, name: form.name.trim(), name_en: form.name_en.trim() || form.name.trim(),
-      discoverer_id: null, discoverer_name: form.discoverer_name.trim(),
+      discoverer_id: form.discoverer_id, discoverer_name: form.discoverer_name.trim(),
       discovery_date: form.discovery_date,
       gradient_from: form.gradient_from, gradient_to: form.gradient_to,
       image_path: form.image_path.trim() || null,
@@ -171,8 +174,11 @@ export default function WorldsAdmin() {
               <input style={S.input} value={form.id} onChange={e => set('id', e.target.value)} placeholder={nextWorldId(items)} disabled={!!editId} />
             </div>
             <div>
-              <label style={S.label}>发现者姓名</label>
-              <input style={S.input} value={form.discoverer_name} onChange={e => set('discoverer_name', e.target.value)} placeholder="Mira Volkov" />
+              <MemberPicker
+                label="发现者姓名"
+                value={form.discoverer_name ? { id: form.discoverer_id ?? '', name: form.discoverer_name } : null}
+                onChange={setDiscoverer}
+              />
             </div>
             <div>
               <label style={S.label}>发现日期</label>

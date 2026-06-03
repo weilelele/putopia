@@ -116,7 +116,7 @@ function LoginPageContent() {
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', marginBottom: '0.5rem' }}>
             NO ACTIVE CREDENTIALS?
           </div>
-          <Link href="/#apply" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-nucleus)' }}>
+          <Link href="/new" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-nucleus)' }}>
             APPLY FOR VOYAGER STATUS →
           </Link>
         </div>

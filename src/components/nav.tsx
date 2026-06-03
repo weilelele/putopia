@@ -216,7 +216,7 @@ export function Nav() {
       {user.role === 'guest' && (
         <div style={{ margin: '0 10px 12px' }}>
           <Link
-            href="/#apply"
+            href="/new"
             style={{
               display: 'block', textAlign: 'center',
               fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',

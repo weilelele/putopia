@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { getAllDevices } from '@/lib/actions/devices'
+import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { useAuth } from '@/lib/auth-context'
-import type { Device } from '@/types/database'
+import type { Device, McFunction } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
+import { McConsolePanel } from '@/components/mc-console-panel'
 
 const STATUS_STYLES = {
   available:    { color: '#20D890', bg: 'rgba(32,216,144,0.08)', border: 'rgba(32,216,144,0.3)' },
@@ -87,8 +90,12 @@ function DeviceImage({ device, isUnknown }: { device: Device; isUnknown: boolean
 export default function DevicesPage() {
   const { isAtLeast } = useAuth()
   const [devices, setDevices] = useState<Device[]>([])
+  const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
 
-  useEffect(() => { getAllDevices().then(setDevices) }, [])
+  useEffect(() => {
+    getAllDevices().then(setDevices)
+    getMcFunctions().then(setMcFunctions)
+  }, [])
 
   const unknownDevices = devices.filter((d) => d.knowledge === 'unknown')
   const knownDevices   = devices.filter((d) => d.knowledge === 'known')
@@ -112,6 +119,11 @@ export default function DevicesPage() {
         </div>
       </div>
 
+      {/* Multiverse Console showcase — confirmed functions + boot flicker */}
+      <div style={{ marginBottom: '2.5rem' }}>
+        <McConsolePanel mcFunctions={mcFunctions} />
+      </div>
+
       {/* legacy spacer removed */}
       <div style={{ display: 'contents' }}>
 
@@ -125,14 +137,18 @@ export default function DevicesPage() {
 
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {unknownDevices.map((device) => (
-            <div
+            <Link
               key={device.id}
-              className="border overflow-hidden"
+              href={`/devices/${device.id}`}
+              className="border overflow-hidden block transition-colors"
               style={{
                 background: '#0F1430',
                 borderColor: 'rgba(255,107,53,0.16)',
                 opacity: 0.7,
+                textDecoration: 'none',
               }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,245,245,0.35)'; (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)'; (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
             >
               <div className="border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
                 <DeviceImage device={device} isUnknown={true} />
@@ -167,7 +183,7 @@ export default function DevicesPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -187,13 +203,17 @@ export default function DevicesPage() {
             return (
               <div
                 key={device.id}
-                className="border overflow-hidden"
+                className="border overflow-hidden relative transition-colors"
                 style={{
                   background: '#151B3A',
                   borderColor: 'rgba(255,107,53,0.16)',
                   boxShadow: 'inset 0 1px 0 rgba(32,216,144,0.06)',
                 }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(32,216,144,0.45)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)' }}
               >
+                {/* stretched link — whole card navigates, except the button which sits above */}
+                <Link href={`/devices/${device.id}`} aria-label={device.name} className="absolute inset-0" style={{ zIndex: 1 }} />
                 <div className="border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
                   <DeviceImage device={device} isUnknown={false} />
                 </div>
@@ -235,8 +255,8 @@ export default function DevicesPage() {
 
                   {isAtLeast('voyager') && (
                     <button
-                      className="w-full py-1.5 text-xs font-mono tracking-widest border transition-all"
-                      style={{ borderColor: '#20D890', color: '#20D890', background: 'rgba(32,216,144,0.06)' }}
+                      className="w-full py-1.5 text-xs font-mono tracking-widest border transition-all relative"
+                      style={{ borderColor: '#20D890', color: '#20D890', background: 'rgba(32,216,144,0.06)', zIndex: 2 }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLElement).style.background = '#20D890'
                         ;(e.currentTarget as HTMLElement).style.color = '#070912'

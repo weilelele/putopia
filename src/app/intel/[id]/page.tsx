@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getIntelById } from '@/lib/actions/intel'
-import { Send } from 'lucide-react'
 import type { Intel } from '@/types/database'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
+import { CommentThread } from '@/components/comment-thread'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -15,19 +15,8 @@ const TAG_COLOR: Record<string, string> = {
   ORG:    'var(--color-nebula)',
 }
 
-interface Comment {
-  id: string
-  author: string
-  timestamp: string
-  text: string
-}
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-}
-
-function getInitials(name: string) {
-  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
 export default function IntelDetailPage() {
@@ -39,9 +28,6 @@ export default function IntelDetailPage() {
   const backLabel = isGuest ? '← DASHBOARD' : '← INTEL'
 
   const [entry, setEntry] = useState<Intel | null | undefined>(undefined)
-  const [comments, setComments] = useState<Comment[]>([])
-  const [commentText, setCommentText] = useState('')
-  const [transmitted, setTransmitted] = useState(false)
 
   useEffect(() => {
     getIntelById(id).then((e) => {
@@ -71,21 +57,6 @@ export default function IntelDetailPage() {
   const color = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
   const hasImages = (entry.images?.length ?? 0) > 0
   const isSingle  = entry.images?.length === 1
-
-  const handleTransmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!commentText.trim()) return
-    posthog.capture('intel_comment_sent', { intel_id: id, intel_tag: entry?.tag })
-    setComments((prev) => [...prev, {
-      id: `c${Date.now()}`,
-      author: 'You',
-      timestamp: new Date().toISOString(),
-      text: commentText.trim(),
-    }])
-    setCommentText('')
-    setTransmitted(true)
-    setTimeout(() => setTransmitted(false), 3000)
-  }
 
   return (
     <div className="main">
@@ -172,60 +143,7 @@ export default function IntelDetailPage() {
         )}
 
         {/* Transmissions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-          <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>TRANSMISSIONS</div>
-          <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-        </div>
-
-        {comments.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-            {comments.map((comment) => (
-              <div key={comment.id} className="card-void">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700,
-                    background: 'rgba(232,93,4,0.08)', color: 'var(--color-nebula)',
-                    border: '1px solid var(--bd-cyan-2)', flexShrink: 0,
-                  }}>{getInitials(comment.author)}</div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)' }}>{comment.author}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginLeft: 'auto' }}>
-                    {new Date(comment.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </span>
-                </div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>{comment.text}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <form onSubmit={handleTransmit}>
-          <div className="hud-frame">
-            <div style={{ padding: '0 0.5rem' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
-                TRANSMIT A MESSAGE
-              </div>
-              <textarea
-                rows={3}
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Leave a transmission..."
-                className="input-dark"
-                style={{ resize: 'none' }}
-              />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem' }}>
-                {transmitted ? (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-ok)' }}>✓ TRANSMISSION SENT</span>
-                ) : <span />}
-                <button type="submit" disabled={!commentText.trim()} className="btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: 'var(--fs-caption)' }}>
-                  <Send size={10} /> TRANSMIT
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
+        <CommentThread subjectType="intel" subjectId={entry.id} posthogEvent="intel_comment_sent" />
       </div>
 
       <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
