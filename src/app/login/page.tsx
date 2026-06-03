@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
+import { HudField } from '@/components/hud-field'
 
 export default function LoginPage() {
   return (
@@ -40,7 +41,8 @@ function LoginPageContent() {
       setLoading(false)
       posthog.capture('login_failed', { error: authError.message })
     } else {
-      posthog.identify(email, { email })
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) posthog.identify(user.id, { email: user.email })
       posthog.capture('user_logged_in', { email })
       window.location.href = redirect
     }
@@ -69,26 +71,30 @@ function LoginPageContent() {
               <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                 EMAIL ADDRESS
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="operative@domain.void"
-                className="input-dark"
-              />
+              <HudField>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="operative@domain.void"
+                  className="input-dark"
+                />
+              </HudField>
             </div>
 
             <div>
               <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                 ACCESS CODE
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="input-dark"
-              />
+              <HudField>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="input-dark"
+                />
+              </HudField>
             </div>
 
             {error && (

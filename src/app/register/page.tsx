@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
 import { getFirstTouch } from '@/lib/utm'
+import { HudField } from '@/components/hud-field'
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
@@ -124,40 +125,46 @@ export default function RegisterPage() {
                 <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                   DISPLAY NAME
                 </label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="ALIAS_IDENTIFIER"
-                  className="input-dark"
-                  maxLength={40}
-                />
+                <HudField>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="ALIAS_IDENTIFIER"
+                    className="input-dark"
+                    maxLength={40}
+                  />
+                </HudField>
               </div>
 
               <div>
                 <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                   ACCESS CODE
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="min. 8 characters"
-                  className="input-dark"
-                />
+                <HudField>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="min. 8 characters"
+                    className="input-dark"
+                  />
+                </HudField>
               </div>
 
               <div>
                 <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                   CONFIRM ACCESS CODE
                 </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="repeat code"
-                  className="input-dark"
-                />
+                <HudField>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="repeat code"
+                    className="input-dark"
+                  />
+                </HudField>
               </div>
 
               {error && (

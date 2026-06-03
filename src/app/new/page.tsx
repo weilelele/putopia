@@ -7,6 +7,7 @@ import posthog from 'posthog-js'
 import { getFirstTouch } from '@/lib/utm'
 import { FlameSlider, WorldChoiceCards, WORLD_OPTIONS, beliefToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
+import { HudField } from '@/components/hud-field'
 
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v2'
@@ -541,16 +542,18 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
             }}>
               YOUR EMAIL
             </label>
-            <input
-              ref={inputRef}
-              type="email"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="operative@domain.void"
-              className="input-dark"
-              style={{ width: '100%' }}
-            />
+            <HudField style={{ width: '100%' }}>
+              <input
+                ref={inputRef}
+                type="email"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="operative@domain.void"
+                className="input-dark"
+                style={{ width: '100%' }}
+              />
+            </HudField>
           </div>
 
           {/* CTA button */}

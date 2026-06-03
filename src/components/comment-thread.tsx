@@ -6,6 +6,7 @@ import { Send } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { getComments, postComment, deleteComment } from '@/lib/actions/comments'
+import { HudField } from '@/components/hud-field'
 import type { Comment, CommentSubjectType } from '@/types/database'
 
 const SUBJECT_BASE: Record<CommentSubjectType, string> = {
@@ -130,14 +131,16 @@ export function CommentThread({
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
                 TRANSMIT A MESSAGE
               </div>
-              <textarea
-                rows={3}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Leave a transmission..."
-                className="input-dark"
-                style={{ resize: 'none' }}
-              />
+              <HudField>
+                <textarea
+                  rows={3}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Leave a transmission..."
+                  className="input-dark"
+                  style={{ resize: 'none' }}
+                />
+              </HudField>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem' }}>
                 {transmitted ? (
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-ok)' }}>✓ TRANSMISSION SENT</span>

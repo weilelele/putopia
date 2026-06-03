@@ -313,6 +313,26 @@ code, pre, kbd { font-family: var(--font-mono); }
 }
 .btn-teal, .btn-outline { }
 
+/* HUD corner accents on prominent buttons — BL square node + right-edge dash.
+   (Bevel/clip-path is defined per-button above; these sit in the un-beveled
+   corners so the clip never eats them.) */
+.btn-primary, .btn-orange, .btn-amber, .btn-secondary { position: relative; }
+.btn-primary::before, .btn-orange::before, .btn-amber::before, .btn-secondary::before {
+  content: ''; position: absolute; left: 0; bottom: 0; width: 6px; height: 6px;
+  z-index: 2; pointer-events: none;
+}
+.btn-primary::after, .btn-orange::after, .btn-amber::after, .btn-secondary::after {
+  content: ''; position: absolute; right: 2px; top: 10px; width: 1.5px; height: 22px;
+  z-index: 2; pointer-events: none; opacity: 0.85;
+  background: repeating-linear-gradient(180deg, currentColor 0 3px, transparent 3px 6px);
+}
+/* filled buttons → dark accents over the orange fill */
+.btn-primary::before, .btn-orange::before, .btn-amber::before { background: rgba(20,10,4,0.5); }
+.btn-primary::after,  .btn-orange::after,  .btn-amber::after  { color: rgba(20,10,4,0.5); }
+/* outline button → orange accents */
+.btn-secondary::before { background: var(--color-nebula); }
+.btn-secondary::after  { color: var(--color-nebula); }
+
 /* ---------- BADGES / TAGS / STAMPS ---------- */
 .label-tag {
   font-family: var(--font-mono);
@@ -430,6 +450,40 @@ code, pre, kbd { font-family: var(--font-mono); }
 .input-retro { }
 .input-dark.error { border-color: var(--color-fault); }
 .apply-textarea { resize: none; min-height: 80px; }
+
+/* ---------- HUD FIELD — notched input wrapper (方案1) ----------
+   Wrap any <input class="input-dark"> / <textarea> in <div class="hud-field">.
+   The wrapper draws a notched border (::before) + dark fill (::after); the input
+   inside is flattened to transparent so only the notched frame shows. */
+.hud-field {
+  --fnotch: 12px;
+  --legend-bg: var(--color-deep);
+  position: relative;
+}
+.hud-field::before { /* border layer */
+  content: ''; position: absolute; inset: 0; z-index: 0; background: var(--bd-faint);
+  clip-path: polygon(var(--fnotch) 0, 100% 0, 100% calc(100% - var(--fnotch)), calc(100% - var(--fnotch)) 100%, 0 100%, 0 var(--fnotch));
+  transition: background 0.15s;
+}
+.hud-field::after { /* fill layer, inset by border width */
+  content: ''; position: absolute; inset: 1.5px; z-index: 1; background: var(--color-deep);
+  clip-path: polygon(calc(var(--fnotch) - 1.5px) 0, 100% 0, 100% calc(100% - var(--fnotch) + 1.5px), calc(100% - var(--fnotch) + 1.5px) 100%, 0 100%, 0 calc(var(--fnotch) - 1.5px));
+}
+.hud-field > .input-dark,
+.hud-field > textarea.input-dark {
+  position: relative; z-index: 2; background: transparent; border: none;
+}
+.hud-field > .input-dark:focus { border: none; box-shadow: none; }
+.hud-field:focus-within::before { background: var(--bd-orange); }
+.hud-field:focus-within { filter: drop-shadow(0 0 5px rgba(255,107,53,0.35)); }
+.hud-field.error::before { background: var(--color-fault); }
+/* optional floating legend that sits on the top border line */
+.hud-field__legend {
+  position: absolute; top: -7px; left: 14px; z-index: 3; padding: 0 6px;
+  background: var(--legend-bg);
+  font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em;
+  color: var(--color-star-dim); pointer-events: none;
+}
 
 /* ---------- DECORATIVE ---------- */
 .hr-orange {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { submitApplication } from '@/lib/actions/applications'
+import { HudField } from '@/components/hud-field'
 import posthog from 'posthog-js'
 
 const reasons = [
@@ -111,29 +112,35 @@ export default function ApplyPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>NAME</label>
-            <input
-              type="text" required value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Your name or alias" className="input-dark"
-            />
+            <HudField>
+              <input
+                type="text" required value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Your name or alias" className="input-dark"
+              />
+            </HudField>
           </div>
 
           <div>
             <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>EMAIL</label>
-            <input
-              type="email" required value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="contact@domain.void" className="input-dark"
-            />
+            <HudField>
+              <input
+                type="email" required value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="contact@domain.void" className="input-dark"
+              />
+            </HudField>
           </div>
 
           <div>
             <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>LOCATION / REGION</label>
-            <input
-              type="text" value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              placeholder="City, Country" className="input-dark"
-            />
+            <HudField>
+              <input
+                type="text" value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                placeholder="City, Country" className="input-dark"
+              />
+            </HudField>
           </div>
 
           <div>
@@ -162,12 +169,14 @@ export default function ApplyPage() {
               })}
             </div>
             {selectedReason === 'other' && (
-              <textarea
-                required rows={3} maxLength={300} value={otherText}
-                onChange={(e) => setOtherText(e.target.value)}
-                placeholder="Describe your reason in your own words..."
-                className="input-dark mt-2 resize-none"
-              />
+              <HudField className="mt-2">
+                <textarea
+                  required rows={3} maxLength={300} value={otherText}
+                  onChange={(e) => setOtherText(e.target.value)}
+                  placeholder="Describe your reason in your own words..."
+                  className="input-dark resize-none"
+                />
+              </HudField>
             )}
           </div>
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { getMcFunctions, createMcFunction, updateMcFunction, deleteMcFunction } from '@/lib/actions/mc-functions'
 import type { McFunction, McFunctionStatus } from '@/types/database'
 import { Plus, Trash2, GripVertical } from 'lucide-react'
+import { HudField } from '@/components/hud-field'
 
 const STATUS_OPTIONS: { value: McFunctionStatus; label: string; color: string }[] = [
   { value: 'active',         label: '生效',   color: '#20D890' },
@@ -160,14 +161,16 @@ export default function McConfigPage() {
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <div style={{ flex: 1, minWidth: 180 }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>NAME</div>
-                <input
-                  value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAdd()}
-                  placeholder="Function name..."
-                  className="input-dark"
-                  style={{ width: '100%' }}
-                />
+                <HudField style={{ width: '100%' }}>
+                  <input
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                    placeholder="Function name..."
+                    className="input-dark"
+                    style={{ width: '100%' }}
+                  />
+                </HudField>
               </div>
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>STATUS</div>
