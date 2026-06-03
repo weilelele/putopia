@@ -48,9 +48,9 @@
   --sig-warn:   #E8A020;   /* status: warning / Architect role */
   --sig-fault:  #E83030;   /* status: error */
 
-  /* Type — monospace primary (Space Mono) */
-  --font-display: var(--font-mono), 'SF Mono', ui-monospace, monospace;
-  --font-body:    var(--font-mono), 'SF Mono', ui-monospace, monospace;
+  /* Type — monospace primary (Courier Prime) */
+  --font-display: var(--font-mono), 'Courier New', ui-monospace, monospace;
+  --font-body:    var(--font-mono), 'Courier New', ui-monospace, monospace;
 
   /* Type scale — MULTIVERSE COLLECTIVE VI (pt→px mapped to UI) */
   --fs-display: clamp(2.5rem, 8vw, 4.5rem); /* hero wordmark */

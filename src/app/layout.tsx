@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
-import { Space_Mono } from 'next/font/google'
+import { Courier_Prime } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
 import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
 
-const spaceMono = Space_Mono({
+const courierPrime = Courier_Prime({
   variable: '--font-mono',
   subsets: ['latin'],
   weight: ['400', '700'],
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${spaceMono.variable} h-full`}>
+    <html lang="en" className={`${courierPrime.variable} h-full`}>
       <body className="starfield flex h-full">
         <Script id="meta-pixel" strategy="afterInteractive">{`
           !function(f,b,e,v,n,t,s)
