@@ -96,7 +96,7 @@ function FeedRow({ event }: { event: ActivityEvent }) {
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, minWidth: 0, paddingBottom: '0.1rem' }}>
+      <div style={{ flex: 1, minWidth: 0, paddingBottom: '0.1rem', textAlign: 'left' }}>
 
         {/* Name · verb · time */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
