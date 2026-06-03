@@ -113,6 +113,19 @@ export async function getMyVoteResponses() {
   return data ?? []
 }
 
+export async function deleteVote(voteId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  // vote_responses has ON DELETE CASCADE — deleting votes cascades automatically
+  const { error } = await supabase.from('votes').delete().eq('id', voteId)
+  if (error) return { error: error.message }
+  revalidatePath('/vote')
+  revalidatePath('/admin/votes')
+  return { error: null }
+}
+
 export async function getVoteResults(voteId: string) {
   const supabase = await createClient()
   const { data } = await supabase
