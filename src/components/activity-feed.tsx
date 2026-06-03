@@ -211,9 +211,14 @@ function VoteGroup({ opener, casts }: { opener: ActivityEvent | undefined; casts
               </span>
             </div>
           </div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', flexShrink: 0, letterSpacing: '0.1em', paddingTop: '0.15rem' }}>
-            EXPAND ▾
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.2rem', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.2)' }}>
+              {relTs(casts[0].created_at)}
+            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em' }}>
+              EXPAND ▾
+            </span>
+          </div>
         </button>
       )}
 
@@ -246,9 +251,7 @@ type DisplayItem =
 
 function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
   const items: DisplayItem[] = []
-  // group_key → { opener, casts }
   const groups: Record<string, { opener?: ActivityEvent; casts: ActivityEvent[] }> = {}
-  const groupOrder: string[] = []
 
   for (const ev of events) {
     if (!ev.group_key) {
@@ -257,7 +260,6 @@ function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
     }
     if (!groups[ev.group_key]) {
       groups[ev.group_key] = { casts: [] }
-      groupOrder.push(ev.group_key)
       items.push({ kind: 'group', opener: undefined, casts: groups[ev.group_key].casts })
     }
     const key = ev.group_key
@@ -269,7 +271,17 @@ function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
       groups[key].casts.push(ev)
     }
   }
-  return items
+
+  // Sort by most-recent timestamp: groups use their newest cast (or opener if no casts)
+  return items.sort((a, b) => {
+    const tsA = a.kind === 'single'
+      ? a.event.created_at
+      : (a.casts[0]?.created_at ?? a.opener?.created_at ?? '')
+    const tsB = b.kind === 'single'
+      ? b.event.created_at
+      : (b.casts[0]?.created_at ?? b.opener?.created_at ?? '')
+    return tsB.localeCompare(tsA)
+  })
 }
 
 // ─── Main export ─────────────────────────────────────────────────────────────
