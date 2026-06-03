@@ -78,7 +78,7 @@ export default function RegisterPage() {
         registered_at: new Date().toISOString(),
       }, { onConflict: 'id' })
       const utm = getFirstTouch()
-      posthog.identify(user.id, { email: user.email, display_name: displayName.trim() })
+      posthog.identify(user.id, { email: user.email, display_name: displayName.trim(), registered_at: new Date().toISOString() })
       posthog.capture('account_registered', {
         display_name:  displayName.trim(),
         utm_source:    utm.utm_source   ?? undefined,
