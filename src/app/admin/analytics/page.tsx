@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
+import { queryPostHog } from '@/lib/analytics/posthog-query'
 import { RefreshButton } from './refresh-button'
+import { FunnelTabs } from './tabs'
 
 const ACCENT   = '#E85D04'
 const MUTED    = 'rgba(245,245,245,0.35)'
@@ -407,7 +409,7 @@ function HistoryTable({ runs }: { runs: Run[] }) {
   return (
     <div style={{ marginTop: '2rem' }}>
       <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
-        // HISTORY — overall CVR (Onboarding Started → Email)
+        {'// HISTORY — overall CVR (Onboarding Started → Email)'}
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 10 }}>
@@ -557,26 +559,166 @@ function RecoveryCohortPanel({ rows }: { rows: RecoveryRow[] }) {
   )
 }
 
-export default async function AnalyticsPage() {
-  const [runs, recovery] = await Promise.all([getLatestRuns(10), getRecoveryCohort()])
+/* ── Daily logins: new (first-seen) vs returning ───────────────────────────── */
+
+const NEW_COLOR = ACCENT       // 新增登录
+const RET_COLOR = '#E8A020'    // 回流登录
+
+type DailyRow = {
+  day: string
+  newUsers: number
+  returningUsers: number
+  activeUsers: number
+}
+
+// Per-day breakdown of *known users* (anyone who has ever registered or logged in)
+// into "new" vs "returning":
+//   first_day = the day the user first registered / logged in (their join day).
+//   active    = any activity that day (incl. $pageview via a persisted session),
+//               restricted to known users — so session revisits without a fresh
+//               re-login still count as "returning".
+//   new       = active on their join day · returning = active on a later day.
+// active = new + returning (pre-join anonymous activity excluded via a.day >= first_day).
+async function getDailyActivity(days = 30): Promise<DailyRow[]> {
+  const sql = `
+    SELECT
+      a.day AS day,
+      countIf(a.day = f.first_day) AS new_users,
+      countIf(a.day > f.first_day) AS returning_users,
+      count() AS active_users
+    FROM (
+      SELECT DISTINCT person_id, toDate(timestamp) AS day
+      FROM events
+      WHERE toDate(timestamp) >= today() - ${days - 1}
+    ) AS a
+    INNER JOIN (
+      SELECT person_id, min(toDate(timestamp)) AS first_day
+      FROM events
+      WHERE event IN ('user_logged_in', 'account_registered')
+      GROUP BY person_id
+    ) AS f ON a.person_id = f.person_id
+    WHERE a.day >= f.first_day
+    GROUP BY a.day
+    ORDER BY a.day ASC
+  `
+  const rows = await queryPostHog(sql)
+  return (rows as [string, number, number, number][]).map(r => ({
+    day:            String(r[0]),
+    newUsers:       Number(r[1]) || 0,
+    returningUsers: Number(r[2]) || 0,
+    activeUsers:    Number(r[3]) || 0,
+  }))
+}
+
+function fmtDay(day: string) {
+  // day comes back as 'YYYY-MM-DD'
+  const [, m, d] = day.split('-')
+  return m && d ? `${m}/${d}` : day
+}
+
+function DailyLoginsPanel({ rows }: { rows: DailyRow[] }) {
+  const hasData = rows.some(r => r.activeUsers > 0)
+
+  const sum = (arr: DailyRow[], k: 'newUsers' | 'returningUsers' | 'activeUsers') =>
+    arr.reduce((acc, r) => acc + r[k], 0)
+  const last7  = rows.slice(-7)
+  const today  = rows[rows.length - 1]
+  const maxActive = Math.max(...rows.map(r => r.activeUsers), 1)
+
+  const kpis = today ? [
+    { label: '今日新增',      val: today.newUsers,               color: NEW_COLOR },
+    { label: '今日回流',      val: today.returningUsers,         color: RET_COLOR },
+    { label: '近7日新增',     val: sum(last7, 'newUsers'),       color: NEW_COLOR },
+    { label: '近7日回流',     val: sum(last7, 'returningUsers'), color: RET_COLOR },
+  ] : []
+
+  // Most recent day on top
+  const chartRows = [...rows].reverse()
 
   return (
-    <div style={{ maxWidth: 900 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <div>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.5rem' }}>
-            // ONBOARDING FUNNEL
-          </div>
-          <h1 style={{ fontFamily: 'monospace', fontSize: 18, letterSpacing: '0.15em', color: STAR, margin: 0 }}>
-            CONVERSION FUNNEL
-          </h1>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, marginTop: '0.4rem' }}>
-            Onboarding Started → Q1 → Q2 → Email → Link Clicked → Registered · all-time unique users
-          </div>
-        </div>
-        <RefreshButton />
+    <div style={{ marginTop: '2rem', background: CARD_BG, border: `1px solid ${ACCENT}`, padding: '1.25rem 1.5rem', borderRadius: 2 }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: ACCENT, marginBottom: '0.4rem' }}>
+        DAILY LOGINS · 新增 vs 回流
+      </div>
+      <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, marginBottom: '1rem' }}>
+        每天<strong style={{ color: DIM }}>新增</strong>(当天首次注册/登录) vs <strong style={{ color: DIM }}>回流</strong>(老用户当天有活动，含免登录 session 访问)。
+        仅统计注册/登录过的用户，活动含 <code style={{ color: DIM }}>$pageview</code>。来源 PostHog，按埋点上线起累积。
       </div>
 
+      {!hasData ? (
+        <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, padding: '0.5rem 0' }}>
+          暂无登录数据。确认 PostHog 已配置且站点有登录/注册事件。
+        </div>
+      ) : (
+        <>
+          {/* KPI strip */}
+          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            {kpis.map(s => (
+              <div key={s.label}>
+                <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' }}>{s.label}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 22, color: s.color, fontWeight: 700, lineHeight: 1 }}>
+                  {s.val.toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Legend */}
+          <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ width: 10, height: 10, background: NEW_COLOR, display: 'inline-block', borderRadius: 1 }} />
+              <span style={{ fontFamily: 'monospace', fontSize: 9, color: DIM }}>新增</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ width: 10, height: 10, background: RET_COLOR, display: 'inline-block', borderRadius: 1 }} />
+              <span style={{ fontFamily: 'monospace', fontSize: 9, color: DIM }}>回流</span>
+            </div>
+            <div style={{ marginLeft: 'auto', fontFamily: 'monospace', fontSize: 9, color: MUTED }}>
+              共 {chartRows.length} 天 · 当日活跃 = 新增 + 回流
+            </div>
+          </div>
+
+          {/* Per-day stacked bars */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {chartRows.map((r, i) => (
+              <div key={r.day} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 10, color: i === 0 ? STAR : DIM, width: 44, flexShrink: 0 }}>
+                  {fmtDay(r.day)}
+                </div>
+                <div style={{ flex: 1, display: 'flex', height: 9, background: '#151B3A', borderRadius: 1, overflow: 'hidden' }}>
+                  <div style={{ width: `${(r.newUsers / maxActive) * 100}%`, background: NEW_COLOR, transition: 'width 0.4s ease' }} />
+                  <div style={{ width: `${(r.returningUsers / maxActive) * 100}%`, background: RET_COLOR, transition: 'width 0.4s ease' }} />
+                </div>
+                <div style={{ fontFamily: 'monospace', fontSize: 10, color: NEW_COLOR, width: 32, textAlign: 'right', flexShrink: 0 }}>
+                  {r.newUsers}
+                </div>
+                <div style={{ fontFamily: 'monospace', fontSize: 10, color: RET_COLOR, width: 32, textAlign: 'right', flexShrink: 0 }}>
+                  {r.returningUsers}
+                </div>
+                <div style={{ fontFamily: 'monospace', fontSize: 10, color: STAR, width: 36, textAlign: 'right', flexShrink: 0 }}>
+                  {r.activeUsers}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Column key */}
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.6rem', justifyContent: 'flex-end' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 8, color: NEW_COLOR, width: 32, textAlign: 'right' }}>新</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 8, color: RET_COLOR, width: 32, textAlign: 'right' }}>回流</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 8, color: STAR, width: 36, textAlign: 'right' }}>活跃</div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+export default async function AnalyticsPage() {
+  const [runs, recovery, daily] = await Promise.all([getLatestRuns(10), getRecoveryCohort(), getDailyActivity(30)])
+
+  const conversion = (
+    <>
       {runs.length === 0 ? (
         <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, padding: '2rem', textAlign: 'center' }}>
           <div style={{ fontFamily: 'monospace', fontSize: 11, color: DIM, lineHeight: 2 }}>
@@ -591,7 +733,7 @@ export default async function AnalyticsPage() {
           {runs.length > 1 && (
             <div style={{ marginTop: '2rem' }}>
               <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
-                // PREVIOUS RUNS
+                {'// PREVIOUS RUNS'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {runs.slice(1).map(run => (
@@ -604,9 +746,33 @@ export default async function AnalyticsPage() {
       )}
 
       <div style={{ marginTop: '2rem', fontFamily: 'monospace', fontSize: 9, color: MUTED, lineHeight: 2 }}>
-        // Tag a version: <code style={{ color: ACCENT }}>GET /api/analytics/snapshot?version_tag=v1.2</code><br />
-        // Cron: daily 09:00 UTC · PostHog (steps 1–4, cookie去重) + Supabase (step 5)
+        {'// Tag a version: '}<code style={{ color: ACCENT }}>GET /api/analytics/snapshot?version_tag=v1.2</code><br />
+        {'// Cron: daily 09:00 UTC · PostHog (steps 1–4, cookie去重) + Supabase (step 5)'}
       </div>
+    </>
+  )
+
+  return (
+    <div style={{ maxWidth: 900 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <div>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.5rem' }}>
+            {'// FUNNEL & RETENTION'}
+          </div>
+          <h1 style={{ fontFamily: 'monospace', fontSize: 18, letterSpacing: '0.15em', color: STAR, margin: 0 }}>
+            ANALYTICS
+          </h1>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, marginTop: '0.4rem' }}>
+            CONVERSION = 转化漏斗 · RETENTION = 每日新增 / 回流
+          </div>
+        </div>
+        <RefreshButton />
+      </div>
+
+      <FunnelTabs
+        conversion={conversion}
+        retention={<DailyLoginsPanel rows={daily} />}
+      />
     </div>
   )
 }
