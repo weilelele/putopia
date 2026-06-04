@@ -63,6 +63,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // /voyager-pack is an internal review page — Architect or Voyager only.
+  // (Optimistic gate; the page server-component re-checks the role authoritatively.)
+  if (pathname.startsWith('/voyager-pack')) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/login?redirect=/voyager-pack', request.url))
+    }
+    const { data: profile } = await supabase
+      .from('voyager_profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'architect' && profile?.role !== 'voyager') {
+      return NextResponse.redirect(new URL('/console', request.url))
+    }
+  }
+
   // /admin and /studio both require architect role
   if (pathname.startsWith('/admin') || pathname.startsWith('/studio')) {
     if (!user) {
