@@ -78,6 +78,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: '/admin/votes',       label: 'VOTES'    },
     { href: '/admin/analytics',   label: 'FUNNEL'   },
     { href: '/admin/activity',    label: 'ACTIVITY' },
+    { href: '/admin/onboarding-preview', label: 'ONBOARDING' },
   ]
 
   return (

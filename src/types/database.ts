@@ -197,6 +197,29 @@ export type McFunction = {
 export type McFunctionInsert = Omit<McFunction, 'id' | 'created_at'>
 export type McFunctionUpdate = Partial<Pick<McFunction, 'name' | 'status' | 'sort_order'>>
 
+// ---------- onboarding_variants ----------
+// UTM-driven, admin-editable onboarding copy + video.
+// match_key '' = default row; variant rows leave inherited fields null.
+export type OnboardingVariantRow = {
+  id: string
+  match_key: string
+  label: string
+  q1_headline: string | null
+  q2_headline: string | null
+  affirm_line1: string | null
+  affirm_line2: string | null
+  cta_invitation: string | null
+  cta_label: string | null
+  video_url: string | null
+  sort_order: number
+  enabled: boolean
+  updated_at: string
+}
+
+export type OnboardingVariantInsert = Partial<Omit<OnboardingVariantRow, 'id' | 'updated_at'>>
+  & Pick<OnboardingVariantRow, 'match_key' | 'label'>
+export type OnboardingVariantUpdate = Partial<Omit<OnboardingVariantRow, 'id' | 'updated_at'>>
+
 // ---------- stories ----------
 export type Story = {
   id: string                  // URL-safe slug
