@@ -69,12 +69,14 @@ export async function provisionVoyagerMembership(userId: string): Promise<{
   // 3) Status feed — only on first activation.
   if (!already) {
     logActivity({
-      actor_id: userId,
-      actor_name: displayName ?? 'Voyager',
-      actor_role: 'voyager',
-      event_type: 'voyager_activated',
-      target_id: userId,
-      target_href: '/voyagers',
+      actor_id:     userId,
+      actor_name:   displayName ?? 'Voyager',
+      actor_role:   'voyager',
+      event_type:   'voyager_activated',
+      target_id:    userId,
+      target_title: 'Become a new Voyager!',
+      target_href:  '/voyagers',
+      group_key:    'voyager_activations',
     })
   }
 
