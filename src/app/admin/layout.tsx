@@ -80,6 +80,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: '/admin/intel',       label: 'INTEL'    },
         { href: '/admin/worlds',      label: 'WORLDS'   },
         { href: '/admin/voyagers',    label: 'VOYAGERS' },
+        { href: '/admin/orders',      label: 'ORDERS'   },
         { href: '/admin/mc-config',   label: 'MC CONFIG' },
         { href: '/admin/create-news', label: 'AI NEWS'  },
         { href: '/admin/votes',       label: 'VOTES'    },
