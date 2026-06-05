@@ -74,7 +74,6 @@ export async function proxy(request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .single()
-
     if (profile?.role !== 'architect' && profile?.role !== 'voyager') {
       return NextResponse.redirect(new URL('/console', request.url))
     }
