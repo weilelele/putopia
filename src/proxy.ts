@@ -63,18 +63,24 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // /admin and /studio both require architect role
+  // /admin and /studio both require architect role.
+  // Exception: /admin/onboarding-preview is also open to users explicitly
+  // granted can_edit_onboarding (page-level grant for non-architects).
   if (pathname.startsWith('/admin') || pathname.startsWith('/studio')) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     const { data: profile } = await supabase
       .from('voyager_profiles')
-      .select('role')
+      .select('role, can_edit_onboarding')
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'architect') {
+    const isArchitect = profile?.role === 'architect'
+    const onboardingGrant =
+      pathname.startsWith('/admin/onboarding-preview') && profile?.can_edit_onboarding === true
+
+    if (!isArchitect && !onboardingGrant) {
       return NextResponse.redirect(new URL('/console', request.url))
     }
   }
