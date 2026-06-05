@@ -66,6 +66,7 @@ function OnboardingInner() {
     })
     posthog.capture('waitlist_submitted', {
       onboarding_version: ONBOARDING_VERSION,
+      source: 'demo',
     })
     // Brief "TRANSMITTING..." beat before scan fires
     await new Promise(r => setTimeout(r, 200))

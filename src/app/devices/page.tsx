@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { getAllDevices } from '@/lib/actions/devices'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
@@ -58,6 +58,100 @@ function DevicePlaceholder({ id }: { id: string }) {
       <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
       <path d="M155,115 L155,105 M155,115 L145,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
     </svg>
+  )
+}
+
+function CairoClaimVisual() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    canvas.width  = 320
+    canvas.height = 180
+
+    let frame = 0
+    let raf: number
+
+    function draw() {
+      if (!ctx || !canvas) return
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Background
+      ctx.fillStyle = '#0A0D1F'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(232,93,4,0.12)'
+      ctx.lineWidth = 0.5
+      for (let x = 0; x < canvas.width; x += 20) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke()
+      }
+      for (let y = 0; y < canvas.height; y += 20) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke()
+      }
+
+      // Pulse ring
+      const t = frame / 60
+      for (let i = 0; i < 3; i++) {
+        const phase = (t + i * 0.5) % 2
+        const r = phase * 55
+        const alpha = Math.max(0, 0.45 - phase * 0.22)
+        ctx.beginPath()
+        ctx.arc(160, 90, r, 0, Math.PI * 2)
+        ctx.strokeStyle = `rgba(232,93,4,${alpha})`
+        ctx.lineWidth = 1
+        ctx.stroke()
+      }
+
+      // Core dot
+      const pulse = 0.7 + 0.3 * Math.sin(t * 3)
+      ctx.beginPath()
+      ctx.arc(160, 90, 4 * pulse, 0, Math.PI * 2)
+      ctx.fillStyle = '#E85D04'
+      ctx.fill()
+
+      // Cross hair
+      ctx.strokeStyle = 'rgba(232,93,4,0.55)'
+      ctx.lineWidth = 0.8
+      ctx.beginPath(); ctx.moveTo(140, 90); ctx.lineTo(180, 90); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(160, 70); ctx.lineTo(160, 110); ctx.stroke()
+
+      // Scanning line
+      const scanY = ((frame * 1.2) % (canvas.height + 20)) - 10
+      const grad = ctx.createLinearGradient(0, scanY - 8, 0, scanY + 8)
+      grad.addColorStop(0,   'rgba(232,93,4,0)')
+      grad.addColorStop(0.5, 'rgba(232,93,4,0.18)')
+      grad.addColorStop(1,   'rgba(232,93,4,0)')
+      ctx.fillStyle = grad
+      ctx.fillRect(0, scanY - 8, canvas.width, 16)
+
+      // Corner brackets
+      const bLen = 12, bOff = 6
+      ctx.strokeStyle = 'rgba(232,93,4,0.45)'
+      ctx.lineWidth = 1.5
+      ;[[bOff, bOff], [canvas.width - bOff, bOff], [bOff, canvas.height - bOff], [canvas.width - bOff, canvas.height - bOff]].forEach(([cx, cy], i) => {
+        const sx = i % 2 === 0 ? 1 : -1
+        const sy = i < 2 ? 1 : -1
+        ctx.beginPath(); ctx.moveTo(cx, cy + sy * bLen); ctx.lineTo(cx, cy); ctx.lineTo(cx + sx * bLen, cy); ctx.stroke()
+      })
+
+      frame++
+      raf = requestAnimationFrame(draw)
+    }
+
+    draw()
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ width: '100%', height: '100%', display: 'block' }}
+    />
   )
 }
 
@@ -126,6 +220,84 @@ export default function DevicesPage() {
 
       {/* legacy spacer removed */}
       <div style={{ display: 'contents' }}>
+
+      {/* FIRST BATCH CLAIM — Cairo Discovery */}
+      <section className="mb-10">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="label-tag" style={{ color: '#FF6B35', borderColor: '#FF6B35' }}>FIRST BATCH</span>
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+          <span className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>Cairo Discovery · Batch 01</span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+          <Link
+            href="/devices/claim"
+            className="border overflow-hidden block col-span-2 md:col-span-1 transition-all"
+            style={{
+              background: '#0F1430',
+              borderColor: '#FF6B35',
+              textDecoration: 'none',
+              boxShadow: '0 0 18px rgba(255,107,53,0.28)',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 28px rgba(255,107,53,0.5)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(255,107,53,0.28)' }}
+          >
+            {/* Visual */}
+            <div className="border-b w-full overflow-hidden relative" style={{ borderColor: 'rgba(255,107,53,0.35)', aspectRatio: '16/9' }}>
+              <CairoClaimVisual />
+              <div className="absolute top-2 right-2">
+                <span
+                  className="text-xs font-mono px-1.5 py-0.5 border"
+                  style={{ color: '#070912', borderColor: '#FF6B35', background: '#FF6B35', fontWeight: 700 }}
+                >
+                  CLAIM
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3">
+              <div className="flex items-start justify-between mb-1.5">
+                <div>
+                  <div className="text-xs font-mono" style={{ color: '#FF6B35' }}>CAIRO-BATCH-01</div>
+                  <div className="text-sm font-mono font-bold" style={{ color: '#F5F5F5' }}>FIRST PARTS PACK</div>
+                </div>
+                <span
+                  className="text-xs font-mono px-1.5 py-0.5 border shrink-0 ml-1"
+                  style={{ color: '#FF6B35', borderColor: '#FF6B35', background: 'rgba(255,107,53,0.08)' }}
+                >
+                  $12
+                </span>
+              </div>
+
+              <div className="text-xs font-mono font-bold mb-2 tracking-wider" style={{ color: '#FF6B35' }}>
+                AWAITING CLAIM
+              </div>
+
+              <div className="flex items-center gap-1 text-xs font-mono mb-3" style={{ color: 'rgba(245,245,245,0.35)' }}>
+                <span>◎</span>
+                <span>Cairo, Egypt</span>
+              </div>
+
+              <div className="mb-3">
+                <div className="flex justify-between text-xs font-mono mb-1" style={{ color: '#FF6B35' }}>
+                  <span>RESTORATION</span>
+                  <span>IN PROGRESS</span>
+                </div>
+                <div className="progress-track">
+                  <div className="progress-fill indeterminate" style={{ opacity: 0.7 }} />
+                </div>
+              </div>
+
+              <div
+                className="w-full py-2 text-xs font-mono tracking-widest border text-center font-bold"
+                style={{ borderColor: '#FF6B35', color: '#070912', background: '#FF6B35' }}
+              >
+                [ SECURE PARTS PACK ]
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
 
       {/* UNKNOWN DEVICES */}
       <section className="mb-10">
