@@ -13,6 +13,8 @@ export type ActivityEventType =
   | 'vote_opened'
   | 'vote_cast'
   | 'member_joined'
+  | 'voyager_activated'   // became a Voyager via the first parts pack ($12)
+  | 'device_matched'      // completed the trait test + paid → matched a device
 
 export interface ActivityEventInsert {
   actor_id:     string | null
