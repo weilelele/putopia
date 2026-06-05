@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { getAllWorlds } from '@/lib/actions/worlds'
 import { SectionTracker } from '@/components/section-tracker'
 
+export const dynamic = 'force-dynamic'
+
 export default async function WorldsPage() {
   const worlds = await getAllWorlds()
 
