@@ -169,11 +169,10 @@ export async function postComment(
 
   if (error) return { error: error.message, data: null }
 
-  // Notify the parent author by email that their comment got a reply.
-  // Awaited (not fire-and-forget) so the send completes before a serverless
-  // function can be recycled; notifyReply swallows its own errors so a mail
-  // hiccup can never fail the post.
-  if (parentId) {
+  // Notify the parent author by email — only when a real architect hits send
+  // (regardless of which identity they're posting as via impersonation).
+  // Regular members (applicant / voyager) replying does NOT trigger an email.
+  if (parentId && caller?.role === 'architect') {
     await notifyReply({ parentId, replierName: authorName, replyBody: text, effectiveAuthorId: authorId, subjectType, subjectId, subjectTitle: opts?.subjectTitle })
   }
 

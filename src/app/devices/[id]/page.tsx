@@ -150,7 +150,7 @@ export default function DeviceDetailPage() {
         </div>
 
         {/* Transmissions / comments */}
-        <CommentThread subjectType="device" subjectId={device.id} posthogEvent="device_comment_sent" />
+        <CommentThread subjectType="device" subjectId={device.id} subjectTitle={device.name} posthogEvent="device_comment_sent" />
       </div>
 
       <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>

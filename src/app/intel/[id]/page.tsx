@@ -143,7 +143,7 @@ export default function IntelDetailPage() {
         )}
 
         {/* Transmissions */}
-        <CommentThread subjectType="intel" subjectId={entry.id} posthogEvent="intel_comment_sent" />
+        <CommentThread subjectType="intel" subjectId={entry.id} subjectTitle={entry.title} posthogEvent="intel_comment_sent" />
       </div>
 
       <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>

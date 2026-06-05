@@ -148,7 +148,7 @@ export default function WorldDetailPage() {
         </div>
 
         {/* Transmissions */}
-        <CommentThread subjectType="world" subjectId={world.id} posthogEvent="world_comment_sent" />
+        <CommentThread subjectType="world" subjectId={world.id} subjectTitle={displayName} posthogEvent="world_comment_sent" />
       </div>
 
       <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>

@@ -49,6 +49,15 @@ export type Comment = {
   author_avatar_url: string | null
   body: string
   is_visible: boolean
+  parent_id: string | null    // the comment this one replies to; null = top-level
+}
+
+// A profile an architect may impersonate when posting (voyager / architect only).
+export type ImpersonatableProfile = {
+  id: string
+  display_name: string
+  avatar_url: string | null
+  role: UserRole
 }
 
 // ---------- votes ----------
