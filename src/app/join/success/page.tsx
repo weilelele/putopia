@@ -106,7 +106,7 @@ export default async function JoinSuccessPage() {
           )}
         </div>
 
-        <Link href="/voyagers" style={cta}>
+        <Link href="/profile" style={cta}>
           Update your Voyager profile →
         </Link>
       </div>
