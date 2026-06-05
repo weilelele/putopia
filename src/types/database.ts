@@ -20,6 +20,7 @@ export type VoyagerProfile = {
   social_linkedin: string | null
   location: string | null
   role: UserRole
+  can_edit_onboarding: boolean  // page-level grant: access to /admin/onboarding-preview without architect
   observation_days: number
   worlds_discovered: number
   batch_label: string         // cohort grouping, e.g. 'Original Batch'

@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Try to fetch the profile
   let { data: profile } = await admin
     .from('voyager_profiles')
-    .select('role, display_name')
+    .select('role, display_name, can_edit_onboarding')
     .eq('id', user.id)
     .single()
 
@@ -44,11 +44,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       role: 'architect',
     })
 
-    profile = { role: 'architect', display_name: displayName }
+    profile = { role: 'architect', display_name: displayName, can_edit_onboarding: true }
   }
 
-  // Profile exists but role isn't architect
-  if (profile.role !== 'architect') {
+  const isArchitect       = profile.role === 'architect'
+  // Non-architects granted can_edit_onboarding get a restricted admin: only the
+  // onboarding editor (proxy.ts enforces they can't reach other /admin routes).
+  const onboardingOnly    = !isArchitect && profile.can_edit_onboarding === true
+
+  // No architect role and no page grant → denied
+  if (!isArchitect && !onboardingOnly) {
     return (
       <div style={{ background: '#070912', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace' }}>
         <div style={{ background: '#151B3A', border: '1px solid #E83030', padding: '32px', maxWidth: '480px', textAlign: 'center' }}>
@@ -67,19 +72,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     )
   }
 
-  const navItems = [
-    { href: '/admin/stories',     label: 'STORIES'  },
-    { href: '/admin/devices',     label: 'DEVICES'  },
-    { href: '/admin/intel',       label: 'INTEL'    },
-    { href: '/admin/worlds',      label: 'WORLDS'   },
-    { href: '/admin/voyagers',    label: 'VOYAGERS' },
-    { href: '/admin/mc-config',   label: 'MC CONFIG' },
-    { href: '/admin/create-news', label: 'AI NEWS'  },
-    { href: '/admin/votes',       label: 'VOTES'    },
-    { href: '/admin/analytics',   label: 'FUNNEL'   },
-    { href: '/admin/activity',    label: 'ACTIVITY' },
-    { href: '/admin/onboarding-preview', label: 'ONBOARDING' },
-  ]
+  const navItems = onboardingOnly
+    ? [{ href: '/admin/onboarding-preview', label: 'ONBOARDING' }]
+    : [
+        { href: '/admin/stories',     label: 'STORIES'  },
+        { href: '/admin/devices',     label: 'DEVICES'  },
+        { href: '/admin/intel',       label: 'INTEL'    },
+        { href: '/admin/worlds',      label: 'WORLDS'   },
+        { href: '/admin/voyagers',    label: 'VOYAGERS' },
+        { href: '/admin/mc-config',   label: 'MC CONFIG' },
+        { href: '/admin/create-news', label: 'AI NEWS'  },
+        { href: '/admin/votes',       label: 'VOTES'    },
+        { href: '/admin/analytics',   label: 'FUNNEL'   },
+        { href: '/admin/activity',    label: 'ACTIVITY' },
+        { href: '/admin/onboarding-preview', label: 'ONBOARDING' },
+      ]
 
   return (
     <div style={{ background: '#070912', height: '100vh', overflowY: 'auto', fontFamily: 'monospace' }}>
