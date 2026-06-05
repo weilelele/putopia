@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { getAllOrders, updateOrderFulfillment, type AdminOrder } from '@/lib/actions/orders'
+import { getAllOrders, updateOrderFulfillment, createOrderManually, type AdminOrder } from '@/lib/actions/orders'
 
 const STATUSES = ['paid', 'preparing', 'shipped', 'delivered', 'refunded', 'canceled'] as const
 const STATUS_COLOR: Record<string, string> = {
@@ -41,6 +41,11 @@ export default function OrdersAdmin() {
   const [savingId, setSavingId] = useState<string | null>(null)
   const [msg, setMsg] = useState<{ id: string; text: string; ok: boolean } | null>(null)
   const [filter, setFilter] = useState<'toship' | 'all' | 'shipped'>('toship')
+  const [showNew, setShowNew] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [newNote, setNewNote] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [createMsg, setCreateMsg] = useState<{ text: string; ok: boolean } | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -55,6 +60,21 @@ export default function OrdersAdmin() {
     setLoading(false)
   }
   useEffect(() => { load() }, [])
+
+  const handleCreate = async () => {
+    if (!newEmail.trim()) return
+    setCreating(true); setCreateMsg(null)
+    const { error, orderId } = await createOrderManually({ email: newEmail.trim(), note: newNote.trim() || undefined })
+    setCreating(false)
+    if (error) {
+      setCreateMsg({ text: error, ok: false })
+    } else {
+      setCreateMsg({ text: `Order created ✓ (${orderId?.slice(0, 8)}…)`, ok: true })
+      setNewEmail(''); setNewNote('')
+      await load()
+      setTimeout(() => { setShowNew(false); setCreateMsg(null) }, 1800)
+    }
+  }
 
   const setD = (id: string, k: keyof Draft, v: string) =>
     setDrafts((d) => ({ ...d, [id]: { ...d[id], [k]: v } }))
@@ -92,12 +112,50 @@ export default function OrdersAdmin() {
           <div style={{ color: '#E85D04', fontSize: '11px', letterSpacing: '0.25em' }}>// FULFILLMENT</div>
           <h1 style={{ fontSize: '20px', margin: '6px 0 0' }}>ORDERS</h1>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button style={S.filterBtn(filter === 'toship')} onClick={() => setFilter('toship')}>TO SHIP ({counts.toship})</button>
           <button style={S.filterBtn(filter === 'shipped')} onClick={() => setFilter('shipped')}>SHIPPED ({counts.shipped})</button>
           <button style={S.filterBtn(filter === 'all')} onClick={() => setFilter('all')}>ALL ({counts.all})</button>
+          <button style={{ ...S.btn, background: showNew ? 'rgba(255,107,53,0.2)' : '#FF6B35', color: showNew ? '#FF6B35' : '#0A0E27', border: '1px solid #FF6B35', marginLeft: '8px' }}
+            onClick={() => { setShowNew((v) => !v); setCreateMsg(null) }}>
+            {showNew ? '✕ CANCEL' : '+ NEW ORDER'}
+          </button>
         </div>
       </div>
+
+      {/* Manual order creation panel */}
+      {showNew && (
+        <div style={{ background: '#151B3A', border: '1px solid #FF6B35', padding: '20px', marginBottom: '20px' }}>
+          <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.22em', marginBottom: '14px' }}>
+            // MANUAL ORDER — confirm offline payment and provision Voyager membership
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+            <div>
+              <label style={S.label}>BUYER EMAIL *</label>
+              <input style={S.input} value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="voyager@example.com" onKeyDown={(e) => e.key === 'Enter' && handleCreate()} />
+            </div>
+            <div>
+              <label style={S.label}>INTERNAL NOTE (optional)</label>
+              <input style={S.input} value={newNote} onChange={(e) => setNewNote(e.target.value)}
+                placeholder="e.g. paid via Venmo, gift, event" />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button style={{ ...S.btn, opacity: creating || !newEmail.trim() ? 0.5 : 1 }}
+              disabled={creating || !newEmail.trim()} onClick={handleCreate}>
+              {creating ? 'CREATING...' : 'CONFIRM PAYMENT & CREATE ORDER'}
+            </button>
+            {createMsg && (
+              <span style={{ fontSize: '12px', color: createMsg.ok ? '#20D890' : '#E83030' }}>{createMsg.text}</span>
+            )}
+          </div>
+          <div style={{ marginTop: '10px', fontSize: '11px', color: 'rgba(245,245,245,0.35)', lineHeight: 1.6 }}>
+            Creates a paid order → auto-upgrades the account to Voyager + joins current batch.<br />
+            If no account exists for this email, an invitation will be sent automatically.
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ color: 'rgba(245,245,245,0.35)', padding: '40px 0', textAlign: 'center', letterSpacing: '0.15em' }}>LOADING ORDERS...</div>

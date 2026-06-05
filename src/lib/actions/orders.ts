@@ -105,3 +105,71 @@ export async function updateOrderFulfillment(
   revalidatePath('/profile')
   return { error: null }
 }
+
+/**
+ * Manually create a paid order for a user (by email) and provision their
+ * Voyager membership. Used when payment happened outside the Stripe flow
+ * (offline, gifted, etc.) or for testing.
+ *
+ * - If no account exists for the email, one is invited via Supabase.
+ * - Idempotent: if the user is already a paid Voyager, still creates a new
+ *   order row so you can record the physical shipment.
+ */
+export async function createOrderManually(params: {
+  email: string
+  amount?: number          // cents, default 1200
+  note?: string            // internal note stored in display_name field
+}): Promise<{ error: string | null; orderId?: string }> {
+  if (!(await requireArchitect())) return { error: 'Forbidden' }
+
+  const { provisionVoyagerMembership } = await import('@/lib/actions/membership')
+  const { getCurrentBatch } = await import('@/lib/actions/membership')
+
+  const email = params.email.trim().toLowerCase()
+  const amount = params.amount ?? 1200
+  const admin = createAdminClient()
+
+  // Resolve or create the account
+  const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 })
+  let authUser = list?.users?.find((u) => u.email?.toLowerCase() === email)
+
+  if (!authUser) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://voyager.putopia.studio'
+    const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${siteUrl}/auth/callback?next=/register`,
+    })
+    if (inviteErr) return { error: `Could not invite ${email}: ${inviteErr.message}` }
+    authUser = invited?.user ?? null
+  }
+
+  if (!authUser) return { error: `Failed to resolve account for ${email}` }
+
+  const batch = await getCurrentBatch()
+
+  // Create the order row (status=paid immediately)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: order, error: orderErr } = await (admin.from('voyager_orders') as any)
+    .insert({
+      user_id:    authUser.id,
+      email,
+      amount,
+      currency:   'usd',
+      status:     'paid',
+      batch_label: batch,
+      display_name: params.note?.trim() || null,
+      stripe_session_id: `manual_${Date.now()}`,
+      paid_at:    new Date().toISOString(),
+    })
+    .select('id')
+    .single()
+
+  if (orderErr) return { error: orderErr.message }
+
+  // Provision Voyager membership (idempotent)
+  const { error: provErr } = await provisionVoyagerMembership(authUser.id)
+  if (provErr) return { error: provErr }
+
+  revalidatePath('/admin/orders')
+  revalidatePath('/profile')
+  return { error: null, orderId: order?.id }
+}
