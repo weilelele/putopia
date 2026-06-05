@@ -20,10 +20,10 @@ export async function GET(req: NextRequest) {
   //    success page can be exercised end to end. Requires a signed-in account.
   if (!isStripeConfigured()) {
     if (!user) {
-      return NextResponse.redirect(new URL('/login?redirect=/voyager-pack', origin))
+      return NextResponse.redirect(new URL('/login?redirect=/voyager-pack', req.nextUrl.origin))
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: order } = await (admin.from('voyager_orders') as any)
+    const { data: order, error: orderErr } = await (admin.from('voyager_orders') as any)
       .insert({
         user_id: user.id,
         email: user.email,
@@ -37,9 +37,15 @@ export async function GET(req: NextRequest) {
       .select('id')
       .single()
 
-    await provisionVoyagerMembership(user.id)
+    if (orderErr) console.error('[checkout/mock] order insert failed:', orderErr.message)
+
+    const { error: provErr } = await provisionVoyagerMembership(user.id)
+    if (provErr) console.error('[checkout/mock] provision failed:', provErr)
+
+    // Always redirect back to the same origin (preview or production),
+    // never follow NEXT_PUBLIC_SITE_URL which might point to a different deployment.
     return NextResponse.redirect(
-      new URL(`/join/success?mock=1&order=${order?.id ?? ''}`, origin),
+      new URL(`/join/success?mock=1&order=${order?.id ?? ''}`, req.nextUrl.origin),
     )
   }
 
