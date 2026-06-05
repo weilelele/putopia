@@ -75,6 +75,16 @@ export async function getAllVoyagers() {
   return data ?? []
 }
 
+export async function getVoyagerById(id: string) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('voyager_profiles')
+    .select('*')
+    .eq('id', id)
+    .single()
+  return data ?? null
+}
+
 // Architect-only: reassign a voyager's batch (writes past RLS via service role).
 export async function setVoyagerBatch(voyagerId: string, batchLabel: string) {
   const supabase = await createClient()
