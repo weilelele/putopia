@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import StudioForm from './StudioForm'
 
+export const dynamic = 'force-dynamic'
+
 export default async function StudioPage() {
   const admin = createAdminClient()
 
