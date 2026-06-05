@@ -67,3 +67,9 @@ alter table public.voyager_orders enable row level security;
 drop policy if exists "orders_select_own" on public.voyager_orders;
 create policy "orders_select_own" on public.voyager_orders for select
   using (auth.uid() = user_id);
+
+-- Explicit grants for service_role (needed for JS client inserts/updates).
+-- The supabase_admin role grants these at creation time for built-in tables,
+-- but custom tables require an explicit GRANT.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.voyager_orders TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.batches TO service_role;
