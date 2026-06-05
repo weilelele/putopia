@@ -91,9 +91,13 @@ export function Sidebar() {
 
       {/* Auth block */}
       <div className="sidebar-auth">
-        <div className="sidebar-auth-name">
-          {user.name ?? (user.role === 'guest' ? 'UNKNOWN OPERATIVE' : user.email ?? '—')}
-        </div>
+        {user.role === 'guest' ? (
+          <div className="sidebar-auth-name">UNKNOWN OPERATIVE</div>
+        ) : (
+          <Link href="/profile" className="sidebar-auth-name" style={{ textDecoration: 'none', cursor: 'pointer' }}>
+            {user.name ?? user.email ?? '—'}
+          </Link>
+        )}
         <div className="sidebar-auth-role">{user.role.toUpperCase()}</div>
         {user.role === 'guest' ? (
           <Link href="/login" className="sidebar-auth-btn">↗ LOGIN</Link>

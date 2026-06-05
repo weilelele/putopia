@@ -49,6 +49,8 @@ type EditForm = {
   social_x: string
   social_instagram: string
   social_linkedin: string
+  observation_days: string
+  worlds_discovered: string
 }
 
 // ── Pack fulfillment timeline ───────────────────────────────────────────────
@@ -132,6 +134,8 @@ export default function ProfilePage() {
           social_x: p.social_x ?? '',
           social_instagram: p.social_instagram ?? '',
           social_linkedin: p.social_linkedin ?? '',
+          observation_days: String(p.observation_days ?? 0),
+          worlds_discovered: String(p.worlds_discovered ?? 0),
         })
       }
       setLoading(false)
@@ -166,6 +170,8 @@ export default function ProfilePage() {
       social_x: form.social_x.trim() || null,
       social_instagram: form.social_instagram.trim() || null,
       social_linkedin: form.social_linkedin.trim() || null,
+      observation_days: Math.max(0, parseInt(form.observation_days) || 0),
+      worlds_discovered: Math.max(0, parseInt(form.worlds_discovered) || 0),
     })
 
     setSaving(false)
@@ -200,7 +206,8 @@ export default function ProfilePage() {
   }
 
   const accent = accentColor(profile.display_name)
-  const isVoyager = profile.role === 'voyager' || profile.role === 'architect'
+  const isPureVoyager = profile.role === 'voyager'
+  const isApplicant = profile.role === 'applicant'
 
   return (
     <div className="main">
@@ -211,7 +218,7 @@ export default function ProfilePage() {
       <div className="page-head">
         <div>
           <div className="h-eyebrow">// YOUR DOSSIER</div>
-          <h1>VOYAGER <span className="accent">PROFILE</span></h1>
+          <h1><span className="accent">PROFILE</span></h1>
         </div>
       </div>
 
@@ -247,12 +254,13 @@ export default function ProfilePage() {
             <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: accent, border: `1px solid ${accent}55`, padding: '2px 8px', textTransform: 'uppercase' }}>
               {profile.role}
             </span>
-            {isVoyager && profile.member_no != null && (
+            {/* Only Voyagers carry a member number + batch; Architects do not. */}
+            {isPureVoyager && profile.member_no != null && (
               <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'rgba(245,245,245,0.6)' }}>
                 VOYAGER #{String(profile.member_no).padStart(3, '0')}
               </span>
             )}
-            {profile.batch_label && (
+            {isPureVoyager && profile.batch_label && (
               <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'rgba(245,245,245,0.6)' }}>
                 · {profile.batch_label}
               </span>
@@ -261,12 +269,21 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Applicants: upgrade path to the $12 Initial Voyager Pack */}
+      {isApplicant && (
+        <div style={{ marginBottom: '28px' }}>
+          <Link href="/voyager-pack" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: '#FF6B35', color: '#0A0E27', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', padding: '13px 24px', borderRadius: '3px', textDecoration: 'none' }}>
+            Become Voyager →
+          </Link>
+        </div>
+      )}
+
       {/* Pack tracking */}
       {order && <PackTracker order={order} />}
 
       {/* Edit form */}
       <div style={{ border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: '20px', fontFamily: 'var(--font-mono)', maxWidth: '640px' }}>
-        <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: '18px' }}>// EDIT YOUR INFO</div>
+        <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: '18px' }}>// ADD YOUR INFO</div>
 
         <FieldGroup cols={2}>
           <Field label="DISPLAY NAME">
@@ -297,6 +314,16 @@ export default function ProfilePage() {
           </Field>
           <Field label="LINKEDIN (full URL)">
             <input style={FIELD_INPUT} value={form.social_linkedin} onChange={(e) => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
+          </Field>
+        </FieldGroup>
+
+        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// FIELD DATA</div>
+        <FieldGroup cols={2}>
+          <Field label="OBSERVATION DAYS">
+            <input style={FIELD_INPUT} type="number" min="0" value={form.observation_days} onChange={(e) => setF('observation_days', e.target.value)} />
+          </Field>
+          <Field label="WORLDS DISCOVERED">
+            <input style={FIELD_INPUT} type="number" min="0" value={form.worlds_discovered} onChange={(e) => setF('worlds_discovered', e.target.value)} />
           </Field>
         </FieldGroup>
 
