@@ -38,7 +38,7 @@ export async function submitApplication(application: ApplicationInsert) {
 
   if (error) return { error }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://voyager.putopia.studio'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
 
   // Send invite email via Supabase Auth
   try {

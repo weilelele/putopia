@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   }
 
   const batch = Math.max(1, Math.min(20, Number(request.nextUrl.searchParams.get('count') ?? DEFAULT_BATCH)))
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://voyager.putopia.studio'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
   const admin = createAdminClient()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

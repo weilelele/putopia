@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         userId = existing.id
       } else {
         const siteUrl =
-          process.env.NEXT_PUBLIC_SITE_URL ?? 'https://voyager.putopia.studio'
+          process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
         const { data: invited } = await admin.auth.admin.inviteUserByEmail(email, {
           redirectTo: `${siteUrl}/auth/callback?next=/register`,
         })
