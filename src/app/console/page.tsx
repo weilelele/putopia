@@ -132,6 +132,74 @@ function DevicePreviewCard({ device }: { device: Device }) {
   )
 }
 
+/* ─── First Parts Pack claim card (brightest orange — front of registry) ─── */
+function ClaimPreviewCard() {
+  return (
+    <Link
+      href="/devices/claim"
+      style={{
+        background: 'var(--color-void)',
+        border: '1px solid #FF6B35',
+        boxShadow: '0 0 18px rgba(255,107,53,0.28)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        textDecoration: 'none',
+        transition: 'box-shadow 0.15s',
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 28px rgba(255,107,53,0.5)' }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(255,107,53,0.28)' }}
+    >
+      <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid rgba(255,107,53,0.35)', background: '#0A0D1F', position: 'relative' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://picsum.photos/seed/cairo-batch-01/600/450"
+          alt="Cairo Batch 01 — first parts pack"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'saturate(0.7) brightness(0.6)' }}
+        />
+        <span style={{
+          position: 'absolute', top: 8, right: 8,
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.1em',
+          color: '#070912', background: '#FF6B35', padding: '0.1rem 0.45rem',
+        }}>
+          CLAIM
+        </span>
+      </div>
+      <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#FF6B35', letterSpacing: '0.15em' }}>
+              CAIRO-BATCH-01
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, color: 'var(--color-star)' }}>
+              FIRST PARTS PACK
+            </div>
+          </div>
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap', flexShrink: 0,
+            color: '#FF6B35', border: '1px solid #FF6B35', padding: '0.1rem 0.35rem', background: 'rgba(255,107,53,0.08)',
+          }}>
+            $12
+          </span>
+        </div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.12em', color: '#FF6B35' }}>
+          AWAITING CLAIM
+        </div>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.6 }}>
+          Secure the first pack from the Cairo discovery, activate Voyager status, and unlock the trait test.
+        </p>
+        <div style={{
+          marginTop: 'auto', textAlign: 'center',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.15em',
+          color: '#070912', background: '#FF6B35', padding: '0.4rem',
+        }}>
+          [ SECURE PARTS PACK ]
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 /* ─── Unknown Device Preview Card (greyed, uncontacted signal) ─── */
 function UnknownDevicePreviewCard({ device }: { device: Device }) {
   return (
@@ -420,16 +488,16 @@ function AuthHero({ user, activityEvents }: { user: { role: string; name?: strin
         </div>
       )}
 
-      {/* Activate Voyager — shown to applicants who haven't been promoted yet */}
+      {/* Claim the first parts pack — shown to applicants not yet promoted */}
       {isApplicant && (
         <div className="cta-row">
-          <Link href="/activate" className="btn-primary" style={{ padding: '1rem 2.25rem' }}
-            onClick={() => posthog.capture('activate_voyager_clicked')}
+          <Link href="/devices/claim" className="btn-primary" style={{ padding: '1rem 2.25rem' }}
+            onClick={() => posthog.capture('claim_parts_pack_clicked')}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
               <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,255,255,0.25)" strokeLinejoin="round" />
             </svg>
-            ACTIVATE VOYAGER
+            CLAIM PARTS PACK
           </Link>
         </div>
       )}
@@ -537,6 +605,7 @@ function ConsoleInner() {
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
+              <ClaimPreviewCard />
               {devices.map((device) => (
                 device.knowledge === 'unknown'
                   ? <UnknownDevicePreviewCard key={device.id} device={device} />

@@ -12,13 +12,16 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
   captureFirstTouch()
 
   const utm = getFirstTouch()
-  posthog.register({
-    first_touch_utm_source:   utm.utm_source,
-    first_touch_utm_medium:   utm.utm_medium,
-    first_touch_utm_campaign: utm.utm_campaign,
-    first_touch_utm_content:  utm.utm_content,
-    first_touch_fbclid:       utm.fbclid,
-  })
+  const hasUtm = Object.values(utm).some(v => v !== null)
+  if (hasUtm) {
+    posthog.register({
+      first_touch_utm_source:   utm.utm_source,
+      first_touch_utm_medium:   utm.utm_medium,
+      first_touch_utm_campaign: utm.utm_campaign,
+      first_touch_utm_content:  utm.utm_content,
+      first_touch_fbclid:       utm.fbclid,
+    })
+  }
 }
 
 export function onRouterTransitionStart(url: string) {

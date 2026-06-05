@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Multiverse Collective — Voyager 权益台 (demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E27; --panel:#111634; --panel2:#0E1330;
+    --tx:#F5F5F5; --tx-muted:rgba(245,245,245,.55); --tx-faint:rgba(245,245,245,.32);
+    --or:#FF6B35; --or2:#E85D04; --or3:#DC2F02;
+    --line:rgba(255,107,53,.18); --line2:rgba(245,245,245,.10);
+    --mono:'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 700px at 50% -10%, rgba(255,107,53,.10), transparent 60%),
+      var(--bg);
+    color:var(--tx); font-family:var(--mono); line-height:1.5;
+    min-height:100vh; padding-bottom:80px;
+  }
+  a{color:inherit;}
+
+  /* ── top toolbar ── */
+  .toolbar{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding:12px 18px;
+    background:rgba(10,14,39,.82); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .toolbar .brand{font-size:12px; letter-spacing:.28em; color:var(--or); font-weight:700;}
+  .toolbar .brand small{display:block; color:var(--tx-faint); letter-spacing:.18em; font-weight:400; font-size:9px; margin-top:3px;}
+  .seg{display:inline-flex; border:1px solid var(--line); border-radius:2px; overflow:hidden;}
+  .seg button{
+    font-family:var(--mono); font-size:11px; letter-spacing:.1em;
+    background:transparent; color:var(--tx-muted); border:0; padding:8px 12px; cursor:pointer;
+  }
+  .seg button.on{background:var(--or); color:#0A0E27; font-weight:700;}
+
+  .wrap{max-width:1040px; margin:0 auto; padding:26px 18px;}
+  body.force-mobile .wrap{max-width:420px;}
+
+  .lede{margin:0 0 22px;}
+  .lede h1{font-size:22px; line-height:1.3; margin:0 0 10px; font-weight:700;}
+  .lede h1 .price{color:var(--or);}
+  .lede p{margin:0; color:var(--tx-muted); font-size:13px; max-width:56ch;}
+  body.force-mobile .lede h1{font-size:18px;}
+
+  /* ── hero stage ── */
+  .stage-card{
+    border:1px solid var(--line); border-radius:4px; overflow:hidden;
+    background:linear-gradient(180deg, #0E1330, #0A0E27);
+    margin-bottom:14px;
+  }
+  .stage-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 14px; border-bottom:1px solid var(--line2);
+    font-size:10px; letter-spacing:.22em; color:var(--tx-faint);
+  }
+  .stage-head .dot{width:7px;height:7px;border-radius:50%;background:var(--or);display:inline-block;margin-right:6px;box-shadow:0 0 8px var(--or);}
+  .stage{position:relative; width:100%; aspect-ratio: 1000/600;}
+  body.force-mobile .stage{aspect-ratio: 1000/760;}
+  .stage svg{position:absolute; inset:0; width:100%; height:100%;}
+
+  /* hotspots */
+  .hot{
+    position:absolute; transform:translate(-50%,-50%);
+    width:30px;height:30px; border-radius:50%;
+    border:1px solid var(--or); background:rgba(255,107,53,.14);
+    color:var(--or); font-family:var(--mono); font-size:12px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    z-index:5; transition:transform .15s, background .15s;
+  }
+  .hot::before{
+    content:''; position:absolute; inset:-6px; border-radius:50%;
+    border:1px solid var(--or); opacity:.55; animation:ping 2.4s ease-out infinite;
+  }
+  .hot:hover, .hot.active{background:var(--or); color:#0A0E27; transform:translate(-50%,-50%) scale(1.12);}
+  .hot.active::before{animation:none; opacity:0;}
+  @keyframes ping{0%{transform:scale(.7);opacity:.7} 80%,100%{transform:scale(1.5);opacity:0}}
+
+  /* desktop popover */
+  .pop{
+    position:absolute; z-index:20; width:248px; max-width:70vw;
+    background:var(--panel); border:1px solid var(--or); border-radius:3px;
+    box-shadow:0 14px 40px rgba(0,0,0,.55); padding:14px;
+    opacity:0; pointer-events:none; transform:translateY(4px); transition:opacity .14s, transform .14s;
+  }
+  .pop.show{opacity:1; pointer-events:auto; transform:translateY(0);}
+  .pop .cat{font-size:9px; letter-spacing:.2em; color:var(--or); margin-bottom:6px;}
+  .pop h4{margin:0 0 7px; font-size:14px;}
+  .pop p{margin:0; font-size:11.5px; color:var(--tx-muted); line-height:1.6;}
+  .pop .num{position:absolute; top:-9px; left:14px; background:var(--or); color:#0A0E27; font-size:10px; font-weight:700; padding:2px 7px; border-radius:2px;}
+
+  /* mobile bottom sheet */
+  .sheet-scrim{position:fixed; inset:0; background:rgba(5,7,20,.6); z-index:50; opacity:0; pointer-events:none; transition:opacity .2s;}
+  .sheet-scrim.show{opacity:1; pointer-events:auto;}
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:51;
+    background:var(--panel); border-top:1px solid var(--or);
+    border-radius:14px 14px 0 0; padding:8px 20px 26px;
+    transform:translateY(102%); transition:transform .26s cubic-bezier(.2,.7,.3,1);
+    max-width:480px; margin:0 auto;
+  }
+  .sheet.show{transform:translateY(0);}
+  .sheet .grab{width:38px;height:4px;border-radius:3px;background:rgba(245,245,245,.25);margin:8px auto 16px;}
+  .sheet .icon{width:54px;height:54px;border:1px solid var(--line);border-radius:3px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;background:var(--panel2);}
+  .sheet .icon svg{width:32px;height:32px;}
+  .sheet .cat{font-size:10px; letter-spacing:.2em; color:var(--or); margin-bottom:7px;}
+  .sheet h4{margin:0 0 10px; font-size:17px;}
+  .sheet p{margin:0; font-size:13px; color:var(--tx-muted); line-height:1.7;}
+  .sheet .step{display:flex; gap:10px; align-items:center; margin-top:16px; font-size:11px; color:var(--tx-faint); letter-spacing:.06em;}
+  .sheet .step b{color:var(--or);}
+
+  /* swipe hint for mobile stage */
+  .tap-hint{
+    text-align:center; font-size:10px; letter-spacing:.16em; color:var(--tx-faint);
+    margin:10px 0 0; display:none;
+  }
+  body.mobile-mode .tap-hint{display:block;}
+
+  /* ── categorized list below ── */
+  .cats{display:grid; gap:22px; margin-top:30px;}
+  .cat-block h3{
+    font-size:12px; letter-spacing:.2em; color:var(--or); margin:0 0 4px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .cat-block h3 .ln{flex:1; height:1px; background:var(--line);}
+  .cat-block .sub{font-size:11px; color:var(--tx-faint); margin:0 0 14px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px;}
+  body.force-mobile .grid{grid-template-columns:1fr;}
+  .item{
+    display:flex; gap:12px; align-items:flex-start;
+    border:1px solid var(--line2); border-radius:3px; background:var(--panel2);
+    padding:13px; cursor:pointer; transition:border-color .15s, background .15s, transform .1s;
+  }
+  .item:hover{border-color:var(--or); background:#131838;}
+  .item.flash{border-color:var(--or); box-shadow:0 0 0 1px var(--or) inset;}
+  .item .ic{width:40px;height:40px;flex-shrink:0;border:1px solid var(--line);border-radius:3px;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+  .item .ic svg{width:24px;height:24px;}
+  .item .tx h5{margin:0 0 5px; font-size:13px; display:flex; align-items:center; gap:7px;}
+  .item .tx h5 .n{font-size:9px; color:#0A0E27; background:var(--or); padding:1px 5px; border-radius:2px; font-weight:700;}
+  .item .tx p{margin:0; font-size:11px; color:var(--tx-muted); line-height:1.55;}
+
+  /* sticky CTA */
+  .cta{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    background:linear-gradient(180deg, rgba(10,14,39,0), rgba(10,14,39,.95) 40%);
+    padding:16px; display:flex; justify-content:center; pointer-events:none;
+  }
+  .cta button{
+    pointer-events:auto;
+    font-family:var(--mono); font-weight:700; letter-spacing:.08em;
+    background:var(--or); color:#0A0E27; border:0; border-radius:3px;
+    padding:14px 26px; font-size:14px; cursor:pointer;
+    box-shadow:0 8px 30px rgba(255,107,53,.4); display:flex; gap:12px; align-items:center;
+  }
+  .cta button .p{background:#0A0E27; color:var(--or); padding:3px 8px; border-radius:2px; font-size:12px;}
+
+  .note{max-width:1040px; margin:26px auto 0; padding:0 18px; color:var(--tx-faint); font-size:10.5px; letter-spacing:.04em;}
+  body.force-mobile + .note{max-width:420px;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="brand">MULTIVERSE COLLECTIVE<small>VOYAGER MEMBERSHIP · 权益台 demo</small></div>
+  <div class="seg" id="seg">
+    <button data-v="desktop" class="on">🖥 桌面</button>
+    <button data-v="mobile">📱 移动</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="lede">
+    <h1>用 <span class="price">$12</span> 解锁的一切，都摆在这张台子上。</h1>
+    <p>点亮台面上的每一件物品，看它代表什么。下方是这些权益的完整分类清单。<br>（这是占位 demo：真图你来做，这里先用线框场景 + 假设性标注验证交互。）</p>
+  </div>
+
+  <div class="stage-card">
+    <div class="stage-head"><span><span class="dot"></span>ARTIFACT TABLE · 8 ITEMS</span><span id="modeTag">HOVER / CLICK</span></div>
+    <div class="stage" id="stage"><!-- svg + hotspots + popover injected --></div>
+  </div>
+  <p class="tap-hint">▲ 轻点台面上的编号查看权益</p>
+
+  <div class="cats" id="cats"></div>
+</div>
+
+<p class="note">DEMO NOTE：移动端把"图上悬停弹框"换成了"轻点编号→底部抽屉"，并且图与下方清单双向联动（点清单卡片也会高亮图上对应物品）。切换右上角 🖥/📱 可对比两种形态。</p>
+
+<!-- mobile sheet -->
+<div class="sheet-scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <div class="icon" id="sheetIcon"></div>
+  <div class="cat" id="sheetCat"></div>
+  <h4 id="sheetTitle"></h4>
+  <p id="sheetBody"></p>
+  <div class="step"><b id="sheetN"></b><span id="sheetStep"></span></div>
+</div>
+
+<div class="cta">
+  <button>成为 Voyager <span class="p">$12</span></button>
+</div>
+
+<script>
+/* ── icon library (inline svg, orange line-art) ── */
+const I = {
+  letter:`<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>`,
+  badge:`<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.4"><circle cx="12" cy="10" r="6"/><path d="M9 15l-1.5 6L12 19l4.5 2L15 15"/><circle cx="12" cy="10" r="2.3"/></svg>`,
+  key:`<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.4"><circle cx="8" cy="12" r="3.5"/><path d="M11.5 12H21M18 12v3M15 12v2.4"/></svg>`,
+  id:`<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="8.5" cy="11" r="2.2"/><path d="M13 9h5M13 12h5M5.5 15.5c.6-1.4 4.4-1.4 6 0"/></svg>`,
+  batch:`<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.4"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M8 9h8M8 12h8M8 15h5"/><circle cx="17.5" cy="6.5" r="3" fill="#0A0E27"/><path d="M16.2 6.5l1 1 1.6-1.8" stroke-width="1.2"/></svg>`,
+  keycard:`<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.4"><rect x="3" y="6" width="18" height="12" rx="1.5"/><rect x="6" y="9" width="5" height="6" rx="1"/><path d="M14 10h4M14 13h4"/></svg>`,
+  ballot:`<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.4"><path d="M5 11l5 5L20 6"/><rect x="3" y="3" width="18" height="18" rx="2" opacity=".0"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" opacity=".45"/></svg>`,
+  dossier:`<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="1.4"><path d="M3 7a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M7 13h6" opacity=".6"/><circle cx="16" cy="13.5" r="1.6"/></svg>`,
+};
+
+/* ── benefits, embodied as physical items on the table ── */
+const ITEMS = [
+  // identity artifacts
+  {id:'letter', n:1, ic:'letter', x:19, y:34, cat:'身份认证物件', title:'确认信',
+   short:'一封来自组织的入会确认信，记录你的 Voyager 编号与所属批次。',
+   long:'一封来自 Multiverse Collective 的确认信——确认你正式被接纳为 Voyager，落款你的编号 #NNN 与加入批次。入会后可在 Profile 里随时重读。',
+   step:'入会即刻签发 · 收件箱 + Profile 可重读'},
+  {id:'badge', n:2, ic:'badge', x:49, y:27, cat:'身份认证物件', title:'神秘徽章',
+   short:'一枚带唯一编号的 Voyager 徽章，是你在内部的身份标记。',
+   long:'一枚专属你的 Voyager 徽章，带唯一序列号。它会出现在你的 Profile 与成员名录里，是你在 Collective 内部的可见身份。',
+   step:'唯一编号 · 展示在 Profile 与成员名录'},
+  {id:'console', n:3, ic:'key', x:79, y:32, cat:'身份认证物件', title:'Multiverse Console 道具',
+   short:'一件用途尚未公开的神秘道具，未来可与 Multiverse Console 配对。',
+   long:'一件神秘道具，携带一枚配对密钥。它现在的用途尚未公开——当你日后获得 Multiverse Console，便可用它配对，解锁仅属于持有者的探索。',
+   step:'持有即生效 · 等待与 Console 配对'},
+  // participation
+  {id:'identity', n:4, ic:'id', x:29, y:63, cat:'参与权益', title:'Voyager 身份',
+   short:'账号即刻升级为 Voyager，获得完整内网身份。',
+   long:'付费即刻把你的账号升级为 Voyager——不再是访客或申请者，而是 Collective 的正式一员，享有完整内网身份与可编辑的个人档案。',
+   step:'即时升级 · 完整内网身份'},
+  {id:'batch', n:5, ic:'batch', x:50, y:70, cat:'参与权益', title:'最新 Batch 席位',
+   short:'自动编入当前最新批次，和同期成员一起开始。',
+   long:'你会被自动编入当前最新的 Batch，成为该批次的 Voyager——一个有归属感的同期群体，一起参与协作与活动。',
+   step:'自动编入 · 当前批次成员'},
+  {id:'collab', n:6, ic:'keycard', x:71, y:62, cat:'参与权益', title:'内部协作通道',
+   short:'解锁内部协作空间，参与组织的日常运转。',
+   long:'一张通往内部协作通道的门禁——更多参与内部协作的机会，看到、并加入组织正在推进的事。',
+   step:'解锁 · 内部协作空间'},
+  {id:'vote', n:7, ic:'ballot', x:85, y:72, cat:'参与权益', title:'内部决策投票权',
+   short:'获得 Voyager 级别的投票与决策参与权。',
+   long:'你将拥有 Voyager 级别的投票权，参与组织的内部决策——你的选择会真正影响 Collective 的走向。',
+   step:'获得 · Voyager 级投票权'},
+  // access
+  {id:'intel', n:8, ic:'dossier', x:14, y:70, cat:'情报权限', title:'机密情报库',
+   short:'解锁原本仅对 Voyager 开放的机密情报。',
+   long:'解锁机密情报库——那些原本只对被组织授予权限的 Voyager 开放的内容，现在向你敞开。',
+   step:'解锁 · 机密 intel 访问'},
+];
+
+const CAT_SUB = {
+  '身份认证物件':'一封信、一枚徽章、一件神秘道具 —— 你真正"拿到手"的东西',
+  '参与权益':'从访客变成内部一员，能参与、能决策、有归属',
+  '情报权限':'看见原本看不见的',
+};
+
+/* ── build SVG scene (placeholder line-art table) ── */
+function itemSvg(it){
+  const cx = it.x*10, cy = it.y*6;
+  return `<g transform="translate(${cx},${cy})" opacity=".9">
+    <ellipse cx="0" cy="34" rx="46" ry="9" fill="#FF6B35" opacity=".06"/>
+    <g transform="translate(-26,-26) scale(2.17)">${I[it.ic]}</g>
+  </g>`;
+}
+function buildStage(){
+  const stage = document.getElementById('stage');
+  let svg = `<svg viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <radialGradient id="glow" cx="50%" cy="38%" r="70%">
+        <stop offset="0%" stop-color="#FF6B35" stop-opacity=".12"/>
+        <stop offset="100%" stop-color="#FF6B35" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1000" height="600" fill="url(#glow)"/>`;
+  // faint grid (desk surface)
+  for(let x=0;x<=1000;x+=50) svg+=`<line x1="${x}" y1="0" x2="${x}" y2="600" stroke="rgba(255,107,53,.05)"/>`;
+  for(let y=0;y<=600;y+=50) svg+=`<line x1="0" y1="${y}" x2="1000" y2="${y}" stroke="rgba(255,107,53,.05)"/>`;
+  // perspective desk line
+  svg+=`<line x1="0" y1="300" x2="1000" y2="300" stroke="rgba(245,245,245,.08)"/>`;
+  ITEMS.forEach(it=> svg+=itemSvg(it));
+  svg+=`</svg>`;
+  stage.innerHTML = svg;
+
+  // hotspots
+  ITEMS.forEach(it=>{
+    const b=document.createElement('button');
+    b.className='hot'; b.textContent=it.n; b.style.left=it.x+'%'; b.style.top=it.y+'%';
+    b.dataset.id=it.id; b.onclick=(e)=>{e.stopPropagation(); openDetail(it.id,'hot');};
+    stage.appendChild(b);
+  });
+  // desktop popover element
+  const pop=document.createElement('div'); pop.className='pop'; pop.id='pop';
+  pop.innerHTML=`<span class="num" id="popNum"></span><div class="cat" id="popCat"></div><h4 id="popTitle"></h4><p id="popBody"></p>`;
+  stage.appendChild(pop);
+  stage.addEventListener('click',()=>closeDetail());
+}
+
+/* ── build categorized list ── */
+function buildCats(){
+  const root=document.getElementById('cats');
+  const order=['身份认证物件','参与权益','情报权限'];
+  order.forEach(cat=>{
+    const block=document.createElement('div'); block.className='cat-block';
+    block.innerHTML=`<h3>${cat}<span class="ln"></span></h3><p class="sub">${CAT_SUB[cat]}</p>`;
+    const grid=document.createElement('div'); grid.className='grid';
+    ITEMS.filter(i=>i.cat===cat).forEach(it=>{
+      const el=document.createElement('div'); el.className='item'; el.dataset.id=it.id;
+      el.innerHTML=`<div class="ic">${I[it.ic]}</div><div class="tx"><h5><span class="n">${it.n}</span>${it.title}</h5><p>${it.short}</p></div>`;
+      el.onclick=()=>openDetail(it.id,'list');
+      grid.appendChild(el);
+    });
+    block.appendChild(grid); root.appendChild(block);
+  });
+}
+
+/* ── interaction ── */
+function isMobile(){ return document.body.classList.contains('force-mobile') || window.matchMedia('(max-width:767px)').matches; }
+let activeId=null;
+
+function setActiveMarker(id){
+  document.querySelectorAll('.hot').forEach(h=>h.classList.toggle('active', h.dataset.id===id));
+}
+function flashListCard(id){
+  document.querySelectorAll('.item').forEach(c=>{
+    if(c.dataset.id===id){ c.classList.add('flash'); setTimeout(()=>c.classList.remove('flash'),1200);
+      if(isMobile()) c.scrollIntoView({behavior:'smooth',block:'center'}); }
+  });
+}
+function openDetail(id, from){
+  const it=ITEMS.find(i=>i.id===id); if(!it) return;
+  activeId=id; setActiveMarker(id);
+  if(from==='hot') flashListCard(id);
+
+  if(isMobile()){
+    document.getElementById('sheetIcon').innerHTML=I[it.ic];
+    document.getElementById('sheetCat').textContent=it.cat;
+    document.getElementById('sheetTitle').textContent=it.title;
+    document.getElementById('sheetBody').textContent=it.long;
+    document.getElementById('sheetN').textContent='#'+it.n;
+    document.getElementById('sheetStep').textContent=it.step;
+    document.getElementById('sheet').classList.add('show');
+    document.getElementById('scrim').classList.add('show');
+  } else {
+    const pop=document.getElementById('pop');
+    document.getElementById('popNum').textContent='ITEM '+it.n;
+    document.getElementById('popCat').textContent=it.cat;
+    document.getElementById('popTitle').textContent=it.title;
+    document.getElementById('popBody').textContent=it.long;
+    // position popover near marker, clamped inside stage
+    const stage=document.getElementById('stage'); const w=stage.clientWidth, h=stage.clientHeight;
+    let left=(it.x/100)*w + 22; let top=(it.y/100)*h - 20;
+    const pw=248, ph=140;
+    if(left+pw > w-8) left=(it.x/100)*w - pw - 22;
+    left=Math.max(8, Math.min(left, w-pw-8));
+    top=Math.max(8, Math.min(top, h-ph-8));
+    pop.style.left=left+'px'; pop.style.top=top+'px';
+    pop.classList.add('show');
+  }
+}
+function closeDetail(){
+  activeId=null; setActiveMarker(null);
+  document.getElementById('pop')?.classList.remove('show');
+  document.getElementById('sheet').classList.remove('show');
+  document.getElementById('scrim').classList.remove('show');
+}
+document.getElementById('scrim').onclick=closeDetail;
+
+/* ── view toggle ── */
+function applyModeTag(){
+  document.body.classList.toggle('mobile-mode', isMobile());
+  document.getElementById('modeTag').textContent = isMobile() ? 'TAP TO OPEN' : 'HOVER / CLICK';
+}
+document.getElementById('seg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  document.body.classList.toggle('force-mobile', b.dataset.v==='mobile');
+  closeDetail(); applyModeTag();
+});
+window.addEventListener('resize', applyModeTag);
+
+/* desktop hover preview */
+function wireHover(){
+  document.querySelectorAll('.hot').forEach(h=>{
+    h.addEventListener('mouseenter',()=>{ if(!isMobile()) openDetail(h.dataset.id,'hot'); });
+  });
+}
+
+buildStage(); buildCats(); wireHover(); applyModeTag();
+</script>
+</body>
+</html>
