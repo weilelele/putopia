@@ -219,62 +219,44 @@ function VoteGroup({ casts }: { casts: ActivityEvent[] }) {
 
   return (
     <div>
-      {!expanded && casts.length > 0 && (
-        <button
-          onClick={() => setExpanded(true)}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-            padding: '0.75rem 1rem', background: 'transparent', border: 'none',
-            borderBottom: '1px solid var(--bd-faint)',
-            borderTop: 'none',
-            cursor: 'pointer', textAlign: 'left',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-        >
-          <AvatarStack events={casts} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <span style={{ color: '#20D890', fontWeight: 700 }}>{nameList}</span>
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginTop: '0.15rem' }}>
-              {casts.length} votes cast
-              <span className="feed-detail">
-                {' · '}
-                {tallyEntries.map(([opt, count], i) => (
-                  <span key={opt}>{i > 0 && ' · '}{opt} ×{count}</span>
-                ))}
-              </span>
-            </div>
+      {/* Header is always visible — click anywhere to toggle expand/collapse */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+          padding: '0.75rem 1rem', background: expanded ? 'rgba(255,255,255,0.02)' : 'transparent',
+          border: 'none', borderBottom: '1px solid var(--bd-faint)', borderTop: 'none',
+          cursor: 'pointer', textAlign: 'left',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
+        onMouseLeave={e => (e.currentTarget.style.background = expanded ? 'rgba(255,255,255,0.02)' : 'transparent')}
+      >
+        <AvatarStack events={casts} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ color: '#20D890', fontWeight: 700 }}>{nameList}</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.2rem', flexShrink: 0 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.2)' }}>
-              {relTs(casts[0].created_at)}
-            </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em' }}>
-              EXPAND ▾
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginTop: '0.15rem' }}>
+            {casts.length} votes cast
+            <span className="feed-detail">
+              {' · '}
+              {tallyEntries.map(([opt, count], i) => (
+                <span key={opt}>{i > 0 && ' · '}{opt} ×{count}</span>
+              ))}
             </span>
           </div>
-        </button>
-      )}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.2rem', flexShrink: 0 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.2)' }}>
+            {relTs(casts[0].created_at)}
+          </span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em' }}>
+            {expanded ? 'COLLAPSE ▴' : 'EXPAND ▾'}
+          </span>
+        </div>
+      </button>
 
       {expanded && casts.map(e => <FeedRow key={e.id} event={e} />)}
-
-      {expanded && (
-        <button
-          onClick={() => setExpanded(false)}
-          style={{
-            width: '100%', padding: '0.4rem 1rem', background: 'transparent', border: 'none',
-            borderBottom: '1px solid var(--bd-faint)', borderTop: '1px solid var(--bd-faint)',
-            cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-            color: 'var(--color-star-deep)', textAlign: 'right', letterSpacing: '0.1em',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-star-dim)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-star-deep)')}
-        >
-          COLLAPSE ▴
-        </button>
-      )}
     </div>
   )
 }
@@ -288,55 +270,38 @@ function CollapseGroup({ events, accent, summary }: { events: ActivityEvent[]; a
 
   return (
     <div>
-      {!expanded && (
-        <button
-          onClick={() => setExpanded(true)}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-            padding: '0.75rem 1rem', background: 'transparent', border: 'none',
-            borderBottom: '1px solid var(--bd-faint)', borderTop: 'none',
-            cursor: 'pointer', textAlign: 'left',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,107,53,0.04)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-        >
-          <AvatarStack events={events} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <span style={{ color: accent, fontWeight: 700 }}>{nameList}</span>
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginTop: '0.15rem' }}>
-              {summary}
-            </div>
+      {/* Header is always visible — click anywhere to toggle expand/collapse */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+          padding: '0.75rem 1rem', background: expanded ? 'rgba(255,107,53,0.03)' : 'transparent',
+          border: 'none', borderBottom: '1px solid var(--bd-faint)', borderTop: 'none',
+          cursor: 'pointer', textAlign: 'left',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,107,53,0.04)')}
+        onMouseLeave={e => (e.currentTarget.style.background = expanded ? 'rgba(255,107,53,0.03)' : 'transparent')}
+      >
+        <AvatarStack events={events} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ color: accent, fontWeight: 700 }}>{nameList}</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.2rem', flexShrink: 0 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.2)' }}>
-              {relTs(events[0].created_at)}
-            </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em' }}>
-              EXPAND ▾
-            </span>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginTop: '0.15rem' }}>
+            {summary}
           </div>
-        </button>
-      )}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.2rem', flexShrink: 0 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.2)' }}>
+            {relTs(events[0].created_at)}
+          </span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em' }}>
+            {expanded ? 'COLLAPSE ▴' : 'EXPAND ▾'}
+          </span>
+        </div>
+      </button>
 
       {expanded && events.map(e => <FeedRow key={e.id} event={e} />)}
-
-      {expanded && (
-        <button
-          onClick={() => setExpanded(false)}
-          style={{
-            width: '100%', padding: '0.4rem 1rem', background: 'transparent', border: 'none',
-            borderBottom: '1px solid var(--bd-faint)', borderTop: '1px solid var(--bd-faint)',
-            cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-            color: 'var(--color-star-deep)', textAlign: 'right', letterSpacing: '0.1em',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-star-dim)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-star-deep)')}
-        >
-          COLLAPSE ▴
-        </button>
-      )}
     </div>
   )
 }
@@ -494,6 +459,10 @@ type DisplayItem =
   | { kind: 'single'; event: ActivityEvent }
   | { kind: 'group'; groupType: string; events: ActivityEvent[] }
 
+// vote_cast groups older than this threshold are dropped from the feed so they
+// don't permanently occupy the top spot once voting activity has settled down.
+const VOTE_CAST_TTL_MS = 60 * 60 * 1000 // 1 hour
+
 function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
   const items: DisplayItem[] = []
   const groups: Record<string, ActivityEvent[]> = {}
@@ -519,8 +488,17 @@ function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
       : it
   )
 
+  // TTL filter: drop vote_cast groups whose most-recent event is older than 1 hour.
+  // Events within each group arrive newest-first from the server, so events[0] is latest.
+  const withTTL = normalized.filter(item => {
+    if (item.kind !== 'group' || item.groupType !== 'vote_cast') return true
+    const latestTs = item.events[0]?.created_at
+    if (!latestTs) return false
+    return Date.now() - new Date(latestTs).getTime() < VOTE_CAST_TTL_MS
+  })
+
   // Sort by most-recent timestamp: groups use their newest event's time
-  return normalized.sort((a, b) => {
+  return withTTL.sort((a, b) => {
     const tsA = a.kind === 'single' ? a.event.created_at : (a.events[0]?.created_at ?? '')
     const tsB = b.kind === 'single' ? b.event.created_at : (b.events[0]?.created_at ?? '')
     return tsB.localeCompare(tsA)
