@@ -61,6 +61,7 @@ export async function uploadAvatar(formData: FormData) {
     .eq('id', user.id)
 
   revalidatePath('/profile')
+  revalidatePath('/voyagers')
   return { error: null, url: publicUrl }
 }
 
