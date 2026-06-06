@@ -221,8 +221,8 @@ export default function DevicesPage() {
       {/* legacy spacer removed */}
       <div style={{ display: 'contents' }}>
 
-      {/* FIRST BATCH CLAIM — Cairo Discovery */}
-      <section className="mb-10">
+      {/* FIRST BATCH CLAIM — Cairo Discovery — architect-only until Stripe is live */}
+      {isAtLeast('architect') && <section className="mb-10">
         <div className="flex items-center gap-3 mb-4">
           <span className="label-tag" style={{ color: '#FF6B35', borderColor: '#FF6B35' }}>FIRST BATCH</span>
           <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
@@ -297,7 +297,7 @@ export default function DevicesPage() {
             </div>
           </Link>
         </div>
-      </section>
+      </section>}
 
       {/* UNKNOWN DEVICES */}
       <section className="mb-10">

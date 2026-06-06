@@ -79,6 +79,21 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // /devices/claim is architect-only until Stripe is wired in.
+  if (pathname.startsWith('/devices/claim')) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/login?redirect=/devices/claim', request.url))
+    }
+    const { data: profile } = await supabase
+      .from('voyager_profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (profile?.role !== 'architect') {
+      return NextResponse.redirect(new URL('/console', request.url))
+    }
+  }
+
   // /admin and /studio both require architect role.
   // Exception: /admin/onboarding-preview is also open to users explicitly
   // granted can_edit_onboarding (page-level grant for non-architects).
