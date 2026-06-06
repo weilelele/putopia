@@ -1406,7 +1406,19 @@ code, pre, kbd { font-family: var(--font-mono); }
 /* ============================================================
    MOBILE — ≤ 768px
    ============================================================ */
+/* Active votes grid — 2-col on desktop, 1-col on mobile */
+.votes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
 @media (max-width: 767px) {
+  .votes-grid {
+    grid-template-columns: 1fr;
+  }
+
   /* Hide sidebar, show bottom-nav */
   .app-shell {
     grid-template-columns: 1fr;

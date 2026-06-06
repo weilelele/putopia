@@ -236,14 +236,8 @@ function VoteGroup({ casts }: { casts: ActivityEvent[] }) {
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <span style={{ color: '#20D890', fontWeight: 700 }}>{nameList}</span>
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginTop: '0.15rem' }}>
-            {casts.length} votes cast
-            <span className="feed-detail">
-              {' · '}
-              {tallyEntries.map(([opt, count], i) => (
-                <span key={opt}>{i > 0 && ' · '}{opt} ×{count}</span>
-              ))}
-            </span>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {casts[0]?.target_title ?? 'voted'}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.2rem', flexShrink: 0 }}>

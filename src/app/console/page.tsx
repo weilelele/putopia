@@ -692,7 +692,7 @@ function ConsoleInner() {
               </div>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
+            <div className="votes-grid">
               {latestVotes.map((vote) => {
                 const myResp = myVoteResponses.find((r) => r.vote_id === vote.id)
                 return (
