@@ -488,19 +488,7 @@ function AuthHero({ user, activityEvents }: { user: { role: string; name?: strin
         </div>
       )}
 
-      {/* Claim the first parts pack — shown to applicants not yet promoted */}
-      {isApplicant && (
-        <div className="cta-row">
-          <Link href="/devices/claim" className="btn-primary" style={{ padding: '1rem 2.25rem' }}
-            onClick={() => posthog.capture('claim_parts_pack_clicked')}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
-              <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,255,255,0.25)" strokeLinejoin="round" />
-            </svg>
-            CLAIM PARTS PACK
-          </Link>
-        </div>
-      )}
+      {/* Claim CTA hidden until Stripe is live */}
     </section>
   )
 }
@@ -605,7 +593,7 @@ function ConsoleInner() {
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
-              <ClaimPreviewCard />
+              {user.role === 'architect' && <ClaimPreviewCard />}
               {devices.map((device) => (
                 device.knowledge === 'unknown'
                   ? <UnknownDevicePreviewCard key={device.id} device={device} />
