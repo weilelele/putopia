@@ -39,7 +39,7 @@ function AuthCallbackInner() {
         if (!error) { router.replace(next); return }
       }
 
-      router.replace('/?error=auth_failed')
+      router.replace('/auth/expired')
     }
 
     handle()

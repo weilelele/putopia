@@ -1,0 +1,41 @@
+'use server'
+
+import { createAdminClient } from '@/lib/supabase/server'
+
+export interface ResendResult {
+  ok: boolean
+  error?: string
+}
+
+/**
+ * Resend an access link to a user whose invite/magic link has expired.
+ * Checks that the email belongs to an existing invited account before sending.
+ */
+export async function resendAccessLink(email: string): Promise<ResendResult> {
+  const admin = createAdminClient()
+  const normalised = email.trim().toLowerCase()
+
+  // Verify an account exists for this email (uses the email column we added in schema_v25)
+  const { data: profile } = await admin
+    .from('voyager_profiles')
+    .select('id, registered_at')
+    .eq('email', normalised)
+    .maybeSingle()
+
+  if (!profile) {
+    return { ok: false, error: 'NO ACCOUNT FOUND FOR THIS EMAIL.' }
+  }
+
+  // Generate a magic link — Supabase sends the email automatically.
+  // redirect_to must match the Supabase whitelist; /auth/callback is registered.
+  const { error } = await (admin.auth.admin as any).generateLink({
+    type: 'magiclink',
+    email: normalised,
+    options: {
+      redirect_to: 'https://voyager.putopia.studio/auth/callback',
+    },
+  })
+
+  if (error) return { ok: false, error: error.message.toUpperCase() }
+  return { ok: true }
+}

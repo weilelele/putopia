@@ -42,7 +42,11 @@ export async function proxy(request: NextRequest) {
     }
     const qs = request.nextUrl.searchParams.toString()
     if (qs) {
-      // Preserve all query params (UTM, preview, etc.)
+      // Auth error params should not trigger the onboarding flow
+      if (request.nextUrl.searchParams.has('error')) {
+        return NextResponse.redirect(new URL('/auth/expired', request.url))
+      }
+      // Preserve UTM/preview params for onboarding
       return NextResponse.redirect(new URL('/new?' + qs, request.url))
     }
     return NextResponse.redirect(new URL('/console', request.url))
