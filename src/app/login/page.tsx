@@ -123,7 +123,7 @@ function LoginPageContent() {
             NO ACTIVE CREDENTIALS?
           </div>
           <Link href="/new" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-nucleus)' }}>
-            APPLY FOR VOYAGER STATUS →
+            REQUEST ACCESS PERMISSION. →
           </Link>
         </div>
 
