@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import Link from 'next/link'
+import { MessageSquare } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { getAllDevices } from '@/lib/actions/devices'
 import { getPublicIntel } from '@/lib/actions/intel'
+import { getCommentCountsBulk } from '@/lib/actions/comments'
 import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actions/votes'
 import { getAllWorlds } from '@/lib/actions/worlds'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
@@ -17,7 +19,7 @@ import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
-import type { Device, Intel, Vote, World, McFunction } from '@/types/database'
+import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/types/database'
 import type { ActivityEvent } from '@/lib/actions/activity-events'
 
 const STATUS_STYLES = {
@@ -258,48 +260,75 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
   )
 }
 
-function IntelPreviewCard({ entry }: { entry: Intel }) {
+function getInitials(name: string) {
+  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+}
+
+function IntelPreviewCard({ entry, commentCount }: { entry: IntelWithAvatar; commentCount: number }) {
   const color = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
   const hasImage = (entry.images?.length ?? 0) > 0
+  const publisherName = entry.publisher_name ?? 'MULTIVERSE COLLECTIVE'
 
   return (
     <Link
       href={`/intel/${entry.id}`}
       className="block transition-all duration-150"
       style={{
-        background: 'var(--color-void)', border: '1px solid var(--bd-faint)',
-        borderLeft: `3px solid ${color}`, overflow: 'hidden',
+        background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)',
+        overflow: 'hidden', textDecoration: 'none',
       }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = 'var(--color-void-2)'
-        ;(e.currentTarget as HTMLElement).style.borderColor = color
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = 'var(--color-void)'
-        ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--bd-faint)'
-      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = color }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)' }}
     >
+      {/* Publisher bar — mirrors Intel Feed style */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px', background: '#0F1430', borderBottom: '1px solid rgba(255,107,53,0.12)' }}>
+        {entry.publisher_avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={entry.publisher_avatar_url} alt={publisherName} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(138,154,181,0.25)' }} />
+        ) : (
+          <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: `${color}18`, border: `1px solid ${color}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color }}>
+            {getInitials(publisherName)}
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: '#F5F5F5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {publisherName}
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
+            {new Date(entry.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </div>
+        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color, border: `1px solid ${color}60`, padding: '2px 7px', flexShrink: 0 }}>
+          {entry.tag}
+        </span>
+      </div>
+
+      {/* Optional image */}
       {hasImage && (
         <div style={{ width: '100%', aspectRatio: '16/7', overflow: 'hidden' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={entry.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: BRAND_FILTER, display: 'block' }} />
         </div>
       )}
-      <div style={{ padding: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-          <span className="label-tag" style={{ color }}>{entry.tag}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.15em' }}>
-            {new Date(entry.timestamp).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}
-          </span>
-        </div>
-        <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', color: 'var(--color-star)', marginBottom: '0.4rem', lineHeight: 1.4 }}>
+
+      {/* Content */}
+      <div style={{ padding: '0.9rem 1rem' }}>
+        <h3 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', color: '#F5F5F5', marginBottom: '0.4rem', lineHeight: 1.4 }}>
           {entry.title}
         </h3>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.6 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.6, margin: 0 }}>
           {entry.content.length > 120 ? entry.content.slice(0, 120) + '…' : entry.content}
         </p>
-        <div style={{ marginTop: '0.75rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color, opacity: 0.7 }}>
-          READ MORE →
+
+        {/* Footer: comment count + READ MORE */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.9rem' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
+            <MessageSquare size={11} />
+            {commentCount}
+          </span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color, opacity: 0.8 }}>
+            READ MORE →
+          </span>
         </div>
       </div>
     </Link>
@@ -523,7 +552,8 @@ function ConsoleInner() {
   // Preserve UTM params when forwarding to /new
   const newHref = searchParams.toString() ? `/new?${searchParams.toString()}` : '/new'
   const [devices, setDevices] = useState<Device[]>([])
-  const [latestIntel, setLatestIntel] = useState<Intel[]>([])
+  const [latestIntel, setLatestIntel] = useState<IntelWithAvatar[]>([])
+  const [intelCommentCounts, setIntelCommentCounts] = useState<Record<string, number>>({})
   const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([])
   const [latestVotes, setLatestVotes] = useState<Vote[]>([])
   const [voteTallies, setVoteTallies] = useState<Record<string, Record<string, number>>>({})
@@ -537,12 +567,19 @@ function ConsoleInner() {
       const known = all.filter((dev) => dev.knowledge === 'known').slice(0, 2)
       setDevices([...unknown, ...known])
     })
-    getPublicIntel().then((intel) => setLatestIntel(intel.slice(0, 2)))
+    getPublicIntel().then(async (intel) => {
+      const slice = (intel as IntelWithAvatar[]).slice(0, 3)
+      setLatestIntel(slice)
+      if (slice.length > 0) {
+        const counts = await getCommentCountsBulk('intel', slice.map(e => e.id))
+        setIntelCommentCounts(counts)
+      }
+    })
     getActivityFeed(7).then(setActivityEvents)
-    getAllWorlds().then((w) => setLatestWorlds([...w].reverse().slice(0, 3)))
+    getAllWorlds().then((w) => setLatestWorlds([...w].reverse().slice(0, 4)))
     getMcFunctions().then((fns) => setMcFunctions(fns as McFunction[]))
     getAllVotes().then(async (votes) => {
-      const active = votes.filter((v) => v.is_active).slice(0, 2)
+      const active = votes.filter((v) => v.is_active).slice(0, 3)
       setLatestVotes(active)
       if (active.length > 0) {
         const tallies = await getVoteResultsBulk(active.map((v) => v.id))
@@ -617,7 +654,7 @@ function ConsoleInner() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
               {latestIntel.map((entry) => (
-                <IntelPreviewCard key={entry.id} entry={entry} />
+                <IntelPreviewCard key={entry.id} entry={entry} commentCount={intelCommentCounts[entry.id] ?? 0} />
               ))}
             </div>
           </div>
@@ -655,7 +692,7 @@ function ConsoleInner() {
               </div>
               <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
               {latestVotes.map((vote) => {
                 const myResp = myVoteResponses.find((r) => r.vote_id === vote.id)
                 return (

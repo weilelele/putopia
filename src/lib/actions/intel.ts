@@ -5,16 +5,32 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { IntelInsert, IntelUpdate } from '@/types/database'
 import { logActivity } from './activity-events'
 
-// Public intel (unclassified) — accessible to all including guests
+// Public intel (unclassified) — accessible to all including guests.
+// Enriched with publisher_avatar_url so cards can show the author avatar.
 export async function getPublicIntel() {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data: items } = await supabase
     .from('intel')
     .select('*')
     .eq('classified', false)
     .order('timestamp', { ascending: false })
 
-  return data ?? []
+  if (!items?.length) return []
+
+  const publisherIds = [...new Set(items.filter(i => i.publisher_id).map(i => i.publisher_id!))]
+  const avatarMap: Record<string, string | null> = {}
+  if (publisherIds.length) {
+    const { data: profiles } = await supabase
+      .from('voyager_profiles')
+      .select('id, avatar_url')
+      .in('id', publisherIds)
+    profiles?.forEach(p => { avatarMap[p.id] = p.avatar_url })
+  }
+
+  return items.map(i => ({
+    ...i,
+    publisher_avatar_url: i.publisher_id ? (avatarMap[i.publisher_id] ?? null) : null,
+  }))
 }
 
 // All intel visible to current user — RLS controls classified access

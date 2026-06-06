@@ -89,6 +89,26 @@ export async function listImpersonatableProfiles(): Promise<ImpersonatableProfil
   return (data ?? []) as ImpersonatableProfile[]
 }
 
+// Bulk comment counts for a list of subjects of the same type.
+// Returns { [subjectId]: count } — missing keys mean 0 comments.
+export async function getCommentCountsBulk(
+  subjectType: CommentSubjectType,
+  subjectIds: string[],
+): Promise<Record<string, number>> {
+  if (!subjectIds.length) return {}
+  const admin = createAdminClient()
+  const { data } = await (admin.from('comments' as never) as ReturnType<typeof admin.from>)
+    .select('subject_id')
+    .eq('subject_type', subjectType)
+    .in('subject_id', subjectIds)
+    .eq('is_visible', true)
+  const counts: Record<string, number> = {}
+  for (const row of (data ?? []) as { subject_id: string }[]) {
+    counts[row.subject_id] = (counts[row.subject_id] ?? 0) + 1
+  }
+  return counts
+}
+
 // ─── Write ────────────────────────────────────────────────────────────────────
 
 export async function postComment(

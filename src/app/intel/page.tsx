@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { MessageSquare } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
+import { getCommentCountsBulk } from '@/lib/actions/comments'
 import { useEffect, useState } from 'react'
 import type { IntelWithAvatar } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
@@ -22,7 +24,7 @@ function getInitials(name: string) {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
-function IntelCard({ entry }: { entry: IntelWithAvatar }) {
+function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commentCount?: number }) {
   const color     = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
   const hasImage  = (entry.images?.length ?? 0) > 0
   const extraImgs = (entry.images?.length ?? 0) - 1
@@ -92,8 +94,14 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.7, margin: 0 }}>
               {entry.content.length > 140 ? entry.content.slice(0, 140) + '…' : entry.content}
             </p>
-            <div style={{ marginTop: '12px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color, opacity: 0.8 }}>
-              READ MORE →
+            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
+                <MessageSquare size={12} />
+                {commentCount}
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color, opacity: 0.8 }}>
+                READ MORE →
+              </span>
             </div>
           </div>
 
@@ -150,8 +158,18 @@ function IntelCard({ entry }: { entry: IntelWithAvatar }) {
 
 export default function IntelPage() {
   const [intel, setIntel] = useState<IntelWithAvatar[]>([])
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
 
-  useEffect(() => { getAllIntel().then(data => setIntel(data as IntelWithAvatar[])) }, [])
+  useEffect(() => {
+    getAllIntel().then(async (data) => {
+      const items = data as IntelWithAvatar[]
+      setIntel(items)
+      if (items.length > 0) {
+        const counts = await getCommentCountsBulk('intel', items.map(e => e.id))
+        setCommentCounts(counts)
+      }
+    })
+  }, [])
 
   return (
     <div className="main">
@@ -182,7 +200,7 @@ export default function IntelPage() {
 
       {/* Feed */}
       <div style={{ maxWidth: '720px', width: '100%' }}>
-        {intel.map(entry => <IntelCard key={entry.id} entry={entry} />)}
+        {intel.map(entry => <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />)}
       </div>
 
       <div className="footer-bar" style={{ marginTop: '2rem' }}>
