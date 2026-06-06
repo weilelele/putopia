@@ -224,7 +224,7 @@ async function notifyReply(args: {
     const html = `
       <div style="font-family:'Courier New',monospace;background:#0A0E27;color:#F5F5F5;padding:32px;">
         <p style="letter-spacing:0.2em;color:#FF6B35;font-size:12px;margin:0 0 16px;">MULTIVERSE COLLECTIVE — TRANSMISSION</p>
-        <p style="margin:0 0 12px;">Voyager ${escapeHtml(greetName)},</p>
+        <p style="margin:0 0 12px;">${escapeHtml(greetName)},</p>
         <p style="margin:0 0 12px;color:#cfd2e0;">${escapeHtml(args.replierName)} replied to your transmission on ${escapeHtml(where)}:</p>
         <blockquote style="border-left:2px solid #E85D04;margin:0 0 20px;padding:8px 16px;color:#cfd2e0;white-space:pre-wrap;">${escapeHtml(snippet)}</blockquote>
         <a href="${link}" style="display:inline-block;background:#FF6B35;color:#0A0E27;text-decoration:none;padding:10px 20px;font-weight:700;letter-spacing:0.1em;font-size:13px;">VIEW THE THREAD</a>
