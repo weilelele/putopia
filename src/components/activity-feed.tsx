@@ -461,7 +461,7 @@ type DisplayItem =
 
 // vote_cast groups older than this threshold are dropped from the feed so they
 // don't permanently occupy the top spot once voting activity has settled down.
-const VOTE_CAST_TTL_MS = 60 * 60 * 1000 // 1 hour
+const VOTE_CAST_TTL_MS = 3 * 60 * 60 * 1000 // 3 hours
 
 function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
   const items: DisplayItem[] = []
