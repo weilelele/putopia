@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { submitVoteResponse } from '@/lib/actions/votes'
 import type { Vote, UserRole } from '@/types/database'
@@ -65,6 +65,15 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
   const [tally, setTally] = useState(initialTally)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // The parent fetches the tally and the viewer's prior responses AFTER mount,
+  // so these props start empty and arrive a beat later. Without syncing them in,
+  // useState's mount-only initial value would freeze the card at "0 votes cast".
+  // (We never re-fetch mid-session, so these refs are stable once loaded and
+  // won't clobber an optimistic post-vote update.)
+  useEffect(() => { setTally(initialTally) }, [initialTally])
+  useEffect(() => { setVoted(initialHasVoted) }, [initialHasVoted])
+  useEffect(() => { setSelected(initialSelections) }, [initialSelections])
 
   const isActive = vote.is_active
   const hasPermission = vote.scope.includes(user.role as UserRole)
