@@ -116,7 +116,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           style={baseInput}
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="输入名字搜索成员..."
+          placeholder="Search members by name..."
           onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(232,93,4,0.5)' }}
           onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,107,53,0.16)' }}
           autoComplete="off"
@@ -138,12 +138,12 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
         }}>
           {loading && (
             <div style={{ padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
-              搜索中...
+              Searching...
             </div>
           )}
           {!loading && results.length === 0 && (
             <div style={{ padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
-              未找到匹配成员
+              No members found
             </div>
           )}
           {!loading && results.map(m => (

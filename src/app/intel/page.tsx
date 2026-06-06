@@ -1,12 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Plus } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
 import { useEffect, useState } from 'react'
 import type { IntelWithAvatar } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
+import { useAuth } from '@/lib/auth-context'
+import { CreateIntelModal } from './CreateIntelModal'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -157,19 +159,22 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
 }
 
 export default function IntelPage() {
+  const { isAtLeast } = useAuth()
   const [intel, setIntel] = useState<IntelWithAvatar[]>([])
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const [showCreate, setShowCreate] = useState(false)
 
-  useEffect(() => {
-    getAllIntel().then(async (data) => {
-      const items = data as IntelWithAvatar[]
-      setIntel(items)
-      if (items.length > 0) {
-        const counts = await getCommentCountsBulk('intel', items.map(e => e.id))
-        setCommentCounts(counts)
-      }
-    })
-  }, [])
+  const loadIntel = async () => {
+    const data = await getAllIntel()
+    const items = data as IntelWithAvatar[]
+    setIntel(items)
+    if (items.length > 0) {
+      const counts = await getCommentCountsBulk('intel', items.map(e => e.id))
+      setCommentCounts(counts)
+    }
+  }
+
+  useEffect(() => { loadIntel() }, [])
 
   return (
     <div className="main">
@@ -207,6 +212,29 @@ export default function IntelPage() {
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
         <div>LAST UPDATED: {intel[0] ? new Date(intel[0].timestamp).toLocaleDateString() : '—'}</div>
       </div>
+
+      {isAtLeast('architect') && (
+        <button
+          className="btn-secondary"
+          style={{
+            position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 40,
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '0.55rem 1.25rem', fontSize: 'var(--fs-caption)',
+          }}
+          onClick={() => setShowCreate(true)}
+        >
+          <Plus size={12} />
+          PUBLISH INTEL
+        </button>
+      )}
+
+      {showCreate && (
+        <CreateIntelModal
+          onClose={() => setShowCreate(false)}
+          onCreated={() => { setShowCreate(false); loadIntel() }}
+          existingItems={intel}
+        />
+      )}
     </div>
   )
 }
