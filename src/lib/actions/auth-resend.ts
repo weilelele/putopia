@@ -15,9 +15,9 @@ export async function resendAccessLink(email: string): Promise<ResendResult> {
   const admin = createAdminClient()
   const normalised = email.trim().toLowerCase()
 
-  // Verify an account exists for this email (uses the email column we added in schema_v25)
-  const { data: profile } = await admin
-    .from('voyager_profiles')
+  // Verify an account exists for this email (uses the email column we added in schema_v25).
+  // `email` exists in the DB but isn't in the generated TS types — cast to bypass.
+  const { data: profile } = await (admin.from('voyager_profiles' as never) as ReturnType<typeof admin.from>)
     .select('id, registered_at')
     .eq('email', normalised)
     .maybeSingle()
