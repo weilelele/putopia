@@ -90,7 +90,7 @@ export default function RegisterPage() {
       })
     }
 
-    router.push('/intel')
+    router.push('/console')
     router.refresh()
   }
 

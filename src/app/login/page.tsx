@@ -22,7 +22,7 @@ function LoginPageContent() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/intel'
+  const redirect = searchParams.get('redirect') || '/console'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

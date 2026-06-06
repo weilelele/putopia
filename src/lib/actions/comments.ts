@@ -213,7 +213,8 @@ async function notifyReply(args: {
     const to = recipient?.email
     if (!to) return
 
-    const link = `${SITE_URL}/console`
+    const path = subjectPath(args.subjectType, args.subjectId) ?? '/'
+    const link = `${SITE_URL}${path}`
     const where = args.subjectTitle
       ? `${args.subjectTitle} (${SUBJECT_LABEL[args.subjectType]})`
       : `a ${SUBJECT_LABEL[args.subjectType]}`
