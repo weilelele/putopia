@@ -488,13 +488,16 @@ function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
       : it
   )
 
-  // TTL filter: drop vote_cast groups whose most-recent event is older than 1 hour.
-  // Events within each group arrive newest-first from the server, so events[0] is latest.
-  const withTTL = normalized.filter(item => {
-    if (item.kind !== 'group' || item.groupType !== 'vote_cast') return true
-    const latestTs = item.events[0]?.created_at
-    if (!latestTs) return false
-    return Date.now() - new Date(latestTs).getTime() < VOTE_CAST_TTL_MS
+  // TTL filter for vote_cast groups: each individual vote has its own 1-hour window.
+  // Votes older than 1 hour are stripped from their group; a group is removed entirely
+  // only when every vote inside it has expired.
+  const now = Date.now()
+  const withTTL: DisplayItem[] = normalized.flatMap(item => {
+    if (item.kind !== 'group' || item.groupType !== 'vote_cast') return [item]
+    const fresh = item.events.filter(e => now - new Date(e.created_at).getTime() < VOTE_CAST_TTL_MS)
+    if (fresh.length === 0) return []           // whole group expired — drop it
+    if (fresh.length === 1) return [{ kind: 'single', event: fresh[0] }]  // collapse back to single
+    return [{ kind: 'group', groupType: item.groupType, events: fresh }]
   })
 
   // Sort by most-recent timestamp: groups use their newest event's time
