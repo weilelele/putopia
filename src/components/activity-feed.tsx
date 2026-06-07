@@ -453,10 +453,6 @@ type DisplayItem =
   | { kind: 'single'; event: ActivityEvent }
   | { kind: 'group'; groupType: string; events: ActivityEvent[] }
 
-// vote_cast groups older than this threshold are dropped from the feed so they
-// don't permanently occupy the top spot once voting activity has settled down.
-const VOTE_CAST_TTL_MS = 12 * 60 * 60 * 1000 // 12 hours
-
 function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
   const items: DisplayItem[] = []
   const groups: Record<string, ActivityEvent[]> = {}
@@ -482,20 +478,9 @@ function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
       : it
   )
 
-  // TTL filter for vote_cast groups: each individual vote has its own 1-hour window.
-  // Votes older than 1 hour are stripped from their group; a group is removed entirely
-  // only when every vote inside it has expired.
-  const now = Date.now()
-  const withTTL: DisplayItem[] = normalized.flatMap(item => {
-    if (item.kind !== 'group' || item.groupType !== 'vote_cast') return [item]
-    const fresh = item.events.filter(e => now - new Date(e.created_at).getTime() < VOTE_CAST_TTL_MS)
-    if (fresh.length === 0) return []           // whole group expired — drop it
-    if (fresh.length === 1) return [{ kind: 'single', event: fresh[0] }]  // collapse back to single
-    return [{ kind: 'group', groupType: item.groupType, events: fresh }]
-  })
-
-  // Sort by most-recent timestamp: groups use their newest event's time
-  return withTTL.sort((a, b) => {
+  // Sort by most-recent timestamp: groups use their newest event's time.
+  // TTL filtering is now handled server-side (two-queue approach in getActivityFeed).
+  return normalized.sort((a, b) => {
     const tsA = a.kind === 'single' ? a.event.created_at : (a.events[0]?.created_at ?? '')
     const tsB = b.kind === 'single' ? b.event.created_at : (b.events[0]?.created_at ?? '')
     return tsB.localeCompare(tsA)

@@ -54,19 +54,35 @@ export async function logActivity(event: ActivityEventInsert): Promise<void> {
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
+// Two-queue feed: non-vote events (7d, 20 items) + vote_cast (12h, 20 items).
+// This prevents high-frequency vote_cast rows from crowding out other event types.
 export async function getActivityFeed(days = 7): Promise<ActivityEvent[]> {
   const admin = createAdminClient()
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+  const since7d  = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+  const since12h = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
 
-  const { data, error } = await admin.from('activity_events')
+  // Queue 1 — everything except vote_cast (7 days, 20 items)
+  const { data: nonVote, error: e1 } = await admin.from('activity_events')
     .select('*')
     .eq('is_visible', true)
-    .gte('created_at', since)
+    .neq('event_type', 'vote_cast')
+    .gte('created_at', since7d)
     .order('created_at', { ascending: false })
-    .limit(200)
+    .limit(20)
 
-  if (error) console.error('[getActivityFeed]', error.message)
-  const events = (data ?? []) as ActivityEvent[]
+  // Queue 2 — vote_cast only (12 hours, 20 items)
+  const { data: voteCast, error: e2 } = await admin.from('activity_events')
+    .select('*')
+    .eq('is_visible', true)
+    .eq('event_type', 'vote_cast')
+    .gte('created_at', since12h)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  if (e1) console.error('[getActivityFeed] non-vote query', e1.message)
+  if (e2) console.error('[getActivityFeed] vote_cast query', e2.message)
+
+  const events = [...(nonVote ?? []), ...(voteCast ?? [])] as ActivityEvent[]
 
   // Batch-fetch latest avatar_url for all actors
   const actorIds = [...new Set(events.map(e => e.actor_id).filter(Boolean))] as string[]
