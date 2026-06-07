@@ -63,7 +63,7 @@ export async function getActivityFeed(days = 7): Promise<ActivityEvent[]> {
     .eq('is_visible', true)
     .gte('created_at', since)
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(200)
 
   if (error) console.error('[getActivityFeed]', error.message)
   const events = (data ?? []) as ActivityEvent[]
