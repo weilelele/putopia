@@ -488,6 +488,59 @@ function GuestHero({ newHref, mcFunctions }: { newHref: string; mcFunctions: McF
           LOGIN
         </Link>
       </div>
+
+      {/* ── Ask us strip ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '0.75rem',
+        marginTop: '1.25rem',
+        opacity: 0.55,
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+          letterSpacing: '0.12em', color: 'var(--color-star-dim)',
+          whiteSpace: 'nowrap',
+        }}>
+          QUESTIONS ABOUT US:
+        </span>
+        {([
+          {
+            name: 'Ryo Tanaka',
+            handle: 'ryotanakaputo',
+            avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/86fadca3-8739-4553-9179-c4d0e84895ee/avatar.jpg',
+            href: 'https://x.com/ryotanakaputo',
+          },
+          {
+            name: 'Valentina Cruz',
+            handle: 'ValentinaCruzi',
+            avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/403b32a7-8d85-4cdd-9c7f-4f2c7919d726/avatar.jpg',
+            href: 'https://x.com/ValentinaCruzi',
+          },
+        ] as const).map(({ name, handle, avatar, href }) => (
+          <a
+            key={name}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Ask ${name} on X`}
+            style={{ display: 'inline-block', flexShrink: 0 }}
+            onClick={() => posthog.capture('ask_us_clicked', { architect: name, x_handle: handle })}
+            onMouseEnter={e => { (e.currentTarget.querySelector('img') as HTMLImageElement).style.borderColor = 'var(--color-nebula)'; e.currentTarget.style.opacity = '1' }}
+            onMouseLeave={e => { (e.currentTarget.querySelector('img') as HTMLImageElement).style.borderColor = 'rgba(245,245,245,0.15)'; e.currentTarget.style.opacity = '0.85' }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={avatar}
+              alt={name}
+              style={{
+                width: 28, height: 28, borderRadius: '50%', objectFit: 'cover',
+                display: 'block',
+                border: '1px solid rgba(245,245,245,0.15)',
+                transition: 'border-color 0.15s',
+              }}
+            />
+          </a>
+        ))}
+      </div>
     </section>
   )
 }
