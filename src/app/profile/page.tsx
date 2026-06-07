@@ -21,7 +21,7 @@ function getInitials(name: string): string {
   return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
-const BIO_LIMIT = 280
+const BIO_LIMIT = 240
 const FIELD_INPUT: React.CSSProperties = {
   width: '100%', background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5',
   padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', outline: 'none',

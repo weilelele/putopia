@@ -66,7 +66,7 @@ function profileToForm(v: VoyagerProfile): EditForm {
   }
 }
 
-const BIO_LIMIT = 280
+const BIO_LIMIT = 240
 const DEFAULT_BATCH = 'Original Batch'
 const BATCH_COLLAPSE = 6
 
@@ -534,10 +534,10 @@ function VoyagerCard({
         </div>
       </div>
 
-      {/* Bio — 240 char display limit */}
+      {/* Bio — display limit matches BIO_LIMIT */}
       <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: 'rgba(245,245,245,0.55)' }}>
         {voyager.bio
-          ? (voyager.bio.length > 240 ? voyager.bio.slice(0, 240) + '…' : voyager.bio)
+          ? (voyager.bio.length > BIO_LIMIT ? voyager.bio.slice(0, BIO_LIMIT) + '…' : voyager.bio)
           : '—'}
       </p>
 
