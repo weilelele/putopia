@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Camera } from 'lucide-react'
+import { Camera, LogOut } from 'lucide-react'
 import { getMyProfile, updateProfile, uploadAvatar } from '@/lib/actions/profile'
 import { getMyLatestOrder, type VoyagerOrder } from '@/lib/actions/orders'
+import { useAuth } from '@/lib/auth-context'
 
 // ── helpers (mirrors /voyagers) ─────────────────────────────────────────────
 const ACCENT_COLORS = [
@@ -111,6 +112,7 @@ function PackTracker({ order }: { order: VoyagerOrder }) {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function ProfilePage() {
+  const { logout } = useAuth()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null)
   const [order, setOrder] = useState<VoyagerOrder | null>(null)
@@ -220,6 +222,14 @@ export default function ProfilePage() {
           <div className="h-eyebrow">// YOUR DOSSIER</div>
           <h1><span className="accent">PROFILE</span></h1>
         </div>
+        <button
+          onClick={() => logout()}
+          className="btn-ghost"
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}
+        >
+          <LogOut size={12} />
+          LOGOUT
+        </button>
       </div>
 
       {/* Identity header */}

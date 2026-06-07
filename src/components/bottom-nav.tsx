@@ -71,6 +71,13 @@ const DotsIcon = () => (
   </svg>
 )
 
+const ProfileIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
+    <circle cx="9" cy="6" r="3.5" stroke="currentColor" strokeWidth="1"/>
+    <path d="M2 16c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+  </svg>
+)
+
 const PRIMARY_NAV = [
   { href: '/console', label: 'HOME',     icon: <HomeIcon /> },
   { href: '/intel',   label: 'INTEL',    icon: <RadarIcon /> },
@@ -146,6 +153,23 @@ export function BottomNav() {
                 </Link>
               )
             })}
+
+            {/* My Profile — logged-in users only */}
+            {!isGuest && (
+              <Link
+                href="/profile"
+                onClick={() => setMoreOpen(false)}
+                className="flex items-center gap-4 px-6 py-4 transition-all"
+                style={{
+                  color: pathname === '/profile' ? '#E85D04' : 'rgba(245,245,245,0.55)',
+                  background: pathname === '/profile' ? 'rgba(232,93,4,0.06)' : 'transparent',
+                  borderTop: '1px solid rgba(255,107,53,0.25)',
+                }}
+              >
+                <ProfileIcon />
+                <span className="font-mono text-xs tracking-widest">MY PROFILE</span>
+              </Link>
+            )}
           </div>
         </>
       )}
