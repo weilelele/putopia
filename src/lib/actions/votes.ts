@@ -101,8 +101,10 @@ export async function submitVoteResponse(response: Omit<VoteResponseInsert, 'use
         .then(({ data: p }) => { voterName = p?.display_name ?? null; voterRole = p?.role ?? 'voyager' }) as Promise<void>
     )
   }
+  // Use admin client so RLS never silently swallows the title fetch
+  const adminForTitle = createAdminClient()
   fetches.push(
-    supabase.from('votes').select('title').eq('id', response.vote_id).single()
+    adminForTitle.from('votes').select('title').eq('id', response.vote_id).single()
       .then(({ data: v }) => { voteQuestion = (v as { title?: string } | null)?.title ?? null }) as Promise<void>
   )
   await Promise.all(fetches)
