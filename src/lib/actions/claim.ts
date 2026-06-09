@@ -43,14 +43,16 @@ export async function mockClaimFirstPack(): Promise<ClaimResult> {
 
   if (upErr) return { ok: false, error: upErr.message }
 
-  // Log feed event — folds with other recent activations
+  // Log feed event — folds with other recent activations.
+  // Device Seeker = pack-purchase path (this mock + future Stripe webhook).
+  // World Builder  = separate sub-role flow, wired in when that system is ready.
   await logActivity({
     actor_id:     user.id,
     actor_name:   profile.display_name ?? 'Unknown Voyager',
     actor_role:   'voyager',
     event_type:   'voyager_activated',
-    target_title: 'Secured the first parts pack · Cairo Batch 01',
-    target_href:  '/devices/claim',
+    target_title: 'Become a new Voyager: Device Seeker',
+    target_href:  '/voyagers',
     group_key:    'voyager_activations',
   })
 

@@ -454,10 +454,15 @@ type DisplayItem =
   | { kind: 'group'; groupType: string; events: ActivityEvent[] }
 
 function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
+  // Architects should never appear as "new Voyager" activations in the feed.
+  const filtered = events.filter(ev =>
+    !(ev.event_type === 'voyager_activated' && ev.actor_role === 'architect')
+  )
+
   const items: DisplayItem[] = []
   const groups: Record<string, ActivityEvent[]> = {}
 
-  for (const ev of events) {
+  for (const ev of filtered) {
     // vote_opened is always its own standalone row — never grouped with casts
     if (!ev.group_key || ev.event_type === 'vote_opened') {
       items.push({ kind: 'single', event: ev })

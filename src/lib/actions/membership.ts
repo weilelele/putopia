@@ -37,7 +37,7 @@ export async function provisionVoyagerMembership(userId: string): Promise<{
   // 1) Ensure a profile row exists — this is the user's Voyager Profile.
   const { data: profile } = await admin
     .from('voyager_profiles')
-    .select('id, display_name')
+    .select('id, display_name, role')
     .eq('id', userId)
     .maybeSingle()
 
@@ -66,15 +66,19 @@ export async function provisionVoyagerMembership(userId: string): Promise<{
   const batch = result?.batch_label as string | undefined
   const already = !!result?.already
 
-  // 3) Status feed — only on first activation.
-  if (!already) {
+  // 3) Status feed — only on first activation. Skip for architects.
+  const existingRole = (profile as { role?: string } | null)?.role
+  if (!already && existingRole !== 'architect') {
+    // target_title encodes the Voyager sub-role.
+    // "Device Seeker" = pack-purchase path (this function).
+    // "World Builder"  = separate flow, wired in when that system is ready.
     logActivity({
       actor_id:     userId,
       actor_name:   displayName ?? 'Voyager',
       actor_role:   'voyager',
       event_type:   'voyager_activated',
       target_id:    userId,
-      target_title: 'Become a new Voyager!',
+      target_title: 'Become a new Voyager: Device Seeker',
       target_href:  '/voyagers',
       group_key:    'voyager_activations',
     })
