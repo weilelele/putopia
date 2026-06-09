@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You've been invited — Multiverse Collective</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0A0E27;font-family:'Courier New',Courier,monospace;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0A0E27;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+
+        <!-- Card -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+
+          <!-- Logo / wordmark -->
+          <tr>
+            <td align="center" style="padding-bottom:40px;">
+              <span style="font-family:'Courier New',Courier,monospace;font-size:11px;font-weight:700;letter-spacing:0.35em;color:#FF6B35;text-transform:uppercase;">
+                ◈ MULTIVERSE COLLECTIVE
+              </span>
+            </td>
+          </tr>
+
+          <!-- Main card -->
+          <tr>
+            <td style="background-color:#0D1020;border:1px solid #1E2840;padding:40px 36px;">
+
+              <!-- Label -->
+              <p style="margin:0 0 24px 0;font-family:'Courier New',Courier,monospace;font-size:9px;letter-spacing:0.3em;color:#4A5570;text-transform:uppercase;">
+                // TRANSMISSION RECEIVED
+              </p>
+
+              <!-- Headline -->
+              <h1 style="margin:0 0 16px 0;font-family:'Courier New',Courier,monospace;font-size:20px;font-weight:700;letter-spacing:0.08em;color:#F5F5F5;line-height:1.3;">
+                YOU'VE BEEN<br/>CLEARED FOR ACCESS
+              </h1>
+
+              <!-- Body -->
+              <p style="margin:0 0 32px 0;font-family:'Courier New',Courier,monospace;font-size:12px;line-height:1.8;color:#8A9AB5;">
+                An invitation to join the Multiverse Collective has been issued for this address. Click the link below to establish your identity and complete registration.
+              </p>
+
+              <!-- Divider -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
+                <tr>
+                  <td style="height:1px;background-color:#1E2840;"></td>
+                </tr>
+              </table>
+
+              <!-- CTA button -->
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color:#FF6B35;">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="display:inline-block;padding:14px 32px;font-family:'Courier New',Courier,monospace;font-size:11px;font-weight:700;letter-spacing:0.2em;color:#0A0E27;text-decoration:none;text-transform:uppercase;">
+                      [ ACCEPT INVITATION ]
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Link fallback -->
+              <p style="margin:24px 0 0 0;font-family:'Courier New',Courier,monospace;font-size:9px;color:#4A5570;line-height:1.6;">
+                OR PASTE THIS URL INTO YOUR BROWSER:<br/>
+                <a href="{{ .ConfirmationURL }}" style="color:#FF6B35;word-break:break-all;">{{ .ConfirmationURL }}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding-top:24px;">
+              <p style="margin:0;font-family:'Courier New',Courier,monospace;font-size:9px;color:#2A3A5A;text-align:center;line-height:1.8;letter-spacing:0.05em;">
+                THIS LINK EXPIRES IN 24 HOURS · ONE-TIME USE ONLY<br/>
+                If you did not request this, you can safely discard this message.<br/>
+                <a href="https://multiverseco.org" style="color:#4A5570;text-decoration:none;">multiverseco.org</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
