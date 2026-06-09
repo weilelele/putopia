@@ -51,7 +51,7 @@ export async function mockClaimFirstPack(): Promise<ClaimResult> {
     actor_name:   profile.display_name ?? 'Unknown Voyager',
     actor_role:   'voyager',
     event_type:   'voyager_activated',
-    target_title: 'Become a new Voyager: Device Seeker',
+    target_title: 'Become a new Voyager: World Builder',
     target_href:  '/voyagers',
     group_key:    'voyager_activations',
   })
