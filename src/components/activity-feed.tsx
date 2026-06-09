@@ -55,11 +55,11 @@ function Avatar({ name, role, avatarUrl, size = 36 }: { name: string; role: stri
 
 function AvatarStack({ events }: { events: ActivityEvent[] }) {
   return (
-    <div style={{ display: 'flex', width: 36, justifyContent: 'flex-start' }}>
+    <div style={{ display: 'flex', flexShrink: 0, alignItems: 'center' }}>
       {events.slice(0, 4).map((e, i) => (
-        <span key={e.id} style={{ marginLeft: i === 0 ? 0 : -8, zIndex: events.length - i, position: 'relative' }}>
+        <div key={e.id} style={{ marginLeft: i === 0 ? 0 : -8, zIndex: events.length - i, position: 'relative', display: 'block', lineHeight: 0 }}>
           <Avatar name={e.actor_name} role={e.actor_role} avatarUrl={e.actor_avatar_url} size={20} />
-        </span>
+        </div>
       ))}
     </div>
   )
@@ -226,7 +226,7 @@ function VoteGroup({ casts }: { casts: ActivityEvent[] }) {
           width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
           padding: '0.75rem 1rem', background: expanded ? 'rgba(255,255,255,0.02)' : 'transparent',
           border: 'none', borderBottom: '1px solid var(--bd-faint)', borderTop: 'none',
-          cursor: 'pointer', textAlign: 'left',
+          cursor: 'pointer', textAlign: 'left', outline: 'none',
         }}
         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
         onMouseLeave={e => (e.currentTarget.style.background = expanded ? 'rgba(255,255,255,0.02)' : 'transparent')}
@@ -271,7 +271,7 @@ function CollapseGroup({ events, accent, summary }: { events: ActivityEvent[]; a
           width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
           padding: '0.75rem 1rem', background: expanded ? 'rgba(255,107,53,0.03)' : 'transparent',
           border: 'none', borderBottom: '1px solid var(--bd-faint)', borderTop: 'none',
-          cursor: 'pointer', textAlign: 'left',
+          cursor: 'pointer', textAlign: 'left', outline: 'none',
         }}
         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,107,53,0.04)')}
         onMouseLeave={e => (e.currentTarget.style.background = expanded ? 'rgba(255,107,53,0.03)' : 'transparent')}
