@@ -52,11 +52,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/console', request.url))
   }
 
-  // Category listing pages require a logged-in user
-  // Guests can access individual content pages (e.g. /intel/[id]) but not the root listings
+  // Category listing pages require a logged-in user.
+  // Guests can access individual content pages (e.g. /intel/[id]) but not the root listings.
+  // Redirect to /login with a ?redirect= param so the user lands on the right page after signing in.
   const GUEST_BLOCKED = ['/intel', '/devices', '/worlds', '/voyagers', '/vote', '/logs']
   if (!user && GUEST_BLOCKED.some(p => pathname === p || pathname === p + '/')) {
-    return NextResponse.redirect(new URL('/console', request.url))
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/login'
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
   // /profile requires a logged-in user

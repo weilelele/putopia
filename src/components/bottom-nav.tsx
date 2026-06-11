@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 
 const HomeIcon = () => (
@@ -94,8 +94,24 @@ const MORE_NAV = [
 export function BottomNav() {
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const { user } = useAuth()
+
+  // /voyager-pack is a standalone long-scroll page — no nav needed there.
+  // Return null AFTER all hooks so hook call order is consistent.
+  const isVoyagerPack = pathname === '/voyager-pack'
+
+  useEffect(() => {
+    function handleMsg(e: MessageEvent) {
+      if (e.data?.type === 'sheet-open') setSheetOpen(true)
+      if (e.data?.type === 'sheet-close') setSheetOpen(false)
+    }
+    window.addEventListener('message', handleMsg)
+    return () => window.removeEventListener('message', handleMsg)
+  }, [])
   const isGuest = user.role === 'guest'
+
+  if (isVoyagerPack) return null
 
   const isMoreActive = MORE_NAV.some(
     (item) => pathname === item.href || pathname.startsWith(item.href + '/')
@@ -103,8 +119,8 @@ export function BottomNav() {
 
   return (
     <>
-      {/* More drawer — slides up from bottom */}
-      {moreOpen && (
+      {/* More drawer — slides up from bottom; hidden when iframe sheet is open */}
+      {moreOpen && !sheetOpen && (
         <>
           <div
             className="fixed inset-0 z-40 md:hidden"
@@ -126,14 +142,16 @@ export function BottomNav() {
               const isActive = pathname === href || pathname.startsWith(href + '/')
               if (isGuest) {
                 return (
-                  <div
+                  <Link
                     key={href}
+                    href={`/login?redirect=${href}`}
+                    onClick={() => setMoreOpen(false)}
                     className="flex items-center gap-4 px-6 py-4"
-                    style={{ color: '#2A3248', borderBottom: '1px solid rgba(255,107,53,0.16)', cursor: 'default' }}
+                    style={{ color: 'rgba(245,245,245,0.2)', borderBottom: '1px solid rgba(255,107,53,0.16)', textDecoration: 'none' }}
                   >
                     {icon}
                     <span className="font-mono text-xs tracking-widest">{label}</span>
-                  </div>
+                  </Link>
                 )
               }
               return (
@@ -174,10 +192,11 @@ export function BottomNav() {
         </>
       )}
 
-      {/* Primary nav bar */}
+      {/* Primary nav bar — hidden when an iframe sheet is open (via postMessage) */}
       <nav
         className="flex md:hidden fixed left-3 right-3 z-50"
         style={{
+          display: sheetOpen ? 'none' : undefined,
           bottom: 'calc(14px + env(safe-area-inset-bottom))',
           background: 'rgba(15,20,48,0.82)',
           backdropFilter: 'blur(12px)',
@@ -195,14 +214,15 @@ export function BottomNav() {
 
           if (locked) {
             return (
-              <div
+              <Link
                 key={href}
-                className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5"
-                style={{ color: '#1E2838', cursor: 'default' }}
+                href={`/login?redirect=${href}`}
+                className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
+                style={{ color: 'rgba(245,245,245,0.18)', borderRadius: '12px', textDecoration: 'none' }}
               >
                 {icon}
                 <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
-              </div>
+              </Link>
             )
           }
 

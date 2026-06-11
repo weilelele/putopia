@@ -14,6 +14,10 @@ import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actio
 import { getAllWorlds } from '@/lib/actions/worlds'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { getActivityFeed } from '@/lib/actions/activity-events'
+import { getApplicantTaskStatus } from '@/lib/actions/tasks'
+import type { ApplicantTaskStatus } from '@/lib/actions/tasks'
+import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
+import type { ExperimentGroup } from '@/lib/actions/experiment'
 import { ActivityFeed } from '@/components/activity-feed'
 import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
@@ -81,14 +85,19 @@ function DevicePreviewCard({ device }: { device: Device }) {
   const style = STATUS_STYLES[statusKey] ?? STATUS_STYLES.unknown
 
   return (
-    <div
+    <Link
+      href={`/devices/${device.id}`}
       style={{
         background: 'var(--color-void)',
         border: '1px solid var(--bd-faint)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
+        textDecoration: 'none',
+        transition: 'border-color 0.15s',
       }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.35)' }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--bd-faint)' }}
     >
       <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18' }}>
         {device.image_path ? (
@@ -130,7 +139,7 @@ function DevicePreviewCard({ device }: { device: Device }) {
           </div>
         )}
       </div>
-    </div>
+    </Link>
   )
 }
 
@@ -202,10 +211,119 @@ function ClaimPreviewCard() {
   )
 }
 
+/* ─── Voyager Pack Card — Group A (direct): always-visible pack entry ─── */
+function VoyagerPackCard() {
+  return (
+    <Link
+      href="/voyager-pack"
+      style={{
+        background: 'linear-gradient(160deg, #0F1430 60%, #1A0E2A)',
+        border: '1px solid rgba(255,107,53,0.55)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        textDecoration: 'none',
+        position: 'relative',
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = '#FF6B35'
+        ;(e.currentTarget as HTMLElement).style.boxShadow = '0 0 32px rgba(255,107,53,0.35), 0 0 64px rgba(255,107,53,0.12)'
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.55)'
+        ;(e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(255,107,53,0.22)'
+      }}
+    >
+      <style>{`
+        @keyframes pack-pulse {
+          0%, 100% { box-shadow: 0 0 18px rgba(255,107,53,0.22); }
+          50%       { box-shadow: 0 0 32px rgba(255,107,53,0.42), 0 0 60px rgba(255,107,53,0.14); }
+        }
+        .voyager-pack-card { animation: pack-pulse 2.8s ease-in-out infinite; }
+        @keyframes badge-blink {
+          0%, 90%, 100% { opacity: 1; }
+          95%           { opacity: 0.4; }
+        }
+      `}</style>
+
+      {/* Hero image */}
+      <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid rgba(255,107,53,0.3)', background: '#070A1A', position: 'relative' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/voyager-hero.png"
+          alt="Initial Voyager Pack"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'saturate(0.85) brightness(0.7)' }}
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+        />
+        {/* Scan line overlay */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,107,53,0.03) 3px, rgba(255,107,53,0.03) 4px)',
+          pointerEvents: 'none',
+        }} />
+        {/* ACTIVATE badge */}
+        <span style={{
+          position: 'absolute', top: 8, right: 8,
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.12em',
+          color: '#070912', background: '#FF6B35', padding: '0.1rem 0.5rem',
+          animation: 'badge-blink 3s ease-in-out infinite',
+        }}>
+          ACTIVATE
+        </span>
+        {/* Corner brackets */}
+        <div style={{ position: 'absolute', top: 8, left: 8, width: 16, height: 16, borderTop: '1.5px solid rgba(255,107,53,0.7)', borderLeft: '1.5px solid rgba(255,107,53,0.7)' }} />
+        <div style={{ position: 'absolute', bottom: 8, right: 48, width: 16, height: 16, borderBottom: '1.5px solid rgba(255,107,53,0.7)', borderRight: '1.5px solid rgba(255,107,53,0.7)' }} />
+      </div>
+
+      {/* Info */}
+      <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#FF6B35', letterSpacing: '0.15em' }}>
+              VOYAGER INITIATION
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, color: 'var(--color-star)' }}>
+              INITIAL VOYAGER PACK
+            </div>
+          </div>
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap', flexShrink: 0,
+            color: '#FF6B35', border: '1px solid rgba(255,107,53,0.5)', padding: '0.1rem 0.4rem',
+            background: 'rgba(255,107,53,0.08)',
+          }}>
+            $12
+          </span>
+        </div>
+
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.6, margin: 0 }}>
+          Secure your position in the first wave. Activate Voyager status and unlock full access to the Collective network.
+        </p>
+
+        {/* Progress indicator row */}
+        <div style={{ marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ flex: 1, height: 2, background: 'linear-gradient(90deg, #E85D04, #FF6B35)', opacity: 0.6 + i * 0.2 }} />
+          ))}
+        </div>
+
+        {/* CTA bar */}
+        <div style={{
+          marginTop: '0.25rem', textAlign: 'center',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.18em',
+          color: '#070912', background: 'linear-gradient(90deg, #E85D04, #FF6B35)', padding: '0.4rem',
+        }}>
+          [ ACTIVATE VOYAGER STATUS ]
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 /* ─── Unknown Device Preview Card (greyed, uncontacted signal) ─── */
 function UnknownDevicePreviewCard({ device }: { device: Device }) {
   return (
-    <div
+    <Link
+      href={`/devices/${device.id}`}
       style={{
         background: '#0F1430',
         border: '1px solid var(--bd-faint)',
@@ -213,7 +331,11 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
         display: 'flex',
         flexDirection: 'column',
         opacity: 0.7,
+        textDecoration: 'none',
+        transition: 'opacity 0.15s, border-color 0.15s',
       }}
+      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.9'; el.style.borderColor = 'rgba(255,107,53,0.2)' }}
+      onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.7'; el.style.borderColor = 'var(--bd-faint)' }}
     >
       <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18' }}>
         {device.image_path ? (
@@ -256,7 +378,7 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
 
@@ -545,6 +667,123 @@ function GuestHero({ newHref, mcFunctions }: { newHref: string; mcFunctions: McF
   )
 }
 
+/* ─── Applicant Task Panel ──────────────────────────────── */
+function ApplicantTaskPanel({ tasks }: { tasks: ApplicantTaskStatus }) {
+  const items: { key: keyof Omit<ApplicantTaskStatus, 'allDone'>; label: string; desc: string; href: string }[] = [
+    { key: 'sighting', label: 'Report a Sighting',      desc: 'Submit a parallel world to the pipeline.',                          href: '/worlds/submit' },
+    { key: 'votes',    label: 'Cast Two Votes',          desc: 'Participate in at least two votes in the Voting Hub.',              href: '/vote' },
+    { key: 'intel',    label: 'Read an Architect Report', desc: 'Read an Architect dispatch to the end.',                          href: '/intel' },
+    { key: 'quiz',     label: 'Pass the Assessment',     desc: 'Complete and pass the entry-level field assessment.',               href: '/quiz' },
+  ]
+  const doneCount = items.filter(i => tasks[i.key]).length
+
+  return (
+    <section style={{ padding: '0 2.5rem 2.5rem', maxWidth: 960, margin: '0 auto', width: '100%' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>
+          APPLICANT TASKS
+        </div>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: '1rem' }}>
+        {items.map((item) => (
+          <div key={item.key} style={{
+            flex: 1, height: 3,
+            background: tasks[item.key]
+              ? (tasks.allDone ? 'var(--color-ok)' : 'linear-gradient(90deg,var(--color-burnt),var(--color-nucleus))')
+              : 'var(--bd-faint)',
+            transition: 'background 0.3s',
+          }} />
+        ))}
+      </div>
+
+      <div style={{
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+        color: tasks.allDone ? 'var(--color-ok)' : 'var(--color-star-deep)',
+        marginBottom: '1rem', letterSpacing: '0.1em',
+      }}>
+        {tasks.allDone
+          ? '✓ ALL TASKS COMPLETE — CHOOSE YOUR PACK TO ADVANCE'
+          : `${doneCount} OF ${items.length} COMPLETE`}
+      </div>
+
+      {/* Task rows */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {items.map((item) => {
+          const done = tasks[item.key]
+          return (
+            <a
+              key={item.key}
+              href={item.href}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
+                textDecoration: 'none',
+                background: done ? 'rgba(32,216,144,0.04)' : 'var(--color-void)',
+                border: `1px solid ${done ? 'rgba(32,216,144,0.2)' : 'rgba(255,107,53,0.14)'}`,
+                transition: 'border-color 0.15s',
+              }}
+            >
+              {/* Status dot */}
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: done ? 'rgba(32,216,144,0.1)' : 'rgba(255,107,53,0.07)',
+                border: `1.5px solid ${done ? 'rgba(32,216,144,0.45)' : 'rgba(255,107,53,0.28)'}`,
+                color: done ? 'var(--color-ok)' : 'var(--color-nucleus)',
+                fontSize: 13,
+              }}>
+                {done ? '✓' : '→'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
+                  color: done ? 'rgba(32,216,144,0.65)' : 'var(--color-star)',
+                  marginBottom: 2,
+                }}>
+                  {item.label}
+                  {done && (
+                    <span style={{
+                      marginLeft: 8, fontSize: 9, letterSpacing: '0.14em',
+                      color: 'var(--color-ok)', border: '1px solid rgba(32,216,144,0.25)',
+                      padding: '1px 6px', background: 'rgba(32,216,144,0.08)',
+                    }}>DONE</span>
+                  )}
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-star-deep)', lineHeight: 1.5 }}>
+                  {item.desc}
+                </div>
+              </div>
+            </a>
+          )
+        })}
+      </div>
+
+      {/* CTA when all done */}
+      {tasks.allDone && (
+        <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+          <a
+            href="/voyager-pack"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '12px 28px', textDecoration: 'none',
+              background: 'linear-gradient(135deg, var(--color-burnt), var(--color-nucleus-3))',
+              border: '1px solid rgba(232,93,4,0.5)',
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+              color: 'var(--color-star)', letterSpacing: '0.16em', fontWeight: 700,
+            }}
+          >
+            CHOOSE YOUR PACK →
+          </a>
+        </div>
+      )}
+    </section>
+  )
+}
+
 /* ─── Auth Hero — Welcome Voyager ──────────────────────── */
 function AuthHero({ user, activityEvents }: { user: { role: string; name?: string }; activityEvents: ActivityEvent[] }) {
   const isApplicant = user.role === 'applicant'
@@ -613,6 +852,8 @@ function ConsoleInner() {
   const [myVoteResponses, setMyVoteResponses] = useState<{ vote_id: string; selected_options: string[] }[]>([])
   const [latestWorlds, setLatestWorlds] = useState<World[]>([])
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
+  const [applicantTasks, setApplicantTasks] = useState<ApplicantTaskStatus | null>(null)
+  const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
 
   useEffect(() => {
     getAllDevices().then((all) => {
@@ -641,6 +882,14 @@ function ConsoleInner() {
     })
     getMyVoteResponses().then(setMyVoteResponses)
   }, [])
+
+  // Load experiment group + task status for applicants
+  useEffect(() => {
+    if (!loading && user.role === 'applicant') {
+      getOrAssignExperimentGroup().then(setExperimentGroup)
+      getApplicantTaskStatus().then(setApplicantTasks)
+    }
+  }, [loading, user.role])
 
   const isGuest = !loading && user.role === 'guest'
 
@@ -671,6 +920,11 @@ function ConsoleInner() {
         <AuthHero user={user} activityEvents={activityEvents} />
       )}
 
+      {/* ── Applicant task panel — Group B (task_gated) only ── */}
+      {!loading && user.role === 'applicant' && experimentGroup === 'task_gated' && applicantTasks && (
+        <ApplicantTaskPanel tasks={applicantTasks} />
+      )}
+
       {/* ── Devices (unknown + known) ── */}
       {devices.length > 0 && (
         <section style={{ padding: '3rem 2.5rem 2rem' }}>
@@ -684,6 +938,10 @@ function ConsoleInner() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
               {user.role === 'architect' && <ClaimPreviewCard />}
+              {/* Group A: Voyager Pack card as first item, always visible */}
+              {user.role === 'applicant' && experimentGroup === 'direct' && (
+                <VoyagerPackCard />
+              )}
               {devices.map((device) => (
                 device.knowledge === 'unknown'
                   ? <UnknownDevicePreviewCard key={device.id} device={device} />
