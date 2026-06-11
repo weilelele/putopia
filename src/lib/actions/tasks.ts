@@ -1,116 +1,97 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+/**
+ * Applicant task-tracking engine.
+ *
+ * Reconstructed from docs/system-design.md §3–5 + schema_v31 (voyager_profiles
+ * .task_quiz_at / .task_intel_at) + caller usage. The four Applicant tasks:
+ *   - sighting : the user submitted a world to the pipeline (worlds.submitted_by)
+ *   - votes    : ≥2 DISTINCT vote_id in vote_responses
+ *   - intel    : read an Architect report to the end (task_intel_at set)
+ *   - quiz     : passed the entry assessment (task_quiz_at set)
+ *
+ * Quiz/intel completion are explicit timestamps; sighting/votes are queried live.
+ */
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type ApplicantTaskStatus = {
-  sighting: boolean  // submitted at least one world
-  votes:    boolean  // cast votes on at least 2 distinct vote items
-  intel:    boolean  // scrolled to the end of an architect report
-  quiz:     boolean  // passed the assessment
-  allDone:  boolean
+export interface ApplicantTaskStatus {
+  sighting: boolean
+  votes: boolean
+  intel: boolean
+  quiz: boolean
+  allDone: boolean
 }
 
-// ─── Read task status ─────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DB = any
 
-export async function getApplicantTaskStatus(
-  userId?: string,
-): Promise<ApplicantTaskStatus> {
+async function getUserId(): Promise<string | null> {
   const supabase = await createClient()
-
-  // Use provided userId or fall back to auth session
-  let uid = userId
-  if (!uid) {
-    const { data: { session } } = await supabase.auth.getSession()
-    uid = session?.user?.id
-  }
-  if (!uid) {
-    return { sighting: false, votes: false, intel: false, quiz: false, allDone: false }
-  }
-
-  // Run all checks in parallel
-  const [sightingRes, votesRes, profileRes] = await Promise.all([
-    // Task 1: Has submitted at least one world
-    supabase
-      .from('worlds')
-      .select('id', { count: 'exact', head: true })
-      .eq('submitted_by', uid),
-
-    // Task 2: Has cast votes on at least 2 distinct vote items
-    supabase
-      .from('vote_responses')
-      .select('vote_id')
-      .eq('user_id', uid),
-
-    // Tasks 3 & 4: Read from profile timestamp columns
-    supabase
-      .from('voyager_profiles')
-      .select('task_intel_at, task_quiz_at')
-      .eq('id', uid)
-      .single(),
-  ])
-
-  const sighting = (sightingRes.count ?? 0) > 0
-
-  const distinctVotes = new Set(
-    (votesRes.data ?? []).map((r: { vote_id: string }) => r.vote_id),
-  ).size
-  const votes = distinctVotes >= 2
-
-  const intel = !!profileRes.data?.task_intel_at
-  const quiz  = !!profileRes.data?.task_quiz_at
-
-  return { sighting, votes, intel, quiz, allDone: sighting && votes && intel && quiz }
+  const { data: { user } } = await supabase.auth.getUser()
+  return user?.id ?? null
 }
 
-// ─── Mark intel read ──────────────────────────────────────────────────────────
-
-/** Call when the user scrolls to the bottom of an architect report. Idempotent. */
-export async function markIntelRead(): Promise<{ ok: boolean }> {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  const uid = session?.user?.id
-  if (!uid) return { ok: false }
-
-  // Only set if not already set (preserve first-read timestamp)
-  const { data: profile } = await supabase
-    .from('voyager_profiles')
-    .select('task_intel_at')
-    .eq('id', uid)
-    .single()
-
-  if (profile?.task_intel_at) return { ok: true }  // already done
-
-  const { error } = await supabase
-    .from('voyager_profiles')
-    .update({ task_intel_at: new Date().toISOString() })
-    .eq('id', uid)
-
-  return { ok: !error }
-}
-
-// ─── Mark quiz passed ─────────────────────────────────────────────────────────
-
-/** Call when the user passes the assessment. Idempotent. */
+/** Mark the entry assessment as passed for the current user (idempotent). */
 export async function markQuizPassed(): Promise<{ ok: boolean }> {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  const uid = session?.user?.id
+  const uid = await getUserId()
   if (!uid) return { ok: false }
-
-  const { data: profile } = await supabase
-    .from('voyager_profiles')
-    .select('task_quiz_at')
-    .eq('id', uid)
-    .single()
-
-  if (profile?.task_quiz_at) return { ok: true }  // already done
-
-  const { error } = await supabase
+  const admin = createAdminClient() as DB
+  await admin
     .from('voyager_profiles')
     .update({ task_quiz_at: new Date().toISOString() })
     .eq('id', uid)
+    .is('task_quiz_at', null)
+  return { ok: true }
+}
 
-  return { ok: !error }
+/** Mark "read an Architect report" complete (called when an intel article is
+ *  scrolled to the bottom). Idempotent. */
+export async function markIntelRead(): Promise<{ ok: boolean }> {
+  const uid = await getUserId()
+  if (!uid) return { ok: false }
+  const admin = createAdminClient() as DB
+  await admin
+    .from('voyager_profiles')
+    .update({ task_intel_at: new Date().toISOString() })
+    .eq('id', uid)
+    .is('task_intel_at', null)
+  return { ok: true }
+}
+
+/** Current Applicant checklist status for the signed-in user. */
+export async function getApplicantTaskStatus(): Promise<ApplicantTaskStatus> {
+  const empty: ApplicantTaskStatus = { sighting: false, votes: false, intel: false, quiz: false, allDone: false }
+  const uid = await getUserId()
+  if (!uid) return empty
+  const admin = createAdminClient() as DB
+
+  // explicit timestamp flags
+  const { data: profile } = await admin
+    .from('voyager_profiles')
+    .select('task_quiz_at, task_intel_at')
+    .eq('id', uid)
+    .single()
+  const quiz = !!profile?.task_quiz_at
+  const intel = !!profile?.task_intel_at
+
+  // sighting: a world submitted by this user (degrades to false if column absent)
+  let sighting = false
+  const { count } = await admin
+    .from('worlds')
+    .select('id', { count: 'exact', head: true })
+    .eq('submitted_by', uid)
+  sighting = (count ?? 0) > 0
+
+  // votes: ≥2 distinct vote_id (anon_token votes don't carry user_id)
+  let votes = false
+  const { data: vr } = await admin
+    .from('vote_responses')
+    .select('vote_id')
+    .eq('user_id', uid)
+  if (vr) {
+    votes = new Set((vr as { vote_id: string }[]).map((r) => r.vote_id)).size >= 2
+  }
+
+  const allDone = sighting && votes && intel && quiz
+  return { sighting, votes, intel, quiz, allDone }
 }
