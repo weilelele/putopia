@@ -29,7 +29,7 @@ export async function getComments(
 ): Promise<Comment[]> {
   const admin = createAdminClient()
   const { data } = await (admin.from('comments' as never) as ReturnType<typeof admin.from>)
-    .select('id, created_at, subject_type, subject_id, author_id, author_name, author_avatar_url, body, is_visible, parent_id')
+    .select('id, created_at, subject_type, subject_id, author_id, author_name, author_avatar_url, body, is_visible, parent_id, image_paths')
     .eq('subject_type', subjectType)
     .eq('subject_id', subjectId)
     .eq('is_visible', true)
@@ -115,7 +115,7 @@ export async function postComment(
   subjectType: CommentSubjectType,
   subjectId: string,
   body: string,
-  opts?: { parentId?: string | null; asProfileId?: string | null; subjectTitle?: string },
+  opts?: { parentId?: string | null; asProfileId?: string | null; subjectTitle?: string; imagePaths?: string[] },
 ): Promise<{ error: string | null; data: Comment | null }> {
   const text = body.trim()
   if (!text) return { error: 'Empty comment', data: null }
@@ -183,8 +183,9 @@ export async function postComment(
       body:              text.slice(0, 2000),
       parent_id:         parentId,
       posted_by_id:      postedById,
+      image_paths:       (opts?.imagePaths ?? []).slice(0, 3),
     })
-    .select('id, created_at, subject_type, subject_id, author_id, author_name, author_avatar_url, body, is_visible, parent_id')
+    .select('id, created_at, subject_type, subject_id, author_id, author_name, author_avatar_url, body, is_visible, parent_id, image_paths')
     .single()
 
   if (error) return { error: error.message, data: null }

@@ -27,12 +27,16 @@ export type VoyagerProfile = {
   joined_at: string           // ISO timestamp — set on invite (trigger), NOT on registration
   registered_at: string | null // set when user completes /register (password + display name)
   updated_at: string
+  // Applicant task completion timestamps (null = not yet done)
+  task_quiz_at:  string | null
+  task_intel_at: string | null
 }
 
 export type VoyagerProfileUpdate = Partial<Pick<
   VoyagerProfile,
   | 'display_name' | 'bio' | 'avatar_url' | 'social_x' | 'social_instagram' | 'social_linkedin'
   | 'location' | 'observation_days' | 'worlds_discovered'
+  | 'task_quiz_at' | 'task_intel_at'
 >>
 
 // ---------- comments ----------
@@ -50,6 +54,7 @@ export type Comment = {
   body: string
   is_visible: boolean
   parent_id: string | null    // the comment this one replies to; null = top-level
+  image_paths: string[]       // up to 3 image URLs attached to this transmission
 }
 
 // A profile an architect may impersonate when posting (voyager / architect only).
@@ -150,6 +155,8 @@ export type DeviceUpdate = Partial<Pick<
 >>
 
 // ---------- worlds ----------
+export type WorldLifecycle = 'proposed' | 'picked' | 'syncing' | 'stable'
+
 export type World = {
   id: string
   name: string
@@ -162,15 +169,35 @@ export type World = {
   image_path: string | null   // uploaded world image (optional)
   description: string
   is_verified: boolean
+  lifecycle_state: WorldLifecycle
+  submitted_by: string | null
+  submitted_at: string | null
   created_at: string
 }
 
-export type WorldInsert = Omit<World, 'created_at'>
+// lifecycle_state / submitted_by / submitted_at have DB defaults — optional on insert
+export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'submitted_by' | 'submitted_at'> & {
+  lifecycle_state?: WorldLifecycle
+  submitted_by?: string | null
+  submitted_at?: string | null
+}
 export type WorldUpdate = Partial<Pick<
   World,
   'name' | 'name_en' | 'discoverer_id' | 'discoverer_name' | 'discovery_date' |
-  'gradient_from' | 'gradient_to' | 'image_path' | 'description' | 'is_verified'
+  'gradient_from' | 'gradient_to' | 'image_path' | 'description' | 'is_verified' |
+  'lifecycle_state'
 >>
+
+export type WorldImage = {
+  id: string
+  world_id: string
+  url: string
+  storage_path: string | null
+  caption: string | null
+  source: string | null        // 'upload' | 'repost'
+  uploaded_by: string | null
+  created_at: string
+}
 
 // ---------- intel ----------
 export type Intel = {
@@ -344,6 +371,12 @@ export type Database = {
         Update: WorldUpdate
         Relationships: []
       }
+      world_images: {
+        Row: WorldImage
+        Insert: Omit<WorldImage, 'id' | 'created_at'> & { id?: string; created_at?: string }
+        Update: Partial<Omit<WorldImage, 'id' | 'created_at'>>
+        Relationships: []
+      }
       intel: {
         Row: Intel
         Insert: IntelInsert
@@ -354,6 +387,37 @@ export type Database = {
         Row: Story
         Insert: StoryInsert
         Update: StoryUpdate
+        Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          id: string
+          quiz_id: string
+          sort_order: number
+          prompt: string
+          options: { key: string; label: string }[]
+          answer_key: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          quiz_id?: string
+          sort_order: number
+          prompt: string
+          options: { key: string; label: string }[]
+          answer_key: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<{
+          quiz_id: string
+          sort_order: number
+          prompt: string
+          options: { key: string; label: string }[]
+          answer_key: string
+          updated_at: string
+        }>
         Relationships: []
       }
       funnel_snapshots: {
