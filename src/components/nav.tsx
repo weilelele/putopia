@@ -124,7 +124,7 @@ export function Nav() {
         <Link href="/console" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assets/logo.png"
+            src="/assets/vi-wordmark.png"
             alt="Multiverse Collective"
             style={{ width: '100%', maxWidth: '176px', height: 'auto', display: 'block' }}
           />
@@ -143,27 +143,29 @@ export function Nav() {
       <div className="py-1 overflow-y-auto">
         {navLinks.map(({ href, label, icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/')
+          const isGuest = user.role === 'guest'
+          const linkHref = isGuest ? `/login?redirect=${href}` : href
           return (
             <Link
               key={href}
-              href={href}
+              href={linkHref}
               className="flex items-center gap-3 mx-2 px-3 py-2.5 text-sm transition-all duration-150"
               style={
                 isActive
                   ? { background: 'rgba(232,93,4,0.15)', borderLeft: '3px solid #E85D04', paddingLeft: '9px', color: '#E85D04' }
-                  : { color: 'rgba(245,245,245,0.35)', borderLeft: '3px solid transparent', paddingLeft: '9px' }
+                  : { color: isGuest ? 'rgba(245,245,245,0.2)' : 'rgba(245,245,245,0.35)', borderLeft: '3px solid transparent', paddingLeft: '9px' }
               }
               onMouseEnter={(e) => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(232,93,4,0.4)'
-                  ;(e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.55)'
+                  ;(e.currentTarget as HTMLElement).style.color = isGuest ? 'rgba(245,245,245,0.4)' : 'rgba(245,245,245,0.55)'
                   ;(e.currentTarget as HTMLElement).style.background = 'rgba(232,93,4,0.05)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.borderLeftColor = 'transparent'
-                  ;(e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.35)'
+                  ;(e.currentTarget as HTMLElement).style.color = isGuest ? 'rgba(245,245,245,0.2)' : 'rgba(245,245,245,0.35)'
                   ;(e.currentTarget as HTMLElement).style.background = 'transparent'
                 }
               }}
