@@ -1,0 +1,970 @@
+'use client'
+
+import Link from 'next/link'
+import { useState } from 'react'
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
+// Stage node icons
+function ApplicantIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      {/* Compass rose — 4 cardinal points */}
+      <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M10 2.5v3.5M10 14v3.5M2.5 10H6M14 10h3.5"
+        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      {/* Diagonal minor points, lighter */}
+      <path d="M5 5l1.8 1.8M13.2 13.2l1.8 1.8M15 5l-1.8 1.8M6.8 13.2L5 15"
+        stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" opacity="0.45" />
+    </svg>
+  )
+}
+
+function VoyagerIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      {/* Planet body */}
+      <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.3" />
+      {/* Orbital ring — tilted ellipse */}
+      <ellipse cx="10" cy="10" rx="9" ry="3.2"
+        stroke="currentColor" strokeWidth="1.1" opacity="0.55"
+        transform="rotate(-28 10 10)" />
+    </svg>
+  )
+}
+
+function CheckCircleIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 18" fill="none">
+      <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5" />
+      <polyline points="5.5,9.5 7.5,11.5 12.5,6.5" stroke="currentColor" strokeWidth="1.8"
+        strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function CheckIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <polyline points="2,7 6,11 12,3" stroke="currentColor" strokeWidth="1.8"
+        strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ArrowIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 12 12" fill="none">
+      <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.4"
+        strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function LockIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <rect x="2.5" y="6.5" width="9" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M4.5 6.5V4.5a2.5 2.5 0 015 0v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+// Pack icons
+function WorldPackIcon({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="11" stroke="currentColor" strokeWidth="1.4" />
+      <ellipse cx="14" cy="14" rx="5.5" ry="11" stroke="currentColor" strokeWidth="1.2" />
+      <line x1="3" y1="14" x2="25" y2="14" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+      <line x1="5" y1="9"  x2="23" y2="9"  stroke="currentColor" strokeWidth="1" opacity="0.35" />
+      <line x1="5" y1="19" x2="23" y2="19" stroke="currentColor" strokeWidth="1" opacity="0.35" />
+    </svg>
+  )
+}
+
+function DevicePackIcon({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="7" width="20" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+      <line x1="4" y1="12" x2="24" y2="12" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+      <rect x="7" y="14.5" width="4" height="3" rx="0.5" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+      <rect x="13" y="14.5" width="8" height="1.2" rx="0.3" fill="currentColor" opacity="0.3" />
+      <rect x="13" y="17"   width="5" height="1.2" rx="0.3" fill="currentColor" opacity="0.2" />
+    </svg>
+  )
+}
+
+function ConsoleIcon({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="2.8" fill="currentColor" />
+      <circle cx="14" cy="14" r="6.5" stroke="currentColor" strokeWidth="1.2" strokeDasharray="2.5 2.5" />
+      <circle cx="14" cy="14" r="11" stroke="currentColor" strokeWidth="1.2" opacity="0.45" />
+    </svg>
+  )
+}
+
+// Task icons
+function WorldIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.2" />
+      <ellipse cx="9" cy="9" rx="3.5" ry="7.5" stroke="currentColor" strokeWidth="1.2" />
+      <line x1="1.5" y1="9" x2="16.5" y2="9" stroke="currentColor" strokeWidth="1" opacity="0.7" />
+    </svg>
+  )
+}
+
+function VoteIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.2" />
+      <polyline points="5,9 8,12 13,5.5" stroke="currentColor" strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function IntelIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <rect x="3" y="1.5" width="12" height="15" rx="1" stroke="currentColor" strokeWidth="1.2" />
+      <line x1="6" y1="6"  x2="12" y2="6"  stroke="currentColor" strokeWidth="1" />
+      <line x1="6" y1="9"  x2="12" y2="9"  stroke="currentColor" strokeWidth="1" />
+      <line x1="6" y1="12" x2="10" y2="12" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  )
+}
+
+function QuizIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M7 7.2c0-1.1.9-2 2-2s2 .9 2 2c0 .9-.5 1.5-1.3 1.8L9 9.5v1"
+        stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="9" cy="12.5" r="0.8" fill="currentColor" />
+    </svg>
+  )
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type TaskKey    = 'report_sighting' | 'cast_votes' | 'read_intel' | 'pass_quiz'
+type ViewStage  = 'applicant' | 'voyager' | 'console'
+type ModalKind  = 'device_seeker' | 'console_locked'
+
+// ─── Task definitions ─────────────────────────────────────────────────────────
+
+const TASKS: {
+  key: TaskKey; num: string; label: string; description: string
+  href: string; icon: React.ReactNode; accentColor: string
+}[] = [
+  {
+    key: 'report_sighting', num: '01', label: 'Report a Sighting',
+    description: 'Submit a sighting — a signal, image, or account of a parallel world you believe exists.',
+    href: '/worlds/submit', icon: <WorldIcon />, accentColor: '#FF6B35',
+  },
+  {
+    key: 'cast_votes', num: '02', label: 'Cast Two Votes',
+    description: 'Participate in at least two different votes in the Voting Hub.',
+    href: '/vote', icon: <VoteIcon />, accentColor: '#E85D04',
+  },
+  {
+    key: 'read_intel', num: '03', label: 'Read an Architect Report',
+    description: '"Why does our organization need to exist?" — Filed 2026-06-06. Scroll to the end to mark it complete.',
+    href: '/intel/INT-628014', icon: <IntelIcon />, accentColor: '#DC2F02',
+  },
+  {
+    key: 'pass_quiz', num: '04', label: 'Pass the Assessment',
+    description: 'Complete and pass the entry-level field assessment to demonstrate readiness.',
+    href: '/quiz', icon: <QuizIcon />, accentColor: '#C04000',
+  },
+]
+
+// ─── Centered modal (click anywhere to close) ─────────────────────────────────
+
+function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void }) {
+  if (!kind) return null
+
+  const isDevice  = kind === 'device_seeker'
+  const accent    = isDevice ? '#E8A020' : '#60B0FF'
+  const borderClr = isDevice ? 'rgba(232,160,32,0.3)' : 'rgba(96,176,255,0.25)'
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(10,14,39,0.82)',
+        backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 60, padding: '24px',
+        animation: 'modal-backdrop-in 0.15s ease-out',
+      }}
+    >
+      <div className="dd-panel" style={{
+        maxWidth: 400, width: '100%',
+        ['--dd-bd' as string]: borderClr,
+        ['--dd-fill' as string]: '#0F1430',
+        padding: '24px 28px 20px',
+        animation: 'modal-in 0.18s cubic-bezier(0.34,1.56,0.64,1)',
+        filter: 'drop-shadow(0 0 40px rgba(10,14,39,0.6))',
+      }}>
+        <i className="dd-node" />
+        <i className="dd-dash" />
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          marginBottom: 12,
+        }}>
+          <LockIcon size={13} />
+          <span style={{ fontSize: 'var(--fs-label)', color: accent, letterSpacing: '0.12em' }}>
+            {isDevice ? 'MATERIALS IN PREPARATION' : 'DEVICE SCAN IN PROGRESS'}
+          </span>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.75 }}>
+          {isDevice
+            ? 'The materials for this career track are still being prepared. Please stand by.'
+            : "We're currently scanning for devices. We'll share updates as soon as we have news."
+          }
+        </p>
+        <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.15)', letterSpacing: '0.14em', textAlign: 'center' }}>
+          TAP ANYWHERE TO DISMISS
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes modal-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modal-in {
+          from { opacity: 0; transform: scale(0.92) translateY(8px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// ─── Demo controls bar ────────────────────────────────────────────────────────
+
+function DemoControls({
+  completed, onToggle, packPurchased, onTogglePack,
+}: {
+  completed: Record<TaskKey, boolean>
+  onToggle: (key: TaskKey) => void
+  packPurchased: boolean
+  onTogglePack: () => void
+}) {
+  return (
+    <div style={{
+      background: '#060A1A', borderBottom: '1px solid rgba(255,107,53,0.08)',
+      padding: '8px 20px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+    }}>
+      <span style={{ fontSize: 9, color: 'rgba(245,245,245,0.15)', letterSpacing: '0.18em', flexShrink: 0 }}>DEMO</span>
+      <div style={{ width: 1, height: 10, background: 'rgba(255,107,53,0.12)', flexShrink: 0 }} />
+      {TASKS.map((task) => {
+        const done = completed[task.key]
+        return (
+          <button key={task.key} onClick={() => onToggle(task.key)} style={{
+            display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px',
+            background: done ? 'rgba(32,216,144,0.08)' : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${done ? 'rgba(32,216,144,0.3)' : 'rgba(255,255,255,0.08)'}`,
+            color: done ? '#20D890' : 'rgba(245,245,245,0.25)',
+            fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
+            cursor: 'pointer', transition: 'all 0.15s',
+          }}>
+            <span style={{ fontSize: 8 }}>{done ? '●' : '○'}</span>
+            TASK {task.num}
+          </button>
+        )
+      })}
+      {/* Pack purchased toggle — visually separated */}
+      <div style={{ width: 1, height: 10, background: 'rgba(255,107,53,0.12)', flexShrink: 0 }} />
+      <button onClick={onTogglePack} style={{
+        display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px',
+        background: packPurchased ? 'rgba(196,169,106,0.1)' : 'rgba(255,255,255,0.03)',
+        border: `1px solid ${packPurchased ? 'rgba(196,169,106,0.4)' : 'rgba(255,255,255,0.08)'}`,
+        color: packPurchased ? 'rgba(196,169,106,0.9)' : 'rgba(245,245,245,0.25)',
+        fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
+        cursor: 'pointer', transition: 'all 0.15s',
+      }}>
+        <span style={{ fontSize: 8 }}>{packPurchased ? '●' : '○'}</span>
+        PACK PURCHASED
+      </button>
+    </div>
+  )
+}
+
+// ─── Path Rail (stage bar — full width, arrow connectors) ────────────────────
+
+function PathRail({
+  allDone, isVoyager,
+  viewedStage, onStageClick, onConsoleClick,
+}: {
+  allDone: boolean
+  isVoyager: boolean
+  viewedStage: ViewStage
+  onStageClick: (s: ViewStage) => void
+  onConsoleClick: () => void
+}) {
+  // APPLICANT node: green if voyager, amber if tasks done, amber-dim otherwise
+  const applicantDone  = allDone || isVoyager
+  const applicantHex   = applicantDone ? '#20D890' : '#E8A020'
+  const applicantColor = applicantDone ? 'var(--color-ok)' : 'var(--color-warn)'
+
+  // VOYAGER node: gold current if isVoyager, dim-preview if applicant clicked, inactive otherwise
+  const voyagerCurrent  = isVoyager
+  const voyagerPreview  = !isVoyager && viewedStage === 'voyager'
+  const voyagerHex      = 'rgba(196,169,106,'
+  const vBorder = voyagerCurrent ? `${voyagerHex}0.75)` : voyagerPreview ? `${voyagerHex}0.45)` : `${voyagerHex}0.22)`
+  const vBg     = voyagerCurrent ? `${voyagerHex}0.12)` : voyagerPreview ? `${voyagerHex}0.06)` : 'transparent'
+  const vColor  = voyagerCurrent ? `${voyagerHex}0.95)` : voyagerPreview ? `${voyagerHex}0.6)` : `${voyagerHex}0.38)`
+
+  // A→V connector: fully lit when voyager, half-lit when allDone, dim otherwise
+  const avConnector = isVoyager
+    ? 'linear-gradient(90deg,#20D890,rgba(32,216,144,0.6))'
+    : allDone ? 'linear-gradient(90deg,#E85D04,#FF6B35)' : 'rgba(255,107,53,0.12)'
+  const avChevron = isVoyager ? '#20D890' : allDone ? '#FF6B35' : 'rgba(255,107,53,0.22)'
+
+  return (
+    <div className="dd-panel" style={{
+      ['--dd-bd' as string]: isVoyager ? 'rgba(196,169,106,0.4)' : 'rgba(255,107,53,0.25)',
+    }}>
+      <i className="dd-node" />
+      <i className="dd-dash" />
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px 28px' }}>
+
+        {/* ── APPLICANT ── */}
+        <div
+          onClick={() => !isVoyager && onStageClick('applicant')}
+          style={{ flexShrink: 0, textAlign: 'center', width: 72, cursor: isVoyager ? 'default' : 'pointer' }}
+        >
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%', margin: '0 auto 7px',
+            border: `2px solid ${applicantHex}`,
+            background: `${applicantHex}18`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: applicantColor,
+            animation: applicantDone
+              ? (isVoyager ? 'none' : 'node-done 0.4s ease-out')
+              : 'node-pulse 2.4s ease-in-out infinite',
+            outline: (!isVoyager && viewedStage === 'applicant') ? `2px solid ${applicantHex}45` : 'none',
+            outlineOffset: 3,
+            transition: 'all 0.35s ease',
+            opacity: isVoyager ? 0.6 : 1,
+          }}>
+            {applicantDone ? <CheckIcon size={18} /> : <ApplicantIcon size={20} />}
+          </div>
+          <div style={{ fontSize: 9, letterSpacing: '0.13em', color: applicantColor, fontFamily: 'var(--font-mono)', opacity: isVoyager ? 0.55 : 1, transition: 'opacity 0.3s' }}>
+            APPLICANT
+          </div>
+          <div style={{ fontSize: 8, color: `${applicantHex}80`, letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+            {applicantDone ? 'COMPLETE' : 'CURRENT'}
+          </div>
+        </div>
+
+        {/* ── A → V connector ── */}
+        <div style={{ flex: 1, paddingTop: 21, display: 'flex', alignItems: 'center' }}>
+          <div style={{ flex: 1, height: 2, background: avConnector, transition: 'background 0.5s' }} />
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
+            <path d="M2 1l5 4-5 4" stroke={avChevron} strokeWidth="1.4"
+              strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke 0.5s' } as React.CSSProperties} />
+          </svg>
+          <div style={{ flex: 1, height: 2, background: isVoyager ? 'rgba(196,169,106,0.15)' : 'rgba(255,107,53,0.06)', transition: 'background 0.5s' }} />
+        </div>
+
+        {/* ── VOYAGER ── */}
+        <div
+          onClick={() => !isVoyager && onStageClick('voyager')}
+          style={{ flexShrink: 0, textAlign: 'center', width: 72, cursor: isVoyager ? 'default' : 'pointer' }}
+        >
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%', margin: '0 auto 7px',
+            border: `2px solid ${vBorder}`,
+            background: vBg,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: vColor,
+            animation: voyagerCurrent ? 'voyager-pulse 2.4s ease-in-out infinite' : 'none',
+            outline: voyagerCurrent ? `2px solid rgba(196,169,106,0.2)` : 'none',
+            outlineOffset: 3,
+            transition: 'all 0.35s ease',
+          }}>
+            <VoyagerIcon size={20} />
+          </div>
+          <div style={{ fontSize: 9, letterSpacing: '0.13em', color: vColor, fontFamily: 'var(--font-mono)', transition: 'color 0.3s' }}>
+            VOYAGER
+          </div>
+          {voyagerCurrent && (
+            <div style={{ fontSize: 8, color: 'rgba(196,169,106,0.55)', letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+              CURRENT
+            </div>
+          )}
+        </div>
+
+        {/* ── V → C connector ── */}
+        <div style={{ flex: 1, paddingTop: 21, display: 'flex', alignItems: 'center' }}>
+          <div style={{ flex: 1, height: 2, background: 'rgba(255,107,53,0.06)' }} />
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
+            <path d="M2 1l5 4-5 4" stroke="rgba(255,107,53,0.15)" strokeWidth="1.4"
+              strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div style={{ flex: 1, height: 2, background: 'rgba(255,107,53,0.04)' }} />
+        </div>
+
+        {/* ── CONSOLE HOLDER ── */}
+        <div
+          onClick={onConsoleClick}
+          style={{ flexShrink: 0, textAlign: 'center', width: 72, cursor: 'pointer' }}
+        >
+          <div style={{
+            width: 44, height: 44, borderRadius: '50%', margin: '0 auto 7px',
+            border: '2px solid rgba(255,107,53,0.22)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'rgba(255,107,53,0.38)',
+          }}>
+            <LockIcon size={14} />
+          </div>
+          <div style={{ fontSize: 9, letterSpacing: '0.13em', color: 'rgba(255,107,53,0.38)', fontFamily: 'var(--font-mono)' }}>
+            CONSOLE
+          </div>
+          <div style={{ fontSize: 8, letterSpacing: '0.08em', color: 'rgba(255,107,53,0.28)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+            HOLDER
+          </div>
+        </div>
+
+      </div>
+
+      <style>{`
+        @keyframes node-pulse {
+          0%, 100% { box-shadow: 0 0 10px rgba(232,160,32,0.22); }
+          50%       { box-shadow: 0 0 22px rgba(232,160,32,0.5), 0 0 44px rgba(232,160,32,0.12); }
+        }
+        @keyframes node-done {
+          0%  { transform: scale(0.9); opacity: 0.6; }
+          60% { transform: scale(1.06); }
+          100%{ transform: scale(1); opacity: 1; }
+        }
+        @keyframes voyager-pulse {
+          0%, 100% { box-shadow: 0 0 10px rgba(196,169,106,0.2); }
+          50%       { box-shadow: 0 0 24px rgba(196,169,106,0.55), 0 0 48px rgba(196,169,106,0.15); }
+        }
+        @keyframes pack-glow {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
+          50%       { box-shadow: 0 0 18px rgba(255,107,53,0.18), inset 0 0 18px rgba(255,107,53,0.04); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// ─── APPLICANT stage: unlock + pack block ─────────────────────────────────────
+
+function ApplicantUnlockBlock({
+  completedCount, totalTasks, allDone, onDeviceSeeker,
+}: { completedCount: number; totalTasks: number; allDone: boolean; onDeviceSeeker: () => void }) {
+  const remaining = totalTasks - completedCount
+  return (
+    <div className="dd-panel" style={{
+      ['--dd-bd' as string]: allDone ? 'rgba(32,216,144,0.32)' : 'rgba(255,107,53,0.28)',
+      ['--dd-fill' as string]: allDone ? '#0C1A26' : 'var(--bg-panel)',
+    }}>
+      <i className="dd-node" />
+      <i className="dd-dash" />
+      {/* Status row */}
+      <div style={{
+        padding: '13px 18px 12px',
+        borderBottom: `1px solid ${allDone ? 'rgba(32,216,144,0.1)' : 'rgba(255,107,53,0.07)'}`,
+      }}>
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ fontSize: 'var(--fs-label)', letterSpacing: '0.1em', color: allDone ? 'var(--color-ok)' : 'var(--color-star-deep)', transition: 'color 0.3s' }}>
+            {allDone ? 'READY TO ADVANCE' : 'NEXT UNLOCK: VOYAGER STATUS'}
+          </div>
+        </div>
+        {/* Progress pips */}
+        <div style={{ display: 'flex', gap: 3, marginBottom: 6 }}>
+          {Array.from({ length: totalTasks }).map((_, i) => (
+            <div key={i} style={{
+              flex: 1, height: 3,
+              background: i < completedCount
+                ? (allDone ? 'var(--color-ok)' : 'linear-gradient(90deg,#E85D04,#FF6B35)')
+                : 'rgba(255,107,53,0.1)',
+              transition: 'background 0.3s',
+            }} />
+          ))}
+        </div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: allDone ? 'rgba(32,216,144,0.4)' : 'var(--color-star-deep)', opacity: 0.7, transition: 'color 0.3s' }}>
+          {allDone
+            ? 'All tasks complete — select a pack below'
+            : `${remaining} task${remaining !== 1 ? 's' : ''} remaining`}
+        </div>
+      </div>
+      {/* Pack cards */}
+      <div style={{ padding: '14px 18px 16px' }}>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {/* World Builder — always a link, always accessible */}
+          <Link href="/voyager-pack" className="dd-panel" style={{
+            ['--dd-bd' as string]: allDone ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.32)',
+            ['--dd-fill' as string]: allDone ? '#231527' : '#15102A',
+            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 9,
+            padding: '16px 10px 14px', textDecoration: 'none',
+            color: '#FF6B35',
+            animation: allDone ? 'pack-glow 2s ease-in-out infinite' : 'none',
+          }}>
+            <i className="dd-node" />
+            <i className="dd-dash" />
+            <WorldPackIcon size={26} />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.12em' }}>WORLD BUILDER</div>
+              <div style={{ fontSize: 9, color: allDone ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.4)', letterSpacing: '0.1em', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
+                {allDone ? 'APPLY NOW →' : 'VIEW PACK →'}
+              </div>
+            </div>
+          </Link>
+          {/* Device Seeker — coming soon, still clickable */}
+          <button onClick={onDeviceSeeker} className="dd-panel" style={{
+            ['--dd-bd' as string]: 'rgba(255,255,255,0.12)',
+            ['--dd-fill' as string]: '#0C1029',
+            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 9,
+            padding: '16px 10px 14px', cursor: 'pointer',
+            color: 'rgba(245,245,245,0.35)',
+            fontFamily: 'var(--font-mono)',
+          }}>
+            <i className="dd-node" />
+            <i className="dd-dash" />
+            <DevicePackIcon size={26} />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 11, letterSpacing: '0.12em' }}>DEVICE SEEKER</div>
+              <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.2)', letterSpacing: '0.1em', marginTop: 4 }}>
+                COMING SOON
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── VOYAGER stage content ────────────────────────────────────────────────────
+
+function VoyagerStageContent({ onConsoleClick }: { onConsoleClick: () => void }) {
+  return (
+    <div className="dd-panel" style={{
+      ['--dd-bd' as string]: 'rgba(196,169,106,0.3)',
+    }}>
+      <i className="dd-node" />
+      <i className="dd-dash" />
+      {/* Status */}
+      <div style={{
+        padding: '13px 18px 13px',
+        borderBottom: '1px solid rgba(196,169,106,0.08)',
+      }}>
+        <div style={{ fontSize: 'var(--fs-label)', letterSpacing: '0.1em', color: 'rgba(196,169,106,0.55)', marginBottom: 4 }}>
+          NEXT UNLOCK: CONSOLE HOLDER
+        </div>
+        <p style={{ margin: 0, fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', lineHeight: 1.75 }}>
+          The Multiverse Console is currently being explored and repaired.
+          We&apos;ll notify you as soon as there&apos;s news.
+        </p>
+      </div>
+      {/* Locked apply button */}
+      <div style={{ padding: '14px 18px 16px' }}>
+        <button
+          onClick={onConsoleClick}
+          className="dd-panel"
+          style={{
+            ['--dd-bd' as string]: 'rgba(255,255,255,0.1)',
+            ['--dd-fill' as string]: '#0C1029',
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            padding: '15px', cursor: 'pointer', fontFamily: 'var(--font-mono)',
+            color: 'rgba(245,245,245,0.2)',
+          }}
+        >
+          <i className="dd-node" />
+          <i className="dd-dash" />
+          <ConsoleIcon size={22} />
+          <span style={{ fontSize: 11, letterSpacing: '0.14em' }}>APPLY FOR CONSOLE</span>
+          <LockIcon size={12} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── VOYAGER welcome block (post-purchase) ────────────────────────────────────
+
+function VoyagerWelcomeBlock({ onConsoleClick }: { onConsoleClick: () => void }) {
+  const gold = (a: number) => `rgba(196,169,106,${a})`
+
+  const capabilities = [
+    {
+      icon: <IntelIcon />,
+      label: 'Architect Intel',
+      desc: 'Access all filed Architect reports and strategic dispatches.',
+      href: '/intel',
+      locked: false,
+    },
+    {
+      icon: <VoteIcon />,
+      label: 'Collective Votes',
+      desc: 'Cast votes on Collective decisions and shape the direction of the mission.',
+      href: '/vote',
+      locked: false,
+    },
+    {
+      icon: <WorldIcon />,
+      label: 'Signal & Exploration Tasks',
+      desc: 'Take on special missions: identify anomalous signals and explore parallel worlds.',
+      href: null,
+      locked: true,
+    },
+    {
+      icon: <ConsoleIcon size={18} />,
+      label: 'Apply for Multiverse Console',
+      desc: 'Voyagers with strong standing may be selected for early Console access.',
+      href: null,
+      locked: true,
+      onClickLocked: onConsoleClick,
+    },
+  ]
+
+  return (
+    <div className="dd-panel" style={{
+      ['--dd-bd' as string]: gold(0.4),
+      ['--dd-fill' as string]: '#13152C',
+      animation: 'voyager-welcome-in 0.35s ease-out',
+    }}>
+      <i className="dd-node" />
+      <i className="dd-dash" />
+
+      {/* ── Header ── */}
+      <div style={{
+        padding: '14px 18px 13px',
+        borderBottom: `1px solid ${gold(0.1)}`,
+        display: 'flex', alignItems: 'center', gap: 10,
+      }}>
+        <div style={{ color: gold(0.7) }}><VoyagerIcon size={16} /></div>
+        <span style={{ fontSize: 'var(--fs-label)', letterSpacing: '0.12em', color: gold(0.75) }}>
+          VOYAGER — ACTIVE ACCESS
+        </span>
+      </div>
+
+      {/* ── Capability rows ── */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {capabilities.map(({ icon, label, desc, href, locked, onClickLocked }, i) => {
+          const isLast = i === capabilities.length - 1
+          const rowStyle: React.CSSProperties = {
+            display: 'flex', alignItems: 'center', gap: 14,
+            padding: '13px 18px',
+            borderBottom: isLast ? 'none' : `1px solid ${locked ? 'rgba(255,255,255,0.04)' : gold(0.07)}`,
+            textDecoration: 'none',
+            background: 'transparent',
+            cursor: locked ? (onClickLocked ? 'pointer' : 'default') : 'pointer',
+            transition: 'background 0.15s',
+            width: '100%', textAlign: 'left',
+            fontFamily: 'var(--font-mono)',
+          }
+
+          const inner = (
+            <>
+              <div style={{
+                width: 34, height: 34, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: locked
+                  ? '1px solid rgba(255,255,255,0.08)'
+                  : `1px solid ${gold(0.3)}`,
+                background: locked ? 'rgba(255,255,255,0.02)' : gold(0.07),
+                color: locked ? 'rgba(245,245,245,0.2)' : gold(0.65),
+              }}>
+                {icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 11, letterSpacing: '0.08em', marginBottom: 3,
+                  color: locked ? 'rgba(245,245,245,0.22)' : gold(0.8),
+                }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: 9, color: locked ? 'rgba(245,245,245,0.15)' : 'rgba(245,245,245,0.35)', letterSpacing: '0.05em', lineHeight: 1.6 }}>
+                  {desc}
+                </div>
+              </div>
+              <div style={{ flexShrink: 0, color: locked ? 'rgba(255,255,255,0.15)' : gold(0.45) }}>
+                {locked ? <LockIcon size={13} /> : <ArrowIcon size={13} />}
+              </div>
+            </>
+          )
+
+          if (!locked && href) {
+            return (
+              <Link
+                key={label}
+                href={href}
+                style={rowStyle}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = gold(0.06) }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                {inner}
+              </Link>
+            )
+          }
+
+          return (
+            <button
+              key={label}
+              onClick={onClickLocked}
+              style={rowStyle}
+            >
+              {inner}
+            </button>
+          )
+        })}
+      </div>
+
+      <style>{`
+        @keyframes voyager-welcome-in {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// ─── Task card — entire row clickable ─────────────────────────────────────────
+
+function TaskCard({ task, done }: { task: typeof TASKS[number]; done: boolean }) {
+  const idleBd  = done ? 'rgba(32,216,144,0.22)' : 'rgba(255,107,53,0.18)'
+  const hoverBd = done ? 'rgba(32,216,144,0.45)' : 'rgba(255,107,53,0.4)'
+  return (
+    <Link
+      href={task.href}
+      className="dd-panel"
+      style={{
+        ['--dd-bd' as string]: idleBd,
+        ['--dd-fill' as string]: done ? '#0C1A24' : 'var(--bg-panel)',
+        display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+        textDecoration: 'none',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.setProperty('--dd-bd', hoverBd) }}
+      onMouseLeave={(e) => { e.currentTarget.style.setProperty('--dd-bd', idleBd) }}
+    >
+      <i className="dd-node" />
+      <i className="dd-dash" />
+      <div style={{ flexShrink: 0 }}>
+        {done ? (
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(32,216,144,0.12)', border: '1.5px solid rgba(32,216,144,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#20D890' }}>
+            <CheckCircleIcon size={18} />
+          </div>
+        ) : (
+          <div style={{ width: 28, height: 28, background: `${task.accentColor}10`, border: `1px solid ${task.accentColor}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: task.accentColor }}>
+            {task.icon}
+          </div>
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 'var(--fs-label)', letterSpacing: '0.05em', color: done ? 'rgba(32,216,144,0.6)' : '#F5F5F5' }}>
+            {task.label}
+          </span>
+          {done && (
+            <span style={{ fontSize: 9, letterSpacing: '0.14em', color: '#20D890', background: 'rgba(32,216,144,0.09)', border: '1px solid rgba(32,216,144,0.22)', padding: '1px 6px' }}>
+              DONE
+            </span>
+          )}
+        </div>
+        <p style={{ margin: 0, fontSize: 'var(--fs-caption)', color: done ? 'rgba(245,245,245,0.2)' : 'rgba(245,245,245,0.4)', lineHeight: 1.55 }}>
+          {task.description}
+        </p>
+      </div>
+      <div style={{ flexShrink: 0, color: done ? 'rgba(32,216,144,0.4)' : task.accentColor }}>
+        {done ? <CheckIcon size={14} /> : <ArrowIcon size={14} />}
+      </div>
+    </Link>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function DashboardDemoPage() {
+  const [completed, setCompleted] = useState<Record<TaskKey, boolean>>({
+    report_sighting: false,
+    cast_votes:      false,
+    read_intel:      false,
+    pass_quiz:       false,
+  })
+  const [packPurchased, setPackPurchased] = useState(false)
+  const [viewedStage, setViewedStage]     = useState<ViewStage>('applicant')
+  const [modal, setModal]                 = useState<ModalKind | null>(null)
+
+  const completedCount = Object.values(completed).filter(Boolean).length
+  const totalTasks     = TASKS.length
+  const allDone        = completedCount === totalTasks
+
+  // Voyager = pack purchased (tasks are auto-completed for the demo)
+  const isVoyager = packPurchased
+
+  function toggleTask(key: TaskKey) {
+    setCompleted(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  function togglePack() {
+    const next = !packPurchased
+    setPackPurchased(next)
+    // When becoming a voyager, mark all tasks done and switch to voyager view
+    if (next) {
+      setCompleted({ report_sighting: true, cast_votes: true, read_intel: true, pass_quiz: true })
+      setViewedStage('voyager')
+    } else {
+      setViewedStage('applicant')
+    }
+  }
+
+  function handleStageClick(stage: ViewStage) {
+    if (stage === 'console') {
+      setModal('console_locked')
+    } else {
+      setViewedStage(stage)
+    }
+  }
+
+  return (
+    <div style={{ height: '100vh', overflowY: 'auto', background: 'var(--color-deep)', fontFamily: 'var(--font-mono)' }}>
+
+      {/* ── Centered modal ── */}
+      <Modal kind={modal} onClose={() => setModal(null)} />
+
+      {/* ── Top bar ── */}
+      <div style={{ borderBottom: '1px solid rgba(255,107,53,0.12)', background: '#0F1430', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/vi-wordmark.png" alt="Multiverse Collective" style={{ height: 20, width: 'auto', display: 'block' }} />
+          <div style={{ width: 1, height: 12, background: 'rgba(255,107,53,0.22)' }} />
+          <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.2em' }}>DASHBOARD</span>
+        </div>
+        {isVoyager ? (
+          <span style={{
+            fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', padding: '2px 8px',
+            color: 'rgba(196,169,106,0.85)',
+            border: '1px solid rgba(196,169,106,0.35)',
+            background: 'rgba(196,169,106,0.07)',
+            transition: 'all 0.3s',
+            animation: 'badge-in 0.3s ease-out',
+          }}>
+            VOYAGER
+          </span>
+        ) : (
+          <span style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', letterSpacing: '0.2em', border: '1px solid #E8A02044', padding: '2px 8px' }}>
+            APPLICANT
+          </span>
+        )}
+      </div>
+
+      {/* ── Demo controls ── */}
+      <DemoControls
+        completed={completed} onToggle={toggleTask}
+        packPurchased={packPurchased} onTogglePack={togglePack}
+      />
+
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '24px 20px 80px' }}>
+
+        {/* ── YOUR PATH ── */}
+        <section style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 8 }}>
+            <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.22em' }}>— YOUR PATH —</span>
+          </div>
+          <PathRail
+            allDone={allDone}
+            isVoyager={isVoyager}
+            viewedStage={viewedStage}
+            onStageClick={handleStageClick}
+            onConsoleClick={() => setModal('console_locked')}
+          />
+        </section>
+
+        {/* ── Stage-specific content ── */}
+        <section style={{ marginBottom: 16 }}>
+          {isVoyager ? (
+            <VoyagerWelcomeBlock onConsoleClick={() => setModal('console_locked')} />
+          ) : viewedStage === 'applicant' ? (
+            <ApplicantUnlockBlock
+              completedCount={completedCount}
+              totalTasks={totalTasks}
+              allDone={allDone}
+              onDeviceSeeker={() => setModal('device_seeker')}
+            />
+          ) : (
+            <VoyagerStageContent onConsoleClick={() => setModal('console_locked')} />
+          )}
+        </section>
+
+        {/* ── APPLICANT TASKS (only in applicant/non-voyager view) ── */}
+        {!isVoyager && viewedStage === 'applicant' && (
+          <section>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.22em' }}>— APPLICANT TASKS —</span>
+              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: allDone ? '#20D890' : 'rgba(245,245,245,0.3)' }}>
+                {allDone ? 'ALL COMPLETE ✓' : `${completedCount} OF ${totalTasks} COMPLETE`}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {TASKS.map((task) => (
+                <TaskCard key={task.key} task={task} done={completed[task.key]} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <div style={{ marginTop: 20, textAlign: 'center' }}>
+          <span style={{ fontSize: 9, color: 'rgba(245,245,245,0.08)', letterSpacing: '0.15em' }}>DASHBOARD DEMO — STATIC PROTOTYPE</span>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes badge-in {
+          from { opacity: 0; transform: scale(0.9); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+
+        /* ── ui-kit candidate HUD restyle — notched panel ──
+           Two clipped layers: ::before = border, ::after = fill (inset by border
+           width). Signature decorations: BL square node + right-edge dashed tick. */
+        .dd-panel {
+          position: relative;
+          --dd-notch: 15px;
+          --dd-bw: 1.5px;
+          --dd-bd: rgba(255,107,53,0.3);
+          --dd-fill: var(--bg-panel);
+        }
+        .dd-panel::before {
+          content: ''; position: absolute; inset: 0; z-index: 0;
+          background: var(--dd-bd);
+          clip-path: polygon(var(--dd-notch) 0, 100% 0, 100% calc(100% - var(--dd-notch)), calc(100% - var(--dd-notch)) 100%, 0 100%, 0 var(--dd-notch));
+          transition: background 0.4s;
+        }
+        .dd-panel::after {
+          content: ''; position: absolute; inset: var(--dd-bw); z-index: 0;
+          background: var(--dd-fill);
+          clip-path: polygon(calc(var(--dd-notch) - var(--dd-bw)) 0, 100% 0, 100% calc(100% - var(--dd-notch) + var(--dd-bw)), calc(100% - var(--dd-notch) + var(--dd-bw)) 100%, 0 100%, 0 calc(var(--dd-notch) - var(--dd-bw)));
+          transition: background 0.3s;
+        }
+        /* lift real content above the two clip layers */
+        .dd-panel > *:not(.dd-node):not(.dd-dash):not(style) {
+          position: relative; z-index: 1;
+        }
+        /* BL square node */
+        .dd-node {
+          position: absolute; z-index: 2; left: 0; bottom: 0;
+          width: 6px; height: 6px; background: var(--dd-bd); pointer-events: none;
+          transition: background 0.4s;
+        }
+        /* right-edge dashed tick, near the top */
+        .dd-dash {
+          position: absolute; z-index: 2; right: 2px; top: 14px;
+          width: 1.6px; height: 30px; pointer-events: none; opacity: 0.9;
+          background: repeating-linear-gradient(180deg, var(--dd-bd) 0 3.5px, transparent 3.5px 7px);
+          transition: background 0.4s;
+        }
+      `}</style>
+    </div>
+  )
+}
