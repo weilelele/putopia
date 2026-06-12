@@ -92,7 +92,7 @@ const PRIMARY_NAV = [
 ]
 
 const MORE_NAV = [
-  { href: '/signal', label: 'SIGNAL',         icon: <SignalIcon /> },
+  { href: '/signal', label: 'DISPATCH',        icon: <SignalIcon /> },
   { href: '/logs',   label: 'VOYAGER LOGS',   icon: <LogsIcon /> },
   { href: '/vote',   label: 'VOTING HUB',     icon: <VoteIcon /> },
   { href: '/worlds', label: 'WORLD RECORDS',  icon: <WorldsIcon /> },

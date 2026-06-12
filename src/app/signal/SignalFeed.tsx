@@ -18,10 +18,12 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
       <div style={{ maxWidth: 880, margin: '0 auto' }}>
         {/* header */}
         <div style={{ borderBottom: '1px solid rgba(255,107,53,0.2)', paddingBottom: 16, marginBottom: 28 }}>
-          <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.3em', marginBottom: 8 }}>// SIGNAL TASKS</div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>TODAY&apos;S SIGNALS</h1>
-          <p style={{ fontSize: 13, color: 'rgba(245,245,245,0.55)', marginTop: 8, lineHeight: 1.6 }}>
-            Vote with your intuition — no right or wrong answers.
+          <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.3em', marginBottom: 8 }}>// SIGNAL DISPATCH</div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>SIGNAL DISPATCH</h1>
+          <p style={{ fontSize: 13, color: 'rgba(245,245,245,0.55)', marginTop: 8, lineHeight: 1.8 }}>
+            We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
+            Your intuition is the only instrument that can make sense of them —
+            help us decipher the noise, and connect to more parallel worlds.
           </p>
           {!feed.canParticipate && (
             <div style={{ fontSize: 11, color: '#E8A020', marginTop: 6, letterSpacing: '0.1em' }}>
