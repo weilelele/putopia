@@ -63,6 +63,12 @@ const WorldsIcon = () => (
   </svg>
 )
 
+const SignalIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
+    <path d="M1 9 Q3 4 5 9 Q7 14 9 9 Q11 4 13 9 Q15 14 17 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
 const DotsIcon = () => (
   <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
     <circle cx="9" cy="4" r="1.5" fill="currentColor"/>
@@ -86,6 +92,7 @@ const PRIMARY_NAV = [
 ]
 
 const MORE_NAV = [
+  { href: '/signal', label: 'SIGNAL',         icon: <SignalIcon /> },
   { href: '/logs',   label: 'VOYAGER LOGS',   icon: <LogsIcon /> },
   { href: '/vote',   label: 'VOTING HUB',     icon: <VoteIcon /> },
   { href: '/worlds', label: 'WORLD RECORDS',  icon: <WorldsIcon /> },
