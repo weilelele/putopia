@@ -90,6 +90,44 @@ export const DIRECT_HTML = `
     </table>
 
     <!-- Intel 1 -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;background:#0F1430;border:1px solid rgba(255,107,53,0.14);border-left:2px solid rgba(245,245,245,0.2);">
+      <tr><td style="padding:18px 20px;">
+        <div style="margin-bottom:10px;">
+          <span style="font-size:8px;letter-spacing:0.18em;color:rgba(245,245,245,0.45);border:1px solid rgba(245,245,245,0.18);padding:2px 8px;">NOTICE</span>
+          <span style="font-size:8px;letter-spacing:0.12em;color:rgba(245,245,245,0.25);margin-left:10px;">2026-06-12</span>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">
+          Collective&#39;s badges will soon be available to claim.
+        </div>
+        <div style="font-size:11px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:14px;">
+          For some time we have been debating whether to reveal our existence to others. We have prepared a special badge for everyone who aspires to become a Voyager — so that when we see each other across the world, we can share a knowing smile.
+        </div>
+        <a href="https://putopia.vercel.app/intel/INT-640130" style="display:inline-block;font-size:9px;letter-spacing:0.2em;color:rgba(245,245,245,0.45);text-decoration:none;border-bottom:1px solid rgba(245,245,245,0.18);">
+          READ NOTICE →
+        </a>
+      </td></tr>
+    </table>
+
+    <!-- Intel 2 -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;background:#0F1430;border:1px solid rgba(255,107,53,0.14);border-left:2px solid rgba(255,107,53,0.5);">
+      <tr><td style="padding:18px 20px;">
+        <div style="margin-bottom:10px;">
+          <span style="font-size:8px;letter-spacing:0.18em;color:#E85D04;border:1px solid rgba(232,93,4,0.35);padding:2px 8px;">ORG</span>
+          <span style="font-size:8px;letter-spacing:0.12em;color:rgba(245,245,245,0.25);margin-left:10px;">2026-06-12</span>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">
+          Archive Unsealing Protocol — Mass Signal Declassification
+        </div>
+        <div style="font-size:11px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:14px;">
+          The Collective initiates controlled release of long-archived parallel-world signal data. All members are directed to participate in signal-locking procedures. Time investment per unit is minimal; aggregate contribution yields significant expansion of world-mapping coverage.
+        </div>
+        <a href="https://putopia.vercel.app/intel/INT-640129" style="display:inline-block;font-size:9px;letter-spacing:0.2em;color:#FF6B35;text-decoration:none;border-bottom:1px solid rgba(255,107,53,0.35);">
+          READ DISPATCH →
+        </a>
+      </td></tr>
+    </table>
+
+    <!-- Intel 3 -->
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;background:#0F1430;border:1px solid rgba(255,107,53,0.14);border-left:2px solid rgba(255,107,53,0.5);">
       <tr><td style="padding:18px 20px;">
         <div style="margin-bottom:10px;">
@@ -100,48 +138,10 @@ export const DIRECT_HTML = `
           Why does our organization need to exist?
         </div>
         <div style="font-size:11px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:14px;">
-          Recently, many new members have joined us. I want to inform all of our new members that over 100 years ago, the Multiverse Collective came close to total collapse — and how that shapes our mission today.
+          Over 100 years ago, the Multiverse Collective came close to total collapse. Understanding that history is essential — our goal is not aggression, but building connections across worlds on goodwill and positive energy.
         </div>
         <a href="https://putopia.vercel.app/intel/INT-628014" style="display:inline-block;font-size:9px;letter-spacing:0.2em;color:#FF6B35;text-decoration:none;border-bottom:1px solid rgba(255,107,53,0.35);">
           READ DISPATCH →
-        </a>
-      </td></tr>
-    </table>
-
-    <!-- Intel 2 -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;background:#0F1430;border:1px solid rgba(255,107,53,0.14);border-left:2px solid rgba(245,245,245,0.2);">
-      <tr><td style="padding:18px 20px;">
-        <div style="margin-bottom:10px;">
-          <span style="font-size:8px;letter-spacing:0.18em;color:rgba(245,245,245,0.45);border:1px solid rgba(245,245,245,0.18);padding:2px 8px;">NOTICE</span>
-          <span style="font-size:8px;letter-spacing:0.12em;color:rgba(245,245,245,0.25);margin-left:10px;">2026-05-20</span>
-        </div>
-        <div style="font-size:14px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">
-          Console Distribution Temporarily Limited Due to Enrollment Surge
-        </div>
-        <div style="font-size:11px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:14px;">
-          Enrollment volume has exceeded projected allocation capacity. The provisioning team is actively working to secure additional devices. Voyagers awaiting console assignment: your status remains valid.
-        </div>
-        <a href="https://putopia.vercel.app/intel/INT-628013" style="display:inline-block;font-size:9px;letter-spacing:0.2em;color:rgba(245,245,245,0.45);text-decoration:none;border-bottom:1px solid rgba(245,245,245,0.18);">
-          READ NOTICE →
-        </a>
-      </td></tr>
-    </table>
-
-    <!-- Intel 3 -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;background:#0F1430;border:1px solid rgba(255,107,53,0.14);border-left:2px solid rgba(232,93,4,0.5);">
-      <tr><td style="padding:18px 20px;">
-        <div style="margin-bottom:10px;">
-          <span style="font-size:8px;letter-spacing:0.18em;color:#E85D04;border:1px solid rgba(232,93,4,0.35);padding:2px 8px;">ORG</span>
-          <span style="font-size:8px;letter-spacing:0.12em;color:rgba(245,245,245,0.25);margin-left:10px;">2026-04-27</span>
-        </div>
-        <div style="font-size:14px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">
-          Rumor: The Field Effect
-        </div>
-        <div style="font-size:11px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:14px;">
-          Establishing a connection with a parallel world appears to generate a stable energy field around the operator. Several members have independently reported an increase in spontaneous acts of goodwill in their surroundings during active observation sessions.
-        </div>
-        <a href="https://putopia.vercel.app/intel/9c6fdc60-385e-4cec-8e69-aef016a08037" style="display:inline-block;font-size:9px;letter-spacing:0.2em;color:#FF6B35;text-decoration:none;border-bottom:1px solid rgba(255,107,53,0.35);">
-          READ REPORT →
         </a>
       </td></tr>
     </table>
