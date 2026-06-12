@@ -391,14 +391,12 @@ export default function DevicesPage() {
                 </div>
 
                 <div className="p-3">
-                  <div className="flex items-start justify-between mb-1.5">
-                    <div className="min-w-0">
-                      <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>{device.id}</div>
-                      <div className="text-sm font-mono font-semibold truncate" style={{ color: '#F5F5F5' }}>{device.name}</div>
-                    </div>
+                  <div className="mb-1.5 min-w-0">
+                    <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>{device.id}</div>
+                    <div className="text-sm font-mono font-semibold truncate" style={{ color: '#F5F5F5' }}>{device.name}</div>
                     {device.status && (
                       <span
-                        className="label-tag whitespace-nowrap ml-1 shrink-0"
+                        className="label-tag whitespace-nowrap mt-1 inline-block"
                         style={{ color: statusStyle.color, fontSize: 'var(--fs-caption)' }}
                       >
                         {STATUS_LABELS[device.status] ?? device.status}
