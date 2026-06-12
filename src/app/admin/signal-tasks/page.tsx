@@ -3,9 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   getFrequencies,
-  listTasks,
   getTask,
-  createTask,
   setTaskPublished,
   updateTask,
   deleteTask,
@@ -13,22 +11,23 @@ import {
   setAssetSelected,
   setAssetRole,
   deleteAsset,
-  listThreads,
-  createThread,
+  listInvestigations,
+  createInvestigation,
+  addDayToInvestigation,
+  listInvestigationTasks,
 } from '@/lib/actions/signal-tasks'
 import type {
   SignalTask,
   SignalTaskAsset,
   SignalTaskType,
   GenerateSource,
-  SignalThreadRow,
-  ThreadSource,
+  InvestigationSummary,
 } from '@/lib/actions/signal-tasks'
 import type { CosmoFrequency } from '@/lib/cosmo'
 import type { CropShape, FilterPreset } from '@/lib/signal/presets'
 import { FILTER_PRESETS } from '@/lib/signal/presets'
 
-// ─── styles (match other admin pages) ─────────────────────────────────────────
+// ─── styles ───────────────────────────────────────────────────────────────────
 const S = {
   card: { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '18px', marginBottom: '12px' } as const,
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
@@ -42,7 +41,7 @@ const S = {
 }
 
 const TYPE_LABELS: Record<SignalTaskType, string> = {
-  visual_match: 'VISUAL · Match (main + options)',
+  visual_match: 'VISUAL · Match',
   visual_odd_one: 'VISUAL · Odd One Out',
   audio_odd_one: 'AUDIO · Odd One Out',
 }
@@ -50,239 +49,218 @@ const TYPE_LABELS: Record<SignalTaskType, string> = {
 const SHAPES: CropShape[] = ['square', 'circle', 'rect']
 
 const FILTER_LABELS: Record<FilterPreset, string> = {
-  signal_decay: 'Signal Decay (pixelate + noise + scanlines)',
+  signal_decay: 'Signal Decay (pixelate + noise)',
   chromatic: 'Chromatic (RGB channel split)',
-  glitch_art: 'Glitch Art (slice displacement + ghost)',
+  glitch_art: 'Glitch Art (slice displacement)',
   static_noise: 'Static Noise (heavy grain)',
 }
 
+// ─── Root ─────────────────────────────────────────────────────────────────────
 export default function SignalTasksAdmin() {
   const [freqs, setFreqs] = useState<CosmoFrequency[]>([])
   const [freqsLoading, setFreqsLoading] = useState(true)
-  const [tasks, setTasks] = useState<SignalTask[]>([])
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [investigations, setInvestigations] = useState<InvestigationSummary[]>([])
+  const [activeInvId, setActiveInvId] = useState<string | null>(null)
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+  const [newInvOpen, setNewInvOpen] = useState(false)
 
-  const refreshTasks = useCallback(async () => {
-    setTasks(await listTasks())
+  const refreshInvestigations = useCallback(async () => {
+    setInvestigations(await listInvestigations())
   }, [])
 
   useEffect(() => {
-    getFrequencies().then((f) => {
-      setFreqs(f)
-      setFreqsLoading(false)
-    })
-    refreshTasks()
-  }, [refreshTasks])
+    getFrequencies().then((f) => { setFreqs(f); setFreqsLoading(false) })
+    refreshInvestigations()
+  }, [refreshInvestigations])
+
+  const activeInv = investigations.find((i) => i.id === activeInvId) ?? null
 
   return (
-   <div>
-    {!freqsLoading && <ThreadPanel freqs={freqs} />}
-    <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-      {/* Left: task list */}
-      <div style={{ width: 260, flexShrink: 0 }}>
+    <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+      {/* Left: investigation list */}
+      <div style={{ width: 240, flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>SIGNAL TASKS</span>
-          <NewTaskButton onCreated={async (id) => { await refreshTasks(); setActiveId(id) }} />
+          <span style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.2em' }}>INVESTIGATIONS</span>
+          <button style={{ ...S.btn, ...S.btnOk, padding: '4px 10px' }} onClick={() => setNewInvOpen((o) => !o)}>
+            {newInvOpen ? '✕' : '+ NEW'}
+          </button>
         </div>
-        {tasks.length === 0 && <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 12 }}>No tasks yet.</div>}
-        {tasks.map((t) => (
+
+        {newInvOpen && (
+          <NewInvestigationForm
+            onCreated={async (id) => {
+              setNewInvOpen(false)
+              await refreshInvestigations()
+              setActiveInvId(id)
+              setActiveTaskId(null)
+            }}
+          />
+        )}
+
+        {investigations.length === 0 && !newInvOpen && (
+          <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 12 }}>No investigations yet.</div>
+        )}
+
+        {investigations.map((inv) => (
           <button
-            key={t.id}
-            onClick={() => setActiveId(t.id)}
+            key={inv.id}
+            onClick={() => { setActiveInvId(inv.id); setActiveTaskId(null) }}
             style={{
-              ...S.card,
-              width: '100%', textAlign: 'left', cursor: 'pointer', padding: '12px',
-              borderColor: activeId === t.id ? 'rgba(255,107,53,0.5)' : 'rgba(255,107,53,0.16)',
+              ...S.card, width: '100%', textAlign: 'left', cursor: 'pointer', padding: '10px 12px',
+              borderColor: activeInvId === inv.id ? 'rgba(255,107,53,0.5)' : 'rgba(255,107,53,0.16)',
             }}
           >
-            <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.35)', letterSpacing: '0.08em' }}>
-              {t.task_date} · {t.type.replace(/_/g, ' ')}
+            <div style={{ fontSize: 12, color: '#F5F5F5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {inv.title || '(untitled)'}
             </div>
-            <div style={{ fontSize: 12, color: '#F5F5F5', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {t.prompt || '(no prompt)'}
-            </div>
-            <div style={{ fontSize: 10, marginTop: 6, color: t.is_published ? '#20D890' : 'rgba(245,245,245,0.3)', letterSpacing: '0.1em' }}>
-              {t.is_published ? '● LIVE' : '○ DRAFT'}
+            <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.35)', marginTop: 3, letterSpacing: '0.06em' }}>
+              {inv.type.replace(/_/g, ' ')} · {inv.dayCount} day{inv.dayCount !== 1 ? 's' : ''}
             </div>
           </button>
         ))}
       </div>
 
-      {/* Right: editor */}
+      {/* Middle: day list for selected investigation */}
+      {activeInvId && (
+        <div style={{ width: 200, flexShrink: 0 }}>
+          <DayList
+            key={activeInvId}
+            investigationId={activeInvId}
+            investigationTitle={activeInv?.title ?? ''}
+            activeTaskId={activeTaskId}
+            onSelectTask={setActiveTaskId}
+            onDayAdded={async (id) => {
+              await refreshInvestigations()
+              setActiveTaskId(id)
+            }}
+          />
+        </div>
+      )}
+
+      {/* Right: task editor */}
       <div style={{ flex: 1, minWidth: 0 }}>
         {freqsLoading && <div style={{ color: 'rgba(245,245,245,0.4)', fontSize: 12, marginBottom: 12 }}>Loading Cosmo catalog…</div>}
-        {!activeId ? (
-          <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 13, paddingTop: 40, textAlign: 'center' }}>
-            Select a task on the left, or click + NEW to create one.
+        {!activeInvId && (
+          <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 13, paddingTop: 60, textAlign: 'center' }}>
+            Select an investigation on the left.
           </div>
-        ) : (
+        )}
+        {activeInvId && !activeTaskId && (
+          <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 13, paddingTop: 60, textAlign: 'center' }}>
+            Select a day or click + Add Day.
+          </div>
+        )}
+        {activeTaskId && (
           <TaskEditor
-            key={activeId}
-            taskId={activeId}
+            key={activeTaskId}
+            taskId={activeTaskId}
             freqs={freqs}
-            onChanged={refreshTasks}
-            onDeleted={async () => { setActiveId(null); await refreshTasks() }}
+            onChanged={refreshInvestigations}
+            onDeleted={async () => { setActiveTaskId(null); await refreshInvestigations() }}
           />
         )}
       </div>
     </div>
-   </div>
   )
 }
 
-// ─── Investigation threads ─────────────────────────────────────────────────────
-function ThreadPanel({ freqs }: { freqs: CosmoFrequency[] }) {
-  const [threads, setThreads] = useState<SignalThreadRow[]>([])
-  const [open, setOpen] = useState(false)
-  const refresh = useCallback(async () => setThreads(await listThreads()), [])
-  useEffect(() => { refresh() }, [refresh])
-
-  return (
-    <div style={{ ...S.card, marginBottom: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: threads.length || open ? 12 : 0 }}>
-        <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>INVESTIGATION THREADS</span>
-        <button style={{ ...S.btn, ...S.btnOk }} onClick={() => setOpen((o) => !o)}>{open ? 'Collapse' : '+ New Thread'}</button>
-      </div>
-
-      {open && <CreateThreadForm freqs={freqs} onCreated={() => { setOpen(false); refresh() }} />}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {threads.map((t) => (
-          <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0F1430', border: '1px solid rgba(255,107,53,0.12)', padding: '10px 12px' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, color: '#F5F5F5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {t.title || t.id} <span style={{ color: 'rgba(245,245,245,0.4)' }}>· {t.type.replace(/_/g, ' ')}</span>
-              </div>
-              <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.4)', marginTop: 3 }}>
-                Day {t.day_count} · clarity {t.clarity}/{t.clarity_max} · drift {t.drift} ·{' '}
-                <span style={{ color: t.status === 'locked' ? '#20D890' : t.status === 'lost' ? '#E83030' : '#E8A020' }}>
-                  {t.status === 'locked' ? `LOCKED${t.world_id ? ` → ${t.world_id}` : ''}` : t.status === 'lost' ? 'LOST' : 'OPEN'}
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
-        {threads.length === 0 && !open && (
-          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.35)' }}>
-            No investigation threads yet. Create one to group daily tasks by signal source.
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function CreateThreadForm({ freqs, onCreated }: { freqs: CosmoFrequency[]; onCreated: () => void }) {
+// ─── New investigation form ────────────────────────────────────────────────────
+function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }) {
+  const [title, setTitle] = useState('')
   const [type, setType] = useState<SignalTaskType>('visual_odd_one')
-  const [prompt, setPrompt] = useState('Which signal does not belong to this group?')
-  const [optionCount, setOptionCount] = useState(4)
-  const [clarityMax, setClarityMax] = useState(4)
-  const [busy, setBusy] = useState(false)
-  const audioMode = type === 'audio_odd_one'
-  const wantImage = !audioMode
-  const pickBand = (f: CosmoFrequency | undefined) =>
-    f?.bands.find((b) => (wantImage ? b.imageCount > 0 : b.videoCount > 0)) || f?.bands[0]
-  const mk = (f: CosmoFrequency): ThreadSource => { const b = pickBand(f); return { channelId: f.channelId, channelName: f.name, freq: f.freq, bandId: b?.bandId || '', bandName: b?.name || '' } }
-  const [group, setGroup] = useState<ThreadSource>(() => mk(freqs[0]))
-  const [target, setTarget] = useState<ThreadSource>(() => mk(freqs[1] || freqs[0]))
-
-  const setSrcFreq = (set: (s: ThreadSource) => void, channelId: string) => {
-    const f = freqs.find((x) => x.channelId === channelId); if (f) set(mk(f))
-  }
-  const setSrcBand = (src: ThreadSource, set: (s: ThreadSource) => void, bandId: string) => {
-    const f = freqs.find((x) => x.channelId === src.channelId); const b = f?.bands.find((x) => x.bandId === bandId)
-    set({ ...src, bandId, bandName: b?.name || '' })
-  }
-  const srcRow = (label: string, src: ThreadSource, set: (s: ThreadSource) => void) => {
-    const f = freqs.find((x) => x.channelId === src.channelId)
-    return (
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 11, color: 'rgba(245,245,245,0.5)', width: 72 }}>{label}</span>
-        <select style={{ ...S.sel, maxWidth: 200 }} value={src.channelId} onChange={(e) => setSrcFreq(set, e.target.value)}>
-          {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq ?? '–'} {fr.name}</option>)}
-        </select>
-        <select style={{ ...S.sel, maxWidth: 200 }} value={src.bandId} onChange={(e) => setSrcBand(src, set, e.target.value)}>
-          {(f?.bands || []).map((b) => <option key={b.bandId} value={b.bandId}>{b.name} (img {b.imageCount} / vid {b.videoCount})</option>)}
-        </select>
-      </div>
-    )
-  }
-
-  const submit = async () => {
-    setBusy(true)
-    const r = await createThread({ type, prompt, group, target, optionCount, clarityMax })
-    setBusy(false)
-    if (!r.ok) { alert(r.error || 'Failed to create thread'); return }
-    alert(`Thread created. Day 0 task published with ${r.made} assets.`)
-    onCreated()
-  }
-
-  return (
-    <div style={{ background: '#0F1430', border: '1px solid rgba(255,107,53,0.2)', padding: 14, marginBottom: 12 }}>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
-        <div>
-          <label style={S.label}>TYPE</label>
-          <select style={S.sel} value={type} onChange={(e) => setType(e.target.value as SignalTaskType)}>
-            <option value="visual_odd_one">VISUAL · Odd One Out</option>
-            <option value="audio_odd_one">AUDIO · Odd One Out</option>
-          </select>
-        </div>
-        <div>
-          <label style={S.label}>OPTIONS</label>
-          <input type="number" min={3} max={6} style={{ ...S.input, width: 64 }} value={optionCount} onChange={(e) => setOptionCount(Math.max(3, Number(e.target.value)))} />
-        </div>
-        <div>
-          <label style={S.label}>DAYS TO LOCK</label>
-          <input type="number" min={1} max={10} style={{ ...S.input, width: 64 }} value={clarityMax} onChange={(e) => setClarityMax(Math.max(1, Number(e.target.value)))} />
-        </div>
-      </div>
-
-      <label style={S.label}>PROMPT</label>
-      <input style={{ ...S.input, marginBottom: 10 }} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
-      {srcRow('Group', group, setGroup)}
-      {srcRow('Target', target, setTarget)}
-      <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.4)', marginBottom: 10 }}>
-        Target = the hidden correct answer (the signal that doesn&apos;t belong). Never sent to the frontend.
-      </div>
-      <button style={{ ...S.btn, ...S.btnOk, opacity: busy ? 0.5 : 1 }} disabled={busy} onClick={submit}>
-        {busy ? 'Creating…' : 'Create thread & publish day 0'}
-      </button>
-    </div>
-  )
-}
-
-// ─── New task ─────────────────────────────────────────────────────────────────
-function NewTaskButton({ onCreated }: { onCreated: (id: string) => void }) {
-  const [open, setOpen] = useState(false)
-  const [type, setType] = useState<SignalTaskType>('visual_odd_one')
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [busy, setBusy] = useState(false)
 
-  if (!open) {
-    return <button style={{ ...S.btn, ...S.btnOk }} onClick={() => setOpen(true)}>+ NEW</button>
-  }
   return (
-    <div style={{ position: 'absolute', zIndex: 10, marginTop: 30, background: '#0F1430', border: '1px solid rgba(255,107,53,0.3)', padding: 14, width: 240 }}>
+    <div style={{ ...S.card, padding: 12, marginBottom: 12 }}>
+      <label style={S.label}>TITLE</label>
+      <input style={{ ...S.input, marginBottom: 8 }} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. The Alien Signal" />
       <label style={S.label}>TYPE</label>
-      <select style={{ ...S.sel, width: '100%' }} value={type} onChange={(e) => setType(e.target.value as SignalTaskType)}>
+      <select style={{ ...S.sel, width: '100%', marginBottom: 10 }} value={type} onChange={(e) => setType(e.target.value as SignalTaskType)}>
         {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
-      <label style={{ ...S.label, marginTop: 10 }}>DATE</label>
-      <input type="date" style={S.input} value={date} onChange={(e) => setDate(e.target.value)} />
-      <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
-        <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => setOpen(false)}>Cancel</button>
+      <button
+        style={{ ...S.btn, ...S.btnOk, opacity: !title.trim() || busy ? 0.5 : 1, width: '100%' }}
+        disabled={!title.trim() || busy}
+        onClick={async () => {
+          setBusy(true)
+          const r = await createInvestigation({ title: title.trim(), type })
+          setBusy(false)
+          if (!r.ok || !r.id) { alert(r.error || 'Failed'); return }
+          onCreated(r.id)
+        }}
+      >{busy ? 'Creating…' : 'Create'}</button>
+    </div>
+  )
+}
+
+// ─── Day list for an investigation ────────────────────────────────────────────
+function DayList({
+  investigationId, investigationTitle, activeTaskId, onSelectTask, onDayAdded,
+}: {
+  investigationId: string
+  investigationTitle: string
+  activeTaskId: string | null
+  onSelectTask: (id: string) => void
+  onDayAdded: (id: string) => void
+}) {
+  const [tasks, setTasks] = useState<SignalTask[]>([])
+  const [busy, setBusy] = useState(false)
+
+  const reload = useCallback(async () => {
+    setTasks(await listInvestigationTasks(investigationId))
+  }, [investigationId])
+
+  useEffect(() => { reload() }, [reload])
+
+  const addDay = async () => {
+    setBusy(true)
+    const r = await addDayToInvestigation(investigationId)
+    setBusy(false)
+    if (!r.ok || !r.id) { alert(r.error || 'Failed'); return }
+    await reload()
+    onDayAdded(r.id)
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <span style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.15em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
+          {investigationTitle || 'DAYS'}
+        </span>
         <button
-          style={{ ...S.btn, ...S.btnOk, opacity: busy ? 0.5 : 1 }}
+          style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', opacity: busy ? 0.5 : 1 }}
           disabled={busy}
-          onClick={async () => {
-            setBusy(true)
-            const r = await createTask({ type, task_date: date })
-            setBusy(false)
-            if (r.ok && r.id) { setOpen(false); onCreated(r.id) }
-            else alert(r.error || 'Failed to create task')
-          }}
-        >{busy ? '…' : 'Create'}</button>
+          onClick={addDay}
+        >{busy ? '…' : '+ Day'}</button>
       </div>
+
+      {tasks.length === 0 && (
+        <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.3)' }}>No days yet — click + Day.</div>
+      )}
+
+      {tasks.map((t) => {
+        const dayNum = (t.day_index ?? 0) + 1
+        const isActive = t.id === activeTaskId
+        return (
+          <button
+            key={t.id}
+            onClick={() => onSelectTask(t.id)}
+            style={{
+              width: '100%', textAlign: 'left', cursor: 'pointer', padding: '8px 10px',
+              background: isActive ? 'rgba(255,107,53,0.1)' : '#0F1430',
+              border: `1px solid ${isActive ? 'rgba(255,107,53,0.4)' : 'rgba(255,107,53,0.1)'}`,
+              marginBottom: 4, display: 'block',
+            }}
+          >
+            <div style={{ fontSize: 12, color: isActive ? '#FF6B35' : '#F5F5F5', letterSpacing: '0.08em' }}>
+              Day {dayNum}
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.35)', marginTop: 2 }}>
+              {t.task_date} · <span style={{ color: t.is_published ? '#20D890' : 'rgba(245,245,245,0.3)' }}>{t.is_published ? '● LIVE' : '○ DRAFT'}</span>
+            </div>
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -312,15 +290,15 @@ function TaskEditor({
   if (loading) return <div style={{ color: 'rgba(245,245,245,0.4)', fontSize: 12 }}>Loading…</div>
   if (!task) return <div style={{ color: '#E83030', fontSize: 12 }}>Task not found.</div>
 
+  const dayNum = (task.day_index ?? 0) + 1
   const selectedCount = assets.filter((a) => a.is_selected).length
 
   return (
     <div>
-      {/* meta */}
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>
-            {TYPE_LABELS[task.type]} · {task.task_date}
+            DAY {dayNum} · {task.task_date} · {TYPE_LABELS[task.type]}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
@@ -329,25 +307,33 @@ function TaskEditor({
             >{task.is_published ? '○ Unpublish' : '● Publish'}</button>
             <button
               style={{ ...S.btn, ...S.btnDanger }}
-              onClick={async () => { if (confirm('Delete this task and all its assets?')) { await deleteTask(taskId); onDeleted() } }}
+              onClick={async () => { if (confirm('Delete this day and all its assets?')) { await deleteTask(taskId); onDeleted() } }}
             >Delete</button>
           </div>
         </div>
         <label style={S.label}>PROMPT</label>
         <textarea style={S.area} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Write the puzzle prompt…" />
-        <button
-          style={{ ...S.btn, ...S.btnGhost, marginTop: 8 }}
-          onClick={async () => { await updateTask(taskId, { prompt }); await reload(); onChanged() }}
-        >Save</button>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+          <button
+            style={{ ...S.btn, ...S.btnGhost }}
+            onClick={async () => { await updateTask(taskId, { prompt }); await reload(); onChanged() }}
+          >Save prompt</button>
+          <div>
+            <label style={{ ...S.label, display: 'inline', marginRight: 6 }}>Date</label>
+            <input
+              type="date" style={{ ...S.input, width: 140, display: 'inline-block' }}
+              value={task.task_date}
+              onChange={async (e) => { await updateTask(taskId, { task_date: e.target.value }); await reload(); onChanged() }}
+            />
+          </div>
+        </div>
         {task.is_published && selectedCount === 0 && (
           <div style={{ marginTop: 8, fontSize: 11, color: '#E8A020' }}>⚠ Published but no assets selected — members will see nothing.</div>
         )}
       </div>
 
-      {/* generator */}
       <Generator taskId={taskId} freqs={freqs} taskType={task.type} onGenerated={reload} />
 
-      {/* candidate pool */}
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
           <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>CANDIDATE POOL</span>
@@ -358,7 +344,7 @@ function TaskEditor({
         {assets.length === 0 ? (
           <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 12 }}>No candidates yet — use the generator above.</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
             {assets.map((a) => (
               <AssetCard key={a.id} asset={a} showRole={task.type === 'visual_match'} onChanged={reload} />
             ))}
@@ -370,14 +356,7 @@ function TaskEditor({
 }
 
 // ─── Generator ────────────────────────────────────────────────────────────────
-function Generator({
-  taskId, freqs, taskType, onGenerated,
-}: {
-  taskId: string
-  freqs: CosmoFrequency[]
-  taskType: SignalTaskType
-  onGenerated: () => void
-}) {
+function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; freqs: CosmoFrequency[]; taskType: SignalTaskType; onGenerated: () => void }) {
   const audioMode = taskType === 'audio_odd_one'
   const [sources, setSources] = useState<GenerateSource[]>([])
   const [shape, setShape] = useState<CropShape>('square')
@@ -386,28 +365,22 @@ function Generator({
   const [filter, setFilter] = useState<FilterPreset>('signal_decay')
   const [durationSec, setDurationSec] = useState(4)
   const [busy, setBusy] = useState(false)
-  const [result, setResult] = useState<string>('')
+  const [result, setResult] = useState('')
 
   const defaultMedia: 'image' | 'video' = audioMode ? 'video' : 'image'
-
   const pickBand = (f: CosmoFrequency | undefined, media: 'image' | 'video') =>
     f?.bands.find((x) => (media === 'image' ? x.imageCount > 0 : x.videoCount > 0)) || f?.bands[0]
 
   const addSource = () => {
-    if (sources.length >= 3) return
-    const f = freqs[0]
-    const b = pickBand(f, defaultMedia)
-    if (!f || !b) return
+    if (sources.length >= 3 || !freqs[0]) return
+    const f = freqs[0]; const b = pickBand(f, defaultMedia)
+    if (!b) return
     setSources((s) => [...s, { channelId: f.channelId, channelName: f.name, freq: f.freq, bandId: b.bandId, bandName: b.name, media: defaultMedia, count: 4 }])
   }
-
-  const updateSource = (i: number, patch: Partial<GenerateSource>) =>
-    setSources((s) => s.map((x, idx) => (idx === i ? { ...x, ...patch } : x)))
+  const updateSource = (i: number, patch: Partial<GenerateSource>) => setSources((s) => s.map((x, idx) => idx === i ? { ...x, ...patch } : x))
   const removeSource = (i: number) => setSources((s) => s.filter((_, idx) => idx !== i))
-
   const onPickFreq = (i: number, channelId: string) => {
-    const f = freqs.find((x) => x.channelId === channelId)
-    if (!f) return
+    const f = freqs.find((x) => x.channelId === channelId); if (!f) return
     const b = pickBand(f, sources[i].media)
     updateSource(i, { channelId, channelName: f.name, freq: f.freq, bandId: b?.bandId || '', bandName: b?.name || '' })
   }
@@ -416,57 +389,47 @@ function Generator({
     const b = f?.bands.find((x) => x.bandId === bandId)
     updateSource(i, { bandId, bandName: b?.name || '' })
   }
-
   const run = async () => {
-    if (sources.length === 0) return
+    if (!sources.length) return
     setBusy(true); setResult('')
     const r = await generateCandidates(taskId, sources, { shape, areaRatio, glitchIntensity: glitch, filter }, { durationSec })
     setBusy(false)
-    setResult(`Generated ${r.created} candidates` + (r.errors.length ? ` · ${r.errors.length} error(s): ${r.errors.slice(0, 2).join('; ')}` : ''))
+    setResult(`Generated ${r.created} candidates` + (r.errors.length ? ` · ${r.errors.length} error(s)` : ''))
     onGenerated()
   }
 
-  const title = audioMode ? 'BATCH GENERATE (audio from video tracks)' : 'BATCH GENERATE (image / video)'
-
   return (
     <div style={S.card}>
-      <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em', marginBottom: 10 }}>{title}</div>
-      {audioMode && (
-        <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.45)', marginBottom: 10 }}>
-          Audio tasks extract the audio track from channel videos. ~25% of clips have no audio (2× oversampling compensates).
-        </div>
-      )}
+      <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em', marginBottom: 10 }}>
+        {audioMode ? 'BATCH GENERATE (audio from video)' : 'BATCH GENERATE'}
+      </div>
 
       {sources.map((src, i) => {
         const f = freqs.find((x) => x.channelId === src.channelId)
         return (
-          <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-            <select style={{ ...S.sel, maxWidth: 190 }} value={src.channelId} onChange={(e) => onPickFreq(i, e.target.value)}>
+          <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+            <select style={{ ...S.sel, maxWidth: 180 }} value={src.channelId} onChange={(e) => onPickFreq(i, e.target.value)}>
               {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq ?? '–'} {fr.name}</option>)}
             </select>
-            <select style={{ ...S.sel, maxWidth: 190 }} value={src.bandId} onChange={(e) => onPickBand(i, e.target.value)}>
-              {(f?.bands || []).map((b) => <option key={b.bandId} value={b.bandId}>{b.name} (img {b.imageCount} / vid {b.videoCount})</option>)}
+            <select style={{ ...S.sel, maxWidth: 160 }} value={src.bandId} onChange={(e) => onPickBand(i, e.target.value)}>
+              {(f?.bands || []).map((b) => <option key={b.bandId} value={b.bandId}>{b.name} ({b.imageCount}i/{b.videoCount}v)</option>)}
             </select>
             {!audioMode && (
-              <select style={{ ...S.sel, maxWidth: 90 }} value={src.media} onChange={(e) => { const media = e.target.value as 'image' | 'video'; updateSource(i, { media, ...(pickBand(f, media) ? {} : {}) }) }}>
+              <select style={{ ...S.sel, maxWidth: 80 }} value={src.media} onChange={(e) => updateSource(i, { media: e.target.value as 'image' | 'video' })}>
                 <option value="image">image</option>
                 <option value="video">video</option>
               </select>
             )}
-            <label style={{ fontSize: 11, color: 'rgba(245,245,245,0.4)' }}>count</label>
-            <input type="number" min={1} max={20} style={{ ...S.input, width: 56 }} value={src.count} onChange={(e) => updateSource(i, { count: Math.max(1, Number(e.target.value)) })} />
-            <button style={{ ...S.btn, ...S.btnDanger }} onClick={() => removeSource(i)}>×</button>
+            <input type="number" min={1} max={20} style={{ ...S.input, width: 52 }} value={src.count} onChange={(e) => updateSource(i, { count: Math.max(1, Number(e.target.value)) })} />
+            <button style={{ ...S.btn, ...S.btnDanger, padding: '4px 8px' }} onClick={() => removeSource(i)}>×</button>
           </div>
         )
       })}
 
-      <button style={{ ...S.btn, ...S.btnGhost, marginBottom: 12 }} onClick={addSource} disabled={sources.length >= 3 || freqs.length === 0}>
-        + Add source (max 3)
-      </button>
+      <button style={{ ...S.btn, ...S.btnGhost, marginBottom: 10 }} onClick={addSource} disabled={sources.length >= 3 || !freqs.length}>+ Add source (max 3)</button>
 
-      {/* crop / filter config (audio uses none of these) */}
       {!audioMode && (
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 10, alignItems: 'flex-end' }}>
           <div>
             <label style={S.label}>FILTER</label>
             <select style={S.sel} value={filter} onChange={(e) => setFilter(e.target.value as FilterPreset)}>
@@ -480,25 +443,25 @@ function Generator({
             </select>
           </div>
           <div>
-            <label style={S.label}>CROP AREA {(areaRatio * 100).toFixed(0)}%</label>
-            <input type="range" min={5} max={40} value={Math.round(areaRatio * 100)} onChange={(e) => setAreaRatio(Number(e.target.value) / 100)} style={{ accentColor: '#FF6B35', width: 140 }} />
+            <label style={S.label}>CROP {(areaRatio * 100).toFixed(0)}%</label>
+            <input type="range" min={5} max={40} value={Math.round(areaRatio * 100)} onChange={(e) => setAreaRatio(Number(e.target.value) / 100)} style={{ accentColor: '#FF6B35', width: 120 }} />
           </div>
           <div>
             <label style={S.label}>GLITCH {glitch}</label>
-            <input type="range" min={0} max={100} value={glitch} onChange={(e) => setGlitch(Number(e.target.value))} style={{ accentColor: '#FF6B35', width: 140 }} />
+            <input type="range" min={0} max={100} value={glitch} onChange={(e) => setGlitch(Number(e.target.value))} style={{ accentColor: '#FF6B35', width: 120 }} />
           </div>
         </div>
       )}
 
       {(audioMode || sources.some((s) => s.media === 'video')) && (
-        <div style={{ marginBottom: 12 }}>
-          <label style={S.label}>{audioMode ? 'AUDIO' : 'VIDEO'} CLIP LENGTH {durationSec}s</label>
-          <input type="range" min={2} max={10} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} style={{ accentColor: '#FF6B35', width: 160 }} />
+        <div style={{ marginBottom: 10 }}>
+          <label style={S.label}>CLIP LENGTH {durationSec}s</label>
+          <input type="range" min={2} max={10} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} style={{ accentColor: '#FF6B35', width: 140 }} />
         </div>
       )}
 
-      <button style={{ ...S.btn, ...S.btnOk, opacity: busy || sources.length === 0 ? 0.5 : 1 }} disabled={busy || sources.length === 0} onClick={run}>
-        {busy ? 'Generating… (this may take a few seconds)' : '⚡ Generate candidates'}
+      <button style={{ ...S.btn, ...S.btnOk, opacity: busy || !sources.length ? 0.5 : 1 }} disabled={busy || !sources.length} onClick={run}>
+        {busy ? 'Generating…' : '⚡ Generate candidates'}
       </button>
       {result && <div style={{ marginTop: 8, fontSize: 11, color: 'rgba(245,245,245,0.6)' }}>{result}</div>}
     </div>
@@ -506,47 +469,39 @@ function Generator({
 }
 
 // ─── Asset card ───────────────────────────────────────────────────────────────
-function AssetCard({
-  asset, showRole, onChanged,
-}: {
-  asset: SignalTaskAsset
-  showRole: boolean
-  onChanged: () => void
-}) {
+function AssetCard({ asset, showRole, onChanged }: { asset: SignalTaskAsset; showRole: boolean; onChanged: () => void }) {
   const [busy, setBusy] = useState(false)
   const wrap = async (fn: () => Promise<unknown>) => { setBusy(true); await fn(); await onChanged(); setBusy(false) }
 
   return (
-    <div style={{
-      border: asset.is_selected ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)',
-      background: '#0F1430', padding: 8, opacity: busy ? 0.5 : 1,
-    }}>
+    <div style={{ border: asset.is_selected ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: 6, opacity: busy ? 0.5 : 1 }}>
       {asset.media === 'video' ? (
         <video src={asset.processed_url || ''} controls muted loop style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
       ) : asset.media === 'audio' ? (
-        <div style={{ background: '#070912', padding: '18px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 22 }}>🔊</span>
+        <div style={{ background: '#070912', padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 20 }}>🔊</span>
           <audio src={asset.processed_url || ''} controls style={{ width: '100%' }} />
         </div>
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={asset.processed_url || ''} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
       )}
-      <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.4)', marginTop: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {asset.source_freq ?? '–'} {asset.source_channel_name} / {asset.source_band_name}
+      <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.35)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {asset.source_freq ?? '–'} {asset.source_band_name}
       </div>
-      <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-        <button
-          style={{ ...S.btn, padding: '4px 8px', ...(asset.is_selected ? S.btnOk : S.btnGhost) }}
-          onClick={() => wrap(() => setAssetSelected(asset.id, !asset.is_selected))}
-        >{asset.is_selected ? '✓ Live' : 'Set live'}</button>
+      <div style={{ display: 'flex', gap: 4, marginTop: 5, flexWrap: 'wrap' }}>
+        <button style={{ ...S.btn, padding: '3px 6px', fontSize: '10px', ...(asset.is_selected ? S.btnOk : S.btnGhost) }}
+          onClick={() => wrap(() => setAssetSelected(asset.id, !asset.is_selected))}>
+          {asset.is_selected ? '✓ Live' : 'Live'}
+        </button>
         {showRole && asset.is_selected && (
-          <button
-            style={{ ...S.btn, padding: '4px 8px', ...(asset.asset_role === 'main' ? S.btnOk : S.btnGhost) }}
-            onClick={() => wrap(() => setAssetRole(asset.id, asset.asset_role === 'main' ? 'option' : 'main'))}
-          >{asset.asset_role === 'main' ? '★ Main' : 'Set main'}</button>
+          <button style={{ ...S.btn, padding: '3px 6px', fontSize: '10px', ...(asset.asset_role === 'main' ? S.btnOk : S.btnGhost) }}
+            onClick={() => wrap(() => setAssetRole(asset.id, asset.asset_role === 'main' ? 'option' : 'main'))}>
+            {asset.asset_role === 'main' ? '★ Main' : 'Main'}
+          </button>
         )}
-        <button style={{ ...S.btn, padding: '4px 8px', ...S.btnDanger }} onClick={() => wrap(() => deleteAsset(asset.id))}>Del</button>
+        <button style={{ ...S.btn, padding: '3px 6px', fontSize: '10px', ...S.btnDanger }}
+          onClick={() => wrap(() => deleteAsset(asset.id))}>Del</button>
       </div>
     </div>
   )

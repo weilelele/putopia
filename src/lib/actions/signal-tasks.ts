@@ -31,6 +31,8 @@ export interface SignalTask {
   is_published: boolean
   sort_order: number
   created_at: string
+  day_index: number | null
+  thread_id: string | null
 }
 
 export interface SignalTaskAsset {
@@ -83,7 +85,7 @@ export async function listTasks(): Promise<SignalTask[]> {
   const supabase = createAdminClient() as DB
   const { data, error } = await supabase
     .from('signal_tasks')
-    .select('id, task_date, type, prompt, is_published, sort_order, created_at')
+    .select('id, task_date, type, prompt, is_published, sort_order, created_at, day_index, thread_id')
     .order('task_date', { ascending: false })
     .order('sort_order', { ascending: true })
   if (error || !data) return []
@@ -96,7 +98,7 @@ export async function getTask(
   const supabase = createAdminClient() as DB
   const { data: task } = await supabase
     .from('signal_tasks')
-    .select('id, task_date, type, prompt, is_published, sort_order, created_at')
+    .select('id, task_date, type, prompt, is_published, sort_order, created_at, day_index, thread_id')
     .eq('id', taskId)
     .single()
   if (!task) return null
@@ -137,7 +139,36 @@ export async function setTaskPublished(
     .from('signal_tasks')
     .update({ is_published: published })
     .eq('id', taskId)
-  return error ? { ok: false, error: error.message } : { ok: true }
+  if (error) return { ok: false, error: error.message }
+
+  // When publishing a task that belongs to an investigation, post to the feed
+  if (published) {
+    try {
+      const { data: task } = await supabase
+        .from('signal_tasks')
+        .select('thread_id, day_index, prompt, type')
+        .eq('id', taskId)
+        .maybeSingle()
+      if (task?.thread_id) {
+        const { data: thread } = await supabase
+          .from('signal_threads')
+          .select('title')
+          .eq('id', task.thread_id)
+          .maybeSingle()
+        if (thread?.title) {
+          const dayNum = (task.day_index ?? 0) + 1
+          await postSignalStory(
+            `signal-day-${taskId.slice(0, 8)}`,
+            `Day ${dayNum} · ${thread.title}`,
+            task.prompt || `New signals available for Day ${dayNum} of "${thread.title}".`,
+            `**${thread.title}** — Day ${dayNum} signals are now live.\n\nHead to Signal Tasks and cast your vote.`,
+          )
+        }
+      }
+    } catch { /* feed post is best-effort */ }
+  }
+
+  return { ok: true }
 }
 
 export async function updateTask(
@@ -530,6 +561,236 @@ export async function submitSignalResponse(
     return { ok: false, error: error.message }
   }
   return { ok: true }
+}
+
+// ─── Investigation management (simplified — no auto-evolution) ────────────────
+
+export interface PublicInvestigation {
+  id: string
+  title: string
+  type: SignalTaskType
+  days: {
+    dayIndex: number
+    task: PublicSignalTask
+  }[]
+}
+
+export interface InvestigationFeedData {
+  investigations: PublicInvestigation[]
+  role: string | null
+  canParticipate: boolean
+}
+
+export interface InvestigationSummary {
+  id: string
+  title: string | null
+  type: SignalTaskType
+  dayCount: number
+  createdAt: string
+}
+
+/** Post a system-authored story to the community feed (best-effort). */
+async function postSignalStory(id: string, title: string, excerpt: string, content: string) {
+  const admin = createAdminClient() as DB
+  try {
+    await admin.from('stories').insert({
+      id,
+      title,
+      author_id: null,
+      author_name: 'The Organization',
+      date: todayStr(),
+      tags: ['signal', 'investigation'],
+      excerpt,
+      content,
+      youtube_id: null,
+      is_published: true,
+    })
+  } catch (e) {
+    console.warn('[signal] postSignalStory non-fatal:', (e as Error).message)
+  }
+}
+
+/** Create a new investigation — title + type only, no auto day generation. */
+export async function createInvestigation(input: {
+  title: string
+  type: SignalTaskType
+}): Promise<{ ok: boolean; id?: string; error?: string }> {
+  const me = await currentUser()
+  if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
+  const admin = createAdminClient() as DB
+
+  const { data, error } = await admin
+    .from('signal_threads')
+    .insert({ title: input.title, type: input.type, created_by: me.id })
+    .select('id')
+    .single()
+  if (error || !data) return { ok: false, error: error?.message }
+
+  await postSignalStory(
+    `signal-inv-${data.id.slice(0, 8)}`,
+    `New Investigation: ${input.title}`,
+    `A new signal investigation has opened: "${input.title}". Vote each day as the organization closes in.`,
+    `The organization has opened a new line of investigation: **${input.title}**.\n\nHead to Signal Tasks to participate.`,
+  )
+
+  return { ok: true, id: data.id }
+}
+
+/** Add the next day to an investigation — creates a draft task (day_index auto-increments). */
+export async function addDayToInvestigation(
+  threadId: string,
+): Promise<{ ok: boolean; id?: string; dayIndex?: number; error?: string }> {
+  const me = await currentUser()
+  if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
+  const admin = createAdminClient() as DB
+
+  const { data: thread } = await admin
+    .from('signal_threads')
+    .select('type')
+    .eq('id', threadId)
+    .single()
+  if (!thread) return { ok: false, error: 'Investigation not found' }
+
+  const { data: latest } = await admin
+    .from('signal_tasks')
+    .select('day_index')
+    .eq('thread_id', threadId)
+    .order('day_index', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const nextDayIndex = (latest?.day_index ?? -1) + 1
+
+  const { data, error } = await admin
+    .from('signal_tasks')
+    .insert({
+      type: thread.type,
+      task_date: todayStr(),
+      is_published: false,
+      thread_id: threadId,
+      day_index: nextDayIndex,
+    })
+    .select('id')
+    .single()
+
+  if (error || !data) return { ok: false, error: error?.message }
+  return { ok: true, id: data.id, dayIndex: nextDayIndex }
+}
+
+/** List all investigations (threads) ordered newest first. */
+export async function listInvestigations(): Promise<InvestigationSummary[]> {
+  const admin = createAdminClient() as DB
+  const { data } = await admin
+    .from('signal_threads')
+    .select('id, title, type, created_at')
+    .order('created_at', { ascending: false })
+  const rows = (data ?? []) as InvestigationSummary[]
+  for (const r of rows) {
+    const { count } = await admin
+      .from('signal_tasks')
+      .select('id', { count: 'exact', head: true })
+      .eq('thread_id', r.id)
+    r.dayCount = count ?? 0
+  }
+  return rows
+}
+
+/** List all tasks for an investigation, sorted by day_index ASC. */
+export async function listInvestigationTasks(threadId: string): Promise<SignalTask[]> {
+  const admin = createAdminClient() as DB
+  const { data } = await admin
+    .from('signal_tasks')
+    .select('id, task_date, type, prompt, is_published, sort_order, created_at, day_index, thread_id')
+    .eq('thread_id', threadId)
+    .order('day_index', { ascending: true })
+  return (data ?? []) as SignalTask[]
+}
+
+/** Member-facing: all investigations with their published days, for the /signal page. */
+export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
+  const admin = createAdminClient() as DB
+  const me = await currentUser()
+  const role = me?.role ?? null
+  const isArchitect = role === 'architect'
+  const canParticipate = role === 'voyager' || role === 'architect'
+
+  const { data: threads } = await admin
+    .from('signal_threads')
+    .select('id, title, type')
+    .order('created_at', { ascending: false })
+
+  const investigations: PublicInvestigation[] = []
+
+  for (const thread of threads ?? []) {
+    const { data: taskRows } = await admin
+      .from('signal_tasks')
+      .select('id, type, prompt, day_index')
+      .eq('thread_id', thread.id)
+      .eq('is_published', true)
+      .order('day_index', { ascending: true })
+
+    if (!taskRows?.length) continue
+
+    const days: PublicInvestigation['days'] = []
+    for (const t of taskRows) {
+      const { data: assetRows } = await admin
+        .from('signal_task_assets')
+        .select('id, media, processed_url, display_url, asset_role, display_order')
+        .eq('task_id', t.id)
+        .eq('is_selected', true)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: true })
+
+      const { count } = await admin
+        .from('signal_responses')
+        .select('id', { count: 'exact', head: true })
+        .eq('task_id', t.id)
+
+      let mySelection: string | null = null
+      if (me) {
+        const { data: mine } = await admin
+          .from('signal_responses')
+          .select('selected_asset_id')
+          .eq('task_id', t.id)
+          .eq('user_id', me.id)
+          .maybeSingle()
+        mySelection = mine?.selected_asset_id ?? null
+      }
+
+      let distribution: Record<string, number> | null = null
+      if (mySelection || isArchitect) {
+        const { data: all } = await admin
+          .from('signal_responses')
+          .select('selected_asset_id')
+          .eq('task_id', t.id)
+        distribution = {}
+        for (const r of all ?? []) {
+          const k = r.selected_asset_id as string
+          distribution[k] = (distribution[k] ?? 0) + 1
+        }
+      }
+
+      days.push({
+        dayIndex: t.day_index ?? 0,
+        task: {
+          id: t.id,
+          type: t.type,
+          prompt: t.prompt,
+          assets: (assetRows ?? []) as PublicSignalAsset[],
+          participantCount: count ?? 0,
+          mySelection,
+          distribution,
+          thread: null,
+        },
+      })
+    }
+
+    if (days.length > 0) {
+      investigations.push({ id: thread.id, title: thread.title || 'Investigation', type: thread.type, days })
+    }
+  }
+
+  return { investigations, role, canParticipate }
 }
 
 // ─── Investigation threads: the natural day-to-day evolution ──────────────────
