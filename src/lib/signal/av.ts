@@ -124,20 +124,36 @@ async function cornerMaskPng(size: number): Promise<Buffer> {
   return sharp(svg).png().toBuffer()
 }
 
+export interface VideoClipResult {
+  /** Glitched MP4 — store as the canonical asset (exports, social media, admin preview). */
+  buffer: Buffer
+  contentType: 'video/mp4'
+  ext: 'mp4'
+  box: { left: number; top: number; width: number; height: number }
+  /** Animated WebP derived from the MP4 — use as `<img>` on the frontend.
+   *  Auto-loops without any play button. Null if WebP conversion failed. */
+  displayBuffer: Buffer | null
+  displayContentType: 'image/webp'
+  displayExt: 'webp'
+}
+
 /**
  * Crop + glitch a short clip from a Cosmo video. `circle` is rendered by overlaying
  * a corner mask (transparent centre circle) so the crop reads as a circle on the
- * dark UI; `rect` honours cfg.aspect; otherwise square. Returns a muted MP4.
+ * dark UI; `rect` honours cfg.aspect; otherwise square.
+ *
+ * Returns a muted MP4 (canonical) + an animated WebP (frontend display).
  */
 export async function renderVideoClip(
   videoUrl: string,
   cfg: CropConfig,
   opts: { durSec?: number } = {},
-): Promise<{ buffer: Buffer; contentType: string; ext: string; box: { left: number; top: number; width: number; height: number } }> {
+): Promise<VideoClipResult> {
   const dur = clamp(opts.durSec ?? 4, 1, 15)
   const src = await fetchToTemp(videoUrl, 'mp4')
   const out = join(tmpdir(), `sig-${randomUUID()}.mp4`)
   let maskPath: string | null = null
+  let outWebp: string | null = null
   try {
     const meta = await probeVideoMeta(src)
     if (!meta.width || !meta.height) throw new Error('could not read video dimensions')
@@ -181,11 +197,42 @@ export async function renderVideoClip(
 
     await pexec('ffmpeg', args, { maxBuffer: 1024 * 1024 * 64 })
     const buffer = await readFile(out)
-    return { buffer, contentType: 'video/mp4', ext: 'mp4', box: { left: cx, top: cy, width: cw, height: ch } }
+
+    // Convert the glitched MP4 → animated WebP for frontend display.
+    // WebP renders as <img>: auto-plays, auto-loops, no controls needed.
+    let displayBuffer: Buffer | null = null
+    try {
+      outWebp = join(tmpdir(), `sig-${randomUUID()}.webp`)
+      await pexec('ffmpeg', [
+        '-y', '-v', 'error',
+        '-i', out,
+        '-vf', 'fps=15',
+        '-c:v', 'libwebp_anim',
+        '-loop', '0',
+        '-quality', '75',
+        '-lossless', '0',
+        outWebp,
+      ], { maxBuffer: 1024 * 1024 * 64 })
+      displayBuffer = await readFile(outWebp)
+    } catch (e) {
+      // WebP conversion is best-effort — MP4 is always available as fallback
+      console.warn('[signal/av] WebP conversion failed (non-fatal):', (e as Error).message)
+    }
+
+    return {
+      buffer,
+      contentType: 'video/mp4',
+      ext: 'mp4',
+      box: { left: cx, top: cy, width: cw, height: ch },
+      displayBuffer,
+      displayContentType: 'image/webp',
+      displayExt: 'webp',
+    }
   } finally {
     await safeUnlink(src)
     await safeUnlink(out)
     if (maskPath) await safeUnlink(maskPath)
+    if (outWebp) await safeUnlink(outWebp)
   }
 }
 

@@ -49,6 +49,12 @@ export function SignalFeed({ initial }: { initial: Feed }) {
 
 function AssetView({ asset }: { asset: PublicSignalAsset }) {
   if (asset.media === 'video') {
+    // Prefer animated WebP (auto-loops as <img>, no play button).
+    // Fall back to <video> for older assets without a display_url.
+    if (asset.display_url) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={asset.display_url} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+    }
     return <video src={asset.processed_url || ''} controls loop muted playsInline style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
   }
   if (asset.media === 'audio') {

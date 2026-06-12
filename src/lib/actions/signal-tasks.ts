@@ -43,6 +43,9 @@ export interface SignalTaskAsset {
   source_asset_id: string | null
   source_url: string | null
   processed_url: string | null
+  /** Animated WebP derived from the MP4 — used by the frontend for auto-looping
+   *  display. Null for image/audio assets and older video rows. */
+  display_url: string | null
   crop_config: CropConfig | Record<string, unknown>
   asset_role: 'main' | 'option'
   is_selected: boolean
@@ -188,6 +191,7 @@ export async function generateCandidates(
     media: SignalMedia,
     asset: { assetId: string; url: string },
     out: { path: string; url: string; box?: unknown },
+    displayOut?: { url: string } | null,
   ) => {
     const { error } = await supabase.from('signal_task_assets').insert({
       task_id: taskId,
@@ -201,6 +205,7 @@ export async function generateCandidates(
       source_url: asset.url,
       processed_path: out.path,
       processed_url: out.url,
+      display_url: displayOut?.url ?? null,
       crop_config: {
         ...cfg,
         ...(out.box ? { box: out.box } : {}),
@@ -244,7 +249,12 @@ export async function generateCandidates(
         } else if (src.media === 'video') {
           const clip = await renderVideoClip(asset.url, cfg, { durSec: durationSec })
           const up = await uploadProcessed(taskId, key, clip.buffer, clip.contentType, clip.ext)
-          await insertAsset(src, 'video', asset, { ...up, box: clip.box })
+          // Upload animated WebP for frontend auto-loop display (best-effort)
+          let dispUp: { url: string } | null = null
+          if (clip.displayBuffer) {
+            dispUp = await uploadProcessed(taskId, `${key}-d`, clip.displayBuffer, clip.displayContentType, clip.displayExt)
+          }
+          await insertAsset(src, 'video', asset, { ...up, box: clip.box }, dispUp)
           made++
         } else {
           const out = await processImageAsset(taskId, key, asset.url, cfg)
@@ -322,6 +332,8 @@ export interface PublicSignalAsset {
   id: string
   media: SignalMedia
   processed_url: string | null
+  /** Animated WebP — prefer this over processed_url for video assets on the frontend. */
+  display_url: string | null
   asset_role: 'main' | 'option'
   display_order: number
 }
@@ -405,7 +417,7 @@ export async function getSignalFeed(date?: string): Promise<SignalFeed> {
   for (const t of taskRows ?? []) {
     const { data: assetRows } = await admin
       .from('signal_task_assets')
-      .select('id, media, processed_url, asset_role, display_order')
+      .select('id, media, processed_url, display_url, asset_role, display_order')
       .eq('task_id', t.id)
       .eq('is_selected', true)
       .order('display_order', { ascending: true })
@@ -554,6 +566,7 @@ async function genThreadAsset(
     try {
       let up: { path: string; url: string }
       let box: unknown
+      let displayUrl: string | null = null
       if (media === 'audio') {
         const clip = await extractAudioClip(asset.url, { durSec: durationSec })
         if (!clip) continue
@@ -562,6 +575,10 @@ async function genThreadAsset(
         const clip = await renderVideoClip(asset.url, cfg, { durSec: durationSec })
         up = await uploadProcessed(taskId, key, clip.buffer, clip.contentType, clip.ext)
         box = clip.box
+        if (clip.displayBuffer) {
+          const dispUp = await uploadProcessed(taskId, `${key}-d`, clip.displayBuffer, clip.displayContentType, clip.displayExt)
+          displayUrl = dispUp.url
+        }
       } else {
         const out = await processImageAsset(taskId, key, asset.url, cfg)
         up = { path: out.path, url: out.url }
@@ -579,6 +596,7 @@ async function genThreadAsset(
         source_url: asset.url,
         processed_path: up.path,
         processed_url: up.url,
+        display_url: displayUrl,
         crop_config: { ...cfg, ...(box ? { box } : {}), ...(media !== 'image' ? { durationSec } : {}) },
         asset_role: 'option',
         is_target: isTarget,
