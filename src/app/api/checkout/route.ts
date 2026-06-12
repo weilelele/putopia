@@ -6,33 +6,77 @@ import { getCurrentBatch, provisionVoyagerMembership } from '@/lib/actions/membe
 export const dynamic = 'force-dynamic'
 
 // GET /api/checkout — starts a purchase of the $12 Initial Voyager Pack.
-// Reached from the "Become a Voyager" CTA (a top-level link), so a redirect
-// response works directly.
+//
+// Auth + gating is handled here so /voyager-pack can be fully public:
+//   1. Not logged in      → redirect to /login (returns to /voyager-pack)
+//   2. task_gated group   → must complete all 4 Applicant tasks first;
+//                           incomplete → redirect to /console
+//   3. Otherwise          → proceed to Stripe (or mock) checkout
+//
 export async function GET(req: NextRequest) {
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  // ── 1. Must be logged in ──────────────────────────────────────────────────
+  if (!user) {
+    return NextResponse.redirect(new URL('/login?redirect=/voyager-pack', req.nextUrl.origin))
+  }
+
+  // ── 2. Experiment-group gate ──────────────────────────────────────────────
   const admin = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: profile } = await (admin as any)
+    .from('voyager_profiles')
+    .select('experiment_group, task_quiz_at, task_intel_at')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.experiment_group === 'task_gated') {
+    const intel = !!profile?.task_intel_at
+    const quiz  = !!profile?.task_quiz_at
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count: sightingCount } = await (admin as any)
+      .from('worlds')
+      .select('id', { count: 'exact', head: true })
+      .eq('submitted_by', user.id)
+    const sighting = (sightingCount ?? 0) > 0
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: voteRows } = await (admin as any)
+      .from('vote_responses')
+      .select('vote_id')
+      .eq('user_id', user.id)
+    const votes =
+      new Set(
+        ((voteRows ?? []) as { vote_id: string }[]).map((r) => r.vote_id)
+      ).size >= 2
+
+    if (!(intel && quiz && sighting && votes)) {
+      // Tasks not yet complete — send them to the console to finish
+      return NextResponse.redirect(
+        new URL('/console?msg=tasks_incomplete', req.nextUrl.origin)
+      )
+    }
+  }
+
+  // ── 3a. MOCK MODE — simulate completed purchase end-to-end ────────────────
   const batch = await getCurrentBatch()
 
-  // ── MOCK MODE — no Stripe keys yet. Simulate a completed purchase so the
-  //    whole post-payment chain (provision → status → batch → profile) and the
-  //    success page can be exercised end to end. Requires a signed-in account.
   if (!isStripeConfigured()) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login?redirect=/voyager-pack', req.nextUrl.origin))
-    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: order, error: orderErr } = await (admin.from('voyager_orders') as any)
+    const { data: order, error: orderErr } = await (admin as any)
+      .from('voyager_orders')
       .insert({
-        user_id: user.id,
-        email: user.email,
-        amount: PACK_PRICE_CENTS,
-        currency: 'usd',
-        status: 'paid',
-        batch_label: batch,
+        user_id:          user.id,
+        email:            user.email,
+        amount:           PACK_PRICE_CENTS,
+        currency:         'usd',
+        status:           'paid',
+        batch_label:      batch,
         stripe_session_id: 'mock_' + Date.now(),
-        paid_at: new Date().toISOString(),
+        paid_at:          new Date().toISOString(),
       })
       .select('id')
       .single()
@@ -42,36 +86,30 @@ export async function GET(req: NextRequest) {
     const { error: provErr } = await provisionVoyagerMembership(user.id)
     if (provErr) console.error('[checkout/mock] provision failed:', provErr)
 
-    // Always redirect back to the same origin (preview or production),
-    // never follow NEXT_PUBLIC_SITE_URL which might point to a different deployment.
     return NextResponse.redirect(
       new URL(`/join/success?mock=1&order=${order?.id ?? ''}`, req.nextUrl.origin),
     )
   }
 
-  // ── REAL STRIPE ──────────────────────────────────────────────────────────
-  // Must be logged in so the order is immediately linked to an account.
-  if (!user) {
-    return NextResponse.redirect(new URL('/login?redirect=/voyager-pack', req.nextUrl.origin))
-  }
-
+  // ── 3b. REAL STRIPE ───────────────────────────────────────────────────────
   const stripe = getStripe()!
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: order } = await (admin.from('voyager_orders') as any)
+  const { data: order } = await (admin as any)
+    .from('voyager_orders')
     .insert({
-      user_id: user.id,
-      email: user.email,
-      amount: PACK_PRICE_CENTS,
-      currency: 'usd',
-      status: 'pending',
+      user_id:     user.id,
+      email:       user.email,
+      amount:      PACK_PRICE_CENTS,
+      currency:    'usd',
+      status:      'pending',
       batch_label: batch,
     })
     .select('id')
     .single()
 
   const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
+    mode:       'payment',
     line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
     // $12 includes shipping; US addresses only.
     shipping_address_collection: { allowed_countries: ['US'] },
@@ -80,11 +118,12 @@ export async function GET(req: NextRequest) {
     customer_email: user.email ?? undefined,
     metadata: { order_id: order?.id ?? '', user_id: user.id },
     success_url: `${origin}/join/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/voyager-pack`,
+    cancel_url:  `${origin}/voyager-pack`,
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (admin.from('voyager_orders') as any)
+  await (admin as any)
+    .from('voyager_orders')
     .update({ stripe_session_id: session.id })
     .eq('id', order?.id)
 

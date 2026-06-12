@@ -171,32 +171,20 @@ export const TASK_GATED_HTML = `
                style="width:210px;display:block;filter:grayscale(55%);opacity:0.55;" />
         </td>
         <!-- Right: content + CTA -->
-        <td style="vertical-align:top;padding:22px 22px 22px 20px;">
-          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:8px;">◈ YOUR PATH TO VOYAGER ◈</div>
+        <td style="vertical-align:middle;padding:24px 24px 24px 22px;">
+          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:9px;">◈ YOUR PATH TO VOYAGER ◈</div>
 
           <div style="font-size:15px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:14px;line-height:1.3;">
-            COMPLETE 4 TASKS<br/>TO UNLOCK.
+            ACTIVATE YOUR<br/>VOYAGER STATUS.
           </div>
 
-          <!-- Task list -->
-          <table cellpadding="0" cellspacing="0" style="margin-bottom:18px;width:100%;">
-            <tr><td style="padding:5px 0;border-bottom:1px solid rgba(232,160,32,0.08);font-size:11px;letter-spacing:0.03em;color:rgba(245,245,245,0.5);">
-              <span style="color:rgba(232,160,32,0.5);">01</span> &nbsp;Report a Sighting
-            </td></tr>
-            <tr><td style="padding:5px 0;border-bottom:1px solid rgba(232,160,32,0.08);font-size:11px;letter-spacing:0.03em;color:rgba(245,245,245,0.5);">
-              <span style="color:rgba(232,160,32,0.5);">02</span> &nbsp;Cast Two Votes
-            </td></tr>
-            <tr><td style="padding:5px 0;border-bottom:1px solid rgba(232,160,32,0.08);font-size:11px;letter-spacing:0.03em;color:rgba(245,245,245,0.5);">
-              <span style="color:rgba(232,160,32,0.5);">03</span> &nbsp;Read an Architect Report
-            </td></tr>
-            <tr><td style="padding:5px 0;font-size:11px;letter-spacing:0.03em;color:rgba(245,245,245,0.5);">
-              <span style="color:rgba(232,160,32,0.5);">04</span> &nbsp;Pass the Field Assessment
-            </td></tr>
-          </table>
+          <div style="font-size:11px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:18px;">
+            Complete the Collective&#39;s field assessment tasks to unlock the Initial Voyager Pack and activate your status.
+          </div>
 
           <a href="https://putopia.vercel.app/console"
-             style="display:block;text-align:center;background:rgba(232,160,32,0.1);color:#E8A020;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:12px 14px;border:1px solid rgba(232,160,32,0.5);margin-bottom:10px;">
-            [ VIEW PROGRESS ]
+             style="display:block;text-align:center;background:rgba(232,160,32,0.1);color:#E8A020;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:12px 14px;border:1px solid rgba(232,160,32,0.5);margin-bottom:12px;">
+            [ VIEW MY PROGRESS ]
           </a>
 
           <div style="text-align:center;font-size:9px;letter-spacing:0.06em;color:rgba(245,245,245,0.2);">
