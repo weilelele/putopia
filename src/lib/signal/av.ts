@@ -199,21 +199,22 @@ export async function renderVideoClip(
     const buffer = await readFile(out)
 
     // Convert the glitched MP4 → animated WebP for frontend display.
-    // WebP renders as <img>: auto-plays, auto-loops, no controls needed.
+    // Strategy: ffmpeg MP4→GIF (built-in encoder, no extra libs needed), then
+    // sharp GIF→animated WebP (smaller, full-color, auto-loops as <img>).
     let displayBuffer: Buffer | null = null
     try {
-      outWebp = join(tmpdir(), `sig-${randomUUID()}.webp`)
+      outWebp = join(tmpdir(), `sig-${randomUUID()}.gif`) // reuse var for cleanup
       await pexec('ffmpeg', [
         '-y', '-v', 'error',
         '-i', out,
-        '-vf', 'fps=15',
-        '-c:v', 'libwebp_anim',
+        '-vf', 'fps=12,scale=320:-2',
         '-loop', '0',
-        '-quality', '75',
-        '-lossless', '0',
         outWebp,
-      ], { maxBuffer: 1024 * 1024 * 64 })
-      displayBuffer = await readFile(outWebp)
+      ], { maxBuffer: 1024 * 1024 * 128 })
+      const gifBuf = await readFile(outWebp)
+      displayBuffer = await sharp(gifBuf, { animated: true })
+        .webp({ quality: 75 })
+        .toBuffer()
     } catch (e) {
       // WebP conversion is best-effort — MP4 is always available as fallback
       console.warn('[signal/av] WebP conversion failed (non-fatal):', (e as Error).message)
