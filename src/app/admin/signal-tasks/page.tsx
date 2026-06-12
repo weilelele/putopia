@@ -15,7 +15,6 @@ import {
   deleteAsset,
   listThreads,
   createThread,
-  advanceThread,
 } from '@/lib/actions/signal-tasks'
 import type {
   SignalTask,
@@ -43,18 +42,18 @@ const S = {
 }
 
 const TYPE_LABELS: Record<SignalTaskType, string> = {
-  visual_match: 'VISUAL · 找关联 (main + options)',
-  visual_odd_one: 'VISUAL · 找异类 (odd one out)',
-  audio_odd_one: 'AUDIO · 听声辨异 (P2)',
+  visual_match: 'VISUAL · Match (main + options)',
+  visual_odd_one: 'VISUAL · Odd One Out',
+  audio_odd_one: 'AUDIO · Odd One Out',
 }
 
 const SHAPES: CropShape[] = ['square', 'circle', 'rect']
 
 const FILTER_LABELS: Record<FilterPreset, string> = {
-  signal_decay: '信号衰减 (像素+噪点+扫描线)',
-  chromatic: '色差 (RGB 错位)',
-  glitch_art: '故障艺术 (切片错位+通道残影)',
-  static_noise: '雪花噪点 (强颗粒/静电)',
+  signal_decay: 'Signal Decay (pixelate + noise + scanlines)',
+  chromatic: 'Chromatic (RGB channel split)',
+  glitch_art: 'Glitch Art (slice displacement + ghost)',
+  static_noise: 'Static Noise (heavy grain)',
 }
 
 export default function SignalTasksAdmin() {
@@ -85,7 +84,7 @@ export default function SignalTasksAdmin() {
           <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>SIGNAL TASKS</span>
           <NewTaskButton onCreated={async (id) => { await refreshTasks(); setActiveId(id) }} />
         </div>
-        {tasks.length === 0 && <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 12 }}>暂无题目</div>}
+        {tasks.length === 0 && <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 12 }}>No tasks yet.</div>}
         {tasks.map((t) => (
           <button
             key={t.id}
@@ -100,7 +99,7 @@ export default function SignalTasksAdmin() {
               {t.task_date} · {t.type.replace(/_/g, ' ')}
             </div>
             <div style={{ fontSize: 12, color: '#F5F5F5', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {t.prompt || '(无题干)'}
+              {t.prompt || '(no prompt)'}
             </div>
             <div style={{ fontSize: 10, marginTop: 6, color: t.is_published ? '#20D890' : 'rgba(245,245,245,0.3)', letterSpacing: '0.1em' }}>
               {t.is_published ? '● LIVE' : '○ DRAFT'}
@@ -111,10 +110,10 @@ export default function SignalTasksAdmin() {
 
       {/* Right: editor */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        {freqsLoading && <div style={{ color: 'rgba(245,245,245,0.4)', fontSize: 12, marginBottom: 12 }}>载入 Cosmo 频率目录…</div>}
+        {freqsLoading && <div style={{ color: 'rgba(245,245,245,0.4)', fontSize: 12, marginBottom: 12 }}>Loading Cosmo catalog…</div>}
         {!activeId ? (
           <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 13, paddingTop: 40, textAlign: 'center' }}>
-            选择左侧题目，或点 + NEW 新建
+            Select a task on the left, or click + NEW to create one.
           </div>
         ) : (
           <TaskEditor
@@ -131,30 +130,18 @@ export default function SignalTasksAdmin() {
   )
 }
 
-// ─── Investigation threads (natural day-to-day evolution) ─────────────────────
+// ─── Investigation threads ─────────────────────────────────────────────────────
 function ThreadPanel({ freqs }: { freqs: CosmoFrequency[] }) {
   const [threads, setThreads] = useState<SignalThreadRow[]>([])
   const [open, setOpen] = useState(false)
   const refresh = useCallback(async () => setThreads(await listThreads()), [])
   useEffect(() => { refresh() }, [refresh])
 
-  const advance = async (id: string) => {
-    if (!confirm('结算昨日填报并推进到下一天？')) return
-    const r = await advanceThread(id)
-    if (!r.ok) { alert(r.error || '推进失败'); return }
-    alert(
-      `已结算：${r.converged ? '众人命中真相 → 信号更清晰' : '众人未命中 → 信号偏移'}\n` +
-      `参与 ${r.participantCount} 人 · 锁定进度 ${r.clarity}/?? · 状态 ${r.status}` +
-      (r.worldId ? `\n✓ 已锁定并生成世界 ${r.worldId}` : ''),
-    )
-    refresh()
-  }
-
   return (
     <div style={{ ...S.card, marginBottom: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: threads.length || open ? 12 : 0 }}>
-        <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>调查线（每日自然推演）</span>
-        <button style={{ ...S.btn, ...S.btnOk }} onClick={() => setOpen((o) => !o)}>{open ? '收起' : '+ 新建调查线'}</button>
+        <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>INVESTIGATION THREADS</span>
+        <button style={{ ...S.btn, ...S.btnOk }} onClick={() => setOpen((o) => !o)}>{open ? 'Collapse' : '+ New Thread'}</button>
       </div>
 
       {open && <CreateThreadForm freqs={freqs} onCreated={() => { setOpen(false); refresh() }} />}
@@ -167,19 +154,18 @@ function ThreadPanel({ freqs }: { freqs: CosmoFrequency[] }) {
                 {t.title || t.id} <span style={{ color: 'rgba(245,245,245,0.4)' }}>· {t.type.replace(/_/g, ' ')}</span>
               </div>
               <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.4)', marginTop: 3 }}>
-                第 {t.day_count} 日 · 锁定 {t.clarity}/{t.clarity_max} · 偏移 {t.drift} ·{' '}
+                Day {t.day_count} · clarity {t.clarity}/{t.clarity_max} · drift {t.drift} ·{' '}
                 <span style={{ color: t.status === 'locked' ? '#20D890' : t.status === 'lost' ? '#E83030' : '#E8A020' }}>
                   {t.status === 'locked' ? `LOCKED${t.world_id ? ` → ${t.world_id}` : ''}` : t.status === 'lost' ? 'LOST' : 'OPEN'}
                 </span>
               </div>
             </div>
-            {t.status === 'open' && (
-              <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => advance(t.id)}>推进到明天 →</button>
-            )}
           </div>
         ))}
         {threads.length === 0 && !open && (
-          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.35)' }}>暂无调查线。新建一条：选一个「群组源」+ 一个隐藏的「真相源」，系统每天根据大家的研判自动收敛或偏移。</div>
+          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.35)' }}>
+            No investigation threads yet. Create one to group daily tasks by signal source.
+          </div>
         )}
       </div>
     </div>
@@ -188,7 +174,7 @@ function ThreadPanel({ freqs }: { freqs: CosmoFrequency[] }) {
 
 function CreateThreadForm({ freqs, onCreated }: { freqs: CosmoFrequency[]; onCreated: () => void }) {
   const [type, setType] = useState<SignalTaskType>('visual_odd_one')
-  const [prompt, setPrompt] = useState('下面哪一个信号不属于这一组？')
+  const [prompt, setPrompt] = useState('Which signal does not belong to this group?')
   const [optionCount, setOptionCount] = useState(4)
   const [clarityMax, setClarityMax] = useState(4)
   const [busy, setBusy] = useState(false)
@@ -226,8 +212,8 @@ function CreateThreadForm({ freqs, onCreated }: { freqs: CosmoFrequency[]; onCre
     setBusy(true)
     const r = await createThread({ type, prompt, group, target, optionCount, clarityMax })
     setBusy(false)
-    if (!r.ok) { alert(r.error || '创建失败'); return }
-    alert(`已创建调查线，第 0 天生成 ${r.made} 个素材并发布。`)
+    if (!r.ok) { alert(r.error || 'Failed to create thread'); return }
+    alert(`Thread created. Day 0 task published with ${r.made} assets.`)
     onCreated()
   }
 
@@ -235,28 +221,31 @@ function CreateThreadForm({ freqs, onCreated }: { freqs: CosmoFrequency[]; onCre
     <div style={{ background: '#0F1430', border: '1px solid rgba(255,107,53,0.2)', padding: 14, marginBottom: 12 }}>
       <div style={{ display: 'flex', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
         <div>
-          <label style={S.label}>题型</label>
+          <label style={S.label}>TYPE</label>
           <select style={S.sel} value={type} onChange={(e) => setType(e.target.value as SignalTaskType)}>
-            <option value="visual_odd_one">VISUAL 找异类</option>
-            <option value="audio_odd_one">AUDIO 听声辨异</option>
+            <option value="visual_odd_one">VISUAL · Odd One Out</option>
+            <option value="audio_odd_one">AUDIO · Odd One Out</option>
           </select>
         </div>
         <div>
-          <label style={S.label}>选项数</label>
+          <label style={S.label}>OPTIONS</label>
           <input type="number" min={3} max={6} style={{ ...S.input, width: 64 }} value={optionCount} onChange={(e) => setOptionCount(Math.max(3, Number(e.target.value)))} />
         </div>
         <div>
-          <label style={S.label}>锁定所需天数</label>
+          <label style={S.label}>DAYS TO LOCK</label>
           <input type="number" min={1} max={10} style={{ ...S.input, width: 64 }} value={clarityMax} onChange={(e) => setClarityMax(Math.max(1, Number(e.target.value)))} />
         </div>
       </div>
-      <label style={S.label}>题干</label>
+
+      <label style={S.label}>PROMPT</label>
       <input style={{ ...S.input, marginBottom: 10 }} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
-      {srcRow('群组源', group, setGroup)}
-      {srcRow('真相源', target, setTarget)}
-      <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.4)', marginBottom: 10 }}>「真相源」= 隐藏的正确答案（那个不属于群组的信号），永不下发前端。</div>
+      {srcRow('Group', group, setGroup)}
+      {srcRow('Target', target, setTarget)}
+      <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.4)', marginBottom: 10 }}>
+        Target = the hidden correct answer (the signal that doesn&apos;t belong). Never sent to the frontend.
+      </div>
       <button style={{ ...S.btn, ...S.btnOk, opacity: busy ? 0.5 : 1 }} disabled={busy} onClick={submit}>
-        {busy ? '生成中…' : '创建并发布第 0 天'}
+        {busy ? 'Creating…' : 'Create thread & publish day 0'}
       </button>
     </div>
   )
@@ -281,7 +270,7 @@ function NewTaskButton({ onCreated }: { onCreated: (id: string) => void }) {
       <label style={{ ...S.label, marginTop: 10 }}>DATE</label>
       <input type="date" style={S.input} value={date} onChange={(e) => setDate(e.target.value)} />
       <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
-        <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => setOpen(false)}>取消</button>
+        <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => setOpen(false)}>Cancel</button>
         <button
           style={{ ...S.btn, ...S.btnOk, opacity: busy ? 0.5 : 1 }}
           disabled={busy}
@@ -290,9 +279,9 @@ function NewTaskButton({ onCreated }: { onCreated: (id: string) => void }) {
             const r = await createTask({ type, task_date: date })
             setBusy(false)
             if (r.ok && r.id) { setOpen(false); onCreated(r.id) }
-            else alert(r.error || '创建失败')
+            else alert(r.error || 'Failed to create task')
           }}
-        >{busy ? '…' : '创建'}</button>
+        >{busy ? '…' : 'Create'}</button>
       </div>
     </div>
   )
@@ -320,8 +309,8 @@ function TaskEditor({
 
   useEffect(() => { reload() }, [reload])
 
-  if (loading) return <div style={{ color: 'rgba(245,245,245,0.4)', fontSize: 12 }}>载入…</div>
-  if (!task) return <div style={{ color: '#E83030', fontSize: 12 }}>题目不存在</div>
+  if (loading) return <div style={{ color: 'rgba(245,245,245,0.4)', fontSize: 12 }}>Loading…</div>
+  if (!task) return <div style={{ color: '#E83030', fontSize: 12 }}>Task not found.</div>
 
   const selectedCount = assets.filter((a) => a.is_selected).length
 
@@ -337,21 +326,21 @@ function TaskEditor({
             <button
               style={{ ...S.btn, ...(task.is_published ? S.btnGhost : S.btnOk) }}
               onClick={async () => { await setTaskPublished(taskId, !task.is_published); await reload(); onChanged() }}
-            >{task.is_published ? '○ 撤下' : '● 发布'}</button>
+            >{task.is_published ? '○ Unpublish' : '● Publish'}</button>
             <button
               style={{ ...S.btn, ...S.btnDanger }}
-              onClick={async () => { if (confirm('删除整道题（含素材）？')) { await deleteTask(taskId); onDeleted() } }}
-            >删除</button>
+              onClick={async () => { if (confirm('Delete this task and all its assets?')) { await deleteTask(taskId); onDeleted() } }}
+            >Delete</button>
           </div>
         </div>
-        <label style={S.label}>题干 PROMPT</label>
-        <textarea style={S.area} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="手写题干，例如：下面哪一张不属于这个世界？" />
+        <label style={S.label}>PROMPT</label>
+        <textarea style={S.area} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Write the puzzle prompt…" />
         <button
           style={{ ...S.btn, ...S.btnGhost, marginTop: 8 }}
           onClick={async () => { await updateTask(taskId, { prompt }); await reload(); onChanged() }}
-        >保存题干</button>
+        >Save</button>
         {task.is_published && selectedCount === 0 && (
-          <div style={{ marginTop: 8, fontSize: 11, color: '#E8A020' }}>⚠ 已发布但未勾选任何上线素材，前端将无内容可显示</div>
+          <div style={{ marginTop: 8, fontSize: 11, color: '#E8A020' }}>⚠ Published but no assets selected — members will see nothing.</div>
         )}
       </div>
 
@@ -361,13 +350,13 @@ function TaskEditor({
       {/* candidate pool */}
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>候选素材池</span>
+          <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>CANDIDATE POOL</span>
           <span style={{ fontSize: 11, color: 'rgba(245,245,245,0.4)' }}>
-            共 {assets.length} · 已勾选上线 <span style={{ color: '#20D890' }}>{selectedCount}</span>
+            {assets.length} total · <span style={{ color: '#20D890' }}>{selectedCount}</span> live
           </span>
         </div>
         {assets.length === 0 ? (
-          <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 12 }}>还没有素材，用上方生成器批量生成</div>
+          <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 12 }}>No candidates yet — use the generator above.</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
             {assets.map((a) => (
@@ -399,7 +388,6 @@ function Generator({
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<string>('')
 
-  // for audio tasks sources always pull video (we extract the audio track)
   const defaultMedia: 'image' | 'video' = audioMode ? 'video' : 'image'
 
   const pickBand = (f: CosmoFrequency | undefined, media: 'image' | 'video') =>
@@ -434,18 +422,18 @@ function Generator({
     setBusy(true); setResult('')
     const r = await generateCandidates(taskId, sources, { shape, areaRatio, glitchIntensity: glitch, filter }, { durationSec })
     setBusy(false)
-    setResult(`生成 ${r.created} 个候选` + (r.errors.length ? ` · ${r.errors.length} 个提示：${r.errors.slice(0, 2).join('; ')}` : ''))
+    setResult(`Generated ${r.created} candidates` + (r.errors.length ? ` · ${r.errors.length} error(s): ${r.errors.slice(0, 2).join('; ')}` : ''))
     onGenerated()
   }
 
-  const title = audioMode ? '批量生成（音效 · 从视频抽音轨）' : '批量生成（图片 / 视频）'
+  const title = audioMode ? 'BATCH GENERATE (audio from video tracks)' : 'BATCH GENERATE (image / video)'
 
   return (
     <div style={S.card}>
       <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em', marginBottom: 10 }}>{title}</div>
       {audioMode && (
         <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.45)', marginBottom: 10 }}>
-          音效题从频道的视频里抽取音轨；约 25% 视频无音轨会自动跳过（已按 2× 超采样补足）。
+          Audio tasks extract the audio track from channel videos. ~25% of clips have no audio (2× oversampling compensates).
         </div>
       )}
 
@@ -461,11 +449,11 @@ function Generator({
             </select>
             {!audioMode && (
               <select style={{ ...S.sel, maxWidth: 90 }} value={src.media} onChange={(e) => { const media = e.target.value as 'image' | 'video'; updateSource(i, { media, ...(pickBand(f, media) ? {} : {}) }) }}>
-                <option value="image">图片</option>
-                <option value="video">视频</option>
+                <option value="image">image</option>
+                <option value="video">video</option>
               </select>
             )}
-            <label style={{ fontSize: 11, color: 'rgba(245,245,245,0.4)' }}>数量</label>
+            <label style={{ fontSize: 11, color: 'rgba(245,245,245,0.4)' }}>count</label>
             <input type="number" min={1} max={20} style={{ ...S.input, width: 56 }} value={src.count} onChange={(e) => updateSource(i, { count: Math.max(1, Number(e.target.value)) })} />
             <button style={{ ...S.btn, ...S.btnDanger }} onClick={() => removeSource(i)}>×</button>
           </div>
@@ -473,30 +461,30 @@ function Generator({
       })}
 
       <button style={{ ...S.btn, ...S.btnGhost, marginBottom: 12 }} onClick={addSource} disabled={sources.length >= 3 || freqs.length === 0}>
-        + 添加频道 (最多 3)
+        + Add source (max 3)
       </button>
 
       {/* crop / filter config (audio uses none of these) */}
       {!audioMode && (
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
           <div>
-            <label style={S.label}>滤镜风格</label>
+            <label style={S.label}>FILTER</label>
             <select style={S.sel} value={filter} onChange={(e) => setFilter(e.target.value as FilterPreset)}>
               {FILTER_PRESETS.map((p) => <option key={p} value={p}>{FILTER_LABELS[p]}</option>)}
             </select>
           </div>
           <div>
-            <label style={S.label}>形状</label>
+            <label style={S.label}>SHAPE</label>
             <select style={S.sel} value={shape} onChange={(e) => setShape(e.target.value as CropShape)}>
               {SHAPES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
-            <label style={S.label}>裁切面积比 {(areaRatio * 100).toFixed(0)}%</label>
+            <label style={S.label}>CROP AREA {(areaRatio * 100).toFixed(0)}%</label>
             <input type="range" min={5} max={40} value={Math.round(areaRatio * 100)} onChange={(e) => setAreaRatio(Number(e.target.value) / 100)} style={{ accentColor: '#FF6B35', width: 140 }} />
           </div>
           <div>
-            <label style={S.label}>故障强度 {glitch}</label>
+            <label style={S.label}>GLITCH {glitch}</label>
             <input type="range" min={0} max={100} value={glitch} onChange={(e) => setGlitch(Number(e.target.value))} style={{ accentColor: '#FF6B35', width: 140 }} />
           </div>
         </div>
@@ -504,13 +492,13 @@ function Generator({
 
       {(audioMode || sources.some((s) => s.media === 'video')) && (
         <div style={{ marginBottom: 12 }}>
-          <label style={S.label}>{audioMode ? '音频' : '视频'}片段时长 {durationSec}s</label>
+          <label style={S.label}>{audioMode ? 'AUDIO' : 'VIDEO'} CLIP LENGTH {durationSec}s</label>
           <input type="range" min={2} max={10} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} style={{ accentColor: '#FF6B35', width: 160 }} />
         </div>
       )}
 
       <button style={{ ...S.btn, ...S.btnOk, opacity: busy || sources.length === 0 ? 0.5 : 1 }} disabled={busy || sources.length === 0} onClick={run}>
-        {busy ? '生成中…(抓取+处理需几秒)' : '⚡ 生成候选'}
+        {busy ? 'Generating… (this may take a few seconds)' : '⚡ Generate candidates'}
       </button>
       {result && <div style={{ marginTop: 8, fontSize: 11, color: 'rgba(245,245,245,0.6)' }}>{result}</div>}
     </div>
@@ -551,14 +539,14 @@ function AssetCard({
         <button
           style={{ ...S.btn, padding: '4px 8px', ...(asset.is_selected ? S.btnOk : S.btnGhost) }}
           onClick={() => wrap(() => setAssetSelected(asset.id, !asset.is_selected))}
-        >{asset.is_selected ? '✓ 上线' : '上线'}</button>
+        >{asset.is_selected ? '✓ Live' : 'Set live'}</button>
         {showRole && asset.is_selected && (
           <button
             style={{ ...S.btn, padding: '4px 8px', ...(asset.asset_role === 'main' ? S.btnOk : S.btnGhost) }}
             onClick={() => wrap(() => setAssetRole(asset.id, asset.asset_role === 'main' ? 'option' : 'main'))}
-          >{asset.asset_role === 'main' ? '★ 主图' : '设为主图'}</button>
+          >{asset.asset_role === 'main' ? '★ Main' : 'Set main'}</button>
         )}
-        <button style={{ ...S.btn, padding: '4px 8px', ...S.btnDanger }} onClick={() => wrap(() => deleteAsset(asset.id))}>删</button>
+        <button style={{ ...S.btn, padding: '4px 8px', ...S.btnDanger }} onClick={() => wrap(() => deleteAsset(asset.id))}>Del</button>
       </div>
     </div>
   )

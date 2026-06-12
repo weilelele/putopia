@@ -50,13 +50,18 @@ export async function GET(req: NextRequest) {
   }
 
   // ── REAL STRIPE ──────────────────────────────────────────────────────────
+  // Must be logged in so the order is immediately linked to an account.
+  if (!user) {
+    return NextResponse.redirect(new URL('/login?redirect=/voyager-pack', req.nextUrl.origin))
+  }
+
   const stripe = getStripe()!
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: order } = await (admin.from('voyager_orders') as any)
     .insert({
-      user_id: user?.id ?? null,
-      email: user?.email ?? null,
+      user_id: user.id,
+      email: user.email,
       amount: PACK_PRICE_CENTS,
       currency: 'usd',
       status: 'pending',
@@ -70,8 +75,10 @@ export async function GET(req: NextRequest) {
     line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
     // $12 includes shipping; US addresses only.
     shipping_address_collection: { allowed_countries: ['US'] },
-    ...(user?.email ? { customer_email: user.email } : {}),
-    metadata: { order_id: order?.id ?? '', user_id: user?.id ?? '' },
+    // Let users enter coupon / promo codes at checkout.
+    allow_promotion_codes: true,
+    customer_email: user.email ?? undefined,
+    metadata: { order_id: order?.id ?? '', user_id: user.id },
     success_url: `${origin}/join/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/voyager-pack`,
   })

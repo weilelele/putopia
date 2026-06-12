@@ -84,6 +84,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: '/admin/mc-config',   label: 'MC CONFIG' },
         { href: '/admin/create-news', label: 'AI NEWS'  },
         { href: '/admin/votes',       label: 'VOTES'    },
+        { href: '/admin/signal-tasks', label: 'SIGNAL'  },
         { href: '/admin/analytics',   label: 'FUNNEL'   },
         { href: '/admin/activity',    label: 'ACTIVITY' },
         { href: '/admin/onboarding-preview', label: 'ONBOARDING' },

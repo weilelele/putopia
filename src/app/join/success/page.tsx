@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { getMyProfile } from '@/lib/actions/profile'
-import { getMyLatestOrder } from '@/lib/actions/orders'
+import { getMyOrders } from '@/lib/actions/orders'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,7 +44,8 @@ const cta: React.CSSProperties = {
 }
 
 export default async function JoinSuccessPage() {
-  const [profile, order] = await Promise.all([getMyProfile(), getMyLatestOrder()])
+  const [profile, orders] = await Promise.all([getMyProfile(), getMyOrders()])
+  const order = orders[0] ?? null   // latest order for the success card
 
   // Anonymous Stripe purchaser (no session on this domain yet): the invite email
   // is their way in.

@@ -20,21 +20,19 @@ export interface VoyagerOrder {
   created_at: string
 }
 
-/** The signed-in user's most recent order (RLS limits this to their own rows). */
-export async function getMyLatestOrder(): Promise<VoyagerOrder | null> {
+/** All orders for the signed-in user, newest first (RLS limits to their own rows). */
+export async function getMyOrders(): Promise<VoyagerOrder[]> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  if (!user) return []
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabase.from('voyager_orders') as any)
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
-  return (data as VoyagerOrder | null) ?? null
+  return (data as VoyagerOrder[]) ?? []
 }
 
 // ── Admin (architect-only) ──────────────────────────────────────────────────

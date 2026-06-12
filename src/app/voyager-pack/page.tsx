@@ -35,14 +35,14 @@ export default async function VoyagerPackPage() {
     <iframe
       title="Initial Voyager Pack"
       srcDoc={PACK_HTML}
+      scrolling="yes"
       style={{
-        position: 'fixed',
-        inset: 0,
+        display: 'block',
         width: '100%',
-        height: '100%',
+        height: '100vh',
         border: 0,
-        zIndex: 9999,
         background: '#0A0E27',
+        overflowY: 'auto',
       }}
     />
   )

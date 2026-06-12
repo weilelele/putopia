@@ -30,13 +30,15 @@ export type VoyagerProfile = {
   // Applicant task completion timestamps (null = not yet done)
   task_quiz_at:  string | null
   task_intel_at: string | null
+  // A/B experiment group (null = not yet assigned)
+  experiment_group: 'direct' | 'task_gated' | null
 }
 
 export type VoyagerProfileUpdate = Partial<Pick<
   VoyagerProfile,
   | 'display_name' | 'bio' | 'avatar_url' | 'social_x' | 'social_instagram' | 'social_linkedin'
   | 'location' | 'observation_days' | 'worlds_discovered'
-  | 'task_quiz_at' | 'task_intel_at'
+  | 'task_quiz_at' | 'task_intel_at' | 'experiment_group'
 >>
 
 // ---------- comments ----------

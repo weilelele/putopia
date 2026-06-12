@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Camera, LogOut } from 'lucide-react'
 import { getMyProfile, updateProfile, uploadAvatar } from '@/lib/actions/profile'
-import { getMyLatestOrder, type VoyagerOrder } from '@/lib/actions/orders'
+import { getMyOrders, type VoyagerOrder } from '@/lib/actions/orders'
 import { useAuth } from '@/lib/auth-context'
 
 // ── helpers (mirrors /voyagers) ─────────────────────────────────────────────
@@ -50,8 +50,6 @@ type EditForm = {
   social_x: string
   social_instagram: string
   social_linkedin: string
-  observation_days: string
-  worlds_discovered: string
 }
 
 // ── Pack fulfillment timeline ───────────────────────────────────────────────
@@ -60,14 +58,20 @@ const STEP_LABEL: Record<string, string> = {
   paid: 'Paid', preparing: 'Preparing', shipped: 'Shipped', delivered: 'Delivered',
 }
 
-function PackTracker({ order }: { order: VoyagerOrder }) {
+function PackTracker({ order, index, total }: { order: VoyagerOrder; index: number; total: number }) {
   const refunded = order.status === 'refunded' || order.status === 'canceled'
   const activeIdx = Math.max(0, PACK_STEPS.indexOf(order.status as (typeof PACK_STEPS)[number]))
+  const date = new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 
   return (
-    <div style={{ border: '1px solid rgba(255,107,53,0.2)', background: '#0F1430', padding: '18px 20px', marginBottom: '28px' }}>
-      <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', marginBottom: '16px' }}>
-        // MY VOYAGER PACK
+    <div style={{ border: '1px solid rgba(255,107,53,0.2)', background: '#0F1430', padding: '18px 20px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em' }}>
+          // ORDER {total > 1 ? `#${total - index}` : 'MY VOYAGER PACK'}
+        </div>
+        <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em' }}>
+          {date}
+        </div>
       </div>
 
       {refunded ? (
@@ -115,7 +119,7 @@ export default function ProfilePage() {
   const { logout } = useAuth()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null)
-  const [order, setOrder] = useState<VoyagerOrder | null>(null)
+  const [orders, setOrders] = useState<VoyagerOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState<EditForm | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -125,9 +129,9 @@ export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    Promise.all([getMyProfile(), getMyLatestOrder()]).then(([p, o]) => {
+    Promise.all([getMyProfile(), getMyOrders()]).then(([p, o]) => {
       setProfile(p)
-      setOrder(o)
+      setOrders(o)
       if (p) {
         setForm({
           display_name: p.display_name ?? '',
@@ -136,8 +140,6 @@ export default function ProfilePage() {
           social_x: p.social_x ?? '',
           social_instagram: p.social_instagram ?? '',
           social_linkedin: p.social_linkedin ?? '',
-          observation_days: String(p.observation_days ?? 0),
-          worlds_discovered: String(p.worlds_discovered ?? 0),
         })
       }
       setLoading(false)
@@ -172,8 +174,6 @@ export default function ProfilePage() {
       social_x: form.social_x.trim() || null,
       social_instagram: form.social_instagram.trim() || null,
       social_linkedin: form.social_linkedin.trim() || null,
-      observation_days: Math.max(0, parseInt(form.observation_days) || 0),
-      worlds_discovered: Math.max(0, parseInt(form.worlds_discovered) || 0),
     })
 
     setSaving(false)
@@ -264,6 +264,24 @@ export default function ProfilePage() {
             <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: accent, border: `1px solid ${accent}55`, padding: '2px 8px', textTransform: 'uppercase' }}>
               {profile.role}
             </span>
+
+            {/* Applicant: inline upgrade CTA */}
+            {isApplicant && (
+              <Link
+                href="/dashboard-demo"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  fontSize: 'var(--fs-caption)', letterSpacing: '0.14em',
+                  color: '#FF6B35', border: '1px solid rgba(255,107,53,0.45)',
+                  background: 'rgba(255,107,53,0.08)',
+                  padding: '2px 10px', textDecoration: 'none',
+                  fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap',
+                }}
+              >
+                ↑ UPGRADE
+              </Link>
+            )}
+
             {/* Only Voyagers carry a member number + batch; Architects do not. */}
             {isPureVoyager && profile.member_no != null && (
               <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'rgba(245,245,245,0.6)' }}>
@@ -279,17 +297,41 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Applicants: upgrade path to the $12 Initial Voyager Pack */}
+      {/* Applicants: upgrade path banner */}
       {isApplicant && (
-        <div style={{ marginBottom: '28px' }}>
-          <Link href="/voyager-pack" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: '#FF6B35', color: '#0A0E27', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', padding: '13px 24px', borderRadius: '3px', textDecoration: 'none' }}>
-            Become Voyager →
-          </Link>
+        <div style={{ marginBottom: '24px', padding: '14px 18px', border: '1px solid rgba(255,107,53,0.2)', background: 'rgba(255,107,53,0.04)' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.18em', marginBottom: '8px' }}>
+            // YOUR NEXT STEP
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <p style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.6 }}>
+              Complete 4 Applicant tasks to become a Voyager and unlock the full Collective.
+            </p>
+            <Link
+              href="/dashboard-demo"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: 'linear-gradient(135deg, #E85D04, #C04000)',
+                border: '1px solid rgba(232,93,4,0.5)',
+                color: '#F5F5F5', fontWeight: 700, fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.12em', padding: '9px 20px', textDecoration: 'none',
+                fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap', flexShrink: 0,
+              }}
+            >
+              VIEW TASKS →
+            </Link>
+          </div>
         </div>
       )}
 
-      {/* Pack tracking */}
-      {order && <PackTracker order={order} />}
+      {/* Pack tracking — show all orders, newest first */}
+      {orders.length > 0 && (
+        <div style={{ marginBottom: '12px' }}>
+          {orders.map((o, i) => (
+            <PackTracker key={o.id} order={o} index={i} total={orders.length} />
+          ))}
+        </div>
+      )}
 
       {/* Edit form */}
       <div style={{ border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: '20px', fontFamily: 'var(--font-mono)', maxWidth: '640px' }}>
@@ -324,16 +366,6 @@ export default function ProfilePage() {
           </Field>
           <Field label="LINKEDIN (full URL)">
             <input style={FIELD_INPUT} value={form.social_linkedin} onChange={(e) => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
-          </Field>
-        </FieldGroup>
-
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// FIELD DATA</div>
-        <FieldGroup cols={2}>
-          <Field label="OBSERVATION DAYS">
-            <input style={FIELD_INPUT} type="number" min="0" value={form.observation_days} onChange={(e) => setF('observation_days', e.target.value)} />
-          </Field>
-          <Field label="WORLDS DISCOVERED">
-            <input style={FIELD_INPUT} type="number" min="0" value={form.worlds_discovered} onChange={(e) => setF('worlds_discovered', e.target.value)} />
           </Field>
         </FieldGroup>
 

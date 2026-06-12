@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getIntelById } from '@/lib/actions/intel'
@@ -8,6 +8,7 @@ import type { Intel } from '@/types/database'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
+import { markIntelRead } from '@/lib/actions/tasks'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -28,6 +29,8 @@ export default function IntelDetailPage() {
   const backLabel = isGuest ? '← DASHBOARD' : '← INTEL'
 
   const [entry, setEntry] = useState<Intel | null | undefined>(undefined)
+  const scrollRef  = useRef<HTMLDivElement>(null)
+  const markedRef  = useRef(false)   // fire once per page load
 
   useEffect(() => {
     getIntelById(id).then((e) => {
@@ -35,6 +38,19 @@ export default function IntelDetailPage() {
       if (e) posthog.capture('intel_viewed', { intel_id: id, intel_tag: e.tag, intel_title: e.title })
     })
   }, [id])
+
+  // Scroll-to-bottom tracker — marks intel read when user reaches ≥90% depth
+  const handleScroll = useCallback(() => {
+    if (markedRef.current || isGuest) return
+    const el = scrollRef.current
+    if (!el) return
+    const ratio = (el.scrollTop + el.clientHeight) / el.scrollHeight
+    if (ratio >= 0.9) {
+      markedRef.current = true
+      markIntelRead().catch(() => {/* silent */})
+      posthog.capture('intel_read_complete', { intel_id: id })
+    }
+  }, [id, isGuest])
 
   if (entry === undefined) {
     return (
@@ -59,7 +75,7 @@ export default function IntelDetailPage() {
   const isSingle  = entry.images?.length === 1
 
   return (
-    <div className="main">
+    <div className="main" ref={scrollRef} onScroll={handleScroll} style={{ overflowY: 'auto' }}>
       <div className="top-bar">
         <div className="crumbs">
           {isGuest

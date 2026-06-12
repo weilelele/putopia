@@ -19,6 +19,7 @@ const navItems = [
       { href: '/voyagers', label: 'Voyagers',        icon: <IconUsers /> },
       { href: '/worlds',   label: 'World Records',   icon: <IconGlobe /> },
       { href: '/vote',     label: 'Voting Hub',      icon: <IconVote /> },
+      { href: '/signal',   label: 'Signal Tasks',    icon: <IconSignal /> },
       { href: '/logs',     label: 'Voyager Logs',    icon: <IconDoc /> },
     ],
   },
@@ -131,3 +132,4 @@ function IconUsers()  { return <svg className="nav-icon" viewBox="0 0 24 24" {..
 function IconGlobe()  { return <svg className="nav-icon" viewBox="0 0 24 24" {...stroke}><circle cx="12" cy="12" r="9" /><path d="M3 12 H21" /><path d="M12 3 C 15 6, 15 18, 12 21" /><path d="M12 3 C 9 6, 9 18, 12 21" /></svg> }
 function IconVote()   { return <svg className="nav-icon" viewBox="0 0 24 24" {...stroke}><circle cx="12" cy="12" r="9" /><path d="M8 12.5 L11 15.5 L16.5 9.5" strokeLinecap="round" strokeLinejoin="round" /></svg> }
 function IconDoc()    { return <svg className="nav-icon" viewBox="0 0 24 24" {...stroke}><path d="M5 3 H19 V21 H7 a2 2 0 0 1 -2 -2 V3 Z" /><line x1="9" y1="8" x2="16" y2="8" /><line x1="9" y1="12" x2="16" y2="12" /><line x1="9" y1="16" x2="13" y2="16" /></svg> }
+function IconSignal() { return <svg className="nav-icon" viewBox="0 0 24 24" {...stroke}><path d="M12 20 v-6" /><path d="M8.5 17 a5 5 0 0 1 7 0" strokeLinecap="round" /><path d="M5.5 14 a9 9 0 0 1 13 0" strokeLinecap="round" /><circle cx="12" cy="20" r="0.6" fill="currentColor" /></svg> }

@@ -487,9 +487,9 @@ export async function submitSignalResponse(
   assetId: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const me = await currentUser()
-  if (!me) return { ok: false, error: '请先登录' }
+  if (!me) return { ok: false, error: 'Please log in first' }
   if (me.role !== 'voyager' && me.role !== 'architect') {
-    return { ok: false, error: '仅 Voyager 可参与填报' }
+    return { ok: false, error: 'Only Voyager members can respond' }
   }
   const admin = createAdminClient() as DB
 
@@ -500,13 +500,13 @@ export async function submitSignalResponse(
     .eq('id', assetId)
     .eq('task_id', taskId)
     .maybeSingle()
-  if (!asset || !asset.is_selected) return { ok: false, error: '无效的选项' }
+  if (!asset || !asset.is_selected) return { ok: false, error: 'Invalid option' }
   const { data: task } = await admin
     .from('signal_tasks')
     .select('is_published')
     .eq('id', taskId)
     .maybeSingle()
-  if (!task?.is_published) return { ok: false, error: '该题目未发布' }
+  if (!task?.is_published) return { ok: false, error: 'Task is not published' }
 
   const { error } = await admin.from('signal_responses').insert({
     user_id: me.id,
@@ -514,7 +514,7 @@ export async function submitSignalResponse(
     selected_asset_id: assetId,
   })
   if (error) {
-    if (error.code === '23505') return { ok: false, error: '你已经填报过这道题' }
+    if (error.code === '23505') return { ok: false, error: 'You have already responded to this task' }
     return { ok: false, error: error.message }
   }
   return { ok: true }
@@ -522,10 +522,8 @@ export async function submitSignalResponse(
 
 // ─── Investigation threads: the natural day-to-day evolution ──────────────────
 
-const GLITCH_START = 70
-const GLITCH_STEP = 15
-const effectiveGlitch = (clarity: number, drift: number) =>
-  Math.max(5, Math.min(95, GLITCH_START - clarity * GLITCH_STEP + drift * GLITCH_STEP))
+const effectiveGlitch = (start: number, step: number, clarity: number, drift: number) =>
+  Math.max(5, Math.min(95, start - clarity * step + drift * step))
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
 export interface ThreadSource {
@@ -665,9 +663,12 @@ export async function createThread(input: {
   target: ThreadSource
   optionCount?: number
   clarityMax?: number
+  startGlitch?: number
+  glitchStep?: number
+  driftMax?: number
 }): Promise<{ ok: boolean; threadId?: string; taskId?: string; made?: number; error?: string }> {
   const me = await currentUser()
-  if (!me || me.role !== 'architect') return { ok: false, error: '仅 Architect 可创建调查线' }
+  if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
   const admin = createAdminClient() as DB
 
   const { data: thread, error: tErr } = await admin
@@ -681,6 +682,9 @@ export async function createThread(input: {
       target_freq: input.target.freq, target_band_id: input.target.bandId, target_band_name: input.target.bandName,
       option_count: input.optionCount ?? 4,
       clarity_max: input.clarityMax ?? 4,
+      drift_max: input.driftMax ?? 3,
+      glitch_start: input.startGlitch ?? 70,
+      glitch_step: input.glitchStep ?? 15,
       created_by: me.id,
     })
     .select('*')
@@ -701,7 +705,9 @@ export async function createThread(input: {
     .single()
   if (kErr || !task) return { ok: false, error: kErr?.message }
 
-  const { made } = await generateThreadDay(task.id, thread, effectiveGlitch(0, 0))
+  const { made } = await generateThreadDay(
+    task.id, thread, effectiveGlitch(thread.glitch_start ?? 70, thread.glitch_step ?? 15, 0, 0),
+  )
   return { ok: true, threadId: thread.id, taskId: task.id, made }
 }
 
@@ -806,7 +812,10 @@ export async function advanceThread(threadId: string): Promise<AdvanceResult> {
       .select('id')
       .single()
     if (nextTask) {
-      await generateThreadDay(nextTask.id, thread, effectiveGlitch(clarity, drift))
+      await generateThreadDay(
+        nextTask.id, thread,
+        effectiveGlitch(thread.glitch_start ?? 70, thread.glitch_step ?? 15, clarity, drift),
+      )
       result.nextTaskId = nextTask.id
     }
   } else if (status === 'locked') {
