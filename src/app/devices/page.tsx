@@ -425,22 +425,6 @@ export default function DevicesPage() {
                     </div>
                   )}
 
-                  {isAtLeast('voyager') && (
-                    <button
-                      className="w-full py-1.5 text-xs font-mono tracking-widest border transition-all relative"
-                      style={{ borderColor: '#20D890', color: '#20D890', background: 'rgba(32,216,144,0.06)', zIndex: 2 }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLElement).style.background = '#20D890'
-                        ;(e.currentTarget as HTMLElement).style.color = '#070912'
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLElement).style.background = 'rgba(32,216,144,0.06)'
-                        ;(e.currentTarget as HTMLElement).style.color = '#20D890'
-                      }}
-                    >
-                      [ APPLY FOR ACCESS ]
-                    </button>
-                  )}
                 </div>
               </div>
             )

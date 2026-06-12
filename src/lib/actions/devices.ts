@@ -64,7 +64,7 @@ export async function updateDevice(id: string, updates: DeviceUpdate) {
     target_id:   id,
     target_title: updates.name ?? existing?.name,
     target_image: updates.image_path ?? existing?.image_path ?? undefined,
-    target_href: '/devices',
+    target_href: `/devices/${id}`,
   })
 
   return { error: null }
@@ -95,7 +95,7 @@ export async function assignDevice(deviceId: string, voyagerId: string, voyagerN
     target_id:   deviceId,
     target_title: existing?.name,
     target_image: existing?.image_path ?? undefined,
-    target_href: '/devices',
+    target_href: `/devices/${deviceId}`,
   })
 
   return { error: null }
@@ -126,7 +126,7 @@ export async function releaseDevice(deviceId: string) {
     target_id:   deviceId,
     target_title: existing?.name,
     target_image: existing?.image_path ?? undefined,
-    target_href: '/devices',
+    target_href: `/devices/${deviceId}`,
   })
 
   return { error: null }
