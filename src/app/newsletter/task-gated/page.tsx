@@ -128,96 +128,55 @@ export const TASK_GATED_HTML = `
 
   <tr><td style="height:16px;"></td></tr>
 
-  <!-- ── VOTES SECTION ── -->
-  <tr><td>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
-      <tr>
-        <td style="height:1px;background:rgba(32,216,144,0.12);"></td>
-        <td style="padding:0 12px;white-space:nowrap;font-size:8px;letter-spacing:0.3em;color:#20D890;">● ACTIVE VOTES</td>
-        <td style="height:1px;background:rgba(32,216,144,0.12);"></td>
-      </tr>
-    </table>
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;background:#0A0E27;border:1px solid rgba(32,216,144,0.12);">
-      <tr><td style="padding:12px 16px;">
-        <div style="font-size:11px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">What format gives us the best chance of being understood on the other end?</div>
-        <a href="https://putopia.vercel.app/vote" style="font-size:8px;letter-spacing:0.18em;color:#20D890;text-decoration:none;border-bottom:1px solid rgba(32,216,144,0.3);">CAST VOTE →</a>
-      </td></tr>
-    </table>
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;background:#0A0E27;border:1px solid rgba(32,216,144,0.12);">
-      <tr><td style="padding:12px 16px;">
-        <div style="font-size:11px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">A world I have been observing has gone dark — further attempts may damage my device.</div>
-        <a href="https://putopia.vercel.app/vote" style="font-size:8px;letter-spacing:0.18em;color:#20D890;text-decoration:none;border-bottom:1px solid rgba(32,216,144,0.3);">CAST VOTE →</a>
-      </td></tr>
-    </table>
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;background:#0A0E27;border:1px solid rgba(32,216,144,0.12);">
-      <tr><td style="padding:12px 16px;">
-        <div style="font-size:11px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">Key parallel world signal monitoring — which category should we prioritize?</div>
-        <a href="https://putopia.vercel.app/vote" style="font-size:8px;letter-spacing:0.18em;color:#20D890;text-decoration:none;border-bottom:1px solid rgba(32,216,144,0.3);">CAST VOTE →</a>
-      </td></tr>
-    </table>
-  </td></tr>
-
-  <tr><td style="height:16px;"></td></tr>
-
-  <!-- ── CTA BLOCK — GROUP B (TASK GATED) ── -->
+  <!-- ── CTA BLOCK — GROUP B (TASK GATED) — two-column layout ── -->
   <tr><td style="background:#0A0E27;border:1px solid rgba(232,160,32,0.35);overflow:hidden;">
     <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(232,160,32,0.5),transparent);"></div>
 
-    <!-- Product image (desaturated — locked) -->
-    <div style="position:relative;overflow:hidden;">
-      <img src="https://putopia.vercel.app/voyager-pack/voyager-hero.png"
-           width="600"
-           alt="Initial Voyager Pack — unlock after completing your assessment"
-           style="width:100%;display:block;opacity:0.45;filter:grayscale(40%);" />
-      <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,#0A0E27 100%);"></div>
-    </div>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <!-- Left: product image (desaturated — locked state) -->
+        <td width="210" style="vertical-align:top;padding:0;overflow:hidden;">
+          <img src="https://putopia.vercel.app/voyager-pack/voyager-hero.png"
+               width="210"
+               alt="Initial Voyager Pack — locked until assessment complete"
+               style="width:210px;display:block;filter:grayscale(55%);opacity:0.55;" />
+        </td>
+        <!-- Right: content + CTA -->
+        <td style="vertical-align:top;padding:22px 22px 22px 20px;">
+          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:8px;">◈ YOUR PATH TO VOYAGER ◈</div>
 
-    <!-- Content -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px 28px 28px;">
-      <tr><td>
-        <div style="font-size:8px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:10px;">◈ &nbsp;YOUR PATH TO VOYAGER &nbsp;◈</div>
+          <div style="font-size:15px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:12px;line-height:1.3;">
+            COMPLETE 4 TASKS<br/>TO UNLOCK.
+          </div>
 
-        <div style="font-size:18px;font-weight:700;letter-spacing:0.08em;color:#F5F5F5;margin-bottom:12px;line-height:1.25;">
-          COMPLETE 4 TASKS TO<br/>UNLOCK THE PACK.
-        </div>
+          <!-- Task list -->
+          <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;width:100%;">
+            <tr><td style="padding:5px 0;border-bottom:1px solid rgba(232,160,32,0.08);font-size:9px;letter-spacing:0.05em;color:rgba(245,245,245,0.4);">
+              <span style="color:rgba(232,160,32,0.45);">01</span> &nbsp;Report a Sighting
+            </td></tr>
+            <tr><td style="padding:5px 0;border-bottom:1px solid rgba(232,160,32,0.08);font-size:9px;letter-spacing:0.05em;color:rgba(245,245,245,0.4);">
+              <span style="color:rgba(232,160,32,0.45);">02</span> &nbsp;Cast Two Votes
+            </td></tr>
+            <tr><td style="padding:5px 0;border-bottom:1px solid rgba(232,160,32,0.08);font-size:9px;letter-spacing:0.05em;color:rgba(245,245,245,0.4);">
+              <span style="color:rgba(232,160,32,0.45);">03</span> &nbsp;Read an Architect Report
+            </td></tr>
+            <tr><td style="padding:5px 0;font-size:9px;letter-spacing:0.05em;color:rgba(245,245,245,0.4);">
+              <span style="color:rgba(232,160,32,0.45);">04</span> &nbsp;Pass the Field Assessment
+            </td></tr>
+          </table>
 
-        <!-- Task list -->
-        <table cellpadding="0" cellspacing="0" style="margin-bottom:22px;width:100%;">
-          <tr><td style="padding:6px 0;border-bottom:1px solid rgba(232,160,32,0.08);">
-            <span style="font-size:9px;color:rgba(232,160,32,0.4);">01 &nbsp;</span>
-            <span style="font-size:10px;letter-spacing:0.08em;color:rgba(245,245,245,0.45);">Report a Sighting</span>
-          </td></tr>
-          <tr><td style="padding:6px 0;border-bottom:1px solid rgba(232,160,32,0.08);">
-            <span style="font-size:9px;color:rgba(232,160,32,0.4);">02 &nbsp;</span>
-            <span style="font-size:10px;letter-spacing:0.08em;color:rgba(245,245,245,0.45);">Cast Two Votes</span>
-          </td></tr>
-          <tr><td style="padding:6px 0;border-bottom:1px solid rgba(232,160,32,0.08);">
-            <span style="font-size:9px;color:rgba(232,160,32,0.4);">03 &nbsp;</span>
-            <span style="font-size:10px;letter-spacing:0.08em;color:rgba(245,245,245,0.45);">Read an Architect Report</span>
-          </td></tr>
-          <tr><td style="padding:6px 0;">
-            <span style="font-size:9px;color:rgba(232,160,32,0.4);">04 &nbsp;</span>
-            <span style="font-size:10px;letter-spacing:0.08em;color:rgba(245,245,245,0.45);">Pass the Field Assessment</span>
-          </td></tr>
-        </table>
+          <a href="https://putopia.vercel.app/console"
+             style="display:block;text-align:center;background:rgba(232,160,32,0.1);color:#E8A020;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:11px 14px;border:1px solid rgba(232,160,32,0.5);margin-bottom:10px;">
+            [ VIEW PROGRESS ]
+          </a>
 
-        <!-- CTA button -->
-        <a href="https://putopia.vercel.app/console"
-           style="display:block;text-align:center;background:rgba(232,160,32,0.1);color:#E8A020;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.2em;text-decoration:none;padding:14px 32px;border:1px solid rgba(232,160,32,0.5);margin-bottom:14px;">
-          [ VIEW MY PROGRESS ]
-        </a>
-
-        <!-- Unlock note -->
-        <div style="text-align:center;">
-          <span style="font-size:9px;letter-spacing:0.1em;color:rgba(245,245,245,0.25);">
-            Unlock the Initial Voyager Pack ($12) upon completion
-          </span>
-        </div>
-      </td></tr>
+          <div style="text-align:center;font-size:8px;letter-spacing:0.06em;color:rgba(245,245,245,0.2);">
+            Pack ($12) unlocks on completion
+          </div>
+        </td>
+      </tr>
     </table>
+
     <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(232,160,32,0.2),transparent);"></div>
   </td></tr>
 

@@ -133,78 +133,49 @@ export const DIRECT_HTML = `
 
   <tr><td style="height:16px;"></td></tr>
 
-  <!-- ── VOTES SECTION ── -->
-  <tr><td>
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
-      <tr>
-        <td style="height:1px;background:rgba(32,216,144,0.12);"></td>
-        <td style="padding:0 12px;white-space:nowrap;font-size:8px;letter-spacing:0.3em;color:#20D890;">● ACTIVE VOTES</td>
-        <td style="height:1px;background:rgba(32,216,144,0.12);"></td>
-      </tr>
-    </table>
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;background:#0A0E27;border:1px solid rgba(32,216,144,0.12);">
-      <tr><td style="padding:12px 16px;">
-        <div style="font-size:11px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">What format gives us the best chance of being understood on the other end?</div>
-        <a href="https://putopia.vercel.app/vote" style="font-size:8px;letter-spacing:0.18em;color:#20D890;text-decoration:none;border-bottom:1px solid rgba(32,216,144,0.3);">CAST VOTE →</a>
-      </td></tr>
-    </table>
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;background:#0A0E27;border:1px solid rgba(32,216,144,0.12);">
-      <tr><td style="padding:12px 16px;">
-        <div style="font-size:11px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">A world I have been observing has gone dark — further attempts may damage my device.</div>
-        <a href="https://putopia.vercel.app/vote" style="font-size:8px;letter-spacing:0.18em;color:#20D890;text-decoration:none;border-bottom:1px solid rgba(32,216,144,0.3);">CAST VOTE →</a>
-      </td></tr>
-    </table>
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;background:#0A0E27;border:1px solid rgba(32,216,144,0.12);">
-      <tr><td style="padding:12px 16px;">
-        <div style="font-size:11px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.4;">Key parallel world signal monitoring — which category should we prioritize?</div>
-        <a href="https://putopia.vercel.app/vote" style="font-size:8px;letter-spacing:0.18em;color:#20D890;text-decoration:none;border-bottom:1px solid rgba(32,216,144,0.3);">CAST VOTE →</a>
-      </td></tr>
-    </table>
-  </td></tr>
-
-  <tr><td style="height:16px;"></td></tr>
-
-  <!-- ── CTA BLOCK — GROUP A (DIRECT) ── -->
+  <!-- ── CTA BLOCK — GROUP A (DIRECT) — two-column layout ── -->
   <tr><td style="background:linear-gradient(160deg,#1A0E2A,#0F1430);border:1px solid rgba(255,107,53,0.45);overflow:hidden;">
     <div style="height:2px;background:linear-gradient(90deg,#E85D04,#FF6B35,#DC2F02);"></div>
 
-    <!-- Product image -->
-    <img src="https://putopia.vercel.app/voyager-pack/voyager-hero.png"
-         width="600"
-         alt="Initial Voyager Pack — badge and access card"
-         style="width:100%;display:block;" />
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <!-- Left: product image -->
+        <td width="210" style="vertical-align:top;padding:0;overflow:hidden;">
+          <img src="https://putopia.vercel.app/voyager-pack/voyager-hero.png"
+               width="210"
+               alt="Initial Voyager Pack"
+               style="width:210px;display:block;" />
+        </td>
+        <!-- Right: content + CTA -->
+        <td style="vertical-align:middle;padding:24px 22px 24px 20px;">
+          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(255,107,53,0.6);margin-bottom:8px;">◈ INITIAL VOYAGER PACK ◈</div>
 
-    <!-- Content -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding:24px 28px 28px;">
-      <tr><td>
-        <div style="font-size:8px;letter-spacing:0.28em;color:rgba(255,107,53,0.6);margin-bottom:10px;">◈ &nbsp;INITIAL VOYAGER PACK &nbsp;◈</div>
+          <div style="font-size:15px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:10px;line-height:1.3;">
+            YOUR VOYAGER<br/>STATUS IS READY.
+          </div>
 
-        <div style="font-size:18px;font-weight:700;letter-spacing:0.08em;color:#F5F5F5;margin-bottom:8px;line-height:1.25;">
-          YOUR VOYAGER STATUS IS<br/>READY TO ACTIVATE.
-        </div>
+          <div style="font-size:9px;color:rgba(245,245,245,0.45);line-height:1.75;margin-bottom:18px;">
+            Physical badge<br/>
+            Access card<br/>
+            Full network access<br/>
+            <span style="color:#FF6B35;font-weight:700;">$12 one-time</span>
+          </div>
 
-        <div style="font-size:10px;color:rgba(245,245,245,0.45);line-height:1.7;margin-bottom:22px;">
-          Physical badge &nbsp;·&nbsp; Access card &nbsp;·&nbsp; Full Collective network access &nbsp;·&nbsp; <span style="color:#FF6B35;font-weight:700;">$12</span>
-        </div>
-
-        <!-- Buy button -->
-        <a href="https://putopia.vercel.app/voyager-pack"
-           style="display:block;text-align:center;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.2em;text-decoration:none;padding:14px 32px;border:1px solid rgba(255,107,53,0.6);margin-bottom:16px;">
-          [ ACTIVATE VOYAGER STATUS ]
-        </a>
-
-        <!-- Learn more -->
-        <div style="text-align:center;">
           <a href="https://putopia.vercel.app/voyager-pack"
-             style="font-size:9px;letter-spacing:0.14em;color:rgba(255,107,53,0.5);text-decoration:none;border-bottom:1px solid rgba(255,107,53,0.22);">
-            Learn more about this item →
+             style="display:block;text-align:center;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:11px 14px;margin-bottom:12px;">
+            [ ACTIVATE NOW ]
           </a>
-        </div>
-      </td></tr>
+
+          <div style="text-align:center;">
+            <a href="https://putopia.vercel.app/voyager-pack"
+               style="font-size:8px;letter-spacing:0.1em;color:rgba(255,107,53,0.5);text-decoration:none;border-bottom:1px solid rgba(255,107,53,0.22);">
+              Learn more about this item →
+            </a>
+          </div>
+        </td>
+      </tr>
     </table>
+
     <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,107,53,0.2),transparent);"></div>
   </td></tr>
 
