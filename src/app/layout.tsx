@@ -5,6 +5,7 @@ import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
 import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
+import { ScrollRestorer } from '@/components/scroll-restorer'
 
 const courierPrime = Courier_Prime({
   variable: '--font-mono',
@@ -38,6 +39,7 @@ export default function RootLayout({
           fbq('track','PageView');
         `}</Script>
         <AuthProvider>
+          <ScrollRestorer />
           <div className="app-shell w-full">
             <Sidebar />
             {children}
