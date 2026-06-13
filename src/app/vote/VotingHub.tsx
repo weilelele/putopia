@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
@@ -15,15 +16,92 @@ type Props = {
   tallies: Record<string, Record<string, number>>
 }
 
+type FilterTab = 'all' | 'public' | 'classified'
+
+// A vote is "classified" if applicants cannot participate (scope excludes 'applicant')
+const isClassified = (v: Vote) => !v.scope.includes('applicant')
+
+// ─── Classified wall ──────────────────────────────────────────────────────────
+function ClassifiedWall() {
+  return (
+    <div style={{
+      border: '1px solid rgba(255,107,53,0.25)',
+      background: 'rgba(232,93,4,0.03)',
+      padding: '3.5rem 2rem',
+      textAlign: 'center',
+      marginTop: '1rem',
+    }}>
+      <div style={{
+        fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
+        letterSpacing: '0.25em', color: 'rgba(245,245,245,0.2)',
+        marginBottom: '1rem',
+      }}>
+        // ACCESS RESTRICTED
+      </div>
+      <p style={{
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
+        color: 'rgba(245,245,245,0.5)', lineHeight: 1.8, marginBottom: '1.75rem',
+      }}>
+        后续信息机密，无法显示
+      </p>
+      <Link
+        href="/voyager-pack"
+        style={{
+          display: 'inline-block',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+          letterSpacing: '0.18em', color: '#FF6B35',
+          border: '1px solid rgba(255,107,53,0.45)',
+          padding: '0.5rem 1.75rem', textDecoration: 'none',
+        }}
+        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,107,53,0.08)')}
+        onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+      >
+        BECOME A VOYAGER →
+      </Link>
+    </div>
+  )
+}
+
+// ─── Filter tab pill ──────────────────────────────────────────────────────────
+function FilterTabBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
+        padding: '0.3rem 1rem',
+        border: `1px solid ${active ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.18)'}`,
+        background: active ? 'rgba(255,107,53,0.12)' : 'transparent',
+        color: active ? '#FF6B35' : 'rgba(245,245,245,0.4)',
+        cursor: 'pointer', transition: 'all 0.12s',
+      }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.35)' }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.18)' }}
+    >
+      {label}
+    </button>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 export function VotingHub({ votes, myResponses, tallies }: Props) {
   const { isAtLeast } = useAuth()
   const router = useRouter()
   const [showCreate, setShowCreate] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
 
   const myResponseMap = Object.fromEntries(myResponses.map((r) => [r.vote_id, r.selected_options]))
 
-  const activeVotes = votes.filter((v) => v.is_active)
-  const closedVotes = votes.filter((v) => !v.is_active)
+  // Filter votes based on active tab
+  const filteredVotes =
+    activeFilter === 'public'     ? votes.filter(v => !isClassified(v)) :
+    activeFilter === 'classified' ? votes.filter(v =>  isClassified(v)) :
+    votes
+
+  const activeVotes = filteredVotes.filter((v) => v.is_active)
+  const closedVotes = filteredVotes.filter((v) => !v.is_active)
+
+  const showClassifiedWall = activeFilter === 'classified' && !isAtLeast('voyager')
 
   const handleCreated = () => {
     setShowCreate(false)
@@ -36,8 +114,8 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> VOTING HUB</div>
         <div className="right">
-          <div className="item">ACTIVE <span className="val">{activeVotes.length}</span></div>
-          <div className="item">CLOSED <span className="val">{closedVotes.length}</span></div>
+          <div className="item">ACTIVE <span className="val">{votes.filter(v => v.is_active).length}</span></div>
+          <div className="item">CLOSED <span className="val">{votes.filter(v => !v.is_active).length}</span></div>
         </div>
       </div>
 
@@ -45,7 +123,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
         <div>
           <div className="h-eyebrow">// DECISION ZONE</div>
           <h1>VOTING <span className="accent">HUB</span></h1>
-          <p className="sub">{activeVotes.length} active / {closedVotes.length} closed</p>
+          <p className="sub">{votes.filter(v => v.is_active).length} active / {votes.filter(v => !v.is_active).length} closed</p>
         </div>
         {isAtLeast('architect') && (
           <button
@@ -59,61 +137,76 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
         )}
       </div>
 
-      {/* Active Votes */}
-      {activeVotes.length > 0 && (
-        <section className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="text-xs font-mono tracking-widest" style={{ color: '#20D890' }}>
-              ● ACTIVE VOTES
-            </div>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {activeVotes.map((v) => (
-              <VoteCard
-                key={v.id}
-                vote={v}
-                hasVoted={!!myResponseMap[v.id]}
-                mySelections={myResponseMap[v.id] ?? []}
-                tally={tallies[v.id] ?? {}}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Filter tabs */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        <FilterTabBtn label="ALL"    active={activeFilter === 'all'}        onClick={() => setActiveFilter('all')} />
+        <FilterTabBtn label="PUBLIC" active={activeFilter === 'public'}     onClick={() => setActiveFilter('public')} />
+        <FilterTabBtn label="机密"   active={activeFilter === 'classified'} onClick={() => setActiveFilter('classified')} />
+      </div>
 
-      {/* Closed Votes */}
-      {closedVotes.length > 0 && (
-        <section>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="text-xs font-mono tracking-widest" style={{ color: 'rgba(245,245,245,0.35)' }}>
-              ○ CLOSED VOTES
-            </div>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {closedVotes.map((v) => (
-              <VoteCard
-                key={v.id}
-                vote={v}
-                hasVoted={!!myResponseMap[v.id]}
-                mySelections={myResponseMap[v.id] ?? []}
-                tally={tallies[v.id] ?? {}}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Classified wall for non-Voyager */}
+      {showClassifiedWall && <ClassifiedWall />}
 
-      {votes.length === 0 && (
-        <div className="text-center py-16">
-          <div className="text-xs font-mono tracking-widest mb-2" style={{ color: 'rgba(245,245,245,0.35)' }}>
-            // NO VOTES FOUND
-          </div>
-          <p className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
-            No votes have been created yet.
-          </p>
-        </div>
+      {/* Vote lists */}
+      {!showClassifiedWall && (
+        <>
+          {/* Active Votes */}
+          {activeVotes.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="text-xs font-mono tracking-widest" style={{ color: '#20D890' }}>
+                  ● ACTIVE VOTES
+                </div>
+                <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {activeVotes.map((v) => (
+                  <VoteCard
+                    key={v.id}
+                    vote={v}
+                    hasVoted={!!myResponseMap[v.id]}
+                    mySelections={myResponseMap[v.id] ?? []}
+                    tally={tallies[v.id] ?? {}}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Closed Votes */}
+          {closedVotes.length > 0 && (
+            <section>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="text-xs font-mono tracking-widest" style={{ color: 'rgba(245,245,245,0.35)' }}>
+                  ○ CLOSED VOTES
+                </div>
+                <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {closedVotes.map((v) => (
+                  <VoteCard
+                    key={v.id}
+                    vote={v}
+                    hasVoted={!!myResponseMap[v.id]}
+                    mySelections={myResponseMap[v.id] ?? []}
+                    tally={tallies[v.id] ?? {}}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {filteredVotes.length === 0 && (
+            <div className="text-center py-16">
+              <div className="text-xs font-mono tracking-widest mb-2" style={{ color: 'rgba(245,245,245,0.35)' }}>
+                // NO VOTES FOUND
+              </div>
+              <p className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
+                No votes match this filter.
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       <div className="footer-bar" style={{ marginTop: '2rem' }}>

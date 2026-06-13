@@ -16,6 +16,8 @@ const TAG_COLOR: Record<string, string> = {
   ORG:    'var(--color-nebula)',
 }
 
+type FilterTab = 'all' | 'public' | 'classified'
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -26,11 +28,53 @@ function getInitials(name: string) {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
+// ─── Classified wall — shown when non-Voyager selects the classified filter ───
+function ClassifiedWall() {
+  return (
+    <div style={{
+      maxWidth: '720px',
+      border: '1px solid rgba(255,107,53,0.25)',
+      background: 'rgba(232,93,4,0.03)',
+      padding: '3.5rem 2rem',
+      textAlign: 'center',
+    }}>
+      <div style={{
+        fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
+        letterSpacing: '0.25em', color: 'rgba(245,245,245,0.2)',
+        marginBottom: '1rem',
+      }}>
+        // ACCESS RESTRICTED
+      </div>
+      <p style={{
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
+        color: 'rgba(245,245,245,0.5)', lineHeight: 1.8, marginBottom: '1.75rem',
+      }}>
+        内部后续信息机密，无法对您显示
+      </p>
+      <Link
+        href="/voyager-pack"
+        style={{
+          display: 'inline-block',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+          letterSpacing: '0.18em', color: '#FF6B35',
+          border: '1px solid rgba(255,107,53,0.45)',
+          padding: '0.5rem 1.75rem', textDecoration: 'none',
+        }}
+        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,107,53,0.08)')}
+        onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+      >
+        BECOME A VOYAGER →
+      </Link>
+    </div>
+  )
+}
+
+// ─── Individual Intel card ────────────────────────────────────────────────────
 function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commentCount?: number }) {
-  const color     = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
-  const hasImage  = (entry.images?.length ?? 0) > 0
+  const color    = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
+  const hasImage = (entry.images?.length ?? 0) > 0
   const extraImgs = (entry.images?.length ?? 0) - 1
-  const name      = entry.publisher_name ?? 'PUTOPIA COLLECTIVE'
+  const name     = entry.publisher_name ?? 'PUTOPIA COLLECTIVE'
 
   return (
     <Link
@@ -75,13 +119,12 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
             </div>
           </div>
 
-          {/* Tag badge */}
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
-            color, border: `1px solid ${color}60`, padding: '2px 8px', flexShrink: 0,
-          }}>
-            {entry.tag}
-          </span>
+          {/* Colored dot (replaces text tag badge) */}
+          <div style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: color, flexShrink: 0,
+            boxShadow: `0 0 6px ${color}`,
+          }} />
 
         </div>
 
@@ -131,7 +174,7 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
 
         </div>
 
-        {/* Mobile image strip — shown only on small screens when image exists */}
+        {/* Mobile image strip */}
         {hasImage && (
           <div className="block sm:hidden" style={{ borderTop: '1px solid rgba(255,107,53,0.16)', position: 'relative' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -158,11 +201,34 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
   )
 }
 
+// ─── Filter tab pill ──────────────────────────────────────────────────────────
+function FilterTab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
+        padding: '0.3rem 1rem',
+        border: `1px solid ${active ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.18)'}`,
+        background: active ? 'rgba(255,107,53,0.12)' : 'transparent',
+        color: active ? '#FF6B35' : 'rgba(245,245,245,0.4)',
+        cursor: 'pointer', transition: 'all 0.12s',
+      }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.35)' }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.18)' }}
+    >
+      {label}
+    </button>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function IntelPage() {
   const { isAtLeast } = useAuth()
   const [intel, setIntel] = useState<IntelWithAvatar[]>([])
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
   const [showCreate, setShowCreate] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
 
   const loadIntel = async () => {
     const data = await getAllIntel()
@@ -175,6 +241,14 @@ export default function IntelPage() {
   }
 
   useEffect(() => { loadIntel() }, [])
+
+  // Derive displayed list based on filter
+  const visibleIntel =
+    activeFilter === 'public'     ? intel.filter(e => !e.classified) :
+    activeFilter === 'classified' ? intel.filter(e =>  e.classified) :
+    intel
+
+  const showClassifiedWall = activeFilter === 'classified' && !isAtLeast('voyager')
 
   return (
     <div className="main">
@@ -193,6 +267,7 @@ export default function IntelPage() {
           <h1>INTEL <span className="accent">FEED</span></h1>
           <p className="sub">Known intelligence — {intel.length} entries on record</p>
         </div>
+        {/* Color legend */}
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           {(['NOTICE', 'DEVICE', 'ORG'] as const).map((tag) => (
             <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -203,9 +278,21 @@ export default function IntelPage() {
         </div>
       </div>
 
+      {/* Filter tabs */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        <FilterTab label="ALL"      active={activeFilter === 'all'}        onClick={() => setActiveFilter('all')} />
+        <FilterTab label="PUBLIC"   active={activeFilter === 'public'}     onClick={() => setActiveFilter('public')} />
+        <FilterTab label="机密"     active={activeFilter === 'classified'} onClick={() => setActiveFilter('classified')} />
+      </div>
+
       {/* Feed */}
       <div style={{ maxWidth: '720px', width: '100%' }}>
-        {intel.map(entry => <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />)}
+        {showClassifiedWall
+          ? <ClassifiedWall />
+          : visibleIntel.map(entry => (
+              <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />
+            ))
+        }
       </div>
 
       <div className="footer-bar" style={{ marginTop: '2rem' }}>
