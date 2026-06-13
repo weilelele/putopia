@@ -176,8 +176,8 @@ const TASKS: {
   href: string; icon: React.ReactNode; accentColor: string
 }[] = [
   {
-    key: 'report_sighting', num: '01', label: 'Witness Something Extraordinary',
-    description: 'File a sighting — document a signal, image, or encounter with a parallel world.',
+    key: 'report_sighting', num: '01', label: 'Report a Sighting',
+    description: 'Document a signal, image, or encounter with a parallel world.',
     href: '/worlds/submit', icon: <WorldIcon />, accentColor: '#FF6B35',
   },
   {
@@ -191,8 +191,8 @@ const TASKS: {
     href: '/intel/INT-628014', icon: <IntelIcon />, accentColor: '#DC2F02',
   },
   {
-    key: 'pass_quiz', num: '04', label: 'Prove Your Readiness',
-    description: 'Complete the field assessment to demonstrate you are prepared for active service.',
+    key: 'pass_quiz', num: '04', label: 'Qualify for Active Service',
+    description: 'Complete the field assessment to demonstrate you are ready for active service.',
     href: '/quiz', icon: <QuizIcon />, accentColor: '#C04000',
   },
 ]
@@ -258,6 +258,53 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
           to   { opacity: 1; transform: scale(1)    translateY(0); }
         }
       `}</style>
+    </div>
+  )
+}
+
+// ─── Benefit detail modal (Applicant preview: explains what each benefit is) ──
+
+type BenefitDetail = { title: string; sublabel: string; body: string }
+
+function BenefitDetailModal({ item, onClose }: { item: BenefitDetail; onClose: () => void }) {
+  const gold = (a: number) => `rgba(196,169,106,${a})`
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(10,14,39,0.82)',
+        backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 60, padding: '24px',
+        animation: 'modal-backdrop-in 0.15s ease-out',
+      }}
+    >
+      <div className="dd-panel" style={{
+        maxWidth: 400, width: '100%',
+        ['--dd-bd' as string]: gold(0.45),
+        ['--dd-fill' as string]: '#0F1430',
+        padding: '22px 26px 18px',
+        animation: 'modal-in 0.18s cubic-bezier(0.34,1.56,0.64,1)',
+        filter: 'drop-shadow(0 0 40px rgba(10,14,39,0.6))',
+      }}>
+        <i className="dd-node" />
+        <i className="dd-dash" />
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 'var(--fs-label)', color: gold(0.85), letterSpacing: '0.12em', marginBottom: 4 }}>
+            {item.title}
+          </div>
+          <div style={{ fontSize: 9, color: gold(0.45), letterSpacing: '0.1em' }}>
+            {item.sublabel}
+          </div>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.75 }}>
+          {item.body}
+        </p>
+        <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.15)', letterSpacing: '0.14em', textAlign: 'center' }}>
+          TAP ANYWHERE TO DISMISS
+        </div>
+      </div>
     </div>
   )
 }
@@ -564,33 +611,33 @@ function ApplicantUnlockBlock({
 
 // ─── VOYAGER stage content ────────────────────────────────────────────────────
 
-function VoyagerStageContent({ onConsoleClick, onSignalClick }: { onConsoleClick: () => void; onSignalClick: () => void }) {
+function VoyagerStageContent({ onItemClick }: { onItemClick: (item: BenefitDetail) => void }) {
   const gold = (a: number) => `rgba(196,169,106,${a})`
 
-  const preview = [
+  const preview: (BenefitDetail & { icon: React.ReactNode })[] = [
     {
       icon: <ConsoleIcon size={18} />,
-      label: 'CONSOLE — PRIORITY APPLICATION',
+      title: 'CONSOLE — PRIORITY APPLICATION',
       sublabel: 'First in line for limited hardware',
-      onClick: onConsoleClick,
+      body: 'Voyagers are first in line to apply for the next Multiverse Console. Reserve limited hardware before public availability.',
     },
     {
       icon: <IntelIcon />,
-      label: 'INTEL & DECISIONS',
+      title: 'INTEL & DECISIONS',
       sublabel: 'Access reports and shape Collective decisions',
-      onClick: undefined,
+      body: 'Access all Architect intelligence dispatches and participate in Collective votes — stay informed and help shape the mission.',
     },
     {
       icon: <VoyagerIcon size={18} />,
-      label: 'VOYAGER IDENTITY',
+      title: 'VOYAGER IDENTITY',
       sublabel: 'Your permanent number and cohort placement',
-      onClick: undefined,
+      body: 'Receive a permanent Voyager number and cohort designation — your unique position and rank within the Collective.',
     },
     {
       icon: <SignalIcon />,
-      label: 'SIGNAL ANALYSIS & DEVICE TRACKING',
+      title: 'SIGNAL ANALYSIS & DEVICE TRACKING',
       sublabel: 'Active field operations — coming soon',
-      onClick: onSignalClick,
+      body: 'Decode anomalous signal transmissions and trace active Multiverse Consoles in the field. Signal missions are available to Voyagers only.',
     },
   ]
 
@@ -611,21 +658,24 @@ function VoyagerStageContent({ onConsoleClick, onSignalClick }: { onConsoleClick
         </span>
       </div>
 
-      {/* Rows — title + sublabel only, no right indicator */}
+      {/* Rows — all clickable, show detail modal on click */}
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {preview.map(({ icon, label, sublabel, onClick }, i) => {
+        {preview.map(({ icon, title, sublabel, body }, i) => {
           const isLast = i === preview.length - 1
           return (
             <div
-              key={label}
-              onClick={onClick}
+              key={title}
+              onClick={() => onItemClick({ title, sublabel, body })}
               style={{
                 display: 'flex', alignItems: 'center', gap: 13,
                 padding: '12px 18px',
                 borderBottom: isLast ? 'none' : `1px solid ${gold(0.05)}`,
-                cursor: onClick ? 'pointer' : 'default',
+                cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
+                transition: 'background 0.12s',
               }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = gold(0.04) }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
             >
               <div style={{
                 width: 32, height: 32, flexShrink: 0,
@@ -638,11 +688,14 @@ function VoyagerStageContent({ onConsoleClick, onSignalClick }: { onConsoleClick
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 10, letterSpacing: '0.08em', marginBottom: 3, color: gold(0.62) }}>
-                  {label}
+                  {title}
                 </div>
                 <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.22)', letterSpacing: '0.04em' }}>
                   {sublabel}
                 </div>
+              </div>
+              <div style={{ flexShrink: 0, color: gold(0.3) }}>
+                <ArrowIcon size={11} />
               </div>
             </div>
           )
@@ -861,6 +914,7 @@ export default function DashboardDemoPage() {
   const [packPurchased, setPackPurchased] = useState(false)
   const [viewedStage, setViewedStage]     = useState<ViewStage>('applicant')
   const [modal, setModal]                 = useState<ModalKind | null>(null)
+  const [detailItem, setDetailItem]       = useState<BenefitDetail | null>(null)
 
   const completedCount = Object.values(completed).filter(Boolean).length
   const totalTasks     = TASKS.length
@@ -896,8 +950,9 @@ export default function DashboardDemoPage() {
   return (
     <div style={{ height: '100vh', overflowY: 'auto', background: 'var(--color-deep)', fontFamily: 'var(--font-mono)' }}>
 
-      {/* ── Centered modal ── */}
+      {/* ── Modals ── */}
       <Modal kind={modal} onClose={() => setModal(null)} />
+      {detailItem && <BenefitDetailModal item={detailItem} onClose={() => setDetailItem(null)} />}
 
       {/* ── Top bar ── */}
       <div style={{ borderBottom: '1px solid rgba(255,107,53,0.12)', background: '#0F1430', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -959,7 +1014,7 @@ export default function DashboardDemoPage() {
               onDeviceSeeker={() => setModal('device_seeker')}
             />
           ) : (
-            <VoyagerStageContent onConsoleClick={() => setModal('console_locked')} onSignalClick={() => setModal('signal_locked')} />
+            <VoyagerStageContent onItemClick={setDetailItem} />
           )}
         </section>
 
