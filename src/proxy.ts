@@ -71,21 +71,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // /voyager-pack is an internal review page — Architect or Voyager only.
-  // (Optimistic gate; the page server-component re-checks the role authoritatively.)
-  if (pathname.startsWith('/voyager-pack')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login?redirect=/voyager-pack', request.url))
-    }
-    const { data: profile } = await supabase
-      .from('voyager_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    if (profile?.role !== 'architect' && profile?.role !== 'voyager') {
-      return NextResponse.redirect(new URL('/console', request.url))
-    }
-  }
+  // /voyager-pack is a public product page — accessible to all users including guests.
+  // Auth + purchase gating is handled inside /api/checkout.
 
   // /devices/claim is architect-only until Stripe is wired in.
   if (pathname.startsWith('/devices/claim')) {
