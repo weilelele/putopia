@@ -11,16 +11,7 @@ type Props = {
 
 export function FilterBar({ options, active, onChange, className }: Props) {
   return (
-    <div className={className} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.5rem' }}>
-
-      {/* "FILTER" micro-label */}
-      <span style={{
-        fontFamily: 'var(--font-mono)', fontSize: '0.58rem',
-        letterSpacing: '0.25em', color: 'rgba(245,245,245,0.18)',
-        flexShrink: 0, userSelect: 'none',
-      }}>
-        FILTER
-      </span>
+    <div className={className} style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
 
       {/* Segmented control */}
       <div style={{
