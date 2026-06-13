@@ -116,6 +116,21 @@ function WorldIcon() {
   )
 }
 
+function SignalIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      {/* centre dot */}
+      <circle cx="9" cy="9" r="1.6" fill="currentColor" />
+      {/* inner arc */}
+      <path d="M5.8 12.2a4.5 4.5 0 010-6.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      <path d="M12.2 5.8a4.5 4.5 0 010 6.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      {/* outer arc */}
+      <path d="M3.3 14.7a8 8 0 010-11.4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" opacity="0.5" fill="none" />
+      <path d="M14.7 3.3a8 8 0 010 11.4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" opacity="0.5" fill="none" />
+    </svg>
+  )
+}
+
 function VoteIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -547,44 +562,98 @@ function ApplicantUnlockBlock({
 // ─── VOYAGER stage content ────────────────────────────────────────────────────
 
 function VoyagerStageContent({ onConsoleClick }: { onConsoleClick: () => void }) {
+  const gold = (a: number) => `rgba(196,169,106,${a})`
+
+  const preview = [
+    {
+      icon: <ConsoleIcon size={18} />,
+      label: 'CONSOLE — PRIORITY APPLICATION',
+      desc: 'Voyagers are first in line to apply for the next Multiverse Console. Reserve limited hardware before public availability.',
+      dimmed: true,
+      onClick: onConsoleClick,
+    },
+    {
+      icon: <IntelIcon />,
+      label: 'INTEL & DECISIONS',
+      desc: 'Access all Architect intelligence dispatches and participate in Collective votes — stay informed and help shape the mission.',
+      dimmed: false,
+    },
+    {
+      icon: <VoyagerIcon size={18} />,
+      label: 'VOYAGER IDENTITY',
+      desc: 'Receive a permanent Voyager number and cohort designation — your unique position and rank within the Collective.',
+      dimmed: false,
+    },
+    {
+      icon: <SignalIcon />,
+      label: 'SIGNAL ANALYSIS & DEVICE TRACKING',
+      desc: 'Decode anomalous signal transmissions and trace active Multiverse Consoles in the field. Core operative work.',
+      dimmed: true,
+    },
+  ]
+
   return (
-    <div className="dd-panel" style={{
-      ['--dd-bd' as string]: 'rgba(196,169,106,0.3)',
-    }}>
+    <div className="dd-panel" style={{ ['--dd-bd' as string]: gold(0.3) }}>
       <i className="dd-node" />
       <i className="dd-dash" />
-      {/* Status */}
+
+      {/* Header */}
       <div style={{
-        padding: '13px 18px 13px',
-        borderBottom: '1px solid rgba(196,169,106,0.08)',
+        padding: '12px 18px',
+        borderBottom: `1px solid ${gold(0.07)}`,
+        display: 'flex', alignItems: 'center', gap: 9,
       }}>
-        <div style={{ fontSize: 'var(--fs-label)', letterSpacing: '0.1em', color: 'rgba(196,169,106,0.55)', marginBottom: 4 }}>
-          NEXT UNLOCK: CONSOLE HOLDER
-        </div>
-        <p style={{ margin: 0, fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', lineHeight: 1.75 }}>
-          The Multiverse Console is currently being explored and repaired.
-          We&apos;ll notify you as soon as there&apos;s news.
-        </p>
+        <div style={{ color: gold(0.45) }}><VoyagerIcon size={14} /></div>
+        <span style={{ fontSize: 'var(--fs-label)', letterSpacing: '0.14em', color: gold(0.5) }}>
+          VOYAGER BENEFITS
+        </span>
       </div>
-      {/* Locked apply button */}
-      <div style={{ padding: '14px 18px 16px' }}>
-        <button
-          onClick={onConsoleClick}
-          className="dd-panel"
-          style={{
-            ['--dd-bd' as string]: 'rgba(255,255,255,0.1)',
-            ['--dd-fill' as string]: '#0C1029',
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            padding: '15px', cursor: 'pointer', fontFamily: 'var(--font-mono)',
-            color: 'rgba(245,245,245,0.2)',
-          }}
-        >
-          <i className="dd-node" />
-          <i className="dd-dash" />
-          <ConsoleIcon size={22} />
-          <span style={{ fontSize: 11, letterSpacing: '0.14em' }}>APPLY FOR CONSOLE</span>
-          <LockIcon size={12} />
-        </button>
+
+      {/* Rows */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {preview.map(({ icon, label, desc, dimmed, onClick }, i) => {
+          const isLast = i === preview.length - 1
+          return (
+            <div
+              key={label}
+              onClick={onClick}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 13,
+                padding: '12px 18px',
+                borderBottom: isLast ? 'none' : `1px solid ${gold(0.05)}`,
+                cursor: onClick ? 'pointer' : 'default',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              <div style={{
+                width: 32, height: 32, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: `1px solid ${gold(dimmed ? 0.12 : 0.22)}`,
+                background: gold(dimmed ? 0.02 : 0.05),
+                color: gold(dimmed ? 0.28 : 0.5),
+              }}>
+                {icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 10, letterSpacing: '0.08em', marginBottom: 3,
+                  color: gold(dimmed ? 0.32 : 0.65),
+                }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.2)', letterSpacing: '0.04em', lineHeight: 1.65 }}>
+                  {desc}
+                </div>
+              </div>
+              <div style={{ flexShrink: 0 }}>
+                {dimmed
+                  ? <LockIcon size={12} />
+                  : <span style={{ fontSize: 8, letterSpacing: '0.12em', color: gold(0.4), border: `1px solid ${gold(0.2)}`, padding: '2px 5px' }}>UNLOCK</span>
+                }
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -597,33 +666,33 @@ function VoyagerWelcomeBlock({ onConsoleClick }: { onConsoleClick: () => void })
 
   const capabilities = [
     {
+      icon: <ConsoleIcon size={18} />,
+      label: 'CONSOLE — PRIORITY APPLICATION',
+      desc: 'Voyagers are first in line to apply for the next Multiverse Console. Reserve limited hardware before public availability.',
+      href: null,
+      locked: true,
+      onClickLocked: onConsoleClick,
+    },
+    {
       icon: <IntelIcon />,
-      label: 'Architect Intel',
-      desc: 'Access all filed Architect reports and strategic dispatches.',
+      label: 'INTEL & DECISIONS',
+      desc: 'Access all Architect intelligence dispatches and participate in Collective votes — stay informed and help shape the mission.',
       href: '/intel',
       locked: false,
     },
     {
-      icon: <VoteIcon />,
-      label: 'Collective Votes',
-      desc: 'Cast votes on Collective decisions and shape the direction of the mission.',
-      href: '/vote',
+      icon: <VoyagerIcon size={18} />,
+      label: 'VOYAGER IDENTITY',
+      desc: 'Receive a permanent Voyager number and cohort designation — your unique position and rank within the Collective.',
+      href: '/profile',
       locked: false,
     },
     {
-      icon: <WorldIcon />,
-      label: 'Signal & Exploration Tasks',
-      desc: 'Take on special missions: identify anomalous signals and explore parallel worlds.',
+      icon: <SignalIcon />,
+      label: 'SIGNAL ANALYSIS & DEVICE TRACKING',
+      desc: 'Decode anomalous signal transmissions and trace active Multiverse Consoles in the field. Core operative work.',
       href: null,
       locked: true,
-    },
-    {
-      icon: <ConsoleIcon size={18} />,
-      label: 'Apply for Multiverse Console',
-      desc: 'Voyagers with strong standing may be selected for early Console access.',
-      href: null,
-      locked: true,
-      onClickLocked: onConsoleClick,
     },
   ]
 
