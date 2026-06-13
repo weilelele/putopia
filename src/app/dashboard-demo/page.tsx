@@ -167,7 +167,7 @@ function QuizIcon() {
 
 type TaskKey    = 'report_sighting' | 'cast_votes' | 'read_intel' | 'pass_quiz'
 type ViewStage  = 'applicant' | 'voyager' | 'console'
-type ModalKind  = 'device_seeker' | 'console_locked'
+type ModalKind  = 'device_seeker' | 'console_locked' | 'signal_locked'
 
 // ─── Task definitions ─────────────────────────────────────────────────────────
 
@@ -176,23 +176,23 @@ const TASKS: {
   href: string; icon: React.ReactNode; accentColor: string
 }[] = [
   {
-    key: 'report_sighting', num: '01', label: 'Report a Sighting',
-    description: 'Submit a sighting — a signal, image, or account of a parallel world you believe exists.',
+    key: 'report_sighting', num: '01', label: 'Witness Something Extraordinary',
+    description: 'File a sighting — document a signal, image, or encounter with a parallel world.',
     href: '/worlds/submit', icon: <WorldIcon />, accentColor: '#FF6B35',
   },
   {
-    key: 'cast_votes', num: '02', label: 'Cast Two Votes',
-    description: 'Participate in at least two different votes in the Voting Hub.',
+    key: 'cast_votes', num: '02', label: 'Influence the Mission',
+    description: 'Cast votes on two Collective decisions and help determine our direction.',
     href: '/vote', icon: <VoteIcon />, accentColor: '#E85D04',
   },
   {
-    key: 'read_intel', num: '03', label: 'Read an Architect Report',
-    description: '"Why does our organization need to exist?" — Filed 2026-06-06. Scroll to the end to mark it complete.',
+    key: 'read_intel', num: '03', label: 'Uncover the Truth',
+    description: 'Read a dispatch from the Architects to understand why this organisation exists.',
     href: '/intel/INT-628014', icon: <IntelIcon />, accentColor: '#DC2F02',
   },
   {
-    key: 'pass_quiz', num: '04', label: 'Pass the Assessment',
-    description: 'Complete and pass the entry-level field assessment to demonstrate readiness.',
+    key: 'pass_quiz', num: '04', label: 'Prove Your Readiness',
+    description: 'Complete the field assessment to demonstrate you are prepared for active service.',
     href: '/quiz', icon: <QuizIcon />, accentColor: '#C04000',
   },
 ]
@@ -203,8 +203,9 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
   if (!kind) return null
 
   const isDevice  = kind === 'device_seeker'
-  const accent    = isDevice ? '#E8A020' : '#60B0FF'
-  const borderClr = isDevice ? 'rgba(232,160,32,0.3)' : 'rgba(96,176,255,0.25)'
+  const isSignal  = kind === 'signal_locked'
+  const accent    = isDevice ? '#E8A020' : isSignal ? '#E85D04' : '#60B0FF'
+  const borderClr = isDevice ? 'rgba(232,160,32,0.3)' : isSignal ? 'rgba(232,93,4,0.3)' : 'rgba(96,176,255,0.25)'
 
   return (
     <div
@@ -234,12 +235,14 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
         }}>
           <LockIcon size={13} />
           <span style={{ fontSize: 'var(--fs-label)', color: accent, letterSpacing: '0.12em' }}>
-            {isDevice ? 'MATERIALS IN PREPARATION' : 'DEVICE SCAN IN PROGRESS'}
+            {isDevice ? 'MATERIALS IN PREPARATION' : isSignal ? 'COMING SOON' : 'DEVICE SCAN IN PROGRESS'}
           </span>
         </div>
         <p style={{ margin: '0 0 16px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.75 }}>
           {isDevice
             ? 'The materials for this career track are still being prepared. Please stand by.'
+            : isSignal
+            ? 'Signal analysis and device tracking missions are being prepared. Voyagers will be the first to receive access when they go live.'
             : "We're currently scanning for devices. We'll share updates as soon as we have news."
           }
         </p>
@@ -561,34 +564,33 @@ function ApplicantUnlockBlock({
 
 // ─── VOYAGER stage content ────────────────────────────────────────────────────
 
-function VoyagerStageContent({ onConsoleClick }: { onConsoleClick: () => void }) {
+function VoyagerStageContent({ onConsoleClick, onSignalClick }: { onConsoleClick: () => void; onSignalClick: () => void }) {
   const gold = (a: number) => `rgba(196,169,106,${a})`
 
   const preview = [
     {
       icon: <ConsoleIcon size={18} />,
       label: 'CONSOLE — PRIORITY APPLICATION',
-      desc: 'Voyagers are first in line to apply for the next Multiverse Console. Reserve limited hardware before public availability.',
-      dimmed: true,
+      sublabel: 'First in line for limited hardware',
       onClick: onConsoleClick,
     },
     {
       icon: <IntelIcon />,
       label: 'INTEL & DECISIONS',
-      desc: 'Access all Architect intelligence dispatches and participate in Collective votes — stay informed and help shape the mission.',
-      dimmed: false,
+      sublabel: 'Access reports and shape Collective decisions',
+      onClick: undefined,
     },
     {
       icon: <VoyagerIcon size={18} />,
       label: 'VOYAGER IDENTITY',
-      desc: 'Receive a permanent Voyager number and cohort designation — your unique position and rank within the Collective.',
-      dimmed: false,
+      sublabel: 'Your permanent number and cohort placement',
+      onClick: undefined,
     },
     {
       icon: <SignalIcon />,
       label: 'SIGNAL ANALYSIS & DEVICE TRACKING',
-      desc: 'Decode anomalous signal transmissions and trace active Multiverse Consoles in the field. Core operative work.',
-      dimmed: true,
+      sublabel: 'Active field operations — coming soon',
+      onClick: onSignalClick,
     },
   ]
 
@@ -609,9 +611,9 @@ function VoyagerStageContent({ onConsoleClick }: { onConsoleClick: () => void })
         </span>
       </div>
 
-      {/* Rows */}
+      {/* Rows — title + sublabel only, no right indicator */}
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {preview.map(({ icon, label, desc, dimmed, onClick }, i) => {
+        {preview.map(({ icon, label, sublabel, onClick }, i) => {
           const isLast = i === preview.length - 1
           return (
             <div
@@ -628,28 +630,19 @@ function VoyagerStageContent({ onConsoleClick }: { onConsoleClick: () => void })
               <div style={{
                 width: 32, height: 32, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: `1px solid ${gold(dimmed ? 0.12 : 0.22)}`,
-                background: gold(dimmed ? 0.02 : 0.05),
-                color: gold(dimmed ? 0.28 : 0.5),
+                border: `1px solid ${gold(0.18)}`,
+                background: gold(0.04),
+                color: gold(0.42),
               }}>
                 {icon}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: 10, letterSpacing: '0.08em', marginBottom: 3,
-                  color: gold(dimmed ? 0.32 : 0.65),
-                }}>
+                <div style={{ fontSize: 10, letterSpacing: '0.08em', marginBottom: 3, color: gold(0.62) }}>
                   {label}
                 </div>
-                <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.2)', letterSpacing: '0.04em', lineHeight: 1.65 }}>
-                  {desc}
+                <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.22)', letterSpacing: '0.04em' }}>
+                  {sublabel}
                 </div>
-              </div>
-              <div style={{ flexShrink: 0 }}>
-                {dimmed
-                  ? <LockIcon size={12} />
-                  : <span style={{ fontSize: 8, letterSpacing: '0.12em', color: gold(0.4), border: `1px solid ${gold(0.2)}`, padding: '2px 5px' }}>UNLOCK</span>
-                }
               </div>
             </div>
           )
@@ -661,14 +654,21 @@ function VoyagerStageContent({ onConsoleClick }: { onConsoleClick: () => void })
 
 // ─── VOYAGER welcome block (post-purchase) ────────────────────────────────────
 
-function VoyagerWelcomeBlock({ onConsoleClick }: { onConsoleClick: () => void }) {
+function VoyagerWelcomeBlock({ onConsoleClick, onSignalClick }: { onConsoleClick: () => void; onSignalClick: () => void }) {
   const gold = (a: number) => `rgba(196,169,106,${a})`
 
-  const capabilities = [
+  const capabilities: {
+    icon: React.ReactNode
+    label: string
+    sublabel: string
+    href: string | null
+    locked: boolean
+    onClickLocked?: () => void
+  }[] = [
     {
       icon: <ConsoleIcon size={18} />,
       label: 'CONSOLE — PRIORITY APPLICATION',
-      desc: 'Voyagers are first in line to apply for the next Multiverse Console. Reserve limited hardware before public availability.',
+      sublabel: 'First in line for limited hardware',
       href: null,
       locked: true,
       onClickLocked: onConsoleClick,
@@ -676,23 +676,24 @@ function VoyagerWelcomeBlock({ onConsoleClick }: { onConsoleClick: () => void })
     {
       icon: <IntelIcon />,
       label: 'INTEL & DECISIONS',
-      desc: 'Access all Architect intelligence dispatches and participate in Collective votes — stay informed and help shape the mission.',
+      sublabel: 'Access reports and shape Collective decisions',
       href: '/intel',
       locked: false,
     },
     {
       icon: <VoyagerIcon size={18} />,
       label: 'VOYAGER IDENTITY',
-      desc: 'Receive a permanent Voyager number and cohort designation — your unique position and rank within the Collective.',
+      sublabel: 'Your permanent number and cohort placement',
       href: '/profile',
       locked: false,
     },
     {
       icon: <SignalIcon />,
       label: 'SIGNAL ANALYSIS & DEVICE TRACKING',
-      desc: 'Decode anomalous signal transmissions and trace active Multiverse Consoles in the field. Core operative work.',
+      sublabel: 'Active field operations — coming soon',
       href: null,
       locked: true,
+      onClickLocked: onSignalClick,
     },
   ]
 
@@ -717,17 +718,17 @@ function VoyagerWelcomeBlock({ onConsoleClick }: { onConsoleClick: () => void })
         </span>
       </div>
 
-      {/* ── Capability rows ── */}
+      {/* ── Capability rows: title + sublabel only ── */}
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {capabilities.map(({ icon, label, desc, href, locked, onClickLocked }, i) => {
+        {capabilities.map(({ icon, label, sublabel, href, locked, onClickLocked }, i) => {
           const isLast = i === capabilities.length - 1
-          const rowStyle: React.CSSProperties = {
+          const baseStyle: React.CSSProperties = {
             display: 'flex', alignItems: 'center', gap: 14,
             padding: '13px 18px',
             borderBottom: isLast ? 'none' : `1px solid ${locked ? 'rgba(255,255,255,0.04)' : gold(0.07)}`,
             textDecoration: 'none',
             background: 'transparent',
-            cursor: locked ? (onClickLocked ? 'pointer' : 'default') : 'pointer',
+            cursor: 'pointer',
             transition: 'background 0.15s',
             width: '100%', textAlign: 'left',
             fontFamily: 'var(--font-mono)',
@@ -738,37 +739,36 @@ function VoyagerWelcomeBlock({ onConsoleClick }: { onConsoleClick: () => void })
               <div style={{
                 width: 34, height: 34, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: locked
-                  ? '1px solid rgba(255,255,255,0.08)'
-                  : `1px solid ${gold(0.3)}`,
+                border: locked ? '1px solid rgba(255,255,255,0.08)' : `1px solid ${gold(0.3)}`,
                 background: locked ? 'rgba(255,255,255,0.02)' : gold(0.07),
                 color: locked ? 'rgba(245,245,245,0.2)' : gold(0.65),
               }}>
                 {icon}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: 11, letterSpacing: '0.08em', marginBottom: 3,
-                  color: locked ? 'rgba(245,245,245,0.22)' : gold(0.8),
-                }}>
+                <div style={{ fontSize: 11, letterSpacing: '0.08em', marginBottom: 3, color: locked ? 'rgba(245,245,245,0.22)' : gold(0.82) }}>
                   {label}
                 </div>
-                <div style={{ fontSize: 9, color: locked ? 'rgba(245,245,245,0.15)' : 'rgba(245,245,245,0.35)', letterSpacing: '0.05em', lineHeight: 1.6 }}>
-                  {desc}
+                <div style={{ fontSize: 9, color: locked ? 'rgba(245,245,245,0.15)' : 'rgba(245,245,245,0.35)', letterSpacing: '0.05em' }}>
+                  {sublabel}
                 </div>
               </div>
-              <div style={{ flexShrink: 0, color: locked ? 'rgba(255,255,255,0.15)' : gold(0.45) }}>
-                {locked ? <LockIcon size={13} /> : <ArrowIcon size={13} />}
-              </div>
+              {/* locked items only show lock icon; unlocked items show nothing */}
+              {locked && (
+                <div style={{ flexShrink: 0, color: 'rgba(255,255,255,0.18)' }}>
+                  <LockIcon size={13} />
+                </div>
+              )}
             </>
           )
 
+          // Unlocked → direct navigation
           if (!locked && href) {
             return (
               <Link
                 key={label}
                 href={href}
-                style={rowStyle}
+                style={baseStyle}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = gold(0.06) }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
@@ -777,12 +777,9 @@ function VoyagerWelcomeBlock({ onConsoleClick }: { onConsoleClick: () => void })
             )
           }
 
+          // Locked → modal on click
           return (
-            <button
-              key={label}
-              onClick={onClickLocked}
-              style={rowStyle}
-            >
+            <button key={label} onClick={onClickLocked} style={baseStyle}>
               {inner}
             </button>
           )
@@ -953,7 +950,7 @@ export default function DashboardDemoPage() {
         {/* ── Stage-specific content ── */}
         <section style={{ marginBottom: 16 }}>
           {isVoyager ? (
-            <VoyagerWelcomeBlock onConsoleClick={() => setModal('console_locked')} />
+            <VoyagerWelcomeBlock onConsoleClick={() => setModal('console_locked')} onSignalClick={() => setModal('signal_locked')} />
           ) : viewedStage === 'applicant' ? (
             <ApplicantUnlockBlock
               completedCount={completedCount}
@@ -962,7 +959,7 @@ export default function DashboardDemoPage() {
               onDeviceSeeker={() => setModal('device_seeker')}
             />
           ) : (
-            <VoyagerStageContent onConsoleClick={() => setModal('console_locked')} />
+            <VoyagerStageContent onConsoleClick={() => setModal('console_locked')} onSignalClick={() => setModal('signal_locked')} />
           )}
         </section>
 
