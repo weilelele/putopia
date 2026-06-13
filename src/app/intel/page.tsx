@@ -50,7 +50,7 @@ function ClassifiedWall() {
         fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
         color: 'rgba(245,245,245,0.5)', lineHeight: 1.8, marginBottom: '1.75rem',
       }}>
-        内部后续信息机密，无法对您显示
+        This content is classified. Access restricted to Voyager and above.
       </p>
       <Link
         href="/voyager-pack"
@@ -205,7 +205,7 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
 const INTEL_FILTERS = [
   { key: 'all',        label: 'ALL'    },
   { key: 'public',     label: 'PUBLIC' },
-  { key: 'classified', label: '机密'   },
+  { key: 'classified', label: 'CLASSIFIED' },
 ] as const
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
