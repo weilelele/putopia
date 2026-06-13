@@ -9,6 +9,7 @@ import type { IntelWithAvatar } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
 import { useAuth } from '@/lib/auth-context'
 import { CreateIntelModal } from './CreateIntelModal'
+import { FilterBar } from '@/components/filter-bar'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -201,26 +202,11 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
   )
 }
 
-// ─── Filter tab pill ──────────────────────────────────────────────────────────
-function FilterTab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
-        padding: '0.3rem 1rem',
-        border: `1px solid ${active ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.18)'}`,
-        background: active ? 'rgba(255,107,53,0.12)' : 'transparent',
-        color: active ? '#FF6B35' : 'rgba(245,245,245,0.4)',
-        cursor: 'pointer', transition: 'all 0.12s',
-      }}
-      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.35)' }}
-      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.18)' }}
-    >
-      {label}
-    </button>
-  )
-}
+const INTEL_FILTERS = [
+  { key: 'all',        label: 'ALL'    },
+  { key: 'public',     label: 'PUBLIC' },
+  { key: 'classified', label: '机密'   },
+] as const
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function IntelPage() {
@@ -278,12 +264,11 @@ export default function IntelPage() {
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <FilterTab label="ALL"      active={activeFilter === 'all'}        onClick={() => setActiveFilter('all')} />
-        <FilterTab label="PUBLIC"   active={activeFilter === 'public'}     onClick={() => setActiveFilter('public')} />
-        <FilterTab label="机密"     active={activeFilter === 'classified'} onClick={() => setActiveFilter('classified')} />
-      </div>
+      <FilterBar
+        options={INTEL_FILTERS}
+        active={activeFilter}
+        onChange={(k) => setActiveFilter(k as FilterTab)}
+      />
 
       {/* Feed */}
       <div style={{ maxWidth: '720px', width: '100%' }}>

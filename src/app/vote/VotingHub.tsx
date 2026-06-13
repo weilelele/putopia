@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { FilterBar } from '@/components/filter-bar'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
 import { Plus } from 'lucide-react'
@@ -62,26 +63,11 @@ function ClassifiedWall() {
   )
 }
 
-// ─── Filter tab pill ──────────────────────────────────────────────────────────
-function FilterTabBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
-        padding: '0.3rem 1rem',
-        border: `1px solid ${active ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.18)'}`,
-        background: active ? 'rgba(255,107,53,0.12)' : 'transparent',
-        color: active ? '#FF6B35' : 'rgba(245,245,245,0.4)',
-        cursor: 'pointer', transition: 'all 0.12s',
-      }}
-      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.35)' }}
-      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.18)' }}
-    >
-      {label}
-    </button>
-  )
-}
+const VOTE_FILTERS = [
+  { key: 'all',        label: 'ALL'    },
+  { key: 'public',     label: 'PUBLIC' },
+  { key: 'classified', label: '机密'   },
+] as const
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export function VotingHub({ votes, myResponses, tallies }: Props) {
@@ -137,12 +123,11 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
         )}
       </div>
 
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <FilterTabBtn label="ALL"    active={activeFilter === 'all'}        onClick={() => setActiveFilter('all')} />
-        <FilterTabBtn label="PUBLIC" active={activeFilter === 'public'}     onClick={() => setActiveFilter('public')} />
-        <FilterTabBtn label="机密"   active={activeFilter === 'classified'} onClick={() => setActiveFilter('classified')} />
-      </div>
+      <FilterBar
+        options={VOTE_FILTERS}
+        active={activeFilter}
+        onChange={(k) => setActiveFilter(k as FilterTab)}
+      />
 
       {/* Classified wall for non-Voyager */}
       {showClassifiedWall && <ClassifiedWall />}
