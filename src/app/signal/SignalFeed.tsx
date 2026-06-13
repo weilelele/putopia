@@ -41,9 +41,6 @@ function AboutModal({ onClose }: { onClose: () => void }) {
           Your intuition is the only instrument that can make sense of them —
           help us decipher the noise, and connect to more parallel worlds.
         </p>
-        <p style={{ fontSize: 12, color: 'rgba(245,245,245,0.4)', lineHeight: 1.8, marginTop: 16, marginBottom: 0 }}>
-          Each investigation is an open-ended series of signal puzzles. Browse previous days, or respond to the latest — there&apos;s no finish line.
-        </p>
       </div>
     </div>
   )
