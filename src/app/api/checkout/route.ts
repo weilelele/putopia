@@ -20,7 +20,9 @@ export async function GET(req: NextRequest) {
 
   // ── 1. Must be logged in ──────────────────────────────────────────────────
   if (!user) {
-    return NextResponse.redirect(new URL('/login?redirect=/voyager-pack', req.nextUrl.origin))
+    // Redirect back to /api/checkout (not pack page) so the user doesn't
+    // need to click "buy" a second time after logging in.
+    return NextResponse.redirect(new URL('/login?redirect=/api/checkout', req.nextUrl.origin))
   }
 
   // ── 2. Experiment-group gate ──────────────────────────────────────────────
