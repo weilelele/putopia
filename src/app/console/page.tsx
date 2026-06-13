@@ -854,6 +854,18 @@ function ConsoleInner() {
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
   const [applicantTasks, setApplicantTasks] = useState<ApplicantTaskStatus | null>(null)
   const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
+  const [packLockedBanner, setPackLockedBanner] = useState(false)
+
+  // Show banner when redirected from /api/checkout with incomplete tasks
+  useEffect(() => {
+    if (searchParams.get('msg') === 'tasks_incomplete') {
+      setPackLockedBanner(true)
+      // Clean the param from the URL without a history entry
+      const url = new URL(window.location.href)
+      url.searchParams.delete('msg')
+      window.history.replaceState(null, '', url.toString())
+    }
+  }, [searchParams])
 
   useEffect(() => {
     getAllDevices().then((all) => {
@@ -910,6 +922,39 @@ function ConsoleInner() {
           <div className="item">UPLINK <span className="val">ACTIVE</span></div>
         </div>
       </div>
+
+      {/* ── Pack-locked notification (redirected from /api/checkout) ── */}
+      {packLockedBanner && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          background: 'rgba(232,160,32,0.07)',
+          border: '1px solid rgba(232,160,32,0.3)',
+          borderLeft: '3px solid rgba(232,160,32,0.7)',
+          padding: '12px 18px',
+          margin: '0 0 4px',
+          fontFamily: 'var(--font-mono)',
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', color: '#E8A020' }}>
+              VOYAGER PACK LOCKED&nbsp;&nbsp;
+            </span>
+            <span style={{ fontSize: 10, color: 'rgba(245,245,245,0.5)', letterSpacing: '0.05em' }}>
+              Complete your field assessment tasks below to unlock the $12 Initial Voyager Pack.
+            </span>
+          </div>
+          <button
+            onClick={() => setPackLockedBanner(false)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(245,245,245,0.3)', fontSize: 16, lineHeight: 1,
+              padding: '2px 4px', flexShrink: 0,
+            }}
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* ── Hero: conditional on auth state ── */}
       {loading ? (

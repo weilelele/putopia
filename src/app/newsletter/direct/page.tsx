@@ -5,21 +5,23 @@
 export const metadata = { title: 'Newsletter Preview — Direct', robots: 'noindex' }
 
 export default function DirectNewsletterPage() {
+  // Strip production domain → links resolve to current host during preview.
+  // The exported DIRECT_HTML constant keeps absolute URLs for real email sends.
+  const previewHtml = DIRECT_HTML.replace(/https:\/\/putopia\.vercel\.app/g, '')
   return (
-    <div style={{
-      background: '#060A1A', minHeight: '100vh', padding: '40px 16px',
-      overflowY: 'auto', height: '100%',
-    }}>
-      <div style={{ maxWidth: 600, margin: '0 auto', fontFamily: 'monospace' }}>
-        <div style={{
-          marginBottom: 12, textAlign: 'center',
-          fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.22em',
-          color: 'rgba(255,107,53,0.45)',
-        }}>
-          ◈ NEWSLETTER PREVIEW — GROUP A (DIRECT) ◈
-        </div>
-        <div dangerouslySetInnerHTML={{ __html: DIRECT_HTML }} />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#060A1A' }}>
+      <div style={{
+        padding: '10px 0 8px', textAlign: 'center', flexShrink: 0,
+        fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.22em',
+        color: 'rgba(255,107,53,0.45)',
+      }}>
+        ◈ NEWSLETTER PREVIEW — GROUP A (DIRECT) ◈
       </div>
+      <iframe
+        srcDoc={previewHtml}
+        style={{ flex: 1, border: 0, display: 'block' }}
+        title="Newsletter Preview — Direct"
+      />
     </div>
   )
 }
@@ -32,6 +34,7 @@ export const DIRECT_HTML = `
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Transmission — Multiverse Collective</title>
+<base target="_top" />
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 <body style="margin:0;padding:0;background:#060A1A;font-family:'Space Mono',ui-monospace,'Courier New',monospace;">
@@ -90,7 +93,8 @@ export const DIRECT_HTML = `
 
     <!-- Intel 1: Valentina Cruz / INT-640130 / NOTICE -->
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;background:#0F1430;border:1px solid rgba(255,107,53,0.12);border-left:2px solid rgba(245,245,245,0.2);">
-      <tr><td style="padding:13px 16px;">
+      <tr><td style="padding:0;">
+        <a href="https://putopia.vercel.app/intel/INT-640130" style="display:block;text-decoration:none;color:inherit;padding:13px 16px;">
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:9px;">
           <tr>
             <td style="width:26px;vertical-align:middle;">
@@ -106,14 +110,15 @@ export const DIRECT_HTML = `
           </tr>
         </table>
         <div style="font-size:12px;font-weight:700;color:#F5F5F5;margin-bottom:5px;line-height:1.35;">Collective&#39;s badges will soon be available to claim.</div>
-        <div style="font-size:10px;color:rgba(245,245,245,0.45);line-height:1.65;margin-bottom:9px;">We&#39;ve prepared a special badge for everyone who aspires to become a Voyager.</div>
-        <a href="https://putopia.vercel.app/intel/INT-640130" style="font-size:8px;letter-spacing:0.18em;color:rgba(245,245,245,0.45);text-decoration:none;border-bottom:1px solid rgba(245,245,245,0.2);">READ →</a>
+        <div style="font-size:10px;color:rgba(245,245,245,0.45);line-height:1.65;">We&#39;ve prepared a special badge for everyone who aspires to become a Voyager.</div>
+        </a>
       </td></tr>
     </table>
 
     <!-- Intel 2: Maren Solberg / INT-640129 / ORG -->
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;background:#0F1430;border:1px solid rgba(255,107,53,0.12);border-left:2px solid rgba(255,107,53,0.5);">
-      <tr><td style="padding:13px 16px;">
+      <tr><td style="padding:0;">
+        <a href="https://putopia.vercel.app/intel/INT-640129" style="display:block;text-decoration:none;color:inherit;padding:13px 16px;">
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:9px;">
           <tr>
             <td style="width:26px;vertical-align:middle;">
@@ -129,14 +134,15 @@ export const DIRECT_HTML = `
           </tr>
         </table>
         <div style="font-size:12px;font-weight:700;color:#F5F5F5;margin-bottom:5px;line-height:1.35;">Archive Unsealing Protocol — Mass Signal Declassification</div>
-        <div style="font-size:10px;color:rgba(245,245,245,0.45);line-height:1.65;margin-bottom:9px;">Long-archived parallel-world signal data is now being released for distributed classification.</div>
-        <a href="https://putopia.vercel.app/intel/INT-640129" style="font-size:8px;letter-spacing:0.18em;color:#FF6B35;text-decoration:none;border-bottom:1px solid rgba(255,107,53,0.3);">READ →</a>
+        <div style="font-size:10px;color:rgba(245,245,245,0.45);line-height:1.65;">Long-archived parallel-world signal data is now being released for distributed classification.</div>
+        </a>
       </td></tr>
     </table>
 
     <!-- Intel 3: Ryo Tanaka / INT-628014 / ORG -->
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;background:#0F1430;border:1px solid rgba(255,107,53,0.12);border-left:2px solid rgba(255,107,53,0.5);">
-      <tr><td style="padding:13px 16px;">
+      <tr><td style="padding:0;">
+        <a href="https://putopia.vercel.app/intel/INT-628014" style="display:block;text-decoration:none;color:inherit;padding:13px 16px;">
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:9px;">
           <tr>
             <td style="width:26px;vertical-align:middle;">
@@ -152,8 +158,8 @@ export const DIRECT_HTML = `
           </tr>
         </table>
         <div style="font-size:12px;font-weight:700;color:#F5F5F5;margin-bottom:5px;line-height:1.35;">Why does our organization need to exist?</div>
-        <div style="font-size:10px;color:rgba(245,245,245,0.45);line-height:1.65;margin-bottom:9px;">Over 100 years ago, the Collective nearly collapsed — a message on what that means for our mission today.</div>
-        <a href="https://putopia.vercel.app/intel/INT-628014" style="font-size:8px;letter-spacing:0.18em;color:#FF6B35;text-decoration:none;border-bottom:1px solid rgba(255,107,53,0.3);">READ →</a>
+        <div style="font-size:10px;color:rgba(245,245,245,0.45);line-height:1.65;">Over 100 years ago, the Collective nearly collapsed — a message on what that means for our mission today.</div>
+        </a>
       </td></tr>
     </table>
   </td></tr>
@@ -181,12 +187,9 @@ export const DIRECT_HTML = `
           </div>
 
           <!-- Feature list -->
-          <div style="margin-bottom:6px;font-size:12px;color:rgba(245,245,245,0.65);letter-spacing:0.03em;line-height:1;">Physical Badge</div>
-          <div style="margin-bottom:6px;font-size:12px;color:rgba(245,245,245,0.65);letter-spacing:0.03em;line-height:1;">Access Card</div>
-          <div style="margin-bottom:10px;font-size:12px;color:rgba(245,245,245,0.65);letter-spacing:0.03em;line-height:1;">Full Network Access</div>
-
-          <!-- Price -->
-          <div style="font-size:22px;font-weight:700;color:#FF6B35;letter-spacing:0.05em;margin-bottom:18px;line-height:1;">$12</div>
+          <div style="margin-bottom:5px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;line-height:1;">Physical Badge</div>
+          <div style="margin-bottom:5px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;line-height:1;">Access Card</div>
+          <div style="margin-bottom:18px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;line-height:1;">Full Network Access</div>
 
           <!-- Buy button -->
           <a href="https://putopia.vercel.app/voyager-pack"
