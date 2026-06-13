@@ -9,24 +9,75 @@ import type {
   PublicSignalAsset,
 } from '@/lib/actions/signal-tasks'
 
+function AboutModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(7,9,18,0.75)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '24px',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: '#0F1430', border: '1px solid rgba(255,107,53,0.25)',
+          maxWidth: 480, width: '100%', padding: '32px 28px', position: 'relative',
+        }}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 14, right: 16,
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'rgba(245,245,245,0.4)', fontSize: 18, lineHeight: 1, padding: 4,
+          }}
+        >✕</button>
+        <div style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.25em', marginBottom: 12 }}>// SIGNAL DISPATCH</div>
+        <p style={{ fontSize: 14, color: 'rgba(245,245,245,0.85)', lineHeight: 1.9, margin: 0 }}>
+          We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
+          Your intuition is the only instrument that can make sense of them —
+          help us decipher the noise, and connect to more parallel worlds.
+        </p>
+        <p style={{ fontSize: 12, color: 'rgba(245,245,245,0.4)', lineHeight: 1.8, marginTop: 16, marginBottom: 0 }}>
+          Each investigation is an open-ended series of signal puzzles. Browse previous days, or respond to the latest — there&apos;s no finish line.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function InvestigationFeed({ initial }: { initial: InvestigationFeedData }) {
   const [feed, setFeed] = useState<InvestigationFeedData>(initial)
+  const [aboutOpen, setAboutOpen] = useState(false)
   const refresh = async () => setFeed(await getInvestigationFeed())
 
   return (
     <main style={{ flex: 1, minWidth: 0, height: '100vh', overflowY: 'auto', padding: '32px 28px', fontFamily: 'var(--font-mono, monospace)', color: '#F5F5F5' }}>
+      {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
       <div style={{ maxWidth: 880, margin: '0 auto' }}>
         {/* header */}
         <div style={{ borderBottom: '1px solid rgba(255,107,53,0.2)', paddingBottom: 16, marginBottom: 28 }}>
           <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.3em', marginBottom: 8 }}>// SIGNAL DISPATCH</div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>SIGNAL DISPATCH</h1>
-          <p style={{ fontSize: 13, color: 'rgba(245,245,245,0.55)', marginTop: 8, lineHeight: 1.8 }}>
-            We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
-            Your intuition is the only instrument that can make sense of them —
-            help us decipher the noise, and connect to more parallel worlds.
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>SIGNAL DISPATCH</h1>
+            <button
+              onClick={() => setAboutOpen(true)}
+              title="What is this?"
+              style={{
+                width: 22, height: 22, borderRadius: '50%',
+                border: '1px solid rgba(255,107,53,0.35)',
+                background: 'transparent', cursor: 'pointer',
+                color: 'rgba(245,245,245,0.45)', fontSize: 12,
+                fontFamily: 'monospace', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >?</button>
+          </div>
           {!feed.canParticipate && (
-            <div style={{ fontSize: 11, color: '#E8A020', marginTop: 6, letterSpacing: '0.1em' }}>
+            <div style={{ fontSize: 11, color: '#E8A020', marginTop: 8, letterSpacing: '0.1em' }}>
               ● Browse only — Voyager+ can respond
             </div>
           )}
