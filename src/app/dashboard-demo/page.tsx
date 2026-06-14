@@ -33,16 +33,6 @@ function VoyagerIcon({ size = 20 }: { size?: number }) {
   )
 }
 
-function CheckCircleIcon({ size = 18 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 18 18" fill="none">
-      <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5" />
-      <polyline points="5.5,9.5 7.5,11.5 12.5,6.5" stroke="currentColor" strokeWidth="1.8"
-        strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
 function CheckIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
@@ -453,90 +443,163 @@ function PathRail({
   )
 }
 
-// ─── APPLICANT stage: unlock + pack block ─────────────────────────────────────
+// ─── APPLICANT stage: unified unlock track (tasks → pack → voyager) ───────────
 
-function ApplicantUnlockBlock({
-  completedCount, totalTasks, allDone, onDeviceSeeker,
-}: { completedCount: number; totalTasks: number; allDone: boolean; onDeviceSeeker: () => void }) {
-  const remaining = totalTasks - completedCount
+function VoyagerUnlockTrack({
+  completed, allDone, onDeviceSeeker,
+}: { completed: Record<TaskKey, boolean>; allDone: boolean; onDeviceSeeker: () => void }) {
+  const gold    = (a: number) => `rgba(196,169,106,${a})`
+  const green   = '#20D890'
+  const orange  = '#FF6B35'
+  const dimLine = 'rgba(255,255,255,0.07)'
+
+  const t1 = completed.report_sighting
+  const t2 = completed.pass_quiz
+
+  // ── Nodes ──
+  const taskNode = (done: boolean, icon: React.ReactNode) => (
+    <div style={{
+      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: done ? 'rgba(32,216,144,0.12)' : 'rgba(255,107,53,0.07)',
+      border: `1.5px solid ${done ? green : 'rgba(255,107,53,0.45)'}`,
+      color: done ? green : orange,
+    }}>
+      {done ? <CheckIcon size={14} /> : icon}
+    </div>
+  )
+  const packNode = allDone ? (
+    <div style={{
+      width: 26, height: 26, flexShrink: 0, transform: 'rotate(45deg)',
+      background: gold(0.14), border: `1.5px solid ${gold(0.7)}`,
+    }} />
+  ) : (
+    <div style={{
+      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(255,255,255,0.02)', border: '1.5px solid rgba(255,255,255,0.12)',
+      color: 'rgba(245,245,245,0.28)',
+    }}>
+      <LockIcon size={13} />
+    </div>
+  )
+  const voyagerNode = (
+    <div style={{
+      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: gold(allDone ? 0.1 : 0.03), border: `1.5px solid ${gold(allDone ? 0.45 : 0.18)}`,
+      color: gold(allDone ? 0.75 : 0.32),
+    }}>
+      <VoyagerIcon size={15} />
+    </div>
+  )
+
+  // ── Row wrapper with the connecting spine segment below the node ──
+  const row = (node: React.ReactNode, lineColor: string, isLast: boolean, content: React.ReactNode) => (
+    <div style={{ display: 'flex', gap: 13, alignItems: 'stretch' }}>
+      <div style={{ width: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+        {node}
+        {!isLast && <div style={{ flex: 1, width: 2, minHeight: 16, background: lineColor, margin: '3px 0' }} />}
+      </div>
+      <div style={{ flex: 1, minWidth: 0, paddingBottom: isLast ? 0 : 16 }}>{content}</div>
+    </div>
+  )
+
+  const taskContent = (task: typeof TASKS[number], done: boolean) => (
+    <Link href={task.href} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, textDecoration: 'none' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+          <span style={{ fontSize: 'var(--fs-label)', color: done ? 'rgba(32,216,144,0.7)' : '#F5F5F5' }}>{task.label}</span>
+          {done && (
+            <span style={{ fontSize: 8, letterSpacing: '0.14em', color: green, border: '1px solid rgba(32,216,144,0.25)', padding: '1px 5px', background: 'rgba(32,216,144,0.08)' }}>DONE</span>
+          )}
+        </div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.38)', lineHeight: 1.5 }}>{task.description}</div>
+      </div>
+      <div style={{ flexShrink: 0, color: done ? 'rgba(32,216,144,0.5)' : task.accentColor }}>
+        {done ? <CheckIcon size={14} /> : <ArrowIcon size={14} />}
+      </div>
+    </Link>
+  )
+
+  // ── Pack choice chip (two options, side by side, smaller) ──
+  const chipInner = (icon: React.ReactNode, label: string, sub: string, active: boolean) => (
+    <>
+      <i className="dd-node" /><i className="dd-dash" />
+      {icon}
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 10, letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>{label}</div>
+        <div style={{ fontSize: 8, letterSpacing: '0.08em', marginTop: 3, fontFamily: 'var(--font-mono)', color: active ? 'rgba(255,107,53,0.55)' : 'rgba(245,245,245,0.25)' }}>{sub}</div>
+      </div>
+    </>
+  )
+  const chipStyle = (active: boolean): React.CSSProperties => ({
+    ['--dd-bd' as string]: active ? 'rgba(255,107,53,0.5)' : 'rgba(255,255,255,0.1)',
+    ['--dd-fill' as string]: active ? '#1B1330' : '#0C1029',
+    flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7,
+    padding: '11px 8px', textDecoration: 'none',
+    color: active ? '#FF6B35' : 'rgba(245,245,245,0.4)',
+    cursor: active ? 'pointer' : 'default',
+    opacity: active ? 1 : 0.5,
+    background: 'none', fontFamily: 'var(--font-mono)',
+  })
+
   return (
     <div className="dd-panel" style={{
-      ['--dd-bd' as string]: allDone ? 'rgba(32,216,144,0.32)' : 'rgba(255,107,53,0.28)',
-      ['--dd-fill' as string]: allDone ? '#0C1A26' : 'var(--bg-panel)',
+      ['--dd-bd' as string]: allDone ? gold(0.4) : 'rgba(255,107,53,0.28)',
+      ['--dd-fill' as string]: 'var(--bg-panel)',
+      padding: '18px',
     }}>
       <i className="dd-node" />
       <i className="dd-dash" />
-      {/* Status row */}
-      <div style={{
-        padding: '13px 18px 12px',
-        borderBottom: `1px solid ${allDone ? 'rgba(32,216,144,0.1)' : 'rgba(255,107,53,0.07)'}`,
-      }}>
-        <div style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: 'var(--fs-label)', letterSpacing: '0.1em', color: allDone ? 'var(--color-ok)' : 'var(--color-star-deep)', transition: 'color 0.3s' }}>
-            {allDone ? 'READY TO ADVANCE' : 'NEXT UNLOCK: VOYAGER STATUS'}
+
+      {row(taskNode(t1, <WorldIcon />), t1 ? green : dimLine, false, taskContent(TASKS[0], t1))}
+      {row(taskNode(t2, <QuizIcon />), allDone ? gold(0.45) : dimLine, false, taskContent(TASKS[1], t2))}
+
+      {/* Pack milestone — two choices (A or B), gated until tasks done */}
+      {row(packNode, dimLine, false, (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
+            <span style={{ fontSize: 'var(--fs-label)', color: allDone ? gold(0.85) : 'rgba(245,245,245,0.55)' }}>Get your Voyager Pack</span>
+            {!allDone && <span style={{ color: 'rgba(245,245,245,0.3)', display: 'inline-flex' }}><LockIcon size={12} /></span>}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {allDone ? (
+              <Link href="/voyager-pack" className="dd-panel" style={chipStyle(true)}>
+                {chipInner(<WorldPackIcon size={22} />, 'WORLD BUILDER', 'VIEW PACK →', true)}
+              </Link>
+            ) : (
+              <div className="dd-panel" style={chipStyle(false)}>
+                {chipInner(<WorldPackIcon size={22} />, 'WORLD BUILDER', '$12 PACK', false)}
+              </div>
+            )}
+            <span style={{ fontSize: 9, letterSpacing: '0.1em', color: 'rgba(245,245,245,0.3)', flexShrink: 0 }}>or</span>
+            <button
+              onClick={allDone ? onDeviceSeeker : undefined}
+              className="dd-panel"
+              style={chipStyle(allDone)}
+              disabled={!allDone}
+            >
+              {chipInner(<DevicePackIcon size={22} />, 'DEVICE SEEKER', 'COMING SOON', allDone)}
+            </button>
+          </div>
+          {!allDone && (
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.28)', letterSpacing: '0.05em', marginTop: 9 }}>
+              Complete both tasks above to unlock.
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Voyager goal */}
+      {row(voyagerNode, dimLine, true, (
+        <div>
+          <div style={{ fontSize: 'var(--fs-label)', color: gold(allDone ? 0.85 : 0.5), marginBottom: 2 }}>Voyager Status</div>
+          <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.32)', lineHeight: 1.5 }}>
+            Unlocked when you claim your pack.
           </div>
         </div>
-        {/* Progress pips */}
-        <div style={{ display: 'flex', gap: 3, marginBottom: 6 }}>
-          {Array.from({ length: totalTasks }).map((_, i) => (
-            <div key={i} style={{
-              flex: 1, height: 3,
-              background: i < completedCount
-                ? (allDone ? 'var(--color-ok)' : 'linear-gradient(90deg,#E85D04,#FF6B35)')
-                : 'rgba(255,107,53,0.1)',
-              transition: 'background 0.3s',
-            }} />
-          ))}
-        </div>
-        <div style={{ fontSize: 'var(--fs-caption)', color: allDone ? 'rgba(32,216,144,0.4)' : 'var(--color-star-deep)', opacity: 0.7, transition: 'color 0.3s' }}>
-          {allDone
-            ? 'All tasks complete — select a pack below'
-            : `${remaining} task${remaining !== 1 ? 's' : ''} remaining`}
-        </div>
-      </div>
-      {/* Pack cards */}
-      <div style={{ padding: '14px 18px 16px' }}>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {/* World Builder — always a link, always accessible */}
-          <Link href="/voyager-pack" className="dd-panel" style={{
-            ['--dd-bd' as string]: allDone ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.32)',
-            ['--dd-fill' as string]: allDone ? '#231527' : '#15102A',
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 9,
-            padding: '16px 10px 14px', textDecoration: 'none',
-            color: '#FF6B35',
-            animation: allDone ? 'pack-glow 2s ease-in-out infinite' : 'none',
-          }}>
-            <i className="dd-node" />
-            <i className="dd-dash" />
-            <WorldPackIcon size={26} />
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.12em' }}>WORLD BUILDER</div>
-              <div style={{ fontSize: 9, color: allDone ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.4)', letterSpacing: '0.1em', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
-                {allDone ? 'APPLY NOW →' : 'VIEW PACK →'}
-              </div>
-            </div>
-          </Link>
-          {/* Device Seeker — coming soon, still clickable */}
-          <button onClick={onDeviceSeeker} className="dd-panel" style={{
-            ['--dd-bd' as string]: 'rgba(255,255,255,0.12)',
-            ['--dd-fill' as string]: '#0C1029',
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 9,
-            padding: '16px 10px 14px', cursor: 'pointer',
-            color: 'rgba(245,245,245,0.35)',
-            fontFamily: 'var(--font-mono)',
-          }}>
-            <i className="dd-node" />
-            <i className="dd-dash" />
-            <DevicePackIcon size={26} />
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 11, letterSpacing: '0.12em' }}>DEVICE SEEKER</div>
-              <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.2)', letterSpacing: '0.1em', marginTop: 4 }}>
-                COMING SOON
-              </div>
-            </div>
-          </button>
-        </div>
-      </div>
+      ))}
     </div>
   )
 }
@@ -781,59 +844,6 @@ function VoyagerWelcomeBlock({ onConsoleClick, onSignalClick }: { onConsoleClick
   )
 }
 
-// ─── Task card — entire row clickable ─────────────────────────────────────────
-
-function TaskCard({ task, done }: { task: typeof TASKS[number]; done: boolean }) {
-  const idleBd  = done ? 'rgba(32,216,144,0.22)' : 'rgba(255,107,53,0.18)'
-  const hoverBd = done ? 'rgba(32,216,144,0.45)' : 'rgba(255,107,53,0.4)'
-  return (
-    <Link
-      href={task.href}
-      className="dd-panel"
-      style={{
-        ['--dd-bd' as string]: idleBd,
-        ['--dd-fill' as string]: done ? '#0C1A24' : 'var(--bg-panel)',
-        display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-        textDecoration: 'none',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.setProperty('--dd-bd', hoverBd) }}
-      onMouseLeave={(e) => { e.currentTarget.style.setProperty('--dd-bd', idleBd) }}
-    >
-      <i className="dd-node" />
-      <i className="dd-dash" />
-      <div style={{ flexShrink: 0 }}>
-        {done ? (
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(32,216,144,0.12)', border: '1.5px solid rgba(32,216,144,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#20D890' }}>
-            <CheckCircleIcon size={18} />
-          </div>
-        ) : (
-          <div style={{ width: 28, height: 28, background: `${task.accentColor}10`, border: `1px solid ${task.accentColor}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: task.accentColor }}>
-            {task.icon}
-          </div>
-        )}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 'var(--fs-label)', letterSpacing: '0.05em', color: done ? 'rgba(32,216,144,0.6)' : '#F5F5F5' }}>
-            {task.label}
-          </span>
-          {done && (
-            <span style={{ fontSize: 9, letterSpacing: '0.14em', color: '#20D890', background: 'rgba(32,216,144,0.09)', border: '1px solid rgba(32,216,144,0.22)', padding: '1px 6px' }}>
-              DONE
-            </span>
-          )}
-        </div>
-        <p style={{ margin: 0, fontSize: 'var(--fs-caption)', color: done ? 'rgba(245,245,245,0.2)' : 'rgba(245,245,245,0.4)', lineHeight: 1.55 }}>
-          {task.description}
-        </p>
-      </div>
-      <div style={{ flexShrink: 0, color: done ? 'rgba(32,216,144,0.4)' : task.accentColor }}>
-        {done ? <CheckIcon size={14} /> : <ArrowIcon size={14} />}
-      </div>
-    </Link>
-  )
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardDemoPage() {
@@ -887,33 +897,23 @@ export default function DashboardDemoPage() {
           {isVoyager ? (
             <VoyagerWelcomeBlock onConsoleClick={() => setModal('console_locked')} onSignalClick={() => setModal('signal_locked')} />
           ) : viewedStage === 'applicant' ? (
-            <ApplicantUnlockBlock
-              completedCount={completedCount}
-              totalTasks={totalTasks}
-              allDone={allDone}
-              onDeviceSeeker={() => setModal('device_seeker')}
-            />
+            <>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.22em' }}>— BECOME A VOYAGER —</span>
+                <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: allDone ? '#20D890' : 'rgba(245,245,245,0.3)' }}>
+                  {allDone ? 'TASKS COMPLETE ✓' : `${completedCount} / ${totalTasks} TASKS`}
+                </span>
+              </div>
+              <VoyagerUnlockTrack
+                completed={completed}
+                allDone={allDone}
+                onDeviceSeeker={() => setModal('device_seeker')}
+              />
+            </>
           ) : (
             <VoyagerStageContent onItemClick={setDetailItem} />
           )}
         </section>
-
-        {/* ── APPLICANT TASKS (only in applicant/non-voyager view) ── */}
-        {!isVoyager && viewedStage === 'applicant' && (
-          <section>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.22em' }}>— APPLICANT TASKS —</span>
-              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: allDone ? '#20D890' : 'rgba(245,245,245,0.3)' }}>
-                {allDone ? 'ALL COMPLETE ✓' : `${completedCount} OF ${totalTasks} COMPLETE`}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {TASKS.map((task) => (
-                <TaskCard key={task.key} task={task} done={completed[task.key]} />
-              ))}
-            </div>
-          </section>
-        )}
 
         <div style={{ marginTop: 20, textAlign: 'center' }}>
           <span style={{ fontSize: 9, color: 'rgba(245,245,245,0.08)', letterSpacing: '0.15em' }}>DASHBOARD DEMO — STATIC PROTOTYPE</span>
