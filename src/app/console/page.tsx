@@ -26,6 +26,9 @@ import { McConsolePanel } from '@/components/mc-console-panel'
 import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/types/database'
 import type { ActivityEvent } from '@/lib/actions/activity-events'
 
+// ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
+const SALES_OPEN = false
+
 const STATUS_STYLES = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
   needs_repair: { color: '#E83030', border: 'rgba(232,48,48,0.3)' },
@@ -705,7 +708,7 @@ function ApplicantTaskPanel({ tasks }: { tasks: ApplicantTaskStatus }) {
         marginBottom: '1rem', letterSpacing: '0.1em',
       }}>
         {tasks.allDone
-          ? '✓ ALL TASKS COMPLETE — CHOOSE YOUR PACK TO ADVANCE'
+          ? (SALES_OPEN ? '✓ ALL TASKS COMPLETE — CHOOSE YOUR PACK TO ADVANCE' : '✓ ALL TASKS COMPLETE — PACK LAUNCH COMING SOON')
           : `${doneCount} OF ${items.length} COMPLETE`}
       </div>
 
@@ -760,8 +763,8 @@ function ApplicantTaskPanel({ tasks }: { tasks: ApplicantTaskStatus }) {
         })}
       </div>
 
-      {/* CTA when all done */}
-      {tasks.allDone && (
+      {/* CTA when all done — only shown when sales are open */}
+      {tasks.allDone && SALES_OPEN && (
         <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
           <a
             href="/voyager-pack"
@@ -1187,8 +1190,8 @@ function ConsoleInner() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
               {user.role === 'architect' && <ClaimPreviewCard />}
-              {/* Group A: Voyager Pack card as first item, always visible */}
-              {user.role === 'applicant' && experimentGroup === 'direct' && (
+              {/* Group A: Voyager Pack card — only shown when sales are open */}
+              {SALES_OPEN && user.role === 'applicant' && experimentGroup === 'direct' && (
                 <VoyagerPackCard />
               )}
               {devices.map((device) => (
