@@ -206,7 +206,7 @@ const INTEL_FILTERS = [
   { key: 'all',        label: 'ALL'    },
   { key: 'public',     label: 'PUBLIC' },
   { key: 'classified', label: 'CLASSIFIED' },
-] as const
+]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function IntelPage() {

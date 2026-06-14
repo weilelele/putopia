@@ -67,7 +67,7 @@ const VOTE_FILTERS = [
   { key: 'all',        label: 'ALL'    },
   { key: 'public',     label: 'PUBLIC' },
   { key: 'classified', label: 'CLASSIFIED' },
-] as const
+]
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export function VotingHub({ votes, myResponses, tallies }: Props) {
