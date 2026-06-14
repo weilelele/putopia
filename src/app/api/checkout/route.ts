@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getStripe, isStripeConfigured, PACK_PRICE_CENTS } from '@/lib/stripe'
 import { getCurrentBatch, provisionVoyagerMembership } from '@/lib/actions/membership'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,6 +42,15 @@ export async function GET(req: NextRequest) {
     .eq('id', user.id)
     .single()
 
+  // Payment-intent signal: the user clicked "buy" and reached checkout. Captured
+  // before the task gate so the dashboard sees attempts that bounce on the gate.
+  const ph = getPostHogClient()
+  ph.capture({
+    distinctId: user.id,
+    event: 'voyager_checkout_initiated',
+    properties: { experiment_group: profile?.experiment_group ?? 'none' },
+  })
+
   if (profile?.experiment_group === 'task_gated') {
     const quiz = !!profile?.task_quiz_at
 
@@ -54,11 +64,13 @@ export async function GET(req: NextRequest) {
     // Promotion gate: a sighting + the assessment quiz only.
     if (!(quiz && sighting)) {
       // Tasks not yet complete — send them to the Path page to finish
+      await ph.shutdown()
       return NextResponse.redirect(
         new URL('/dashboard-demo', req.nextUrl.origin)
       )
     }
   }
+  await ph.shutdown()
 
   // ── 3a. MOCK MODE — simulate completed purchase end-to-end ────────────────
   const batch = await getCurrentBatch()

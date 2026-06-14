@@ -1,5 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { PACK_HTML } from './packHtml'
+import { PackViewTracker } from './pack-view-tracker'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,6 +90,7 @@ function buildPackHtml(state: CtaState): string {
 export default async function VoyagerPackPage() {
   let alreadyVoyager  = false
   let tasksIncomplete = false
+  let group: string   = 'none'   // experiment group for analytics
 
   try {
     const supabase = await createClient()
@@ -100,6 +102,8 @@ export default async function VoyagerPackPage() {
         .select('role, experiment_group, task_quiz_at')
         .eq('id', user.id)
         .single()
+
+      if (profile?.experiment_group) group = profile.experiment_group
 
       if (profile?.role === 'voyager' || profile?.role === 'architect') {
         alreadyVoyager = true
@@ -127,6 +131,7 @@ export default async function VoyagerPackPage() {
 
   return (
     <div style={{ width: '100%', height: '100vh' }}>
+      <PackViewTracker group={group} state={state} />
       <iframe
         title="Initial Voyager Pack"
         srcDoc={buildPackHtml(state)}

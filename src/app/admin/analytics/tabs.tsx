@@ -7,19 +7,22 @@ const MUTED  = 'rgba(245,245,245,0.35)'
 const STAR   = '#F5F5F5'
 const BORDER = '#151B3A'
 
-type TabKey = 'conversion' | 'retention'
+type TabKey = 'conversion' | 'retention' | 'membership'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'conversion', label: 'CONVERSION · 转化漏斗' },
   { key: 'retention',  label: 'RETENTION · 新增 / 留存' },
+  { key: 'membership', label: 'MEMBERSHIP · 会员转化' },
 ]
 
 export function FunnelTabs({
   conversion,
   retention,
+  membership,
 }: {
   conversion: React.ReactNode
   retention: React.ReactNode
+  membership: React.ReactNode
 }) {
   const [tab, setTab] = useState<TabKey>('conversion')
 
@@ -52,7 +55,7 @@ export function FunnelTabs({
         })}
       </div>
 
-      {tab === 'conversion' ? conversion : retention}
+      {tab === 'conversion' ? conversion : tab === 'retention' ? retention : membership}
     </div>
   )
 }
