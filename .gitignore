@@ -46,3 +46,6 @@ next-env.d.ts
 
 # Supabase CLI temp files
 supabase/.temp/
+top30_active_users.csv
+top30_emails_by_group.txt
+top30_invite_email_drafts.md
