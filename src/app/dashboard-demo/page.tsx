@@ -311,54 +311,6 @@ function BenefitDetailModal({ item, onClose }: { item: BenefitDetail; onClose: (
 
 // ─── Demo controls bar ────────────────────────────────────────────────────────
 
-function DemoControls({
-  completed, onToggle, packPurchased, onTogglePack,
-}: {
-  completed: Record<TaskKey, boolean>
-  onToggle: (key: TaskKey) => void
-  packPurchased: boolean
-  onTogglePack: () => void
-}) {
-  return (
-    <div style={{
-      background: '#060A1A', borderBottom: '1px solid rgba(255,107,53,0.08)',
-      padding: '8px 20px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-    }}>
-      <span style={{ fontSize: 9, color: 'rgba(245,245,245,0.15)', letterSpacing: '0.18em', flexShrink: 0 }}>DEMO</span>
-      <div style={{ width: 1, height: 10, background: 'rgba(255,107,53,0.12)', flexShrink: 0 }} />
-      {TASKS.map((task) => {
-        const done = completed[task.key]
-        return (
-          <button key={task.key} onClick={() => onToggle(task.key)} style={{
-            display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px',
-            background: done ? 'rgba(32,216,144,0.08)' : 'rgba(255,255,255,0.03)',
-            border: `1px solid ${done ? 'rgba(32,216,144,0.3)' : 'rgba(255,255,255,0.08)'}`,
-            color: done ? '#20D890' : 'rgba(245,245,245,0.25)',
-            fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
-            cursor: 'pointer', transition: 'all 0.15s',
-          }}>
-            <span style={{ fontSize: 8 }}>{done ? '●' : '○'}</span>
-            TASK {task.num}
-          </button>
-        )
-      })}
-      {/* Pack purchased toggle — visually separated */}
-      <div style={{ width: 1, height: 10, background: 'rgba(255,107,53,0.12)', flexShrink: 0 }} />
-      <button onClick={onTogglePack} style={{
-        display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px',
-        background: packPurchased ? 'rgba(196,169,106,0.1)' : 'rgba(255,255,255,0.03)',
-        border: `1px solid ${packPurchased ? 'rgba(196,169,106,0.4)' : 'rgba(255,255,255,0.08)'}`,
-        color: packPurchased ? 'rgba(196,169,106,0.9)' : 'rgba(245,245,245,0.25)',
-        fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
-        cursor: 'pointer', transition: 'all 0.15s',
-      }}>
-        <span style={{ fontSize: 8 }}>{packPurchased ? '●' : '○'}</span>
-        PACK PURCHASED
-      </button>
-    </div>
-  )
-}
-
 // ─── Path Rail (stage bar — full width, arrow connectors) ────────────────────
 
 function PathRail({
@@ -905,39 +857,19 @@ function TaskCard({ task, done }: { task: typeof TASKS[number]; done: boolean })
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardDemoPage() {
-  const [completed, setCompleted] = useState<Record<TaskKey, boolean>>({
-    report_sighting: false,
-    cast_votes:      false,
-    read_intel:      false,
-    pass_quiz:       false,
-  })
-  const [packPurchased, setPackPurchased] = useState(false)
-  const [viewedStage, setViewedStage]     = useState<ViewStage>('applicant')
-  const [modal, setModal]                 = useState<ModalKind | null>(null)
-  const [detailItem, setDetailItem]       = useState<BenefitDetail | null>(null)
+  const [viewedStage, setViewedStage] = useState<ViewStage>('applicant')
+  const [modal, setModal]             = useState<ModalKind | null>(null)
+  const [detailItem, setDetailItem]   = useState<BenefitDetail | null>(null)
 
+  // Static prototype state: the live page reflects an Applicant viewing
+  // their path. (Real role-driven state is wired in separately.)
+  const completed: Record<TaskKey, boolean> = {
+    report_sighting: false, cast_votes: false, read_intel: false, pass_quiz: false,
+  }
   const completedCount = Object.values(completed).filter(Boolean).length
   const totalTasks     = TASKS.length
   const allDone        = completedCount === totalTasks
-
-  // Voyager = pack purchased (tasks are auto-completed for the demo)
-  const isVoyager = packPurchased
-
-  function toggleTask(key: TaskKey) {
-    setCompleted(prev => ({ ...prev, [key]: !prev[key] }))
-  }
-
-  function togglePack() {
-    const next = !packPurchased
-    setPackPurchased(next)
-    // When becoming a voyager, mark all tasks done and switch to voyager view
-    if (next) {
-      setCompleted({ report_sighting: true, cast_votes: true, read_intel: true, pass_quiz: true })
-      setViewedStage('voyager')
-    } else {
-      setViewedStage('applicant')
-    }
-  }
+  const isVoyager      = false
 
   function handleStageClick(stage: ViewStage) {
     if (stage === 'console') {
@@ -979,12 +911,6 @@ export default function DashboardDemoPage() {
           </span>
         )}
       </div>
-
-      {/* ── Demo controls ── */}
-      <DemoControls
-        completed={completed} onToggle={toggleTask}
-        packPurchased={packPurchased} onTogglePack={togglePack}
-      />
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '24px 20px 80px' }}>
 

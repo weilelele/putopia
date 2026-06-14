@@ -846,8 +846,8 @@ function PathStatusBar({
   const isArchitect = user.role === 'architect'
 
   // Identity accent
-  const idColor  = isApplicant ? '#E8A020' : isArchitect ? '#FF6B35' : '#FFB07A'
-  const idLabel  = isApplicant ? 'APPLICANT' : isArchitect ? 'ARCHITECT' : 'VOYAGER'
+  const idColor = isApplicant ? '#E8A020' : isArchitect ? '#FF6B35' : '#FFB07A'
+  const idLabel = isApplicant ? 'APPLICANT' : isArchitect ? 'ARCHITECT' : 'VOYAGER'
 
   // Profile-completion nudge: a Voyager who hasn't set an avatar yet.
   const showNudge = user.role === 'voyager' && !user.avatarUrl
@@ -855,9 +855,12 @@ function PathStatusBar({
   const name = user.name || user.email?.split('@')[0] || 'Voyager'
   const initials = name.slice(0, 2).toUpperCase()
 
+  // Device ownership (no claim flow yet → always false / gray logo).
+  const hasDevice = false
+
   const cell: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 9,
-    padding: '9px 14px', textDecoration: 'none',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+    padding: '11px 18px', textDecoration: 'none',
     fontFamily: 'var(--font-mono)', cursor: 'pointer',
     background: 'transparent', border: 'none',
     transition: 'background 0.15s',
@@ -873,6 +876,7 @@ function PathStatusBar({
       {/* ── Avatar → /profile ── */}
       <Link
         href="/profile"
+        title="Edit your profile"
         style={{ ...cell, flex: '0 0 auto' }}
         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
@@ -881,13 +885,13 @@ function PathStatusBar({
           {user.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={user.avatarUrl} alt={name} style={{
-              width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', display: 'block',
+              width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', display: 'block',
               border: '1.5px solid rgba(255,138,92,0.4)',
             }} />
           ) : (
             <span style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 34, height: 34, borderRadius: '50%',
+              width: 32, height: 32, borderRadius: '50%',
               border: `1.5px solid ${idColor}66`, background: '#0A0D1A',
               fontSize: 12, fontWeight: 700, color: idColor, letterSpacing: '0.02em',
             }}>
@@ -896,7 +900,7 @@ function PathStatusBar({
           )}
           {showNudge && (
             <span style={{
-              position: 'absolute', top: -1, right: -1,
+              position: 'absolute', top: -2, right: -2,
               width: 9, height: 9, borderRadius: '50%',
               background: '#E83030', border: '1.5px solid var(--color-void)',
               boxShadow: '0 0 6px rgba(232,48,48,0.8)',
@@ -904,14 +908,6 @@ function PathStatusBar({
             }} />
           )}
         </span>
-        <div style={{ textAlign: 'left', minWidth: 0 }}>
-          <div style={{ fontSize: 11, color: '#F5F5F5', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
-            {name}
-          </div>
-          <div style={{ fontSize: 8.5, color: showNudge ? '#E8703C' : 'rgba(245,245,245,0.35)', letterSpacing: '0.1em' }}>
-            {showNudge ? 'COMPLETE PROFILE' : 'EDIT PROFILE'}
-          </div>
-        </div>
       </Link>
 
       {divider}
@@ -919,41 +915,40 @@ function PathStatusBar({
       {/* ── Identity → Path page ── */}
       <Link
         href="/dashboard-demo"
-        style={{ ...cell, flex: 1, justifyContent: 'center' }}
+        title="View your path"
+        style={{ ...cell, flex: 1 }}
         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
       >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: idColor, letterSpacing: '0.16em', fontWeight: 700 }}>
-            {idLabel}
-          </div>
-          <div style={{ fontSize: 8.5, color: 'rgba(245,245,245,0.35)', letterSpacing: '0.08em' }}>
-            VIEW YOUR PATH →
-          </div>
-        </div>
+        <span style={{ fontSize: 12, color: idColor, letterSpacing: '0.18em', fontWeight: 700 }}>
+          {idLabel}
+        </span>
       </Link>
 
       {divider}
 
-      {/* ── Device status → popup ── */}
+      {/* ── Device status → popup (brand logo, gray=none / green=owned) ── */}
       <button
         onClick={onDeviceClick}
+        title={hasDevice ? 'Device active' : 'No device assigned'}
         style={{ ...cell, flex: '0 0 auto' }}
         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
       >
-        <span style={{ color: 'rgba(245,245,245,0.3)', display: 'inline-flex', flexShrink: 0 }}>
-          <DeviceBarIcon size={16} />
-        </span>
-        <div style={{ textAlign: 'left' }}>
-          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.5)', letterSpacing: '0.06em' }}>
-            NO DEVICE
-          </div>
-          <div style={{ fontSize: 8.5, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.08em' }}>
-            DETAILS
-          </div>
-        </div>
+        <span
+          aria-label={hasDevice ? 'Device active' : 'No device'}
+          style={{
+            display: 'inline-block', width: 32, height: 19, flexShrink: 0,
+            background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.32)',
+            WebkitMaskImage: 'url(/assets/vi-icon.png)',
+            maskImage: 'url(/assets/vi-icon.png)',
+            WebkitMaskSize: 'contain', maskSize: 'contain',
+            WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center', maskPosition: 'center',
+            filter: hasDevice ? 'drop-shadow(0 0 5px rgba(32,216,144,0.5))' : 'none',
+          }}
+        />
       </button>
 
       <style>{`
