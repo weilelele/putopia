@@ -3,13 +3,17 @@ import { PACK_HTML } from './packHtml'
 
 export const dynamic = 'force-dynamic'
 
+// ─── Global sales gate ────────────────────────────────────────────────────────
+// Set to true when you're ready to open purchases.
+// While false, every non-voyager visitor sees a "launch pending" overlay
+// instead of the live checkout button.
+const SALES_OPEN = false
+
 // Public product page — accessible to all users including guests.
 // Auth + gating is enforced at /api/checkout.
-// For task_gated users with incomplete tasks we overlay a lock banner so they
-// know they need to finish their assessment before they can purchase.
 export default async function VoyagerPackPage() {
-  let showLockBanner = false
   let alreadyVoyager = false
+  let showLockBanner = false   // task_gated with incomplete tasks
 
   try {
     const supabase = await createClient()
@@ -25,17 +29,15 @@ export default async function VoyagerPackPage() {
       // Already paid in / promoted → no need to buy again.
       if (profile?.role === 'voyager' || profile?.role === 'architect') {
         alreadyVoyager = true
-      } else if (profile?.experiment_group === 'task_gated') {
+      } else if (SALES_OPEN && profile?.experiment_group === 'task_gated') {
+        // Only evaluate task gate when sales are actually open.
         const quiz = !!profile.task_quiz_at
-
         const admin = createAdminClient()
         const { count: sightingCount } = await admin
           .from('worlds')
           .select('id', { count: 'exact', head: true })
           .eq('submitted_by', user.id)
         const sighting = (sightingCount ?? 0) > 0
-
-        // Promotion gate: a sighting + the assessment quiz only.
         if (!(quiz && sighting)) {
           showLockBanner = true
         }
@@ -44,6 +46,9 @@ export default async function VoyagerPackPage() {
   } catch {
     // Non-critical — silently fall through and show the pack normally
   }
+
+  // When sales are closed, all non-voyager visitors see the launch-pending overlay.
+  const showLaunchPending = !SALES_OPEN && !alreadyVoyager
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
@@ -60,8 +65,74 @@ export default async function VoyagerPackPage() {
         }}
       />
 
-      {showLockBanner && (
-        /* Overlay that covers the native checkout CTA for task_gated users */
+      {/* ── Sales closed — launch pending ── */}
+      {showLaunchPending && (
+        <div style={{
+          position: 'absolute',
+          left: 0, right: 0, bottom: 0,
+          background: 'rgba(6,10,26,0.97)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+          borderTop: '1px solid rgba(255,107,53,0.25)',
+          padding: '22px 28px 28px',
+          zIndex: 10,
+        }}>
+          <div style={{
+            maxWidth: 480,
+            margin: '0 auto',
+            textAlign: 'center',
+            fontFamily: "'Space Mono', ui-monospace, monospace",
+          }}>
+            <div style={{
+              fontSize: 8,
+              letterSpacing: '0.30em',
+              color: 'rgba(255,107,53,0.55)',
+              marginBottom: 10,
+            }}>
+              ◈ LAUNCH PENDING ◈
+            </div>
+            <div style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: '#F5F5F5',
+              letterSpacing: '0.06em',
+              marginBottom: 10,
+              lineHeight: 1.3,
+            }}>
+              The Voyager Pack is not yet available.
+            </div>
+            <div style={{
+              fontSize: 11,
+              color: 'rgba(245,245,245,0.42)',
+              lineHeight: 1.75,
+              marginBottom: 20,
+            }}>
+              We&apos;re preparing the first batch. Registered Applicants
+              will be notified when the pack goes live.
+            </div>
+            <a
+              href="/console"
+              style={{
+                display: 'inline-block',
+                background: 'rgba(255,107,53,0.08)',
+                color: '#FF6B35',
+                fontFamily: "'Space Mono', ui-monospace, monospace",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.18em',
+                textDecoration: 'none',
+                padding: '11px 32px',
+                border: '1px solid rgba(255,107,53,0.35)',
+              }}
+            >
+              ← BACK TO CONSOLE
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* ── task_gated: assessment not complete ── */}
+      {!showLaunchPending && showLockBanner && (
         <div style={{
           position: 'absolute',
           left: 0, right: 0, bottom: 0,
@@ -135,8 +206,8 @@ export default async function VoyagerPackPage() {
         </div>
       )}
 
+      {/* ── Already a Voyager ── */}
       {alreadyVoyager && (
-        /* User is already a Voyager — cover the checkout CTA so they can't re-pay */
         <div style={{
           position: 'absolute',
           left: 0, right: 0, bottom: 0,

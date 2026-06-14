@@ -5,15 +5,22 @@ import { getCurrentBatch, provisionVoyagerMembership } from '@/lib/actions/membe
 
 export const dynamic = 'force-dynamic'
 
+// Mirror the gate in /voyager-pack/page.tsx — keep in sync.
+const SALES_OPEN = false
+
 // GET /api/checkout — starts a purchase of the $12 Initial Voyager Pack.
 //
 // Auth + gating is handled here so /voyager-pack can be fully public:
-//   1. Not logged in      → redirect to /login (returns to /voyager-pack)
-//   2. task_gated group   → must complete all 4 Applicant tasks first;
-//                           incomplete → redirect to /console
+//   0. Sales not open yet → redirect back to /voyager-pack
+//   1. Not logged in      → redirect to /login (returns to /api/checkout)
+//   2. task_gated group   → must complete Applicant tasks first
 //   3. Otherwise          → proceed to Stripe (or mock) checkout
 //
 export async function GET(req: NextRequest) {
+  // ── 0. Sales gate ─────────────────────────────────────────────────────────
+  if (!SALES_OPEN) {
+    return NextResponse.redirect(new URL('/voyager-pack', req.nextUrl.origin))
+  }
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
