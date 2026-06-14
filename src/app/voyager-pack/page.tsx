@@ -47,7 +47,7 @@ function buildPackHtml(state: CtaState): string {
 
   // 'closed' | 'voyager' — greyed button + centered dialog on click
   const copy       = DLG_COPY[state]
-  const btnText    = state === 'voyager' ? '✓ Already a Voyager' : 'Not Yet Available'
+  const btnText    = state === 'voyager' ? '✓ Already a Voyager' : 'Not Available to Purchase'
   const lockClass  = state === 'voyager' ? 'ctabtn--locked ctabtn--ok' : 'ctabtn--locked'
 
   const css = `
