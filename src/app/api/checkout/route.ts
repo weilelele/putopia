@@ -88,8 +88,12 @@ export async function GET(req: NextRequest) {
     const { error: provErr } = await provisionVoyagerMembership(user.id)
     if (provErr) console.error('[checkout/mock] provision failed:', provErr)
 
+    // Land back on the homepage as a freshly-minted Voyager. The profile-
+    // completion nudge (red dot on the avatar) appears there automatically
+    // because a new Voyager has no avatar set yet.
+    void order
     return NextResponse.redirect(
-      new URL(`/join/success?mock=1&order=${order?.id ?? ''}`, req.nextUrl.origin),
+      new URL('/console?welcome=voyager', req.nextUrl.origin),
     )
   }
 

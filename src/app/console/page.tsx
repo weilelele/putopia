@@ -784,32 +784,238 @@ function ApplicantTaskPanel({ tasks }: { tasks: ApplicantTaskStatus }) {
   )
 }
 
-/* ─── Auth Hero — Welcome Voyager ──────────────────────── */
-function AuthHero({ user, activityEvents }: { user: { role: string; name?: string }; activityEvents: ActivityEvent[] }) {
+/* ─── Device "coming soon" popup (same pattern as locked Voyager rows) ── */
+function DeviceComingSoonModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 80,
+        background: 'rgba(10,14,39,0.82)', backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        animation: 'pathbar-fade 0.15s ease-out',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: 380, width: '100%',
+          border: '1px solid rgba(232,160,32,0.3)',
+          background: '#0F1430', padding: '22px 26px 18px',
+          fontFamily: 'var(--font-mono)',
+          boxShadow: '0 0 40px rgba(10,14,39,0.6)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <DeviceBarIcon size={14} color="#E8A020" />
+          <span style={{ fontSize: 'var(--fs-label)', color: '#E8A020', letterSpacing: '0.12em' }}>
+            DEVICE SCAN IN PROGRESS
+          </span>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.75 }}>
+          You don&apos;t have a Multiverse Console assigned yet. We&apos;re still scanning for
+          available devices — we&apos;ll notify you as soon as one is ready for you.
+        </p>
+        <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.15)', letterSpacing: '0.14em', textAlign: 'center' }}>
+          TAP ANYWHERE TO DISMISS
+        </div>
+      </div>
+      <style>{`@keyframes pathbar-fade { from { opacity: 0 } to { opacity: 1 } }`}</style>
+    </div>
+  )
+}
+
+function DeviceBarIcon({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="3.5" width="12" height="9" rx="1" stroke={color} strokeWidth="1.2" />
+      <line x1="2" y1="6.5" x2="14" y2="6.5" stroke={color} strokeWidth="1" opacity="0.5" />
+      <rect x="4" y="8.5" width="2.5" height="2" rx="0.4" stroke={color} strokeWidth="0.9" opacity="0.7" />
+    </svg>
+  )
+}
+
+/* ─── Path status bar — avatar · identity · device (entry to the Path) ── */
+function PathStatusBar({
+  user, onDeviceClick,
+}: {
+  user: { role: string; name?: string; email?: string; avatarUrl?: string | null }
+  onDeviceClick: () => void
+}) {
   const isApplicant = user.role === 'applicant'
+  const isArchitect = user.role === 'architect'
+
+  // Identity accent
+  const idColor  = isApplicant ? '#E8A020' : isArchitect ? '#FF6B35' : '#FFB07A'
+  const idLabel  = isApplicant ? 'APPLICANT' : isArchitect ? 'ARCHITECT' : 'VOYAGER'
+
+  // Profile-completion nudge: a Voyager who hasn't set an avatar yet.
+  const showNudge = user.role === 'voyager' && !user.avatarUrl
+
+  const name = user.name || user.email?.split('@')[0] || 'Voyager'
+  const initials = name.slice(0, 2).toUpperCase()
+
+  const cell: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 9,
+    padding: '9px 14px', textDecoration: 'none',
+    fontFamily: 'var(--font-mono)', cursor: 'pointer',
+    background: 'transparent', border: 'none',
+    transition: 'background 0.15s',
+  }
+  const divider = <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,107,53,0.14)' }} />
+
+  return (
+    <div style={{
+      width: '100%', maxWidth: 560, margin: '0 auto',
+      display: 'flex', alignItems: 'stretch',
+      border: '1px solid var(--bd-faint)', background: 'var(--color-void)',
+    }}>
+      {/* ── Avatar → /profile ── */}
+      <Link
+        href="/profile"
+        style={{ ...cell, flex: '0 0 auto' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+      >
+        <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+          {user.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.avatarUrl} alt={name} style={{
+              width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', display: 'block',
+              border: '1.5px solid rgba(255,138,92,0.4)',
+            }} />
+          ) : (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 34, height: 34, borderRadius: '50%',
+              border: `1.5px solid ${idColor}66`, background: '#0A0D1A',
+              fontSize: 12, fontWeight: 700, color: idColor, letterSpacing: '0.02em',
+            }}>
+              {initials}
+            </span>
+          )}
+          {showNudge && (
+            <span style={{
+              position: 'absolute', top: -1, right: -1,
+              width: 9, height: 9, borderRadius: '50%',
+              background: '#E83030', border: '1.5px solid var(--color-void)',
+              boxShadow: '0 0 6px rgba(232,48,48,0.8)',
+              animation: 'pathbar-pulse 1.8s ease-in-out infinite',
+            }} />
+          )}
+        </span>
+        <div style={{ textAlign: 'left', minWidth: 0 }}>
+          <div style={{ fontSize: 11, color: '#F5F5F5', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
+            {name}
+          </div>
+          <div style={{ fontSize: 8.5, color: showNudge ? '#E8703C' : 'rgba(245,245,245,0.35)', letterSpacing: '0.1em' }}>
+            {showNudge ? 'COMPLETE PROFILE' : 'EDIT PROFILE'}
+          </div>
+        </div>
+      </Link>
+
+      {divider}
+
+      {/* ── Identity → Path page ── */}
+      <Link
+        href="/dashboard-demo"
+        style={{ ...cell, flex: 1, justifyContent: 'center' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+      >
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 11, color: idColor, letterSpacing: '0.16em', fontWeight: 700 }}>
+            {idLabel}
+          </div>
+          <div style={{ fontSize: 8.5, color: 'rgba(245,245,245,0.35)', letterSpacing: '0.08em' }}>
+            VIEW YOUR PATH →
+          </div>
+        </div>
+      </Link>
+
+      {divider}
+
+      {/* ── Device status → popup ── */}
+      <button
+        onClick={onDeviceClick}
+        style={{ ...cell, flex: '0 0 auto' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+      >
+        <span style={{ color: 'rgba(245,245,245,0.3)', display: 'inline-flex', flexShrink: 0 }}>
+          <DeviceBarIcon size={16} />
+        </span>
+        <div style={{ textAlign: 'left' }}>
+          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.5)', letterSpacing: '0.06em' }}>
+            NO DEVICE
+          </div>
+          <div style={{ fontSize: 8.5, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.08em' }}>
+            DETAILS
+          </div>
+        </div>
+      </button>
+
+      <style>{`
+        @keyframes pathbar-pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50%       { transform: scale(1.25); opacity: 0.7; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+/* ─── Auth Hero — Welcome Voyager (voyager+) / status-led (applicant) ──── */
+function AuthHero({ user, activityEvents }: {
+  user: { role: string; name?: string; email?: string; avatarUrl?: string | null }
+  activityEvents: ActivityEvent[]
+}) {
+  const isApplicant = user.role === 'applicant'
+  const [deviceModal, setDeviceModal] = useState(false)
 
   return (
     <section className="hero">
-      <div className="eyebrow">WELCOME,</div>
-      <h1 className="hero-title">
-        <span className="sparkle sparkle-l">✦</span>
-        VOYAGER
-        <span className="sparkle sparkle-r">✦</span>
-      </h1>
-      <p className="hero-subtitle">
-        YOU HAVE BEEN SELECTED TO EXPLORE<br />
-        THE MYSTERIES OF PARALLEL WORLDS.
-      </p>
+      {deviceModal && <DeviceComingSoonModal onClose={() => setDeviceModal(false)} />}
 
-      <div className="deco-diamond"><span /></div>
+      {isApplicant ? (
+        /* Applicant: no "Welcome Voyager" — lead with status to drive the path */
+        <>
+          <div className="eyebrow" style={{ fontSize: 'clamp(0.7rem, 1.8vh, 1rem)', letterSpacing: '0.35em' }}>
+            YOUR JOURNEY
+          </div>
+          <p className="hero-subtitle" style={{ marginTop: '0.4rem', marginBottom: '1.1rem' }}>
+            COMPLETE YOUR PATH TO BECOME A VOYAGER.
+          </p>
+        </>
+      ) : (
+        /* Voyager / Architect: full welcome */
+        <>
+          <div className="eyebrow">WELCOME,</div>
+          <h1 className="hero-title">
+            <span className="sparkle sparkle-l">✦</span>
+            VOYAGER
+            <span className="sparkle sparkle-r">✦</span>
+          </h1>
+          <p className="hero-subtitle">
+            YOU HAVE BEEN SELECTED TO EXPLORE<br />
+            THE MYSTERIES OF PARALLEL WORLDS.
+          </p>
+          <div className="deco-diamond"><span /></div>
+        </>
+      )}
 
+      {/* ── Path status bar (above the Status Feed) ── */}
+      <div style={{ width: '100%', margin: isApplicant ? '0 auto' : '0.75rem auto 0', padding: '0 1.25rem' }}>
+        <PathStatusBar user={user} onDeviceClick={() => setDeviceModal(true)} />
+      </div>
+
+      {/* ── Status Feed ── */}
       {activityEvents.length > 0 && (
-        <div style={{ width: '100%', maxWidth: '560px', margin: '1.25rem auto 0' }}>
+        <div style={{ width: '100%', maxWidth: '560px', margin: '0.75rem auto 0', padding: '0 1.25rem' }}>
           <ActivityFeed events={activityEvents} />
         </div>
       )}
-
-      {/* Claim CTA hidden until Stripe is live */}
     </section>
   )
 }

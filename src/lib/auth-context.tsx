@@ -11,6 +11,7 @@ export interface AuthUser {
   role: UserRole
   email?: string
   name?: string
+  avatarUrl?: string | null
 }
 
 interface AuthContextType {
@@ -44,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient()
     const { data } = await supabase
       .from('voyager_profiles')
-      .select('role, display_name')
+      .select('role, display_name, avatar_url')
       .eq('id', userId)
       .single()
 
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: data?.role ?? 'applicant',
       email,
       name: data?.display_name ?? undefined,
+      avatarUrl: data?.avatar_url ?? null,
     })
   }, [])
 
