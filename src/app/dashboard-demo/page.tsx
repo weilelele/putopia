@@ -533,14 +533,15 @@ function VoyagerUnlockTrack({
       </div>
     </>
   )
-  const chipStyle = (active: boolean): React.CSSProperties => ({
-    ['--dd-bd' as string]: active ? 'rgba(255,107,53,0.5)' : 'rgba(255,255,255,0.1)',
-    ['--dd-fill' as string]: active ? '#1B1330' : '#0C1029',
+  // active = fully unlocked; preview = clickable but not yet unlocked; false = disabled
+  const chipStyle = (state: boolean | 'preview'): React.CSSProperties => ({
+    ['--dd-bd' as string]: state === true ? 'rgba(255,107,53,0.5)' : state === 'preview' ? 'rgba(255,107,53,0.28)' : 'rgba(255,255,255,0.1)',
+    ['--dd-fill' as string]: state === true ? '#1B1330' : state === 'preview' ? '#0F1128' : '#0C1029',
     flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7,
     padding: '11px 8px', textDecoration: 'none',
-    color: active ? '#FF6B35' : 'rgba(245,245,245,0.4)',
-    cursor: active ? 'pointer' : 'default',
-    opacity: active ? 1 : 0.5,
+    color: state === true ? '#FF6B35' : state === 'preview' ? 'rgba(255,107,53,0.65)' : 'rgba(245,245,245,0.4)',
+    cursor: state !== false ? 'pointer' : 'default',
+    opacity: state === false ? 0.5 : 1,
     background: 'none', fontFamily: 'var(--font-mono)',
   })
 
@@ -564,20 +565,19 @@ function VoyagerUnlockTrack({
             {!allDone && <span style={{ color: 'rgba(245,245,245,0.3)', display: 'inline-flex' }}><LockIcon size={12} /></span>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {allDone ? (
-              <Link href="/voyager-pack" className="dd-panel" style={chipStyle(true)}>
-                {chipInner(<WorldPackIcon size={22} />, 'WORLD BUILDER', 'VIEW PACK →', true)}
-              </Link>
-            ) : (
-              <div className="dd-panel" style={chipStyle(false)}>
-                {chipInner(<WorldPackIcon size={22} />, 'WORLD BUILDER', '$12 PACK', false)}
-              </div>
-            )}
+            {/* World Builder: always clickable — links to /voyager-pack even before tasks done */}
+            <Link
+              href="/voyager-pack"
+              className="dd-panel"
+              style={chipStyle(allDone ? true : 'preview')}
+            >
+              {chipInner(<WorldPackIcon size={22} />, 'WORLD BUILDER', allDone ? 'VIEW PACK →' : '$12 PACK', allDone)}
+            </Link>
             <span style={{ fontSize: 9, letterSpacing: '0.1em', color: 'rgba(245,245,245,0.3)', flexShrink: 0 }}>or</span>
             <button
               onClick={allDone ? onDeviceSeeker : undefined}
               className="dd-panel"
-              style={chipStyle(allDone)}
+              style={chipStyle(allDone ? true : false)}
               disabled={!allDone}
             >
               {chipInner(<DevicePackIcon size={22} />, 'DEVICE SEEKER', 'COMING SOON', allDone)}
