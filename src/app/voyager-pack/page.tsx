@@ -50,11 +50,21 @@ export default async function VoyagerPackPage() {
   // When sales are closed, all non-voyager visitors see the launch-pending overlay.
   const showLaunchPending = !SALES_OPEN && !alreadyVoyager
 
+  // For task_gated users with incomplete tasks: swap the CTA button text + destination
+  // so they see the pack normally but the button guides them to their Path.
+  let packHtml = PACK_HTML
+  if (showLockBanner) {
+    packHtml = PACK_HTML
+      .replace('href="/api/checkout"', 'href="/dashboard-demo"')
+      .replace("cta:   'Activate Voyager Status'", "cta:   'Complete Tasks to Purchase'")
+      .replace("price: '$12'", "price: ''")
+  }
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
       <iframe
         title="Initial Voyager Pack"
-        srcDoc={PACK_HTML}
+        srcDoc={packHtml}
         scrolling="yes"
         style={{
           display: 'block',
@@ -131,80 +141,8 @@ export default async function VoyagerPackPage() {
         </div>
       )}
 
-      {/* ── task_gated: assessment not complete ── */}
-      {!showLaunchPending && showLockBanner && (
-        <div style={{
-          position: 'absolute',
-          left: 0, right: 0, bottom: 0,
-          background: 'rgba(6,10,26,0.97)',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          borderTop: '1px solid rgba(232,160,32,0.35)',
-          padding: '22px 28px 28px',
-          zIndex: 10,
-        }}>
-          <div style={{
-            maxWidth: 480,
-            margin: '0 auto',
-            textAlign: 'center',
-            fontFamily: "'Space Mono', ui-monospace, monospace",
-          }}>
-            <div style={{
-              fontSize: 8,
-              letterSpacing: '0.30em',
-              color: 'rgba(232,160,32,0.6)',
-              marginBottom: 10,
-            }}>
-              ◈ PACK LOCKED ◈
-            </div>
-            <div style={{
-              fontSize: 15,
-              fontWeight: 700,
-              color: '#F5F5F5',
-              letterSpacing: '0.06em',
-              marginBottom: 10,
-              lineHeight: 1.3,
-            }}>
-              Complete Your Field Assessment to Purchase
-            </div>
-            <div style={{
-              fontSize: 11,
-              color: 'rgba(245,245,245,0.42)',
-              lineHeight: 1.75,
-              marginBottom: 20,
-            }}>
-              The Initial Voyager Pack unlocks once you finish the
-              Collective&apos;s evaluation tasks. Head to the console to
-              check your progress.
-            </div>
-            <a
-              href="/console"
-              style={{
-                display: 'inline-block',
-                background: 'rgba(232,160,32,0.08)',
-                color: '#E8A020',
-                fontFamily: "'Space Mono', ui-monospace, monospace",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.18em',
-                textDecoration: 'none',
-                padding: '11px 32px',
-                border: '1px solid rgba(232,160,32,0.45)',
-              }}
-            >
-              VIEW MY PROGRESS →
-            </a>
-            <div style={{
-              marginTop: 12,
-              fontSize: 9,
-              color: 'rgba(245,245,245,0.18)',
-              letterSpacing: '0.08em',
-            }}>
-              Pack ($12) unlocks automatically on completion
-            </div>
-          </div>
-        </div>
-      )}
+      {/* task_gated users with incomplete tasks see the pack normally,
+          but the CTA button text + href are swapped (see packHtml above). */}
 
       {/* ── Already a Voyager ── */}
       {alreadyVoyager && (

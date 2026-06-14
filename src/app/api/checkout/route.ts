@@ -53,9 +53,9 @@ export async function GET(req: NextRequest) {
 
     // Promotion gate: a sighting + the assessment quiz only.
     if (!(quiz && sighting)) {
-      // Tasks not yet complete — send them to the console to finish
+      // Tasks not yet complete — send them to the Path page to finish
       return NextResponse.redirect(
-        new URL('/console?msg=tasks_incomplete', req.nextUrl.origin)
+        new URL('/dashboard-demo', req.nextUrl.origin)
       )
     }
   }
