@@ -131,16 +131,6 @@ function SignalIcon() {
   )
 }
 
-function VoteIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.2" />
-      <polyline points="5,9 8,12 13,5.5" stroke="currentColor" strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
 function IntelIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -165,7 +155,7 @@ function QuizIcon() {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TaskKey    = 'report_sighting' | 'cast_votes' | 'read_intel' | 'pass_quiz'
+type TaskKey    = 'report_sighting' | 'pass_quiz'
 type ViewStage  = 'applicant' | 'voyager' | 'console'
 type ModalKind  = 'device_seeker' | 'console_locked' | 'signal_locked'
 
@@ -181,17 +171,7 @@ const TASKS: {
     href: '/worlds/submit', icon: <WorldIcon />, accentColor: '#FF6B35',
   },
   {
-    key: 'cast_votes', num: '02', label: 'Influence the Mission',
-    description: 'Cast votes on two Collective decisions and help determine our direction.',
-    href: '/vote', icon: <VoteIcon />, accentColor: '#E85D04',
-  },
-  {
-    key: 'read_intel', num: '03', label: 'Uncover the Truth',
-    description: 'Read a dispatch from the Architects to understand why this organisation exists.',
-    href: '/intel/INT-628014', icon: <IntelIcon />, accentColor: '#DC2F02',
-  },
-  {
-    key: 'pass_quiz', num: '04', label: 'Qualify for Active Service',
+    key: 'pass_quiz', num: '02', label: 'Qualify for Active Service',
     description: 'Complete the field assessment to demonstrate you are ready for active service.',
     href: '/quiz', icon: <QuizIcon />, accentColor: '#C04000',
   },
@@ -864,7 +844,7 @@ export default function DashboardDemoPage() {
   // Static prototype state: the live page reflects an Applicant viewing
   // their path. (Real role-driven state is wired in separately.)
   const completed: Record<TaskKey, boolean> = {
-    report_sighting: false, cast_votes: false, read_intel: false, pass_quiz: false,
+    report_sighting: false, pass_quiz: false,
   }
   const completedCount = Object.values(completed).filter(Boolean).length
   const totalTasks     = TASKS.length
@@ -886,33 +866,7 @@ export default function DashboardDemoPage() {
       <Modal kind={modal} onClose={() => setModal(null)} />
       {detailItem && <BenefitDetailModal item={detailItem} onClose={() => setDetailItem(null)} />}
 
-      {/* ── Top bar ── */}
-      <div style={{ borderBottom: '1px solid rgba(255,107,53,0.12)', background: '#0F1430', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/vi-wordmark.png" alt="Multiverse Collective" style={{ height: 20, width: 'auto', display: 'block' }} />
-          <div style={{ width: 1, height: 12, background: 'rgba(255,107,53,0.22)' }} />
-          <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.2em' }}>DASHBOARD</span>
-        </div>
-        {isVoyager ? (
-          <span style={{
-            fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', padding: '2px 8px',
-            color: 'rgba(196,169,106,0.85)',
-            border: '1px solid rgba(196,169,106,0.35)',
-            background: 'rgba(196,169,106,0.07)',
-            transition: 'all 0.3s',
-            animation: 'badge-in 0.3s ease-out',
-          }}>
-            VOYAGER
-          </span>
-        ) : (
-          <span style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', letterSpacing: '0.2em', border: '1px solid #E8A02044', padding: '2px 8px' }}>
-            APPLICANT
-          </span>
-        )}
-      </div>
-
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '24px 20px 80px' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 20px 80px' }}>
 
         {/* ── YOUR PATH ── */}
         <section style={{ marginBottom: 16 }}>

@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import type { ApplicationInsert, ApplicationStatus } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
 import { logActivity } from './activity-events'
+import { upsertLoopsContact } from '@/lib/loops'
 
 export async function submitApplication(application: ApplicationInsert) {
   const supabase = await createClient()
@@ -50,6 +51,16 @@ export async function submitApplication(application: ApplicationInsert) {
   } catch (err) {
     console.error('[submitApplication] inviteUserByEmail threw:', err)
   }
+
+  // Sync to Loops (newsletter & marketing)
+  upsertLoopsContact({
+    email: application.email,
+    userGroup: 'applicant',
+    utmSource:   application.utm_source   ?? undefined,
+    utmMedium:   application.utm_medium   ?? undefined,
+    utmCampaign: application.utm_campaign ?? undefined,
+    utmContent:  application.utm_content  ?? undefined,
+  }).catch(() => {})
 
   // Subscribe to Beehiiv newsletter
   const beehiivKey = process.env.BEEHIIV_API_KEY

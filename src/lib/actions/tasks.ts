@@ -92,6 +92,8 @@ export async function getApplicantTaskStatus(): Promise<ApplicantTaskStatus> {
     votes = new Set((vr as { vote_id: string }[]).map((r) => r.vote_id)).size >= 2
   }
 
-  const allDone = sighting && votes && intel && quiz
+  // Promotion to Voyager requires only the two core tasks: a sighting + the
+  // assessment quiz. (votes/intel are still tracked but no longer gating.)
+  const allDone = sighting && quiz
   return { sighting, votes, intel, quiz, allDone }
 }

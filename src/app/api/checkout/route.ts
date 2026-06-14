@@ -35,8 +35,7 @@ export async function GET(req: NextRequest) {
     .single()
 
   if (profile?.experiment_group === 'task_gated') {
-    const intel = !!profile?.task_intel_at
-    const quiz  = !!profile?.task_quiz_at
+    const quiz = !!profile?.task_quiz_at
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { count: sightingCount } = await (admin as any)
@@ -45,17 +44,8 @@ export async function GET(req: NextRequest) {
       .eq('submitted_by', user.id)
     const sighting = (sightingCount ?? 0) > 0
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: voteRows } = await (admin as any)
-      .from('vote_responses')
-      .select('vote_id')
-      .eq('user_id', user.id)
-    const votes =
-      new Set(
-        ((voteRows ?? []) as { vote_id: string }[]).map((r) => r.vote_id)
-      ).size >= 2
-
-    if (!(intel && quiz && sighting && votes)) {
+    // Promotion gate: a sighting + the assessment quiz only.
+    if (!(quiz && sighting)) {
       // Tasks not yet complete — send them to the console to finish
       return NextResponse.redirect(
         new URL('/console?msg=tasks_incomplete', req.nextUrl.origin)

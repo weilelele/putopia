@@ -670,10 +670,8 @@ function GuestHero({ newHref, mcFunctions }: { newHref: string; mcFunctions: McF
 /* ─── Applicant Task Panel ──────────────────────────────── */
 function ApplicantTaskPanel({ tasks }: { tasks: ApplicantTaskStatus }) {
   const items: { key: keyof Omit<ApplicantTaskStatus, 'allDone'>; label: string; desc: string; href: string }[] = [
-    { key: 'sighting', label: 'Report a Sighting',      desc: 'Submit a parallel world to the pipeline.',                          href: '/worlds/submit' },
-    { key: 'votes',    label: 'Cast Two Votes',          desc: 'Participate in at least two votes in the Voting Hub.',              href: '/vote' },
-    { key: 'intel',    label: 'Read an Architect Report', desc: 'Read an Architect dispatch to the end.',                          href: '/intel' },
-    { key: 'quiz',     label: 'Pass the Assessment',     desc: 'Complete and pass the entry-level field assessment.',               href: '/quiz' },
+    { key: 'sighting', label: 'Report a Sighting',          desc: 'Submit a parallel world to the pipeline.',           href: '/worlds/submit' },
+    { key: 'quiz',     label: 'Qualify for Active Service',  desc: 'Complete and pass the entry-level field assessment.', href: '/quiz' },
   ]
   const doneCount = items.filter(i => tasks[i.key]).length
 
@@ -868,10 +866,10 @@ function PathStatusBar({
   const divider = <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,107,53,0.14)' }} />
 
   return (
-    <div style={{
+    <div className="hud-frame hud-frame--orange" style={{
       width: '100%', maxWidth: 560, margin: '0 auto',
       display: 'flex', alignItems: 'stretch',
-      border: '1px solid var(--bd-faint)', background: 'var(--color-void)',
+      padding: 0, background: 'var(--color-void)',
     }}>
       {/* ── Avatar → /profile ── */}
       <Link
@@ -921,8 +919,13 @@ function PathStatusBar({
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
       >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
-        <span style={{ fontSize: 12, color: idColor, letterSpacing: '0.18em', fontWeight: 700 }}>
-          {idLabel}
+        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.2 }}>
+          <span style={{ fontSize: 12, color: idColor, letterSpacing: '0.18em', fontWeight: 700 }}>
+            {idLabel}
+          </span>
+          <span style={{ fontSize: 8.5, color: 'var(--color-star-dim)', letterSpacing: '0.14em', marginTop: 3 }}>
+            VIEW YOUR PATH
+          </span>
         </span>
       </Link>
 

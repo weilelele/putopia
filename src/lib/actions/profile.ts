@@ -3,6 +3,21 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { VoyagerProfileUpdate } from '@/types/database'
+import { upsertLoopsContact } from '@/lib/loops'
+
+export async function syncLoopsRegistration(
+  email: string,
+  displayName: string,
+  userId: string,
+): Promise<void> {
+  await upsertLoopsContact({
+    email,
+    firstName: displayName,
+    userId,
+    userGroup: 'registered',
+    registered: true,
+  })
+}
 
 export async function getMyProfile() {
   const supabase = await createClient()

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
 import { getFirstTouch } from '@/lib/utm'
 import { HudField } from '@/components/hud-field'
+import { syncLoopsRegistration } from '@/lib/actions/profile'
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
@@ -78,6 +79,9 @@ export default function RegisterPage() {
         worlds_discovered: 0,
         registered_at: new Date().toISOString(),
       }, { onConflict: 'id' })
+      if (user.email) {
+        syncLoopsRegistration(user.email, displayName.trim(), user.id).catch(() => {})
+      }
       const utm = getFirstTouch()
       posthog.identify(user.id, { email: user.email, display_name: displayName.trim(), registered_at: new Date().toISOString() })
       posthog.capture('account_registered', {
