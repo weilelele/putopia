@@ -484,7 +484,8 @@ function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
   )
 
   // Sort by most-recent timestamp: groups use their newest event's time.
-  // TTL filtering is now handled server-side (two-queue approach in getActivityFeed).
+  // TTL filtering is handled server-side (per-type windows in getActivityFeed:
+  // 7d for long-lived events, 12h for vote_cast and world_added).
   return normalized.sort((a, b) => {
     const tsA = a.kind === 'single' ? a.event.created_at : (a.events[0]?.created_at ?? '')
     const tsB = b.kind === 'single' ? b.event.created_at : (b.events[0]?.created_at ?? '')

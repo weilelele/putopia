@@ -54,35 +54,52 @@ export async function logActivity(event: ActivityEventInsert): Promise<void> {
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
-// Two-queue feed: non-vote events (7d, 20 items) + vote_cast (12h, 20 items).
-// This prevents high-frequency vote_cast rows from crowding out other event types.
+// Per-type feed windows (hours). High-frequency / low-signal event types get a
+// short TTL so they auto-expire and don't crowd the feed. Tunable independently.
+const VOTE_WINDOW_HOURS  = 12   // vote_cast
+const WORLD_WINDOW_HOURS = 12   // world_added ("world log") — separate knob, same as votes by default
+
+// Three-queue feed: long-lived events (7d) + vote_cast (12h) + world_added (12h),
+// each capped at 20 items so no single high-frequency type crowds out the rest.
 export async function getActivityFeed(days = 7): Promise<ActivityEvent[]> {
   const admin = createAdminClient()
-  const since7d  = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
-  const since12h = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+  const since7d    = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+  const sinceVote  = new Date(Date.now() - VOTE_WINDOW_HOURS  * 60 * 60 * 1000).toISOString()
+  const sinceWorld = new Date(Date.now() - WORLD_WINDOW_HOURS * 60 * 60 * 1000).toISOString()
 
-  // Queue 1 — everything except vote_cast (7 days, 20 items)
+  // Queue 1 — long-lived events: everything except vote_cast and world_added (7 days, 20 items)
   const { data: nonVote, error: e1 } = await admin.from('activity_events')
     .select('*')
     .eq('is_visible', true)
     .neq('event_type', 'vote_cast')
+    .neq('event_type', 'world_added')
     .gte('created_at', since7d)
     .order('created_at', { ascending: false })
     .limit(20)
 
-  // Queue 2 — vote_cast only (12 hours, 20 items)
+  // Queue 2 — vote_cast only (short window, 20 items)
   const { data: voteCast, error: e2 } = await admin.from('activity_events')
     .select('*')
     .eq('is_visible', true)
     .eq('event_type', 'vote_cast')
-    .gte('created_at', since12h)
+    .gte('created_at', sinceVote)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  // Queue 3 — world_added ("world log") only (short window, 20 items)
+  const { data: worldAdded, error: e3 } = await admin.from('activity_events')
+    .select('*')
+    .eq('is_visible', true)
+    .eq('event_type', 'world_added')
+    .gte('created_at', sinceWorld)
     .order('created_at', { ascending: false })
     .limit(20)
 
   if (e1) console.error('[getActivityFeed] non-vote query', e1.message)
   if (e2) console.error('[getActivityFeed] vote_cast query', e2.message)
+  if (e3) console.error('[getActivityFeed] world_added query', e3.message)
 
-  const events = [...(nonVote ?? []), ...(voteCast ?? [])] as ActivityEvent[]
+  const events = [...(nonVote ?? []), ...(voteCast ?? []), ...(worldAdded ?? [])] as ActivityEvent[]
 
   // Batch-fetch latest avatar_url for all actors
   const actorIds = [...new Set(events.map(e => e.actor_id).filter(Boolean))] as string[]
