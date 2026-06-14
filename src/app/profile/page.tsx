@@ -210,6 +210,9 @@ export default function ProfilePage() {
   const accent = accentColor(profile.display_name)
   const isPureVoyager = profile.role === 'voyager'
   const isApplicant = profile.role === 'applicant'
+  // Only Voyagers/Architects (i.e. people who have actually paid in) may edit
+  // their dossier and see pack fulfillment. Applicants get a locked state.
+  const canEdit = profile.role === 'voyager' || profile.role === 'architect'
 
   return (
     <div className="main">
@@ -236,9 +239,9 @@ export default function ProfilePage() {
       <div style={{ display: 'flex', gap: '18px', alignItems: 'center', border: '1px solid rgba(255,107,53,0.2)', background: '#0F1430', padding: '20px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative' }}>
           <div
-            onClick={() => fileRef.current?.click()}
+            onClick={canEdit ? () => fileRef.current?.click() : undefined}
             style={{
-              width: '76px', height: '76px', borderRadius: '50%', overflow: 'hidden', cursor: 'pointer',
+              width: '76px', height: '76px', borderRadius: '50%', overflow: 'hidden', cursor: canEdit ? 'pointer' : 'default',
               background: avatarPreview || profile.avatar_url ? 'transparent' : `${accent}18`,
               border: `2px solid ${accent}60`, display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: accent, fontSize: 'var(--fs-title)', fontWeight: 'bold',
@@ -249,11 +252,15 @@ export default function ProfilePage() {
               ? <img src={avatarPreview ?? profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : getInitials(profile.display_name)}
           </div>
-          <div onClick={() => fileRef.current?.click()}
-               style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '24px', height: '24px', borderRadius: '50%', background: '#151B3A', border: '1px solid #E85D04', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#E85D04' }}>
-            <Camera size={11} />
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
+          {canEdit && (
+            <>
+              <div onClick={() => fileRef.current?.click()}
+                   style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '24px', height: '24px', borderRadius: '50%', background: '#151B3A', border: '1px solid #E85D04', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#E85D04' }}>
+                <Camera size={11} />
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
+            </>
+          )}
         </div>
 
         <div style={{ flex: 1, minWidth: '180px' }}>
@@ -297,35 +304,8 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Applicants: upgrade path banner */}
-      {isApplicant && (
-        <div style={{ marginBottom: '24px', padding: '14px 18px', border: '1px solid rgba(255,107,53,0.2)', background: 'rgba(255,107,53,0.04)' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.18em', marginBottom: '8px' }}>
-            // YOUR NEXT STEP
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <p style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.6 }}>
-              Complete 4 Applicant tasks to become a Voyager and unlock the full Collective.
-            </p>
-            <Link
-              href="/dashboard-demo"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                background: 'linear-gradient(135deg, #E85D04, #C04000)',
-                border: '1px solid rgba(232,93,4,0.5)',
-                color: '#F5F5F5', fontWeight: 700, fontFamily: 'var(--font-mono)',
-                letterSpacing: '0.12em', padding: '9px 20px', textDecoration: 'none',
-                fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap', flexShrink: 0,
-              }}
-            >
-              VIEW TASKS →
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Pack tracking — show all orders, newest first */}
-      {orders.length > 0 && (
+      {/* Pack tracking — only for Voyagers+ who have actually paid in */}
+      {canEdit && orders.length > 0 && (
         <div style={{ marginBottom: '12px' }}>
           {orders.map((o, i) => (
             <PackTracker key={o.id} order={o} index={i} total={orders.length} />
@@ -333,7 +313,29 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Edit form */}
+      {/* Edit form — Voyagers+ only; Applicants see a locked notice */}
+      {!canEdit ? (
+        <div style={{ border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: '22px 20px', fontFamily: 'var(--font-mono)', maxWidth: '640px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: 8 }}>// PROFILE LOCKED</div>
+            <p style={{ margin: 0, fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.65 }}>
+              Set up your avatar, bio and links once you become a Voyager.
+            </p>
+          </div>
+          <Link
+            href="/dashboard-demo"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0,
+              background: 'linear-gradient(135deg, #E85D04, #C04000)',
+              border: '1px solid rgba(232,93,4,0.5)', color: '#F5F5F5', fontWeight: 700,
+              letterSpacing: '0.12em', padding: '9px 20px', textDecoration: 'none',
+              fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap',
+            }}
+          >
+            VIEW YOUR PATH →
+          </Link>
+        </div>
+      ) : (
       <div style={{ border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: '20px', fontFamily: 'var(--font-mono)', maxWidth: '640px' }}>
         <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: '18px' }}>// ADD YOUR INFO</div>
 
@@ -381,6 +383,7 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
+      )}
     </div>
   )
 }
