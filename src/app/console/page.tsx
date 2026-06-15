@@ -25,7 +25,7 @@ import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/
 import type { ActivityEvent } from '@/lib/actions/activity-events'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
-const SALES_OPEN = true
+const SALES_OPEN = false
 
 const STATUS_STYLES = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
@@ -250,7 +250,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
       <div style={{ position: 'relative', height: 150, overflow: 'hidden', background: '#070A1A' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/voyager-hero.png"
+          src="/voyager-pack/voyager-hero.png"
           alt={title}
           style={{
             width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center',
@@ -908,6 +908,22 @@ function AuthHero({ user, activityEvents }: {
   )
 }
 
+/* ─── Live UTC clock ─────────────────────────────────────── */
+// Renders an empty placeholder on the server + first client paint (so the two
+// match — no hydration mismatch), then fills in and ticks every second after
+// mount. The previous inline `new Date()` differed between server and client by
+// a second or two, forcing React to discard and rebuild the whole tree.
+function UtcClock() {
+  const [t, setT] = useState('')
+  useEffect(() => {
+    const tick = () => setT(new Date().toISOString().slice(11, 19))
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
+  return <span className="val">{t || '--:--:--'}</span>
+}
+
 /* ─── Page ──────────────────────────────────────────────── */
 export default function ConsolePage() {
   return <Suspense><ConsoleInner /></Suspense>
@@ -947,18 +963,6 @@ function ConsoleInner() {
   const [latestWorlds, setLatestWorlds] = useState<World[]>([])
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
   const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
-  const [packLockedBanner, setPackLockedBanner] = useState(false)
-
-  // Show banner when redirected from /api/checkout with incomplete tasks
-  useEffect(() => {
-    if (searchParams.get('msg') === 'tasks_incomplete') {
-      setPackLockedBanner(true)
-      // Clean the param from the URL without a history entry
-      const url = new URL(window.location.href)
-      url.searchParams.delete('msg')
-      window.history.replaceState(null, '', url.toString())
-    }
-  }, [searchParams])
 
   useEffect(() => {
     // Each section loads independently — a single failed query must not become an
@@ -1016,43 +1020,10 @@ function ConsoleInner() {
           }
         </div>
         <div className="right">
-          <div className="item">UTC <span className="val">{new Date().toISOString().slice(11, 19)}</span></div>
+          <div className="item">UTC <UtcClock /></div>
           <div className="item">UPLINK <span className="val">ACTIVE</span></div>
         </div>
       </div>
-
-      {/* ── Pack-locked notification (redirected from /api/checkout) ── */}
-      {packLockedBanner && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 14,
-          background: 'rgba(232,160,32,0.07)',
-          border: '1px solid rgba(232,160,32,0.3)',
-          borderLeft: '3px solid rgba(232,160,32,0.7)',
-          padding: '12px 18px',
-          margin: '0 0 4px',
-          fontFamily: 'var(--font-mono)',
-        }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', color: '#E8A020' }}>
-              VOYAGER PACK LOCKED&nbsp;&nbsp;
-            </span>
-            <span style={{ fontSize: 10, color: 'rgba(245,245,245,0.5)', letterSpacing: '0.05em' }}>
-              Complete your field assessment tasks below to unlock the $12 Initial Voyager Pack.
-            </span>
-          </div>
-          <button
-            onClick={() => setPackLockedBanner(false)}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'rgba(245,245,245,0.3)', fontSize: 16, lineHeight: 1,
-              padding: '2px 4px', flexShrink: 0,
-            }}
-            aria-label="Dismiss"
-          >
-            ×
-          </button>
-        </div>
-      )}
 
       {/* ── Hero: conditional on auth state ── */}
       {loading ? (
