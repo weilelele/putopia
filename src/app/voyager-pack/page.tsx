@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // ─── Global sales gate ────────────────────────────────────────────────────────
 // Set to true when you're ready to open purchases.
 // Keep in sync with api/checkout/route.ts and console/page.tsx.
-const SALES_OPEN = true
+const SALES_OPEN = false
 
 // The product page itself is NEVER blocked by an overlay — the only thing that
 // changes between user states is the bottom CTA button. Four states:
