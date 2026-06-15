@@ -7,7 +7,7 @@ import { getPostHogClient } from '@/lib/posthog-server'
 export const dynamic = 'force-dynamic'
 
 // Mirror the gate in /voyager-pack/page.tsx — keep in sync.
-const SALES_OPEN = false
+const SALES_OPEN = true
 
 // GET /api/checkout — starts a purchase of the $12 Initial Voyager Pack.
 //
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
       // Tasks not yet complete — send them to the Path page to finish
       await ph.shutdown()
       return NextResponse.redirect(
-        new URL('/dashboard-demo', req.nextUrl.origin)
+        new URL('/voyager-path', req.nextUrl.origin)
       )
     }
   }

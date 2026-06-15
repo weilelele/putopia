@@ -27,12 +27,14 @@ export async function resendAccessLink(email: string): Promise<ResendResult> {
   }
 
   // Generate a magic link — Supabase sends the email automatically.
-  // redirect_to must match the Supabase whitelist; /auth/callback is registered.
+  // If the user has already registered, send them to the console; otherwise to /register.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
+  const next = (profile as { registered_at?: string | null }).registered_at ? '/intel' : '/register'
   const { error } = await (admin.auth.admin as any).generateLink({
     type: 'magiclink',
     email: normalised,
     options: {
-      redirect_to: 'https://voyager.putopia.studio/auth/callback',
+      redirect_to: `${siteUrl}/auth/callback?next=${next}`,
     },
   })
 

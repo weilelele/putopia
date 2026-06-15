@@ -275,7 +275,7 @@ export default function ProfilePage() {
             {/* Applicant: inline upgrade CTA */}
             {isApplicant && (
               <Link
-                href="/dashboard-demo"
+                href="/voyager-path"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '5px',
                   fontSize: 'var(--fs-caption)', letterSpacing: '0.14em',
@@ -323,7 +323,7 @@ export default function ProfilePage() {
             </p>
           </div>
           <Link
-            href="/dashboard-demo"
+            href="/voyager-path"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0,
               background: 'linear-gradient(135deg, #E85D04, #C04000)',

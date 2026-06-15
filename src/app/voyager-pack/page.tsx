@@ -7,12 +7,12 @@ export const dynamic = 'force-dynamic'
 // ─── Global sales gate ────────────────────────────────────────────────────────
 // Set to true when you're ready to open purchases.
 // Keep in sync with api/checkout/route.ts and console/page.tsx.
-const SALES_OPEN = false
+const SALES_OPEN = true
 
 // The product page itself is NEVER blocked by an overlay — the only thing that
 // changes between user states is the bottom CTA button. Four states:
 //   buy     — orange, clickable → /api/checkout (Stripe)
-//   tasks   — orange, clickable → /dashboard-demo (finish prerequisites first)
+//   tasks   — orange, clickable → /voyager-path (finish prerequisites first)
 //   closed  — greyed, click shows a centered "launch pending" dialog
 //   voyager — greyed green, click shows a centered "already active" dialog
 type CtaState = 'buy' | 'tasks' | 'closed' | 'voyager'
@@ -41,7 +41,7 @@ function buildPackHtml(state: CtaState): string {
 
   if (state === 'tasks') {
     return PACK_HTML
-      .replace('href="/api/checkout"', 'href="/dashboard-demo"')
+      .replace('href="/api/checkout"', 'href="/voyager-path"')
       .replace("cta:   'Activate Voyager Status'", "cta:   'Complete Tasks to Purchase'")
       .replace("price: '$12'", "price: ''")
   }
