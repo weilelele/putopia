@@ -463,8 +463,9 @@ function buildDisplayList(events: ActivityEvent[]): DisplayItem[] {
   const groups: Record<string, ActivityEvent[]> = {}
 
   for (const ev of filtered) {
-    // vote_opened is always its own standalone row — never grouped with casts
-    if (!ev.group_key || ev.event_type === 'vote_opened') {
+    // Always-standalone rows (never grouped): vote_opened, and voyager_activated
+    // (voyager identity changes should each show as their own row, not collapsed).
+    if (!ev.group_key || ev.event_type === 'vote_opened' || ev.event_type === 'voyager_activated') {
       items.push({ kind: 'single', event: ev })
       continue
     }
