@@ -25,8 +25,8 @@ import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/
 import type { ActivityEvent } from '@/lib/actions/activity-events'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
-// NOTE: kept `true` LOCALLY for ad-slot tuning — do NOT commit this as true.
-const SALES_OPEN = true
+// ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
+const SALES_OPEN = false
 
 const STATUS_STYLES = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
@@ -253,7 +253,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
           src="/voyager-pack/voyager-hero.png"
           alt={title}
           style={{
-            width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top',
+            width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 40%',
             filter: direct
               ? 'saturate(0.9) brightness(0.74)'
               : 'saturate(0.6) brightness(0.72) sepia(0.35) hue-rotate(-18deg)',
