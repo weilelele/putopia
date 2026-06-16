@@ -73,9 +73,9 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
               }}
             >?</button>
           </div>
-          {!feed.canParticipate && (
+          {!feed.loggedIn && (
             <div style={{ fontSize: 11, color: '#E8A020', marginTop: 8, letterSpacing: '0.1em' }}>
-              ● Browse only — Voyager+ can respond
+              ● Browse only — <a href="/login" style={{ color: '#E85D04' }}>log in</a> to respond
             </div>
           )}
         </div>
@@ -89,7 +89,6 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
             <InvestigationCard
               key={inv.id}
               investigation={inv}
-              canParticipate={feed.canParticipate}
               onFiled={refresh}
             />
           ))
@@ -100,10 +99,9 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
 }
 
 export function InvestigationCard({
-  investigation, canParticipate, onFiled, showTitle = true,
+  investigation, onFiled, showTitle = true,
 }: {
   investigation: PublicInvestigation
-  canParticipate: boolean
   onFiled: () => void
   /** When false, the title is omitted (e.g. the world page already shows it in the hero). */
   showTitle?: boolean
@@ -121,9 +119,18 @@ export function InvestigationCard({
       {/* investigation header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: showTitle ? 'space-between' : 'flex-end', marginBottom: 16 }}>
         {showTitle && (
-          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '0.15em', color: '#F5F5F5', textTransform: 'uppercase' }}>
-            {investigation.title}
-          </h2>
+          investigation.worldId ? (
+            <a
+              href={`/worlds/${encodeURIComponent(investigation.worldId)}`}
+              style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '0.15em', color: '#F5F5F5', textTransform: 'uppercase', textDecoration: 'none' }}
+            >
+              {investigation.title} <span style={{ color: '#E85D04', fontSize: 12 }}>→</span>
+            </a>
+          ) : (
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '0.15em', color: '#F5F5F5', textTransform: 'uppercase' }}>
+              {investigation.title}
+            </h2>
+          )
         )}
         {/* day navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -153,7 +160,8 @@ export function InvestigationCard({
       <TaskCard
         key={current.task.id}
         task={current.task}
-        canParticipate={canParticipate}
+        canParticipate={investigation.canParticipate}
+        lockReason={investigation.lockReason}
         onFiled={onFiled}
       />
     </div>
@@ -186,7 +194,7 @@ const TYPE_HINT: Record<string, string> = {
   audio_odd_one: 'Which sound does not belong to this group?',
 }
 
-function TaskCard({ task, canParticipate, onFiled }: { task: PublicSignalTask; canParticipate: boolean; onFiled: () => void }) {
+function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicSignalTask; canParticipate: boolean; lockReason?: string | null; onFiled: () => void }) {
   const [pick, setPick] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -272,8 +280,11 @@ function TaskCard({ task, canParticipate, onFiled }: { task: PublicSignalTask; c
             {err && <span style={{ fontSize: 11, color: '#E83030' }}>{err}</span>}
           </div>
         ) : (
-          <div style={{ fontSize: 12, color: 'rgba(245,245,245,0.4)' }}>
-            <a href="/login" style={{ color: '#E85D04' }}>Log in</a> or become a Voyager to respond.
+          <div style={{ fontSize: 12, color: 'rgba(245,245,245,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: 'rgba(245,245,245,0.5)' }}>🔒</span>
+            {lockReason === 'Log in to respond'
+              ? <span><a href="/login" style={{ color: '#E85D04' }}>Log in</a> to respond.</span>
+              : <span>{lockReason || 'Voting is restricted for this world.'}</span>}
           </div>
         )}
       </div>

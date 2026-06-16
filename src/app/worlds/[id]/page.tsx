@@ -145,15 +145,14 @@ export default function WorldDetailPage() {
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-nebula)' }}>
                 {'// SIGNAL TUNING'}
               </div>
-              {!inv.canParticipate && (
+              {inv.investigation.lockReason && (
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: '#E8A020' }}>
-                  ● Browse only — Voyager+ can respond
+                  ● {inv.investigation.lockReason}
                 </div>
               )}
             </div>
             <InvestigationCard
               investigation={inv.investigation}
-              canParticipate={inv.canParticipate}
               onFiled={refreshInvestigation}
               showTitle={false}
             />

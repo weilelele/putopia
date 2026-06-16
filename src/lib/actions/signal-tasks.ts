@@ -138,9 +138,14 @@ export async function setTaskPublished(
   published: boolean,
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = createAdminClient() as DB
+  // Publishing stamps published_at (the 24h recall reference) and re-arms the
+  // recall guard; unpublishing clears both.
+  const patch = published
+    ? { is_published: true, published_at: new Date().toISOString(), recall_sent_at: null }
+    : { is_published: false, published_at: null, recall_sent_at: null }
   const { error } = await supabase
     .from('signal_tasks')
-    .update({ is_published: published })
+    .update(patch)
     .eq('id', taskId)
   if (error) return { ok: false, error: error.message }
 
@@ -610,19 +615,65 @@ export async function getSignalFeed(date?: string): Promise<SignalFeed> {
   return { date: targetDate as string, role, canParticipate, tasks }
 }
 
-/** File a response (Voyager+ only). One filing per task; re-filing is rejected. */
+/**
+ * Owner voting permission (doc 2.1). Architect can always vote; otherwise:
+ *   self   → only the world's owner (discoverer)
+ *   voters → Voyager members only
+ *   all    → any logged-in registered user (applicants included)
+ */
+function eligibleToVote(
+  role: string | null,
+  userId: string | null,
+  voteScope: WorldVoteScope,
+  ownerId: string | null,
+): boolean {
+  if (!role || !userId) return false
+  if (role === 'architect') return true
+  if (voteScope === 'self') return userId === ownerId
+  if (voteScope === 'voters') return role === 'voyager'
+  return true // 'all'
+}
+
+/** Human-readable reason a viewer can't vote, for the locked-card label. */
+function lockReason(voteScope: WorldVoteScope, loggedIn: boolean): string {
+  if (!loggedIn) return 'Log in to respond'
+  if (voteScope === 'self') return 'Private — owner only'
+  if (voteScope === 'voters') return 'Voyagers only'
+  return 'Log in to respond'
+}
+
+/** File a response. Eligibility is per-world (doc 2.1). One filing per task. */
 export async function submitSignalResponse(
   taskId: string,
   assetId: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const me = await currentUser()
   if (!me) return { ok: false, error: 'Please log in first' }
-  if (me.role !== 'voyager' && me.role !== 'architect') {
-    return { ok: false, error: 'Only Voyager members can respond' }
-  }
   const admin = createAdminClient() as DB
 
-  // validate the asset is a live (selected) option of this task, and the task is published
+  // resolve the owning world's vote scope + owner via the task's thread
+  const { data: task } = await admin
+    .from('signal_tasks')
+    .select('is_published, thread_id')
+    .eq('id', taskId)
+    .maybeSingle()
+  if (!task?.is_published) return { ok: false, error: 'Task is not published' }
+
+  let voteScope: WorldVoteScope = 'all'
+  let ownerId: string | null = null
+  if (task.thread_id) {
+    const { data: thread } = await admin.from('signal_threads').select('world_id').eq('id', task.thread_id).maybeSingle()
+    if (thread?.world_id) {
+      const { data: world } = await admin.from('worlds').select('vote_scope, discoverer_id').eq('id', thread.world_id).maybeSingle()
+      voteScope = (world?.vote_scope as WorldVoteScope) ?? 'all'
+      ownerId = world?.discoverer_id ?? null
+    }
+  }
+  if (!eligibleToVote(me.role, me.id, voteScope, ownerId)) {
+    return { ok: false, error: 'You are not eligible to vote on this world' }
+  }
+
+  // validate the asset is a live (selected) option of this task
   const { data: asset } = await admin
     .from('signal_task_assets')
     .select('id, is_selected')
@@ -630,12 +681,6 @@ export async function submitSignalResponse(
     .eq('task_id', taskId)
     .maybeSingle()
   if (!asset || !asset.is_selected) return { ok: false, error: 'Invalid option' }
-  const { data: task } = await admin
-    .from('signal_tasks')
-    .select('is_published')
-    .eq('id', taskId)
-    .maybeSingle()
-  if (!task?.is_published) return { ok: false, error: 'Task is not published' }
 
   const { error } = await admin.from('signal_responses').insert({
     user_id: me.id,
@@ -662,6 +707,9 @@ export interface PublicInvestigation {
   title: string                   // world name
   discovererName: string | null
   type: SignalTaskType
+  voteScope: WorldVoteScope
+  canParticipate: boolean         // this viewer may vote on THIS world (doc 2.1)
+  lockReason: string | null       // why voting is locked, if it is
   days: {
     dayIndex: number
     task: PublicSignalTask
@@ -671,7 +719,7 @@ export interface PublicInvestigation {
 export interface InvestigationFeedData {
   investigations: PublicInvestigation[]
   role: string | null
-  canParticipate: boolean
+  loggedIn: boolean
 }
 
 export interface InvestigationSummary {
@@ -958,16 +1006,25 @@ export async function listInvestigations(): Promise<InvestigationSummary[]> {
 }
 
 /** Resolve a set of world ids → { id: { name, discoverer_name } }. */
-async function worldMetaMap(
-  admin: DB,
-  ids: (string | null)[],
-): Promise<Map<string, { name: string; discoverer_name: string | null }>> {
+interface WorldMeta {
+  name: string
+  discoverer_name: string | null
+  discoverer_id: string | null
+  vote_scope: WorldVoteScope
+}
+
+async function worldMetaMap(admin: DB, ids: (string | null)[]): Promise<Map<string, WorldMeta>> {
   const unique = [...new Set(ids.filter(Boolean))] as string[]
-  const m = new Map<string, { name: string; discoverer_name: string | null }>()
+  const m = new Map<string, WorldMeta>()
   if (!unique.length) return m
-  const { data } = await admin.from('worlds').select('id, name, discoverer_name').in('id', unique)
-  for (const w of (data ?? []) as { id: string; name: string; discoverer_name: string | null }[]) {
-    m.set(w.id, { name: w.name, discoverer_name: w.discoverer_name })
+  const { data } = await admin.from('worlds').select('id, name, discoverer_name, discoverer_id, vote_scope').in('id', unique)
+  for (const w of (data ?? []) as (WorldMeta & { id: string })[]) {
+    m.set(w.id, {
+      name: w.name,
+      discoverer_name: w.discoverer_name,
+      discoverer_id: w.discoverer_id,
+      vote_scope: (w.vote_scope as WorldVoteScope) ?? 'all',
+    })
   }
   return m
 }
@@ -1104,19 +1161,42 @@ async function buildPublishedDays(
   return days
 }
 
+type ThreadRow = { id: string; title: string | null; type: SignalTaskType; world_id: string | null }
+
+/** Assemble a PublicInvestigation, resolving title/owner and per-viewer eligibility. */
+function buildInvestigation(
+  thread: ThreadRow,
+  wm: WorldMeta | undefined,
+  days: PublicInvestigation['days'],
+  me: Viewer,
+): PublicInvestigation {
+  const voteScope = wm?.vote_scope ?? 'all'
+  const can = eligibleToVote(me?.role ?? null, me?.id ?? null, voteScope, wm?.discoverer_id ?? null)
+  return {
+    id: thread.id,
+    worldId: thread.world_id,
+    title: wm?.name || thread.title || 'Investigation',
+    discovererName: wm?.discoverer_name ?? null,
+    type: thread.type,
+    voteScope,
+    canParticipate: can,
+    lockReason: can ? null : lockReason(voteScope, !!me),
+    days,
+  }
+}
+
 /** Member-facing: all investigations with their published days, for the /signal page. */
 export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   const admin = createAdminClient() as DB
   const me = await currentUser()
   const role = me?.role ?? null
   const isArchitect = role === 'architect'
-  const canParticipate = role === 'voyager' || role === 'architect'
 
   const { data: threadData } = await admin
     .from('signal_threads')
     .select('id, title, type, world_id')
     .order('created_at', { ascending: false })
-  const threads = (threadData ?? []) as { id: string; title: string | null; type: SignalTaskType; world_id: string | null }[]
+  const threads = (threadData ?? []) as ThreadRow[]
 
   const meta = await worldMetaMap(admin, threads.map((t) => t.world_id))
 
@@ -1125,23 +1205,16 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
     const days = await buildPublishedDays(admin, thread.id, me, isArchitect)
     if (days.length === 0) continue
     const wm = thread.world_id ? meta.get(thread.world_id) : undefined
-    investigations.push({
-      id: thread.id,
-      worldId: thread.world_id,
-      title: wm?.name || thread.title || 'Investigation',
-      discovererName: wm?.discoverer_name ?? null,
-      type: thread.type,
-      days,
-    })
+    investigations.push(buildInvestigation(thread, wm, days, me))
   }
 
-  return { investigations, role, canParticipate }
+  return { investigations, role, loggedIn: !!me }
 }
 
 export interface WorldInvestigationData {
   investigation: PublicInvestigation | null
   role: string | null
-  canParticipate: boolean
+  loggedIn: boolean
 }
 
 /** Member-facing: the single investigation (Signal Tuning) for one world, if any. */
@@ -1150,7 +1223,6 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
   const me = await currentUser()
   const role = me?.role ?? null
   const isArchitect = role === 'architect'
-  const canParticipate = role === 'voyager' || role === 'architect'
 
   const { data: thread } = await admin
     .from('signal_threads')
@@ -1160,24 +1232,17 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
     .limit(1)
     .maybeSingle()
 
-  if (!thread) return { investigation: null, role, canParticipate }
+  if (!thread) return { investigation: null, role, loggedIn: !!me }
 
   const days = await buildPublishedDays(admin, thread.id, me, isArchitect)
-  if (days.length === 0) return { investigation: null, role, canParticipate }
+  if (days.length === 0) return { investigation: null, role, loggedIn: !!me }
 
-  const meta = await worldMetaMap(admin, [thread.world_id])
-  const wm = thread.world_id ? meta.get(thread.world_id) : undefined
+  const meta = await worldMetaMap(admin, [(thread as ThreadRow).world_id])
+  const wm = (thread as ThreadRow).world_id ? meta.get((thread as ThreadRow).world_id!) : undefined
 
   return {
-    investigation: {
-      id: thread.id,
-      worldId: thread.world_id,
-      title: wm?.name || thread.title || 'Investigation',
-      discovererName: wm?.discoverer_name ?? null,
-      type: thread.type,
-      days,
-    },
+    investigation: buildInvestigation(thread as ThreadRow, wm, days, me),
     role,
-    canParticipate,
+    loggedIn: !!me,
   }
 }
