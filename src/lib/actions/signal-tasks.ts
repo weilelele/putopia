@@ -840,6 +840,78 @@ export async function listInvestigationTasks(threadId: string): Promise<SignalTa
   return (data ?? []) as SignalTask[]
 }
 
+type Viewer = { id: string; role: string } | null
+
+/** Build the published, vote-ready days for one thread (shared by feed + world page). */
+async function buildPublishedDays(
+  admin: DB,
+  threadId: string,
+  me: Viewer,
+  isArchitect: boolean,
+): Promise<PublicInvestigation['days']> {
+  const { data: taskRows } = await admin
+    .from('signal_tasks')
+    .select('id, type, prompt, day_index')
+    .eq('thread_id', threadId)
+    .eq('is_published', true)
+    .order('day_index', { ascending: true })
+
+  const days: PublicInvestigation['days'] = []
+  for (const t of taskRows ?? []) {
+    const { data: assetRows } = await admin
+      .from('signal_task_assets')
+      .select('id, media, processed_url, display_url, asset_role, display_order')
+      .eq('task_id', t.id)
+      .eq('is_selected', true)
+      .order('display_order', { ascending: true })
+      .order('created_at', { ascending: true })
+
+    const { count } = await admin
+      .from('signal_responses')
+      .select('id', { count: 'exact', head: true })
+      .eq('task_id', t.id)
+
+    let mySelection: string | null = null
+    if (me) {
+      const { data: mine } = await admin
+        .from('signal_responses')
+        .select('selected_asset_id')
+        .eq('task_id', t.id)
+        .eq('user_id', me.id)
+        .maybeSingle()
+      mySelection = mine?.selected_asset_id ?? null
+    }
+
+    let distribution: Record<string, number> | null = null
+    if (mySelection || isArchitect) {
+      const { data: all } = await admin
+        .from('signal_responses')
+        .select('selected_asset_id')
+        .eq('task_id', t.id)
+      distribution = {}
+      for (const r of all ?? []) {
+        const k = r.selected_asset_id as string
+        distribution[k] = (distribution[k] ?? 0) + 1
+      }
+    }
+
+    days.push({
+      dayIndex: t.day_index ?? 0,
+      task: {
+        id: t.id,
+        type: t.type,
+        prompt: t.prompt,
+        assets: (assetRows ?? []) as PublicSignalAsset[],
+        participantCount: count ?? 0,
+        mySelection,
+        distribution,
+        thread: null,
+      },
+    })
+  }
+  return days
+}
+
 /** Member-facing: all investigations with their published days, for the /signal page. */
 export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   const admin = createAdminClient() as DB
@@ -857,83 +929,63 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   const meta = await worldMetaMap(admin, threads.map((t) => t.world_id))
 
   const investigations: PublicInvestigation[] = []
-
   for (const thread of threads) {
-    const { data: taskRows } = await admin
-      .from('signal_tasks')
-      .select('id, type, prompt, day_index')
-      .eq('thread_id', thread.id)
-      .eq('is_published', true)
-      .order('day_index', { ascending: true })
-
-    if (!taskRows?.length) continue
-
-    const days: PublicInvestigation['days'] = []
-    for (const t of taskRows) {
-      const { data: assetRows } = await admin
-        .from('signal_task_assets')
-        .select('id, media, processed_url, display_url, asset_role, display_order')
-        .eq('task_id', t.id)
-        .eq('is_selected', true)
-        .order('display_order', { ascending: true })
-        .order('created_at', { ascending: true })
-
-      const { count } = await admin
-        .from('signal_responses')
-        .select('id', { count: 'exact', head: true })
-        .eq('task_id', t.id)
-
-      let mySelection: string | null = null
-      if (me) {
-        const { data: mine } = await admin
-          .from('signal_responses')
-          .select('selected_asset_id')
-          .eq('task_id', t.id)
-          .eq('user_id', me.id)
-          .maybeSingle()
-        mySelection = mine?.selected_asset_id ?? null
-      }
-
-      let distribution: Record<string, number> | null = null
-      if (mySelection || isArchitect) {
-        const { data: all } = await admin
-          .from('signal_responses')
-          .select('selected_asset_id')
-          .eq('task_id', t.id)
-        distribution = {}
-        for (const r of all ?? []) {
-          const k = r.selected_asset_id as string
-          distribution[k] = (distribution[k] ?? 0) + 1
-        }
-      }
-
-      days.push({
-        dayIndex: t.day_index ?? 0,
-        task: {
-          id: t.id,
-          type: t.type,
-          prompt: t.prompt,
-          assets: (assetRows ?? []) as PublicSignalAsset[],
-          participantCount: count ?? 0,
-          mySelection,
-          distribution,
-          thread: null,
-        },
-      })
-    }
-
-    if (days.length > 0) {
-      const wm = thread.world_id ? meta.get(thread.world_id) : undefined
-      investigations.push({
-        id: thread.id,
-        worldId: thread.world_id,
-        title: wm?.name || thread.title || 'Investigation',
-        discovererName: wm?.discoverer_name ?? null,
-        type: thread.type,
-        days,
-      })
-    }
+    const days = await buildPublishedDays(admin, thread.id, me, isArchitect)
+    if (days.length === 0) continue
+    const wm = thread.world_id ? meta.get(thread.world_id) : undefined
+    investigations.push({
+      id: thread.id,
+      worldId: thread.world_id,
+      title: wm?.name || thread.title || 'Investigation',
+      discovererName: wm?.discoverer_name ?? null,
+      type: thread.type,
+      days,
+    })
   }
 
   return { investigations, role, canParticipate }
+}
+
+export interface WorldInvestigationData {
+  investigation: PublicInvestigation | null
+  role: string | null
+  canParticipate: boolean
+}
+
+/** Member-facing: the single investigation (Signal Tuning) for one world, if any. */
+export async function getWorldInvestigation(worldId: string): Promise<WorldInvestigationData> {
+  const admin = createAdminClient() as DB
+  const me = await currentUser()
+  const role = me?.role ?? null
+  const isArchitect = role === 'architect'
+  const canParticipate = role === 'voyager' || role === 'architect'
+
+  const { data: thread } = await admin
+    .from('signal_threads')
+    .select('id, title, type, world_id')
+    .eq('world_id', worldId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!thread) return { investigation: null, role, canParticipate }
+
+  const days = await buildPublishedDays(admin, thread.id, me, isArchitect)
+  if (days.length === 0) return { investigation: null, role, canParticipate }
+
+  const meta = await worldMetaMap(admin, [thread.world_id])
+  const wm = thread.world_id ? meta.get(thread.world_id) : undefined
+
+  return {
+    investigation: {
+      id: thread.id,
+      worldId: thread.world_id,
+      title: wm?.name || thread.title || 'Investigation',
+      discovererName: wm?.discoverer_name ?? null,
+      type: thread.type,
+      days,
+    },
+    role,
+    canParticipate,
+  }
 }

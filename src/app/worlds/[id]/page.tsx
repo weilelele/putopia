@@ -4,10 +4,15 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getWorldById } from '@/lib/actions/worlds'
+import { getWorldInvestigation } from '@/lib/actions/signal-tasks'
+import type { WorldInvestigationData } from '@/lib/actions/signal-tasks'
 import type { World } from '@/types/database'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
+import { InvestigationCard } from '@/app/signal/SignalFeed'
+
+const DESC_CLAMP = 320 // chars before the "expand all" fold
 
 export default function WorldDetailPage() {
   const params = useParams()
@@ -18,13 +23,18 @@ export default function WorldDetailPage() {
   const backLabel = isGuest ? '← DASHBOARD' : '← WORLD RECORDS'
 
   const [world, setWorld] = useState<World | null | undefined>(undefined)
+  const [inv, setInv] = useState<WorldInvestigationData | null>(null)
+  const [descExpanded, setDescExpanded] = useState(false)
 
   useEffect(() => {
     getWorldById(id).then((w) => {
       setWorld(w ?? null)
       if (w) posthog.capture('world_viewed', { world_id: id, world_name: w.name_en || w.name })
     })
+    getWorldInvestigation(id).then(setInv)
   }, [id])
+
+  const refreshInvestigation = () => getWorldInvestigation(id).then(setInv)
 
   if (world === undefined) {
     return (
@@ -128,16 +138,56 @@ export default function WorldDetailPage() {
           </div>
         </div>
 
-        {/* Description */}
+        {/* Active Voting Node — the world's Signal Tuning, votable inline */}
+        {inv?.investigation && (
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-nebula)' }}>
+                {'// SIGNAL TUNING'}
+              </div>
+              {!inv.canParticipate && (
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: '#E8A020' }}>
+                  ● Browse only — Voyager+ can respond
+                </div>
+              )}
+            </div>
+            <InvestigationCard
+              investigation={inv.investigation}
+              canParticipate={inv.canParticipate}
+              onFiled={refreshInvestigation}
+              showTitle={false}
+            />
+          </div>
+        )}
+
+        {/* Detail Text — creator's initial vision (collapsible) */}
         <div className="hud-frame" style={{ marginBottom: '2rem' }}>
           <div className="hud-tick-rail hud-tick-left" />
           <div className="hud-tick-rail hud-tick-right" />
           <div style={{ padding: '0 1rem' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>FIELD NOTES</div>
             <div className="hr-cyan" />
-            <article style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.85, whiteSpace: 'pre-wrap', marginTop: '1rem' }}>
-              {world.description}
-            </article>
+            <div style={{ position: 'relative', marginTop: '1rem' }}>
+              <article style={{
+                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)',
+                lineHeight: 1.85, whiteSpace: 'pre-wrap',
+                maxHeight: descExpanded || world.description.length <= DESC_CLAMP ? 'none' : '7.5rem',
+                overflow: 'hidden',
+              }}>
+                {world.description}
+              </article>
+              {!descExpanded && world.description.length > DESC_CLAMP && (
+                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '3rem', background: 'linear-gradient(to bottom, transparent, var(--bg-panel, #0F1430))', pointerEvents: 'none' }} />
+              )}
+            </div>
+            {world.description.length > DESC_CLAMP && (
+              <button
+                onClick={() => setDescExpanded((v) => !v)}
+                style={{ marginTop: '0.75rem', background: 'none', border: '1px solid var(--bd-faint)', color: 'var(--color-nebula)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', padding: '5px 12px', cursor: 'pointer' }}
+              >
+                {descExpanded ? '▲ COLLAPSE' : '▼ EXPAND ALL'}
+              </button>
+            )}
           </div>
         </div>
 

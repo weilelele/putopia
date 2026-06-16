@@ -35,7 +35,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
             color: 'rgba(245,245,245,0.4)', fontSize: 18, lineHeight: 1, padding: 4,
           }}
         >✕</button>
-        <div style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.25em', marginBottom: 12 }}>// SIGNAL DISPATCH</div>
+        <div style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.25em', marginBottom: 12 }}>{'// SIGNAL DISPATCH'}</div>
         <p style={{ fontSize: 14, color: 'rgba(245,245,245,0.85)', lineHeight: 1.9, margin: 0 }}>
           We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
           Your intuition is the only instrument that can make sense of them —
@@ -57,7 +57,7 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
       <div style={{ maxWidth: 880, margin: '0 auto' }}>
         {/* header */}
         <div style={{ borderBottom: '1px solid rgba(255,107,53,0.2)', paddingBottom: 16, marginBottom: 28 }}>
-          <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.3em', marginBottom: 8 }}>// SIGNAL DISPATCH</div>
+          <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.3em', marginBottom: 8 }}>{'// SIGNAL DISPATCH'}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>SIGNAL DISPATCH</h1>
             <button
@@ -99,12 +99,14 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
   )
 }
 
-function InvestigationCard({
-  investigation, canParticipate, onFiled,
+export function InvestigationCard({
+  investigation, canParticipate, onFiled, showTitle = true,
 }: {
   investigation: PublicInvestigation
   canParticipate: boolean
   onFiled: () => void
+  /** When false, the title is omitted (e.g. the world page already shows it in the hero). */
+  showTitle?: boolean
 }) {
   const [selectedDay, setSelectedDay] = useState(investigation.days.length - 1) // default: latest day
 
@@ -117,10 +119,12 @@ function InvestigationCard({
   return (
     <div style={{ marginBottom: 32 }}>
       {/* investigation header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '0.15em', color: '#F5F5F5', textTransform: 'uppercase' }}>
-          {investigation.title}
-        </h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: showTitle ? 'space-between' : 'flex-end', marginBottom: 16 }}>
+        {showTitle && (
+          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '0.15em', color: '#F5F5F5', textTransform: 'uppercase' }}>
+            {investigation.title}
+          </h2>
+        )}
         {/* day navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
