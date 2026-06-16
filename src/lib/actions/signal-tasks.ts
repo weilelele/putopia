@@ -20,6 +20,8 @@ import { renderVideoClip, extractAudioClip } from '@/lib/signal/av'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
 
+const todayStr = () => new Date().toISOString().slice(0, 10)
+
 export type SignalTaskType = 'visual_match' | 'visual_odd_one' | 'audio_odd_one'
 export type SignalMedia = 'image' | 'video' | 'audio'
 
@@ -152,16 +154,25 @@ export async function setTaskPublished(
       if (task?.thread_id) {
         const { data: thread } = await supabase
           .from('signal_threads')
-          .select('title')
+          .select('title, world_id')
           .eq('id', task.thread_id)
           .maybeSingle()
-        if (thread?.title) {
+        let worldName: string | null = thread?.title ?? null
+        if (thread?.world_id) {
+          const { data: world } = await supabase
+            .from('worlds')
+            .select('name')
+            .eq('id', thread.world_id)
+            .maybeSingle()
+          worldName = world?.name ?? worldName
+        }
+        if (worldName) {
           const dayNum = (task.day_index ?? 0) + 1
           await postSignalStory(
             `signal-day-${taskId.slice(0, 8)}`,
-            `Day ${dayNum} · ${thread.title}`,
-            task.prompt || `New signals available for Day ${dayNum} of "${thread.title}".`,
-            `**${thread.title}** — Day ${dayNum} signals are now live.\n\nHead to Signal Tasks and cast your vote.`,
+            `Day ${dayNum} · ${worldName}`,
+            task.prompt || `New signals available for Day ${dayNum} of "${worldName}".`,
+            `**${worldName}** — Day ${dayNum} signals are now live.\n\nHead to Signal Dispatch and cast your vote.`,
           )
         }
       }
@@ -563,11 +574,18 @@ export async function submitSignalResponse(
   return { ok: true }
 }
 
-// ─── Investigation management (simplified — no auto-evolution) ────────────────
+// ─── World Building: Signal Tuning (manual authoring, world-centric) ──────────
+//
+// An "Investigation" is a signal_thread bound to a World. It represents that
+// World's Signal Tuning phase. Title / discoverer always come from the World;
+// the thread no longer carries its own title. Authoring is fully manual — admins
+// add each day's puzzle by hand (no auto-generation, no auto-advance).
 
 export interface PublicInvestigation {
-  id: string
-  title: string
+  id: string                      // thread id
+  worldId: string | null
+  title: string                   // world name
+  discovererName: string | null
   type: SignalTaskType
   days: {
     dayIndex: number
@@ -582,11 +600,19 @@ export interface InvestigationFeedData {
 }
 
 export interface InvestigationSummary {
-  id: string
-  title: string | null
+  id: string                      // thread id
+  worldId: string | null
+  title: string                   // world name (fallback '(untitled)')
   type: SignalTaskType
   dayCount: number
   createdAt: string
+}
+
+/** A proposed world eligible to be promoted into Signal Tuning. */
+export interface TunableWorld {
+  id: string
+  name: string
+  description: string | null
 }
 
 /** Post a system-authored story to the community feed (best-effort). */
@@ -610,30 +636,104 @@ async function postSignalStory(id: string, title: string, excerpt: string, conte
   }
 }
 
-/** Create a new investigation — title + type only, no auto day generation. */
-export async function createInvestigation(input: {
-  title: string
+/** Post the "now tuning" feed story for a world entering Signal Tuning. */
+async function postTuningStory(threadId: string, worldName: string) {
+  await postSignalStory(
+    `signal-inv-${threadId.slice(0, 8)}`,
+    `Now Tuning: ${worldName}`,
+    `The signal for "${worldName}" is being tuned. Help us bring it into focus.`,
+    `**${worldName}** has entered Signal Tuning.\n\nHead to Signal Dispatch to help decipher its signal.`,
+  )
+}
+
+/** Worlds eligible for promotion: in 'proposed' (Raw Imagination) stage and not
+ *  already attached to a tuning thread. */
+export async function listTunableWorlds(): Promise<TunableWorld[]> {
+  const admin = createAdminClient() as DB
+  const { data: threads } = await admin.from('signal_threads').select('world_id')
+  const taken = new Set(((threads ?? []) as { world_id: string | null }[]).map((t) => t.world_id).filter(Boolean))
+  const { data } = await admin
+    .from('worlds')
+    .select('id, name, description')
+    .eq('lifecycle_state', 'proposed')
+    .order('submitted_at', { ascending: false })
+  return ((data ?? []) as TunableWorld[]).filter((w) => !taken.has(w.id))
+}
+
+/** Promote an existing proposed world into Signal Tuning: create its dispatch
+ *  thread and advance the world to the tuning stage. */
+export async function promoteWorldToTuning(input: {
+  worldId: string
   type: SignalTaskType
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
   const admin = createAdminClient() as DB
 
+  const { data: world } = await admin.from('worlds').select('id, name').eq('id', input.worldId).maybeSingle()
+  if (!world) return { ok: false, error: 'World not found' }
+
+  const { data: existing } = await admin.from('signal_threads').select('id').eq('world_id', input.worldId).maybeSingle()
+  if (existing) return { ok: false, error: 'This world is already in Signal Tuning' }
+
   const { data, error } = await admin
     .from('signal_threads')
-    .insert({ title: input.title, type: input.type, created_by: me.id })
+    .insert({ type: input.type, world_id: input.worldId, created_by: me.id })
     .select('id')
     .single()
   if (error || !data) return { ok: false, error: error?.message }
 
-  await postSignalStory(
-    `signal-inv-${data.id.slice(0, 8)}`,
-    `New Investigation: ${input.title}`,
-    `A new signal investigation has opened: "${input.title}". Vote each day as the organization closes in.`,
-    `The organization has opened a new line of investigation: **${input.title}**.\n\nHead to Signal Tasks to participate.`,
-  )
+  await admin.from('worlds').update({ lifecycle_state: 'syncing' }).eq('id', input.worldId)
+  await postTuningStory(data.id, world.name)
 
   return { ok: true, id: data.id }
+}
+
+/** Seed a brand-new world directly into Signal Tuning — the admin authoring path
+ *  when there's no user-proposed world to promote. */
+export async function createWorldForTuning(input: {
+  name: string
+  description?: string
+  type: SignalTaskType
+}): Promise<{ ok: boolean; id?: string; worldId?: string; error?: string }> {
+  const me = await currentUser()
+  if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
+  const name = input.name.trim()
+  if (!name) return { ok: false, error: 'World name is required' }
+  const admin = createAdminClient() as DB
+
+  const { data: profile } = await admin.from('voyager_profiles').select('display_name').eq('id', me.id).maybeSingle()
+  const discovererName = profile?.display_name?.trim() || 'The Organization'
+  const worldId = `WB-${Date.now().toString(36).toUpperCase()}`
+
+  const { error: wErr } = await admin.from('worlds').insert({
+    id: worldId,
+    name,
+    name_en: name,
+    discoverer_id: me.id,
+    discoverer_name: discovererName,
+    discovery_date: todayStr(),
+    gradient_from: '#1a1a2e',
+    gradient_to: '#16213e',
+    image_path: null,
+    description: input.description ?? '',
+    is_verified: true,
+    lifecycle_state: 'syncing',
+    submitted_by: me.id,
+    submitted_at: new Date().toISOString(),
+  })
+  if (wErr) return { ok: false, error: wErr.message }
+
+  const { data, error } = await admin
+    .from('signal_threads')
+    .insert({ type: input.type, world_id: worldId, created_by: me.id })
+    .select('id')
+    .single()
+  if (error || !data) return { ok: false, error: error?.message }
+
+  await postTuningStory(data.id, name)
+
+  return { ok: true, id: data.id, worldId }
 }
 
 /** Add the next day to an investigation — creates a draft task (day_index auto-increments). */
@@ -677,22 +777,56 @@ export async function addDayToInvestigation(
   return { ok: true, id: data.id, dayIndex: nextDayIndex }
 }
 
-/** List all investigations (threads) ordered newest first. */
+/** List all investigations (threads) with their world title, newest first. */
 export async function listInvestigations(): Promise<InvestigationSummary[]> {
   const admin = createAdminClient() as DB
   const { data } = await admin
     .from('signal_threads')
-    .select('id, title, type, created_at')
+    .select('id, title, type, created_at, world_id')
     .order('created_at', { ascending: false })
-  const rows = (data ?? []) as InvestigationSummary[]
-  for (const r of rows) {
+  const threads = (data ?? []) as { id: string; title: string | null; type: SignalTaskType; created_at: string; world_id: string | null }[]
+
+  const nameById = await worldNameMap(admin, threads.map((t) => t.world_id))
+
+  const rows: InvestigationSummary[] = []
+  for (const t of threads) {
     const { count } = await admin
       .from('signal_tasks')
       .select('id', { count: 'exact', head: true })
-      .eq('thread_id', r.id)
-    r.dayCount = count ?? 0
+      .eq('thread_id', t.id)
+    rows.push({
+      id: t.id,
+      worldId: t.world_id,
+      title: (t.world_id && nameById.get(t.world_id)) || t.title || '(untitled)',
+      type: t.type,
+      dayCount: count ?? 0,
+      createdAt: t.created_at,
+    })
   }
   return rows
+}
+
+/** Resolve a set of world ids → { id: { name, discoverer_name } }. */
+async function worldMetaMap(
+  admin: DB,
+  ids: (string | null)[],
+): Promise<Map<string, { name: string; discoverer_name: string | null }>> {
+  const unique = [...new Set(ids.filter(Boolean))] as string[]
+  const m = new Map<string, { name: string; discoverer_name: string | null }>()
+  if (!unique.length) return m
+  const { data } = await admin.from('worlds').select('id, name, discoverer_name').in('id', unique)
+  for (const w of (data ?? []) as { id: string; name: string; discoverer_name: string | null }[]) {
+    m.set(w.id, { name: w.name, discoverer_name: w.discoverer_name })
+  }
+  return m
+}
+
+/** Resolve a set of world ids → { id: name }. */
+async function worldNameMap(admin: DB, ids: (string | null)[]): Promise<Map<string, string>> {
+  const meta = await worldMetaMap(admin, ids)
+  const m = new Map<string, string>()
+  for (const [k, v] of meta) m.set(k, v.name)
+  return m
 }
 
 /** List all tasks for an investigation, sorted by day_index ASC. */
@@ -714,14 +848,17 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   const isArchitect = role === 'architect'
   const canParticipate = role === 'voyager' || role === 'architect'
 
-  const { data: threads } = await admin
+  const { data: threadData } = await admin
     .from('signal_threads')
-    .select('id, title, type')
+    .select('id, title, type, world_id')
     .order('created_at', { ascending: false })
+  const threads = (threadData ?? []) as { id: string; title: string | null; type: SignalTaskType; world_id: string | null }[]
+
+  const meta = await worldMetaMap(admin, threads.map((t) => t.world_id))
 
   const investigations: PublicInvestigation[] = []
 
-  for (const thread of threads ?? []) {
+  for (const thread of threads) {
     const { data: taskRows } = await admin
       .from('signal_tasks')
       .select('id, type, prompt, day_index')
@@ -786,322 +923,17 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
     }
 
     if (days.length > 0) {
-      investigations.push({ id: thread.id, title: thread.title || 'Investigation', type: thread.type, days })
+      const wm = thread.world_id ? meta.get(thread.world_id) : undefined
+      investigations.push({
+        id: thread.id,
+        worldId: thread.world_id,
+        title: wm?.name || thread.title || 'Investigation',
+        discovererName: wm?.discoverer_name ?? null,
+        type: thread.type,
+        days,
+      })
     }
   }
 
   return { investigations, role, canParticipate }
-}
-
-// ─── Investigation threads: the natural day-to-day evolution ──────────────────
-
-const effectiveGlitch = (start: number, step: number, clarity: number, drift: number) =>
-  Math.max(5, Math.min(95, start - clarity * step + drift * step))
-const todayStr = () => new Date().toISOString().slice(0, 10)
-
-export interface ThreadSource {
-  channelId: string
-  channelName: string
-  freq: number | null
-  bandId: string
-  bandName: string
-}
-
-/** Generate ONE thread asset from a source and insert it (selected, optionally the
- *  hidden target). Returns true if an asset was produced. */
-async function genThreadAsset(
-  taskId: string,
-  src: ThreadSource,
-  media: SignalMedia,
-  cfg: CropConfig,
-  isTarget: boolean,
-  order: number,
-  durationSec: number,
-): Promise<boolean> {
-  const admin = createAdminClient() as DB
-  const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const cosmoMedia = media === 'image' ? 'image' : 'video'
-  const pool = await sampleBandAssets(src.channelId, src.bandId, cosmoMedia, media === 'audio' ? 6 : 3)
-
-  for (const asset of pool) {
-    try {
-      let up: { path: string; url: string }
-      let box: unknown
-      let displayUrl: string | null = null
-      if (media === 'audio') {
-        const clip = await extractAudioClip(asset.url, { durSec: durationSec })
-        if (!clip) continue
-        up = await uploadProcessed(taskId, key, clip.buffer, clip.contentType, clip.ext)
-      } else if (media === 'video') {
-        const clip = await renderVideoClip(asset.url, cfg, { durSec: durationSec })
-        up = await uploadProcessed(taskId, key, clip.buffer, clip.contentType, clip.ext)
-        box = clip.box
-        if (clip.displayBuffer) {
-          const dispUp = await uploadProcessed(taskId, `${key}-d`, clip.displayBuffer, clip.displayContentType, clip.displayExt)
-          displayUrl = dispUp.url
-        }
-      } else {
-        const out = await processImageAsset(taskId, key, asset.url, cfg)
-        up = { path: out.path, url: out.url }
-        box = out.box
-      }
-      await admin.from('signal_task_assets').insert({
-        task_id: taskId,
-        media,
-        source_channel_id: src.channelId,
-        source_channel_name: src.channelName,
-        source_freq: src.freq,
-        source_band_id: src.bandId,
-        source_band_name: src.bandName,
-        source_asset_id: asset.assetId,
-        source_url: asset.url,
-        processed_path: up.path,
-        processed_url: up.url,
-        display_url: displayUrl,
-        crop_config: { ...cfg, ...(box ? { box } : {}), ...(media !== 'image' ? { durationSec } : {}) },
-        asset_role: 'option',
-        is_target: isTarget,
-        is_selected: true,
-        display_order: order,
-      })
-      return true
-    } catch {
-      continue
-    }
-  }
-  return false
-}
-
-/** Build one day's assets for a thread: (optionCount-1) from the group source + 1
- *  from the hidden target source, in randomised display order. */
-async function generateThreadDay(
-  taskId: string,
-  thread: DB,
-  glitch: number,
-): Promise<{ made: number; targetPlaced: boolean }> {
-  const media: SignalMedia = thread.type === 'audio_odd_one' ? 'audio' : 'image'
-  const cfg: CropConfig = { ...DEFAULT_CROP, glitchIntensity: glitch }
-  const group: ThreadSource = {
-    channelId: thread.group_channel_id, channelName: thread.group_channel_name,
-    freq: thread.group_freq, bandId: thread.group_band_id, bandName: thread.group_band_name,
-  }
-  const target: ThreadSource = {
-    channelId: thread.target_channel_id, channelName: thread.target_channel_name,
-    freq: thread.target_freq, bandId: thread.target_band_id, bandName: thread.target_band_name,
-  }
-  const n = thread.option_count ?? 4
-  const targetSlot = Math.floor(Math.random() * n)
-  let made = 0
-  let targetPlaced = false
-  for (let i = 0; i < n; i++) {
-    const isTarget = i === targetSlot
-    const ok = await genThreadAsset(taskId, isTarget ? target : group, media, cfg, isTarget, i, 4)
-    if (ok) { made++; if (isTarget) targetPlaced = true }
-  }
-  return { made, targetPlaced }
-}
-
-export interface SignalThreadRow {
-  id: string
-  title: string | null
-  type: SignalTaskType
-  status: string
-  clarity: number
-  clarity_max: number
-  drift: number
-  group_channel_name: string | null
-  target_channel_name: string | null
-  target_freq: number | null
-  world_id: string | null
-  day_count: number
-}
-
-export async function listThreads(): Promise<SignalThreadRow[]> {
-  const admin = createAdminClient() as DB
-  const { data } = await admin
-    .from('signal_threads')
-    .select('id, title, type, status, clarity, clarity_max, drift, group_channel_name, target_channel_name, target_freq, world_id')
-    .order('created_at', { ascending: false })
-  const rows = (data ?? []) as SignalThreadRow[]
-  // attach day_count
-  for (const r of rows) {
-    const { count } = await admin
-      .from('signal_tasks')
-      .select('id', { count: 'exact', head: true })
-      .eq('thread_id', r.id)
-    r.day_count = count ?? 0
-  }
-  return rows
-}
-
-/** Create an investigation thread + its day-0 task, and generate day-0 assets. */
-export async function createThread(input: {
-  type: SignalTaskType
-  prompt?: string
-  group: ThreadSource
-  target: ThreadSource
-  optionCount?: number
-  clarityMax?: number
-  startGlitch?: number
-  glitchStep?: number
-  driftMax?: number
-}): Promise<{ ok: boolean; threadId?: string; taskId?: string; made?: number; error?: string }> {
-  const me = await currentUser()
-  if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
-  const admin = createAdminClient() as DB
-
-  const { data: thread, error: tErr } = await admin
-    .from('signal_threads')
-    .insert({
-      type: input.type,
-      title: `${input.group.channelName} ↔ ${input.target.channelName}`,
-      group_channel_id: input.group.channelId, group_channel_name: input.group.channelName,
-      group_freq: input.group.freq, group_band_id: input.group.bandId, group_band_name: input.group.bandName,
-      target_channel_id: input.target.channelId, target_channel_name: input.target.channelName,
-      target_freq: input.target.freq, target_band_id: input.target.bandId, target_band_name: input.target.bandName,
-      option_count: input.optionCount ?? 4,
-      clarity_max: input.clarityMax ?? 4,
-      drift_max: input.driftMax ?? 3,
-      glitch_start: input.startGlitch ?? 70,
-      glitch_step: input.glitchStep ?? 15,
-      created_by: me.id,
-    })
-    .select('*')
-    .single()
-  if (tErr || !thread) return { ok: false, error: tErr?.message }
-
-  const { data: task, error: kErr } = await admin
-    .from('signal_tasks')
-    .insert({
-      type: input.type,
-      task_date: todayStr(),
-      prompt: input.prompt ?? null,
-      is_published: true,
-      thread_id: thread.id,
-      day_index: 0,
-    })
-    .select('id')
-    .single()
-  if (kErr || !task) return { ok: false, error: kErr?.message }
-
-  const { made } = await generateThreadDay(
-    task.id, thread, effectiveGlitch(thread.glitch_start ?? 70, thread.glitch_step ?? 15, 0, 0),
-  )
-  return { ok: true, threadId: thread.id, taskId: task.id, made }
-}
-
-/** Best-effort: when a thread locks, surface the discovered channel as a world. */
-async function tieWorld(thread: DB): Promise<string | null> {
-  const admin = createAdminClient() as DB
-  const id = `sig-${String(thread.id).slice(0, 8)}`
-  const name = thread.target_channel_name || '未知信号'
-  try {
-    const { error } = await admin.from('worlds').insert({
-      id,
-      name,
-      name_en: name,
-      discoverer_name: 'Signal Collective',
-      discovery_date: todayStr(),
-      gradient_from: '#FF6B35',
-      gradient_to: '#0A0E27',
-      description: `经由每日信号众包研判锁定的频率 ${thread.target_freq ?? ''} ${name}。`,
-    })
-    if (error && error.code !== '23505') return null
-    // try to set lifecycle (column may not exist in older schema — ignore failure)
-    await admin.from('worlds').update({ lifecycle_state: 'picked' }).eq('id', id)
-    return id
-  } catch {
-    return null
-  }
-}
-
-export interface AdvanceResult {
-  ok: boolean
-  error?: string
-  converged?: boolean
-  majorityAssetId?: string | null
-  participantCount?: number
-  clarity?: number
-  drift?: number
-  status?: string
-  nextTaskId?: string
-  worldId?: string | null
-}
-
-/** Settle the latest day of a thread and roll it forward (manual Phase-A trigger).
- *  Crowd majority == hidden target → converge (clearer); else → diverge (noisier). */
-export async function advanceThread(threadId: string): Promise<AdvanceResult> {
-  const me = await currentUser()
-  if (!me || me.role !== 'architect') return { ok: false, error: '仅 Architect 可推进调查线' }
-  const admin = createAdminClient() as DB
-
-  const { data: thread } = await admin.from('signal_threads').select('*').eq('id', threadId).single()
-  if (!thread) return { ok: false, error: '调查线不存在' }
-  if (thread.status !== 'open') return { ok: false, error: `调查线已${thread.status === 'locked' ? '锁定' : '失联'}` }
-
-  const { data: latest } = await admin
-    .from('signal_tasks')
-    .select('id, day_index')
-    .eq('thread_id', threadId)
-    .order('day_index', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  if (!latest) return { ok: false, error: '该调查线没有题目' }
-
-  const { data: assets } = await admin
-    .from('signal_task_assets')
-    .select('id, is_target')
-    .eq('task_id', latest.id)
-  const targetAsset = (assets ?? []).find((a: DB) => a.is_target)
-
-  const { data: responses } = await admin
-    .from('signal_responses')
-    .select('selected_asset_id')
-    .eq('task_id', latest.id)
-  const tally: Record<string, number> = {}
-  for (const r of responses ?? []) tally[r.selected_asset_id] = (tally[r.selected_asset_id] ?? 0) + 1
-  const participantCount = (responses ?? []).length
-  let majorityAssetId: string | null = null
-  let max = -1
-  for (const [k, v] of Object.entries(tally)) if (v > max) { max = v; majorityAssetId = k }
-
-  const converged = !!(majorityAssetId && targetAsset && majorityAssetId === targetAsset.id)
-  const clarity = thread.clarity + (converged ? 1 : 0)
-  const drift = thread.drift + (converged ? 0 : 1)
-  let status: string = 'open'
-  if (clarity >= thread.clarity_max) status = 'locked'
-  else if (drift >= thread.drift_max) status = 'lost'
-
-  await admin.from('signal_threads').update({ clarity, drift, status }).eq('id', threadId)
-
-  const result: AdvanceResult = { ok: true, converged, majorityAssetId, participantCount, clarity, drift, status }
-
-  if (status === 'open') {
-    const { data: nextTask } = await admin
-      .from('signal_tasks')
-      .insert({
-        type: thread.type,
-        task_date: todayStr(),
-        prompt: null,
-        is_published: true,
-        thread_id: threadId,
-        day_index: latest.day_index + 1,
-        prev_task_id: latest.id,
-      })
-      .select('id')
-      .single()
-    if (nextTask) {
-      await generateThreadDay(
-        nextTask.id, thread,
-        effectiveGlitch(thread.glitch_start ?? 70, thread.glitch_step ?? 15, clarity, drift),
-      )
-      result.nextTaskId = nextTask.id
-    }
-  } else if (status === 'locked') {
-    const worldId = await tieWorld(thread)
-    if (worldId) await admin.from('signal_threads').update({ world_id: worldId }).eq('id', threadId)
-    result.worldId = worldId
-  }
-
-  return result
 }

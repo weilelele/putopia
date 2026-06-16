@@ -1,29 +1,39 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import type { WorldInsert, WorldUpdate } from '@/types/database'
 import { logActivity } from './activity-events'
 
-/** Stable / verified worlds (the main archive). */
-export async function getAllWorlds() {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('worlds')
-    .select('*')
-    .eq('lifecycle_state', 'stable')
-    .order('discovery_date', { ascending: true })
+/** Stable / verified worlds (the main archive). Public + identical for everyone,
+ *  so cached 60 s to cut DB load on the console; edits self-heal within the window. */
+const getAllWorldsCached = unstable_cache(
+  async () => {
+    const admin = createAdminClient()
+    const { data } = await admin
+      .from('worlds')
+      .select('*')
+      .eq('lifecycle_state', 'stable')
+      .order('discovery_date', { ascending: true })
+    return data ?? []
+  },
+  ['all-worlds-stable'],
+  { revalidate: 60 },
+)
 
-  return data ?? []
+export async function getAllWorlds() {
+  return getAllWorldsCached()
 }
 
-/** Community pipeline: proposed + picked worlds (authenticated users). */
+/** Community pipeline: worlds still in flight — Raw Imagination (proposed) and
+ *  Signal Tuning (picked | syncing). Established (stable) worlds come from
+ *  getAllWorlds. */
 export async function getPipelineWorlds() {
   const admin = createAdminClient()
   const { data } = await admin
     .from('worlds')
     .select('*')
-    .in('lifecycle_state', ['proposed', 'picked'])
+    .in('lifecycle_state', ['proposed', 'picked', 'syncing'])
     .order('submitted_at', { ascending: false })
 
   return data ?? []

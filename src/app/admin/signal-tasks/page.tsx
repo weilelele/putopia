@@ -12,7 +12,9 @@ import {
   setAssetRole,
   deleteAsset,
   listInvestigations,
-  createInvestigation,
+  listTunableWorlds,
+  promoteWorldToTuning,
+  createWorldForTuning,
   addDayToInvestigation,
   listInvestigationTasks,
 } from '@/lib/actions/signal-tasks'
@@ -22,6 +24,7 @@ import type {
   SignalTaskType,
   GenerateSource,
   InvestigationSummary,
+  TunableWorld,
 } from '@/lib/actions/signal-tasks'
 import type { CosmoFrequency } from '@/lib/cosmo'
 import type { CropShape, FilterPreset } from '@/lib/signal/presets'
@@ -164,31 +167,82 @@ export default function SignalTasksAdmin() {
   )
 }
 
-// ─── New investigation form ────────────────────────────────────────────────────
+// ─── New investigation form (promote a world, or seed a new one) ──────────────
 function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }) {
-  const [title, setTitle] = useState('')
+  const [mode, setMode] = useState<'promote' | 'create'>('promote')
+  const [worlds, setWorlds] = useState<TunableWorld[]>([])
+  const [worldId, setWorldId] = useState('')
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
   const [type, setType] = useState<SignalTaskType>('visual_odd_one')
   const [busy, setBusy] = useState(false)
 
+  useEffect(() => {
+    listTunableWorlds().then((w) => {
+      setWorlds(w)
+      if (w.length) setWorldId(w[0].id)
+      else setMode('create') // nothing to promote → default to seeding
+    })
+  }, [])
+
+  const canSubmit = mode === 'promote' ? !!worldId : !!name.trim()
+
+  const submit = async () => {
+    setBusy(true)
+    const r = mode === 'promote'
+      ? await promoteWorldToTuning({ worldId, type })
+      : await createWorldForTuning({ name: name.trim(), description: description.trim(), type })
+    setBusy(false)
+    if (!r.ok || !r.id) { alert(r.error || 'Failed'); return }
+    onCreated(r.id)
+  }
+
   return (
     <div style={{ ...S.card, padding: 12, marginBottom: 12 }}>
-      <label style={S.label}>TITLE</label>
-      <input style={{ ...S.input, marginBottom: 8 }} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. The Alien Signal" />
-      <label style={S.label}>TYPE</label>
+      {/* mode toggle */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        <button
+          style={{ ...S.btn, flex: 1, ...(mode === 'promote' ? S.btnOk : S.btnGhost) }}
+          onClick={() => setMode('promote')}
+        >Promote World</button>
+        <button
+          style={{ ...S.btn, flex: 1, ...(mode === 'create' ? S.btnOk : S.btnGhost) }}
+          onClick={() => setMode('create')}
+        >New World</button>
+      </div>
+
+      {mode === 'promote' ? (
+        worlds.length === 0 ? (
+          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.4)', marginBottom: 10 }}>
+            No proposed worlds to promote. Use “New World” to seed one.
+          </div>
+        ) : (
+          <>
+            <label style={S.label}>PROPOSED WORLD</label>
+            <select style={{ ...S.sel, width: '100%', marginBottom: 10 }} value={worldId} onChange={(e) => setWorldId(e.target.value)}>
+              {worlds.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+          </>
+        )
+      ) : (
+        <>
+          <label style={S.label}>WORLD NAME</label>
+          <input style={{ ...S.input, marginBottom: 8 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. The Glass Sea" />
+          <label style={S.label}>DESCRIPTION (optional)</label>
+          <textarea style={{ ...S.area, marginBottom: 8, minHeight: 48 }} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="The creator's initial vision…" />
+        </>
+      )}
+
+      <label style={S.label}>DISPATCH TYPE</label>
       <select style={{ ...S.sel, width: '100%', marginBottom: 10 }} value={type} onChange={(e) => setType(e.target.value as SignalTaskType)}>
         {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
+
       <button
-        style={{ ...S.btn, ...S.btnOk, opacity: !title.trim() || busy ? 0.5 : 1, width: '100%' }}
-        disabled={!title.trim() || busy}
-        onClick={async () => {
-          setBusy(true)
-          const r = await createInvestigation({ title: title.trim(), type })
-          setBusy(false)
-          if (!r.ok || !r.id) { alert(r.error || 'Failed'); return }
-          onCreated(r.id)
-        }}
-      >{busy ? 'Creating…' : 'Create'}</button>
+        style={{ ...S.btn, ...S.btnOk, opacity: !canSubmit || busy ? 0.5 : 1, width: '100%' }}
+        disabled={!canSubmit || busy}
+        onClick={submit}
+      >{busy ? 'Working…' : mode === 'promote' ? 'Promote to Tuning' : 'Create & Tune'}</button>
     </div>
   )
 }

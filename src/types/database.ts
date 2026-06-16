@@ -159,6 +159,25 @@ export type DeviceUpdate = Partial<Pick<
 // ---------- worlds ----------
 export type WorldLifecycle = 'proposed' | 'picked' | 'syncing' | 'stable'
 
+// Who may respond to a world's Signal Dispatch (owner-configurable).
+export type WorldVoteScope = 'self' | 'voters' | 'all'
+
+// Public-facing 3-stage lifecycle. The 4 internal enum values above collapse
+// into these three stages for display (see worldStage / WORLD_STAGE_META).
+export type WorldStage = 'raw' | 'tuning' | 'established'
+
+export function worldStage(state: WorldLifecycle): WorldStage {
+  if (state === 'proposed') return 'raw'
+  if (state === 'stable') return 'established'
+  return 'tuning' // picked | syncing
+}
+
+export const WORLD_STAGE_META: Record<WorldStage, { label: string; key: string }> = {
+  raw:         { label: 'Initial Vision',    key: 'initial-vision' },
+  tuning:      { label: 'Signal Tuning',     key: 'signal-tuning' },
+  established: { label: 'Established World',  key: 'established' },
+}
+
 export type World = {
   id: string
   name: string
@@ -172,14 +191,16 @@ export type World = {
   description: string
   is_verified: boolean
   lifecycle_state: WorldLifecycle
+  vote_scope: WorldVoteScope
   submitted_by: string | null
   submitted_at: string | null
   created_at: string
 }
 
-// lifecycle_state / submitted_by / submitted_at have DB defaults — optional on insert
-export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'submitted_by' | 'submitted_at'> & {
+// lifecycle_state / vote_scope / submitted_by / submitted_at have DB defaults — optional on insert
+export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'vote_scope' | 'submitted_by' | 'submitted_at'> & {
   lifecycle_state?: WorldLifecycle
+  vote_scope?: WorldVoteScope
   submitted_by?: string | null
   submitted_at?: string | null
 }
@@ -187,7 +208,7 @@ export type WorldUpdate = Partial<Pick<
   World,
   'name' | 'name_en' | 'discoverer_id' | 'discoverer_name' | 'discovery_date' |
   'gradient_from' | 'gradient_to' | 'image_path' | 'description' | 'is_verified' |
-  'lifecycle_state'
+  'lifecycle_state' | 'vote_scope'
 >>
 
 export type WorldImage = {
