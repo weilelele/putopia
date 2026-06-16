@@ -25,7 +25,8 @@ import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/
 import type { ActivityEvent } from '@/lib/actions/activity-events'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
-const SALES_OPEN = false
+// NOTE: kept `true` LOCALLY for ad-slot tuning — do NOT commit this as true.
+const SALES_OPEN = true
 
 const STATUS_STYLES = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
@@ -239,11 +240,10 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${soft}0.55)` }}
     >
       <style>{`
-        @keyframes vp-breathe-o { 0%,100% { box-shadow: 0 0 11px rgba(255,107,53,0.10); } 50% { box-shadow: 0 0 20px rgba(255,107,53,0.22); } }
-        @keyframes vp-breathe-a { 0%,100% { box-shadow: 0 0 11px rgba(232,160,32,0.10); } 50% { box-shadow: 0 0 20px rgba(232,160,32,0.20); } }
+        @keyframes vp-breathe-o { 0%,100% { box-shadow: 0 0 16px rgba(255,107,53,0.22), 0 0 0 1px rgba(255,107,53,0.18); } 50% { box-shadow: 0 0 38px rgba(255,107,53,0.55), 0 0 70px rgba(255,107,53,0.18), 0 0 0 1px rgba(255,107,53,0.45); } }
+        @keyframes vp-breathe-a { 0%,100% { box-shadow: 0 0 16px rgba(232,160,32,0.22), 0 0 0 1px rgba(232,160,32,0.18); } 50% { box-shadow: 0 0 38px rgba(232,160,32,0.52), 0 0 70px rgba(232,160,32,0.16), 0 0 0 1px rgba(232,160,32,0.42); } }
         .vp-ad--direct { animation: vp-breathe-o 3.6s ease-in-out infinite; }
         .vp-ad--gated  { animation: vp-breathe-a 3.6s ease-in-out infinite; }
-        @keyframes vp-badge-blink { 0%,90%,100% { opacity: 1; } 95% { opacity: 0.45; } }
       `}</style>
 
       {/* Hero photo — bleeds with a top + bottom fade into the card */}
@@ -253,7 +253,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
           src="/voyager-pack/voyager-hero.png"
           alt={title}
           style={{
-            width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center',
+            width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top',
             filter: direct
               ? 'saturate(0.9) brightness(0.74)'
               : 'saturate(0.6) brightness(0.72) sepia(0.35) hue-rotate(-18deg)',
@@ -266,34 +266,20 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
         {/* top + bottom fade into the card body */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
           background: 'linear-gradient(to bottom, #0F1430 0%, rgba(15,20,48,0) 22%, rgba(15,20,48,0) 58%, #0F1430 100%)' }} />
-        {/* badge */}
-        <span style={{ position: 'absolute', top: 8, right: 8,
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.12em',
-          color: '#070912', background: accent, padding: '0.1rem 0.5rem', animation: 'vp-badge-blink 3s ease-in-out infinite' }}>
-          {badge}
-        </span>
         {/* corner bracket */}
         <div style={{ position: 'absolute', top: 8, left: 8, width: 16, height: 16,
           borderTop: `1.5px solid ${soft}0.7)`, borderLeft: `1.5px solid ${soft}0.7)` }} />
       </div>
 
-      {/* Info — eyebrow / title / chip + CTA (no body copy, no progress bars) */}
+      {/* Info — eyebrow / title / CTA */}
       <div style={{ padding: '0.7rem 0.9rem 0.9rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: accent, letterSpacing: '0.15em' }}>
-              {eyebrow}
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, color: 'var(--color-star)' }}>
-              {title}
-            </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: accent, letterSpacing: '0.15em' }}>
+            {eyebrow}
           </div>
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap', flexShrink: 0,
-            color: accent, border: `1px solid ${soft}0.5)`, padding: '0.1rem 0.4rem', background: `${soft}0.08)`,
-          }}>
-            {chip}
-          </span>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, color: 'var(--color-star)' }}>
+            {title}
+          </div>
         </div>
 
         <div style={{
