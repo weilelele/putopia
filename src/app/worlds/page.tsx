@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getAllWorlds, getPipelineWorlds } from '@/lib/actions/worlds'
+import { getTuningCovers } from '@/lib/actions/signal-tasks'
 import { SectionTracker } from '@/components/section-tracker'
 import type { WorldLifecycle } from '@/types/database'
 
@@ -74,8 +75,10 @@ function SectionHeader({
 
 // ─── Pipeline card (compact — used for Raw Imagination + World Building) ──────
 
-function PipelineCard({ world, accentColor }: { world: Awaited<ReturnType<typeof getPipelineWorlds>>[number]; accentColor: string }) {
+function PipelineCard({ world, accentColor, cover }: { world: Awaited<ReturnType<typeof getPipelineWorlds>>[number]; accentColor: string; cover?: string }) {
   const displayName = world.name_en || world.name
+  // Cover priority (doc 4.2.1): live tuning cover → uploaded world image → gradient
+  const coverImg = cover || world.image_path || null
   return (
     <a
       href={`/worlds/${encodeURIComponent(world.id)}`}
@@ -90,8 +93,12 @@ function PipelineCard({ world, accentColor }: { world: Awaited<ReturnType<typeof
         ['--card-hover-border' as string]: `${accentColor}55`,
       }}
     >
-      {/* Gradient strip */}
+      {/* Cover — live tuning image / uploaded image, else gradient strip */}
       <div style={{ width: '100%', height: 72, background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})`, position: 'relative', overflow: 'hidden' }}>
+        {coverImg && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={coverImg} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        )}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)' }} />
         <div style={{ position: 'absolute', top: 7, right: 7 }}>
           <LifecycleBadge state={world.lifecycle_state} />
@@ -121,12 +128,13 @@ export default async function WorldsPage({
   const params = await searchParams
   const submittedName = params.submitted
 
-  const [worlds, pipeline] = await Promise.all([
+  const [worlds, pipeline, covers] = await Promise.all([
     getAllWorlds(),
     getPipelineWorlds(),
+    getTuningCovers(),
   ])
 
-  // Split pipeline by lifecycle tier
+  // Split pipeline by lifecycle tier (3-stage model)
   const rawImagination = pipeline.filter((w) => w.lifecycle_state === 'proposed')
   const worldBuilding  = pipeline.filter((w) => w.lifecycle_state === 'picked' || w.lifecycle_state === 'syncing')
 
@@ -174,26 +182,46 @@ export default async function WorldsPage({
       {/* ── Page head ── */}
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">// ARCHIVE</div>
+          <div className="h-eyebrow">{'// ARCHIVE'}</div>
           <h1>WORLD <span className="accent">RECORDS</span></h1>
           <p className="sub">{worlds.length} confirmed parallel worlds</p>
         </div>
-        <Link
-          href="/worlds/submit"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            padding: '0.625rem 1.25rem', flexShrink: 0, alignSelf: 'flex-start',
-            marginTop: '0.25rem', textDecoration: 'none',
-            background: 'linear-gradient(135deg, var(--color-burnt), var(--color-nucleus-3))',
-            border: '1px solid rgba(232,93,4,0.45)',
-            color: 'var(--color-star)',
-            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-            fontWeight: 700, letterSpacing: '0.15em',
-          }}
-        >
-          <UploadIcon />
-          REPORT A SIGHTING
-        </Link>
+        <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignSelf: 'flex-start', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+          <Link
+            href="/signal"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.625rem 1.25rem', textDecoration: 'none',
+              background: 'transparent',
+              border: '1px solid rgba(232,93,4,0.45)',
+              color: 'var(--color-nebula)',
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+              fontWeight: 700, letterSpacing: '0.15em',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+              <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.2" />
+              <circle cx="9" cy="9" r="3.5" stroke="currentColor" strokeWidth="1.2" />
+              <circle cx="9" cy="9" r="1" fill="currentColor" />
+            </svg>
+            SIGNAL DISPATCH
+          </Link>
+          <Link
+            href="/worlds/submit"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.625rem 1.25rem', textDecoration: 'none',
+              background: 'linear-gradient(135deg, var(--color-burnt), var(--color-nucleus-3))',
+              border: '1px solid rgba(232,93,4,0.45)',
+              color: 'var(--color-star)',
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+              fontWeight: 700, letterSpacing: '0.15em',
+            }}
+          >
+            <UploadIcon />
+            REPORT A SIGHTING
+          </Link>
+        </div>
       </div>
 
       {/* ── Stats bar ── */}
@@ -204,9 +232,9 @@ export default async function WorldsPage({
         boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
       }}>
         {[
-          { val: worlds.length,   label: 'CONFIRMED',   color: 'var(--color-burnt)' },
-          { val: rawImagination.length, label: 'RAW IMAGINATION', color: 'var(--color-warn)' },
-          { val: worldBuilding.length,  label: 'WORLD BUILDING',  color: 'var(--color-ok)'  },
+          { val: rawImagination.length, label: 'INITIAL VISION', color: 'var(--color-warn)' },
+          { val: worldBuilding.length,  label: 'SIGNAL TUNING',  color: 'var(--color-ok)'  },
+          { val: worlds.length,   label: 'ESTABLISHED',   color: 'var(--color-nucleus)' },
         ].map(({ val, label, color }) => (
           <div key={label}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color, lineHeight: 1 }}>{val}</div>
@@ -215,16 +243,15 @@ export default async function WorldsPage({
         ))}
       </div>
 
-      {/* ── RAW IMAGINATION — proposed worlds ── */}
+      {/* ── INITIAL VISION — proposed worlds (Stage 1) ── */}
       {rawImagination.length > 0 && (
         <section style={{ marginBottom: '2rem' }}>
           <SectionHeader
-            title="RAW IMAGINATION"
-            subtitle="Unreviewed field reports — community submissions awaiting Architect assessment"
+            title="INITIAL VISION"
             count={rawImagination.length}
             accentColor="var(--color-warn)"
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {rawImagination.map((world) => (
               <PipelineCard key={world.id} world={world} accentColor="#E8A020" />
             ))}
@@ -232,28 +259,26 @@ export default async function WorldsPage({
         </section>
       )}
 
-      {/* ── WORLD BUILDING — picked / syncing ── */}
+      {/* ── SIGNAL TUNING — picked / syncing (Stage 2) ── */}
       {worldBuilding.length > 0 && (
         <section style={{ marginBottom: '2rem' }}>
           <SectionHeader
-            title="WORLD BUILDING"
-            subtitle="Selected sightings being shaped into classified records by Architects"
+            title="SIGNAL TUNING"
             count={worldBuilding.length}
             accentColor="var(--color-ok)"
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {worldBuilding.map((world) => (
-              <PipelineCard key={world.id} world={world} accentColor="#20D890" />
+              <PipelineCard key={world.id} world={world} accentColor="#20D890" cover={covers[world.id]} />
             ))}
           </div>
         </section>
       )}
 
-      {/* ── CONFIRMED ARCHIVE — stable worlds ── */}
+      {/* ── ESTABLISHED WORLDS — stable (Stage 3) ── */}
       <section>
         <SectionHeader
-          title="CONFIRMED ARCHIVE"
-          subtitle="Classified parallel worlds — verified and catalogued by the Collective"
+          title="ESTABLISHED WORLD"
           count={worlds.length}
           accentColor="var(--color-nucleus)"
         />

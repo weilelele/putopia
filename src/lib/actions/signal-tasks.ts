@@ -11,10 +11,11 @@
  * convention — see admin/layout.tsx).
  */
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { listFrequencies as cosmoListFrequencies, sampleBandAssets } from '@/lib/cosmo'
+import { listFrequencies as cosmoListFrequencies, sampleBandAssets, getBandAssets as cosmoGetBandAssets } from '@/lib/cosmo'
 import type { CosmoFrequency } from '@/lib/cosmo'
 import { processImageAsset, uploadProcessed, DEFAULT_CROP } from '@/lib/signal/process'
 import type { CropConfig } from '@/lib/signal/process'
+import type { WorldVoteScope } from '@/types/database'
 import { renderVideoClip, extractAudioClip } from '@/lib/signal/av'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -199,10 +200,84 @@ export async function deleteTask(taskId: string): Promise<{ ok: boolean; error?:
 
 // ─── Candidate generation (the core: Cosmo → crop+glitch → candidate pool) ────
 
+type SourceMeta = Pick<GenerateSource, 'channelId' | 'channelName' | 'freq' | 'bandId' | 'bandName' | 'media'>
+
 /**
- * For each source, sample assets from Cosmo, run the appropriate processing pipeline
- * (image crop+glitch / video crop+glitch clip / audio clip extraction), and store
- * the results as UNSELECTED candidates.
+ * Process ONE Cosmo asset through the right pipeline (image crop+glitch / video
+ * crop+glitch clip / audio clip extraction), upload it, and insert it as an
+ * UNSELECTED candidate. Shared by random generation and precise Forge pick.
+ * Returns { created:false } with no error when an audio source has no track.
+ */
+async function processAndInsertCandidate(
+  supabase: DB,
+  taskId: string,
+  cfg: CropConfig,
+  durationSec: number,
+  audioMode: boolean,
+  src: SourceMeta,
+  asset: { assetId: string; url: string },
+): Promise<{ created: boolean; error?: string }> {
+  const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  const insert = async (
+    media: SignalMedia,
+    out: { path: string; url: string; box?: unknown },
+    displayOut?: { url: string } | null,
+  ): Promise<string | null> => {
+    const { error } = await supabase.from('signal_task_assets').insert({
+      task_id: taskId,
+      media,
+      source_channel_id: src.channelId,
+      source_channel_name: src.channelName,
+      source_freq: src.freq,
+      source_band_id: src.bandId,
+      source_band_name: src.bandName,
+      source_asset_id: asset.assetId,
+      source_url: asset.url,
+      processed_path: out.path,
+      processed_url: out.url,
+      display_url: displayOut?.url ?? null,
+      crop_config: {
+        ...cfg,
+        ...(out.box ? { box: out.box } : {}),
+        ...(media !== 'image' ? { durationSec } : {}),
+      },
+      asset_role: 'option',
+      is_selected: false,
+    })
+    return error ? error.message : null
+  }
+
+  try {
+    if (audioMode) {
+      const clip = await extractAudioClip(asset.url, { durSec: durationSec })
+      if (!clip) return { created: false } // no audio track — skip
+      const up = await uploadProcessed(taskId, key, clip.buffer, clip.contentType, clip.ext)
+      const e = await insert('audio', up, null)
+      return e ? { created: false, error: e } : { created: true }
+    } else if (src.media === 'video') {
+      const clip = await renderVideoClip(asset.url, cfg, { durSec: durationSec })
+      const up = await uploadProcessed(taskId, key, clip.buffer, clip.contentType, clip.ext)
+      // Upload animated WebP for frontend auto-loop display (best-effort)
+      let dispUp: { url: string } | null = null
+      if (clip.displayBuffer) {
+        dispUp = await uploadProcessed(taskId, `${key}-d`, clip.displayBuffer, clip.displayContentType, clip.displayExt)
+      }
+      const e = await insert('video', { ...up, box: clip.box }, dispUp)
+      return e ? { created: false, error: e } : { created: true }
+    } else {
+      const out = await processImageAsset(taskId, key, asset.url, cfg)
+      const e = await insert('image', out, null)
+      return e ? { created: false, error: e } : { created: true }
+    }
+  } catch (e) {
+    return { created: false, error: (e as Error).message }
+  }
+}
+
+/**
+ * Random Forge import: for each source, sample assets from Cosmo, process them,
+ * and store the results as UNSELECTED candidates.
  *
  * Media per source: image → still; video → short glitched clip. For audio_odd_one
  * tasks every source pulls VIDEO and extracts the audio track (skipping the ~25% of
@@ -228,38 +303,6 @@ export async function generateCandidates(
     .single()
   const audioMode = task?.type === 'audio_odd_one'
 
-  const insertAsset = async (
-    src: GenerateSource,
-    media: SignalMedia,
-    asset: { assetId: string; url: string },
-    out: { path: string; url: string; box?: unknown },
-    displayOut?: { url: string } | null,
-  ) => {
-    const { error } = await supabase.from('signal_task_assets').insert({
-      task_id: taskId,
-      media,
-      source_channel_id: src.channelId,
-      source_channel_name: src.channelName,
-      source_freq: src.freq,
-      source_band_id: src.bandId,
-      source_band_name: src.bandName,
-      source_asset_id: asset.assetId,
-      source_url: asset.url,
-      processed_path: out.path,
-      processed_url: out.url,
-      display_url: displayOut?.url ?? null,
-      crop_config: {
-        ...cfg,
-        ...(out.box ? { box: out.box } : {}),
-        ...(media !== 'image' ? { durationSec } : {}),
-      },
-      asset_role: 'option',
-      is_selected: false,
-    })
-    if (error) errors.push(`insert: ${error.message}`)
-    else created++
-  }
-
   for (const src of sources) {
     const cosmoMedia = audioMode || src.media === 'video' ? 'video' : 'image'
     // audio mode: oversample because ~25% of clips have no audio track
@@ -280,36 +323,68 @@ export async function generateCandidates(
     let made = 0
     for (const asset of assets) {
       if (audioMode && made >= src.count) break
-      const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-      try {
-        if (audioMode) {
-          const clip = await extractAudioClip(asset.url, { durSec: durationSec })
-          if (!clip) continue // no audio track — skip
-          const up = await uploadProcessed(taskId, key, clip.buffer, clip.contentType, clip.ext)
-          await insertAsset(src, 'audio', asset, up)
-          made++
-        } else if (src.media === 'video') {
-          const clip = await renderVideoClip(asset.url, cfg, { durSec: durationSec })
-          const up = await uploadProcessed(taskId, key, clip.buffer, clip.contentType, clip.ext)
-          // Upload animated WebP for frontend auto-loop display (best-effort)
-          let dispUp: { url: string } | null = null
-          if (clip.displayBuffer) {
-            dispUp = await uploadProcessed(taskId, `${key}-d`, clip.displayBuffer, clip.displayContentType, clip.displayExt)
-          }
-          await insertAsset(src, 'video', asset, { ...up, box: clip.box }, dispUp)
-          made++
-        } else {
-          const out = await processImageAsset(taskId, key, asset.url, cfg)
-          await insertAsset(src, 'image', asset, out)
-          made++
-        }
-      } catch (e) {
-        errors.push(`${src.channelName}/${src.bandName} ${asset.assetId}: ${(e as Error).message}`)
-      }
+      const r = await processAndInsertCandidate(supabase, taskId, cfg, durationSec, audioMode, src, asset)
+      if (r.error) errors.push(`${src.channelName}/${src.bandName} ${asset.assetId}: ${r.error}`)
+      if (r.created) { created++; made++ }
     }
     if (audioMode && made < src.count) {
       errors.push(`${src.channelName}/${src.bandName}: only ${made}/${src.count} clips had audio`)
     }
+  }
+
+  return { ok: errors.length === 0, created, errors }
+}
+
+/** Browse a Cosmo band's assets for the precise-pick UI (doc 5.2 precise pick). */
+export async function listBandAssets(
+  channelId: string,
+  bandId: string,
+  media: 'image' | 'video',
+): Promise<{ assetId: string; url: string; prompt: string | null }[]> {
+  try {
+    const assets = await cosmoGetBandAssets(channelId, bandId, media)
+    return assets.map((a) => ({ assetId: a.assetId, url: a.url, prompt: a.prompt ?? null }))
+  } catch (e) {
+    console.error('[signal] listBandAssets failed', e)
+    return []
+  }
+}
+
+/**
+ * Precise Forge import (doc 5.2 precise pick): process a HAND-PICKED set of Cosmo asset
+ * ids from one band through the pipeline and store them as candidates.
+ */
+export async function pullForgeAssets(
+  taskId: string,
+  src: SourceMeta,
+  assetIds: string[],
+  crop: Partial<CropConfig>,
+  opts: { durationSec?: number } = {},
+): Promise<{ ok: boolean; created: number; errors: string[] }> {
+  const supabase = createAdminClient() as DB
+  const cfg: CropConfig = { ...DEFAULT_CROP, ...crop }
+  const durationSec = Math.max(1, Math.min(15, opts.durationSec ?? 4))
+  const errors: string[] = []
+  let created = 0
+
+  const { data: task } = await supabase.from('signal_tasks').select('type').eq('id', taskId).single()
+  const audioMode = task?.type === 'audio_odd_one'
+  const cosmoMedia = audioMode || src.media === 'video' ? 'video' : 'image'
+
+  let all
+  try {
+    all = await cosmoGetBandAssets(src.channelId, src.bandId, cosmoMedia)
+  } catch (e) {
+    return { ok: false, created: 0, errors: [`fetch: ${(e as Error).message}`] }
+  }
+  const want = new Set(assetIds)
+  const picked = all.filter((a) => want.has(a.assetId))
+
+  for (const asset of picked) {
+    const r = await processAndInsertCandidate(supabase, taskId, cfg, durationSec, audioMode, src, asset)
+    if (r.error) errors.push(`${asset.assetId}: ${r.error}`)
+    if (r.created) created++
+    else if (!r.error && audioMode) errors.push(`${asset.assetId}: no audio track`)
   }
 
   return { ok: errors.length === 0, created, errors }
@@ -661,10 +736,11 @@ export async function listTunableWorlds(): Promise<TunableWorld[]> {
 }
 
 /** Promote an existing proposed world into Signal Tuning: create its dispatch
- *  thread and advance the world to the tuning stage. */
+ *  thread, set the owner vote scope, and advance the world to the tuning stage. */
 export async function promoteWorldToTuning(input: {
   worldId: string
   type: SignalTaskType
+  voteScope?: WorldVoteScope
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
@@ -683,7 +759,10 @@ export async function promoteWorldToTuning(input: {
     .single()
   if (error || !data) return { ok: false, error: error?.message }
 
-  await admin.from('worlds').update({ lifecycle_state: 'syncing' }).eq('id', input.worldId)
+  await admin.from('worlds').update({
+    lifecycle_state: 'syncing',
+    vote_scope: input.voteScope ?? 'all',
+  }).eq('id', input.worldId)
   await postTuningStory(data.id, world.name)
 
   return { ok: true, id: data.id }
@@ -695,6 +774,7 @@ export async function createWorldForTuning(input: {
   name: string
   description?: string
   type: SignalTaskType
+  voteScope?: WorldVoteScope
 }): Promise<{ ok: boolean; id?: string; worldId?: string; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
@@ -719,6 +799,7 @@ export async function createWorldForTuning(input: {
     description: input.description ?? '',
     is_verified: true,
     lifecycle_state: 'syncing',
+    vote_scope: input.voteScope ?? 'all',
     submitted_by: me.id,
     submitted_at: new Date().toISOString(),
   })
@@ -734,6 +815,76 @@ export async function createWorldForTuning(input: {
   await postTuningStory(data.id, name)
 
   return { ok: true, id: data.id, worldId }
+}
+
+export interface InvestigationConfig {
+  threadId: string
+  worldId: string | null
+  title: string
+  visionText: string | null
+  type: SignalTaskType
+  voteScope: WorldVoteScope
+  phase: 'image' | 'video' | 'audio'
+}
+
+/** Full config for one investigation — world identity + owner/phase settings. */
+export async function getInvestigationConfig(threadId: string): Promise<InvestigationConfig | null> {
+  const admin = createAdminClient() as DB
+  const { data: thread } = await admin
+    .from('signal_threads')
+    .select('id, title, type, world_id, phase')
+    .eq('id', threadId)
+    .maybeSingle()
+  if (!thread) return null
+
+  let title = thread.title ?? '(untitled)'
+  let visionText: string | null = null
+  let voteScope: WorldVoteScope = 'all'
+  if (thread.world_id) {
+    const { data: world } = await admin
+      .from('worlds')
+      .select('name, description, vote_scope')
+      .eq('id', thread.world_id)
+      .maybeSingle()
+    if (world) {
+      title = world.name
+      visionText = world.description ?? null
+      voteScope = (world.vote_scope as WorldVoteScope) ?? 'all'
+    }
+  }
+
+  return {
+    threadId: thread.id,
+    worldId: thread.world_id,
+    title,
+    visionText,
+    type: thread.type,
+    voteScope,
+    phase: (thread.phase as 'image' | 'video' | 'audio') ?? 'image',
+  }
+}
+
+/** Update owner vote scope (on the world) and/or the media phase (on the thread). */
+export async function updateInvestigationConfig(
+  threadId: string,
+  patch: { voteScope?: WorldVoteScope; phase?: 'image' | 'video' | 'audio' },
+): Promise<{ ok: boolean; error?: string }> {
+  const me = await currentUser()
+  if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
+  const admin = createAdminClient() as DB
+
+  if (patch.phase) {
+    const { error } = await admin.from('signal_threads').update({ phase: patch.phase }).eq('id', threadId)
+    if (error) return { ok: false, error: error.message }
+  }
+  if (patch.voteScope) {
+    const { data: thread } = await admin.from('signal_threads').select('world_id').eq('id', threadId).maybeSingle()
+    if (thread?.world_id) {
+      const { error } = await admin.from('worlds').update({ vote_scope: patch.voteScope }).eq('id', thread.world_id)
+      if (error) return { ok: false, error: error.message }
+    }
+  }
+  return { ok: true }
 }
 
 /** Add the next day to an investigation — creates a draft task (day_index auto-increments). */
@@ -838,6 +989,47 @@ export async function listInvestigationTasks(threadId: string): Promise<SignalTa
     .eq('thread_id', threadId)
     .order('day_index', { ascending: true })
   return (data ?? []) as SignalTask[]
+}
+
+/**
+ * For every world in Signal Tuning, the latest live cover image — the first
+ * selected visual asset from its most recent published day (doc 4.2.1: card
+ * cover updates in real time). Audio-only days yield no cover. Returns
+ * { [worldId]: imageUrl }.
+ */
+export async function getTuningCovers(): Promise<Record<string, string>> {
+  const admin = createAdminClient() as DB
+  const { data: threads } = await admin
+    .from('signal_threads')
+    .select('id, world_id')
+    .not('world_id', 'is', null)
+  const covers: Record<string, string> = {}
+
+  for (const th of (threads ?? []) as { id: string; world_id: string }[]) {
+    const { data: latest } = await admin
+      .from('signal_tasks')
+      .select('id')
+      .eq('thread_id', th.id)
+      .eq('is_published', true)
+      .order('day_index', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (!latest) continue
+
+    const { data: assets } = await admin
+      .from('signal_task_assets')
+      .select('media, processed_url, display_url, display_order')
+      .eq('task_id', latest.id)
+      .eq('is_selected', true)
+      .order('display_order', { ascending: true })
+
+    const visual = ((assets ?? []) as { media: string; processed_url: string | null; display_url: string | null }[])
+      .find((a) => a.media === 'image' || a.media === 'video')
+    const url = visual?.display_url || visual?.processed_url
+    if (url) covers[th.world_id] = url
+  }
+
+  return covers
 }
 
 type Viewer = { id: string; role: string } | null

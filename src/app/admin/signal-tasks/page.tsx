@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import type { ReactNode } from 'react'
 import {
   getFrequencies,
   getTask,
@@ -17,6 +18,10 @@ import {
   createWorldForTuning,
   addDayToInvestigation,
   listInvestigationTasks,
+  listBandAssets,
+  pullForgeAssets,
+  getInvestigationConfig,
+  updateInvestigationConfig,
 } from '@/lib/actions/signal-tasks'
 import type {
   SignalTask,
@@ -25,8 +30,10 @@ import type {
   GenerateSource,
   InvestigationSummary,
   TunableWorld,
+  InvestigationConfig,
 } from '@/lib/actions/signal-tasks'
 import type { CosmoFrequency } from '@/lib/cosmo'
+import type { WorldVoteScope } from '@/types/database'
 import type { CropShape, FilterPreset } from '@/lib/signal/presets'
 import { FILTER_PRESETS } from '@/lib/signal/presets'
 
@@ -47,6 +54,18 @@ const TYPE_LABELS: Record<SignalTaskType, string> = {
   visual_match: 'VISUAL · Match',
   visual_odd_one: 'VISUAL · Odd One Out',
   audio_odd_one: 'AUDIO · Odd One Out',
+}
+
+const VOTE_SCOPE_LABELS: Record<WorldVoteScope, string> = {
+  self: 'Owner only (private)',
+  voters: 'Voyagers only',
+  all: 'All registered users',
+}
+
+const PHASE_LABELS: Record<'image' | 'video' | 'audio', string> = {
+  image: 'Image',
+  video: 'Video',
+  audio: 'Audio',
 }
 
 const SHAPES: CropShape[] = ['square', 'circle', 'rect']
@@ -143,6 +162,7 @@ export default function SignalTasksAdmin() {
       {/* Right: task editor */}
       <div style={{ flex: 1, minWidth: 0 }}>
         {freqsLoading && <div style={{ color: 'rgba(245,245,245,0.4)', fontSize: 12, marginBottom: 12 }}>Loading Cosmo catalog…</div>}
+        {activeInvId && <InvestigationConfigBar key={activeInvId} threadId={activeInvId} />}
         {!activeInvId && (
           <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 13, paddingTop: 60, textAlign: 'center' }}>
             Select an investigation on the left.
@@ -175,6 +195,7 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState<SignalTaskType>('visual_odd_one')
+  const [voteScope, setVoteScope] = useState<WorldVoteScope>('all')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -185,13 +206,14 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
     })
   }, [])
 
+  const selectedWorld = worlds.find((w) => w.id === worldId)
   const canSubmit = mode === 'promote' ? !!worldId : !!name.trim()
 
   const submit = async () => {
     setBusy(true)
     const r = mode === 'promote'
-      ? await promoteWorldToTuning({ worldId, type })
-      : await createWorldForTuning({ name: name.trim(), description: description.trim(), type })
+      ? await promoteWorldToTuning({ worldId, type, voteScope })
+      : await createWorldForTuning({ name: name.trim(), description: description.trim(), type, voteScope })
     setBusy(false)
     if (!r.ok || !r.id) { alert(r.error || 'Failed'); return }
     onCreated(r.id)
@@ -218,17 +240,26 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
           </div>
         ) : (
           <>
-            <label style={S.label}>PROPOSED WORLD</label>
-            <select style={{ ...S.sel, width: '100%', marginBottom: 10 }} value={worldId} onChange={(e) => setWorldId(e.target.value)}>
+            <label style={S.label}>INITIAL VISION</label>
+            <select style={{ ...S.sel, width: '100%', marginBottom: 8 }} value={worldId} onChange={(e) => setWorldId(e.target.value)}>
               {worlds.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
+            {selectedWorld?.description && (
+              <div style={{
+                fontSize: 11, lineHeight: 1.55, color: 'rgba(245,245,245,0.5)',
+                background: '#0F1430', border: '1px solid rgba(255,107,53,0.1)', padding: '7px 9px',
+                marginBottom: 10, maxHeight: 96, overflowY: 'auto', whiteSpace: 'pre-wrap',
+              }}>
+                {selectedWorld.description}
+              </div>
+            )}
           </>
         )
       ) : (
         <>
           <label style={S.label}>WORLD NAME</label>
           <input style={{ ...S.input, marginBottom: 8 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. The Glass Sea" />
-          <label style={S.label}>DESCRIPTION (optional)</label>
+          <label style={S.label}>INITIAL VISION (optional)</label>
           <textarea style={{ ...S.area, marginBottom: 8, minHeight: 48 }} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="The creator's initial vision…" />
         </>
       )}
@@ -238,11 +269,72 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
         {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
 
+      <label style={S.label}>WHO CAN VOTE</label>
+      <select style={{ ...S.sel, width: '100%', marginBottom: 10 }} value={voteScope} onChange={(e) => setVoteScope(e.target.value as WorldVoteScope)}>
+        {Object.entries(VOTE_SCOPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+
       <button
         style={{ ...S.btn, ...S.btnOk, opacity: !canSubmit || busy ? 0.5 : 1, width: '100%' }}
         disabled={!canSubmit || busy}
         onClick={submit}
       >{busy ? 'Working…' : mode === 'promote' ? 'Promote to Tuning' : 'Create & Tune'}</button>
+    </div>
+  )
+}
+
+// ─── Investigation config bar (owner vote scope + media phase) ────────────────
+function InvestigationConfigBar({ threadId }: { threadId: string }) {
+  const [cfg, setCfg] = useState<InvestigationConfig | null>(null)
+  const [visionOpen, setVisionOpen] = useState(false)
+
+  const reload = useCallback(async () => { setCfg(await getInvestigationConfig(threadId)) }, [threadId])
+  useEffect(() => { reload() }, [reload])
+
+  if (!cfg) return null
+
+  const patch = async (p: { voteScope?: WorldVoteScope; phase?: 'image' | 'video' | 'audio' }) => {
+    await updateInvestigationConfig(threadId, p)
+    await reload()
+  }
+
+  return (
+    <div style={{ ...S.card, padding: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 13, color: '#F5F5F5', fontWeight: 600 }}>{cfg.title}</div>
+          <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', marginTop: 2 }}>
+            {TYPE_LABELS[cfg.type]} · SIGNAL TUNING
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div>
+            <label style={S.label}>WHO CAN VOTE</label>
+            <select style={{ ...S.sel, fontSize: 12 }} value={cfg.voteScope} onChange={(e) => patch({ voteScope: e.target.value as WorldVoteScope })}>
+              {Object.entries(VOTE_SCOPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={S.label}>MEDIA PHASE</label>
+            <select style={{ ...S.sel, fontSize: 12 }} value={cfg.phase} onChange={(e) => patch({ phase: e.target.value as 'image' | 'video' | 'audio' })}>
+              {Object.entries(PHASE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+      {cfg.visionText && (
+        <div style={{ marginTop: 10 }}>
+          <button
+            onClick={() => setVisionOpen((v) => !v)}
+            style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', fontSize: 10 }}
+          >{visionOpen ? '▲ Hide initial vision' : '▼ Initial vision'}</button>
+          {visionOpen && (
+            <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.6, color: 'rgba(245,245,245,0.55)', whiteSpace: 'pre-wrap', maxHeight: 160, overflowY: 'auto' }}>
+              {cfg.visionText}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -412,7 +504,9 @@ function TaskEditor({
 // ─── Generator ────────────────────────────────────────────────────────────────
 function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; freqs: CosmoFrequency[]; taskType: SignalTaskType; onGenerated: () => void }) {
   const audioMode = taskType === 'audio_odd_one'
-  const [sources, setSources] = useState<GenerateSource[]>([])
+  const [mode, setMode] = useState<'random' | 'pick'>('random')
+
+  // shared processing settings
   const [shape, setShape] = useState<CropShape>('square')
   const [areaRatio, setAreaRatio] = useState(0.17)
   const [glitch, setGlitch] = useState(50)
@@ -421,13 +515,16 @@ function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; f
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState('')
 
+  // random mode
+  const [sources, setSources] = useState<GenerateSource[]>([])
+
   const defaultMedia: 'image' | 'video' = audioMode ? 'video' : 'image'
-  const pickBand = (f: CosmoFrequency | undefined, media: 'image' | 'video') =>
+  const pickBandFor = (f: CosmoFrequency | undefined, media: 'image' | 'video') =>
     f?.bands.find((x) => (media === 'image' ? x.imageCount > 0 : x.videoCount > 0)) || f?.bands[0]
 
   const addSource = () => {
     if (sources.length >= 3 || !freqs[0]) return
-    const f = freqs[0]; const b = pickBand(f, defaultMedia)
+    const f = freqs[0]; const b = pickBandFor(f, defaultMedia)
     if (!b) return
     setSources((s) => [...s, { channelId: f.channelId, channelName: f.name, freq: f.freq, bandId: b.bandId, bandName: b.name, media: defaultMedia, count: 4 }])
   }
@@ -435,7 +532,7 @@ function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; f
   const removeSource = (i: number) => setSources((s) => s.filter((_, idx) => idx !== i))
   const onPickFreq = (i: number, channelId: string) => {
     const f = freqs.find((x) => x.channelId === channelId); if (!f) return
-    const b = pickBand(f, sources[i].media)
+    const b = pickBandFor(f, sources[i].media)
     updateSource(i, { channelId, channelName: f.name, freq: f.freq, bandId: b?.bandId || '', bandName: b?.name || '' })
   }
   const onPickBand = (i: number, bandId: string) => {
@@ -443,45 +540,85 @@ function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; f
     const b = f?.bands.find((x) => x.bandId === bandId)
     updateSource(i, { bandId, bandName: b?.name || '' })
   }
-  const run = async () => {
+  const runRandom = async () => {
     if (!sources.length) return
     setBusy(true); setResult('')
     const r = await generateCandidates(taskId, sources, { shape, areaRatio, glitchIntensity: glitch, filter }, { durationSec })
     setBusy(false)
-    setResult(`Generated ${r.created} candidates` + (r.errors.length ? ` · ${r.errors.length} error(s)` : ''))
+    setResult(`Pulled ${r.created} candidate(s)` + (r.errors.length ? ` · ${r.errors.length} error(s)` : ''))
     onGenerated()
   }
 
+  const cropProps = { shape, setShape, areaRatio, setAreaRatio, glitch, setGlitch, filter, setFilter, durationSec, setDurationSec, audioMode }
+  const showClip = (videoInPlay: boolean) => audioMode || videoInPlay
+
   return (
     <div style={S.card}>
-      <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em', marginBottom: 10 }}>
-        {audioMode ? 'BATCH GENERATE (audio from video)' : 'BATCH GENERATE'}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        <button style={{ ...S.btn, flex: 1, ...(mode === 'random' ? S.btnOk : S.btnGhost) }} onClick={() => { setMode('random'); setResult('') }}>Random pull</button>
+        <button style={{ ...S.btn, flex: 1, ...(mode === 'pick' ? S.btnOk : S.btnGhost) }} onClick={() => { setMode('pick'); setResult('') }}>Pick from Forge</button>
       </div>
 
-      {sources.map((src, i) => {
-        const f = freqs.find((x) => x.channelId === src.channelId)
-        return (
-          <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-            <select style={{ ...S.sel, maxWidth: 180 }} value={src.channelId} onChange={(e) => onPickFreq(i, e.target.value)}>
-              {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq ?? '–'} {fr.name}</option>)}
-            </select>
-            <select style={{ ...S.sel, maxWidth: 160 }} value={src.bandId} onChange={(e) => onPickBand(i, e.target.value)}>
-              {(f?.bands || []).map((b) => <option key={b.bandId} value={b.bandId}>{b.name} ({b.imageCount}i/{b.videoCount}v)</option>)}
-            </select>
-            {!audioMode && (
-              <select style={{ ...S.sel, maxWidth: 80 }} value={src.media} onChange={(e) => updateSource(i, { media: e.target.value as 'image' | 'video' })}>
-                <option value="image">image</option>
-                <option value="video">video</option>
-              </select>
-            )}
-            <input type="number" min={1} max={20} style={{ ...S.input, width: 52 }} value={src.count} onChange={(e) => updateSource(i, { count: Math.max(1, Number(e.target.value)) })} />
-            <button style={{ ...S.btn, ...S.btnDanger, padding: '4px 8px' }} onClick={() => removeSource(i)}>×</button>
-          </div>
-        )
-      })}
+      {mode === 'random' ? (
+        <>
+          {sources.map((src, i) => {
+            const f = freqs.find((x) => x.channelId === src.channelId)
+            return (
+              <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+                <select style={{ ...S.sel, maxWidth: 180 }} value={src.channelId} onChange={(e) => onPickFreq(i, e.target.value)}>
+                  {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq ?? '–'} {fr.name}</option>)}
+                </select>
+                <select style={{ ...S.sel, maxWidth: 160 }} value={src.bandId} onChange={(e) => onPickBand(i, e.target.value)}>
+                  {(f?.bands || []).map((b) => <option key={b.bandId} value={b.bandId}>{b.name} ({b.imageCount}i/{b.videoCount}v)</option>)}
+                </select>
+                {!audioMode && (
+                  <select style={{ ...S.sel, maxWidth: 80 }} value={src.media} onChange={(e) => updateSource(i, { media: e.target.value as 'image' | 'video' })}>
+                    <option value="image">image</option>
+                    <option value="video">video</option>
+                  </select>
+                )}
+                <input type="number" min={1} max={20} style={{ ...S.input, width: 52 }} value={src.count} onChange={(e) => updateSource(i, { count: Math.max(1, Number(e.target.value)) })} />
+                <button style={{ ...S.btn, ...S.btnDanger, padding: '4px 8px' }} onClick={() => removeSource(i)}>×</button>
+              </div>
+            )
+          })}
+          <button style={{ ...S.btn, ...S.btnGhost, marginBottom: 10 }} onClick={addSource} disabled={sources.length >= 3 || !freqs.length}>+ Add source (max 3)</button>
 
-      <button style={{ ...S.btn, ...S.btnGhost, marginBottom: 10 }} onClick={addSource} disabled={sources.length >= 3 || !freqs.length}>+ Add source (max 3)</button>
+          <CropSettings {...cropProps} showClip={showClip(sources.some((s) => s.media === 'video'))} />
 
+          <button style={{ ...S.btn, ...S.btnOk, opacity: busy || !sources.length ? 0.5 : 1 }} disabled={busy || !sources.length} onClick={runRandom}>
+            {busy ? 'Pulling…' : '⚡ Pull random candidates'}
+          </button>
+        </>
+      ) : (
+        <ForgePicker
+          taskId={taskId} freqs={freqs} audioMode={audioMode}
+          crop={{ shape, areaRatio, glitchIntensity: glitch, filter }} durationSec={durationSec}
+          settings={<CropSettings {...cropProps} showClip={true} />}
+          busy={busy} setBusy={setBusy}
+          onResult={(r) => { setResult(r); onGenerated() }}
+        />
+      )}
+
+      {result && <div style={{ marginTop: 8, fontSize: 11, color: 'rgba(245,245,245,0.6)' }}>{result}</div>}
+    </div>
+  )
+}
+
+// ─── Shared crop/processing settings ──────────────────────────────────────────
+function CropSettings({
+  shape, setShape, areaRatio, setAreaRatio, glitch, setGlitch, filter, setFilter,
+  durationSec, setDurationSec, audioMode, showClip,
+}: {
+  shape: CropShape; setShape: (v: CropShape) => void
+  areaRatio: number; setAreaRatio: (v: number) => void
+  glitch: number; setGlitch: (v: number) => void
+  filter: FilterPreset; setFilter: (v: FilterPreset) => void
+  durationSec: number; setDurationSec: (v: number) => void
+  audioMode: boolean; showClip: boolean
+}) {
+  return (
+    <>
       {!audioMode && (
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 10, alignItems: 'flex-end' }}>
           <div>
@@ -506,19 +643,122 @@ function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; f
           </div>
         </div>
       )}
-
-      {(audioMode || sources.some((s) => s.media === 'video')) && (
+      {showClip && (
         <div style={{ marginBottom: 10 }}>
           <label style={S.label}>CLIP LENGTH {durationSec}s</label>
           <input type="range" min={2} max={10} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} style={{ accentColor: '#FF6B35', width: 140 }} />
         </div>
       )}
+    </>
+  )
+}
 
-      <button style={{ ...S.btn, ...S.btnOk, opacity: busy || !sources.length ? 0.5 : 1 }} disabled={busy || !sources.length} onClick={run}>
-        {busy ? 'Generating…' : '⚡ Generate candidates'}
-      </button>
-      {result && <div style={{ marginTop: 8, fontSize: 11, color: 'rgba(245,245,245,0.6)' }}>{result}</div>}
-    </div>
+// ─── Forge precise picker (doc 5.2 precise pick) ──────────────────────────────
+function ForgePicker({
+  taskId, freqs, audioMode, crop, durationSec, settings, busy, setBusy, onResult,
+}: {
+  taskId: string
+  freqs: CosmoFrequency[]
+  audioMode: boolean
+  crop: { shape: CropShape; areaRatio: number; glitchIntensity: number; filter: FilterPreset }
+  durationSec: number
+  settings: ReactNode
+  busy: boolean
+  setBusy: (b: boolean) => void
+  onResult: (r: string) => void
+}) {
+  const [channelId, setChannelId] = useState(freqs[0]?.channelId ?? '')
+  const [bandId, setBandId] = useState('')
+  const [media, setMedia] = useState<'image' | 'video'>(audioMode ? 'video' : 'image')
+  const [assets, setAssets] = useState<{ assetId: string; url: string; prompt: string | null }[]>([])
+  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(false)
+
+  const freq = freqs.find((f) => f.channelId === channelId)
+  const effMedia: 'image' | 'video' = audioMode ? 'video' : media
+
+  const pickFirstBand = (f: CosmoFrequency | undefined) =>
+    f?.bands.find((x) => (effMedia === 'image' ? x.imageCount > 0 : x.videoCount > 0))?.bandId || f?.bands[0]?.bandId || ''
+
+  const browse = async () => {
+    if (!channelId || !bandId) return
+    setLoading(true); setPicked(new Set())
+    setAssets(await listBandAssets(channelId, bandId, effMedia))
+    setLoading(false)
+  }
+
+  const toggle = (id: string) => setPicked((s) => {
+    const n = new Set(s)
+    if (n.has(id)) n.delete(id); else n.add(id)
+    return n
+  })
+
+  const pull = async () => {
+    if (!freq || !bandId || picked.size === 0) return
+    const band = freq.bands.find((b) => b.bandId === bandId)
+    setBusy(true); onResult('')
+    const r = await pullForgeAssets(
+      taskId,
+      { channelId, channelName: freq.name, freq: freq.freq, bandId, bandName: band?.name || '', media: effMedia },
+      [...picked],
+      crop,
+      { durationSec },
+    )
+    setBusy(false)
+    setPicked(new Set())
+    onResult(`Pulled ${r.created} candidate(s)` + (r.errors.length ? ` · ${r.errors.length} error(s)` : ''))
+  }
+
+  return (
+    <>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
+        <select
+          style={{ ...S.sel, maxWidth: 180 }} value={channelId}
+          onChange={(e) => { const f = freqs.find((x) => x.channelId === e.target.value); setChannelId(e.target.value); setBandId(pickFirstBand(f)); setAssets([]) }}
+        >
+          {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq ?? '–'} {fr.name}</option>)}
+        </select>
+        <select style={{ ...S.sel, maxWidth: 160 }} value={bandId} onChange={(e) => { setBandId(e.target.value); setAssets([]) }}>
+          <option value="">— band —</option>
+          {(freq?.bands || []).map((b) => <option key={b.bandId} value={b.bandId}>{b.name} ({b.imageCount}i/{b.videoCount}v)</option>)}
+        </select>
+        {!audioMode && (
+          <select style={{ ...S.sel, maxWidth: 80 }} value={media} onChange={(e) => { setMedia(e.target.value as 'image' | 'video'); setAssets([]) }}>
+            <option value="image">image</option>
+            <option value="video">video</option>
+          </select>
+        )}
+        <button style={{ ...S.btn, ...S.btnGhost }} onClick={browse} disabled={!bandId || loading}>{loading ? 'Loading…' : 'Browse'}</button>
+      </div>
+
+      {assets.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))', gap: 6, marginBottom: 10, maxHeight: 320, overflowY: 'auto', padding: 2 }}>
+          {assets.map((a) => {
+            const on = picked.has(a.assetId)
+            return (
+              <div
+                key={a.assetId} onClick={() => toggle(a.assetId)} title={a.prompt ?? ''}
+                style={{ position: 'relative', cursor: 'pointer', border: on ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)', background: '#070912', aspectRatio: '1' }}
+              >
+                {effMedia === 'video'
+                  ? <video src={a.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  : <img src={a.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                {on && <div style={{ position: 'absolute', top: 2, right: 3, color: '#20D890', fontSize: 12 }}>✓</div>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {assets.length > 0 && settings}
+
+      <button
+        style={{ ...S.btn, ...S.btnOk, opacity: busy || picked.size === 0 ? 0.5 : 1 }}
+        disabled={busy || picked.size === 0}
+        onClick={pull}
+      >{busy ? 'Pulling…' : `⚡ Pull ${picked.size || ''} selected`}</button>
+    </>
   )
 }
 
