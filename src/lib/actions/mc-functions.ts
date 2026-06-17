@@ -1,16 +1,26 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { McFunctionInsert, McFunctionUpdate } from '@/types/database'
 
+// MC console functions rarely change — cache 5 min to keep them off the DB
+// on every console load; admin edits self-heal within the window.
+const getMcFunctionsCached = unstable_cache(
+  async () => {
+    const admin = createAdminClient()
+    const { data } = await admin
+      .from('mc_functions')
+      .select('*')
+      .order('sort_order', { ascending: true })
+    return data ?? []
+  },
+  ['mc-functions'],
+  { revalidate: 300 },
+)
+
 export async function getMcFunctions() {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('mc_functions')
-    .select('*')
-    .order('sort_order', { ascending: true })
-  return data ?? []
+  return getMcFunctionsCached()
 }
 
 export async function createMcFunction(fn: McFunctionInsert) {

@@ -90,8 +90,8 @@ export default function WorldDetailPage() {
           )}
           {/* scanline overlay */}
           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)', pointerEvents: 'none' }} />
-          {/* bottom fade for text legibility */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(11,15,23,0.85) 100%)', pointerEvents: 'none' }} />
+          {/* bottom fade — transparent → warm orange tint → near-black, keeps title legible over busy images */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(160,45,4,0.42) 60%, rgba(12,5,1,0.93) 100%)', pointerEvents: 'none' }} />
           {/* ID badge */}
           <div style={{ position: 'absolute', top: 12, left: 12 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', background: 'rgba(7,9,18,0.75)', color: 'var(--color-star-deep)', padding: '3px 8px', border: '1px solid var(--bd-faint)' }}>

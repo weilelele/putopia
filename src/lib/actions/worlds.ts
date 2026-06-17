@@ -36,7 +36,29 @@ export async function getPipelineWorlds() {
     .in('lifecycle_state', ['proposed', 'picked', 'syncing'])
     .order('submitted_at', { ascending: false })
 
-  return data ?? []
+  const worlds = data ?? []
+  if (!worlds.length) return []
+
+  // Enrich each world with its discoverer's avatar (cards show author + avatar).
+  const personIds = [...new Set(
+    worlds.map(w => w.discoverer_id ?? w.submitted_by).filter(Boolean) as string[],
+  )]
+  const avatarMap: Record<string, string | null> = {}
+  if (personIds.length) {
+    const { data: profiles } = await admin
+      .from('voyager_profiles')
+      .select('id, avatar_url')
+      .in('id', personIds)
+    profiles?.forEach(p => { avatarMap[p.id] = p.avatar_url })
+  }
+
+  return worlds.map(w => {
+    const personId = w.discoverer_id ?? w.submitted_by
+    return {
+      ...w,
+      discoverer_avatar_url: personId ? (avatarMap[personId] ?? null) : null,
+    }
+  })
 }
 
 /** Submit a user-proposed world sighting. */

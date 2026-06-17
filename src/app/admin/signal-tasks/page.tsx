@@ -54,6 +54,7 @@ const TYPE_LABELS: Record<SignalTaskType, string> = {
   visual_match: 'VISUAL · Match',
   visual_odd_one: 'VISUAL · Odd One Out',
   audio_odd_one: 'AUDIO · Odd One Out',
+  audio_match: 'AUDIO · Match',
 }
 
 const VOTE_SCOPE_LABELS: Record<WorldVoteScope, string> = {
@@ -62,11 +63,6 @@ const VOTE_SCOPE_LABELS: Record<WorldVoteScope, string> = {
   all: 'All registered users',
 }
 
-const PHASE_LABELS: Record<'image' | 'video' | 'audio', string> = {
-  image: 'Image',
-  video: 'Video',
-  audio: 'Audio',
-}
 
 const SHAPES: CropShape[] = ['square', 'circle', 'rect']
 
@@ -136,7 +132,7 @@ export default function SignalTasksAdmin() {
               {inv.title || '(untitled)'}
             </div>
             <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.35)', marginTop: 3, letterSpacing: '0.06em' }}>
-              {inv.type.replace(/_/g, ' ')} · {inv.dayCount} day{inv.dayCount !== 1 ? 's' : ''}
+              SIGNAL TUNING · {inv.dayCount} day{inv.dayCount !== 1 ? 's' : ''}
             </div>
           </button>
         ))}
@@ -194,7 +190,6 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
   const [worldId, setWorldId] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [type, setType] = useState<SignalTaskType>('visual_odd_one')
   const [voteScope, setVoteScope] = useState<WorldVoteScope>('all')
   const [busy, setBusy] = useState(false)
 
@@ -212,8 +207,8 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
   const submit = async () => {
     setBusy(true)
     const r = mode === 'promote'
-      ? await promoteWorldToTuning({ worldId, type, voteScope })
-      : await createWorldForTuning({ name: name.trim(), description: description.trim(), type, voteScope })
+      ? await promoteWorldToTuning({ worldId, voteScope })
+      : await createWorldForTuning({ name: name.trim(), description: description.trim(), voteScope })
     setBusy(false)
     if (!r.ok || !r.id) { alert(r.error || 'Failed'); return }
     onCreated(r.id)
@@ -264,11 +259,6 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
         </>
       )}
 
-      <label style={S.label}>DISPATCH TYPE</label>
-      <select style={{ ...S.sel, width: '100%', marginBottom: 10 }} value={type} onChange={(e) => setType(e.target.value as SignalTaskType)}>
-        {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
-
       <label style={S.label}>WHO CAN VOTE</label>
       <select style={{ ...S.sel, width: '100%', marginBottom: 10 }} value={voteScope} onChange={(e) => setVoteScope(e.target.value as WorldVoteScope)}>
         {Object.entries(VOTE_SCOPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -283,7 +273,7 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
   )
 }
 
-// ─── Investigation config bar (owner vote scope + media phase) ────────────────
+// ─── Investigation config bar (owner vote scope) ──────────────────────────────
 function InvestigationConfigBar({ threadId }: { threadId: string }) {
   const [cfg, setCfg] = useState<InvestigationConfig | null>(null)
   const [visionOpen, setVisionOpen] = useState(false)
@@ -293,7 +283,7 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
 
   if (!cfg) return null
 
-  const patch = async (p: { voteScope?: WorldVoteScope; phase?: 'image' | 'video' | 'audio' }) => {
+  const patch = async (p: { voteScope?: WorldVoteScope }) => {
     await updateInvestigationConfig(threadId, p)
     await reload()
   }
@@ -304,22 +294,14 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 13, color: '#F5F5F5', fontWeight: 600 }}>{cfg.title}</div>
           <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', marginTop: 2 }}>
-            {TYPE_LABELS[cfg.type]} · SIGNAL TUNING
+            SIGNAL TUNING
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div>
-            <label style={S.label}>WHO CAN VOTE</label>
-            <select style={{ ...S.sel, fontSize: 12 }} value={cfg.voteScope} onChange={(e) => patch({ voteScope: e.target.value as WorldVoteScope })}>
-              {Object.entries(VOTE_SCOPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={S.label}>MEDIA PHASE</label>
-            <select style={{ ...S.sel, fontSize: 12 }} value={cfg.phase} onChange={(e) => patch({ phase: e.target.value as 'image' | 'video' | 'audio' })}>
-              {Object.entries(PHASE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-          </div>
+        <div>
+          <label style={S.label}>WHO CAN VOTE</label>
+          <select style={{ ...S.sel, fontSize: 12 }} value={cfg.voteScope} onChange={(e) => patch({ voteScope: e.target.value as WorldVoteScope })}>
+            {Object.entries(VOTE_SCOPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
         </div>
       </div>
       {cfg.visionText && (
@@ -444,7 +426,7 @@ function TaskEditor({
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>
-            DAY {dayNum} · {task.task_date} · {TYPE_LABELS[task.type]}
+            DAY {dayNum} · {task.task_date}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
@@ -457,22 +439,35 @@ function TaskEditor({
             >Delete</button>
           </div>
         </div>
-        <label style={S.label}>PROMPT</label>
-        <textarea style={S.area} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Write the puzzle prompt…" />
-        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-          <button
-            style={{ ...S.btn, ...S.btnGhost }}
-            onClick={async () => { await updateTask(taskId, { prompt }); await reload(); onChanged() }}
-          >Save prompt</button>
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 8 }}>
           <div>
-            <label style={{ ...S.label, display: 'inline', marginRight: 6 }}>Date</label>
+            <label style={S.label}>TYPE (this day)</label>
+            <select
+              style={{ ...S.sel, fontSize: 12 }}
+              value={task.type}
+              onChange={async (e) => {
+                if (assets.length && !confirm('Changing the type may not match the existing candidates in this day. Continue?')) return
+                await updateTask(taskId, { type: e.target.value as SignalTaskType }); await reload(); onChanged()
+              }}
+            >
+              {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={S.label}>DATE</label>
             <input
-              type="date" style={{ ...S.input, width: 140, display: 'inline-block' }}
+              type="date" style={{ ...S.input, width: 140 }}
               value={task.task_date}
               onChange={async (e) => { await updateTask(taskId, { task_date: e.target.value }); await reload(); onChanged() }}
             />
           </div>
         </div>
+        <label style={S.label}>PROMPT</label>
+        <textarea style={S.area} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Write the puzzle prompt…" />
+        <button
+          style={{ ...S.btn, ...S.btnGhost, marginTop: 8 }}
+          onClick={async () => { await updateTask(taskId, { prompt }); await reload(); onChanged() }}
+        >Save prompt</button>
         {task.is_published && selectedCount === 0 && (
           <div style={{ marginTop: 8, fontSize: 11, color: '#E8A020' }}>⚠ Published but no assets selected — members will see nothing.</div>
         )}
@@ -492,7 +487,7 @@ function TaskEditor({
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
             {assets.map((a) => (
-              <AssetCard key={a.id} asset={a} showRole={task.type === 'visual_match'} onChanged={reload} />
+              <AssetCard key={a.id} asset={a} showRole={task.type === 'visual_match' || task.type === 'audio_match'} onChanged={reload} />
             ))}
           </div>
         )}
@@ -503,7 +498,7 @@ function TaskEditor({
 
 // ─── Generator ────────────────────────────────────────────────────────────────
 function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; freqs: CosmoFrequency[]; taskType: SignalTaskType; onGenerated: () => void }) {
-  const audioMode = taskType === 'audio_odd_one'
+  const audioMode = taskType === 'audio_odd_one' || taskType === 'audio_match'
   const [mode, setMode] = useState<'random' | 'pick'>('random')
 
   // shared processing settings
@@ -679,6 +674,20 @@ function ForgePicker({
 
   const pickFirstBand = (f: CosmoFrequency | undefined) =>
     f?.bands.find((x) => (effMedia === 'image' ? x.imageCount > 0 : x.videoCount > 0))?.bandId || f?.bands[0]?.bandId || ''
+
+  // Reconcile selection once the Cosmo catalog is available (it loads async, so
+  // the picker can mount before freqs arrive) and pre-pick a band so Browse is
+  // immediately usable.
+  useEffect(() => {
+    if (!freqs.length) return
+    const valid = channelId && freqs.some((f) => f.channelId === channelId) ? channelId : freqs[0].channelId
+    if (valid !== channelId) setChannelId(valid)
+    if (!bandId) {
+      const f = freqs.find((x) => x.channelId === valid)
+      const b = f?.bands.find((x) => (effMedia === 'image' ? x.imageCount > 0 : x.videoCount > 0))?.bandId || f?.bands[0]?.bandId || ''
+      if (b) setBandId(b)
+    }
+  }, [freqs]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const browse = async () => {
     if (!channelId || !bandId) return

@@ -192,6 +192,7 @@ const TYPE_HINT: Record<string, string> = {
   visual_match: 'Which signal comes from the same world as the reference?',
   visual_odd_one: 'Which signal does not belong to this group?',
   audio_odd_one: 'Which sound does not belong to this group?',
+  audio_match: 'Which sound comes from the same world as the reference?',
 }
 
 function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicSignalTask; canParticipate: boolean; lockReason?: string | null; onFiled: () => void }) {
