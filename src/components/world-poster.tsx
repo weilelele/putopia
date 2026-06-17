@@ -37,6 +37,7 @@ export function WorldPoster({
   minHeight = 190,
   badge,
   hoverBorder = 'rgba(255,255,255,0.28)',
+  orangeMask = false,
 }: {
   world: PosterWorld
   cover?: string | null
@@ -47,6 +48,7 @@ export function WorldPoster({
   minHeight?: number
   badge?: ReactNode
   hoverBorder?: string
+  orangeMask?: boolean
 }) {
   const displayName = world.name_en || world.name
   const bg = cover ?? world.image_path ?? null
@@ -74,8 +76,11 @@ export function WorldPoster({
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
         />
       )}
-      {/* Legibility fade — transparent → warm orange tint → near-black, matches detail page treatment */}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 28%, rgba(160,45,4,0.40) 62%, rgba(12,5,1,0.92) 100%)' }} />
+      {/* Legibility fade — orange variant for Established cards, plain dark for others */}
+      <div style={{ position: 'absolute', inset: 0, background: orangeMask
+        ? 'linear-gradient(to bottom, transparent 15%, rgba(160,45,4,0.45) 45%, rgba(10,4,1,0.96) 65%, rgba(10,4,1,0.98) 100%)'
+        : 'linear-gradient(to bottom, transparent 38%, rgba(0,0,0,0.6) 100%)'
+      }} />
       {badge && <div style={{ position: 'absolute', top: 8, right: 8 }}>{badge}</div>}
 
       <div style={{ position: 'relative', padding: '13px 13px 12px', display: 'flex', flexDirection: 'column', minHeight, boxSizing: 'border-box' }}>

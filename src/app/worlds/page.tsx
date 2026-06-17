@@ -261,6 +261,7 @@ export default async function WorldsPage({
               date={world.discovery_date}
               minHeight={232}
               hoverBorder="rgba(255,107,53,0.45)"
+              orangeMask
             />
           ))}
         </div>
