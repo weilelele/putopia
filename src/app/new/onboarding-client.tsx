@@ -59,6 +59,7 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
   const [emotion, setEmotion]             = useState('')
   const [email, setEmail]                 = useState('')
   const [submitting, setSubmitting]       = useState(false)
+  const [submitError, setSubmitError]     = useState('')
   const [showTransition, setShowTransition] = useState(false)
   const [showConfirm, setShowConfirm]     = useState(false)
   const [awaitClick, setAwaitClick]       = useState(false)
@@ -126,12 +127,13 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     e.preventDefault()
     if (!email) return
     setSubmitting(true)
+    setSubmitError('')
     // Submit to the shared applications table
     const worldText = WORLD_OPTIONS.find(w => w.id === emotion)?.text ?? emotion
     const utm = getFirstTouch()
     const sp  = new URLSearchParams(window.location.search)
     const normalizedEmail = email.trim().toLowerCase()
-    await submitApplication({
+    const result = await submitApplication({
       email:                normalizedEmail,
       reason:               beliefToReason(belief),
       location:             worldText,
@@ -142,8 +144,11 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
       fbclid:               utm.fbclid,
       landing_page_variant: v.key !== 'default' ? v.key : (sp.get('variant') ?? null),
     })
-    // Persist email so returning users skip onboarding and land on the inbox screen
-    localStorage.setItem('putopia_pending_email', normalizedEmail)
+    if (result.error && !result.applicationSaved) {
+      setSubmitError(result.error)
+      setSubmitting(false)
+      return
+    }
     posthog.capture('waitlist_submitted', {
       utm_source:   utm.utm_source   ?? undefined,
       utm_medium:   utm.utm_medium   ?? undefined,
@@ -160,6 +165,16 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     if (typeof window !== 'undefined' && (window as any).fbq) {
       (window as any).fbq('track', 'Lead')
     }
+    if (typeof window !== 'undefined' && (window as any).twq) {
+      (window as any).twq('event', 'tw-rd22u-rd2mg', {})
+    }
+    if (result.error) {
+      setSubmitError(result.error)
+      setSubmitting(false)
+      return
+    }
+    // Persist email so returning users skip onboarding and land on the inbox screen
+    localStorage.setItem('putopia_pending_email', normalizedEmail)
     setShowConfirm(true)
     // Enable click-anywhere to trigger scan after all lines have appeared
     setTimeout(() => setAwaitClick(true), 2400)
@@ -261,6 +276,7 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
                   affirmLine2={v.affirmLine2}
                   invitation={v.ctaInvitation}
                   ctaLabel={v.ctaLabel}
+                  submitError={submitError}
                 />
               )}
 
@@ -470,11 +486,12 @@ function Q2Card({ headline, selected, onSelect }: { headline: string; selected: 
 /* ─────────────────────────────────────────────────────
    CTA CARD — affirmation first, then form staggered in
 ───────────────────────────────────────────────────── */
-function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClick, affirmLine1, affirmLine2, invitation, ctaLabel }: {
+function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClick, affirmLine1, affirmLine2, invitation, ctaLabel, submitError }: {
   email: string; setEmail: (v: string) => void
   submitting: boolean; onSubmit: (e: React.FormEvent) => void
   showConfirm: boolean; awaitClick: boolean
   affirmLine1: string; affirmLine2: string; invitation: string; ctaLabel: string
+  submitError: string
 }) {
   const [showSecondLine, setShowSecondLine] = useState(false)
   const [showForm, setShowForm]             = useState(false)
@@ -576,6 +593,20 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
               />
             </HudField>
           </div>
+
+          {submitError && (
+            <div style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              color: 'var(--color-fault)',
+              border: '1px solid rgba(232,48,48,0.3)',
+              background: 'rgba(232,48,48,0.08)',
+              padding: '0.7rem 0.8rem',
+              lineHeight: 1.5,
+            }}>
+              {submitError}
+            </div>
+          )}
 
           {/* CTA button */}
           <button

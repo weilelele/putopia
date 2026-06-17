@@ -77,6 +77,7 @@ export default function RegisterPage() {
         role: 'applicant',
         observation_days: 0,
         worlds_discovered: 0,
+        email: user.email?.toLowerCase() ?? null,
         registered_at: new Date().toISOString(),
       }, { onConflict: 'id' })
       if (user.email) {
