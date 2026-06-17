@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getAllWorlds, getPipelineWorlds } from '@/lib/actions/worlds'
 import { getTuningCovers } from '@/lib/actions/signal-tasks'
 import { SectionTracker } from '@/components/section-tracker'
+import { WorldPoster } from '@/components/world-poster'
 import type { WorldLifecycle } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -73,49 +74,10 @@ function SectionHeader({
   )
 }
 
-// ─── Pipeline card (compact — used for Raw Imagination + World Building) ──────
-
-function PipelineCard({ world, accentColor, cover }: { world: Awaited<ReturnType<typeof getPipelineWorlds>>[number]; accentColor: string; cover?: string }) {
-  const displayName = world.name_en || world.name
-  // Cover priority (doc 4.2.1): live tuning cover → uploaded world image → gradient
-  const coverImg = cover || world.image_path || null
-  return (
-    <a
-      href={`/worlds/${encodeURIComponent(world.id)}`}
-      className="pipeline-card"
-      style={{
-        display: 'block', textDecoration: 'none',
-        background: 'var(--bg-panel)',
-        border: `1px solid ${accentColor}22`,
-        overflow: 'hidden',
-        transition: 'border-color 0.2s',
-        // CSS custom property for hover color
-        ['--card-hover-border' as string]: `${accentColor}55`,
-      }}
-    >
-      {/* Cover — live tuning image / uploaded image, else gradient strip */}
-      <div style={{ width: '100%', height: 72, background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})`, position: 'relative', overflow: 'hidden' }}>
-        {coverImg && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={coverImg} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        )}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)' }} />
-        <div style={{ position: 'absolute', top: 7, right: 7 }}>
-          <LifecycleBadge state={world.lifecycle_state} />
-        </div>
-      </div>
-      <div style={{ padding: '0.5rem 0.75rem 0.625rem' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 600, color: 'var(--color-star)', marginBottom: 2, letterSpacing: '0.03em' }}>
-          {displayName}
-        </div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-star-deep)', letterSpacing: '0.04em' }}>
-          {world.submitted_at
-            ? new Date(world.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            : '—'}
-        </div>
-      </div>
-    </a>
-  )
+function formatSubmitted(submitted_at: string | null) {
+  return submitted_at
+    ? new Date(submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : '—'
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -140,12 +102,6 @@ export default async function WorldsPage({
 
   return (
     <div className="main">
-      <style>{`
-        .pipeline-card:hover { border-color: var(--card-hover-border) !important; }
-        .world-archive-card:hover { border-color: rgba(255,107,53,0.4) !important; }
-        .world-archive-card:hover .world-archive-img { transform: scale(1.04); }
-        .world-archive-img { transition: transform 0.5s; }
-      `}</style>
       <SectionTracker section="worlds" />
 
       {/* ── Top bar ── */}
@@ -253,7 +209,12 @@ export default async function WorldsPage({
           />
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {rawImagination.map((world) => (
-              <PipelineCard key={world.id} world={world} accentColor="#E8A020" />
+              <WorldPoster
+                key={world.id}
+                world={world}
+                eyebrow="◌ INITIAL VISION"
+                date={formatSubmitted(world.submitted_at)}
+              />
             ))}
           </div>
         </section>
@@ -269,7 +230,15 @@ export default async function WorldsPage({
           />
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {worldBuilding.map((world) => (
-              <PipelineCard key={world.id} world={world} accentColor="#20D890" cover={covers[world.id]} />
+              <WorldPoster
+                key={world.id}
+                world={world}
+                cover={covers[world.id]}
+                eyebrow={world.id}
+                date={formatSubmitted(world.submitted_at)}
+                badge={<LifecycleBadge state={world.lifecycle_state} />}
+                hoverBorder="rgba(32,216,144,0.5)"
+              />
             ))}
           </div>
         </section>
@@ -284,79 +253,16 @@ export default async function WorldsPage({
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {worlds.map((world) => {
-            const hasImage  = !!world.image_path
-            const displayName = world.name_en || world.name
-
-            return (
-              <a
-                key={world.id}
-                href={`/worlds/${encodeURIComponent(world.id)}`}
-                className="world-archive-card"
-                style={{
-                  display: 'block', textDecoration: 'none',
-                  background: 'var(--bg-card)',
-                  border: '1px solid rgba(255,107,53,0.16)',
-                  boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
-                  overflow: 'hidden',
-                  transition: 'border-color 0.2s',
-                }}
-              >
-                {/* Hero */}
-                <div className="h-52 relative overflow-hidden">
-                  {hasImage ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={world.image_path!}
-                        alt={world.name}
-                        className="w-full h-full object-cover world-archive-img"
-                        style={{ transition: 'transform 0.5s' }}
-                      />
-                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(17,21,37,0.9) 100%)' }} />
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
-                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(17,21,37,0.85) 100%)' }} />
-                      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px)' }} />
-                    </>
-                  )}
-                  <div className="absolute top-2 left-2">
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.1em', background: 'rgba(7,9,18,0.72)', color: 'var(--color-star-deep)', padding: '2px 7px', border: '1px solid var(--bd-faint)' }}>
-                      {world.id}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div style={{ padding: '0.75rem' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: 'var(--color-star)', marginBottom: 4, letterSpacing: '0.02em' }}>
-                    {displayName}
-                  </div>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', lineHeight: 1.6, color: 'var(--color-star-dim)', marginBottom: '0.75rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {world.description}
-                  </p>
-                  <div style={{ paddingTop: '0.5rem', borderTop: '1px solid rgba(255,107,53,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <div style={{ minWidth: 0 }}>
-                      {world.discoverer_id ? (
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-star-dim)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {world.discoverer_name}
-                        </span>
-                      ) : world.discoverer_name ? (
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-star-dim)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {world.discoverer_name}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-star-deep)', flexShrink: 0 }}>
-                      {world.discovery_date}
-                    </div>
-                  </div>
-                </div>
-              </a>
-            )
-          })}
+          {worlds.map((world) => (
+            <WorldPoster
+              key={world.id}
+              world={world}
+              eyebrow={world.id}
+              date={world.discovery_date}
+              minHeight={232}
+              hoverBorder="rgba(255,107,53,0.45)"
+            />
+          ))}
         </div>
       </section>
 

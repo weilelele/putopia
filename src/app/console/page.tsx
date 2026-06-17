@@ -19,6 +19,7 @@ import type { ExperimentGroup } from '@/lib/actions/experiment'
 import { ActivityFeed } from '@/components/activity-feed'
 import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
+import { WorldPoster } from '@/components/world-poster'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
 import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/types/database'
@@ -434,44 +435,15 @@ function IntelPreviewCard({ entry, commentCount }: { entry: IntelWithAvatar; com
 
 /* ─── World Preview Card ─────────────────────────────────── */
 function WorldPreviewCard({ world }: { world: World }) {
-  const hasImage = !!world.image_path
-  const displayName = world.name_en || world.name
-  const showAltName = false
-
   return (
-    <Link href={`/worlds/${encodeURIComponent(world.id)}`} style={{ display: 'block', overflow: 'hidden', textDecoration: 'none' }}>
-      {/* Gradient / image header */}
-      <div style={{ height: 110, position: 'relative', overflow: 'hidden' }}>
-        {hasImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={world.image_path!} alt={world.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.4s ease' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
-        )}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(17,21,37,0.85) 100%)' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px)', opacity: 0.3 }} />
-        <span style={{ position: 'absolute', top: 6, left: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', background: 'rgba(7,9,18,0.7)', padding: '1px 5px' }}>
-          {world.id}
-        </span>
-        <span style={{ position: 'absolute', bottom: 8, right: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'rgba(232,160,32,0.8)' }}>
-          VIEW →
-        </span>
-      </div>
-
-      {/* Info */}
-      <div style={{ padding: '0.65rem 0.75rem', background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', borderTop: 'none' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: '#F5F5F5', marginBottom: 6 }}>
-          {displayName}
-        </div>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {world.description}
-        </p>
-        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid rgba(255,107,53,0.16)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)' }}>{world.discoverer_name}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>{world.discovery_date}</span>
-        </div>
-      </div>
-    </Link>
+    <WorldPoster
+      world={world}
+      eyebrow={world.id}
+      date={world.discovery_date}
+      minHeight={184}
+      descLines={2}
+      hoverBorder="rgba(255,107,53,0.45)"
+    />
   )
 }
 

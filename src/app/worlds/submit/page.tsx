@@ -6,14 +6,16 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { submitWorld } from '@/lib/actions/worlds'
 
-// Gradient presets the user can choose from
+// Atmosphere tones — the chosen color becomes the whole world card's mood.
+// Kept deep enough for white text to read, but with real hue so cards don't
+// vanish into the page background (which the old near-black presets did).
 const GRADIENT_PRESETS = [
-  { label: 'VOID',     from: '#0a0e27', to: '#1a1040' },
-  { label: 'EMBER',    from: '#2d1200', to: '#5c2800' },
-  { label: 'TIDE',     from: '#0a1628', to: '#0d3050' },
-  { label: 'GROVE',    from: '#0d1f0d', to: '#1a3520' },
-  { label: 'DUSK',     from: '#1a0a2e', to: '#3d1060' },
-  { label: 'ASH',      from: '#1c1c1c', to: '#3a3a3a' },
+  { label: 'VOID',   from: '#0E1138', to: '#2E2E8A' },
+  { label: 'EMBER',  from: '#2A0810', to: '#7A1226' },
+  { label: 'TIDE',   from: '#080F1E', to: '#1A4A7A' },
+  { label: 'GROVE',  from: '#0A2412', to: '#1E6B34' },
+  { label: 'DUSK',   from: '#1A0A28', to: '#4E1E7A' },
+  { label: 'ASH',    from: '#161616', to: '#4A4A4A' },
 ]
 
 function GradientPreview({ from, to }: { from: string; to: string }) {
@@ -210,8 +212,8 @@ export default function SubmitWorldPage() {
             {/* Gradient selector */}
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(245,245,245,0.45)', marginBottom: '0.75rem' }}>
-                WORLD SIGNATURE
-                <span style={{ marginLeft: '1rem', color: 'rgba(245,245,245,0.25)', letterSpacing: '0.1em' }}>visual tone</span>
+                ATMOSPHERE
+                <span style={{ marginLeft: '1rem', color: 'rgba(245,245,245,0.25)', letterSpacing: '0.1em' }}>mood tone</span>
               </label>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {GRADIENT_PRESETS.map((preset) => {
