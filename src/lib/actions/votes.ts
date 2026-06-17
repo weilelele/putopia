@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { Vote, UserRole, VoteInsert, VoteResponseInsert } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
@@ -19,35 +19,54 @@ function normalizeScope(scope: unknown): UserRole[] {
 }
 
 // All votes visible to everyone (scope controls who can participate, not who can view)
-export async function getAllVotes(): Promise<Vote[]> {
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('votes')
-    .select('*')
-    .order('created_at', { ascending: false })
+// Cached 30 s — the vote list is identical for every viewer and loads on the console.
+const getAllVotesCached = unstable_cache(
+  async (): Promise<Vote[]> => {
+    const supabase = createAdminClient()
+    const { data } = await supabase
+      .from('votes')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-  return (data ?? []).map((v) => ({ ...v, scope: normalizeScope(v.scope) })) as Vote[]
+    return (data ?? []).map((v) => ({ ...v, scope: normalizeScope(v.scope) })) as Vote[]
+  },
+  ['all-votes'],
+  { revalidate: 30 },
+)
+
+export async function getAllVotes(): Promise<Vote[]> {
+  return getAllVotesCached()
 }
 
-// Returns { [voteId]: { [optionId]: count } } for all provided vote IDs
+// Returns { [voteId]: { [optionId]: count } } for all provided vote IDs.
+// Cached 20 s and keyed by the voteIds argument; tallies move slowly enough that
+// a short window is invisible to users but removes a per-load DB hit.
+const getVoteResultsBulkCached = unstable_cache(
+  async (voteIds: string[]): Promise<Record<string, Record<string, number>>> => {
+    const supabase = createAdminClient()
+    const { data } = await supabase
+      .from('vote_responses')
+      .select('vote_id, selected_options')
+      .in('vote_id', voteIds)
+
+    if (!data) return {}
+
+    const tallies: Record<string, Record<string, number>> = {}
+    for (const row of data) {
+      if (!tallies[row.vote_id]) tallies[row.vote_id] = {}
+      for (const optId of (row.selected_options as string[])) {
+        tallies[row.vote_id][optId] = (tallies[row.vote_id][optId] ?? 0) + 1
+      }
+    }
+    return tallies
+  },
+  ['vote-results-bulk'],
+  { revalidate: 20 },
+)
+
 export async function getVoteResultsBulk(voteIds: string[]): Promise<Record<string, Record<string, number>>> {
   if (voteIds.length === 0) return {}
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('vote_responses')
-    .select('vote_id, selected_options')
-    .in('vote_id', voteIds)
-
-  if (!data) return {}
-
-  const tallies: Record<string, Record<string, number>> = {}
-  for (const row of data) {
-    if (!tallies[row.vote_id]) tallies[row.vote_id] = {}
-    for (const optId of (row.selected_options as string[])) {
-      tallies[row.vote_id][optId] = (tallies[row.vote_id][optId] ?? 0) + 1
-    }
-  }
-  return tallies
+  return getVoteResultsBulkCached(voteIds)
 }
 
 export async function createVote(vote: VoteInsert) {

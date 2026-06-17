@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
 import type {
   OnboardingVariantRow,
@@ -8,18 +8,36 @@ import type {
   OnboardingVariantUpdate,
 } from '@/types/database'
 
+const ONBOARDING_VARIANTS_TAG = 'onboarding-variants'
+
 function revalidate() {
   revalidatePath('/new')
   revalidatePath('/admin/onboarding-preview')
+  // Drop the cached variant copy immediately so admin edits show on the next
+  // ad click rather than waiting out the time window. Two-arg form: the bare
+  // revalidateTag(tag) is deprecated in this Next.js version.
+  revalidateTag(ONBOARDING_VARIANTS_TAG, 'max')
 }
 
+// The /new ad landing page reads this on every (dynamic) request. Cache it so a
+// Meta-ad traffic spike doesn't hit the DB per click — the prior uncached call
+// on a cold serverless start was the white-screen cause. 30 s window + tag-based
+// invalidation above keeps admin edits prompt.
+const getOnboardingVariantsCached = unstable_cache(
+  async () => {
+    const admin = createAdminClient()
+    const { data } = await admin
+      .from('onboarding_variants')
+      .select('*')
+      .order('sort_order', { ascending: true })
+    return (data ?? []) as unknown as OnboardingVariantRow[]
+  },
+  ['onboarding-variants'],
+  { revalidate: 30, tags: [ONBOARDING_VARIANTS_TAG] },
+)
+
 export async function getOnboardingVariants(): Promise<OnboardingVariantRow[]> {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('onboarding_variants')
-    .select('*')
-    .order('sort_order', { ascending: true })
-  return (data ?? []) as unknown as OnboardingVariantRow[]
+  return getOnboardingVariantsCached()
 }
 
 export async function createOnboardingVariant(row: OnboardingVariantInsert) {

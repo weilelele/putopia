@@ -1,36 +1,48 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { IntelInsert, IntelUpdate } from '@/types/database'
 import { logActivity } from './activity-events'
 
 // Public intel (unclassified) — accessible to all including guests.
 // Enriched with publisher_avatar_url so cards can show the author avatar.
+//
+// Reads only classified=false rows, so it uses the admin client (no per-user
+// data) and is cached 60 s — both required to run inside unstable_cache, which
+// forbids cookie access. Cuts 2 DB queries off every console load.
+const getPublicIntelCached = unstable_cache(
+  async () => {
+    const admin = createAdminClient()
+    const { data: items } = await admin
+      .from('intel')
+      .select('*')
+      .eq('classified', false)
+      .order('timestamp', { ascending: false })
+
+    if (!items?.length) return []
+
+    const publisherIds = [...new Set(items.filter(i => i.publisher_id).map(i => i.publisher_id!))]
+    const avatarMap: Record<string, string | null> = {}
+    if (publisherIds.length) {
+      const { data: profiles } = await admin
+        .from('voyager_profiles')
+        .select('id, avatar_url')
+        .in('id', publisherIds)
+      profiles?.forEach(p => { avatarMap[p.id] = p.avatar_url })
+    }
+
+    return items.map(i => ({
+      ...i,
+      publisher_avatar_url: i.publisher_id ? (avatarMap[i.publisher_id] ?? null) : null,
+    }))
+  },
+  ['public-intel'],
+  { revalidate: 60 },
+)
+
 export async function getPublicIntel() {
-  const supabase = await createClient()
-  const { data: items } = await supabase
-    .from('intel')
-    .select('*')
-    .eq('classified', false)
-    .order('timestamp', { ascending: false })
-
-  if (!items?.length) return []
-
-  const publisherIds = [...new Set(items.filter(i => i.publisher_id).map(i => i.publisher_id!))]
-  const avatarMap: Record<string, string | null> = {}
-  if (publisherIds.length) {
-    const { data: profiles } = await supabase
-      .from('voyager_profiles')
-      .select('id, avatar_url')
-      .in('id', publisherIds)
-    profiles?.forEach(p => { avatarMap[p.id] = p.avatar_url })
-  }
-
-  return items.map(i => ({
-    ...i,
-    publisher_avatar_url: i.publisher_id ? (avatarMap[i.publisher_id] ?? null) : null,
-  }))
+  return getPublicIntelCached()
 }
 
 // All intel visible to current user — RLS controls classified access

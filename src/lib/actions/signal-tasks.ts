@@ -15,7 +15,8 @@ import { listFrequencies as cosmoListFrequencies, sampleBandAssets, getBandAsset
 import type { CosmoFrequency } from '@/lib/cosmo'
 import { processImageAsset, uploadProcessed, DEFAULT_CROP } from '@/lib/signal/process'
 import type { CropConfig } from '@/lib/signal/process'
-import type { WorldVoteScope } from '@/types/database'
+import type { WorldVoteScope, WorldLifecycle, WorldStage } from '@/types/database'
+import { worldStage } from '@/types/database'
 import { renderVideoClip, extractAudioClip } from '@/lib/signal/av'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,7 +24,7 @@ type DB = any
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
-export type SignalTaskType = 'visual_match' | 'visual_odd_one' | 'audio_odd_one'
+export type SignalTaskType = 'visual_match' | 'visual_odd_one' | 'audio_odd_one' | 'audio_match'
 export type SignalMedia = 'image' | 'video' | 'audio'
 
 export interface SignalTask {
@@ -190,7 +191,7 @@ export async function setTaskPublished(
 
 export async function updateTask(
   taskId: string,
-  patch: { prompt?: string; task_date?: string; sort_order?: number },
+  patch: { prompt?: string; task_date?: string; sort_order?: number; type?: SignalTaskType },
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = createAdminClient() as DB
   const { error } = await supabase.from('signal_tasks').update(patch).eq('id', taskId)
@@ -306,7 +307,7 @@ export async function generateCandidates(
     .select('type')
     .eq('id', taskId)
     .single()
-  const audioMode = task?.type === 'audio_odd_one'
+  const audioMode = task?.type === 'audio_odd_one' || task?.type === 'audio_match'
 
   for (const src of sources) {
     const cosmoMedia = audioMode || src.media === 'video' ? 'video' : 'image'
@@ -373,7 +374,7 @@ export async function pullForgeAssets(
   let created = 0
 
   const { data: task } = await supabase.from('signal_tasks').select('type').eq('id', taskId).single()
-  const audioMode = task?.type === 'audio_odd_one'
+  const audioMode = task?.type === 'audio_odd_one' || task?.type === 'audio_match'
   const cosmoMedia = audioMode || src.media === 'video' ? 'video' : 'image'
 
   let all
@@ -787,7 +788,6 @@ export async function listTunableWorlds(): Promise<TunableWorld[]> {
  *  thread, set the owner vote scope, and advance the world to the tuning stage. */
 export async function promoteWorldToTuning(input: {
   worldId: string
-  type: SignalTaskType
   voteScope?: WorldVoteScope
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
   const me = await currentUser()
@@ -800,9 +800,10 @@ export async function promoteWorldToTuning(input: {
   const { data: existing } = await admin.from('signal_threads').select('id').eq('world_id', input.worldId).maybeSingle()
   if (existing) return { ok: false, error: 'This world is already in Signal Tuning' }
 
+  // thread.type is only a default template for new days — each day picks its own.
   const { data, error } = await admin
     .from('signal_threads')
-    .insert({ type: input.type, world_id: input.worldId, created_by: me.id })
+    .insert({ type: 'visual_odd_one', world_id: input.worldId, created_by: me.id })
     .select('id')
     .single()
   if (error || !data) return { ok: false, error: error?.message }
@@ -821,7 +822,6 @@ export async function promoteWorldToTuning(input: {
 export async function createWorldForTuning(input: {
   name: string
   description?: string
-  type: SignalTaskType
   voteScope?: WorldVoteScope
 }): Promise<{ ok: boolean; id?: string; worldId?: string; error?: string }> {
   const me = await currentUser()
@@ -855,7 +855,7 @@ export async function createWorldForTuning(input: {
 
   const { data, error } = await admin
     .from('signal_threads')
-    .insert({ type: input.type, world_id: worldId, created_by: me.id })
+    .insert({ type: 'visual_odd_one', world_id: worldId, created_by: me.id })
     .select('id')
     .single()
   if (error || !data) return { ok: false, error: error?.message }
@@ -870,17 +870,16 @@ export interface InvestigationConfig {
   worldId: string | null
   title: string
   visionText: string | null
-  type: SignalTaskType
   voteScope: WorldVoteScope
-  phase: 'image' | 'video' | 'audio'
 }
 
-/** Full config for one investigation — world identity + owner/phase settings. */
+/** Full config for one investigation — world identity + owner vote scope.
+ *  (Type is now per-day, not per-world; media phase is retired.) */
 export async function getInvestigationConfig(threadId: string): Promise<InvestigationConfig | null> {
   const admin = createAdminClient() as DB
   const { data: thread } = await admin
     .from('signal_threads')
-    .select('id, title, type, world_id, phase')
+    .select('id, title, world_id')
     .eq('id', threadId)
     .maybeSingle()
   if (!thread) return null
@@ -901,30 +900,18 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
     }
   }
 
-  return {
-    threadId: thread.id,
-    worldId: thread.world_id,
-    title,
-    visionText,
-    type: thread.type,
-    voteScope,
-    phase: (thread.phase as 'image' | 'video' | 'audio') ?? 'image',
-  }
+  return { threadId: thread.id, worldId: thread.world_id, title, visionText, voteScope }
 }
 
-/** Update owner vote scope (on the world) and/or the media phase (on the thread). */
+/** Update the owner vote scope on the world. */
 export async function updateInvestigationConfig(
   threadId: string,
-  patch: { voteScope?: WorldVoteScope; phase?: 'image' | 'video' | 'audio' },
+  patch: { voteScope?: WorldVoteScope },
 ): Promise<{ ok: boolean; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
   const admin = createAdminClient() as DB
 
-  if (patch.phase) {
-    const { error } = await admin.from('signal_threads').update({ phase: patch.phase }).eq('id', threadId)
-    if (error) return { ok: false, error: error.message }
-  }
   if (patch.voteScope) {
     const { data: thread } = await admin.from('signal_threads').select('world_id').eq('id', threadId).maybeSingle()
     if (thread?.world_id) {
@@ -938,6 +925,7 @@ export async function updateInvestigationConfig(
 /** Add the next day to an investigation — creates a draft task (day_index auto-increments). */
 export async function addDayToInvestigation(
   threadId: string,
+  type?: SignalTaskType,
 ): Promise<{ ok: boolean; id?: string; dayIndex?: number; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
@@ -950,20 +938,22 @@ export async function addDayToInvestigation(
     .single()
   if (!thread) return { ok: false, error: 'Investigation not found' }
 
+  // Carry the latest day's type forward (continuity); admin can change it after.
   const { data: latest } = await admin
     .from('signal_tasks')
-    .select('day_index')
+    .select('day_index, type')
     .eq('thread_id', threadId)
     .order('day_index', { ascending: false })
     .limit(1)
     .maybeSingle()
 
   const nextDayIndex = (latest?.day_index ?? -1) + 1
+  const nextType = type ?? latest?.type ?? thread.type ?? 'visual_odd_one'
 
   const { data, error } = await admin
     .from('signal_tasks')
     .insert({
-      type: thread.type,
+      type: nextType,
       task_date: todayStr(),
       is_published: false,
       thread_id: threadId,
@@ -1245,4 +1235,56 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
     role,
     loggedIn: !!me,
   }
+}
+
+// ─── Console dashboard board (doc 4.1) ────────────────────────────────────────
+
+export interface DispatchDashboard {
+  awaitingYou: number   // published days this viewer may vote on and hasn't
+  inTuning: number      // total published signals across worlds in tuning
+  yourWorlds: { id: string; name: string; stage: WorldStage }[]
+}
+
+/** Stats for the home-page Signal Dispatch board. Null for guests. */
+export async function getDispatchDashboard(): Promise<DispatchDashboard | null> {
+  const me = await currentUser()
+  if (!me) return null
+  const admin = createAdminClient() as DB
+
+  const { data: pubTasks } = await admin
+    .from('signal_tasks')
+    .select('id, thread_id')
+    .eq('is_published', true)
+    .not('thread_id', 'is', null)
+  const tasks = (pubTasks ?? []) as { id: string; thread_id: string }[]
+  const inTuning = tasks.length
+
+  const threadIds = [...new Set(tasks.map((t) => t.thread_id))]
+  const threadWorld = new Map<string, string | null>()
+  if (threadIds.length) {
+    const { data: threads } = await admin.from('signal_threads').select('id, world_id').in('id', threadIds)
+    for (const t of (threads ?? []) as { id: string; world_id: string | null }[]) threadWorld.set(t.id, t.world_id)
+  }
+  const meta = await worldMetaMap(admin, [...threadWorld.values()])
+
+  const { data: resp } = await admin.from('signal_responses').select('task_id').eq('user_id', me.id)
+  const responded = new Set(((resp ?? []) as { task_id: string }[]).map((r) => r.task_id))
+
+  let awaitingYou = 0
+  for (const t of tasks) {
+    if (responded.has(t.id)) continue
+    const wid = threadWorld.get(t.thread_id) ?? null
+    const wm = wid ? meta.get(wid) : undefined
+    if (eligibleToVote(me.role, me.id, wm?.vote_scope ?? 'all', wm?.discoverer_id ?? null)) awaitingYou++
+  }
+
+  const { data: mine } = await admin
+    .from('worlds')
+    .select('id, name, lifecycle_state')
+    .eq('discoverer_id', me.id)
+    .order('created_at', { ascending: false })
+  const yourWorlds = ((mine ?? []) as { id: string; name: string; lifecycle_state: WorldLifecycle }[])
+    .map((w) => ({ id: w.id, name: w.name, stage: worldStage(w.lifecycle_state) }))
+
+  return { awaitingYou, inTuning, yourWorlds }
 }

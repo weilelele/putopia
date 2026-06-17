@@ -1,19 +1,28 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { DeviceInsert, DeviceUpdate } from '@/types/database'
 import { logActivity } from './activity-events'
 
-export async function getAllDevices() {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('devices')
-    .select('*')
-    .order('knowledge', { ascending: false })
-    .order('id')
+// Public device registry — same for every visitor. Cached 60 s to spare the DB
+// on the console (highest-traffic page); admin edits self-heal within the window.
+const getAllDevicesCached = unstable_cache(
+  async () => {
+    const admin = createAdminClient()
+    const { data } = await admin
+      .from('devices')
+      .select('*')
+      .order('knowledge', { ascending: false })
+      .order('id')
+    return data ?? []
+  },
+  ['all-devices'],
+  { revalidate: 60 },
+)
 
-  return data ?? []
+export async function getAllDevices() {
+  return getAllDevicesCached()
 }
 
 export async function getDeviceById(id: string) {

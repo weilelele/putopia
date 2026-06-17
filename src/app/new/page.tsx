@@ -1,8 +1,9 @@
 import { getOnboardingVariants } from '@/lib/actions/onboarding-variants'
 import OnboardingClient from './onboarding-client'
 
-// Personalized funnel page — always read the latest variant copy from the DB
-// (so admin edits show up immediately, no stale cache).
+// Keep this route dynamic (no build-time prerender / DB dependency). The
+// white-screen-on-ad-click problem is solved by loading.tsx (instant paint) +
+// caching getOnboardingVariants itself (so the DB isn't hit on every click).
 export const dynamic = 'force-dynamic'
 
 export default async function NewPage() {

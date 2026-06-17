@@ -22,12 +22,13 @@ import { SectionTracker } from '@/components/section-tracker'
 import { WorldPoster } from '@/components/world-poster'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
+import { PathStatusBar } from '@/components/path-status-bar'
 import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/types/database'
 import type { ActivityEvent } from '@/lib/actions/activity-events'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
-const SALES_OPEN = false
+const SALES_OPEN = true
 
 const STATUS_STYLES = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
@@ -222,11 +223,9 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
   const direct = group === 'direct'
   const accent = direct ? '#FF6B35' : '#E8A020'
   const soft   = direct ? 'rgba(255,107,53,' : 'rgba(232,160,32,'   // append "<a>)"
-  const badge   = direct ? 'ACTIVATE' : 'RECRUITING'
   const eyebrow = direct ? 'VOYAGER INITIATION' : 'VOYAGER RECRUITMENT'
   const title   = direct ? 'INITIAL VOYAGER PACK' : 'EARN YOUR STATUS'
-  const chip    = direct ? '$12' : '2 TASKS'
-  const cta      = direct ? 'ACTIVATE VOYAGER STATUS' : 'ACTIVATE WATCH STATUS'
+  const cta     = 'ACTIVATE'
   const href    = direct ? '/voyager-pack' : '/voyager-path'
 
   return (
@@ -254,7 +253,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
           src="/voyager-pack/voyager-hero.png"
           alt={title}
           style={{
-            width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 40%',
+            width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 66%',
             filter: direct
               ? 'saturate(0.9) brightness(0.74)'
               : 'saturate(0.6) brightness(0.72) sepia(0.35) hue-rotate(-18deg)',
@@ -275,18 +274,18 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
       {/* Info — eyebrow / title / CTA */}
       <div style={{ padding: '0.7rem 0.9rem 0.9rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: accent, letterSpacing: '0.15em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: accent, letterSpacing: '0.15em' }}>
             {eyebrow}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, color: 'var(--color-star)' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'clamp(1rem, 3.5vw, 1.15rem)', fontWeight: 700, color: 'var(--color-star)', letterSpacing: '0.06em', lineHeight: 1.2 }}>
             {title}
           </div>
         </div>
 
         <div style={{
           textAlign: 'center',
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.18em',
-          color: '#070912', background: accent, padding: '0.5rem',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, letterSpacing: '0.22em',
+          color: '#070912', background: accent, padding: '0.6rem',
         }}>
           [ {cta} ]
         </div>
@@ -667,135 +666,6 @@ function DeviceBarIcon({ size = 16, color = 'currentColor' }: { size?: number; c
 }
 
 /* ─── Path status bar — avatar · identity · device (entry to the Path) ── */
-function PathStatusBar({
-  user, onDeviceClick,
-}: {
-  user: { role: string; name?: string; email?: string; avatarUrl?: string | null }
-  onDeviceClick: () => void
-}) {
-  const isApplicant = user.role === 'applicant'
-  const isArchitect = user.role === 'architect'
-
-  // Identity accent
-  const idColor = isApplicant ? '#E8A020' : isArchitect ? '#FF6B35' : '#FFB07A'
-  const idLabel = isApplicant ? 'APPLICANT' : isArchitect ? 'ARCHITECT' : 'VOYAGER'
-
-  // Profile-completion nudge: a Voyager who hasn't set an avatar yet.
-  const showNudge = user.role === 'voyager' && !user.avatarUrl
-
-  const name = user.name || user.email?.split('@')[0] || 'Voyager'
-  const initials = name.slice(0, 2).toUpperCase()
-
-  // Device ownership (no claim flow yet → always false / gray logo).
-  const hasDevice = false
-
-  const cell: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-    padding: '11px 18px', textDecoration: 'none',
-    fontFamily: 'var(--font-mono)', cursor: 'pointer',
-    background: 'transparent', border: 'none',
-    transition: 'background 0.15s',
-  }
-  const divider = <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,107,53,0.14)' }} />
-
-  return (
-    <div className="hud-frame hud-frame--orange" style={{
-      width: '100%', maxWidth: 560, margin: '0 auto',
-      display: 'flex', alignItems: 'stretch',
-      padding: 0, background: 'var(--color-void)',
-    }}>
-      {/* ── Avatar → /profile ── */}
-      <Link
-        href="/profile"
-        title="Edit your profile"
-        style={{ ...cell, flex: '0 0 auto' }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-      >
-        <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-          {user.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatarUrl} alt={name} style={{
-              width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', display: 'block',
-              border: '1.5px solid rgba(255,138,92,0.4)',
-            }} />
-          ) : (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 32, height: 32, borderRadius: '50%',
-              border: `1.5px solid ${idColor}66`, background: '#0A0D1A',
-              fontSize: 12, fontWeight: 700, color: idColor, letterSpacing: '0.02em',
-            }}>
-              {initials}
-            </span>
-          )}
-          {showNudge && (
-            <span style={{
-              position: 'absolute', top: -2, right: -2,
-              width: 9, height: 9, borderRadius: '50%',
-              background: '#E83030', border: '1.5px solid var(--color-void)',
-              boxShadow: '0 0 6px rgba(232,48,48,0.8)',
-              animation: 'pathbar-pulse 1.8s ease-in-out infinite',
-            }} />
-          )}
-        </span>
-      </Link>
-
-      {divider}
-
-      {/* ── Identity → Path page ── */}
-      <Link
-        href="/voyager-path"
-        title="View your path"
-        style={{ ...cell, flex: 1 }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-      >
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
-        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.2 }}>
-          <span style={{ fontSize: 12, color: idColor, letterSpacing: '0.18em', fontWeight: 700 }}>
-            {idLabel}
-          </span>
-          <span style={{ fontSize: 8.5, color: 'var(--color-star-dim)', letterSpacing: '0.14em', marginTop: 3 }}>
-            VIEW YOUR PATH
-          </span>
-        </span>
-      </Link>
-
-      {divider}
-
-      {/* ── Device status → popup (brand logo, gray=none / green=owned) ── */}
-      <button
-        onClick={onDeviceClick}
-        title={hasDevice ? 'Device active' : 'No device assigned'}
-        style={{ ...cell, flex: '0 0 auto' }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-      >
-        <span
-          aria-label={hasDevice ? 'Device active' : 'No device'}
-          style={{
-            display: 'inline-block', width: 32, height: 19, flexShrink: 0,
-            background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.32)',
-            WebkitMaskImage: 'url(/assets/vi-icon.png)',
-            maskImage: 'url(/assets/vi-icon.png)',
-            WebkitMaskSize: 'contain', maskSize: 'contain',
-            WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-            WebkitMaskPosition: 'center', maskPosition: 'center',
-            filter: hasDevice ? 'drop-shadow(0 0 5px rgba(32,216,144,0.5))' : 'none',
-          }}
-        />
-      </button>
-
-      <style>{`
-        @keyframes pathbar-pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50%       { transform: scale(1.25); opacity: 0.7; }
-        }
-      `}</style>
-    </div>
-  )
-}
 
 /* ─── Auth Hero — Welcome Voyager (voyager+) / status-led (applicant) ──── */
 function AuthHero({ user, activityEvents }: {
