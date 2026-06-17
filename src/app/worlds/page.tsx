@@ -188,20 +188,20 @@ export default async function WorldsPage({
         boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
       }}>
         {[
-          { val: rawImagination.length, label: 'INITIAL VISION', color: 'var(--color-warn)' },
-          { val: worldBuilding.length,  label: 'SIGNAL TUNING',  color: 'var(--color-ok)'  },
-          { val: worlds.length,   label: 'ESTABLISHED',   color: 'var(--color-nucleus)' },
-        ].map(({ val, label, color }) => (
-          <div key={label}>
+          { val: rawImagination.length, label: 'INITIAL VISION', color: 'var(--color-warn)',    anchor: '#section-initial-vision' },
+          { val: worldBuilding.length,  label: 'SIGNAL TUNING',  color: 'var(--color-ok)',      anchor: '#section-signal-tuning'  },
+          { val: worlds.length,         label: 'ESTABLISHED',    color: 'var(--color-nucleus)', anchor: '#section-established'    },
+        ].map(({ val, label, color, anchor }) => (
+          <a key={label} href={anchor} style={{ textDecoration: 'none', cursor: 'pointer' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color, lineHeight: 1 }}>{val}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-star-deep)', letterSpacing: '0.12em', marginTop: 3 }}>{label}</div>
-          </div>
+          </a>
         ))}
       </div>
 
       {/* ── INITIAL VISION — proposed worlds (Stage 1) ── */}
       {rawImagination.length > 0 && (
-        <section style={{ marginBottom: '2rem' }}>
+        <section id="section-initial-vision" style={{ marginBottom: '2rem' }}>
           <SectionHeader
             title="INITIAL VISION"
             count={rawImagination.length}
@@ -222,7 +222,7 @@ export default async function WorldsPage({
 
       {/* ── SIGNAL TUNING — picked / syncing (Stage 2) ── */}
       {worldBuilding.length > 0 && (
-        <section style={{ marginBottom: '2rem' }}>
+        <section id="section-signal-tuning" style={{ marginBottom: '2rem' }}>
           <SectionHeader
             title="SIGNAL TUNING"
             count={worldBuilding.length}
@@ -245,7 +245,7 @@ export default async function WorldsPage({
       )}
 
       {/* ── ESTABLISHED WORLDS — stable (Stage 3) ── */}
-      <section>
+      <section id="section-established">
         <SectionHeader
           title="ESTABLISHED WORLD"
           count={worlds.length}

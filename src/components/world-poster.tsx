@@ -74,8 +74,8 @@ export function WorldPoster({
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
         />
       )}
-      {/* Legibility fade — visual stays vivid up top, only the lower text area deepens */}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 38%, rgba(0,0,0,0.6) 100%)' }} />
+      {/* Legibility fade — transparent → warm orange tint → near-black, matches detail page treatment */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 28%, rgba(160,45,4,0.40) 62%, rgba(12,5,1,0.92) 100%)' }} />
       {badge && <div style={{ position: 'absolute', top: 8, right: 8 }}>{badge}</div>}
 
       <div style={{ position: 'relative', padding: '13px 13px 12px', display: 'flex', flexDirection: 'column', minHeight, boxSizing: 'border-box' }}>
