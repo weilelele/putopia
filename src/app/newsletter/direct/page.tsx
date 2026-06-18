@@ -9,7 +9,7 @@ import { getWeeklyNewsletterContent, buildDirectHtml } from '@/lib/newsletter'
 export default async function DirectNewsletterPage() {
   const content = await getWeeklyNewsletterContent()
   const html = buildDirectHtml(content, '[CODENAME]')
-  const previewHtml = html.replace(/https:\/\/putopia\.vercel\.app/g, '')
+  const previewHtml = html.replace(/https:\/\/multiverseco\.org/g, '')
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#060A1A' }}>

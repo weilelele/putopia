@@ -9,7 +9,7 @@ import { getWeeklyNewsletterContent, buildUnregisteredHtml } from '@/lib/newslet
 export default async function UnregisteredNewsletterPage() {
   const { activeUsers, devices, weekLabel } = await getWeeklyNewsletterContent()
   const html = buildUnregisteredHtml(activeUsers, devices)
-  const previewHtml = html.replace(/https:\/\/putopia\.vercel\.app/g, '')
+  const previewHtml = html.replace(/https:\/\/multiverseco\.org/g, '')
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#060A1A' }}>
