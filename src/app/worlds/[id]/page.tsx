@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getWorldById } from '@/lib/actions/worlds'
-import { getWorldInvestigation } from '@/lib/actions/signal-tasks'
+import { getWorldInvestigation, setWorldVoteScope } from '@/lib/actions/signal-tasks'
 import type { WorldInvestigationData } from '@/lib/actions/signal-tasks'
-import type { World } from '@/types/database'
+import type { World, WorldVoteScope } from '@/types/database'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
@@ -25,14 +25,31 @@ export default function WorldDetailPage() {
   const [world, setWorld] = useState<World | null | undefined>(undefined)
   const [inv, setInv] = useState<WorldInvestigationData | null>(null)
   const [descExpanded, setDescExpanded] = useState(false)
+  const [scope, setScope] = useState<WorldVoteScope>('all')
+  const [scopeSaving, setScopeSaving] = useState(false)
 
   useEffect(() => {
     getWorldById(id).then((w) => {
       setWorld(w ?? null)
-      if (w) posthog.capture('world_viewed', { world_id: id, world_name: w.name_en || w.name })
+      if (w) {
+        setScope(w.vote_scope ?? 'all')
+        posthog.capture('world_viewed', { world_id: id, world_name: w.name_en || w.name })
+      }
     })
     getWorldInvestigation(id).then(setInv)
   }, [id])
+
+  const isOwner = !!user.id && !!world && (user.id === world.submitted_by || user.id === world.discoverer_id)
+
+  const onScopeChange = async (next: WorldVoteScope) => {
+    const prev = scope
+    setScope(next)
+    setScopeSaving(true)
+    const res = await setWorldVoteScope(id, next)
+    setScopeSaving(false)
+    if (!res.ok) { setScope(prev); return }
+    refreshInvestigation()
+  }
 
   const refreshInvestigation = () => getWorldInvestigation(id).then(setInv)
 
@@ -146,11 +163,39 @@ export default function WorldDetailPage() {
                 {'// SIGNAL TUNING'}
               </div>
               {inv.investigation.lockReason && (
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', letterSpacing: '0.1em', color: '#E8A020' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: '#E8A020' }}>
                   ● {inv.investigation.lockReason}
                 </div>
               )}
             </div>
+            {isOwner && (
+              <div style={{
+                display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem',
+                marginBottom: '0.85rem', padding: '0.65rem 0.85rem',
+                border: '1px solid rgba(255,107,53,0.18)', background: 'rgba(255,107,53,0.04)',
+              }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>
+                  WHO CAN VOTE
+                </span>
+                <select
+                  value={scope}
+                  disabled={scopeSaving}
+                  onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)}
+                  style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em',
+                    background: 'var(--bg-card)', color: 'var(--color-star)',
+                    border: '1px solid rgba(255,107,53,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer',
+                  }}
+                >
+                  <option value="all">Open to everyone</option>
+                  <option value="voters">Voyagers only</option>
+                  <option value="self">Just me (private)</option>
+                </select>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.04em', color: 'var(--color-star-deep)' }}>
+                  {scopeSaving ? 'Saving…' : 'You can change this anytime.'}
+                </span>
+              </div>
+            )}
             <InvestigationCard
               investigation={inv.investigation}
               onFiled={refreshInvestigation}

@@ -172,7 +172,7 @@ export default function SubmitWorldPage() {
                   boxSizing: 'border-box',
                 }}
               />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(245,245,245,0.25)', marginTop: '0.25rem', textAlign: 'right' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.25)', marginTop: '0.25rem', textAlign: 'right' }}>
                 {form.name.length}/80
               </div>
             </div>
@@ -204,7 +204,7 @@ export default function SubmitWorldPage() {
                   minHeight: '160px',
                 }}
               />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: form.description.length < 20 ? 'rgba(255,107,53,0.5)' : 'rgba(245,245,245,0.25)', marginTop: '0.25rem', textAlign: 'right' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: form.description.length < 20 ? 'rgba(255,107,53,0.5)' : 'rgba(245,245,245,0.25)', marginTop: '0.25rem', textAlign: 'right' }}>
                 {form.description.length} chars
               </div>
             </div>
@@ -244,7 +244,7 @@ export default function SubmitWorldPage() {
                       }} />
                       <span style={{
                         fontFamily: 'var(--font-mono)',
-                        fontSize: '9px',
+                        fontSize: 'var(--fs-caption)',
                         letterSpacing: '0.12em',
                         color: active ? '#FF6B35' : 'rgba(245,245,245,0.35)',
                       }}>
@@ -308,7 +308,7 @@ export default function SubmitWorldPage() {
                     padding: '0.5rem',
                   }}>
                     {imagePreview ? '[ CHANGE IMAGE ]' : '[ CLICK TO UPLOAD ]'}<br />
-                    <span style={{ color: 'rgba(245,245,245,0.25)', fontSize: '10px' }}>PNG · JPG · WEBP · MAX 5MB</span>
+                    <span style={{ color: 'rgba(245,245,245,0.25)', fontSize: 'var(--fs-caption)' }}>PNG · JPG · WEBP · MAX 5MB</span>
                   </div>
                 </div>
               </div>
@@ -323,13 +323,13 @@ export default function SubmitWorldPage() {
 
               {imageFile && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(245,245,245,0.35)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
                     {imageFile.name} ({(imageFile.size / 1024).toFixed(0)} KB)
                   </span>
                   <button
                     type="button"
                     onClick={() => { setImageFile(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = '' }}
-                    style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(245,245,245,0.35)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}
+                    style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.1em' }}
                   >
                     REMOVE
                   </button>
@@ -396,7 +396,7 @@ export default function SubmitWorldPage() {
             </button>
 
             {!isGuest && !canSubmit && !loading && (
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(245,245,245,0.25)', marginTop: '0.5rem', textAlign: 'center', letterSpacing: '0.1em' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.25)', marginTop: '0.5rem', textAlign: 'center', letterSpacing: '0.1em' }}>
                 {form.name.trim().length === 0
                   ? 'Enter a world designation to continue'
                   : 'Add at least 20 characters of field notes'}
@@ -406,7 +406,7 @@ export default function SubmitWorldPage() {
 
           {/* Footer note */}
           <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,107,53,0.1)' }}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(245,245,245,0.2)', lineHeight: 1.7, letterSpacing: '0.05em' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.2)', lineHeight: 1.7, letterSpacing: '0.05em' }}>
               All sightings are reviewed by Architects before advancing through the pipeline (Proposed → Picked → Syncing → Stable). Submitted records are visible to authenticated members of the Collective.
             </p>
           </div>

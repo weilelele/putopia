@@ -30,7 +30,7 @@ function LifecycleBadge({ state }: { state: WorldLifecycle | string }) {
   const c = config[state] ?? config.stable
   return (
     <span style={{
-      fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.12em',
+      fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
       color: c.color, background: `${c.color}18`,
       padding: '2px 6px', border: `1px solid ${c.color}40`,
     }}>
@@ -56,7 +56,7 @@ function SectionHeader({
         </span>
         {count !== undefined && (
           <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.1em',
+            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
             color: accentColor, background: `${accentColor}15`,
             border: `1px solid ${accentColor}35`, padding: '1px 6px',
           }}>
@@ -66,7 +66,7 @@ function SectionHeader({
         <div style={{ flex: 1, height: '1px', background: `${accentColor}20` }} />
       </div>
       {subtitle && (
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.1em', color: 'var(--color-star-deep)', marginTop: 4, paddingLeft: 15 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: 'var(--color-star-deep)', marginTop: 4, paddingLeft: 15 }}>
           {subtitle}
         </div>
       )}
@@ -128,7 +128,7 @@ export default async function WorldsPage({
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-ok)', letterSpacing: '0.15em', marginBottom: '0.125rem' }}>
               SIGHTING FILED
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--color-star-dim)', letterSpacing: '0.04em' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.04em' }}>
               &ldquo;{decodeURIComponent(submittedName)}&rdquo; has entered the pipeline for Architect review.
             </div>
           </div>
@@ -194,7 +194,7 @@ export default async function WorldsPage({
         ].map(({ val, label, color, anchor }) => (
           <a key={label} href={anchor} style={{ textDecoration: 'none', cursor: 'pointer' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color, lineHeight: 1 }}>{val}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--color-star-deep)', letterSpacing: '0.12em', marginTop: 3 }}>{label}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.12em', marginTop: 3 }}>{label}</div>
           </a>
         ))}
       </div>

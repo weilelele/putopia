@@ -395,7 +395,7 @@ function Composer({
       )}
 
       {uploadErr && (
-        <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--sig-fault)', letterSpacing: '0.05em' }}>
+        <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--sig-fault)', letterSpacing: '0.05em' }}>
           {uploadErr}
         </div>
       )}
@@ -422,7 +422,7 @@ function Composer({
                   background: 'none',
                   border: '1px solid rgba(255,107,53,0.2)',
                   color: canAddMore ? 'rgba(245,245,245,0.4)' : 'rgba(245,245,245,0.15)',
-                  fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
+                  fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
                   padding: '4px 8px', cursor: canAddMore ? 'pointer' : 'not-allowed',
                 }}
               >

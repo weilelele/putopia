@@ -15,7 +15,7 @@ export default async function DirectNewsletterPage() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#060A1A' }}>
       <div style={{
         padding: '10px 0 8px', textAlign: 'center', flexShrink: 0,
-        fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.22em',
+        fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em',
         color: 'rgba(255,107,53,0.45)',
       }}>
         ◈ NEWSLETTER PREVIEW — GROUP A (DIRECT) — {content.weekLabel} ◈

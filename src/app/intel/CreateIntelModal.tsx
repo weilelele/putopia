@@ -189,9 +189,9 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
                   <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #E85D04', opacity: 0.8 }} />
                   <button
                     onClick={() => removePending(idx)}
-                    style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >×</button>
-                  <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(232,93,4,0.85)', color: '#fff', fontSize: '9px', padding: '1px 3px', fontFamily: 'monospace' }}>PENDING</div>
+                  <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(232,93,4,0.85)', color: '#fff', fontSize: 'var(--fs-caption)', padding: '1px 3px', fontFamily: 'monospace' }}>PENDING</div>
                 </div>
               ))}
             </div>

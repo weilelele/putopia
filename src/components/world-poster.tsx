@@ -84,7 +84,7 @@ export function WorldPoster({
       {badge && <div style={{ position: 'absolute', top: 8, right: 8 }}>{badge}</div>}
 
       <div style={{ position: 'relative', padding: '13px 13px 12px', display: 'flex', flexDirection: 'column', minHeight, boxSizing: 'border-box' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '8px', letterSpacing: '0.14em', color: eyebrowColor }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: eyebrowColor }}>
           {eyebrow}
         </div>
         <div style={{ flex: 1 }} />
@@ -92,7 +92,7 @@ export function WorldPoster({
           {displayName}
         </div>
         {world.description && (
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', lineHeight: 1.55, color: 'rgba(255,255,255,0.85)', marginBottom: 11, display: '-webkit-box', WebkitLineClamp: descLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', lineHeight: 1.55, color: 'rgba(255,255,255,0.85)', marginBottom: 11, display: '-webkit-box', WebkitLineClamp: descLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {world.description}
           </div>
         )}
@@ -101,17 +101,17 @@ export function WorldPoster({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={world.discoverer_avatar_url} alt="" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(255,255,255,0.25)' }} />
           ) : (
-            <div style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: '8px', fontWeight: 700, background: 'rgba(255,255,255,0.16)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.25)' }}>
+            <div style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, background: 'rgba(255,255,255,0.16)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.25)' }}>
               {initialsOf(world.discoverer_name)}
             </div>
           )}
           {world.discoverer_name && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'rgba(255,255,255,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,255,255,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
               {world.discoverer_name}
             </span>
           )}
           {date && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em', flexShrink: 0, marginLeft: 'auto' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em', flexShrink: 0, marginLeft: 'auto' }}>
               {date}
             </span>
           )}

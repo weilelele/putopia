@@ -460,7 +460,7 @@ export default function QuizPage() {
 
       {/* ── Quiz ID watermark ── */}
       <div style={{ textAlign: 'center', paddingBottom: 24 }}>
-        <span style={{ fontSize: 10, color: 'rgba(245,245,245,0.1)', letterSpacing: '0.15em' }}>
+        <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.1)', letterSpacing: '0.15em' }}>
           {QUIZ_ID}
         </span>
       </div>

@@ -53,7 +53,7 @@ export default async function JoinSuccessPage() {
     return (
       <main style={wrap}>
         <div style={card}>
-          <div style={{ fontSize: 11, letterSpacing: '0.28em', color: '#FF6B35' }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: '#FF6B35' }}>
             SIGNAL RECEIVED
           </div>
           <h1 style={{ fontSize: 22, margin: '14px 0 10px' }}>Welcome, Voyager.</h1>
@@ -73,7 +73,7 @@ export default async function JoinSuccessPage() {
   return (
     <main style={wrap}>
       <div style={card}>
-        <div style={{ fontSize: 11, letterSpacing: '0.28em', color: '#FF6B35' }}>
+        <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: '#FF6B35' }}>
           STATUS · ACTIVE
         </div>
         <h1 style={{ fontSize: 22, margin: '14px 0 6px' }}>

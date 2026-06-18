@@ -216,7 +216,7 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
             : "We're currently scanning for devices. We'll share updates as soon as we have news."
           }
         </p>
-        <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.15)', letterSpacing: '0.14em', textAlign: 'center' }}>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.15)', letterSpacing: '0.14em', textAlign: 'center' }}>
           TAP ANYWHERE TO DISMISS
         </div>
       </div>
@@ -264,14 +264,14 @@ function BenefitDetailModal({ item, onClose }: { item: BenefitDetail; onClose: (
           <div style={{ fontSize: 'var(--fs-label)', color: gold(0.85), letterSpacing: '0.12em', marginBottom: 4 }}>
             {item.title}
           </div>
-          <div style={{ fontSize: 9, color: gold(0.45), letterSpacing: '0.1em' }}>
+          <div style={{ fontSize: 'var(--fs-caption)', color: gold(0.45), letterSpacing: '0.1em' }}>
             {item.sublabel}
           </div>
         </div>
         <p style={{ margin: '0 0 16px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.75 }}>
           {item.body}
         </p>
-        <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.15)', letterSpacing: '0.14em', textAlign: 'center' }}>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.15)', letterSpacing: '0.14em', textAlign: 'center' }}>
           TAP ANYWHERE TO DISMISS
         </div>
       </div>
@@ -341,10 +341,10 @@ function PathRail({
           }}>
             {applicantDone ? <CheckIcon size={18} /> : <ApplicantIcon size={20} />}
           </div>
-          <div style={{ fontSize: 9, letterSpacing: '0.13em', color: applicantColor, fontFamily: 'var(--font-mono)', opacity: isVoyager ? 0.55 : 1, transition: 'opacity 0.3s' }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: applicantColor, fontFamily: 'var(--font-mono)', opacity: isVoyager ? 0.55 : 1, transition: 'opacity 0.3s' }}>
             APPLICANT
           </div>
-          <div style={{ fontSize: 8, color: `${applicantHex}80`, letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+          <div style={{ fontSize: 'var(--fs-caption)', color: `${applicantHex}80`, letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
             {applicantDone ? 'COMPLETE' : 'CURRENT'}
           </div>
         </div>
@@ -377,11 +377,11 @@ function PathRail({
           }}>
             <VoyagerIcon size={20} />
           </div>
-          <div style={{ fontSize: 9, letterSpacing: '0.13em', color: vColor, fontFamily: 'var(--font-mono)', transition: 'color 0.3s' }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: vColor, fontFamily: 'var(--font-mono)', transition: 'color 0.3s' }}>
             VOYAGER
           </div>
           {voyagerCurrent && (
-            <div style={{ fontSize: 8, color: 'rgba(196,169,106,0.55)', letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(196,169,106,0.55)', letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
               CURRENT
             </div>
           )}
@@ -410,10 +410,10 @@ function PathRail({
           }}>
             <LockIcon size={14} />
           </div>
-          <div style={{ fontSize: 9, letterSpacing: '0.13em', color: 'rgba(255,107,53,0.38)', fontFamily: 'var(--font-mono)' }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: 'rgba(255,107,53,0.38)', fontFamily: 'var(--font-mono)' }}>
             CONSOLE
           </div>
-          <div style={{ fontSize: 8, letterSpacing: '0.08em', color: 'rgba(255,107,53,0.28)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(255,107,53,0.28)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
             HOLDER
           </div>
         </div>
@@ -511,7 +511,7 @@ function VoyagerUnlockTrack({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
           <span style={{ fontSize: 'var(--fs-label)', color: done ? 'rgba(32,216,144,0.7)' : '#F5F5F5' }}>{task.label}</span>
           {done && (
-            <span style={{ fontSize: 8, letterSpacing: '0.14em', color: green, border: '1px solid rgba(32,216,144,0.25)', padding: '1px 5px', background: 'rgba(32,216,144,0.08)' }}>DONE</span>
+            <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: green, border: '1px solid rgba(32,216,144,0.25)', padding: '1px 5px', background: 'rgba(32,216,144,0.08)' }}>DONE</span>
           )}
         </div>
         <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.38)', lineHeight: 1.5 }}>{task.description}</div>
@@ -528,8 +528,8 @@ function VoyagerUnlockTrack({
       <i className="dd-node" /><i className="dd-dash" />
       {icon}
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>{label}</div>
-        <div style={{ fontSize: 8, letterSpacing: '0.08em', marginTop: 3, fontFamily: 'var(--font-mono)', color: active ? 'rgba(255,107,53,0.55)' : 'rgba(245,245,245,0.25)' }}>{sub}</div>
+        <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>{label}</div>
+        <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', marginTop: 3, fontFamily: 'var(--font-mono)', color: active ? 'rgba(255,107,53,0.55)' : 'rgba(245,245,245,0.25)' }}>{sub}</div>
       </div>
     </>
   )
@@ -573,7 +573,7 @@ function VoyagerUnlockTrack({
             >
               {chipInner(<WorldPackIcon size={22} />, 'WORLD BUILDER', allDone ? 'VIEW PACK →' : '$12 PACK', allDone)}
             </Link>
-            <span style={{ fontSize: 9, letterSpacing: '0.1em', color: 'rgba(245,245,245,0.3)', flexShrink: 0 }}>or</span>
+            <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: 'rgba(245,245,245,0.3)', flexShrink: 0 }}>or</span>
             <button
               onClick={allDone ? onDeviceSeeker : undefined}
               className="dd-panel"
@@ -682,10 +682,10 @@ function VoyagerStageContent({ onItemClick }: { onItemClick: (item: BenefitDetai
                 {icon}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 10, letterSpacing: '0.08em', marginBottom: 3, color: gold(0.62) }}>
+                <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', marginBottom: 3, color: gold(0.62) }}>
                   {title}
                 </div>
-                <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.22)', letterSpacing: '0.04em' }}>
+                <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.22)', letterSpacing: '0.04em' }}>
                   {sublabel}
                 </div>
               </div>
@@ -794,10 +794,10 @@ function VoyagerWelcomeBlock({ onConsoleClick, onSignalClick }: { onConsoleClick
                 {icon}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, letterSpacing: '0.08em', marginBottom: 3, color: locked ? 'rgba(245,245,245,0.22)' : gold(0.82) }}>
+                <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', marginBottom: 3, color: locked ? 'rgba(245,245,245,0.22)' : gold(0.82) }}>
                   {label}
                 </div>
-                <div style={{ fontSize: 9, color: locked ? 'rgba(245,245,245,0.15)' : 'rgba(245,245,245,0.35)', letterSpacing: '0.05em' }}>
+                <div style={{ fontSize: 'var(--fs-caption)', color: locked ? 'rgba(245,245,245,0.15)' : 'rgba(245,245,245,0.35)', letterSpacing: '0.05em' }}>
                   {sublabel}
                 </div>
               </div>
@@ -916,7 +916,7 @@ export default function DashboardDemoPage() {
         </section>
 
         <div style={{ marginTop: 20, textAlign: 'center' }}>
-          <span style={{ fontSize: 9, color: 'rgba(245,245,245,0.08)', letterSpacing: '0.15em' }}>DASHBOARD DEMO — STATIC PROTOTYPE</span>
+          <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.08)', letterSpacing: '0.15em' }}>DASHBOARD DEMO — STATIC PROTOTYPE</span>
         </div>
       </div>
 

@@ -35,7 +35,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
             color: 'rgba(245,245,245,0.4)', fontSize: 18, lineHeight: 1, padding: 4,
           }}
         >✕</button>
-        <div style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.25em', marginBottom: 12 }}>{'// SIGNAL DISPATCH'}</div>
+        <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: 12 }}>{'// SIGNAL DISPATCH'}</div>
         <p style={{ fontSize: 14, color: 'rgba(245,245,245,0.85)', lineHeight: 1.9, margin: 0 }}>
           We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
           Your intuition is the only instrument that can make sense of them —
@@ -74,7 +74,7 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
             >?</button>
           </div>
           {!feed.loggedIn && (
-            <div style={{ fontSize: 11, color: '#E8A020', marginTop: 8, letterSpacing: '0.1em' }}>
+            <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', marginTop: 8, letterSpacing: '0.1em' }}>
               ● Browse only — <a href="/login" style={{ color: '#E85D04' }}>log in</a> to respond
             </div>
           )}
@@ -220,20 +220,20 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
         <p style={{ fontSize: 13.5, margin: 0, lineHeight: 1.55, color: 'rgba(245,245,245,0.85)' }}>
           {task.prompt || TYPE_HINT[task.type] || 'Make your judgment.'}
         </p>
-        <span style={{ fontSize: 11, color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap' }}>
           {task.participantCount} response{task.participantCount !== 1 ? 's' : ''}
         </span>
       </div>
 
       {main && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <span style={{ fontSize: 10, color: 'rgba(245,245,245,0.35)', letterSpacing: '0.15em', whiteSpace: 'nowrap' }}>REFERENCE</span>
+          <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.15em', whiteSpace: 'nowrap' }}>REFERENCE</span>
           <div style={{ width: 64, flexShrink: 0, border: '1px solid rgba(255,107,53,0.25)' }}><AssetView asset={main} /></div>
         </div>
       )}
 
-      {/* Options — a single horizontal row of compact thumbnails */}
-      <div style={{ display: 'flex', gap: 8 }}>
+      {/* Options — 2 cols on portrait mobile, 4 cols on wider screens */}
+      <div className="signal-options">
         {options.map((a, i) => {
           const isMine = task.mySelection === a.id
           const isPicked = pick === a.id
@@ -245,22 +245,21 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
               key={a.id}
               onClick={() => selectable && setPick(a.id)}
               style={{
-                flex: '1 1 0', minWidth: 0,
                 border: isMine ? '2px solid #20D890' : isPicked ? '2px solid #FF6B35' : '1px solid rgba(255,107,53,0.16)',
                 background: '#070912', cursor: selectable ? 'pointer' : 'default', position: 'relative',
               }}
             >
-              <div style={{ position: 'absolute', top: 4, left: 4, zIndex: 2, background: 'rgba(7,9,18,0.8)', color: 'rgba(245,245,245,0.65)', fontSize: 9, padding: '1px 4px', letterSpacing: '0.08em' }}>
+              <div style={{ position: 'absolute', top: 4, left: 4, zIndex: 2, background: 'rgba(7,9,18,0.8)', color: 'rgba(245,245,245,0.65)', fontSize: 'var(--fs-caption)', padding: '1px 4px', letterSpacing: '0.08em' }}>
                 {String.fromCharCode(65 + i)}
               </div>
-              {isMine && <div style={{ position: 'absolute', top: 4, right: 4, zIndex: 2, color: '#20D890', fontSize: 11, lineHeight: 1 }}>✓</div>}
+              {isMine && <div style={{ position: 'absolute', top: 4, right: 4, zIndex: 2, color: '#20D890', fontSize: 'var(--fs-caption)', lineHeight: 1 }}>✓</div>}
               <AssetView asset={a} />
               {responded && task.distribution && (
                 <div style={{ padding: '4px 5px' }}>
                   <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', background: isMine ? '#20D890' : '#E85D04' }} />
                   </div>
-                  <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.45)', marginTop: 2 }}>{pct}%</div>
+                  <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.45)', marginTop: 2 }}>{pct}%</div>
                 </div>
               )}
             </div>
@@ -270,15 +269,15 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
 
       <div style={{ marginTop: 14 }}>
         {responded ? (
-          <div style={{ fontSize: 11, color: '#20D890', letterSpacing: '0.05em' }}>● Response recorded.</div>
+          <div style={{ fontSize: 'var(--fs-caption)', color: '#20D890', letterSpacing: '0.05em' }}>● Response recorded.</div>
         ) : canParticipate ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button
               onClick={submit} disabled={!pick || busy}
-              style={{ padding: '7px 18px', fontFamily: 'inherit', fontSize: 11, letterSpacing: '0.12em', border: 'none', cursor: !pick || busy ? 'default' : 'pointer', background: !pick || busy ? 'rgba(255,107,53,0.25)' : '#FF6B35', color: '#070912' }}
+              style={{ padding: '7px 18px', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', border: 'none', cursor: !pick || busy ? 'default' : 'pointer', background: !pick || busy ? 'rgba(255,107,53,0.25)' : '#FF6B35', color: '#070912' }}
             >{busy ? 'Submitting…' : 'SUBMIT'}</button>
-            <span style={{ fontSize: 11, color: 'rgba(245,245,245,0.35)' }}>Submit to see how others responded</span>
-            {err && <span style={{ fontSize: 11, color: '#E83030' }}>{err}</span>}
+            <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>Submit to see how others responded</span>
+            {err && <span style={{ fontSize: 'var(--fs-caption)', color: '#E83030' }}>{err}</span>}
           </div>
         ) : (
           <div style={{ fontSize: 12, color: 'rgba(245,245,245,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
