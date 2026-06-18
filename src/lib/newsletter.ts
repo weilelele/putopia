@@ -495,9 +495,9 @@ export const CTA_TASK_GATED = `
           <div style="font-size:13px;color:#CBCEDF;line-height:1.75;margin-bottom:20px;font-family:'Space Mono',monospace;">
             Complete the Collective&#39;s field assessment tasks to unlock the Initial Voyager Pack.
           </div>
-          <a href="https://www.multiverseco.org/voyager-path${UTM}&amp;utm_content=task_gated"
+          <a href="https://www.multiverseco.org/voyager-pack${UTM}&amp;utm_content=task_gated"
              style="display:block;text-align:center;background:#1C1708;color:#E8A020;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;border:1px solid #B98620;">
-            [ VIEW VOYAGER PATH &rarr; ]
+            [ VIEW VOYAGER PACK &rarr; ]
           </a>
           <div style="text-align:center;font-size:13px;letter-spacing:0.04em;color:#9094AC;margin-top:13px;font-family:'Space Mono',monospace;">
             Pack unlocks upon completing your field assessment.
