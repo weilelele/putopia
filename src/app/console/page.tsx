@@ -26,8 +26,7 @@ import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/
 import type { ActivityEvent } from '@/lib/actions/activity-events'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
-// ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
-const SALES_OPEN = false
+const SALES_OPEN = true
 
 const STATUS_STYLES = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
@@ -222,11 +221,9 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
   const direct = group === 'direct'
   const accent = direct ? '#FF6B35' : '#E8A020'
   const soft   = direct ? 'rgba(255,107,53,' : 'rgba(232,160,32,'   // append "<a>)"
-  const badge   = direct ? 'ACTIVATE' : 'RECRUITING'
   const eyebrow = direct ? 'VOYAGER INITIATION' : 'VOYAGER RECRUITMENT'
   const title   = direct ? 'INITIAL VOYAGER PACK' : 'EARN YOUR STATUS'
-  const chip    = direct ? '$12' : '2 TASKS'
-  const cta      = direct ? 'ACTIVATE VOYAGER STATUS' : 'ACTIVATE WATCH STATUS'
+  const cta     = 'ACTIVATE'
   const href    = direct ? '/voyager-pack' : '/voyager-path'
 
   return (
@@ -254,7 +251,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
           src="/voyager-pack/voyager-hero.png"
           alt={title}
           style={{
-            width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 40%',
+            width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 66%',
             filter: direct
               ? 'saturate(0.9) brightness(0.74)'
               : 'saturate(0.6) brightness(0.72) sepia(0.35) hue-rotate(-18deg)',
@@ -275,18 +272,18 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
       {/* Info — eyebrow / title / CTA */}
       <div style={{ padding: '0.7rem 0.9rem 0.9rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: accent, letterSpacing: '0.15em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: accent, letterSpacing: '0.15em' }}>
             {eyebrow}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, color: 'var(--color-star)' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'clamp(1rem, 3.5vw, 1.15rem)', fontWeight: 700, color: 'var(--color-star)', letterSpacing: '0.06em', lineHeight: 1.2 }}>
             {title}
           </div>
         </div>
 
         <div style={{
           textAlign: 'center',
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.18em',
-          color: '#070912', background: accent, padding: '0.5rem',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, letterSpacing: '0.22em',
+          color: '#070912', background: accent, padding: '0.6rem',
         }}>
           [ {cta} ]
         </div>

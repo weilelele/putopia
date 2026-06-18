@@ -130,20 +130,38 @@ export default async function VoyagerPackPage() {
   else if (tasksIncomplete)  state = 'tasks'
 
   return (
-    <div style={{ width: '100%', height: '100vh' }}>
-      <PackViewTracker group={group} state={state} />
-      <iframe
-        title="Initial Voyager Pack"
-        srcDoc={buildPackHtml(state)}
-        scrolling="yes"
-        style={{
-          display: 'block',
-          width: '100%',
-          height: '100%',
-          border: 0,
-          background: '#0A0E27',
-        }}
-      />
-    </div>
+    <>
+      {/*
+        iOS height fix — DO NOT revert to a bare `height: 100vh`.
+        On iOS Safari/Chrome `100vh` is the *large* viewport (toolbars hidden), so
+        at load the iframe runs taller than the visible area and the bottom CTA
+        ends up behind the browser toolbar. The parent `.app-shell` clips overflow
+        (height:100vh; overflow:hidden) and there is no outer scroll, so the button
+        becomes unreachable. Sizing the host to the dynamic/visible viewport keeps
+        the iframe — and its bottom Activate button — fully on screen.
+        Stacked fallbacks: ancient → 100vh, iOS14 → -webkit-fill-available,
+        modern → 100dvh (the one that actually fixes it).
+      */}
+      <style>{`
+        .pack-host {
+          width: 100%;
+          height: 100vh;
+          height: -webkit-fill-available;
+          height: 100dvh;
+          background: #0A0E27;
+          overflow: hidden;
+        }
+        .pack-host iframe { display: block; width: 100%; height: 100%; border: 0; }
+      `}</style>
+      <div className="pack-host">
+        <PackViewTracker group={group} state={state} />
+        <iframe
+          title="Initial Voyager Pack"
+          srcDoc={buildPackHtml(state)}
+          scrolling="yes"
+          style={{ background: '#0A0E27' }}
+        />
+      </div>
+    </>
   )
 }
