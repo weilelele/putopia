@@ -1347,8 +1347,8 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
 // ─── Console dashboard board (doc 4.1) ────────────────────────────────────────
 
 export interface DispatchDashboard {
-  awaitingYou: number   // published days this viewer may vote on and hasn't
-  inTuning: number      // total published signals across worlds in tuning
+  awaitingYou: number   // revealed (currently-open) days this viewer may vote on and hasn't
+  inTuning: number      // currently-revealed signals across worlds in tuning
   yourWorlds: { id: string; name: string; stage: WorldStage }[]
 }
 
@@ -1360,19 +1360,34 @@ export async function getDispatchDashboard(): Promise<DispatchDashboard | null> 
 
   const { data: pubTasks } = await admin
     .from('signal_tasks')
-    .select('id, thread_id')
+    .select('id, thread_id, day_index')
     .eq('is_published', true)
     .not('thread_id', 'is', null)
-  const tasks = (pubTasks ?? []) as { id: string; thread_id: string }[]
-  const inTuning = tasks.length
+  const allTasks = (pubTasks ?? []) as { id: string; thread_id: string; day_index: number | null }[]
 
-  const threadIds = [...new Set(tasks.map((t) => t.thread_id))]
+  // Reveal schedule per thread — only days that have actually surfaced count as
+  // live/actionable (a published-but-future day is not yet doable).
+  const threadIds = [...new Set(allTasks.map((t) => t.thread_id))]
   const threadWorld = new Map<string, string | null>()
+  const threadSchedule = new Map<string, { anchor: string | null; interval: number }>()
   if (threadIds.length) {
-    const { data: threads } = await admin.from('signal_threads').select('id, world_id').in('id', threadIds)
-    for (const t of (threads ?? []) as { id: string; world_id: string | null }[]) threadWorld.set(t.id, t.world_id)
+    const { data: threads } = await admin
+      .from('signal_threads')
+      .select('id, world_id, reveal_anchor_at, reveal_interval_hours')
+      .in('id', threadIds)
+    for (const t of (threads ?? []) as { id: string; world_id: string | null; reveal_anchor_at: string | null; reveal_interval_hours: number | null }[]) {
+      threadWorld.set(t.id, t.world_id)
+      threadSchedule.set(t.id, { anchor: t.reveal_anchor_at ?? null, interval: t.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS })
+    }
   }
   const meta = await worldMetaMap(admin, [...threadWorld.values()])
+
+  const now = new Date()
+  const tasks = allTasks.filter((t) => {
+    const s = threadSchedule.get(t.thread_id)
+    return isRevealed(s?.anchor ?? null, s?.interval ?? DEFAULT_REVEAL_INTERVAL_HOURS, t.day_index ?? 0, now)
+  })
+  const inTuning = tasks.length // revealed signals across worlds in tuning
 
   const { data: resp } = await admin.from('signal_responses').select('task_id').eq('user_id', me.id)
   const responded = new Set(((resp ?? []) as { task_id: string }[]).map((r) => r.task_id))
