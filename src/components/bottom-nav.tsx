@@ -30,15 +30,6 @@ const ArchiveIcon = () => (
   </svg>
 )
 
-const LogsIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-    <rect x="3" y="1" width="12" height="16" rx="1" stroke="currentColor" strokeWidth="1"/>
-    <line x1="6" y1="6" x2="12" y2="6" stroke="currentColor" strokeWidth="1"/>
-    <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" strokeWidth="1"/>
-    <line x1="6" y1="12" x2="10" y2="12" stroke="currentColor" strokeWidth="1"/>
-  </svg>
-)
-
 const VoyagersIcon = () => (
   <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
     <circle cx="9" cy="7" r="3.5" stroke="currentColor" strokeWidth="1"/>
@@ -60,12 +51,6 @@ const WorldsIcon = () => (
     <line x1="1" y1="9" x2="17" y2="9" stroke="currentColor" strokeWidth="1"/>
     <line x1="2.5" y1="5" x2="15.5" y2="5" stroke="currentColor" strokeWidth="0.75" strokeOpacity="0.6"/>
     <line x1="2.5" y1="13" x2="15.5" y2="13" stroke="currentColor" strokeWidth="0.75" strokeOpacity="0.6"/>
-  </svg>
-)
-
-const SignalIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-    <path d="M1 9 Q3 4 5 9 Q7 14 9 9 Q11 4 13 9 Q15 14 17 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 )
 
@@ -92,8 +77,6 @@ const PRIMARY_NAV = [
 ]
 
 const MORE_NAV = [
-  { href: '/signal', label: 'DISPATCH',        icon: <SignalIcon /> },
-  { href: '/logs',   label: 'VOYAGER LOGS',   icon: <LogsIcon /> },
   { href: '/vote',   label: 'VOTING HUB',     icon: <VoteIcon /> },
   { href: '/worlds', label: 'WORLD RECORDS',  icon: <WorldsIcon /> },
 ]
