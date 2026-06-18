@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { queryPostHog } from '@/lib/analytics/posthog-query'
 import { getMembershipFunnel } from '@/lib/analytics/membership-funnel'
+import { getNewsletterFunnel } from '@/lib/analytics/newsletter-funnel'
+import { NewsletterPanel } from './newsletter-panel'
 import { RefreshButton } from './refresh-button'
 import { FunnelTabs } from './tabs'
 import { MembershipPanel } from './membership-panel'
@@ -717,8 +719,8 @@ function DailyLoginsPanel({ rows }: { rows: DailyRow[] }) {
 }
 
 export default async function AnalyticsPage() {
-  const [runs, recovery, daily, membership] = await Promise.all([
-    getLatestRuns(10), getRecoveryCohort(), getDailyActivity(30), getMembershipFunnel(),
+  const [runs, recovery, daily, membership, newsletter] = await Promise.all([
+    getLatestRuns(10), getRecoveryCohort(), getDailyActivity(30), getMembershipFunnel(), getNewsletterFunnel(),
   ])
 
   const conversion = (
@@ -776,7 +778,7 @@ export default async function AnalyticsPage() {
       <FunnelTabs
         conversion={conversion}
         retention={<DailyLoginsPanel rows={daily} />}
-        membership={<MembershipPanel data={membership} />}
+        membership={<><MembershipPanel data={membership} /><NewsletterPanel data={newsletter} /></>}
       />
     </div>
   )
