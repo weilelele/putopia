@@ -446,9 +446,9 @@ export const EMAIL_FOOTER = `
     </table>
     <div style="margin-top:10px;font-size:12px;color:#62677E;letter-spacing:0.06em;line-height:1.8;font-family:'Space Mono',monospace;">
       You are receiving this because you are registered in the Multiverse Collective network.<br/>
-      <a href="https://www.multiverseco.org/console${UTM}" style="color:#C26A40;text-decoration:none;">Manage preferences</a>
-      &nbsp;·&nbsp;
       <a href="https://www.multiverseco.org/console${UTM}" style="color:#C26A40;text-decoration:none;">Visit console</a>
+      &nbsp;·&nbsp;
+      <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#C26A40;text-decoration:none;">Unsubscribe</a>
     </div>
   </td></tr>`
 
