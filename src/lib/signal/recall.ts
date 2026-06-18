@@ -12,12 +12,12 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
 import { resolveUserEmail } from '@/lib/signal/world-confirmed-email'
+import { isRevealed, DEFAULT_REVEAL_INTERVAL_HOURS } from '@/lib/signal/reveal'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
-const RECALL_DELAY_MS = 24 * 60 * 60 * 1000 // 24h after publish
 
 export interface RecallResult {
   tasksProcessed: number
@@ -43,12 +43,14 @@ function recallEmailHtml(worldName: string, dayNum: number, url: string): string
   </div>`
 }
 
-/** Find tasks published ≥24h ago that haven't been recalled yet, and remind
- *  prior participants who haven't responded to the new day. */
+/** Find days that have REVEALED (scheduled-reveal time has passed) but not yet
+ *  recalled, and remind prior participants who haven't responded to the new day.
+ *  Keys off the reveal schedule, not raw publish time, so pre-published days only
+ *  trigger a recall once they actually surface. */
 export async function runSignalRecall(): Promise<RecallResult> {
   const admin = createAdminClient() as DB
   const result: RecallResult = { tasksProcessed: 0, emailsSent: 0, errors: [] }
-  const cutoff = new Date(Date.now() - RECALL_DELAY_MS).toISOString()
+  const now = new Date()
 
   const { data: tasks } = await admin
     .from('signal_tasks')
@@ -56,14 +58,21 @@ export async function runSignalRecall(): Promise<RecallResult> {
     .eq('is_published', true)
     .is('recall_sent_at', null)
     .not('thread_id', 'is', null)
-    .lte('published_at', cutoff)
 
   for (const task of (tasks ?? []) as { id: string; thread_id: string; day_index: number | null }[]) {
     try {
       const dayIndex = task.day_index ?? 0
 
-      // world (name + id) via the thread
-      const { data: thread } = await admin.from('signal_threads').select('world_id').eq('id', task.thread_id).maybeSingle()
+      // world (name + id) + reveal schedule via the thread
+      const { data: thread } = await admin
+        .from('signal_threads')
+        .select('world_id, reveal_anchor_at, reveal_interval_hours')
+        .eq('id', task.thread_id)
+        .maybeSingle()
+      // Skip days that haven't surfaced yet — recall only after the day is live.
+      if (!isRevealed(thread?.reveal_anchor_at ?? null, thread?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS, dayIndex, now)) {
+        continue
+      }
       const worldId: string | null = thread?.world_id ?? null
       let worldName = 'a world you follow'
       if (worldId) {
