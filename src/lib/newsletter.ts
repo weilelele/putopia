@@ -357,9 +357,21 @@ export const EMAIL_HEAD = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="dark" />
+<meta name="supported-color-schemes" content="dark" />
 <title>Transmission — Multiverse Collective</title>
 <base target="_top" />
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root { color-scheme: dark; supported-color-schemes: dark; }
+  body { margin: 0; padding: 0; }
+  @media only screen and (max-width: 480px) {
+    .stack { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+    .stack-img { width: 100% !important; height: auto !important; max-width: 100% !important; }
+    .pack-pad { padding: 22px 24px 26px !important; }
+    .hdr-pad { padding: 18px 20px !important; }
+  }
+</style>
 </head>
 <body style="margin:0;padding:0;background:#060A1A;font-family:'Space Mono',ui-monospace,'Courier New',monospace;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#060A1A;padding:32px 16px 64px;">
@@ -376,28 +388,25 @@ export const EMAIL_TAIL = `
 export const EMAIL_HEADER_REGISTERED = `
   <tr><td style="background:#0A0E27;border:1px solid rgba(255,107,53,0.18);padding:0;overflow:hidden;">
     <div style="height:2px;background:linear-gradient(90deg,#E85D04,#FF6B35,#DC2F02);"></div>
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding:22px 28px 20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" class="hdr-pad" style="padding:20px 26px;">
       <tr>
         <td style="vertical-align:middle;">
           <table cellpadding="0" cellspacing="0">
             <tr>
-              <td style="vertical-align:middle;padding-right:11px;">
-                <img src="https://putopia.vercel.app/assets/vi-icon.png" height="36" alt=""
-                     style="height:36px;width:auto;display:block;" />
+              <td style="vertical-align:middle;padding-right:9px;">
+                <img src="https://putopia.vercel.app/assets/vi-icon.png" height="26" alt=""
+                     style="height:26px;width:auto;display:block;" />
               </td>
               <td style="vertical-align:middle;">
-                <img src="https://putopia.vercel.app/assets/vi-wordmark.png" height="24" alt="MULTIVERSE COLLECTIVE"
-                     style="height:24px;width:auto;display:block;" />
+                <img src="https://putopia.vercel.app/assets/vi-wordmark.png" height="16" alt="MULTIVERSE COLLECTIVE"
+                     style="height:16px;width:auto;display:block;" />
               </td>
             </tr>
           </table>
-          <div style="font-size:12px;letter-spacing:0.32em;color:rgba(245,245,245,0.28);margin-top:9px;font-family:'Space Mono',monospace;">WEEKLY NEWSLETTER</div>
+          <div style="font-size:12px;letter-spacing:0.3em;color:#8A8FA8;margin-top:8px;font-family:'Space Mono',monospace;">WEEKLY NEWSLETTER</div>
         </td>
-        <td style="text-align:right;vertical-align:middle;">
-          <div style="display:inline-block;border:1px solid rgba(232,160,32,0.45);padding:5px 12px;background:rgba(232,160,32,0.06);">
-            <div style="font-size:12px;letter-spacing:0.2em;color:rgba(232,160,32,0.55);font-family:'Space Mono',monospace;">STATUS</div>
-            <div style="font-size:14px;font-weight:700;letter-spacing:0.18em;color:#E8A020;font-family:'Space Mono',monospace;">APPLICANT</div>
-          </div>
+        <td style="text-align:right;vertical-align:middle;white-space:nowrap;">
+          <span style="display:inline-block;border:1px solid #B98620;padding:5px 11px;background:#1C1708;font-size:12px;font-weight:700;letter-spacing:0.16em;color:#E8A020;font-family:'Space Mono',monospace;">APPLICANT</span>
         </td>
       </tr>
     </table>
@@ -417,15 +426,15 @@ export const EMAIL_FOOTER = `
   <tr><td style="border-top:1px solid rgba(255,107,53,0.1);padding-top:20px;">
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="font-size:12px;letter-spacing:0.18em;color:rgba(255,107,53,0.4);font-family:'Space Mono',monospace;">MULTIVERSE.COLLECTIVE</td>
-        <td style="text-align:right;font-size:12px;letter-spacing:0.12em;color:rgba(245,245,245,0.18);font-family:'Space Mono',monospace;">BUILDING BETTER WORLDS, TOGETHER.</td>
+        <td style="font-size:12px;letter-spacing:0.18em;color:#B5603A;font-family:'Space Mono',monospace;">MULTIVERSE.COLLECTIVE</td>
+        <td style="text-align:right;font-size:12px;letter-spacing:0.12em;color:#888CA4;font-family:'Space Mono',monospace;">EXPLORE PARALLEL WORLDS</td>
       </tr>
     </table>
-    <div style="margin-top:10px;font-size:12px;color:rgba(245,245,245,0.15);letter-spacing:0.06em;line-height:1.8;font-family:'Space Mono',monospace;">
+    <div style="margin-top:10px;font-size:12px;color:#62677E;letter-spacing:0.06em;line-height:1.8;font-family:'Space Mono',monospace;">
       You are receiving this because you are registered in the Multiverse Collective network.<br/>
-      <a href="https://putopia.vercel.app/console" style="color:rgba(255,107,53,0.35);text-decoration:none;">Manage preferences</a>
+      <a href="https://putopia.vercel.app/console" style="color:#C26A40;text-decoration:none;">Manage preferences</a>
       &nbsp;·&nbsp;
-      <a href="https://putopia.vercel.app/console" style="color:rgba(255,107,53,0.35);text-decoration:none;">Visit console</a>
+      <a href="https://putopia.vercel.app/console" style="color:#C26A40;text-decoration:none;">Visit console</a>
     </div>
   </td></tr>`
 
@@ -433,61 +442,55 @@ export const EMAIL_FOOTER = `
 
 export const CTA_DIRECT = `
   <tr><td style="height:18px;"></td></tr>
-  <tr><td style="background:linear-gradient(160deg,#1A0E2A,#0F1430);border:1px solid rgba(255,107,53,0.45);overflow:hidden;">
-    <div style="height:2px;background:linear-gradient(90deg,#E85D04,#FF6B35,#DC2F02);"></div>
+  <tr><td style="background:#150E28;border:1px solid #6E3A18;overflow:hidden;">
+    <div style="height:3px;background:#FF6B35;"></div>
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td width="200" style="vertical-align:top;padding:0;width:200px;min-width:200px;">
-          <img src="https://putopia.vercel.app/voyager-pack/voyager-hero.png" width="200" alt="Initial Voyager Pack"
-               style="width:200px;display:block;" />
+        <td class="stack" width="220" style="vertical-align:top;padding:0;width:220px;">
+          <img class="stack-img" src="https://putopia.vercel.app/voyager-pack/voyager-hero.png" width="220" alt="Initial Voyager Pack"
+               style="width:220px;display:block;" />
         </td>
-        <td style="vertical-align:middle;padding:22px 22px 22px 20px;">
-          <div style="font-size:12px;letter-spacing:0.28em;color:rgba(255,107,53,0.6);margin-bottom:11px;font-family:'Space Mono',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
-          <div style="font-size:16px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:14px;line-height:1.3;font-family:'Space Mono',monospace;">
-            YOUR VOYAGER<br/>STATUS IS READY.
-          </div>
-          <div style="margin-bottom:5px;font-size:13px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Physical Badge</div>
-          <div style="margin-bottom:5px;font-size:13px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Access Card</div>
-          <div style="margin-bottom:18px;font-size:13px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Full Network Access</div>
+        <td class="stack pack-pad" style="vertical-align:middle;padding:24px 24px 24px 22px;">
+          <div style="font-size:12px;letter-spacing:0.24em;color:#FF8C5A;margin-bottom:13px;font-family:'Space Mono',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
+          <div style="font-size:17px;font-weight:700;letter-spacing:0.05em;color:#FFFFFF;margin-bottom:16px;line-height:1.32;font-family:'Space Mono',monospace;">YOUR VOYAGER STATUS IS READY.</div>
+          <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Physical Badge</div>
+          <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Access Card</div>
+          <div style="margin-bottom:20px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Full Network Access</div>
           <a href="https://putopia.vercel.app/voyager-pack"
-             style="display:block;text-align:center;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.18em;text-decoration:none;padding:12px 14px;">
-            [ ACTIVATE NOW → ]
+             style="display:block;text-align:center;background:#FF6B35;color:#0A0E27;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;">
+            [ ACTIVATE NOW &rarr; ]
           </a>
         </td>
       </tr>
     </table>
-    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,107,53,0.2),transparent);"></div>
   </td></tr>`
 
 export const CTA_TASK_GATED = `
   <tr><td style="height:18px;"></td></tr>
-  <tr><td style="background:#0A0E27;border:1px solid rgba(232,160,32,0.35);overflow:hidden;">
-    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(232,160,32,0.5),transparent);"></div>
+  <tr><td style="background:#0C1024;border:1px solid #6E5418;overflow:hidden;">
+    <div style="height:3px;background:#B98620;"></div>
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td width="200" style="vertical-align:top;padding:0;width:200px;min-width:200px;">
-          <img src="https://putopia.vercel.app/voyager-pack/voyager-hero.png" width="200" alt="Initial Voyager Pack"
-               style="width:200px;display:block;filter:grayscale(55%);opacity:0.55;" />
+        <td class="stack" width="220" style="vertical-align:top;padding:0;width:220px;">
+          <img class="stack-img" src="https://putopia.vercel.app/voyager-pack/voyager-hero.png" width="220" alt="Initial Voyager Pack"
+               style="width:220px;display:block;filter:grayscale(45%);" />
         </td>
-        <td style="vertical-align:middle;padding:22px 22px 22px 20px;">
-          <div style="font-size:12px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:11px;font-family:'Space Mono',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
-          <div style="font-size:16px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:14px;line-height:1.3;font-family:'Space Mono',monospace;">
-            ACTIVATE YOUR<br/>VOYAGER STATUS.
-          </div>
-          <div style="font-size:14px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:18px;font-family:'Space Mono',monospace;">
+        <td class="stack pack-pad" style="vertical-align:middle;padding:24px 24px 24px 22px;">
+          <div style="font-size:12px;letter-spacing:0.24em;color:#E8A020;margin-bottom:13px;font-family:'Space Mono',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
+          <div style="font-size:17px;font-weight:700;letter-spacing:0.05em;color:#FFFFFF;margin-bottom:16px;line-height:1.32;font-family:'Space Mono',monospace;">ACTIVATE YOUR VOYAGER STATUS.</div>
+          <div style="font-size:13px;color:#CBCEDF;line-height:1.75;margin-bottom:20px;font-family:'Space Mono',monospace;">
             Complete the Collective&#39;s field assessment tasks to unlock the Initial Voyager Pack.
           </div>
           <a href="https://putopia.vercel.app/voyager-pack"
-             style="display:block;text-align:center;background:rgba(232,160,32,0.1);color:#E8A020;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:12px 14px;border:1px solid rgba(232,160,32,0.5);margin-bottom:12px;">
-            [ VIEW VOYAGER PATH → ]
+             style="display:block;text-align:center;background:#1C1708;color:#E8A020;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;border:1px solid #B98620;">
+            [ VIEW VOYAGER PATH &rarr; ]
           </a>
-          <div style="text-align:center;font-size:13px;letter-spacing:0.06em;color:rgba(245,245,245,0.2);font-family:'Space Mono',monospace;">
+          <div style="text-align:center;font-size:13px;letter-spacing:0.04em;color:#9094AC;margin-top:13px;font-family:'Space Mono',monospace;">
             Pack unlocks upon completing your field assessment.
           </div>
         </td>
       </tr>
     </table>
-    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(232,160,32,0.2),transparent);"></div>
   </td></tr>`
 
 // ── Full email assemblers ─────────────────────────────────────────────────────
@@ -628,7 +631,7 @@ export function buildUnregisteredHtml(
   <tr><td style="height:24px;"></td></tr>
   <tr><td style="border-top:1px solid rgba(255,107,53,0.08);padding-top:18px;text-align:center;">
     <div style="font-size:12px;color:rgba(245,245,245,0.15);letter-spacing:0.06em;font-family:'Space Mono',monospace;">
-      MULTIVERSE.COLLECTIVE · BUILDING BETTER WORLDS, TOGETHER.
+      MULTIVERSE.COLLECTIVE · EXPLORE PARALLEL WORLDS
     </div>
   </td></tr>`
 
