@@ -81,7 +81,7 @@ export default function BatchDemoPage() {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">// NETWORK</div>
+          <div className="h-eyebrow">{"// NETWORK"}</div>
           <h1>VOYAGER <span className="accent">BATCHES</span></h1>
           <p className="sub">Horizontal-scroll demo — mock data</p>
         </div>
@@ -89,9 +89,7 @@ export default function BatchDemoPage() {
 
       {/* Architect council — pinned, batch-agnostic */}
       <section style={{ marginBottom: '2rem' }}>
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
-          // ARCHITECT COUNCIL
-        </div>
+        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>{"// ARCHITECT COUNCIL"}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
           {ARCHITECTS.map(m => <MemberCard key={m.id} m={m} architect />)}
         </div>
@@ -99,9 +97,7 @@ export default function BatchDemoPage() {
 
       {/* Batch selector — horizontal scroll rail */}
       <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '0.75rem' }}>
-          // BATCHES
-        </div>
+        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '0.75rem' }}>{"// BATCHES"}</div>
 
         <div style={{ position: 'relative' }}>
           {/* arrows (desktop) */}

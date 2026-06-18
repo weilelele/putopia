@@ -207,7 +207,7 @@ export default function DevicesPage() {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">// ARCHIVE</div>
+          <div className="h-eyebrow">{"// ARCHIVE"}</div>
           <h1>DEVICE <span className="accent">REGISTRY</span></h1>
           <p className="sub">Multiverse Console Registry — {unknownDevices.length} unknown / {knownDevices.length} known</p>
         </div>

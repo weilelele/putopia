@@ -66,8 +66,7 @@ function PackTracker({ order, index, total }: { order: VoyagerOrder; index: numb
   return (
     <div style={{ border: '1px solid rgba(255,107,53,0.2)', background: '#0F1430', padding: '18px 20px', marginBottom: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em' }}>
-          // ORDER {total > 1 ? `#${total - index}` : 'MY VOYAGER PACK'}
+        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em' }}>{"// ORDER"}{total > 1 ? `#${total - index}` : 'MY VOYAGER PACK'}
         </div>
         <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em' }}>
           {date}
@@ -222,7 +221,7 @@ export default function ProfilePage() {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">// YOUR DOSSIER</div>
+          <div className="h-eyebrow">{"// YOUR DOSSIER"}</div>
           <h1><span className="accent">PROFILE</span></h1>
         </div>
         <button
@@ -317,7 +316,7 @@ export default function ProfilePage() {
       {!canEdit ? (
         <div style={{ border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: '22px 20px', fontFamily: 'var(--font-mono)', maxWidth: '640px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: 8 }}>// PROFILE LOCKED</div>
+            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: 8 }}>{"// PROFILE LOCKED"}</div>
             <p style={{ margin: 0, fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.65 }}>
               Set up your avatar, bio and links once you become a Voyager.
             </p>
@@ -337,7 +336,7 @@ export default function ProfilePage() {
         </div>
       ) : (
       <div style={{ border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: '20px', fontFamily: 'var(--font-mono)', maxWidth: '640px' }}>
-        <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: '18px' }}>// ADD YOUR INFO</div>
+        <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: '18px' }}>{"// ADD YOUR INFO"}</div>
 
         <FieldGroup cols={2}>
           <Field label="DISPLAY NAME">
@@ -358,7 +357,7 @@ export default function ProfilePage() {
           />
         </Field>
 
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// SOCIAL LINKS</div>
+        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>{"// SOCIAL LINKS"}</div>
         <FieldGroup>
           <Field label="X / TWITTER (full URL)">
             <input style={FIELD_INPUT} value={form.social_x} onChange={(e) => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />

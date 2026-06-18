@@ -41,7 +41,7 @@ export default function LogsPage() {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">// FIELD ARCHIVE</div>
+          <div className="h-eyebrow">{"// FIELD ARCHIVE"}</div>
           <h1>VOYAGER <span className="accent">LOGS</span></h1>
           <p className="sub">{stories.length} entries on record</p>
         </div>

@@ -74,9 +74,7 @@ export default function ApplyPage() {
               </div>
             </div>
           </div>
-          <div className="text-xs font-mono" style={{ color: 'var(--color-muted)', letterSpacing: '0.2em' }}>
-            // YOUR APPLICATION IS PENDING ARCHITECT REVIEW //
-          </div>
+          <div className="text-xs font-mono" style={{ color: 'var(--color-muted)', letterSpacing: '0.2em' }}>{"// YOUR APPLICATION IS PENDING ARCHITECT REVIEW //"}</div>
         </div>
         <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
           <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
@@ -95,7 +93,7 @@ export default function ApplyPage() {
       <div style={{ maxWidth: '560px', width: '100%' }}>
         <div className="page-head" style={{ marginBottom: '1.5rem' }}>
           <div>
-            <div className="h-eyebrow">// PORTAL ACCESS REQUEST</div>
+            <div className="h-eyebrow">{"// PORTAL ACCESS REQUEST"}</div>
             <h1>JOIN THE <span className="accent">COLLECTIVE</span></h1>
             <p className="sub">Become a Voyager. Apply for access to a Multiverse Console.</p>
           </div>

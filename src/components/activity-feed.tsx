@@ -326,7 +326,7 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid rgba(255,107,53,0.14)', background: '#090D1A' }}>
-          <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>// VOYAGER PROFILE</span>
+          <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>{"// VOYAGER PROFILE"}</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '2px 6px' }}>✕</button>
         </div>
 

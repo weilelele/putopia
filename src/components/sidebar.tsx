@@ -57,7 +57,7 @@ export function Sidebar() {
 
       {navItems.map(({ group, items }) => (
         <div key={group}>
-          <div className="nav-label">// {group}</div>
+          <div className="nav-label">{"//"}{group}</div>
           {items.map(({ href, label, icon }) => {
             const isDashboard = href === '/console'
             const locked = isGuest && !isDashboard

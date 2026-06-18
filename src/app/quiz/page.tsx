@@ -81,15 +81,13 @@ function IntroScreen({ onStart, questionCount }: { onStart: () => void; question
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '48px 24px' }}>
 
-      <div style={{ marginBottom: 8, fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.2em' }}>
-        // APPLICANT TASK 04 / 04
-      </div>
+      <div style={{ marginBottom: 8, fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.2em' }}>{"// APPLICANT TASK 04 / 04"}</div>
       <h1 style={{ margin: '0 0 12px', fontSize: 'var(--fs-h2)', color: '#F5F5F5', letterSpacing: '0.04em' }}>
         FIELD ASSESSMENT
       </h1>
       <p style={{ margin: '0 0 28px', fontSize: 'var(--fs-body)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.7 }}>
         Before you can be considered for Voyager status, you must demonstrate a baseline
-        understanding of the Collective's mission and methods.
+        understanding of the Collective&apos;s mission and methods.
       </p>
 
       {/* Dynamic question count */}

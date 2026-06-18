@@ -162,11 +162,15 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     })
     // Brief "TRANSMITTING..." beat before confirm screen appears
     await new Promise(r => setTimeout(r, 200))
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', 'Lead')
+    const w = window as typeof window & {
+      fbq?: (...args: unknown[]) => void
+      twq?: (...args: unknown[]) => void
     }
-    if (typeof window !== 'undefined' && (window as any).twq) {
-      (window as any).twq('event', 'tw-rd22u-rd2mg', {})
+    if (typeof window !== 'undefined' && w.fbq) {
+      w.fbq('track', 'Lead')
+    }
+    if (typeof window !== 'undefined' && w.twq) {
+      w.twq('event', 'tw-rd22u-rd2mg', {})
     }
     if (result.error) {
       setSubmitError(result.error)

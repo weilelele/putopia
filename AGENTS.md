@@ -31,7 +31,10 @@ deployments share **production** Supabase, MongoDB, and Stripe. Therefore:
 
 - `.claude/hooks/session-start.sh` runs `npm install` on web sessions so
   `node_modules/` (and the Next.js docs above) are available.
-- A PostToolUse hook auto-fixes and reports ESLint issues on edited TS/TSX.
-- CI (`.github/workflows/ci.yml`) gates PRs on `tsc --noEmit` and `next build`;
-  lint is currently advisory because of a pre-existing backlog. Before pushing,
-  run `npx tsc --noEmit` and `npm run build` locally.
+- A PostToolUse hook auto-fixes edited TS/TSX and blocks on any remaining
+  ESLint error.
+- CI (`.github/workflows/ci.yml`) gates PRs on `tsc --noEmit`, `npm run lint`,
+  and `next build`. The tree is lint-error-clean; a handful of React-compiler
+  rules are tracked as warnings in `eslint.config.mjs` (see the comment there).
+  Before pushing, run `npx tsc --noEmit`, `npm run lint`, and `npm run build`
+  locally.

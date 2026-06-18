@@ -162,7 +162,7 @@ export async function renderVideoClip(
     const ratio = clamp(cfg.areaRatio || 1 / 6, 0.02, 0.9)
     const area = meta.width * meta.height * ratio
     const ar = cfg.shape === 'rect' ? parseAspect(cfg.aspect) : 1
-    let cw = evenClamp(Math.sqrt(area * ar), 8, meta.width)
+    const cw = evenClamp(Math.sqrt(area * ar), 8, meta.width)
     let ch = evenClamp(area / Math.max(1, cw), 8, meta.height)
     if (cfg.shape !== 'rect') ch = cw // square / circle
     const cx = Math.floor(Math.random() * (meta.width - cw + 1))

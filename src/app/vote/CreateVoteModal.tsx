@@ -91,7 +91,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="text-xs font-mono tracking-widest mb-1" style={{ color: 'rgba(245,245,245,0.35)' }}>// NEW VOTE</div>
+            <div className="text-xs font-mono tracking-widest mb-1" style={{ color: 'rgba(245,245,245,0.35)' }}>{"// NEW VOTE"}</div>
             <h2 className="text-xl font-mono font-semibold" style={{ color: '#F5F5F5' }}>CREATE VOTE</h2>
           </div>
           <button onClick={onClose} style={{ color: 'rgba(245,245,245,0.35)' }} className="hover:text-[#F5F5F5] transition-colors">

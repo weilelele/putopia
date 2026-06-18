@@ -169,7 +169,7 @@ export default function FlipDemo() {
         .flip-btn:hover { background:rgba(255,107,53,.12) }
       `}</style>
 
-      <div className="flip-meta">// split-flap → spread — 试不同节奏</div>
+      <div className="flip-meta">{"// split-flap → spread — 试不同节奏"}</div>
 
       {layout ? (
         <div className="flip-stage" style={{ width: layout.stageW, height: layout.stageH, ['--spread' as string]: `${p.spread}ms` }}>

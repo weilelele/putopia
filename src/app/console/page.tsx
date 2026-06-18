@@ -545,7 +545,7 @@ function GuestHero({ newHref, mcFunctions }: { newHref: string; mcFunctions: McF
           fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',
           lineHeight: 1.85, color: 'var(--color-star-dim)', margin: 0, ...line(2),
         }}>
-          Whether by accident or design — you've found your way into the internal network of the Multiverse Collective.
+          Whether by accident or design — you&apos;ve found your way into the internal network of the Multiverse Collective.
         </p>
         <p style={{
           fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',

@@ -184,7 +184,7 @@ export default function VoyagersPage() {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">// NETWORK</div>
+          <div className="h-eyebrow">{"// NETWORK"}</div>
           <h1>ACTIVE <span className="accent">VOYAGERS</span></h1>
           <p className="sub">
             {loading ? 'Loading registry...' : `Voyager Registry — ${voyagers.length} active members`}
@@ -200,9 +200,7 @@ export default function VoyagersPage() {
         <>
           {architects.length > 0 && (
             <section style={{ marginBottom: '2.5rem' }}>
-              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
-                // ARCHITECT COUNCIL
-              </div>
+              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>{"// ARCHITECT COUNCIL"}</div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {architects.map(v => (
                   <VoyagerCard key={v.id} voyager={v} user={user} isAtLeast={isAtLeast}
@@ -217,9 +215,7 @@ export default function VoyagersPage() {
               <style>{`.batch-rail::-webkit-scrollbar{display:none}.batch-rail{scrollbar-width:none}`}</style>
 
               {/* Batch selector — horizontal scroll rail */}
-              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '0.75rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
-                // BATCHES
-              </div>
+              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '0.75rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>{"// BATCHES"}</div>
 
               <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
                 {batches.length > 1 && (
@@ -294,7 +290,7 @@ export default function VoyagersPage() {
           >
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>// EDIT PROFILE</div>
+              <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>{"// EDIT PROFILE"}</div>
               <button onClick={closeEdit} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
                 <XClose size={16} />
               </button>
@@ -351,7 +347,7 @@ export default function VoyagersPage() {
               )}
             </Field>
 
-            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// SOCIAL LINKS</div>
+            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>{"// SOCIAL LINKS"}</div>
             <FieldGroup>
               <Field label="X / TWITTER (full URL)">
                 <input style={FIELD_INPUT} value={form.social_x} onChange={e => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
@@ -364,7 +360,7 @@ export default function VoyagersPage() {
               </Field>
             </FieldGroup>
 
-            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>// FIELD DATA</div>
+            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>{"// FIELD DATA"}</div>
             <FieldGroup cols={2}>
               <Field label="OBSERVATION DAYS">
                 <input style={FIELD_INPUT} type="number" min="0" value={form.observation_days} onChange={e => setF('observation_days', e.target.value)} />
