@@ -289,11 +289,12 @@ function buildSignalHtml(signal: SignalTaskItem | null): string {
       </table>`
     : ''
 
-  const optionCells = signal.options
-    .slice(0, 4)
+  const opts = signal.options.slice(0, 4)
+  const colWidth = `${(100 / opts.length).toFixed(4)}%`
+  const optionCells = opts
     .map(
       (a, i) => `
-      <td style="padding:0 3px;vertical-align:top;">
+      <td width="${colWidth}" style="width:${colWidth};padding:0 3px;vertical-align:top;">
         <div style="font-size:9px;color:rgba(245,245,245,0.5);margin-bottom:3px;font-family:${MONO};">${String.fromCharCode(65 + i)}</div>
         <div style="border:1px solid rgba(255,107,53,0.16);background:#070912;">${renderSignalThumb(a)}</div>
       </td>`
@@ -312,7 +313,7 @@ function buildSignalHtml(signal: SignalTaskItem | null): string {
         </tr>
       </table>
       ${referenceRow}
-      <table width="100%" cellpadding="0" cellspacing="0"><tr>${optionCells}</tr></table>
+      <table width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;"><tr>${optionCells}</tr></table>
       <div style="margin-top:13px;font-size:9px;letter-spacing:0.14em;color:rgba(255,107,53,0.55);font-family:${MONO};">FILE YOUR READ — SEE HOW OTHERS RESPONDED →</div>
     </a>
   </td></tr>`
