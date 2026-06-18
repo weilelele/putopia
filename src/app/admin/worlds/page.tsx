@@ -71,7 +71,11 @@ export default function WorldsAdmin() {
   const formRef = useRef<HTMLDivElement>(null)
 
   const load = async () => { setLoading(true); setItems(await getAllWorlds()); setLoading(false) }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    let active = true
+    getAllWorlds().then(w => { if (active) { setItems(w); setLoading(false) } })
+    return () => { active = false }
+  }, [])
 
   const openNew  = () => { setForm(EMPTY); setEditId(null); setShowForm(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }
   const openEdit = (w: World) => { setForm(worldToForm(w)); setEditId(w.id); setShowForm(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }

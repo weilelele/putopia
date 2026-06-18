@@ -28,13 +28,15 @@ export default function AdminActivityPage() {
   const [loading, setLoading] = useState(true)
   const [pending, startTransition] = useTransition()
 
-  async function load() {
-    const data = await getActivityFeedAdmin()
-    setEvents(data)
-    setLoading(false)
-  }
-
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    let active = true
+    getActivityFeedAdmin().then(data => {
+      if (!active) return
+      setEvents(data)
+      setLoading(false)
+    })
+    return () => { active = false }
+  }, [])
 
   function toggle(id: string, current: boolean) {
     startTransition(async () => {

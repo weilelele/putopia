@@ -94,6 +94,7 @@ export default function SignalTasksAdmin() {
 
   useEffect(() => {
     getFrequencies().then((f) => { setFreqs(f); setFreqsLoading(false) })
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional initial fetch; refreshInvestigations is the shared reloader
     refreshInvestigations()
   }, [refreshInvestigations])
 
@@ -285,6 +286,7 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
   const [visionOpen, setVisionOpen] = useState(false)
 
   const reload = useCallback(async () => { setCfg(await getInvestigationConfig(threadId)) }, [threadId])
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional refetch when threadId changes; reload is the shared loader
   useEffect(() => { reload() }, [reload])
 
   if (!cfg) return null
@@ -373,6 +375,7 @@ function DayList({
   }, [investigationId])
 
   // Reload when a day's publish state may have changed (anchor / reveal shifts).
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional refetch on activeTaskId change; reload is the shared loader
   useEffect(() => { reload() }, [reload, activeTaskId])
 
   const addDay = async () => {
@@ -461,6 +464,7 @@ function TaskEditor({
     setLoading(false)
   }, [taskId])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional refetch when taskId changes; reload is the shared loader
   useEffect(() => { reload() }, [reload])
 
   if (loading) return <div style={{ color: 'rgba(245,245,245,0.4)', fontSize: 12 }}>Loading…</div>
@@ -729,6 +733,7 @@ function ForgePicker({
   useEffect(() => {
     if (!freqs.length) return
     const valid = channelId && freqs.some((f) => f.channelId === channelId) ? channelId : freqs[0].channelId
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reconciles channel/band selection once the async Cosmo catalog arrives
     if (valid !== channelId) setChannelId(valid)
     if (!bandId) {
       const f = freqs.find((x) => x.channelId === valid)

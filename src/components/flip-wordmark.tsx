@@ -75,6 +75,7 @@ function FlipCell({ cell, pool, spread, runId, scale }: { cell: Placed; pool: st
   const [settled, setSettled] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets animation state before re-running the shuffle sequence
     setSettled(false)
     const iv = setInterval(() => {
       setSrc(pool[Math.floor(Math.random() * pool.length)])
@@ -145,6 +146,7 @@ export function FlipWordmark({
   // run once on mount + on replay
   useEffect(() => {
     if (!geom) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the spread animation before replaying it on geom/run change
     setSpread(false)
     const t = setTimeout(() => setSpread(true), geom.lastSettle + PAUSE)
     return () => clearTimeout(t)

@@ -82,6 +82,7 @@ function QuestionEditor({
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flexShrink: 0, width: 36 }}>
                 <input
                   type="radio"
+                  // eslint-disable-next-line react-hooks/purity -- name is cosmetic; the radio is fully controlled via checked/onChange
                   name={`answer-${Math.random()}`}
                   checked={draft.answer_key === opt.key}
                   onChange={() => setAnswer(opt.key)}
@@ -137,7 +138,11 @@ export default function QuizAdminPage() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    let active = true
+    adminGetQuizQuestions().then(q => { if (active) { setQuestions(q); setLoading(false) } })
+    return () => { active = false }
+  }, [])
 
   const flash = (text: string, ok: boolean) => {
     setMsg({ text, ok })

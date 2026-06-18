@@ -59,6 +59,7 @@ export default function OrdersAdmin() {
     }])))
     setLoading(false)
   }
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount; load() is the shared refetch reused after mutations
   useEffect(() => { load() }, [])
 
   const handleCreate = async () => {

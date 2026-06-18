@@ -472,6 +472,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
 ───────────────────────────────────────────────────── */
 function ScanTransition({ onComplete }: { onComplete: () => void }) {
   const callbackRef = useRef(onComplete)
+  // eslint-disable-next-line react-hooks/refs -- latest-ref pattern: keep the callback current without re-running the timer effect
   callbackRef.current = onComplete
   const welcomeRef  = useRef<HTMLDivElement>(null)
   const beamRef     = useRef<HTMLDivElement>(null)

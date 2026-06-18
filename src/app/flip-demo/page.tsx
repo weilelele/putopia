@@ -84,6 +84,7 @@ function FlipCell({ cell, pool, spread, runId, tick, lock }: { cell: Placed; poo
   const [settled, setSettled] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets animation state before re-running the shuffle sequence
     setSettled(false)
     const iv = setInterval(() => {
       setSrc(pool[Math.floor(Math.random() * pool.length)])
@@ -130,6 +131,7 @@ export default function FlipDemo() {
   // run once on entering the page + on each replay/preset change: flip → spread
   useEffect(() => {
     if (!layout) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the spread animation before replaying it on layout/run change
     setSpread(false)
     const t = setTimeout(() => setSpread(true), layout.lastSettle + p.pause)
     return () => clearTimeout(t)
