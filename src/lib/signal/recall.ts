@@ -11,6 +11,7 @@
  */
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
+import { resolveUserEmail } from '@/lib/signal/world-confirmed-email'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -103,12 +104,8 @@ export async function runSignalRecall(): Promise<RecallResult> {
         const { error: logErr } = await admin.from('signal_recall_log').insert({ task_id: task.id, user_id: userId })
         if (logErr) continue // unique violation → already reminded
 
-        const { data: profile } = await admin
-          .from('voyager_profiles')
-          .select('email')
-          .eq('id', userId)
-          .maybeSingle()
-        const to = (profile as { email: string | null } | null)?.email
+        // auth.users is authoritative — voyager_profiles.email is often null.
+        const to = await resolveUserEmail(admin, userId)
         if (!to) continue
 
         const { error: mailErr } = await sendEmail({

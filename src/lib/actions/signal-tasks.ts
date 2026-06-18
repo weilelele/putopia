@@ -182,8 +182,14 @@ export async function setTaskPublished(
             `**${worldName}** — Day ${dayNum} signals are now live.\n\nHead to Signal Dispatch and cast your vote.`,
           )
         }
+        // First time a world's signals go live: email the original proposer
+        // ("your world really exists"). Idempotent — no-ops after the first send.
+        if (thread?.world_id) {
+          const { maybeSendWorldConfirmedEmail } = await import('@/lib/signal/world-confirmed-email')
+          await maybeSendWorldConfirmedEmail(thread.world_id)
+        }
       }
-    } catch { /* feed post is best-effort */ }
+    } catch { /* feed post + proposer email are best-effort */ }
   }
 
   return { ok: true }
