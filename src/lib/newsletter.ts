@@ -241,9 +241,8 @@ function buildNewsCardsHtml(news: NewsItem[]): string {
             <td style="text-align:right;vertical-align:middle;font-size:12px;letter-spacing:0.2em;color:rgba(255,107,53,0.5);">${item.tag.toUpperCase()}</td>
           </tr>
         </table>
-        <div style="font-size:15px;font-weight:700;color:#F5F5F5;line-height:1.35;margin-bottom:7px;font-family:${MONO};">${item.title}</div>
-        <div style="font-size:13px;color:rgba(245,245,245,0.42);line-height:1.75;font-family:${MONO};">${item.excerpt}</div>
-        <div style="margin-top:10px;font-size:12px;letter-spacing:0.16em;color:rgba(255,107,53,0.5);font-family:${MONO};">READ MORE →</div>
+        <div style="font-size:15px;font-weight:700;color:#F5F5F5;line-height:1.35;font-family:${MONO};">${item.title}</div>
+        <div style="margin-top:9px;font-size:12px;letter-spacing:0.16em;color:rgba(255,107,53,0.5);font-family:${MONO};">READ MORE →</div>
       </a>
     </td></tr>`
     )
@@ -385,7 +384,16 @@ export const EMAIL_TAIL = `
 </body>
 </html>`
 
-export const EMAIL_HEADER_REGISTERED = `
+/** Format an ISO date (YYYY-MM-DD) as a masthead dateline, e.g. "JUN 18, 2026". */
+function mastheadDate(weekLabel: string): string {
+  return new Date(`${weekLabel}T00:00:00Z`)
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+    .toUpperCase()
+}
+
+/** Registered-email header with the issue date appended to the masthead. */
+export function buildHeaderRegistered(weekLabel: string): string {
+  return `
   <tr><td style="background:#0A0E27;border:1px solid rgba(255,107,53,0.18);padding:0;overflow:hidden;">
     <div style="height:2px;background:linear-gradient(90deg,#E85D04,#FF6B35,#DC2F02);"></div>
     <table width="100%" cellpadding="0" cellspacing="0" class="hdr-pad" style="padding:20px 26px;">
@@ -403,7 +411,7 @@ export const EMAIL_HEADER_REGISTERED = `
               </td>
             </tr>
           </table>
-          <div style="font-size:12px;letter-spacing:0.3em;color:#8A8FA8;margin-top:8px;font-family:'Space Mono',monospace;">WEEKLY NEWSLETTER</div>
+          <div style="font-size:12px;letter-spacing:0.3em;color:#8A8FA8;margin-top:8px;font-family:'Space Mono',monospace;">WEEKLY NEWSLETTER &mdash; ${mastheadDate(weekLabel)}</div>
         </td>
         <td style="text-align:right;vertical-align:middle;white-space:nowrap;">
           <span style="display:inline-block;border:1px solid #B98620;padding:5px 11px;background:#1C1708;font-size:12px;font-weight:700;letter-spacing:0.16em;color:#E8A020;font-family:'Space Mono',monospace;">APPLICANT</span>
@@ -412,6 +420,7 @@ export const EMAIL_HEADER_REGISTERED = `
     </table>
   </td></tr>
   <tr><td style="height:10px;"></td></tr>`
+}
 
 /** Personalized greeting. Pass real codename at send time; preview uses '[CODENAME]'. */
 export function buildGreetingHtml(codename: string): string {
@@ -499,7 +508,7 @@ export const CTA_TASK_GATED = `
 export function buildDirectHtml(content: NewsletterContent, codename = '[CODENAME]'): string {
   return (
     EMAIL_HEAD +
-    EMAIL_HEADER_REGISTERED +
+    buildHeaderRegistered(content.weekLabel) +
     buildGreetingHtml(codename) +
     buildIntroHtml() +
     content.newsCardsHtml +
@@ -514,7 +523,7 @@ export function buildDirectHtml(content: NewsletterContent, codename = '[CODENAM
 export function buildTaskGatedHtml(content: NewsletterContent, codename = '[CODENAME]'): string {
   return (
     EMAIL_HEAD +
-    EMAIL_HEADER_REGISTERED +
+    buildHeaderRegistered(content.weekLabel) +
     buildGreetingHtml(codename) +
     buildIntroHtml() +
     content.newsCardsHtml +
