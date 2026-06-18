@@ -423,15 +423,11 @@ export const EMAIL_FOOTER = `
     </div>
   </td></tr>`
 
-// ── Voyager Pack CTA blocks (live-tested: image left + crafted copy) ───────────
-
-const VOYAGER_PACK_COPY = `
-    <p style="${PARA}">This week, we have prepared the all-new Voyager Pack for everyone. By passing various tests, you will gain higher levels of authorization, participate more deeply in our organization, and get closer to the Multiverse Console — our organization's mysterious device.</p>
-    <p style="${PARA_LAST}">We look forward to seeing what you, and everyone else, will achieve.</p>`
+// ── Voyager Pack CTA blocks (concise: image left + headline + feature list) ────
 
 export const CTA_DIRECT = `
   <tr><td style="height:18px;"></td></tr>
-  <tr><td style="background:linear-gradient(160deg,#1A0E2A,#0F1430);border:1px solid rgba(255,107,53,0.35);overflow:hidden;">
+  <tr><td style="background:linear-gradient(160deg,#1A0E2A,#0F1430);border:1px solid rgba(255,107,53,0.45);overflow:hidden;">
     <div style="height:2px;background:linear-gradient(90deg,#E85D04,#FF6B35,#DC2F02);"></div>
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
@@ -440,44 +436,58 @@ export const CTA_DIRECT = `
                style="width:200px;display:block;" />
         </td>
         <td style="vertical-align:middle;padding:22px 22px 22px 20px;">
-          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(255,107,53,0.6);margin-bottom:12px;font-family:'Space Mono',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
-          ${VOYAGER_PACK_COPY}
-          <div style="margin-top:18px;">
+          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(255,107,53,0.6);margin-bottom:11px;font-family:'Space Mono',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
+          <div style="font-size:15px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:14px;line-height:1.3;font-family:'Space Mono',monospace;">
+            YOUR VOYAGER<br/>STATUS IS READY.
+          </div>
+          <div style="margin-bottom:5px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Physical Badge</div>
+          <div style="margin-bottom:5px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Access Card</div>
+          <div style="margin-bottom:18px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Full Network Access</div>
+          <a href="https://putopia.vercel.app/voyager-pack"
+             style="display:block;text-align:center;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.18em;text-decoration:none;padding:12px 14px;margin-bottom:12px;">
+            [ ACTIVATE NOW → ]
+          </a>
+          <div style="text-align:center;">
             <a href="https://putopia.vercel.app/voyager-pack"
-               style="display:block;text-align:center;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.18em;text-decoration:none;padding:13px 14px;">
-              [ ACTIVATE NOW → ]
+               style="font-size:9px;letter-spacing:0.1em;color:rgba(255,107,53,0.5);text-decoration:none;border-bottom:1px solid rgba(255,107,53,0.22);">
+              Learn more →
             </a>
           </div>
         </td>
       </tr>
     </table>
+    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,107,53,0.2),transparent);"></div>
   </td></tr>`
 
 export const CTA_TASK_GATED = `
   <tr><td style="height:18px;"></td></tr>
-  <tr><td style="background:#0A0E27;border:1px solid rgba(232,160,32,0.30);overflow:hidden;">
+  <tr><td style="background:#0A0E27;border:1px solid rgba(232,160,32,0.35);overflow:hidden;">
     <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(232,160,32,0.5),transparent);"></div>
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td width="200" style="vertical-align:top;padding:0;width:200px;min-width:200px;">
           <img src="https://putopia.vercel.app/voyager-pack/voyager-hero.png" width="200" alt="Initial Voyager Pack"
-               style="width:200px;display:block;filter:grayscale(60%);opacity:0.5;" />
+               style="width:200px;display:block;filter:grayscale(55%);opacity:0.55;" />
         </td>
         <td style="vertical-align:middle;padding:22px 22px 22px 20px;">
-          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:12px;font-family:'Space Mono',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
-          ${VOYAGER_PACK_COPY}
-          <div style="margin-top:18px;">
-            <a href="https://putopia.vercel.app/voyager-pack"
-               style="display:block;text-align:center;background:rgba(232,160,32,0.08);color:#E8A020;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:13px 14px;border:1px solid rgba(232,160,32,0.45);">
-              [ VIEW VOYAGER PATH → ]
-            </a>
-            <div style="margin-top:10px;text-align:center;font-size:9px;color:rgba(245,245,245,0.2);font-family:'Space Mono',monospace;">
-              Pack unlocks upon completing your field assessment.
-            </div>
+          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:11px;font-family:'Space Mono',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
+          <div style="font-size:15px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:14px;line-height:1.3;font-family:'Space Mono',monospace;">
+            ACTIVATE YOUR<br/>VOYAGER STATUS.
+          </div>
+          <div style="font-size:11px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:18px;font-family:'Space Mono',monospace;">
+            Complete the Collective&#39;s field assessment tasks to unlock the Initial Voyager Pack.
+          </div>
+          <a href="https://putopia.vercel.app/voyager-pack"
+             style="display:block;text-align:center;background:rgba(232,160,32,0.1);color:#E8A020;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:12px 14px;border:1px solid rgba(232,160,32,0.5);margin-bottom:12px;">
+            [ VIEW VOYAGER PATH → ]
+          </a>
+          <div style="text-align:center;font-size:9px;letter-spacing:0.06em;color:rgba(245,245,245,0.2);font-family:'Space Mono',monospace;">
+            Pack unlocks upon completing your field assessment.
           </div>
         </td>
       </tr>
     </table>
+    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(232,160,32,0.2),transparent);"></div>
   </td></tr>`
 
 // ── Full email assemblers ─────────────────────────────────────────────────────
