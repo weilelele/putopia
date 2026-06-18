@@ -1,11 +1,13 @@
 /**
- * Weekly newsletter — fixed editorial copy + DB-driven intel cards & device section.
+ * Weekly newsletter — fixed editorial copy + DB-driven action items.
  *
- * No AI generation. Narrative copy is fixed. Intel cards and device section
- * are pulled fresh from DB each render, then cached 6 hours.
+ * Registered layout (Groups A & B):
+ *   greeting → intro paragraph → Initial Voyager Pack (lead-gen, top) →
+ *   2 latest news entries (with publisher avatar) → Signal Dispatch question
  *
- * Personalized greeting (codename) is injected per-recipient at send time.
- * Preview pages use '[CODENAME]' as placeholder.
+ * No AI generation. Copy is fixed; news + signal + devices pull fresh from DB,
+ * cached 6 hours. Personalized greeting (codename) is injected per-recipient at
+ * send time; preview pages use '[CODENAME]'.
  */
 
 import { unstable_cache } from 'next/cache'
@@ -13,11 +15,29 @@ import { createAdminClient } from '@/lib/supabase/server'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface IntelItem {
+interface NewsItem {
   id: string
   title: string
   tag: string
   excerpt: string
+  publisherName: string | null
+  publisherAvatarUrl: string | null
+}
+
+interface SignalAsset {
+  id: string
+  media: 'image' | 'video' | 'audio'
+  url: string | null
+  role: 'main' | 'option'
+}
+
+interface SignalTaskItem {
+  id: string
+  type: string
+  prompt: string | null
+  main: SignalAsset | null
+  options: SignalAsset[]
+  participantCount: number
 }
 
 interface DeviceItem {
@@ -30,8 +50,8 @@ interface DeviceItem {
 }
 
 export interface NewsletterContent {
-  intelCardsHtml: string
-  deviceSectionHtml: string
+  newsCardsHtml: string
+  signalHtml: string
   weekLabel: string
   activeUsers: Array<{ name: string; avatarUrl: string | null }>
   devices: DeviceItem[] // for unregistered device strip
@@ -43,35 +63,35 @@ const MONO = "'Space Mono',ui-monospace,'Courier New',monospace"
 const PARA = `margin:0 0 16px;font-size:11px;color:rgba(245,245,245,0.68);line-height:1.9;letter-spacing:0.01em;font-family:${MONO};`
 const PARA_LAST = `margin:0;font-size:11px;color:rgba(245,245,245,0.68);line-height:1.9;letter-spacing:0.01em;font-family:${MONO};`
 
+const SIGNAL_TYPE_HINT: Record<string, string> = {
+  visual_match: 'Which signal comes from the same world as the reference?',
+  visual_odd_one: 'Which signal does not belong to this group?',
+  audio_odd_one: 'Which sound does not belong to this group?',
+  audio_match: 'Which sound comes from the same world as the reference?',
+}
+
 // ── DB data gathering ─────────────────────────────────────────────────────────
 
 async function gatherWeeklyData(): Promise<{
-  intel: IntelItem[]
-  featuredDevice: DeviceItem | null
+  news: NewsItem[]
+  signal: SignalTaskItem | null
   stripDevices: DeviceItem[]
   activeUsers: Array<{ name: string; avatarUrl: string | null }>
 }> {
   const admin = createAdminClient()
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const today = new Date().toISOString().slice(0, 10)
 
-  const [intelRes, deviceCommentsRes, allCommentsRes, devicesRes] = await Promise.all([
-    // Latest 3 intel items
+  const [intelRes, allCommentsRes, devicesRes, signalTaskRes] = await Promise.all([
+    // Latest 2 public intel items (news entries)
     admin
       .from('intel')
-      .select('id, title, tag, content')
+      .select('id, title, tag, content, publisher_name, publisher_id')
+      .eq('classified', false)
       .order('timestamp', { ascending: false })
-      .limit(3),
+      .limit(2),
 
-    // Who commented on devices this week (for activity count)
-    admin
-      .from('comments')
-      .select('subject_id, author_name, author_avatar_url')
-      .eq('subject_type', 'device')
-      .gte('created_at', since)
-      .eq('is_visible', true)
-      .not('author_name', 'is', null),
-
-    // All recent commenters (for active-user list)
+    // Recent commenters (active-user avatar cluster for unregistered)
     admin
       .from('comments')
       .select('author_name, author_avatar_url')
@@ -81,15 +101,89 @@ async function gatherWeeklyData(): Promise<{
       .order('created_at', { ascending: false })
       .limit(40),
 
-    // Most recently updated devices (up to 4)
+    // Most recently updated devices (for unregistered strip)
     admin
       .from('devices')
       .select('id, name, status, location, image_path')
       .order('updated_at', { ascending: false })
       .limit(4),
+
+    // Latest published signal task
+    admin
+      .from('signal_tasks')
+      .select('id, type, prompt')
+      .eq('is_published', true)
+      .lte('task_date', today)
+      .order('task_date', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .limit(1),
   ])
 
-  // Active users (unique, ordered by recency)
+  // ── News: enrich with publisher avatars ──
+  type IntelRow = {
+    id: string; title: string | null; tag: string | null; content: string | null
+    publisher_name: string | null; publisher_id: string | null
+  }
+  const intelRows = (intelRes.data ?? []) as IntelRow[]
+  const publisherIds = [...new Set(intelRows.map((i) => i.publisher_id).filter(Boolean) as string[])]
+  const avatarMap: Record<string, string | null> = {}
+  if (publisherIds.length) {
+    const { data: profiles } = await admin
+      .from('voyager_profiles')
+      .select('id, avatar_url')
+      .in('id', publisherIds)
+    for (const p of profiles ?? []) avatarMap[p.id] = p.avatar_url
+  }
+  const news: NewsItem[] = intelRows.map((i) => ({
+    id: i.id,
+    title: i.title ?? '',
+    tag: i.tag ?? '',
+    excerpt: (i.content ?? '').slice(0, 150),
+    publisherName: i.publisher_name,
+    publisherAvatarUrl: i.publisher_id ? (avatarMap[i.publisher_id] ?? null) : null,
+  }))
+
+  // ── Signal: fetch assets + participant count for the latest task ──
+  let signal: SignalTaskItem | null = null
+  const taskRow = signalTaskRes.data?.[0] as { id: string; type: string; prompt: string | null } | undefined
+  if (taskRow) {
+    const [assetsRes, countRes] = await Promise.all([
+      admin
+        .from('signal_task_assets')
+        .select('id, media, processed_url, display_url, asset_role, display_order')
+        .eq('task_id', taskRow.id)
+        .eq('is_selected', true)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: true }),
+      admin
+        .from('signal_responses')
+        .select('id', { count: 'exact', head: true })
+        .eq('task_id', taskRow.id),
+    ])
+    type AssetRow = {
+      id: string; media: 'image' | 'video' | 'audio'
+      processed_url: string | null; display_url: string | null
+      asset_role: 'main' | 'option'
+    }
+    const assets = (assetsRes.data ?? []) as AssetRow[]
+    const toAsset = (a: AssetRow): SignalAsset => ({
+      id: a.id,
+      media: a.media,
+      url: a.display_url || a.processed_url,
+      role: a.asset_role,
+    })
+    const main = assets.find((a) => a.asset_role === 'main')
+    signal = {
+      id: taskRow.id,
+      type: taskRow.type,
+      prompt: taskRow.prompt,
+      main: main ? toAsset(main) : null,
+      options: assets.filter((a) => a.asset_role !== 'main').map(toAsset),
+      participantCount: countRes.count ?? 0,
+    }
+  }
+
+  // ── Active users (unique, for unregistered cluster) ──
   type CommentRow = { author_name: string | null; author_avatar_url: string | null }
   const seen = new Set<string>()
   const activeUsers: Array<{ name: string; avatarUrl: string | null }> = []
@@ -100,51 +194,54 @@ async function gatherWeeklyData(): Promise<{
     }
   }
 
-  // Device activity counts
-  type DevCommentRow = { subject_id: string | null; author_name: string | null }
-  const devComments = (deviceCommentsRes.data ?? []) as DevCommentRow[]
-  const activityMap = new Map<string, number>()
-  for (const c of devComments) {
-    if (c.subject_id) {
-      activityMap.set(c.subject_id, (activityMap.get(c.subject_id) ?? 0) + 1)
-    }
-  }
+  const stripDevices: DeviceItem[] = (devicesRes.data ?? [])
+    .map((d) => ({
+      id: d.id, name: d.name, status: d.status, location: d.location,
+      imagePath: d.image_path, activeCount: 0,
+    }))
+    .filter((d) => d.imagePath)
+    .slice(0, 3)
 
-  const deviceItems: DeviceItem[] = (devicesRes.data ?? []).map((d) => ({
-    id: d.id,
-    name: d.name,
-    status: d.status,
-    location: d.location,
-    imagePath: d.image_path,
-    activeCount: activityMap.get(d.id) ?? 0,
-  }))
-
-  return {
-    intel: (intelRes.data ?? []).map((i) => ({
-      id: i.id,
-      title: i.title ?? '',
-      tag: i.tag ?? '',
-      excerpt: ((i.content as string | null) ?? '').slice(0, 160),
-    })),
-    featuredDevice: deviceItems[0] ?? null,
-    stripDevices: deviceItems.filter((d) => d.imagePath).slice(0, 3),
-    activeUsers,
-  }
+  return { news, signal, stripDevices, activeUsers }
 }
 
 // ── Section HTML builders ─────────────────────────────────────────────────────
 
-function buildIntelCardsHtml(intel: IntelItem[]): string {
-  if (intel.length === 0) return ''
+function publisherBadge(name: string | null, avatarUrl: string | null): string {
+  const display = name ?? 'Collective'
+  if (avatarUrl) {
+    return (
+      `<img src="${avatarUrl}" width="20" height="20" alt="" ` +
+      `style="width:20px;height:20px;border-radius:50%;object-fit:cover;display:inline-block;` +
+      `vertical-align:middle;border:1px solid rgba(255,255,255,0.12);" />` +
+      `<span style="font-size:9px;color:rgba(245,245,245,0.7);margin-left:8px;vertical-align:middle;">${display}</span>`
+    )
+  }
+  const initials = display.split(/\s+/).slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase()
+  return (
+    `<span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:#241433;` +
+    `color:#E8A020;font-size:9px;font-weight:700;line-height:20px;text-align:center;` +
+    `vertical-align:middle;border:1px solid rgba(232,160,32,0.4);">${initials}</span>` +
+    `<span style="font-size:9px;color:rgba(245,245,245,0.7);margin-left:8px;vertical-align:middle;">${display}</span>`
+  )
+}
 
-  const cards = intel
+function buildNewsCardsHtml(news: NewsItem[]): string {
+  if (news.length === 0) return ''
+
+  const cards = news
     .map(
       (item) => `
-    <tr><td style="padding-bottom:6px;">
+    <tr><td style="padding-bottom:8px;">
       <a href="https://putopia.vercel.app/intel/${item.id}"
-         style="display:block;text-decoration:none;background:#0A0E27;border:1px solid rgba(255,107,53,0.12);padding:16px 18px;">
-        <div style="font-size:7px;letter-spacing:0.24em;color:rgba(255,107,53,0.5);margin-bottom:8px;font-family:${MONO};">${item.tag.toUpperCase()}</div>
-        <div style="font-size:12px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.35;font-family:${MONO};">${item.title}</div>
+         style="display:block;text-decoration:none;background:#0A0E27;border:1px solid rgba(255,107,53,0.12);padding:15px 17px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:9px;">
+          <tr>
+            <td style="vertical-align:middle;">${publisherBadge(item.publisherName, item.publisherAvatarUrl)}</td>
+            <td style="text-align:right;vertical-align:middle;font-size:7px;letter-spacing:0.2em;color:rgba(255,107,53,0.5);">${item.tag.toUpperCase()}</td>
+          </tr>
+        </table>
+        <div style="font-size:12px;font-weight:700;color:#F5F5F5;line-height:1.35;margin-bottom:7px;font-family:${MONO};">${item.title}</div>
         <div style="font-size:9px;color:rgba(245,245,245,0.42);line-height:1.75;font-family:${MONO};">${item.excerpt}</div>
         <div style="margin-top:10px;font-size:8px;letter-spacing:0.16em;color:rgba(255,107,53,0.5);font-family:${MONO};">READ MORE →</div>
       </a>
@@ -164,54 +261,69 @@ function buildIntelCardsHtml(intel: IntelItem[]): string {
         </td>
       </tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0">
-      ${cards}
-    </table>
+    <table width="100%" cellpadding="0" cellspacing="0">${cards}</table>
   </td></tr>`
 }
 
-function buildDeviceSectionHtml(device: DeviceItem | null): string {
-  if (!device) return ''
+function renderSignalThumb(asset: SignalAsset): string {
+  if (asset.media === 'audio' || !asset.url) {
+    return `<div style="width:100%;aspect-ratio:1;background:#070912;display:flex;align-items:center;justify-content:center;">
+      <span style="font-size:8px;letter-spacing:0.14em;color:rgba(245,245,245,0.4);">AUDIO</span>
+    </div>`
+  }
+  return `<img src="${asset.url}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#070912;" />`
+}
 
-  const img = device.imagePath
-    ? `<img src="${device.imagePath}" width="160" alt="${device.name}"
-         style="width:160px;min-width:160px;height:120px;object-fit:cover;display:block;filter:brightness(0.65) saturate(0.8);" />`
-    : `<div style="width:160px;min-width:160px;height:120px;background:#060A1A;"></div>`
+function buildSignalHtml(signal: SignalTaskItem | null): string {
+  if (!signal || signal.options.length === 0) return ''
 
-  const activityLine =
-    device.activeCount > 0
-      ? `${device.activeCount} member${device.activeCount !== 1 ? 's' : ''} logged readings this week`
-      : 'Recently updated'
+  const prompt = signal.prompt || SIGNAL_TYPE_HINT[signal.type] || 'Make your judgment.'
+  const href = 'https://putopia.vercel.app/signal'
+
+  const referenceRow = signal.main
+    ? `<table cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+        <tr>
+          <td style="font-size:9px;color:rgba(245,245,245,0.35);letter-spacing:0.15em;padding-right:10px;vertical-align:middle;font-family:${MONO};">REFERENCE</td>
+          <td style="width:54px;"><div style="width:54px;border:1px solid rgba(255,107,53,0.25);">${renderSignalThumb(signal.main)}</div></td>
+        </tr>
+      </table>`
+    : ''
+
+  const optionCells = signal.options
+    .slice(0, 4)
+    .map(
+      (a, i) => `
+      <td style="padding:0 3px;vertical-align:top;">
+        <div style="font-size:9px;color:rgba(245,245,245,0.5);margin-bottom:3px;font-family:${MONO};">${String.fromCharCode(65 + i)}</div>
+        <div style="border:1px solid rgba(255,107,53,0.16);background:#070912;">${renderSignalThumb(a)}</div>
+      </td>`
+    )
+    .join('')
 
   return `
   <tr><td style="height:20px;"></td></tr>
   <tr><td>
-    <div style="font-size:8px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);margin-bottom:10px;font-family:${MONO};">LATEST DEVICE</div>
-    <a href="https://putopia.vercel.app/devices/${device.id}"
-       style="display:block;text-decoration:none;background:#0A0E27;border:1px solid rgba(255,107,53,0.12);overflow:hidden;">
-      <table width="100%" cellpadding="0" cellspacing="0">
+    <a href="${href}" style="display:block;text-decoration:none;background:#0F1430;border:1px solid rgba(255,107,53,0.16);padding:16px;">
+      <div style="font-size:10px;letter-spacing:0.28em;color:#E85D04;margin-bottom:12px;font-family:${MONO};">// SIGNAL DISPATCH</div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
         <tr>
-          <td width="160" style="vertical-align:top;padding:0;width:160px;min-width:160px;">${img}</td>
-          <td style="vertical-align:middle;padding:16px 20px;">
-            <div style="font-size:7px;letter-spacing:0.22em;color:rgba(255,107,53,0.5);margin-bottom:6px;font-family:${MONO};">${device.id}</div>
-            <div style="font-size:13px;font-weight:700;color:#F5F5F5;margin-bottom:8px;line-height:1.3;font-family:${MONO};">${device.name}</div>
-            <div style="font-size:9px;color:rgba(245,245,245,0.4);margin-bottom:4px;font-family:${MONO};">Status: ${device.status ?? 'Active'}</div>
-            <div style="font-size:9px;color:rgba(245,245,245,0.4);margin-bottom:14px;font-family:${MONO};">${activityLine}</div>
-            <div style="font-size:8px;letter-spacing:0.16em;color:rgba(255,107,53,0.5);font-family:${MONO};">VIEW DEVICE →</div>
-          </td>
+          <td style="font-size:11px;color:rgba(245,245,245,0.85);line-height:1.55;font-family:${MONO};">${prompt}</td>
+          <td style="text-align:right;vertical-align:top;font-size:10px;color:rgba(245,245,245,0.35);white-space:nowrap;padding-left:10px;font-family:${MONO};">${signal.participantCount} response${signal.participantCount !== 1 ? 's' : ''}</td>
         </tr>
       </table>
+      ${referenceRow}
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>${optionCells}</tr></table>
+      <div style="margin-top:13px;font-size:9px;letter-spacing:0.14em;color:rgba(255,107,53,0.55);font-family:${MONO};">FILE YOUR READ — SEE HOW OTHERS RESPONDED →</div>
     </a>
   </td></tr>`
 }
 
 // ── Fixed editorial copy ──────────────────────────────────────────────────────
 
-function buildRegisteredNarrativeHtml(): string {
+function buildIntroHtml(): string {
   return `
-  <tr><td style="background:#0A0E27;border:1px solid rgba(255,107,53,0.10);padding:22px 26px 24px;">
-    <p style="${PARA}">This week marks our organization's official debut to the public. We have welcomed many new members for a simple reason: we need fresh energy to maintain the order of the parallel worlds and the connections between them.</p>
-    <p style="${PARA_LAST}">Of course, we have also identified some challenges. Many people are skeptical of our organization, and since much of our information is still being processed and hasn't been disclosed yet, some only have a partial understanding of what we do. We ask for your patience and look forward to even more people joining our ranks.</p>
+  <tr><td style="padding:14px 4px 0;">
+    <p style="${PARA_LAST}">This week marks our organization's official debut to the public. We have welcomed many new members for a simple reason: we need fresh energy to maintain the order of the parallel worlds and the connections between them.</p>
   </td></tr>`
 }
 
@@ -219,10 +331,10 @@ function buildRegisteredNarrativeHtml(): string {
 
 export const getWeeklyNewsletterContent = unstable_cache(
   async (): Promise<NewsletterContent> => {
-    const { intel, featuredDevice, stripDevices, activeUsers } = await gatherWeeklyData()
+    const { news, signal, stripDevices, activeUsers } = await gatherWeeklyData()
     return {
-      intelCardsHtml: buildIntelCardsHtml(intel),
-      deviceSectionHtml: buildDeviceSectionHtml(featuredDevice),
+      newsCardsHtml: buildNewsCardsHtml(news),
+      signalHtml: buildSignalHtml(signal),
       weekLabel: new Date().toISOString().slice(0, 10),
       activeUsers,
       devices: stripDevices,
@@ -311,14 +423,14 @@ export const EMAIL_FOOTER = `
     </div>
   </td></tr>`
 
-// ── CTA blocks ────────────────────────────────────────────────────────────────
+// ── Voyager Pack CTA blocks (live-tested: image left + crafted copy) ───────────
 
 const VOYAGER_PACK_COPY = `
     <p style="${PARA}">This week, we have prepared the all-new Voyager Pack for everyone. By passing various tests, you will gain higher levels of authorization, participate more deeply in our organization, and get closer to the Multiverse Console — our organization's mysterious device.</p>
     <p style="${PARA_LAST}">We look forward to seeing what you, and everyone else, will achieve.</p>`
 
 export const CTA_DIRECT = `
-  <tr><td style="height:20px;"></td></tr>
+  <tr><td style="height:18px;"></td></tr>
   <tr><td style="background:linear-gradient(160deg,#1A0E2A,#0F1430);border:1px solid rgba(255,107,53,0.35);overflow:hidden;">
     <div style="height:2px;background:linear-gradient(90deg,#E85D04,#FF6B35,#DC2F02);"></div>
     <table width="100%" cellpadding="0" cellspacing="0">
@@ -342,7 +454,7 @@ export const CTA_DIRECT = `
   </td></tr>`
 
 export const CTA_TASK_GATED = `
-  <tr><td style="height:20px;"></td></tr>
+  <tr><td style="height:18px;"></td></tr>
   <tr><td style="background:#0A0E27;border:1px solid rgba(232,160,32,0.30);overflow:hidden;">
     <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(232,160,32,0.5),transparent);"></div>
     <table width="100%" cellpadding="0" cellspacing="0">
@@ -352,12 +464,12 @@ export const CTA_TASK_GATED = `
                style="width:200px;display:block;filter:grayscale(60%);opacity:0.5;" />
         </td>
         <td style="vertical-align:middle;padding:22px 22px 22px 20px;">
-          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:12px;font-family:'Space Mono',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
+          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:12px;font-family:'Space Mono',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
           ${VOYAGER_PACK_COPY}
           <div style="margin-top:18px;">
             <a href="https://putopia.vercel.app/voyager-pack"
                style="display:block;text-align:center;background:rgba(232,160,32,0.08);color:#E8A020;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:13px 14px;border:1px solid rgba(232,160,32,0.45);">
-              [ VIEW VOYAGER PACK → ]
+              [ VIEW VOYAGER PATH → ]
             </a>
             <div style="margin-top:10px;text-align:center;font-size:9px;color:rgba(245,245,245,0.2);font-family:'Space Mono',monospace;">
               Pack unlocks upon completing your field assessment.
@@ -376,10 +488,10 @@ export function buildDirectHtml(content: NewsletterContent, codename = '[CODENAM
     EMAIL_HEAD +
     EMAIL_HEADER_REGISTERED +
     buildGreetingHtml(codename) +
-    buildRegisteredNarrativeHtml() +
-    content.intelCardsHtml +
-    content.deviceSectionHtml +
+    buildIntroHtml() +
     CTA_DIRECT +
+    content.newsCardsHtml +
+    content.signalHtml +
     EMAIL_FOOTER +
     EMAIL_TAIL
   )
@@ -391,10 +503,10 @@ export function buildTaskGatedHtml(content: NewsletterContent, codename = '[CODE
     EMAIL_HEAD +
     EMAIL_HEADER_REGISTERED +
     buildGreetingHtml(codename) +
-    buildRegisteredNarrativeHtml() +
-    content.intelCardsHtml +
-    content.deviceSectionHtml +
+    buildIntroHtml() +
     CTA_TASK_GATED +
+    content.newsCardsHtml +
+    content.signalHtml +
     EMAIL_FOOTER +
     EMAIL_TAIL
   )
