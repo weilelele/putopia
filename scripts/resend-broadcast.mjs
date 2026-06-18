@@ -51,9 +51,13 @@ const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_UR
 const SUPA_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const FIRST_NAME_TAG = '{{{FIRST_NAME|Voyager}}}'   // Resend broadcast merge tag
 
+// Issue dateline, matching the in-email masthead format (e.g. "JUN 18, 2026").
+const ISSUE_DATE = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()
+const SUBJECT = `This week in the Multiverse Collective — ${ISSUE_DATE}`
+
 const GROUPS = [
-  { key: 'direct',     name: 'Applicants — Direct (A)',      env: 'RESEND_AUDIENCE_DIRECT',     dbValue: 'direct',     subject: 'This week in the Multiverse Collective' },
-  { key: 'task-gated', name: 'Applicants — Task-Gated (B)',  env: 'RESEND_AUDIENCE_TASK_GATED', dbValue: 'task_gated', subject: 'This week in the Multiverse Collective' },
+  { key: 'direct',     name: 'Applicants — Direct (A)',      env: 'RESEND_AUDIENCE_DIRECT',     dbValue: 'direct',     subject: SUBJECT },
+  { key: 'task-gated', name: 'Applicants — Task-Gated (B)',  env: 'RESEND_AUDIENCE_TASK_GATED', dbValue: 'task_gated', subject: SUBJECT },
 ]
 
 async function resend(path, method = 'GET', body) {
