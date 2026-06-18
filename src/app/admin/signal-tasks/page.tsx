@@ -561,7 +561,7 @@ function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; f
             return (
               <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
                 <select style={{ ...S.sel, maxWidth: 180 }} value={src.channelId} onChange={(e) => onPickFreq(i, e.target.value)}>
-                  {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq ?? '–'} {fr.name}</option>)}
+                  {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq != null ? `${fr.freq} · ${fr.name}` : `${fr.name} (unscheduled)`}</option>)}
                 </select>
                 <select style={{ ...S.sel, maxWidth: 160 }} value={src.bandId} onChange={(e) => onPickBand(i, e.target.value)}>
                   {(f?.bands || []).map((b) => <option key={b.bandId} value={b.bandId}>{b.name} ({b.imageCount}i/{b.videoCount}v)</option>)}
@@ -725,7 +725,7 @@ function ForgePicker({
           style={{ ...S.sel, maxWidth: 180 }} value={channelId}
           onChange={(e) => { const f = freqs.find((x) => x.channelId === e.target.value); setChannelId(e.target.value); setBandId(pickFirstBand(f)); setAssets([]) }}
         >
-          {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq ?? '–'} {fr.name}</option>)}
+          {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq != null ? `${fr.freq} · ${fr.name}` : `${fr.name} (unscheduled)`}</option>)}
         </select>
         <select style={{ ...S.sel, maxWidth: 160 }} value={bandId} onChange={(e) => { setBandId(e.target.value); setAssets([]) }}>
           <option value="">— band —</option>
