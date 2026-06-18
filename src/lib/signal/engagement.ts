@@ -360,7 +360,6 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
         result.emailedUserIds.push(userId)
         if (c.rule === 'owner_absent') result.ownerAbsentSent++
         else result.voterChurnSent++
-        sent = true
       } catch (e) {
         result.errors.push(`${c.rule} ${userId}: ${(e as Error).message}`)
       }
