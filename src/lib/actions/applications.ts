@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { ApplicationInsert, ApplicationStatus } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
-import { logActivity } from './activity-events'
 import { upsertLoopsContact } from '@/lib/loops'
 import { resendAccessLink } from '@/lib/actions/auth-resend'
 
@@ -161,7 +160,12 @@ export async function reviewApplication(
 
   if (error) return { error: error.message }
 
-  // If approved, upgrade the applicant's role using service role key
+  // If approved, upgrade the applicant to a full Voyager. Route this through the
+  // single canonical membership entry point (provisionVoyagerMembership) so an
+  // approved member ends up in the exact same state as a paid one: atomic role
+  // promotion + member_no + current batch + the voyager_activated feed event.
+  // (Raw role flips here used to skip all of that, producing Voyagers with no
+  // member number / batch.)
   if (status === 'approved') {
     const { data: app } = await supabase
       .from('applications')
@@ -171,32 +175,12 @@ export async function reviewApplication(
 
     if (app?.email) {
       const admin = createAdminClient()
-      // Find the auth user by email and promote their profile
+      // Find the auth user by email and provision their membership
       const { data: users } = await admin.auth.admin.listUsers()
       const authUser = users?.users?.find(u => u.email === app.email)
       if (authUser) {
-        // VoyagerProfileUpdate restricts to user-editable fields; role promotion
-        // is an architect/admin-only operation so we cast past the RLS type
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (admin.from('voyager_profiles') as any)
-          .update({ role: 'voyager' })
-          .eq('id', authUser.id)
-
-        // Fetch display_name for the activity log
-        const { data: promoted } = await admin
-          .from('voyager_profiles')
-          .select('display_name')
-          .eq('id', authUser.id)
-          .single()
-
-        logActivity({
-          actor_id:   authUser.id,
-          actor_name: promoted?.display_name ?? authUser.email ?? 'Unknown',
-          actor_role: 'voyager',
-          event_type: 'member_joined',
-          target_id:  authUser.id,
-          target_href: '/voyagers',
-        })
+        const { provisionVoyagerMembership } = await import('@/lib/actions/membership')
+        await provisionVoyagerMembership(authUser.id)
       }
     }
   }
