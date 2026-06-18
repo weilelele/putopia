@@ -233,7 +233,7 @@ function buildNewsCardsHtml(news: NewsItem[]): string {
     .map(
       (item) => `
     <tr><td style="padding-bottom:8px;">
-      <a href="https://multiverseco.org/intel/${item.id}"
+      <a href="https://www.multiverseco.org/intel/${item.id}"
          style="display:block;text-decoration:none;background:#0A0E27;border:1px solid rgba(255,107,53,0.12);padding:15px 17px;">
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:9px;">
           <tr>
@@ -256,7 +256,7 @@ function buildNewsCardsHtml(news: NewsItem[]): string {
       <tr>
         <td style="font-size:12px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);padding-bottom:10px;font-family:${MONO};">THIS WEEK'S BRIEFINGS</td>
         <td style="text-align:right;padding-bottom:10px;">
-          <a href="https://multiverseco.org/intel"
+          <a href="https://www.multiverseco.org/intel"
              style="font-size:12px;letter-spacing:0.16em;color:rgba(255,107,53,0.45);text-decoration:none;font-family:${MONO};">VIEW ALL INTEL →</a>
         </td>
       </tr>
@@ -278,7 +278,7 @@ function buildSignalHtml(signal: SignalTaskItem | null): string {
   if (!signal || signal.options.length === 0) return ''
 
   const prompt = signal.prompt || SIGNAL_TYPE_HINT[signal.type] || 'Make your judgment.'
-  const href = 'https://multiverseco.org/signal'
+  const href = 'https://www.multiverseco.org/signal'
 
   const referenceRow = signal.main
     ? `<table cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
@@ -394,11 +394,11 @@ export const EMAIL_HEADER_REGISTERED = `
           <table cellpadding="0" cellspacing="0">
             <tr>
               <td style="vertical-align:middle;padding-right:9px;">
-                <img src="https://multiverseco.org/assets/vi-icon.png" height="26" alt=""
+                <img src="https://www.multiverseco.org/assets/vi-icon.png" height="26" alt=""
                      style="height:26px;width:auto;display:block;" />
               </td>
               <td style="vertical-align:middle;">
-                <img src="https://multiverseco.org/assets/vi-wordmark.png" height="16" alt="MULTIVERSE COLLECTIVE"
+                <img src="https://www.multiverseco.org/assets/vi-wordmark.png" height="16" alt="MULTIVERSE COLLECTIVE"
                      style="height:16px;width:auto;display:block;" />
               </td>
             </tr>
@@ -432,9 +432,9 @@ export const EMAIL_FOOTER = `
     </table>
     <div style="margin-top:10px;font-size:12px;color:#62677E;letter-spacing:0.06em;line-height:1.8;font-family:'Space Mono',monospace;">
       You are receiving this because you are registered in the Multiverse Collective network.<br/>
-      <a href="https://multiverseco.org/console" style="color:#C26A40;text-decoration:none;">Manage preferences</a>
+      <a href="https://www.multiverseco.org/console" style="color:#C26A40;text-decoration:none;">Manage preferences</a>
       &nbsp;·&nbsp;
-      <a href="https://multiverseco.org/console" style="color:#C26A40;text-decoration:none;">Visit console</a>
+      <a href="https://www.multiverseco.org/console" style="color:#C26A40;text-decoration:none;">Visit console</a>
     </div>
   </td></tr>`
 
@@ -447,7 +447,7 @@ export const CTA_DIRECT = `
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td class="stack" width="220" style="vertical-align:top;padding:0;width:220px;">
-          <img class="stack-img" src="https://multiverseco.org/voyager-pack/voyager-hero.png" width="220" alt="Initial Voyager Pack"
+          <img class="stack-img" src="https://www.multiverseco.org/voyager-pack/voyager-hero.png" width="220" alt="Initial Voyager Pack"
                style="width:220px;display:block;" />
         </td>
         <td class="stack pack-pad" style="vertical-align:middle;padding:24px 24px 24px 22px;">
@@ -456,7 +456,7 @@ export const CTA_DIRECT = `
           <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Physical Badge</div>
           <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Access Card</div>
           <div style="margin-bottom:20px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Full Network Access</div>
-          <a href="https://multiverseco.org/voyager-pack"
+          <a href="https://www.multiverseco.org/voyager-pack"
              style="display:block;text-align:center;background:#FF6B35;color:#0A0E27;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;">
             [ ACTIVATE NOW &rarr; ]
           </a>
@@ -472,7 +472,7 @@ export const CTA_TASK_GATED = `
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td class="stack" width="220" style="vertical-align:top;padding:0;width:220px;">
-          <img class="stack-img" src="https://multiverseco.org/voyager-pack/voyager-hero.png" width="220" alt="Initial Voyager Pack"
+          <img class="stack-img" src="https://www.multiverseco.org/voyager-pack/voyager-hero.png" width="220" alt="Initial Voyager Pack"
                style="width:220px;display:block;filter:grayscale(45%);" />
         </td>
         <td class="stack pack-pad" style="vertical-align:middle;padding:24px 24px 24px 22px;">
@@ -481,7 +481,7 @@ export const CTA_TASK_GATED = `
           <div style="font-size:13px;color:#CBCEDF;line-height:1.75;margin-bottom:20px;font-family:'Space Mono',monospace;">
             Complete the Collective&#39;s field assessment tasks to unlock the Initial Voyager Pack.
           </div>
-          <a href="https://multiverseco.org/voyager-path"
+          <a href="https://www.multiverseco.org/voyager-path"
              style="display:block;text-align:center;background:#1C1708;color:#E8A020;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;border:1px solid #B98620;">
             [ VIEW VOYAGER PATH &rarr; ]
           </a>
@@ -549,7 +549,7 @@ export function buildUnregisteredHtml(
     .map(
       (d) =>
         `<td width="33%" style="padding:0 4px;vertical-align:top;">
-          <a href="https://multiverseco.org" style="display:block;text-decoration:none;">
+          <a href="https://www.multiverseco.org" style="display:block;text-decoration:none;">
             <div style="overflow:hidden;border:1px solid rgba(255,107,53,0.15);">
               <img src="${d.imagePath}" width="180" alt="${d.name}"
                    style="width:100%;height:90px;object-fit:cover;display:block;filter:brightness(0.6) saturate(0.7);" />
@@ -592,11 +592,11 @@ export function buildUnregisteredHtml(
           <table cellpadding="0" cellspacing="0">
             <tr>
               <td style="vertical-align:middle;padding-right:11px;">
-                <img src="https://multiverseco.org/assets/vi-icon.png" height="36" alt=""
+                <img src="https://www.multiverseco.org/assets/vi-icon.png" height="36" alt=""
                      style="height:36px;width:auto;display:block;" />
               </td>
               <td style="vertical-align:middle;">
-                <img src="https://multiverseco.org/assets/vi-wordmark.png" height="24" alt="MULTIVERSE COLLECTIVE"
+                <img src="https://www.multiverseco.org/assets/vi-wordmark.png" height="24" alt="MULTIVERSE COLLECTIVE"
                      style="height:24px;width:auto;display:block;" />
               </td>
             </tr>
@@ -620,7 +620,7 @@ export function buildUnregisteredHtml(
   <tr><td style="height:20px;"></td></tr>
   <tr><td style="background:#0A0E27;border:1px solid rgba(255,107,53,0.25);text-align:center;padding:32px 28px 28px;">
     <div style="font-size:12px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);margin-bottom:14px;font-family:'Space Mono',monospace;">◈ OPEN TO NEW MEMBERS ◈</div>
-    <a href="https://multiverseco.org"
+    <a href="https://www.multiverseco.org"
        style="display:inline-block;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;
               font-family:'Space Mono',monospace;font-size:15px;font-weight:700;
               letter-spacing:0.18em;text-decoration:none;padding:14px 36px;">
