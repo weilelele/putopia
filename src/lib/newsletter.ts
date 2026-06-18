@@ -324,7 +324,7 @@ function buildSignalHtml(signal: SignalTaskItem | null): string {
 function buildIntroHtml(): string {
   return `
   <tr><td style="padding:14px 4px 0;">
-    <p style="${PARA_LAST}">This week marks our organization's official debut to the public. We have welcomed many new members for a simple reason: we need fresh energy to maintain the order of the parallel worlds and the connections between them.</p>
+    <p style="${PARA_LAST}">This week marks our organization's official debut to the public, and we have welcomed many new members — we need fresh energy to maintain the order of the parallel worlds. We are now receiving signals from many worlds at once, and we want you to help us decide: which world, which signal deserves our focus?</p>
   </td></tr>`
 }
 
@@ -445,15 +445,9 @@ export const CTA_DIRECT = `
           <div style="margin-bottom:5px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Access Card</div>
           <div style="margin-bottom:18px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Full Network Access</div>
           <a href="https://putopia.vercel.app/voyager-pack"
-             style="display:block;text-align:center;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.18em;text-decoration:none;padding:12px 14px;margin-bottom:12px;">
+             style="display:block;text-align:center;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.18em;text-decoration:none;padding:12px 14px;">
             [ ACTIVATE NOW → ]
           </a>
-          <div style="text-align:center;">
-            <a href="https://putopia.vercel.app/voyager-pack"
-               style="font-size:9px;letter-spacing:0.1em;color:rgba(255,107,53,0.5);text-decoration:none;border-bottom:1px solid rgba(255,107,53,0.22);">
-              Learn more →
-            </a>
-          </div>
         </td>
       </tr>
     </table>
@@ -500,8 +494,8 @@ export function buildDirectHtml(content: NewsletterContent, codename = '[CODENAM
     EMAIL_HEADER_REGISTERED +
     buildGreetingHtml(codename) +
     buildIntroHtml() +
-    CTA_DIRECT +
     content.newsCardsHtml +
+    CTA_DIRECT +
     content.signalHtml +
     EMAIL_FOOTER +
     EMAIL_TAIL
@@ -515,8 +509,8 @@ export function buildTaskGatedHtml(content: NewsletterContent, codename = '[CODE
     EMAIL_HEADER_REGISTERED +
     buildGreetingHtml(codename) +
     buildIntroHtml() +
-    CTA_TASK_GATED +
     content.newsCardsHtml +
+    CTA_TASK_GATED +
     content.signalHtml +
     EMAIL_FOOTER +
     EMAIL_TAIL
