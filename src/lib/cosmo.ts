@@ -109,15 +109,22 @@ function findBand(ch: Document, bandId: string): Document | null {
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
-/** All live frequencies (channels with an assigned dial freq), with band summaries. */
+/** All live channels usable in the Forge, with band summaries. Includes channels
+ *  that haven't been assigned a dial freq yet — those are still valid asset
+ *  sources for puzzle authoring. Scheduled channels (with a freq) sort first by
+ *  freq; unscheduled ones follow, ordered by name. */
 export async function listFrequencies(): Promise<CosmoFrequency[]> {
   const d = await db()
   const channels = await d
     .collection(COLL_CHANNEL)
-    .find({ deletedAt: null, freq: { $ne: null } })
-    .sort({ freq: 1 })
+    .find({ deletedAt: null })
     .toArray()
-  return channels.map(mapFrequency)
+  return channels.map(mapFrequency).sort((a, b) => {
+    if (a.freq !== null && b.freq !== null) return a.freq - b.freq
+    if (a.freq !== null) return -1 // scheduled before unscheduled
+    if (b.freq !== null) return 1
+    return a.name.localeCompare(b.name)
+  })
 }
 
 /** A single frequency by channel id. */
