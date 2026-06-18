@@ -568,6 +568,23 @@ code, pre, kbd { font-family: var(--font-mono); }
 }
 .fade-in-up { animation: fadeInUp 0.55s ease-out forwards; }
 
+/* Loading placeholder — reserves dashboard section height so content doesn't jump in. */
+@keyframes skeletonShimmer {
+  0%   { background-position: -160% 0; }
+  100% { background-position:  160% 0; }
+}
+.dash-skeleton {
+  border: 1px solid var(--bd-faint);
+  background: linear-gradient(
+    100deg,
+    var(--color-void) 30%,
+    rgba(255, 107, 53, 0.07) 50%,
+    var(--color-void) 70%
+  );
+  background-size: 220% 100%;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
 @keyframes deviceFloat {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-14px); }

@@ -7,13 +7,7 @@ import Link from 'next/link'
 import { MessageSquare } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
-import { getAllDevices } from '@/lib/actions/devices'
-import { getPublicIntel } from '@/lib/actions/intel'
-import { getCommentCountsBulk } from '@/lib/actions/comments'
-import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actions/votes'
-import { getAllWorlds } from '@/lib/actions/worlds'
-import { getMcFunctions } from '@/lib/actions/mc-functions'
-import { getActivityFeed } from '@/lib/actions/activity-events'
+import { getDashboardData } from '@/lib/actions/dashboard'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import type { ExperimentGroup } from '@/lib/actions/experiment'
 import { ActivityFeed } from '@/components/activity-feed'
@@ -808,6 +802,32 @@ function UtcClock() {
   return <span className="val">{t || '--:--:--'}</span>
 }
 
+/* ─── Loading skeletons ─────────────────────────────────────
+   Reserve each section's height while the aggregated fetch is in flight so
+   content fades in place instead of shoving the layout down. */
+function SectionSkeleton({ label, color, count, minmax, height }: {
+  label: string; color: string; count: number; minmax: number; height: number
+}) {
+  return (
+    <section style={{ padding: '1rem 2.5rem 2rem' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color }}>
+            {label}
+          </div>
+          <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${minmax}px, 1fr))`, gap: '1rem' }}>
+          {Array.from({ length: count }).map((_, i) => (
+            <div key={i} className="dash-skeleton" style={{ height }} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ─── Page ──────────────────────────────────────────────── */
 export default function ConsolePage() {
   return <Suspense><ConsoleInner /></Suspense>
@@ -847,39 +867,29 @@ function ConsoleInner() {
   const [latestWorlds, setLatestWorlds] = useState<World[]>([])
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
   const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   useEffect(() => {
-    // Each section loads independently — a single failed query must not become an
-    // unhandled rejection or leave the whole dashboard hanging. Catch + log per
-    // fetch so a broken section degrades gracefully (stays empty) and is visible.
-    const onErr = (where: string) => (e: unknown) =>
-      console.error(`[console] ${where} failed:`, (e as Error)?.message ?? e)
-
-    getAllDevices().then((all) => {
-      const unknown = all.filter((dev) => dev.knowledge === 'unknown').slice(0, 1)
-      const known = all.filter((dev) => dev.knowledge === 'known').slice(0, 2)
-      setDevices([...unknown, ...known])
-    }).catch(onErr('getAllDevices'))
-    getPublicIntel().then(async (intel) => {
-      const slice = (intel as IntelWithAvatar[]).slice(0, 3)
-      setLatestIntel(slice)
-      if (slice.length > 0) {
-        const counts = await getCommentCountsBulk('intel', slice.map(e => e.id))
-        setIntelCommentCounts(counts)
-      }
-    }).catch(onErr('getPublicIntel'))
-    getActivityFeed(7).then(setActivityEvents).catch(onErr('getActivityFeed'))
-    getAllWorlds().then((w) => setLatestWorlds([...w].reverse().slice(0, 4))).catch(onErr('getAllWorlds'))
-    getMcFunctions().then((fns) => setMcFunctions(fns as McFunction[])).catch(onErr('getMcFunctions'))
-    getAllVotes().then(async (votes) => {
-      const active = votes.filter((v) => v.is_active).slice(0, 3)
-      setLatestVotes(active)
-      if (active.length > 0) {
-        const tallies = await getVoteResultsBulk(active.map((v) => v.id))
-        setVoteTallies(tallies)
-      }
-    }).catch(onErr('getAllVotes'))
-    getMyVoteResponses().then(setMyVoteResponses).catch(onErr('getMyVoteResponses'))
+    // One aggregated round-trip instead of ~8 serial server actions. All sections
+    // arrive together, so nothing pops in one-by-one. `getDashboardData` already
+    // catches per-fetch, so a broken section degrades to empty without hanging.
+    let cancelled = false
+    getDashboardData()
+      .then((d) => {
+        if (cancelled) return
+        setDevices(d.devices)
+        setLatestIntel(d.latestIntel)
+        setIntelCommentCounts(d.intelCommentCounts)
+        setActivityEvents(d.activityEvents)
+        setLatestVotes(d.latestVotes)
+        setVoteTallies(d.voteTallies)
+        setMyVoteResponses(d.myVoteResponses)
+        setLatestWorlds(d.latestWorlds)
+        setMcFunctions(d.mcFunctions)
+      })
+      .catch((e) => console.error('[console] getDashboardData failed:', (e as Error)?.message ?? e))
+      .finally(() => { if (!cancelled) setDataLoaded(true) })
+    return () => { cancelled = true }
   }, [])
 
   // Load experiment group for applicants (drives the ad-slot variant)
@@ -930,6 +940,9 @@ function ConsoleInner() {
       )}
 
       {/* ── Devices (unknown + known) ── */}
+      {!dataLoaded && (
+        <SectionSkeleton label="DEVICE REGISTRY" color="var(--color-nucleus)" count={3} minmax={240} height={260} />
+      )}
       {devices.length > 0 && (
         <section style={{ padding: '3rem 2.5rem 2rem' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
@@ -953,6 +966,9 @@ function ConsoleInner() {
       )}
 
       {/* ── Latest Intel ── */}
+      {!dataLoaded && (
+        <SectionSkeleton label="LATEST INTEL" color="var(--color-star-dim)" count={3} minmax={280} height={180} />
+      )}
       {latestIntel.length > 0 && (
         <section style={{ padding: '1rem 2.5rem 2rem' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
@@ -973,6 +989,9 @@ function ConsoleInner() {
       )}
 
       {/* ── Worlds ── */}
+      {!dataLoaded && (
+        <SectionSkeleton label="WORLD RECORDS" color="var(--color-nebula)" count={4} minmax={220} height={200} />
+      )}
       {latestWorlds.length > 0 && (
         <section style={{ padding: '1rem 2.5rem 2rem' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
@@ -993,6 +1012,9 @@ function ConsoleInner() {
       )}
 
       {/* ── Active Votes ── */}
+      {!dataLoaded && (
+        <SectionSkeleton label="● ACTIVE VOTES" color="#20D890" count={3} minmax={280} height={220} />
+      )}
       {latestVotes.length > 0 && (
         <section style={{ padding: '1rem 2.5rem 2rem' }}>
           <div style={{ maxWidth: '960px', margin: '0 auto' }}>
