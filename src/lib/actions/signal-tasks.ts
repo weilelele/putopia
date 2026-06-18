@@ -18,6 +18,7 @@ import type { CropConfig } from '@/lib/signal/process'
 import type { WorldVoteScope, WorldLifecycle, WorldStage } from '@/types/database'
 import { worldStage } from '@/types/database'
 import { renderVideoClip, extractAudioClip } from '@/lib/signal/av'
+import { revealAt as computeRevealAt, isRevealed, DEFAULT_REVEAL_INTERVAL_HOURS } from '@/lib/signal/reveal'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -149,6 +150,35 @@ export async function setTaskPublished(
     .update(patch)
     .eq('id', taskId)
   if (error) return { ok: false, error: error.message }
+
+  // Schedule anchor: the whole reveal timeline follows the first published day.
+  // Set the thread anchor on the first publish; clear it once no published days
+  // remain (so re-publishing later restarts the clock cleanly).
+  try {
+    const { data: t } = await supabase.from('signal_tasks').select('thread_id').eq('id', taskId).maybeSingle()
+    const threadId: string | null = t?.thread_id ?? null
+    if (threadId) {
+      if (published) {
+        const { data: thread } = await supabase
+          .from('signal_threads')
+          .select('reveal_anchor_at')
+          .eq('id', threadId)
+          .maybeSingle()
+        if (!thread?.reveal_anchor_at) {
+          await supabase.from('signal_threads').update({ reveal_anchor_at: new Date().toISOString() }).eq('id', threadId)
+        }
+      } else {
+        const { count } = await supabase
+          .from('signal_tasks')
+          .select('id', { count: 'exact', head: true })
+          .eq('thread_id', threadId)
+          .eq('is_published', true)
+        if (!count) {
+          await supabase.from('signal_threads').update({ reveal_anchor_at: null }).eq('id', threadId)
+        }
+      }
+    }
+  } catch { /* anchor maintenance is best-effort */ }
 
   // When publishing a task that belongs to an investigation, post to the feed
   if (published) {
@@ -720,6 +750,8 @@ export interface PublicInvestigation {
   days: {
     dayIndex: number
     task: PublicSignalTask
+    revealAt: string | null   // when this day surfaces (ISO); null if schedule unstarted
+    revealed: boolean         // already surfaced as of now (always true for public viewers)
   }[]
 }
 
@@ -877,6 +909,8 @@ export interface InvestigationConfig {
   title: string
   visionText: string | null
   voteScope: WorldVoteScope
+  revealAnchorAt: string | null      // schedule origin (set when day 0 publishes)
+  revealIntervalHours: number        // cadence between day reveals
 }
 
 /** Full config for one investigation — world identity + owner vote scope.
@@ -885,7 +919,7 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
   const admin = createAdminClient() as DB
   const { data: thread } = await admin
     .from('signal_threads')
-    .select('id, title, world_id')
+    .select('id, title, world_id, reveal_anchor_at, reveal_interval_hours')
     .eq('id', threadId)
     .maybeSingle()
   if (!thread) return null
@@ -906,13 +940,23 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
     }
   }
 
-  return { threadId: thread.id, worldId: thread.world_id, title, visionText, voteScope }
+  return {
+    threadId: thread.id,
+    worldId: thread.world_id,
+    title,
+    visionText,
+    voteScope,
+    revealAnchorAt: thread.reveal_anchor_at ?? null,
+    revealIntervalHours: thread.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS,
+  }
 }
 
-/** Update the owner vote scope on the world. */
+/** Update the owner vote scope (on the world) and/or the reveal schedule (on the
+ *  thread). `revealIntervalHours` tunes the cadence; `revealAnchorAt` lets the
+ *  architect start/reset the timeline (null = not started). */
 export async function updateInvestigationConfig(
   threadId: string,
-  patch: { voteScope?: WorldVoteScope },
+  patch: { voteScope?: WorldVoteScope; revealIntervalHours?: number; revealAnchorAt?: string | null },
 ): Promise<{ ok: boolean; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
@@ -924,6 +968,18 @@ export async function updateInvestigationConfig(
       const { error } = await admin.from('worlds').update({ vote_scope: patch.voteScope }).eq('id', thread.world_id)
       if (error) return { ok: false, error: error.message }
     }
+  }
+
+  const threadPatch: Record<string, unknown> = {}
+  if (patch.revealIntervalHours != null) {
+    threadPatch.reveal_interval_hours = Math.max(1, Math.round(patch.revealIntervalHours))
+  }
+  if (patch.revealAnchorAt !== undefined) {
+    threadPatch.reveal_anchor_at = patch.revealAnchorAt // ISO string or null to reset
+  }
+  if (Object.keys(threadPatch).length) {
+    const { error } = await admin.from('signal_threads').update(threadPatch).eq('id', threadId)
+    if (error) return { ok: false, error: error.message }
   }
   return { ok: true }
 }
@@ -1129,8 +1185,23 @@ async function buildPublishedDays(
     .eq('is_published', true)
     .order('day_index', { ascending: true })
 
+  // Scheduled reveal: days surface one at a time off the thread anchor + cadence.
+  const { data: sched } = await admin
+    .from('signal_threads')
+    .select('reveal_anchor_at, reveal_interval_hours')
+    .eq('id', threadId)
+    .maybeSingle()
+  const anchorAt: string | null = sched?.reveal_anchor_at ?? null
+  const intervalHours: number = sched?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
+  const now = new Date()
+
   const days: PublicInvestigation['days'] = []
   for (const t of taskRows ?? []) {
+    const dayIndex = t.day_index ?? 0
+    const at = computeRevealAt(anchorAt, intervalHours, dayIndex)
+    const revealed = isRevealed(anchorAt, intervalHours, dayIndex, now)
+    // Public viewers only see revealed days; architects see the full schedule.
+    if (!revealed && !isArchitect) continue
     const { data: assetRows } = await admin
       .from('signal_task_assets')
       .select('id, media, processed_url, display_url, asset_role, display_order')
@@ -1169,7 +1240,9 @@ async function buildPublishedDays(
     }
 
     days.push({
-      dayIndex: t.day_index ?? 0,
+      dayIndex,
+      revealAt: at ? at.toISOString() : null,
+      revealed,
       task: {
         id: t.id,
         type: t.type,

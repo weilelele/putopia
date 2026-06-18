@@ -36,6 +36,12 @@ import type { CosmoFrequency } from '@/lib/cosmo'
 import type { WorldVoteScope } from '@/types/database'
 import type { CropShape, FilterPreset } from '@/lib/signal/presets'
 import { FILTER_PRESETS } from '@/lib/signal/presets'
+import { revealAt as computeRevealAt, isRevealed } from '@/lib/signal/reveal'
+
+// Compact local datetime, e.g. "Jun 21, 14:30"
+function fmtReveal(d: Date): string {
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
 
 // ─── styles ───────────────────────────────────────────────────────────────────
 const S = {
@@ -283,10 +289,12 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
 
   if (!cfg) return null
 
-  const patch = async (p: { voteScope?: WorldVoteScope }) => {
+  const patch = async (p: { voteScope?: WorldVoteScope; revealIntervalHours?: number; revealAnchorAt?: string | null }) => {
     await updateInvestigationConfig(threadId, p)
     await reload()
   }
+
+  const anchorDate = cfg.revealAnchorAt ? new Date(cfg.revealAnchorAt) : null
 
   return (
     <div style={{ ...S.card, padding: 14 }}>
@@ -303,6 +311,29 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
             {Object.entries(VOTE_SCOPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
+      </div>
+      {/* Reveal schedule */}
+      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,107,53,0.12)', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div>
+          <label style={S.label}>SCHEDULE</label>
+          <div style={{ fontSize: 11, color: anchorDate ? '#20D890' : 'rgba(245,245,245,0.45)' }}>
+            {anchorDate ? `Started ${fmtReveal(anchorDate)}` : 'Not started — publishing Day 1 begins it'}
+          </div>
+        </div>
+        <div>
+          <label style={S.label}>REVEAL EVERY (HOURS)</label>
+          <input
+            type="number" min={1} defaultValue={cfg.revealIntervalHours}
+            style={{ ...S.input, width: 80, padding: '5px 8px' }}
+            onBlur={(e) => { const v = Number(e.target.value); if (v >= 1 && v !== cfg.revealIntervalHours) patch({ revealIntervalHours: v }) }}
+          />
+        </div>
+        {anchorDate && (
+          <button
+            style={{ ...S.btn, ...S.btnGhost, padding: '4px 10px', fontSize: 10, alignSelf: 'flex-end' }}
+            onClick={async () => { if (confirm('Restart the reveal timeline from now? Already-revealed days stay visible; pending days shift to the new schedule.')) await patch({ revealAnchorAt: new Date().toISOString() }) }}
+          >↻ Restart from now</button>
+        )}
       </div>
       {cfg.visionText && (
         <div style={{ marginTop: 10 }}>
@@ -332,13 +363,17 @@ function DayList({
   onDayAdded: (id: string) => void
 }) {
   const [tasks, setTasks] = useState<SignalTask[]>([])
+  const [cfg, setCfg] = useState<InvestigationConfig | null>(null)
   const [busy, setBusy] = useState(false)
 
   const reload = useCallback(async () => {
-    setTasks(await listInvestigationTasks(investigationId))
+    const [t, c] = await Promise.all([listInvestigationTasks(investigationId), getInvestigationConfig(investigationId)])
+    setTasks(t)
+    setCfg(c)
   }, [investigationId])
 
-  useEffect(() => { reload() }, [reload])
+  // Reload when a day's publish state may have changed (anchor / reveal shifts).
+  useEffect(() => { reload() }, [reload, activeTaskId])
 
   const addDay = async () => {
     setBusy(true)
@@ -369,6 +404,19 @@ function DayList({
       {tasks.map((t) => {
         const dayNum = (t.day_index ?? 0) + 1
         const isActive = t.id === activeTaskId
+        // Reveal status for the badge.
+        const anchor = cfg?.revealAnchorAt ?? null
+        const interval = cfg?.revealIntervalHours ?? 24
+        const dayIdx = t.day_index ?? 0
+        let status: { label: string; color: string }
+        if (!t.is_published) {
+          status = { label: '○ DRAFT', color: 'rgba(245,245,245,0.3)' }
+        } else if (isRevealed(anchor, interval, dayIdx)) {
+          status = { label: '● LIVE', color: '#20D890' }
+        } else {
+          const at = computeRevealAt(anchor, interval, dayIdx)
+          status = { label: at ? `◷ ${fmtReveal(at)}` : '◷ scheduled', color: '#E8A020' }
+        }
         return (
           <button
             key={t.id}
@@ -383,8 +431,8 @@ function DayList({
             <div style={{ fontSize: 12, color: isActive ? '#FF6B35' : '#F5F5F5', letterSpacing: '0.08em' }}>
               Day {dayNum}
             </div>
-            <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.35)', marginTop: 2 }}>
-              {t.task_date} · <span style={{ color: t.is_published ? '#20D890' : 'rgba(245,245,245,0.3)' }}>{t.is_published ? '● LIVE' : '○ DRAFT'}</span>
+            <div style={{ fontSize: 10, color: status.color, marginTop: 2 }}>
+              {status.label}
             </div>
           </button>
         )
