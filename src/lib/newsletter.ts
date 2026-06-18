@@ -60,6 +60,11 @@ export interface NewsletterContent {
 // ── Style constants ───────────────────────────────────────────────────────────
 
 const MONO = "'Space Mono',ui-monospace,'Courier New',monospace"
+
+// UTM suffix for every email link, so newsletter-driven traffic/conversions are
+// attributable in PostHog and kept distinct from organic site entry.
+// CTA links additionally append &utm_content=direct|task_gated for A/B.
+const UTM = '?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=weekly_newsletter'
 const PARA = `margin:0 0 16px;font-size:14px;color:rgba(245,245,245,0.68);line-height:1.9;letter-spacing:0.01em;font-family:${MONO};`
 const PARA_LAST = `margin:0;font-size:14px;color:rgba(245,245,245,0.68);line-height:1.9;letter-spacing:0.01em;font-family:${MONO};`
 
@@ -233,7 +238,7 @@ function buildNewsCardsHtml(news: NewsItem[]): string {
     .map(
       (item) => `
     <tr><td style="padding-bottom:8px;">
-      <a href="https://www.multiverseco.org/intel/${item.id}"
+      <a href="https://www.multiverseco.org/intel/${item.id}${UTM}"
          style="display:block;text-decoration:none;background:#0A0E27;border:1px solid rgba(255,107,53,0.12);padding:15px 17px;">
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:9px;">
           <tr>
@@ -255,7 +260,7 @@ function buildNewsCardsHtml(news: NewsItem[]): string {
       <tr>
         <td style="font-size:12px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);padding-bottom:10px;font-family:${MONO};">THIS WEEK'S BRIEFINGS</td>
         <td style="text-align:right;padding-bottom:10px;">
-          <a href="https://www.multiverseco.org/intel"
+          <a href="https://www.multiverseco.org/intel${UTM}"
              style="font-size:12px;letter-spacing:0.16em;color:rgba(255,107,53,0.45);text-decoration:none;font-family:${MONO};">VIEW ALL INTEL →</a>
         </td>
       </tr>
@@ -277,7 +282,7 @@ function buildSignalHtml(signal: SignalTaskItem | null): string {
   if (!signal || signal.options.length === 0) return ''
 
   const prompt = signal.prompt || SIGNAL_TYPE_HINT[signal.type] || 'Make your judgment.'
-  const href = 'https://www.multiverseco.org/signal'
+  const href = `https://www.multiverseco.org/signal${UTM}`
 
   const referenceRow = signal.main
     ? `<table cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
@@ -441,9 +446,9 @@ export const EMAIL_FOOTER = `
     </table>
     <div style="margin-top:10px;font-size:12px;color:#62677E;letter-spacing:0.06em;line-height:1.8;font-family:'Space Mono',monospace;">
       You are receiving this because you are registered in the Multiverse Collective network.<br/>
-      <a href="https://www.multiverseco.org/console" style="color:#C26A40;text-decoration:none;">Manage preferences</a>
+      <a href="https://www.multiverseco.org/console${UTM}" style="color:#C26A40;text-decoration:none;">Manage preferences</a>
       &nbsp;·&nbsp;
-      <a href="https://www.multiverseco.org/console" style="color:#C26A40;text-decoration:none;">Visit console</a>
+      <a href="https://www.multiverseco.org/console${UTM}" style="color:#C26A40;text-decoration:none;">Visit console</a>
     </div>
   </td></tr>`
 
@@ -465,7 +470,7 @@ export const CTA_DIRECT = `
           <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Physical Badge</div>
           <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Access Card</div>
           <div style="margin-bottom:20px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Full Network Access</div>
-          <a href="https://www.multiverseco.org/voyager-pack"
+          <a href="https://www.multiverseco.org/voyager-pack${UTM}&amp;utm_content=direct"
              style="display:block;text-align:center;background:#FF6B35;color:#0A0E27;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;">
             [ ACTIVATE NOW &rarr; ]
           </a>
@@ -490,7 +495,7 @@ export const CTA_TASK_GATED = `
           <div style="font-size:13px;color:#CBCEDF;line-height:1.75;margin-bottom:20px;font-family:'Space Mono',monospace;">
             Complete the Collective&#39;s field assessment tasks to unlock the Initial Voyager Pack.
           </div>
-          <a href="https://www.multiverseco.org/voyager-path"
+          <a href="https://www.multiverseco.org/voyager-path${UTM}&amp;utm_content=task_gated"
              style="display:block;text-align:center;background:#1C1708;color:#E8A020;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;border:1px solid #B98620;">
             [ VIEW VOYAGER PATH &rarr; ]
           </a>
