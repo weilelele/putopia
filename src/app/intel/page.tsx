@@ -43,9 +43,7 @@ function ClassifiedWall() {
         fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
         letterSpacing: '0.25em', color: 'rgba(245,245,245,0.2)',
         marginBottom: '1rem',
-      }}>
-        // ACCESS RESTRICTED
-      </div>
+      }}>{"// ACCESS RESTRICTED"}</div>
       <p style={{
         fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
         color: 'rgba(245,245,245,0.5)', lineHeight: 1.8, marginBottom: '1.75rem',
@@ -249,7 +247,7 @@ export default function IntelPage() {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">// INTELLIGENCE</div>
+          <div className="h-eyebrow">{"// INTELLIGENCE"}</div>
           <h1>INTEL <span className="accent">FEED</span></h1>
           <p className="sub">Known intelligence — {intel.length} entries on record</p>
         </div>

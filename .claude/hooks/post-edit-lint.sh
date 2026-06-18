@@ -1,11 +1,11 @@
 #!/bin/bash
 # PostToolUse hook: after Claude edits a TS/TSX file, auto-fix what ESLint can
-# fix and surface any *remaining* problems back to the agent as context.
+# fix and block (exit 2) if any errors remain, feeding them back to the agent.
 #
-# Advisory by design (always exits 0): the repo currently carries pre-existing
-# lint errors, so a hard block (exit 2) would falsely stall edits to files whose
-# errors Claude did not introduce. CI is the gate for the whole tree; this hook
-# is fast, file-scoped feedback. Flip to exit 2 once the backlog is clean.
+# The tree is lint-error-clean, so any error this surfaces was just introduced
+# by the edit — fail fast and fix it before moving on. Warnings (e.g. the
+# React-compiler backlog tracked in eslint.config.mjs) never fail ESLint, so
+# they don't block here.
 set -uo pipefail
 
 input=$(cat)
@@ -21,12 +21,12 @@ esac
 cd "${CLAUDE_PROJECT_DIR:-$(pwd)}"
 [ -x node_modules/.bin/eslint ] || exit 0
 
-# Auto-fix the fixable issues in place, then report whatever remains.
+# Auto-fix the fixable issues in place, then block on whatever errors remain.
 node_modules/.bin/eslint --fix "$file" >/dev/null 2>&1 || true
 
 if ! out=$(node_modules/.bin/eslint "$file" 2>&1); then
-  ctx=$(printf 'ESLint still reports problems in %s after auto-fix:\n%s' "$file" "$out")
-  jq -n --arg c "$ctx" \
-    '{hookSpecificOutput:{hookEventName:"PostToolUse",additionalContext:$c}}'
+  echo "ESLint reports errors in $file — fix them before continuing:" >&2
+  echo "$out" >&2
+  exit 2
 fi
 exit 0

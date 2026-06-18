@@ -36,9 +36,7 @@ function ClassifiedWall() {
         fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
         letterSpacing: '0.25em', color: 'rgba(245,245,245,0.2)',
         marginBottom: '1rem',
-      }}>
-        // ACCESS RESTRICTED
-      </div>
+      }}>{"// ACCESS RESTRICTED"}</div>
       <p style={{
         fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
         color: 'rgba(245,245,245,0.5)', lineHeight: 1.8, marginBottom: '1.75rem',
@@ -107,7 +105,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">// DECISION ZONE</div>
+          <div className="h-eyebrow">{"// DECISION ZONE"}</div>
           <h1>VOTING <span className="accent">HUB</span></h1>
           <p className="sub">{votes.filter(v => v.is_active).length} active / {votes.filter(v => !v.is_active).length} closed</p>
         </div>
@@ -183,9 +181,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
 
           {filteredVotes.length === 0 && (
             <div className="text-center py-16">
-              <div className="text-xs font-mono tracking-widest mb-2" style={{ color: 'rgba(245,245,245,0.35)' }}>
-                // NO VOTES FOUND
-              </div>
+              <div className="text-xs font-mono tracking-widest mb-2" style={{ color: 'rgba(245,245,245,0.35)' }}>{"// NO VOTES FOUND"}</div>
               <p className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
                 No votes match this filter.
               </p>

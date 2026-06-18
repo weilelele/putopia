@@ -109,7 +109,7 @@ export default function OrdersAdmin() {
     <div style={{ padding: '24px', fontFamily: 'var(--font-mono)', color: '#F5F5F5' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
         <div>
-          <div style={{ color: '#E85D04', fontSize: '11px', letterSpacing: '0.25em' }}>// FULFILLMENT</div>
+          <div style={{ color: '#E85D04', fontSize: '11px', letterSpacing: '0.25em' }}>{"// FULFILLMENT"}</div>
           <h1 style={{ fontSize: '20px', margin: '6px 0 0' }}>ORDERS</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -126,9 +126,7 @@ export default function OrdersAdmin() {
       {/* Manual order creation panel */}
       {showNew && (
         <div style={{ background: '#151B3A', border: '1px solid #FF6B35', padding: '20px', marginBottom: '20px' }}>
-          <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.22em', marginBottom: '14px' }}>
-            // MANUAL ORDER — confirm offline payment and provision Voyager membership
-          </div>
+          <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.22em', marginBottom: '14px' }}>{"// MANUAL ORDER — confirm offline payment and provision Voyager membership"}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={S.label}>BUYER EMAIL *</label>

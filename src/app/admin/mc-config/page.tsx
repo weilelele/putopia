@@ -71,7 +71,7 @@ export default function McConfigPage() {
       <div style={{ maxWidth: 640, width: '100%' }}>
         <div className="page-head">
           <div>
-            <div className="h-eyebrow">// ADMIN</div>
+            <div className="h-eyebrow">{"// ADMIN"}</div>
             <h1>MC UNIT <span className="accent">CONFIG</span></h1>
             <p className="sub">Configure confirmed functions displayed on the public dashboard</p>
           </div>

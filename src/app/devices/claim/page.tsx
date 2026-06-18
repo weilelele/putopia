@@ -104,7 +104,7 @@ export default function ClaimPage() {
       {/* Page head */}
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">// FIRST DISCOVERY</div>
+          <div className="h-eyebrow">{"// FIRST DISCOVERY"}</div>
           <h1>CAIRO <span className="accent">BATCH 01</span></h1>
           <p className="sub">First parts pack · Antique markets, Cairo · Multiverse Console components</p>
         </div>
@@ -138,7 +138,7 @@ export default function ClaimPage() {
           maxWidth: '820px',
         }}
       >
-        <div className="mb-2" style={{ color: ORANGE }}>// FIELD REPORT</div>
+        <div className="mb-2" style={{ color: ORANGE }}>{"// FIELD REPORT"}</div>
         {INTEL_LINES.map((line) => (
           <div key={line}>{line}</div>
         ))}
@@ -268,7 +268,7 @@ export default function ClaimPage() {
         className="mb-10 border-l-2 pl-4 font-mono text-xs"
         style={{ borderColor: 'rgba(255,107,53,0.4)', color: 'rgba(245,245,245,0.35)', lineHeight: '1.8', maxWidth: '640px' }}
       >
-        <div style={{ color: 'rgba(245,245,245,0.5)', marginBottom: '0.25rem' }}>// UPGRADE PATH</div>
+        <div style={{ color: 'rgba(245,245,245,0.5)', marginBottom: '0.25rem' }}>{"// UPGRADE PATH"}</div>
         The $12 first parts pack is the entry point. If you later choose to secure the full
         Console (four consecutive batches, $360), your initial payment is credited toward the
         total. The first batch is identical across both tracks.

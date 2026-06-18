@@ -371,7 +371,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
           color: 'var(--color-star)', margin: 0,
           animation: 'fadeInUp 0.5s ease forwards',
         }}>
-          Yes, it's you.
+          Yes, it&apos;s you.
         </p>
         <p style={{
           fontFamily: 'var(--font-body)', fontWeight: 500,
@@ -381,7 +381,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
           transform: showSecondLine ? 'translateY(0)' : 'translateY(10px)',
           transition: 'opacity 0.45s ease, transform 0.45s ease',
         }}>
-          You are the Voyager we've been looking for.
+          You are the Voyager we&apos;ve been looking for.
         </p>
       </div>
 

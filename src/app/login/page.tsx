@@ -56,7 +56,7 @@ function LoginPageContent() {
 
       <div style={{ width: '100%', maxWidth: '440px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>// IDENTITY VERIFICATION</div>
+          <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>{"// IDENTITY VERIFICATION"}</div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 900, color: 'var(--color-nucleus)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(255,90,31,0.5)' }}>
             AUTHENTICATE
           </div>
@@ -127,9 +127,7 @@ function LoginPageContent() {
           </Link>
         </div>
 
-        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
-          // ALL ACCESS ATTEMPTS ARE LOGGED //
-        </div>
+        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>{"// ALL ACCESS ATTEMPTS ARE LOGGED //"}</div>
       </div>
 
       <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
