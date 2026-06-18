@@ -123,7 +123,11 @@ export default function DevicesAdmin() {
   const formRef = useRef<HTMLDivElement>(null)
 
   const load = async () => { setLoading(true); setItems(await getAllDevices()); setLoading(false) }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    let active = true
+    getAllDevices().then(d => { if (active) { setItems(d); setLoading(false) } })
+    return () => { active = false }
+  }, [])
 
   const openNew  = () => { setForm(EMPTY); setEditId(null); setShowForm(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }
   const openEdit = (d: Device) => { setForm(deviceToForm(d)); setEditId(d.id); setShowForm(true); setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }

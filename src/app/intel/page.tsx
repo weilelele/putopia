@@ -224,6 +224,7 @@ export default function IntelPage() {
     }
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount; loadIntel() is the shared refetch reused after actions
   useEffect(() => { loadIntel() }, [])
 
   // Derive displayed list based on filter

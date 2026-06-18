@@ -83,6 +83,7 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
       return
     }
     const pending = localStorage.getItem('putopia_pending_email')
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrates state from localStorage / query params on mount
     if (pending) setPendingEmail(pending)
   }, [params])
 
@@ -748,6 +749,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
 ───────────────────────────────────────────────────── */
 function ScanTransition({ onComplete }: { onComplete: () => void }) {
   const callbackRef = useRef(onComplete)
+  // eslint-disable-next-line react-hooks/refs -- latest-ref pattern: keep the callback current without re-running the timer effect
   callbackRef.current = onComplete
   const welcomeRef  = useRef<HTMLDivElement>(null)
   const beamRef     = useRef<HTMLDivElement>(null)

@@ -70,8 +70,10 @@ export default function IntelAdmin() {
 
   const load = async () => { setLoading(true); setItems(await getAllIntel()); setLoading(false) }
   useEffect(() => {
-    load()
-    getLatestFeed().then(f => { if (f?.generated_at) setFeedLastGenerated(f.generated_at) })
+    let active = true
+    getAllIntel().then(items => { if (active) { setItems(items); setLoading(false) } })
+    getLatestFeed().then(f => { if (active && f?.generated_at) setFeedLastGenerated(f.generated_at) })
+    return () => { active = false }
   }, [])
 
   // Fetch current user display name for publisher default

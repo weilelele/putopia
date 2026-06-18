@@ -49,6 +49,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (query.trim().length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the dropdown immediately when the query is emptied
       setResults([])
       setOpen(false)
       return

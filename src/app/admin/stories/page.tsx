@@ -53,7 +53,11 @@ export default function StoriesAdmin() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    let active = true
+    getAllStories().then(s => { if (active) { setItems(s); setLoading(false) } })
+    return () => { active = false }
+  }, [])
 
   const openNew = () => {
     setForm(EMPTY); setEditId(null); setShowForm(true)

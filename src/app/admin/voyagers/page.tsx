@@ -28,6 +28,7 @@ export default function VoyagersAdmin() {
     setDrafts(Object.fromEntries(members.map((v) => [v.id, v.batch_label || DEFAULT_BATCH])))
     setLoading(false)
   }
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount; load() is the shared refetch reused after mutations
   useEffect(() => { load() }, [])
 
   // Distinct existing batch names → datalist for quick reuse

@@ -71,9 +71,11 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
   // useState's mount-only initial value would freeze the card at "0 votes cast".
   // (We never re-fetch mid-session, so these refs are stable once loaded and
   // won't clobber an optimistic post-vote update.)
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional prop->state sync; props arrive after mount (see note above) */
   useEffect(() => { setTally(initialTally) }, [initialTally])
   useEffect(() => { setVoted(initialHasVoted) }, [initialHasVoted])
   useEffect(() => { setSelected(initialSelections) }, [initialSelections])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const isActive = vote.is_active
   const hasPermission = vote.scope.includes(user.role as UserRole)

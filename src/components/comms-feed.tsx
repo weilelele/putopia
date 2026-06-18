@@ -118,6 +118,7 @@ export function CommsFeed({ lines }: { lines: FeedLine[] }) {
 
   useEffect(() => {
     if (!parsed.length) return
+    // eslint-disable-next-line react-hooks/immutability -- drives the imperative typewriter via refs; intentional
     startNextLine()
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,6 +164,7 @@ export function CommsFeed({ lines }: { lines: FeedLine[] }) {
         state.charsDone++
         setActiveLine({ ...state })
         scroll()
+        // eslint-disable-next-line react-hooks/purity -- random jitter on the typewriter delay; cosmetic only
         timerRef.current = setTimeout(typeStep, CHAR_DELAY + (Math.random() * 12 - 6))
       } else {
         // Move to next segment

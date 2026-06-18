@@ -26,7 +26,11 @@ export default function VotesAdmin() {
   const [msg, setMsg]       = useState<{ text: string; ok: boolean } | null>(null)
 
   const load = async () => { setLoading(true); setItems(await getAllVotes()); setLoading(false) }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    let active = true
+    getAllVotes().then(v => { if (active) { setItems(v); setLoading(false) } })
+    return () => { active = false }
+  }, [])
 
   const handleDelete = async (v: Vote) => {
     if (!confirm(`删除投票「${v.title}」？\n\n此操作同时删除所有投票记录，不可撤销。`)) return
