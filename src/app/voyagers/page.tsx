@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import { getAllVoyagers, updateProfile, uploadAvatar } from '@/lib/actions/profile'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
-import { Camera, X as XClose } from 'lucide-react'
+import { Camera, X as XClose, FileText, ArrowRight } from 'lucide-react'
 import type { VoyagerProfile, UserRole } from '@/types/database'
 
 // ── Platform icons ─────────────────────────────────────────────────────────
@@ -190,6 +191,29 @@ export default function VoyagersPage() {
             {loading ? 'Loading registry...' : `Voyager Registry — ${voyagers.length} active members`}
           </p>
         </div>
+        <Link
+          href="/logs"
+          style={{
+            flex: '0 0 auto',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            border: '1px solid var(--color-nucleus)',
+            color: 'var(--color-nucleus)',
+            background: 'rgba(232,93,4,0.08)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--fs-caption)',
+            letterSpacing: '0.1em',
+            padding: '0.5rem 0.75rem',
+            borderRadius: 8,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <FileText size={15} />
+          VOYAGER LOGS
+          <ArrowRight size={14} />
+        </Link>
       </div>
 
       {loading ? (
