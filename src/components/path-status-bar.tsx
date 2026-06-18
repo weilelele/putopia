@@ -15,10 +15,12 @@ const STAGE_ORDER: WorldStage[] = ['tuning', 'raw', 'established']
  * dispatch board (doc 4.1). Shown to logged-in users only.
  */
 export function PathStatusBar({
-  user, onDeviceClick,
+  user, onDeviceClick, deviceDays = 0,
 }: {
   user: { role: string; name?: string; email?: string; avatarUrl?: string | null }
   onDeviceClick: () => void
+  /** Days the user has held a Multiverse Console (0 = none assigned). */
+  deviceDays?: number
 }) {
   const isApplicant = user.role === 'applicant'
   const isArchitect = user.role === 'architect'
@@ -29,15 +31,15 @@ export function PathStatusBar({
 
   const name = user.name || user.email?.split('@')[0] || 'Voyager'
   const initials = name.slice(0, 2).toUpperCase()
-  const hasDevice = false
+  const hasDevice = deviceDays > 0
 
   const [board, setBoard] = useState<DispatchDashboard | null>(null)
   const [worldsOpen, setWorldsOpen] = useState(false)
   useEffect(() => { getDispatchDashboard().then(setBoard) }, [])
 
   const cell: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-    padding: '11px 18px', textDecoration: 'none',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    padding: '11px 13px', textDecoration: 'none',
     fontFamily: 'var(--font-mono)', cursor: 'pointer',
     background: 'transparent', border: 'none',
     transition: 'background 0.15s',
@@ -52,8 +54,8 @@ export function PathStatusBar({
   // the two numbers (and their labels) line up regardless of digit count.
   const statRow: React.CSSProperties = {
     display: 'flex', alignItems: 'baseline', gap: 8, textDecoration: 'none',
-    fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-star-dim)',
-    cursor: 'pointer', textAlign: 'left', width: 'fit-content',
+    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)',
+    cursor: 'pointer', textAlign: 'left', width: 'fit-content', whiteSpace: 'nowrap',
   }
   const statNum: React.CSSProperties = { display: 'inline-block', minWidth: '1.7em', textAlign: 'right' }
 
@@ -83,17 +85,17 @@ export function PathStatusBar({
 
         {divider}
 
-        <Link href="/voyager-path" title="View your path" style={{ ...cell, flex: 1 }} {...hov}>
+        <Link href="/voyager-path" title="View your path" style={{ ...cell, flex: 1, minWidth: 0 }} {...hov}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
-          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.2 }}>
-            <span style={{ fontSize: 12, color: idColor, letterSpacing: '0.18em', fontWeight: 700 }}>{idLabel}</span>
-            <span style={{ fontSize: 8.5, color: 'var(--color-star-dim)', letterSpacing: '0.14em', marginTop: 3 }}>VIEW YOUR PATH</span>
+          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.25 }}>
+            <span style={{ fontSize: 'var(--fs-label)', color: idColor, letterSpacing: '0.14em', fontWeight: 700, whiteSpace: 'nowrap' }}>{idLabel}</span>
+            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em', marginTop: 3, whiteSpace: 'nowrap' }}>VIEW YOUR PATH</span>
           </span>
         </Link>
 
         {divider}
 
-        <button onClick={onDeviceClick} title={hasDevice ? 'Device active' : 'No device assigned'} style={{ ...cell, flex: '0 0 auto' }} {...hov}>
+        <button onClick={onDeviceClick} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '0 0 auto', gap: 7 }} {...hov}>
           <span aria-label={hasDevice ? 'Device active' : 'No device'} style={{
             display: 'inline-block', width: 32, height: 19, flexShrink: 0,
             background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.32)',
@@ -103,6 +105,10 @@ export function PathStatusBar({
             WebkitMaskPosition: 'center', maskPosition: 'center',
             filter: hasDevice ? 'drop-shadow(0 0 5px rgba(32,216,144,0.5))' : 'none',
           }} />
+          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.15 }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: hasDevice ? '#20D890' : 'rgba(245,245,245,0.5)' }}>{deviceDays}</span>
+            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em' }}>{deviceDays === 1 ? 'DAY' : 'DAYS'}</span>
+          </span>
         </button>
       </div>
 
@@ -110,22 +116,22 @@ export function PathStatusBar({
       {board && (
         <>
           <div style={{ height: 1, background: 'rgba(255,107,53,0.22)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', padding: '14px 18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', overflow: 'hidden' }}>
             <Link href="/signal" style={{ flex: '0 0 auto', textDecoration: 'none' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.22em', color: '#E85D04', marginBottom: 3 }}>{'// SIGNAL DISPATCH'}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: '#E85D04', marginBottom: 3 }}>{'// SIGNAL DISPATCH'}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 9 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 42, color: '#FF6B35', lineHeight: 0.85 }}>{board.awaitingYou}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--color-star)' }}>awaiting you →</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star)' }}>awaiting you</span>
               </div>
             </Link>
-            <div style={{ flex: 1, minWidth: 118, display: 'flex', flexDirection: 'column', gap: 7, borderLeft: '1px solid rgba(255,107,53,0.15)', paddingLeft: 18 }}>
+            <div style={{ flex: 1, minWidth: 118, display: 'flex', flexDirection: 'column', gap: 7, borderLeft: '1px solid rgba(255,107,53,0.15)', paddingLeft: 12 }}>
               <Link href="/signal" className="disp-stat" style={statRow}>
                 <b style={{ ...statNum, color: 'var(--color-star)' }}>{board.inTuning}</b>
                 <span>in tuning</span>
               </Link>
               <button onClick={() => setWorldsOpen(true)} className="disp-stat" style={{ ...statRow, background: 'none', border: 'none', padding: 0 }}>
                 <b style={{ ...statNum, color: '#20D890' }}>{board.yourWorlds.length}</b>
-                <span>your worlds →</span>
+                <span>your worlds</span>
               </button>
             </div>
           </div>
@@ -152,7 +158,7 @@ function YourWorldsModal({ worlds, onClose }: { worlds: DispatchDashboard['yourW
     >
       <div onClick={(e) => e.stopPropagation()} style={{ background: '#0F1430', border: '1px solid rgba(255,107,53,0.3)', maxWidth: 460, width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: '24px 22px', position: 'relative', fontFamily: 'var(--font-mono)' }}>
         <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 12, right: 14, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,245,245,0.4)', fontSize: 18 }}>✕</button>
-        <div style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.25em', marginBottom: 16 }}>{'// YOUR WORLDS'}</div>
+        <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: 16 }}>{'// YOUR WORLDS'}</div>
         {worlds.length === 0 && (
           <div style={{ fontSize: 12, color: 'rgba(245,245,245,0.5)', lineHeight: 1.6 }}>
             You haven&apos;t started any worlds yet.
@@ -164,12 +170,12 @@ function YourWorldsModal({ worlds, onClose }: { worlds: DispatchDashboard['yourW
           if (!items.length) return null
           return (
             <div key={stage} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 9, letterSpacing: '0.18em', color: 'rgba(245,245,245,0.4)', marginBottom: 7, textTransform: 'uppercase' }}>
+              <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(245,245,245,0.4)', marginBottom: 7, textTransform: 'uppercase' }}>
                 {WORLD_STAGE_META[stage].label} · {items.length}
               </div>
               {items.map((w) => (
-                <Link key={w.id} href={`/worlds/${encodeURIComponent(w.id)}`} onClick={onClose} style={{ display: 'block', padding: '8px 10px', marginBottom: 4, background: '#070912', border: '1px solid rgba(255,107,53,0.12)', color: '#F5F5F5', fontSize: 12, textDecoration: 'none' }}>
-                  {w.name} <span style={{ color: '#E85D04' }}>→</span>
+                <Link key={w.id} href={`/worlds/${encodeURIComponent(w.id)}`} onClick={onClose} style={{ display: 'block', padding: '8px 10px', marginBottom: 4, background: '#070912', border: '1px solid rgba(255,107,53,0.12)', color: '#F5F5F5', fontSize: 'var(--fs-caption)', textDecoration: 'none' }}>
+                  {w.name}
                 </Link>
               ))}
             </div>

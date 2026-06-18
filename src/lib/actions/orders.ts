@@ -132,7 +132,7 @@ export async function createOrderManually(params: {
   let authUser = list?.users?.find((u) => u.email?.toLowerCase() === email)
 
   if (!authUser) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://voyager.putopia.studio'
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
     const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
       redirectTo: `${siteUrl}/auth/callback?next=/register`,
     })

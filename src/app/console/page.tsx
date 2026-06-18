@@ -21,6 +21,7 @@ import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
+import { PathStatusBar } from '@/components/path-status-bar'
 import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/types/database'
 import type { ActivityEvent } from '@/lib/actions/activity-events'
 
@@ -383,7 +384,7 @@ function IntelPreviewCard({ entry, commentCount }: { entry: IntelWithAvatar; com
           // eslint-disable-next-line @next/next/no-img-element
           <img src={entry.publisher_avatar_url} alt={publisherName} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(138,154,181,0.25)' }} />
         ) : (
-          <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: `${color}18`, border: `1px solid ${color}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, color }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: `${color}18`, border: `1px solid ${color}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, color }}>
             {getInitials(publisherName)}
           </div>
         )}
@@ -643,8 +644,9 @@ function GuestHero({ newHref, mcFunctions }: { newHref: string; mcFunctions: McF
 }
 
 
-/* ─── Device "coming soon" popup (same pattern as locked Voyager rows) ── */
-function DeviceComingSoonModal({ onClose }: { onClose: () => void }) {
+/* ─── Device popup — days held + reservation entry (gated until devices open) ── */
+function DeviceComingSoonModal({ days, onClose }: { days: number; onClose: () => void }) {
+  const hasDevice = days > 0
   return (
     <div
       onClick={onClose}
@@ -665,19 +667,45 @@ function DeviceComingSoonModal({ onClose }: { onClose: () => void }) {
           boxShadow: '0 0 40px rgba(10,14,39,0.6)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <DeviceBarIcon size={14} color="#E8A020" />
           <span style={{ fontSize: 'var(--fs-label)', color: '#E8A020', letterSpacing: '0.12em' }}>
-            DEVICE SCAN IN PROGRESS
+            MULTIVERSE CONSOLE
           </span>
         </div>
-        <p style={{ margin: '0 0 16px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.75 }}>
-          You don&apos;t have a Multiverse Console assigned yet. We&apos;re still scanning for
-          available devices — we&apos;ll notify you as soon as one is ready for you.
-        </p>
-        <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.15)', letterSpacing: '0.14em', textAlign: 'center' }}>
-          TAP ANYWHERE TO DISMISS
+
+        {/* Days held — focal number */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14 }}>
+          <span style={{ fontSize: 40, lineHeight: 0.85, color: hasDevice ? '#20D890' : 'rgba(245,245,245,0.32)' }}>
+            {days}
+          </span>
+          <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.1em' }}>
+            {days === 1 ? 'DAY HELD' : 'DAYS HELD'}
+          </span>
         </div>
+
+        <p style={{ margin: '0 0 16px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.75 }}>
+          {hasDevice
+            ? 'Your Multiverse Console is active. Keep it online to extend your streak.'
+            : "Device applications aren't open yet. We're preparing the first batch — you'll be able to reserve a Multiverse Console here as soon as they go live."}
+        </p>
+
+        {/* Reservation entry — disabled until devices open */}
+        {!hasDevice && (
+          <div
+            aria-disabled="true"
+            style={{
+              textAlign: 'center',
+              fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.16em',
+              color: 'rgba(245,245,245,0.4)',
+              background: 'rgba(245,245,245,0.06)',
+              border: '1px solid rgba(245,245,245,0.12)',
+              padding: '0.6rem', marginBottom: 14, cursor: 'not-allowed',
+            }}
+          >
+            RESERVE A CONSOLE — COMING SOON
+          </div>
+        )}
       </div>
       <style>{`@keyframes pathbar-fade { from { opacity: 0 } to { opacity: 1 } }`}</style>
     </div>
@@ -694,137 +722,6 @@ function DeviceBarIcon({ size = 16, color = 'currentColor' }: { size?: number; c
   )
 }
 
-/* ─── Path status bar — avatar · identity · device (entry to the Path) ── */
-function PathStatusBar({
-  user, onDeviceClick,
-}: {
-  user: { role: string; name?: string; email?: string; avatarUrl?: string | null }
-  onDeviceClick: () => void
-}) {
-  const isApplicant = user.role === 'applicant'
-  const isArchitect = user.role === 'architect'
-
-  // Identity accent
-  const idColor = isApplicant ? '#E8A020' : isArchitect ? '#FF6B35' : '#FFB07A'
-  const idLabel = isApplicant ? 'APPLICANT' : isArchitect ? 'ARCHITECT' : 'VOYAGER'
-
-  // Profile-completion nudge: a Voyager who hasn't set an avatar yet.
-  const showNudge = user.role === 'voyager' && !user.avatarUrl
-
-  const name = user.name || user.email?.split('@')[0] || 'Voyager'
-  const initials = name.slice(0, 2).toUpperCase()
-
-  // Device ownership (no claim flow yet → always false / gray logo).
-  const hasDevice = false
-
-  const cell: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-    padding: '11px 18px', textDecoration: 'none',
-    fontFamily: 'var(--font-mono)', cursor: 'pointer',
-    background: 'transparent', border: 'none',
-    transition: 'background 0.15s',
-  }
-  const divider = <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,107,53,0.14)' }} />
-
-  return (
-    <div className="hud-frame hud-frame--orange" style={{
-      width: '100%', maxWidth: 560, margin: '0 auto',
-      display: 'flex', alignItems: 'stretch',
-      padding: 0, background: 'var(--color-void)',
-    }}>
-      {/* ── Avatar → /profile ── */}
-      <Link
-        href="/profile"
-        title="Edit your profile"
-        style={{ ...cell, flex: '0 0 auto' }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-      >
-        <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-          {user.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatarUrl} alt={name} style={{
-              width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', display: 'block',
-              border: '1.5px solid rgba(255,138,92,0.4)',
-            }} />
-          ) : (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 32, height: 32, borderRadius: '50%',
-              border: `1.5px solid ${idColor}66`, background: '#0A0D1A',
-              fontSize: 12, fontWeight: 700, color: idColor, letterSpacing: '0.02em',
-            }}>
-              {initials}
-            </span>
-          )}
-          {showNudge && (
-            <span style={{
-              position: 'absolute', top: -2, right: -2,
-              width: 9, height: 9, borderRadius: '50%',
-              background: '#E83030', border: '1.5px solid var(--color-void)',
-              boxShadow: '0 0 6px rgba(232,48,48,0.8)',
-              animation: 'pathbar-pulse 1.8s ease-in-out infinite',
-            }} />
-          )}
-        </span>
-      </Link>
-
-      {divider}
-
-      {/* ── Identity → Path page ── */}
-      <Link
-        href="/voyager-path"
-        title="View your path"
-        style={{ ...cell, flex: 1 }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-      >
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
-        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.2 }}>
-          <span style={{ fontSize: 12, color: idColor, letterSpacing: '0.18em', fontWeight: 700 }}>
-            {idLabel}
-          </span>
-          <span style={{ fontSize: 8.5, color: 'var(--color-star-dim)', letterSpacing: '0.14em', marginTop: 3 }}>
-            VIEW YOUR PATH
-          </span>
-        </span>
-      </Link>
-
-      {divider}
-
-      {/* ── Device status → popup (brand logo, gray=none / green=owned) ── */}
-      <button
-        onClick={onDeviceClick}
-        title={hasDevice ? 'Device active' : 'No device assigned'}
-        style={{ ...cell, flex: '0 0 auto' }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-      >
-        <span
-          aria-label={hasDevice ? 'Device active' : 'No device'}
-          style={{
-            display: 'inline-block', width: 32, height: 19, flexShrink: 0,
-            background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.32)',
-            WebkitMaskImage: 'url(/assets/vi-icon.png)',
-            maskImage: 'url(/assets/vi-icon.png)',
-            WebkitMaskSize: 'contain', maskSize: 'contain',
-            WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-            WebkitMaskPosition: 'center', maskPosition: 'center',
-            filter: hasDevice ? 'drop-shadow(0 0 5px rgba(32,216,144,0.5))' : 'none',
-          }}
-        />
-      </button>
-
-      <style>{`
-        @keyframes pathbar-pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50%       { transform: scale(1.25); opacity: 0.7; }
-        }
-      `}</style>
-    </div>
-  )
-}
-
 /* ─── Auth Hero — Welcome Voyager (voyager+) / status-led (applicant) ──── */
 function AuthHero({ user, activityEvents }: {
   user: { role: string; name?: string; email?: string; avatarUrl?: string | null }
@@ -833,9 +730,13 @@ function AuthHero({ user, activityEvents }: {
   const isApplicant = user.role === 'applicant'
   const [deviceModal, setDeviceModal] = useState(false)
 
+  // Device ownership — no claim flow exists yet, so days held is always 0.
+  // Wire this to the real device-assignment date once devices open.
+  const deviceDays = 0
+
   return (
     <section className="hero">
-      {deviceModal && <DeviceComingSoonModal onClose={() => setDeviceModal(false)} />}
+      {deviceModal && <DeviceComingSoonModal days={deviceDays} onClose={() => setDeviceModal(false)} />}
 
       {isApplicant ? (
         /* Applicant: brand lockup (same as guest) instead of "Welcome Voyager" */
@@ -881,7 +782,7 @@ function AuthHero({ user, activityEvents }: {
 
       {/* ── Path status bar (above the Status Feed) ── */}
       <div style={{ width: '100%', margin: isApplicant ? '0 auto' : '0.75rem auto 0', padding: '0 1.25rem' }}>
-        <PathStatusBar user={user} onDeviceClick={() => setDeviceModal(true)} />
+        <PathStatusBar user={user} deviceDays={deviceDays} onDeviceClick={() => setDeviceModal(true)} />
       </div>
 
       {/* ── Status Feed ── */}

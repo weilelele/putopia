@@ -922,6 +922,34 @@ export async function updateInvestigationConfig(
   return { ok: true }
 }
 
+const VOTE_SCOPE_VALUES: WorldVoteScope[] = ['self', 'voters', 'all']
+
+/** Owner-facing: let the world's originator (or an architect) choose who may
+ *  vote on their world's signals, from the world detail page. Defaults to 'all'. */
+export async function setWorldVoteScope(
+  worldId: string,
+  voteScope: WorldVoteScope,
+): Promise<{ ok: boolean; error?: string }> {
+  const me = await currentUser()
+  if (!me) return { ok: false, error: 'Login required' }
+  if (!VOTE_SCOPE_VALUES.includes(voteScope)) return { ok: false, error: 'Invalid scope' }
+  const admin = createAdminClient() as DB
+
+  const { data: world } = await admin
+    .from('worlds')
+    .select('submitted_by, discoverer_id')
+    .eq('id', worldId)
+    .maybeSingle()
+  if (!world) return { ok: false, error: 'World not found' }
+
+  const isOwner = me.id === world.submitted_by || me.id === world.discoverer_id
+  if (!isOwner && me.role !== 'architect') return { ok: false, error: 'Not allowed' }
+
+  const { error } = await admin.from('worlds').update({ vote_scope: voteScope }).eq('id', worldId)
+  if (error) return { ok: false, error: error.message }
+  return { ok: true }
+}
+
 /** Add the next day to an investigation — creates a draft task (day_index auto-increments). */
 export async function addDayToInvestigation(
   threadId: string,
