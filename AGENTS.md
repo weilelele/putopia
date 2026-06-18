@@ -34,7 +34,10 @@ deployments share **production** Supabase, MongoDB, and Stripe. Therefore:
 - A PostToolUse hook auto-fixes edited TS/TSX and blocks on any remaining
   ESLint error.
 - CI (`.github/workflows/ci.yml`) gates PRs on `tsc --noEmit`, `npm run lint`,
-  and `next build`. The tree is lint-error-clean; a handful of React-compiler
-  rules are tracked as warnings in `eslint.config.mjs` (see the comment there).
-  Before pushing, run `npx tsc --noEmit`, `npm run lint`, and `npm run build`
-  locally.
+  `npm test`, and `next build`. The tree is lint-error-clean; a handful of
+  React-compiler rules are tracked as warnings in `eslint.config.mjs` (see the
+  comment there). Before pushing, run `npx tsc --noEmit`, `npm run lint`,
+  `npm test`, and `npm run build` locally.
+- Tests run on **Vitest** (`*.test.ts` next to the code, `node` env — see
+  `vitest.config.ts`). Keep them pure: no DOM, DB, network, or env. Previews
+  share production services, so a test must never touch them.
