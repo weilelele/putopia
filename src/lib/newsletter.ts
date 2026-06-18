@@ -60,8 +60,8 @@ export interface NewsletterContent {
 // ── Style constants ───────────────────────────────────────────────────────────
 
 const MONO = "'Space Mono',ui-monospace,'Courier New',monospace"
-const PARA = `margin:0 0 16px;font-size:11px;color:rgba(245,245,245,0.68);line-height:1.9;letter-spacing:0.01em;font-family:${MONO};`
-const PARA_LAST = `margin:0;font-size:11px;color:rgba(245,245,245,0.68);line-height:1.9;letter-spacing:0.01em;font-family:${MONO};`
+const PARA = `margin:0 0 16px;font-size:14px;color:rgba(245,245,245,0.68);line-height:1.9;letter-spacing:0.01em;font-family:${MONO};`
+const PARA_LAST = `margin:0;font-size:14px;color:rgba(245,245,245,0.68);line-height:1.9;letter-spacing:0.01em;font-family:${MONO};`
 
 const SIGNAL_TYPE_HINT: Record<string, string> = {
   visual_match: 'Which signal comes from the same world as the reference?',
@@ -214,15 +214,15 @@ function publisherBadge(name: string | null, avatarUrl: string | null): string {
       `<img src="${avatarUrl}" width="20" height="20" alt="" ` +
       `style="width:20px;height:20px;border-radius:50%;object-fit:cover;display:inline-block;` +
       `vertical-align:middle;border:1px solid rgba(255,255,255,0.12);" />` +
-      `<span style="font-size:9px;color:rgba(245,245,245,0.7);margin-left:8px;vertical-align:middle;">${display}</span>`
+      `<span style="font-size:13px;color:rgba(245,245,245,0.7);margin-left:8px;vertical-align:middle;">${display}</span>`
     )
   }
   const initials = display.split(/\s+/).slice(0, 2).map((w) => w[0] ?? '').join('').toUpperCase()
   return (
     `<span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:#241433;` +
-    `color:#E8A020;font-size:9px;font-weight:700;line-height:20px;text-align:center;` +
+    `color:#E8A020;font-size:13px;font-weight:700;line-height:20px;text-align:center;` +
     `vertical-align:middle;border:1px solid rgba(232,160,32,0.4);">${initials}</span>` +
-    `<span style="font-size:9px;color:rgba(245,245,245,0.7);margin-left:8px;vertical-align:middle;">${display}</span>`
+    `<span style="font-size:13px;color:rgba(245,245,245,0.7);margin-left:8px;vertical-align:middle;">${display}</span>`
   )
 }
 
@@ -238,12 +238,12 @@ function buildNewsCardsHtml(news: NewsItem[]): string {
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:9px;">
           <tr>
             <td style="vertical-align:middle;">${publisherBadge(item.publisherName, item.publisherAvatarUrl)}</td>
-            <td style="text-align:right;vertical-align:middle;font-size:7px;letter-spacing:0.2em;color:rgba(255,107,53,0.5);">${item.tag.toUpperCase()}</td>
+            <td style="text-align:right;vertical-align:middle;font-size:12px;letter-spacing:0.2em;color:rgba(255,107,53,0.5);">${item.tag.toUpperCase()}</td>
           </tr>
         </table>
-        <div style="font-size:12px;font-weight:700;color:#F5F5F5;line-height:1.35;margin-bottom:7px;font-family:${MONO};">${item.title}</div>
-        <div style="font-size:9px;color:rgba(245,245,245,0.42);line-height:1.75;font-family:${MONO};">${item.excerpt}</div>
-        <div style="margin-top:10px;font-size:8px;letter-spacing:0.16em;color:rgba(255,107,53,0.5);font-family:${MONO};">READ MORE →</div>
+        <div style="font-size:15px;font-weight:700;color:#F5F5F5;line-height:1.35;margin-bottom:7px;font-family:${MONO};">${item.title}</div>
+        <div style="font-size:13px;color:rgba(245,245,245,0.42);line-height:1.75;font-family:${MONO};">${item.excerpt}</div>
+        <div style="margin-top:10px;font-size:12px;letter-spacing:0.16em;color:rgba(255,107,53,0.5);font-family:${MONO};">READ MORE →</div>
       </a>
     </td></tr>`
     )
@@ -254,10 +254,10 @@ function buildNewsCardsHtml(news: NewsItem[]): string {
   <tr><td>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:4px;">
       <tr>
-        <td style="font-size:8px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);padding-bottom:10px;font-family:${MONO};">THIS WEEK'S BRIEFINGS</td>
+        <td style="font-size:12px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);padding-bottom:10px;font-family:${MONO};">THIS WEEK'S BRIEFINGS</td>
         <td style="text-align:right;padding-bottom:10px;">
           <a href="https://putopia.vercel.app/intel"
-             style="font-size:8px;letter-spacing:0.16em;color:rgba(255,107,53,0.45);text-decoration:none;font-family:${MONO};">VIEW ALL INTEL →</a>
+             style="font-size:12px;letter-spacing:0.16em;color:rgba(255,107,53,0.45);text-decoration:none;font-family:${MONO};">VIEW ALL INTEL →</a>
         </td>
       </tr>
     </table>
@@ -268,7 +268,7 @@ function buildNewsCardsHtml(news: NewsItem[]): string {
 function renderSignalThumb(asset: SignalAsset): string {
   if (asset.media === 'audio' || !asset.url) {
     return `<div style="width:100%;aspect-ratio:1;background:#070912;display:flex;align-items:center;justify-content:center;">
-      <span style="font-size:8px;letter-spacing:0.14em;color:rgba(245,245,245,0.4);">AUDIO</span>
+      <span style="font-size:12px;letter-spacing:0.14em;color:rgba(245,245,245,0.4);">AUDIO</span>
     </div>`
   }
   return `<img src="${asset.url}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#070912;" />`
@@ -283,7 +283,7 @@ function buildSignalHtml(signal: SignalTaskItem | null): string {
   const referenceRow = signal.main
     ? `<table cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
         <tr>
-          <td style="font-size:9px;color:rgba(245,245,245,0.35);letter-spacing:0.15em;padding-right:10px;vertical-align:middle;font-family:${MONO};">REFERENCE</td>
+          <td style="font-size:13px;color:rgba(245,245,245,0.35);letter-spacing:0.15em;padding-right:10px;vertical-align:middle;font-family:${MONO};">REFERENCE</td>
           <td style="width:54px;"><div style="width:54px;border:1px solid rgba(255,107,53,0.25);">${renderSignalThumb(signal.main)}</div></td>
         </tr>
       </table>`
@@ -295,7 +295,7 @@ function buildSignalHtml(signal: SignalTaskItem | null): string {
     .map(
       (a, i) => `
       <td width="${colWidth}" style="width:${colWidth};padding:0 3px;vertical-align:top;">
-        <div style="font-size:9px;color:rgba(245,245,245,0.5);margin-bottom:3px;font-family:${MONO};">${String.fromCharCode(65 + i)}</div>
+        <div style="font-size:13px;color:rgba(245,245,245,0.5);margin-bottom:3px;font-family:${MONO};">${String.fromCharCode(65 + i)}</div>
         <div style="border:1px solid rgba(255,107,53,0.16);background:#070912;">${renderSignalThumb(a)}</div>
       </td>`
     )
@@ -305,16 +305,16 @@ function buildSignalHtml(signal: SignalTaskItem | null): string {
   <tr><td style="height:20px;"></td></tr>
   <tr><td>
     <a href="${href}" style="display:block;text-decoration:none;background:#0F1430;border:1px solid rgba(255,107,53,0.16);padding:16px;">
-      <div style="font-size:10px;letter-spacing:0.28em;color:#E85D04;margin-bottom:12px;font-family:${MONO};">// SIGNAL DISPATCH</div>
+      <div style="font-size:13px;letter-spacing:0.28em;color:#E85D04;margin-bottom:12px;font-family:${MONO};">// SIGNAL DISPATCH</div>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
         <tr>
-          <td style="font-size:11px;color:rgba(245,245,245,0.85);line-height:1.55;font-family:${MONO};">${prompt}</td>
-          <td style="text-align:right;vertical-align:top;font-size:10px;color:rgba(245,245,245,0.35);white-space:nowrap;padding-left:10px;font-family:${MONO};">${signal.participantCount} response${signal.participantCount !== 1 ? 's' : ''}</td>
+          <td style="font-size:14px;color:rgba(245,245,245,0.85);line-height:1.55;font-family:${MONO};">${prompt}</td>
+          <td style="text-align:right;vertical-align:top;font-size:13px;color:rgba(245,245,245,0.35);white-space:nowrap;padding-left:10px;font-family:${MONO};">${signal.participantCount} response${signal.participantCount !== 1 ? 's' : ''}</td>
         </tr>
       </table>
       ${referenceRow}
       <table width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;"><tr>${optionCells}</tr></table>
-      <div style="margin-top:13px;font-size:9px;letter-spacing:0.14em;color:rgba(255,107,53,0.55);font-family:${MONO};">FILE YOUR READ — SEE HOW OTHERS RESPONDED →</div>
+      <div style="margin-top:13px;font-size:13px;letter-spacing:0.14em;color:rgba(255,107,53,0.55);font-family:${MONO};">FILE YOUR READ — SEE HOW OTHERS RESPONDED →</div>
     </a>
   </td></tr>`
 }
@@ -330,20 +330,25 @@ function buildIntroHtml(): string {
 
 // ── Cached content orchestrator ───────────────────────────────────────────────
 
-export const getWeeklyNewsletterContent = unstable_cache(
-  async (): Promise<NewsletterContent> => {
-    const { news, signal, stripDevices, activeUsers } = await gatherWeeklyData()
-    return {
-      newsCardsHtml: buildNewsCardsHtml(news),
-      signalHtml: buildSignalHtml(signal),
-      weekLabel: new Date().toISOString().slice(0, 10),
-      activeUsers,
-      devices: stripDevices,
-    }
-  },
-  ['weekly-newsletter'],
+// Cache only the raw DB data (cheap, serializable). HTML is rebuilt fresh on
+// every call below, so template/style edits take effect immediately instead of
+// being frozen inside a 6-hour cache entry.
+const getWeeklyData = unstable_cache(
+  async () => gatherWeeklyData(),
+  ['weekly-newsletter-data'],
   { revalidate: 6 * 60 * 60 }
 )
+
+export async function getWeeklyNewsletterContent(): Promise<NewsletterContent> {
+  const { news, signal, stripDevices, activeUsers } = await getWeeklyData()
+  return {
+    newsCardsHtml: buildNewsCardsHtml(news),
+    signalHtml: buildSignalHtml(signal),
+    weekLabel: new Date().toISOString().slice(0, 10),
+    activeUsers,
+    devices: stripDevices,
+  }
+}
 
 // ── Shared template scaffolding ───────────────────────────────────────────────
 
@@ -386,12 +391,12 @@ export const EMAIL_HEADER_REGISTERED = `
               </td>
             </tr>
           </table>
-          <div style="font-size:8px;letter-spacing:0.32em;color:rgba(245,245,245,0.28);margin-top:9px;font-family:'Space Mono',monospace;">WEEKLY NEWSLETTER</div>
+          <div style="font-size:12px;letter-spacing:0.32em;color:rgba(245,245,245,0.28);margin-top:9px;font-family:'Space Mono',monospace;">WEEKLY NEWSLETTER</div>
         </td>
         <td style="text-align:right;vertical-align:middle;">
           <div style="display:inline-block;border:1px solid rgba(232,160,32,0.45);padding:5px 12px;background:rgba(232,160,32,0.06);">
-            <div style="font-size:7px;letter-spacing:0.2em;color:rgba(232,160,32,0.55);font-family:'Space Mono',monospace;">STATUS</div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:0.18em;color:#E8A020;font-family:'Space Mono',monospace;">APPLICANT</div>
+            <div style="font-size:12px;letter-spacing:0.2em;color:rgba(232,160,32,0.55);font-family:'Space Mono',monospace;">STATUS</div>
+            <div style="font-size:14px;font-weight:700;letter-spacing:0.18em;color:#E8A020;font-family:'Space Mono',monospace;">APPLICANT</div>
           </div>
         </td>
       </tr>
@@ -412,11 +417,11 @@ export const EMAIL_FOOTER = `
   <tr><td style="border-top:1px solid rgba(255,107,53,0.1);padding-top:20px;">
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="font-size:8px;letter-spacing:0.18em;color:rgba(255,107,53,0.4);font-family:'Space Mono',monospace;">MULTIVERSE.COLLECTIVE</td>
-        <td style="text-align:right;font-size:8px;letter-spacing:0.12em;color:rgba(245,245,245,0.18);font-family:'Space Mono',monospace;">BUILDING BETTER WORLDS, TOGETHER.</td>
+        <td style="font-size:12px;letter-spacing:0.18em;color:rgba(255,107,53,0.4);font-family:'Space Mono',monospace;">MULTIVERSE.COLLECTIVE</td>
+        <td style="text-align:right;font-size:12px;letter-spacing:0.12em;color:rgba(245,245,245,0.18);font-family:'Space Mono',monospace;">BUILDING BETTER WORLDS, TOGETHER.</td>
       </tr>
     </table>
-    <div style="margin-top:10px;font-size:8px;color:rgba(245,245,245,0.15);letter-spacing:0.06em;line-height:1.8;font-family:'Space Mono',monospace;">
+    <div style="margin-top:10px;font-size:12px;color:rgba(245,245,245,0.15);letter-spacing:0.06em;line-height:1.8;font-family:'Space Mono',monospace;">
       You are receiving this because you are registered in the Multiverse Collective network.<br/>
       <a href="https://putopia.vercel.app/console" style="color:rgba(255,107,53,0.35);text-decoration:none;">Manage preferences</a>
       &nbsp;·&nbsp;
@@ -437,15 +442,15 @@ export const CTA_DIRECT = `
                style="width:200px;display:block;" />
         </td>
         <td style="vertical-align:middle;padding:22px 22px 22px 20px;">
-          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(255,107,53,0.6);margin-bottom:11px;font-family:'Space Mono',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
-          <div style="font-size:15px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:14px;line-height:1.3;font-family:'Space Mono',monospace;">
+          <div style="font-size:12px;letter-spacing:0.28em;color:rgba(255,107,53,0.6);margin-bottom:11px;font-family:'Space Mono',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
+          <div style="font-size:16px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:14px;line-height:1.3;font-family:'Space Mono',monospace;">
             YOUR VOYAGER<br/>STATUS IS READY.
           </div>
-          <div style="margin-bottom:5px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Physical Badge</div>
-          <div style="margin-bottom:5px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Access Card</div>
-          <div style="margin-bottom:18px;font-size:10px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Full Network Access</div>
+          <div style="margin-bottom:5px;font-size:13px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Physical Badge</div>
+          <div style="margin-bottom:5px;font-size:13px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Access Card</div>
+          <div style="margin-bottom:18px;font-size:13px;color:rgba(245,245,245,0.55);letter-spacing:0.06em;font-family:'Space Mono',monospace;">Full Network Access</div>
           <a href="https://putopia.vercel.app/voyager-pack"
-             style="display:block;text-align:center;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.18em;text-decoration:none;padding:12px 14px;">
+             style="display:block;text-align:center;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.18em;text-decoration:none;padding:12px 14px;">
             [ ACTIVATE NOW → ]
           </a>
         </td>
@@ -465,18 +470,18 @@ export const CTA_TASK_GATED = `
                style="width:200px;display:block;filter:grayscale(55%);opacity:0.55;" />
         </td>
         <td style="vertical-align:middle;padding:22px 22px 22px 20px;">
-          <div style="font-size:7px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:11px;font-family:'Space Mono',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
-          <div style="font-size:15px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:14px;line-height:1.3;font-family:'Space Mono',monospace;">
+          <div style="font-size:12px;letter-spacing:0.28em;color:rgba(232,160,32,0.6);margin-bottom:11px;font-family:'Space Mono',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
+          <div style="font-size:16px;font-weight:700;letter-spacing:0.07em;color:#F5F5F5;margin-bottom:14px;line-height:1.3;font-family:'Space Mono',monospace;">
             ACTIVATE YOUR<br/>VOYAGER STATUS.
           </div>
-          <div style="font-size:11px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:18px;font-family:'Space Mono',monospace;">
+          <div style="font-size:14px;color:rgba(245,245,245,0.5);line-height:1.75;margin-bottom:18px;font-family:'Space Mono',monospace;">
             Complete the Collective&#39;s field assessment tasks to unlock the Initial Voyager Pack.
           </div>
           <a href="https://putopia.vercel.app/voyager-pack"
-             style="display:block;text-align:center;background:rgba(232,160,32,0.1);color:#E8A020;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:12px 14px;border:1px solid rgba(232,160,32,0.5);margin-bottom:12px;">
+             style="display:block;text-align:center;background:rgba(232,160,32,0.1);color:#E8A020;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:12px 14px;border:1px solid rgba(232,160,32,0.5);margin-bottom:12px;">
             [ VIEW VOYAGER PATH → ]
           </a>
-          <div style="text-align:center;font-size:9px;letter-spacing:0.06em;color:rgba(245,245,245,0.2);font-family:'Space Mono',monospace;">
+          <div style="text-align:center;font-size:13px;letter-spacing:0.06em;color:rgba(245,245,245,0.2);font-family:'Space Mono',monospace;">
             Pack unlocks upon completing your field assessment.
           </div>
         </td>
@@ -546,7 +551,7 @@ export function buildUnregisteredHtml(
               <img src="${d.imagePath}" width="180" alt="${d.name}"
                    style="width:100%;height:90px;object-fit:cover;display:block;filter:brightness(0.6) saturate(0.7);" />
             </div>
-            <div style="font-size:8px;letter-spacing:0.12em;color:rgba(245,245,245,0.3);margin-top:5px;
+            <div style="font-size:12px;letter-spacing:0.12em;color:rgba(245,245,245,0.3);margin-top:5px;
                         font-family:'Space Mono',monospace;text-align:center;">${d.id}</div>
           </a>
         </td>`
@@ -569,7 +574,7 @@ export function buildUnregisteredHtml(
   <tr><td style="height:18px;"></td></tr>
   <tr><td>
     <div style="display:inline-block;padding-right:${usersWithPhoto.length * 6 + 4}px;">${avatarCluster}</div>
-    <span style="font-size:10px;color:rgba(245,245,245,0.38);vertical-align:middle;margin-left:14px;font-family:'Space Mono',monospace;">
+    <span style="font-size:13px;color:rgba(245,245,245,0.38);vertical-align:middle;margin-left:14px;font-family:'Space Mono',monospace;">
       ${memberCount} member${memberCount !== 1 ? 's' : ''} active this week
     </span>
   </td></tr>`
@@ -593,7 +598,7 @@ export function buildUnregisteredHtml(
               </td>
             </tr>
           </table>
-          <div style="font-size:8px;letter-spacing:0.32em;color:rgba(245,245,245,0.28);margin-top:9px;font-family:'Space Mono',monospace;">TRANSMISSION</div>
+          <div style="font-size:12px;letter-spacing:0.32em;color:rgba(245,245,245,0.28);margin-top:9px;font-family:'Space Mono',monospace;">TRANSMISSION</div>
         </td>
       </tr>
     </table>
@@ -611,10 +616,10 @@ export function buildUnregisteredHtml(
 
   <tr><td style="height:20px;"></td></tr>
   <tr><td style="background:#0A0E27;border:1px solid rgba(255,107,53,0.25);text-align:center;padding:32px 28px 28px;">
-    <div style="font-size:8px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);margin-bottom:14px;font-family:'Space Mono',monospace;">◈ OPEN TO NEW MEMBERS ◈</div>
+    <div style="font-size:12px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);margin-bottom:14px;font-family:'Space Mono',monospace;">◈ OPEN TO NEW MEMBERS ◈</div>
     <a href="https://putopia.vercel.app"
        style="display:inline-block;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;
-              font-family:'Space Mono',monospace;font-size:12px;font-weight:700;
+              font-family:'Space Mono',monospace;font-size:15px;font-weight:700;
               letter-spacing:0.18em;text-decoration:none;padding:14px 36px;">
       APPLY FOR ACCESS →
     </a>
@@ -622,7 +627,7 @@ export function buildUnregisteredHtml(
 
   <tr><td style="height:24px;"></td></tr>
   <tr><td style="border-top:1px solid rgba(255,107,53,0.08);padding-top:18px;text-align:center;">
-    <div style="font-size:8px;color:rgba(245,245,245,0.15);letter-spacing:0.06em;font-family:'Space Mono',monospace;">
+    <div style="font-size:12px;color:rgba(245,245,245,0.15);letter-spacing:0.06em;font-family:'Space Mono',monospace;">
       MULTIVERSE.COLLECTIVE · BUILDING BETTER WORLDS, TOGETHER.
     </div>
   </td></tr>`
