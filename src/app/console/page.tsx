@@ -13,6 +13,8 @@ import { getCommentCountsBulk } from '@/lib/actions/comments'
 import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actions/votes'
 import { getAllWorlds } from '@/lib/actions/worlds'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
+import { getGuestHeroStats } from '@/lib/actions/hero-stats'
+import type { GuestHeroStats } from '@/lib/actions/hero-stats'
 import { getActivityFeed } from '@/lib/actions/activity-events'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import type { ExperimentGroup } from '@/lib/actions/experiment'
@@ -482,7 +484,80 @@ const HERO_LINES = [
   { delay: 2200 }, // italic sign-off
 ]
 
-function GuestHero({ newHref, mcFunctions }: { newHref: string; mcFunctions: McFunction[] }) {
+/* ─── Three headline numbers (guest hero) — tap a number to reveal copy ── */
+type HeroStatKey = 'worlds' | 'devices' | 'voyagers'
+
+const HERO_STAT_INFO: Record<HeroStatKey, string> = {
+  worlds:
+    'The parallel worlds recorded by the Collective, including those imagined by its members, as well as those now being stably observed via the Multiverse Console.',
+  devices:
+    'The number of Multiverse Consoles currently collected, deployed, or undergoing repairs by the Collective. It is expected to continue growing steadily.',
+  voyagers:
+    'Official voyagers and architects of the Collective, plus the applicants currently in line for a Multiverse Console.',
+}
+
+function HeroStats({ worlds, voyagers }: { worlds: number | null; voyagers: number | null }) {
+  const [active, setActive] = useState<HeroStatKey | null>(null)
+
+  const items: { key: HeroStatKey; value: string; label: string }[] = [
+    { key: 'worlds',   value: worlds == null ? '—' : String(worlds), label: 'PARALLEL WORLDS' },
+    { key: 'devices',  value: '?',                                    label: 'DEVICES' },
+    { key: 'voyagers', value: voyagers == null ? '—' : String(voyagers), label: 'VOYAGERS' },
+  ]
+
+  return (
+    <div style={{ width: '100%', maxWidth: '540px', margin: '1.75rem auto 0' }}>
+      <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}>
+        {items.map(({ key, value, label }, i) => (
+          <div key={key} style={{ display: 'contents' }}>
+            {i > 0 && <div style={{ width: 1, background: 'rgba(255,107,53,0.16)', margin: '6px 0' }} />}
+            <button
+              type="button"
+              onClick={() => setActive((prev) => (prev === key ? null : key))}
+              aria-expanded={active === key}
+              style={{
+                flex: 1, padding: '8px 10px', background: active === key ? 'rgba(232,93,4,0.08)' : 'none',
+                border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'center', font: 'inherit',
+                transition: 'background 0.2s ease',
+              }}
+            >
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontWeight: 500,
+                fontSize: 'clamp(2rem, 9vw, 3.25rem)', height: 'clamp(2rem, 9vw, 3.25rem)', lineHeight: 1,
+                display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+                color: 'var(--color-nucleus)',
+              }}>
+                {value}
+              </div>
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
+                color: 'var(--color-star-dim)', marginTop: 9,
+                minHeight: '2.6em', display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+              }}>
+                {label}
+              </div>
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {active && (
+        <div style={{
+          maxWidth: '470px', margin: '1rem auto 0',
+          border: '1px solid rgba(255,107,53,0.22)', borderRadius: 8,
+          background: 'rgba(232,93,4,0.05)', padding: '12px 16px',
+          animation: 'fadeInUp 0.3s ease-out',
+        }}>
+          <p style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', lineHeight: 1.75, color: 'var(--color-star-dim)' }}>
+            {HERO_STAT_INFO[active]}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function GuestHero({ newHref, mcFunctions, stats }: { newHref: string; mcFunctions: McFunction[]; stats: GuestHeroStats | null }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
 
   useEffect(() => {
@@ -513,45 +588,31 @@ function GuestHero({ newHref, mcFunctions }: { newHref: string; mcFunctions: McF
         <FlipWordmark maxWidth={616} fill={0.858} />
       </div>
 
-      {/* Emblem + tagline */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', marginBottom: '2rem', ...line(0) }}>
+      {/* Emblem */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.75rem', ...line(0) }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/assets/vi-icon.png"
           alt="Multiverse Collective"
           style={{
-            width: '165px', height: 'auto', display: 'block',
+            width: '140px', height: 'auto', display: 'block',
             filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',
           }}
         />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', letterSpacing: '0.34em', color: 'var(--color-star-dim)' }}>
-          EXPLORE PARALLEL WORLDS
-        </span>
       </div>
 
-      {/* Greeting + narrative — each line reveals in sequence */}
-      <div style={{ maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '1.1rem', textAlign: 'center' }}>
-        <div style={{
-          fontFamily: 'var(--font-display)', fontWeight: 700,
-          fontSize: 'clamp(1.4rem, 6.5vw, 2rem)', letterSpacing: '0.12em', whiteSpace: 'nowrap',
-          color: 'var(--color-star)', ...line(1),
-        }}>
-          WELCOME, GUEST.
-        </div>
-        <p style={{
-          fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',
-          lineHeight: 1.85, color: 'var(--color-star-dim)', margin: 0, ...line(2),
-        }}>
-          Whether by accident or design — you&apos;ve found your way into the internal network of the Multiverse Collective.
-        </p>
-        <p style={{
-          fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body)',
-          lineHeight: 1.85, color: 'var(--color-star-dim)', margin: 0, ...line(3),
-        }}>
-          Here you will find our latest dispatches, and our most enigmatic instrument —{' '}
-          <span style={{ color: 'var(--color-nebula)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>Multiverse Console</span>
-          {' '}— a device built to reach into parallel worlds and observe what lies beyond.
-        </p>
+      {/* One-line hook */}
+      <p style={{
+        maxWidth: '460px', textAlign: 'center', margin: '0 0 0.5rem',
+        fontFamily: 'var(--font-body)', fontSize: 'clamp(1rem, 4.5vw, 1.25rem)',
+        lineHeight: 1.55, color: 'var(--color-star)', ...line(1),
+      }}>
+        We built hardware to look into worlds that aren&apos;t ours.
+      </p>
+
+      {/* Three headline numbers — tap to reveal an explanation */}
+      <div style={{ width: '100%', ...line(2) }}>
+        <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
       </div>
 
       {/* MC Unit panel — full width */}
@@ -846,6 +907,7 @@ function ConsoleInner() {
   const [myVoteResponses, setMyVoteResponses] = useState<{ vote_id: string; selected_options: string[] }[]>([])
   const [latestWorlds, setLatestWorlds] = useState<World[]>([])
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
+  const [heroStats, setHeroStats] = useState<GuestHeroStats | null>(null)
   const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
 
   useEffect(() => {
@@ -871,6 +933,7 @@ function ConsoleInner() {
     getActivityFeed(7).then(setActivityEvents).catch(onErr('getActivityFeed'))
     getAllWorlds().then((w) => setLatestWorlds([...w].reverse().slice(0, 4))).catch(onErr('getAllWorlds'))
     getMcFunctions().then((fns) => setMcFunctions(fns as McFunction[])).catch(onErr('getMcFunctions'))
+    getGuestHeroStats().then(setHeroStats).catch(onErr('getGuestHeroStats'))
     getAllVotes().then(async (votes) => {
       const active = votes.filter((v) => v.is_active).slice(0, 3)
       setLatestVotes(active)
@@ -913,7 +976,7 @@ function ConsoleInner() {
       {loading ? (
         <section className="hero" style={{ flex: 1 }} />
       ) : isGuest ? (
-        <GuestHero newHref={newHref} mcFunctions={mcFunctions} />
+        <GuestHero newHref={newHref} mcFunctions={mcFunctions} stats={heroStats} />
       ) : (
         <AuthHero user={user} activityEvents={activityEvents} />
       )}
