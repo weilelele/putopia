@@ -47,10 +47,11 @@ function recallEmailHtml(worldName: string, dayNum: number, url: string): string
  *  recalled, and remind prior participants who haven't responded to the new day.
  *  Keys off the reveal schedule, not raw publish time, so pre-published days only
  *  trigger a recall once they actually surface. */
-export async function runSignalRecall(): Promise<RecallResult> {
+export async function runSignalRecall(opts?: { skipUserIds?: Set<string> }): Promise<RecallResult> {
   const admin = createAdminClient() as DB
   const result: RecallResult = { tasksProcessed: 0, emailsSent: 0, errors: [] }
   const now = new Date()
+  const skip = opts?.skipUserIds ?? new Set<string>()
 
   const { data: tasks } = await admin
     .from('signal_tasks')
@@ -102,6 +103,9 @@ export async function runSignalRecall(): Promise<RecallResult> {
           .select('user_id')
           .eq('task_id', task.id)
         for (const r of (doneResp ?? []) as { user_id: string }[]) participants.delete(r.user_id)
+
+        // Don't double-email anyone who already got a re-engagement email this run.
+        for (const u of skip) participants.delete(u)
 
         recipientIds = [...participants]
       }
