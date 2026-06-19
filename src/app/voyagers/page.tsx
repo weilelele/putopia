@@ -305,7 +305,7 @@ export default function VoyagersPage() {
       {/* ── Edit Modal ── */}
       {editing && form && (
         <div
-          style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(5,8,18,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(10,14,39,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
           onClick={closeEdit}
         >
           <div

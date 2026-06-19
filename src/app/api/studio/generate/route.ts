@@ -188,9 +188,9 @@ PLATFORM RULES:
 
 IMAGE PROMPT RULES (for LovArt / Midjourney):
 • Be specific and directed — shot type, lighting setup, color palette, mood, texture.
-• Putopia aesthetic: void-dark backgrounds (#050810 deep space), retro-futuristic analog hardware, nebula cyan (#22D4E0) and nucleus orange (#FF5A1F) accent lighting, CRT displays with scan-line grain, cosmic scale, cinematic depth of field.
+• Putopia aesthetic: deep-space-blue backgrounds (#0A0E27), retro-futuristic analog hardware, retro-orange (#FF6B35) and burnt-orange (#E85D04) accent lighting, off-white (#F5F5F5) highlights, CRT displays with scan-line grain, cosmic scale, cinematic depth of field. The palette is strictly orange on deep-space blue with off-white — NO cyan, teal, or blue accent light.
 • Style references: Blade Runner 2049 color grading, retro NASA control room aesthetics, Lo-fi sci-fi hardware photography.
-• Avoid: generic "space background", white backgrounds, cartoonish, stock-photo feel.`
+• Avoid: generic "space background", white backgrounds, cartoonish, stock-photo feel, any cyan/teal/blue accent lighting.`
 
   /* ── User message (not cached — changes per request) ── */
   const requestedPlatforms = platforms.join(', ')
@@ -255,7 +255,7 @@ IMAGE PROMPT RULES (for LovArt / Midjourney):
 
   /* ── Build Pollinations URL for draft preview ── */
   const previewPrompt = encodeURIComponent(
-    `${parsed.image_prompt_short ?? 'retro futuristic parallel world device'}, dark void space background, nebula cyan and deep orange lighting, cinematic, photorealistic, no text, no logo`
+    `${parsed.image_prompt_short ?? 'retro futuristic parallel world device'}, deep space blue background #0A0E27, retro-orange and burnt-orange lighting, cinematic, photorealistic, no text, no logo`
   )
   const pollinationsUrl =
     `https://image.pollinations.ai/prompt/${previewPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${Date.now()}`

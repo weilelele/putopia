@@ -59,7 +59,7 @@ export interface NewsletterContent {
 
 // ── Style constants ───────────────────────────────────────────────────────────
 
-const MONO = "'Space Mono',ui-monospace,'Courier New',monospace"
+const MONO = "'Courier Prime','Courier New',ui-monospace,monospace"
 
 // UTM suffix for every email link, so newsletter-driven traffic/conversions are
 // attributable in PostHog and kept distinct from organic site entry.
@@ -377,8 +377,8 @@ export const EMAIL_HEAD = `<!DOCTYPE html>
   }
 </style>
 </head>
-<body style="margin:0;padding:0;background:#060A1A;font-family:'Space Mono',ui-monospace,'Courier New',monospace;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#060A1A;padding:32px 16px 64px;">
+<body style="margin:0;padding:0;background:#0A0E27;font-family:'Courier Prime','Courier New',ui-monospace,monospace;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0E27;padding:32px 16px 64px;">
 <tr><td>
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;">`
 
@@ -416,10 +416,10 @@ export function buildHeaderRegistered(weekLabel: string): string {
               </td>
             </tr>
           </table>
-          <div style="font-size:12px;letter-spacing:0.3em;color:#8A8FA8;margin-top:8px;font-family:'Space Mono',monospace;">WEEKLY NEWSLETTER &mdash; ${mastheadDate(weekLabel)}</div>
+          <div style="font-size:12px;letter-spacing:0.3em;color:rgba(245,245,245,0.45);margin-top:8px;font-family:'Courier Prime','Courier New',monospace;">WEEKLY NEWSLETTER &mdash; ${mastheadDate(weekLabel)}</div>
         </td>
         <td style="text-align:right;vertical-align:middle;white-space:nowrap;">
-          <span style="display:inline-block;border:1px solid #B98620;padding:5px 11px;background:#1C1708;font-size:12px;font-weight:700;letter-spacing:0.16em;color:#E8A020;font-family:'Space Mono',monospace;">APPLICANT</span>
+          <span style="display:inline-block;border:1px solid #B98620;padding:5px 11px;background:#1C1708;font-size:12px;font-weight:700;letter-spacing:0.16em;color:#E8A020;font-family:'Courier Prime','Courier New',monospace;">APPLICANT</span>
         </td>
       </tr>
     </table>
@@ -431,7 +431,7 @@ export function buildHeaderRegistered(weekLabel: string): string {
 export function buildGreetingHtml(codename: string): string {
   return `
   <tr><td style="padding:16px 4px 2px;">
-    <div style="font-size:20px;font-weight:700;color:#F5F5F5;letter-spacing:0.05em;font-family:'Space Mono',ui-monospace,monospace;">${codename},</div>
+    <div style="font-size:20px;font-weight:700;color:#F5F5F5;letter-spacing:0.05em;font-family:'Courier Prime','Courier New',ui-monospace,monospace;">${codename},</div>
   </td></tr>`
 }
 
@@ -440,11 +440,11 @@ export const EMAIL_FOOTER = `
   <tr><td style="border-top:1px solid rgba(255,107,53,0.1);padding-top:20px;">
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="font-size:12px;letter-spacing:0.18em;color:#B5603A;font-family:'Space Mono',monospace;">MULTIVERSE.COLLECTIVE</td>
-        <td style="text-align:right;font-size:12px;letter-spacing:0.12em;color:#888CA4;font-family:'Space Mono',monospace;">EXPLORE PARALLEL WORLDS</td>
+        <td style="font-size:12px;letter-spacing:0.18em;color:#B5603A;font-family:'Courier Prime','Courier New',monospace;">MULTIVERSE.COLLECTIVE</td>
+        <td style="text-align:right;font-size:12px;letter-spacing:0.12em;color:rgba(245,245,245,0.45);font-family:'Courier Prime','Courier New',monospace;">EXPLORE PARALLEL WORLDS</td>
       </tr>
     </table>
-    <div style="margin-top:10px;font-size:12px;color:#62677E;letter-spacing:0.06em;line-height:1.8;font-family:'Space Mono',monospace;">
+    <div style="margin-top:10px;font-size:12px;color:rgba(245,245,245,0.35);letter-spacing:0.06em;line-height:1.8;font-family:'Courier Prime','Courier New',monospace;">
       You are receiving this because you are registered in the Multiverse Collective network.<br/>
       <a href="https://www.multiverseco.org/console${UTM}" style="color:#C26A40;text-decoration:none;">Visit console</a>
       &nbsp;·&nbsp;
@@ -465,13 +465,13 @@ export const CTA_DIRECT = `
                style="width:220px;display:block;" />
         </td>
         <td class="stack pack-pad" style="vertical-align:middle;padding:24px 24px 24px 22px;">
-          <div style="font-size:12px;letter-spacing:0.24em;color:#FF8C5A;margin-bottom:13px;font-family:'Space Mono',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
-          <div style="font-size:17px;font-weight:700;letter-spacing:0.05em;color:#FFFFFF;margin-bottom:16px;line-height:1.32;font-family:'Space Mono',monospace;">YOUR VOYAGER STATUS IS READY.</div>
-          <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Physical Badge</div>
-          <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Access Card</div>
-          <div style="margin-bottom:20px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Full Network Access</div>
+          <div style="font-size:12px;letter-spacing:0.24em;color:#FF8C5A;margin-bottom:13px;font-family:'Courier Prime','Courier New',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
+          <div style="font-size:17px;font-weight:700;letter-spacing:0.05em;color:#FFFFFF;margin-bottom:16px;line-height:1.32;font-family:'Courier Prime','Courier New',monospace;">YOUR VOYAGER STATUS IS READY.</div>
+          <div style="margin-bottom:7px;font-size:13px;color:rgba(245,245,245,0.80);letter-spacing:0.03em;font-family:'Courier Prime','Courier New',monospace;">— Physical Badge</div>
+          <div style="margin-bottom:7px;font-size:13px;color:rgba(245,245,245,0.80);letter-spacing:0.03em;font-family:'Courier Prime','Courier New',monospace;">— Access Card</div>
+          <div style="margin-bottom:20px;font-size:13px;color:rgba(245,245,245,0.80);letter-spacing:0.03em;font-family:'Courier Prime','Courier New',monospace;">— Full Network Access</div>
           <a href="https://www.multiverseco.org/voyager-pack${UTM}&amp;utm_content=direct"
-             style="display:block;text-align:center;background:#FF6B35;color:#0A0E27;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;">
+             style="display:block;text-align:center;background:#FF6B35;color:#0A0E27;font-family:'Courier Prime','Courier New',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;">
             [ ACTIVATE NOW &rarr; ]
           </a>
         </td>
@@ -490,16 +490,16 @@ export const CTA_TASK_GATED = `
                style="width:220px;display:block;filter:grayscale(45%);" />
         </td>
         <td class="stack pack-pad" style="vertical-align:middle;padding:24px 24px 24px 22px;">
-          <div style="font-size:12px;letter-spacing:0.24em;color:#E8A020;margin-bottom:13px;font-family:'Space Mono',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
-          <div style="font-size:17px;font-weight:700;letter-spacing:0.05em;color:#FFFFFF;margin-bottom:16px;line-height:1.32;font-family:'Space Mono',monospace;">ACTIVATE YOUR VOYAGER STATUS.</div>
-          <div style="font-size:13px;color:#CBCEDF;line-height:1.75;margin-bottom:20px;font-family:'Space Mono',monospace;">
+          <div style="font-size:12px;letter-spacing:0.24em;color:#E8A020;margin-bottom:13px;font-family:'Courier Prime','Courier New',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
+          <div style="font-size:17px;font-weight:700;letter-spacing:0.05em;color:#FFFFFF;margin-bottom:16px;line-height:1.32;font-family:'Courier Prime','Courier New',monospace;">ACTIVATE YOUR VOYAGER STATUS.</div>
+          <div style="font-size:13px;color:rgba(245,245,245,0.80);line-height:1.75;margin-bottom:20px;font-family:'Courier Prime','Courier New',monospace;">
             Complete the Collective&#39;s field assessment tasks to unlock the Initial Voyager Pack.
           </div>
           <a href="https://www.multiverseco.org/voyager-pack${UTM}&amp;utm_content=task_gated"
-             style="display:block;text-align:center;background:#1C1708;color:#E8A020;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;border:1px solid #B98620;">
+             style="display:block;text-align:center;background:#1C1708;color:#E8A020;font-family:'Courier Prime','Courier New',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;border:1px solid #B98620;">
             [ VIEW VOYAGER PACK &rarr; ]
           </a>
-          <div style="text-align:center;font-size:13px;letter-spacing:0.04em;color:#9094AC;margin-top:13px;font-family:'Space Mono',monospace;">
+          <div style="text-align:center;font-size:13px;letter-spacing:0.04em;color:rgba(245,245,245,0.50);margin-top:13px;font-family:'Courier Prime','Courier New',monospace;">
             Pack unlocks upon completing your field assessment.
           </div>
         </td>
@@ -552,7 +552,7 @@ export function buildUnregisteredHtml(
       (u, i) =>
         `<img src="${u.avatarUrl}" width="28" height="28" ` +
         `style="width:28px;height:28px;border-radius:50%;display:inline;vertical-align:middle;` +
-        `border:2px solid #060A1A;margin-right:-8px;object-fit:cover;` +
+        `border:2px solid #0A0E27;margin-right:-8px;object-fit:cover;` +
         `position:relative;z-index:${usersWithPhoto.length - i};" />`
     )
     .join('')
@@ -569,7 +569,7 @@ export function buildUnregisteredHtml(
                    style="width:100%;height:90px;object-fit:cover;display:block;filter:brightness(0.6) saturate(0.7);" />
             </div>
             <div style="font-size:12px;letter-spacing:0.12em;color:rgba(245,245,245,0.3);margin-top:5px;
-                        font-family:'Space Mono',monospace;text-align:center;">${d.id}</div>
+                        font-family:'Courier Prime','Courier New',monospace;text-align:center;">${d.id}</div>
           </a>
         </td>`
     )
@@ -591,7 +591,7 @@ export function buildUnregisteredHtml(
   <tr><td style="height:18px;"></td></tr>
   <tr><td>
     <div style="display:inline-block;padding-right:${usersWithPhoto.length * 6 + 4}px;">${avatarCluster}</div>
-    <span style="font-size:13px;color:rgba(245,245,245,0.38);vertical-align:middle;margin-left:14px;font-family:'Space Mono',monospace;">
+    <span style="font-size:13px;color:rgba(245,245,245,0.38);vertical-align:middle;margin-left:14px;font-family:'Courier Prime','Courier New',monospace;">
       ${memberCount} member${memberCount !== 1 ? 's' : ''} active this week
     </span>
   </td></tr>`
@@ -615,7 +615,7 @@ export function buildUnregisteredHtml(
               </td>
             </tr>
           </table>
-          <div style="font-size:12px;letter-spacing:0.32em;color:rgba(245,245,245,0.28);margin-top:9px;font-family:'Space Mono',monospace;">TRANSMISSION</div>
+          <div style="font-size:12px;letter-spacing:0.32em;color:rgba(245,245,245,0.28);margin-top:9px;font-family:'Courier Prime','Courier New',monospace;">TRANSMISSION</div>
         </td>
       </tr>
     </table>
@@ -633,10 +633,10 @@ export function buildUnregisteredHtml(
 
   <tr><td style="height:20px;"></td></tr>
   <tr><td style="background:#0A0E27;border:1px solid rgba(255,107,53,0.25);text-align:center;padding:32px 28px 28px;">
-    <div style="font-size:12px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);margin-bottom:14px;font-family:'Space Mono',monospace;">◈ OPEN TO NEW MEMBERS ◈</div>
+    <div style="font-size:12px;letter-spacing:0.28em;color:rgba(255,107,53,0.42);margin-bottom:14px;font-family:'Courier Prime','Courier New',monospace;">◈ OPEN TO NEW MEMBERS ◈</div>
     <a href="https://www.multiverseco.org"
-       style="display:inline-block;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#060A1A;
-              font-family:'Space Mono',monospace;font-size:15px;font-weight:700;
+       style="display:inline-block;background:linear-gradient(135deg,#E85D04,#FF6B35);color:#0A0E27;
+              font-family:'Courier Prime','Courier New',monospace;font-size:15px;font-weight:700;
               letter-spacing:0.18em;text-decoration:none;padding:14px 36px;">
       APPLY FOR ACCESS →
     </a>
@@ -644,7 +644,7 @@ export function buildUnregisteredHtml(
 
   <tr><td style="height:24px;"></td></tr>
   <tr><td style="border-top:1px solid rgba(255,107,53,0.08);padding-top:18px;text-align:center;">
-    <div style="font-size:12px;color:rgba(245,245,245,0.15);letter-spacing:0.06em;font-family:'Space Mono',monospace;">
+    <div style="font-size:12px;color:rgba(245,245,245,0.15);letter-spacing:0.06em;font-family:'Courier Prime','Courier New',monospace;">
       MULTIVERSE.COLLECTIVE · EXPLORE PARALLEL WORLDS
     </div>
   </td></tr>`
