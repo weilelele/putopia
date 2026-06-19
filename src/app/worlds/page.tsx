@@ -147,15 +147,15 @@ export default async function WorldsPage({
             href="/signal"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.625rem 1.25rem', textDecoration: 'none',
+              padding: '0.5rem 0.75rem', textDecoration: 'none',
               background: 'transparent',
-              border: '1px solid rgba(232,93,4,0.45)',
-              color: 'var(--color-nebula)',
+              border: '1px solid rgba(255,107,53,0.4)',
+              color: 'rgba(255,107,53,0.85)',
               fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-              fontWeight: 700, letterSpacing: '0.15em',
+              letterSpacing: '0.1em', borderRadius: 8, whiteSpace: 'nowrap',
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+            <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
               <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.2" />
               <circle cx="9" cy="9" r="3.5" stroke="currentColor" strokeWidth="1.2" />
               <circle cx="9" cy="9" r="1" fill="currentColor" />
@@ -166,12 +166,12 @@ export default async function WorldsPage({
             href="/worlds/submit"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.625rem 1.25rem', textDecoration: 'none',
-              background: 'linear-gradient(135deg, var(--color-burnt), var(--color-nucleus-3))',
-              border: '1px solid rgba(232,93,4,0.45)',
-              color: 'var(--color-star)',
+              padding: '0.5rem 0.75rem', textDecoration: 'none',
+              background: 'rgba(232,93,4,0.08)',
+              border: '1px solid var(--color-nucleus)',
+              color: 'var(--color-nucleus)',
               fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-              fontWeight: 700, letterSpacing: '0.15em',
+              letterSpacing: '0.1em', borderRadius: 8, whiteSpace: 'nowrap',
             }}
           >
             <UploadIcon />

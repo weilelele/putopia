@@ -30,20 +30,6 @@ const ArchiveIcon = () => (
   </svg>
 )
 
-const VoyagersIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-    <circle cx="9" cy="7" r="3.5" stroke="currentColor" strokeWidth="1"/>
-    <path d="M2 16c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
-  </svg>
-)
-
-const VoteIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 18 18" fill="none">
-    <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1"/>
-    <polyline points="5,9 8,12 13,6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-)
-
 const WorldsIcon = () => (
   <svg width="22" height="22" viewBox="0 0 18 18" fill="none">
     <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1"/>
@@ -54,36 +40,26 @@ const WorldsIcon = () => (
   </svg>
 )
 
-const DotsIcon = () => (
+const VoyagersIcon = () => (
   <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-    <circle cx="9" cy="4" r="1.5" fill="currentColor"/>
-    <circle cx="9" cy="9" r="1.5" fill="currentColor"/>
-    <circle cx="9" cy="14" r="1.5" fill="currentColor"/>
-  </svg>
-)
-
-const ProfileIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-    <circle cx="9" cy="6" r="3.5" stroke="currentColor" strokeWidth="1"/>
+    <circle cx="9" cy="7" r="3.5" stroke="currentColor" strokeWidth="1"/>
     <path d="M2 16c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
   </svg>
 )
 
+// Order: Voyagers and Worlds are swapped vs. the old layout — Worlds sits before
+// Voyagers. The old "More" drawer is gone: Voting Hub now lives on the Intel page,
+// World Records is a direct tab, and My Profile moved to the Voyagers page header.
 const PRIMARY_NAV = [
-  { href: '/console', label: 'HOME',     icon: <HomeIcon /> },
-  { href: '/intel',   label: 'INTEL',    icon: <RadarIcon /> },
-  { href: '/devices', label: 'DEVICES',  icon: <ArchiveIcon /> },
-  { href: '/voyagers',label: 'VOYAGERS', icon: <VoyagersIcon /> },
-]
-
-const MORE_NAV = [
-  { href: '/vote',   label: 'VOTING HUB',     icon: <VoteIcon /> },
-  { href: '/worlds', label: 'WORLD RECORDS',  icon: <WorldsIcon /> },
+  { href: '/console',  label: 'DASHBOARD', icon: <HomeIcon /> },
+  { href: '/intel',    label: 'INTEL',     icon: <RadarIcon /> },
+  { href: '/devices',  label: 'DEVICES',   icon: <ArchiveIcon /> },
+  { href: '/worlds',   label: 'WORLDS',    icon: <WorldsIcon /> },
+  { href: '/voyagers', label: 'VOYAGERS',  icon: <VoyagersIcon /> },
 ]
 
 export function BottomNav() {
   const pathname = usePathname()
-  const [moreOpen, setMoreOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const { user } = useAuth()
 
@@ -103,150 +79,57 @@ export function BottomNav() {
 
   if (isVoyagerPack) return null
 
-  const isMoreActive = MORE_NAV.some(
-    (item) => pathname === item.href || pathname.startsWith(item.href + '/')
-  )
-
   return (
-    <>
-      {/* More drawer — slides up from bottom; hidden when iframe sheet is open */}
-      {moreOpen && !sheetOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 md:hidden"
-            onClick={() => setMoreOpen(false)}
-          />
-          <div
-            className="fixed left-3 right-3 z-50 md:hidden border overflow-hidden"
-            style={{
-              bottom: 'calc(82px + env(safe-area-inset-bottom))',
-              background: 'rgba(15,20,48,0.92)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              borderColor: 'rgba(255,107,53,0.16)',
-              borderRadius: '16px',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
-            }}
-          >
-            {MORE_NAV.map(({ href, label, icon }) => {
-              const isActive = pathname === href || pathname.startsWith(href + '/')
-              if (isGuest) {
-                return (
-                  <Link
-                    key={href}
-                    href={`/login?redirect=${href}`}
-                    onClick={() => setMoreOpen(false)}
-                    className="flex items-center gap-4 px-6 py-4"
-                    style={{ color: 'rgba(245,245,245,0.2)', borderBottom: '1px solid rgba(255,107,53,0.16)', textDecoration: 'none' }}
-                  >
-                    {icon}
-                    <span className="font-mono text-xs tracking-widest">{label}</span>
-                  </Link>
-                )
-              }
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setMoreOpen(false)}
-                  className="flex items-center gap-4 px-6 py-4 transition-all"
-                  style={{
-                    color: isActive ? '#E85D04' : 'rgba(245,245,245,0.35)',
-                    background: isActive ? 'rgba(232,93,4,0.06)' : 'transparent',
-                    borderBottom: '1px solid rgba(255,107,53,0.16)',
-                  }}
-                >
-                  {icon}
-                  <span className="font-mono text-xs tracking-widest">{label}</span>
-                </Link>
-              )
-            })}
+    /* Primary nav bar — hidden when an iframe sheet is open (via postMessage) */
+    <nav
+      className="flex md:hidden fixed left-3 right-3 z-50"
+      style={{
+        display: sheetOpen ? 'none' : undefined,
+        bottom: 'calc(14px + env(safe-area-inset-bottom))',
+        background: 'rgba(15,20,48,0.82)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,107,53,0.16)',
+        borderRadius: '18px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.45), 0 0 16px rgba(232,93,4,0.10)',
+        padding: '6px',
+      }}
+    >
+      {PRIMARY_NAV.map(({ href, label, icon }) => {
+        const isHome = href === '/console'
+        const isActive = isHome ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
+        const locked = isGuest && !isHome
 
-            {/* My Profile — logged-in users only */}
-            {!isGuest && (
-              <Link
-                href="/profile"
-                onClick={() => setMoreOpen(false)}
-                className="flex items-center gap-4 px-6 py-4 transition-all"
-                style={{
-                  color: pathname === '/profile' ? '#E85D04' : 'rgba(245,245,245,0.55)',
-                  background: pathname === '/profile' ? 'rgba(232,93,4,0.06)' : 'transparent',
-                  borderTop: '1px solid rgba(255,107,53,0.25)',
-                }}
-              >
-                <ProfileIcon />
-                <span className="font-mono text-xs tracking-widest">MY PROFILE</span>
-              </Link>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Primary nav bar — hidden when an iframe sheet is open (via postMessage) */}
-      <nav
-        className="flex md:hidden fixed left-3 right-3 z-50"
-        style={{
-          display: sheetOpen ? 'none' : undefined,
-          bottom: 'calc(14px + env(safe-area-inset-bottom))',
-          background: 'rgba(15,20,48,0.82)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255,107,53,0.16)',
-          borderRadius: '18px',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.45), 0 0 16px rgba(232,93,4,0.10)',
-          padding: '6px',
-        }}
-      >
-        {PRIMARY_NAV.map(({ href, label, icon }) => {
-          const isHome = href === '/console'
-          const isActive = isHome ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
-          const locked = isGuest && !isHome
-
-          if (locked) {
-            return (
-              <Link
-                key={href}
-                href={`/login?redirect=${href}`}
-                className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
-                style={{ color: 'rgba(245,245,245,0.18)', borderRadius: '12px', textDecoration: 'none' }}
-              >
-                {icon}
-                <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
-              </Link>
-            )
-          }
-
+        if (locked) {
           return (
             <Link
               key={href}
-              href={href}
+              href={`/login?redirect=${href}`}
               className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
-              style={{
-                color: isActive ? '#E85D04' : 'rgba(245,245,245,0.35)',
-                background: isActive ? 'rgba(232,93,4,0.14)' : 'transparent',
-                borderRadius: '12px',
-              }}
+              style={{ color: 'rgba(245,245,245,0.18)', borderRadius: '12px', textDecoration: 'none' }}
             >
               {icon}
               <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
             </Link>
           )
-        })}
+        }
 
-        {/* More button */}
-        <button
-          onClick={() => setMoreOpen(!moreOpen)}
-          className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
-          style={{
-            color: isMoreActive || moreOpen ? '#E85D04' : 'rgba(245,245,245,0.35)',
-            background: isMoreActive || moreOpen ? 'rgba(232,93,4,0.14)' : 'transparent',
-            borderRadius: '12px',
-          }}
-        >
-          <DotsIcon />
-          <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>MORE</span>
-        </button>
-      </nav>
-    </>
+        return (
+          <Link
+            key={href}
+            href={href}
+            className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
+            style={{
+              color: isActive ? '#E85D04' : 'rgba(245,245,245,0.35)',
+              background: isActive ? 'rgba(232,93,4,0.14)' : 'transparent',
+              borderRadius: '12px',
+            }}
+          >
+            {icon}
+            <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
+          </Link>
+        )
+      })}
+    </nav>
   )
 }
