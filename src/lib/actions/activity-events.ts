@@ -59,8 +59,9 @@ export async function logActivity(event: ActivityEventInsert): Promise<void> {
 
 // Per-type feed windows (hours). High-frequency / low-signal event types get a
 // short TTL so they auto-expire and don't crowd the feed. Tunable independently.
-const VOTE_WINDOW_HOURS  = 12   // vote_cast (only used when SHOW_VOTE_EVENTS)
-const WORLD_WINDOW_HOURS = 12   // world_added ("world log") — separate knob, same as votes by default
+const VOTE_WINDOW_HOURS    = 12   // vote_cast (only used when SHOW_VOTE_EVENTS)
+const WORLD_WINDOW_HOURS   = 12   // world_added ("world log") — separate knob, same as votes by default
+const VOYAGER_WINDOW_HOURS = 24   // voyager_activated ("Become a Voyager") — expires after a day
 
 // TEMP: all vote events (vote_opened + vote_cast) are currently pulled from the
 // feed. Flip to `true` to restore them (re-enables the vote_cast queue and stops
@@ -87,16 +88,19 @@ export async function getActivityFeed(days = 7): Promise<ActivityEvent[]> {
 
 async function _getActivityFeed(days = 7): Promise<ActivityEvent[]> {
   const admin = createAdminClient()
-  const since7d    = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
-  const sinceWorld = new Date(Date.now() - WORLD_WINDOW_HOURS * 60 * 60 * 1000).toISOString()
+  const since7d      = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+  const sinceWorld   = new Date(Date.now() - WORLD_WINDOW_HOURS * 60 * 60 * 1000).toISOString()
+  const sinceVoyager = new Date(Date.now() - VOYAGER_WINDOW_HOURS * 60 * 60 * 1000).toISOString()
 
   // Queue 1 — long-lived events: everything except the per-type queues (vote_cast,
-  // world_added); also excludes vote_opened while votes are hidden. (7 days, 20 items)
+  // world_added, voyager_activated); also excludes vote_opened while votes are
+  // hidden. (7 days, 20 items)
   let q1 = admin.from('activity_events')
     .select('*')
     .eq('is_visible', true)
     .neq('event_type', 'vote_cast')
     .neq('event_type', 'world_added')
+    .neq('event_type', 'voyager_activated')
   if (!SHOW_VOTE_EVENTS) q1 = q1.neq('event_type', 'vote_opened')
   const { data: nonVote, error: e1 } = await q1
     .gte('created_at', since7d)
@@ -127,10 +131,20 @@ async function _getActivityFeed(days = 7): Promise<ActivityEvent[]> {
     .order('created_at', { ascending: false })
     .limit(20)
 
+  // Queue 4 — voyager_activated ("Become a Voyager") only (24h window, 20 items)
+  const { data: voyagerActivated, error: e4 } = await admin.from('activity_events')
+    .select('*')
+    .eq('is_visible', true)
+    .eq('event_type', 'voyager_activated')
+    .gte('created_at', sinceVoyager)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
   if (e1) console.error('[getActivityFeed] non-vote query', e1.message)
   if (e3) console.error('[getActivityFeed] world_added query', e3.message)
+  if (e4) console.error('[getActivityFeed] voyager_activated query', e4.message)
 
-  const events = [...(nonVote ?? []), ...voteCast, ...(worldAdded ?? [])] as ActivityEvent[]
+  const events = [...(nonVote ?? []), ...voteCast, ...(worldAdded ?? []), ...(voyagerActivated ?? [])] as ActivityEvent[]
 
   // Batch-fetch latest avatar_url for all actors
   const actorIds = [...new Set(events.map(e => e.actor_id).filter(Boolean))] as string[]
