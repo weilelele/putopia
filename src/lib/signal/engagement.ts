@@ -113,12 +113,13 @@ async function generateOwnerCopy(
 
   const system = [
     'You are the copywriter for the Multiverse Collective, a fiction-flavoured community where members "discover" and then collectively "tune" parallel worlds.',
+    'WORLDVIEW (critical): the Collective does NOT create, build, shape, or change worlds — every world already exists. Voting decides which frequency band we probe and which signal is the true reading of the world. Never say or imply the member shapes, builds, molds, designs, or determines what a world becomes. Frame their vote as choosing which signal/frequency is real.',
     'Voice: a deep-space mission-control terminal — second person, present tense, understated awe, plain English. No emojis, no exclamation marks, no markdown.',
-    'Context: this email goes to the member who DISCOVERED a world. It has entered Signal Tuning, new signals have surfaced, but the discoverer has missed the last two and other members have been voting in their absence.',
+    'Context: this email goes to the member who DISCOVERED a world. It has entered Signal Tuning, new signals have surfaced, but the discoverer has missed the last two and other members have been voting (choosing which signal is real) in their absence.',
     'Return three fields:',
-    '- subject: under 60 characters, references the world, conveys "your world is being shaped without you".',
+    '- subject: under 60 characters, references the world, conveys "it is being tuned without you" (NOT "shaped").',
     `- lead: ONE sentence telling them their world has kept tuning while they were away, and that ${participantCount} member${participantCount === 1 ? ' has' : 's have'} weighed in over the last two signals. State the number.`,
-    '- appeal: ONE sentence saying that, as its discoverer, their judgment should anchor what this world becomes — invite them back to weigh in.',
+    '- appeal: ONE sentence saying that, as its discoverer, their read should help decide which frequency the Collective probes toward — which signal is the true one — and inviting them back to weigh in. Do NOT say they shape or determine what the world becomes.',
     'Ground all imagery only in the world name and description. Never invent facts beyond them.',
   ].join('\n')
   const user = `World name: ${worldName}\n\nWorld description:\n${description || '(no description provided)'}\n\nMembers who voted over the last two signals: ${participantCount}`
@@ -162,7 +163,7 @@ function ownerStaticCopy(worldName: string, participantCount: number): OwnerCopy
   return {
     subject: `${worldName} is being tuned without you`,
     lead: `Your world has kept tuning while you were away — ${participantCount} member${participantCount === 1 ? ' has' : 's have'} weighed in over the last two signals.`,
-    appeal: 'As its discoverer, your judgment should anchor what this world becomes — come weigh in.',
+    appeal: 'As its discoverer, your read should help decide which frequency we probe toward — come weigh in on which signal is real.',
   }
 }
 
@@ -393,7 +394,7 @@ async function sendOwnerEmail(admin: DB, to: string, c: Candidate): Promise<void
   const optionUrls = await taskOptionUrls(admin, c.latestTaskId)
   const html = shell({
     eyebrow: '// Your world is tuning',
-    headline: 'YOUR WORLD IS<br/>BEING SHAPED',
+    headline: 'YOUR WORLD IS<br/>TUNING WITHOUT YOU',
     paras: [lead, escapeHtml(final.appeal)],
     optionUrls,
     ctaLabel: '[ TUNE YOUR WORLD ]',
@@ -410,7 +411,7 @@ async function sendVoterEmail(admin: DB, to: string, c: Candidate): Promise<void
     headline: "WE'VE LOST<br/>YOUR SIGNAL",
     paras: [
       `It has been a few transmissions since you last helped tune <span style="color:#FF6B35;">${safeName}</span>, and the signals have kept arriving without you.`,
-      'We want you back in the decision — your read on these worlds genuinely shapes what they become, and your voice matters here. Come tell us which signal is real.',
+      'We want you back in the decision — your read helps choose which frequency we probe toward, and which signal is the real one. Your voice matters here.',
     ],
     optionUrls,
     ctaLabel: '[ CAST YOUR SIGNAL ]',
