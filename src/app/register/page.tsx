@@ -7,6 +7,7 @@ import posthog from 'posthog-js'
 import { getFirstTouch } from '@/lib/utm'
 import { HudField } from '@/components/hud-field'
 import { syncLoopsRegistration } from '@/lib/actions/profile'
+import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
@@ -80,12 +81,14 @@ export default function RegisterPage() {
         email: user.email?.toLowerCase() ?? null,
         registered_at: new Date().toISOString(),
       }, { onConflict: 'id' })
+      const experimentGroup = await getOrAssignExperimentGroup()
       if (user.email) {
         syncLoopsRegistration(user.email, displayName.trim(), user.id).catch(() => {})
       }
       const utm = getFirstTouch()
       posthog.identify(user.id, { email: user.email, display_name: displayName.trim(), registered_at: new Date().toISOString() })
       posthog.capture('account_registered', {
+        experiment_group:  experimentGroup ?? undefined,
         display_name:  displayName.trim(),
         utm_source:    utm.utm_source   ?? undefined,
         utm_medium:    utm.utm_medium   ?? undefined,

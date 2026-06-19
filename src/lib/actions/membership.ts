@@ -51,6 +51,7 @@ export async function provisionVoyagerMembership(userId: string): Promise<{
       id: userId,
       display_name: displayName,
       role: 'applicant',
+      experiment_group: Math.random() < 0.5 ? 'direct' : 'task_gated',
     })
     if (insErr) return { error: insErr.message }
   }
