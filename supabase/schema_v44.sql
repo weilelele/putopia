@@ -26,9 +26,8 @@ BEGIN
 END;
 $$;
 
--- Backfill: assign any rows that are still NULL (created before v44).
--- Architects are excluded — they never participate in the purchase experiment.
+-- Backfill: assign every row that is still NULL (created before v44),
+-- architects included, so the experiment runs uniformly across all members.
 UPDATE public.voyager_profiles
 SET experiment_group = CASE WHEN random() < 0.5 THEN 'direct' ELSE 'task_gated' END
-WHERE experiment_group IS NULL
-  AND role <> 'architect';
+WHERE experiment_group IS NULL;

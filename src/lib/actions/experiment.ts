@@ -6,7 +6,8 @@ export type ExperimentGroup = 'direct' | 'task_gated'
 
 /**
  * Returns the user's experiment group, assigning one randomly (50/50) on first call.
- * Only relevant for applicants — voyagers and architects never need gating.
+ * Assigned to every member (applicants, voyagers, architects alike) so the
+ * experiment runs uniformly; the ad slot itself decides who actually sees it.
  * Returns null if the user is not authenticated.
  */
 export async function getOrAssignExperimentGroup(): Promise<ExperimentGroup | null> {
