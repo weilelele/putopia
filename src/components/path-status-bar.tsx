@@ -88,21 +88,22 @@ export function PathStatusBar({
       {/* ── Bottom row: Signal Dispatch (left) + device days (right), split 50/50 ── */}
       <div style={{ height: 1, background: 'rgba(255,107,53,0.22)' }} />
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
-        {/* Left half — Signal Dispatch focal number */}
-        <Link href="/signal" style={{ ...cell, flex: 1, minWidth: 0, flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 4 }} {...hov}>
-          <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: '#E85D04', whiteSpace: 'nowrap' }}>{'// SIGNAL DISPATCH'}</span>
+        {/* Left half — Signal Dispatch focal number. Wider than the right half so
+            the "// SIGNAL DISPATCH" label + number never overrun the slash. */}
+        <Link href="/signal" style={{ ...cell, flex: '1.7 1 0', minWidth: 0, flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 4 }} {...hov}>
+          <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: '#E85D04', whiteSpace: 'nowrap' }}>{'// SIGNAL DISPATCH'}</span>
           <span style={{ display: 'flex', alignItems: 'baseline', gap: 9 }}>
             <span style={{ fontSize: 42, color: '#FF6B35', lineHeight: 0.85 }}>{board ? board.awaitingYou : '—'}</span>
-            <span style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star)' }}>awaiting you</span>
+            <span style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star)', whiteSpace: 'nowrap' }}>awaiting you</span>
           </span>
         </Link>
 
         {diag}
 
         {/* Right half — device days; clicking opens the device modal */}
-        <button onClick={onDeviceClick} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: 1, minWidth: 0, gap: 10 }} {...hov}>
+        <button onClick={onDeviceClick} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1 1 0', minWidth: 0, gap: 11 }} {...hov}>
           <span aria-label={hasDevice ? 'Device active' : 'No device'} style={{
-            display: 'inline-block', width: 36, height: 21, flexShrink: 0,
+            display: 'inline-block', width: 54, height: 32, flexShrink: 0,
             background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.4)',
             WebkitMaskImage: 'url(/assets/vi-icon.png)', maskImage: 'url(/assets/vi-icon.png)',
             WebkitMaskSize: 'contain', maskSize: 'contain',
@@ -111,7 +112,7 @@ export function PathStatusBar({
             filter: hasDevice ? 'drop-shadow(0 0 5px rgba(32,216,144,0.5))' : 'none',
           }} />
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.15 }}>
-            <span style={{ fontSize: 18, fontWeight: 700, color: hasDevice ? '#20D890' : 'rgba(245,245,245,0.5)' }}>{deviceDays}</span>
+            <span style={{ fontSize: 20, fontWeight: 700, color: hasDevice ? '#20D890' : 'rgba(245,245,245,0.5)' }}>{deviceDays}</span>
             <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em' }}>{deviceDays === 1 ? 'DAY' : 'DAYS'}</span>
           </span>
         </button>
