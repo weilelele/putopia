@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MessageSquare, Plus } from 'lucide-react'
+import { MessageSquare, Plus, Vote, ArrowRight } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
 import { useEffect, useState } from 'react'
@@ -252,14 +252,40 @@ export default function IntelPage() {
           <h1>INTEL <span className="accent">FEED</span></h1>
           <p className="sub">Known intelligence — {intel.length} entries on record</p>
         </div>
-        {/* Color legend */}
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          {(['NOTICE', 'DEVICE', 'ORG'] as const).map((tag) => (
-            <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: TAG_COLOR[tag] }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: TAG_COLOR[tag] }}>{tag}</span>
-            </div>
-          ))}
+        {/* Right side: Voting Hub entry + color legend */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem' }}>
+          <Link
+            href="/vote"
+            style={{
+              flex: '0 0 auto',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              border: '1px solid var(--color-nucleus)',
+              color: 'var(--color-nucleus)',
+              background: 'rgba(232,93,4,0.08)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              letterSpacing: '0.1em',
+              padding: '0.5rem 0.75rem',
+              borderRadius: 8,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Vote size={15} />
+            VOTING HUB
+            <ArrowRight size={14} />
+          </Link>
+          {/* Color legend */}
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {(['NOTICE', 'DEVICE', 'ORG'] as const).map((tag) => (
+              <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: TAG_COLOR[tag] }} />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: TAG_COLOR[tag] }}>{tag}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

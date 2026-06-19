@@ -18,7 +18,6 @@ const navItems = [
     items: [
       { href: '/voyagers', label: 'Voyagers',        icon: <IconUsers /> },
       { href: '/worlds',   label: 'World Records',   icon: <IconGlobe /> },
-      { href: '/vote',     label: 'Voting Hub',      icon: <IconVote /> },
     ],
   },
 ]
@@ -128,4 +127,3 @@ function IconMail()   { return <svg className="nav-icon" viewBox="0 0 24 24" {..
 function IconDevice() { return <svg className="nav-icon" viewBox="0 0 24 24" {...stroke}><rect x="3" y="5" width="18" height="14" rx="1" /><line x1="3" y1="9" x2="21" y2="9" /><circle cx="7" cy="7" r="0.7" fill="currentColor" /></svg> }
 function IconUsers()  { return <svg className="nav-icon" viewBox="0 0 24 24" {...stroke}><circle cx="9" cy="8" r="3.5" /><path d="M2 21 a7 7 0 0 1 14 0" /><circle cx="17" cy="10" r="2.5" /><path d="M22 21 a5 5 0 0 0 -6 -4.5" /></svg> }
 function IconGlobe()  { return <svg className="nav-icon" viewBox="0 0 24 24" {...stroke}><circle cx="12" cy="12" r="9" /><path d="M3 12 H21" /><path d="M12 3 C 15 6, 15 18, 12 21" /><path d="M12 3 C 9 6, 9 18, 12 21" /></svg> }
-function IconVote()   { return <svg className="nav-icon" viewBox="0 0 24 24" {...stroke}><circle cx="12" cy="12" r="9" /><path d="M8 12.5 L11 15.5 L16.5 9.5" strokeLinecap="round" strokeLinejoin="round" /></svg> }

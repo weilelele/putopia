@@ -191,29 +191,66 @@ export default function VoyagersPage() {
             {loading ? 'Loading registry...' : `Voyager Registry — ${voyagers.length} active members`}
           </p>
         </div>
-        <Link
-          href="/logs"
-          style={{
-            flex: '0 0 auto',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            border: '1px solid var(--color-nucleus)',
-            color: 'var(--color-nucleus)',
-            background: 'rgba(232,93,4,0.08)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--fs-caption)',
-            letterSpacing: '0.1em',
-            padding: '0.5rem 0.75rem',
-            borderRadius: 8,
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <FileText size={15} />
-          VOYAGER LOGS
-          <ArrowRight size={14} />
-        </Link>
+        <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <Link
+            href="/logs"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              border: '1px solid rgba(255,107,53,0.4)',
+              color: 'rgba(255,107,53,0.85)',
+              background: 'transparent',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--fs-caption)',
+              letterSpacing: '0.1em',
+              padding: '0.5rem 0.75rem',
+              borderRadius: 8,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <FileText size={15} />
+            VOYAGER LOGS
+            <ArrowRight size={14} />
+          </Link>
+          {user.role !== 'guest' && (() => {
+            const idColor = user.role === 'applicant' ? '#E8A020' : user.role === 'architect' ? '#FF6B35' : '#FFB07A'
+            const idLabel = user.role === 'applicant' ? 'APPLICANT' : user.role === 'architect' ? 'ARCHITECT' : 'VOYAGER'
+            const profileName = user.name || user.email?.split('@')[0] || 'Voyager'
+            const profileInitials = profileName.slice(0, 2).toUpperCase()
+            return (
+              <Link
+                href="/profile"
+                title="My profile"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  border: '1px solid var(--color-nucleus)',
+                  background: 'rgba(232,93,4,0.08)',
+                  padding: '0.3rem 0.6rem 0.3rem 0.35rem',
+                  borderRadius: 8,
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {user.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.avatarUrl} alt={profileName} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', display: 'block', border: `1.5px solid ${idColor}66` }} />
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: '50%', border: `1.5px solid ${idColor}66`, background: '#0A0D1A', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: idColor }}>
+                    {profileInitials}
+                  </span>
+                )}
+                <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.1em', color: idColor }}>{idLabel}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.08em', color: 'rgba(245,245,245,0.45)' }}>MY PROFILE</span>
+                </span>
+              </Link>
+            )
+          })()}
+        </div>
       </div>
 
       {loading ? (
