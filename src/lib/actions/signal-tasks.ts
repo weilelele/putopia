@@ -1172,90 +1172,106 @@ export async function getTuningCovers(): Promise<Record<string, string>> {
 type Viewer = { id: string; role: string } | null
 
 /** Build the published, vote-ready days for one thread (shared by feed + world page). */
-async function buildPublishedDays(
-  admin: DB,
-  threadId: string,
-  me: Viewer,
-  isArchitect: boolean,
-): Promise<PublicInvestigation['days']> {
-  const { data: taskRows } = await admin
-    .from('signal_tasks')
-    .select('id, type, prompt, day_index')
-    .eq('thread_id', threadId)
-    .eq('is_published', true)
-    .order('day_index', { ascending: true })
+// A published task that is visible to this viewer (revealed, or any day for an
+// architect), with its computed reveal metadata — produced before the bulk
+// asset/response fetch so we can batch by task id.
+type VisibleDay = {
+  taskId: string
+  type: SignalTaskType
+  prompt: string | null
+  dayIndex: number
+  revealAtISO: string | null
+  revealed: boolean
+}
+type TaskRow = { id: string; type: SignalTaskType; prompt: string | null; day_index: number | null }
+type RespRow = { user_id: string; selected_asset_id: string }
 
-  // Scheduled reveal: days surface one at a time off the thread anchor + cadence.
-  const { data: sched } = await admin
-    .from('signal_threads')
-    .select('reveal_anchor_at, reveal_interval_hours')
-    .eq('id', threadId)
-    .maybeSingle()
-  const anchorAt: string | null = sched?.reveal_anchor_at ?? null
-  const intervalHours: number = sched?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
-  const now = new Date()
-
-  const days: PublicInvestigation['days'] = []
-  for (const t of taskRows ?? []) {
+/** Filter published tasks to the days this viewer may see, with reveal metadata. */
+function computeVisibleDays(taskRows: TaskRow[], anchorAt: string | null, intervalHours: number, isArchitect: boolean, now: Date): VisibleDay[] {
+  const out: VisibleDay[] = []
+  for (const t of taskRows) {
     const dayIndex = t.day_index ?? 0
     const at = computeRevealAt(anchorAt, intervalHours, dayIndex)
     const revealed = isRevealed(anchorAt, intervalHours, dayIndex, now)
-    // Public viewers only see revealed days; architects see the full schedule.
-    if (!revealed && !isArchitect) continue
-    const { data: assetRows } = await admin
+    if (!revealed && !isArchitect) continue // public viewers only see revealed days
+    out.push({ taskId: t.id, type: t.type, prompt: t.prompt, dayIndex, revealAtISO: at ? at.toISOString() : null, revealed })
+  }
+  return out
+}
+
+/** One batched fetch of selected assets + responses for many tasks, grouped by
+ *  task id — replaces the per-day, per-aspect N+1 queries. */
+async function fetchDayData(admin: DB, taskIds: string[]): Promise<{ assetsByTask: Map<string, PublicSignalAsset[]>; respByTask: Map<string, RespRow[]> }> {
+  const assetsByTask = new Map<string, PublicSignalAsset[]>()
+  const respByTask = new Map<string, RespRow[]>()
+  if (!taskIds.length) return { assetsByTask, respByTask }
+  const [{ data: assets }, { data: resp }] = await Promise.all([
+    admin
       .from('signal_task_assets')
-      .select('id, media, processed_url, display_url, asset_role, display_order')
-      .eq('task_id', t.id)
+      .select('id, media, processed_url, display_url, asset_role, display_order, task_id')
+      .in('task_id', taskIds)
       .eq('is_selected', true)
       .order('display_order', { ascending: true })
-      .order('created_at', { ascending: true })
-
-    const { count } = await admin
+      .order('created_at', { ascending: true }),
+    admin
       .from('signal_responses')
-      .select('id', { count: 'exact', head: true })
-      .eq('task_id', t.id)
+      .select('task_id, user_id, selected_asset_id')
+      .in('task_id', taskIds),
+  ])
+  for (const a of (assets ?? []) as (PublicSignalAsset & { task_id: string })[]) {
+    const arr = assetsByTask.get(a.task_id) ?? []
+    arr.push({ id: a.id, media: a.media, processed_url: a.processed_url, display_url: a.display_url, asset_role: a.asset_role, display_order: a.display_order })
+    assetsByTask.set(a.task_id, arr)
+  }
+  for (const r of (resp ?? []) as (RespRow & { task_id: string })[]) {
+    const arr = respByTask.get(r.task_id) ?? []
+    arr.push({ user_id: r.user_id, selected_asset_id: r.selected_asset_id })
+    respByTask.set(r.task_id, arr)
+  }
+  return { assetsByTask, respByTask }
+}
 
-    let mySelection: string | null = null
-    if (me) {
-      const { data: mine } = await admin
-        .from('signal_responses')
-        .select('selected_asset_id')
-        .eq('task_id', t.id)
-        .eq('user_id', me.id)
-        .maybeSingle()
-      mySelection = mine?.selected_asset_id ?? null
-    }
-
+/** Assemble day objects from pre-fetched, grouped data — no queries. */
+function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSignalAsset[]>, respByTask: Map<string, RespRow[]>, me: Viewer, isArchitect: boolean): PublicInvestigation['days'] {
+  return visible.map((v) => {
+    const responses = respByTask.get(v.taskId) ?? []
+    const mySelection = me ? (responses.find((r) => r.user_id === me.id)?.selected_asset_id ?? null) : null
     let distribution: Record<string, number> | null = null
     if (mySelection || isArchitect) {
-      const { data: all } = await admin
-        .from('signal_responses')
-        .select('selected_asset_id')
-        .eq('task_id', t.id)
       distribution = {}
-      for (const r of all ?? []) {
-        const k = r.selected_asset_id as string
-        distribution[k] = (distribution[k] ?? 0) + 1
-      }
+      for (const r of responses) distribution[r.selected_asset_id] = (distribution[r.selected_asset_id] ?? 0) + 1
     }
-
-    days.push({
-      dayIndex,
-      revealAt: at ? at.toISOString() : null,
-      revealed,
+    return {
+      dayIndex: v.dayIndex,
+      revealAt: v.revealAtISO,
+      revealed: v.revealed,
       task: {
-        id: t.id,
-        type: t.type,
-        prompt: t.prompt,
-        assets: (assetRows ?? []) as PublicSignalAsset[],
-        participantCount: count ?? 0,
+        id: v.taskId,
+        type: v.type,
+        prompt: v.prompt,
+        assets: assetsByTask.get(v.taskId) ?? [],
+        participantCount: responses.length,
         mySelection,
         distribution,
         thread: null,
       },
-    })
-  }
-  return days
+    }
+  })
+}
+
+/** Published+visible days for ONE thread (world page). 4 queries regardless of
+ *  day count: tasks + schedule (parallel), then assets + responses (batched). */
+async function buildPublishedDays(admin: DB, threadId: string, me: Viewer, isArchitect: boolean): Promise<PublicInvestigation['days']> {
+  const [{ data: taskRows }, { data: sched }] = await Promise.all([
+    admin.from('signal_tasks').select('id, type, prompt, day_index').eq('thread_id', threadId).eq('is_published', true).order('day_index', { ascending: true }),
+    admin.from('signal_threads').select('reveal_anchor_at, reveal_interval_hours').eq('id', threadId).maybeSingle(),
+  ])
+  const anchorAt: string | null = sched?.reveal_anchor_at ?? null
+  const intervalHours: number = sched?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
+  const visible = computeVisibleDays((taskRows ?? []) as TaskRow[], anchorAt, intervalHours, isArchitect, new Date())
+  if (!visible.length) return []
+  const { assetsByTask, respByTask } = await fetchDayData(admin, visible.map((v) => v.taskId))
+  return assembleDays(visible, assetsByTask, respByTask, me, isArchitect)
 }
 
 type ThreadRow = { id: string; title: string | null; type: SignalTaskType; world_id: string | null }
@@ -1289,20 +1305,54 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   const role = me?.role ?? null
   const isArchitect = role === 'architect'
 
+  const now = new Date()
+
+  // One thread query (with schedule cols) + one published-task query, then a
+  // single batched assets+responses fetch and worldMetaMap — ~5 queries total
+  // regardless of thread/day count (was a per-thread, per-day N+1).
   const { data: threadData } = await admin
     .from('signal_threads')
-    .select('id, title, type, world_id')
+    .select('id, title, type, world_id, reveal_anchor_at, reveal_interval_hours')
     .order('created_at', { ascending: false })
-  const threads = (threadData ?? []) as ThreadRow[]
+  const threads = (threadData ?? []) as (ThreadRow & { reveal_anchor_at: string | null; reveal_interval_hours: number | null })[]
+  if (!threads.length) return { investigations: [], role, loggedIn: !!me }
 
-  const meta = await worldMetaMap(admin, threads.map((t) => t.world_id))
+  const { data: taskData } = await admin
+    .from('signal_tasks')
+    .select('id, thread_id, type, prompt, day_index')
+    .eq('is_published', true)
+    .in('thread_id', threads.map((t) => t.id))
+  const tasksByThread = new Map<string, TaskRow[]>()
+  for (const t of (taskData ?? []) as (TaskRow & { thread_id: string })[]) {
+    const arr = tasksByThread.get(t.thread_id) ?? []
+    arr.push({ id: t.id, type: t.type, prompt: t.prompt, day_index: t.day_index })
+    tasksByThread.set(t.thread_id, arr)
+  }
+
+  // Compute visible days per thread (in memory), gathering all task ids to batch.
+  const visibleByThread = new Map<string, VisibleDay[]>()
+  const allTaskIds: string[] = []
+  for (const th of threads) {
+    const rows = (tasksByThread.get(th.id) ?? []).sort((a, b) => (a.day_index ?? 0) - (b.day_index ?? 0))
+    const visible = computeVisibleDays(rows, th.reveal_anchor_at ?? null, th.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS, isArchitect, now)
+    if (visible.length) {
+      visibleByThread.set(th.id, visible)
+      for (const v of visible) allTaskIds.push(v.taskId)
+    }
+  }
+
+  const [dayData, meta] = await Promise.all([
+    fetchDayData(admin, allTaskIds),
+    worldMetaMap(admin, threads.map((t) => t.world_id)),
+  ])
 
   const investigations: PublicInvestigation[] = []
-  for (const thread of threads) {
-    const days = await buildPublishedDays(admin, thread.id, me, isArchitect)
-    if (days.length === 0) continue
-    const wm = thread.world_id ? meta.get(thread.world_id) : undefined
-    investigations.push(buildInvestigation(thread, wm, days, me))
+  for (const th of threads) {
+    const visible = visibleByThread.get(th.id)
+    if (!visible) continue
+    const days = assembleDays(visible, dayData.assetsByTask, dayData.respByTask, me, isArchitect)
+    const wm = th.world_id ? meta.get(th.world_id) : undefined
+    investigations.push(buildInvestigation(th, wm, days, me))
   }
 
   return { investigations, role, loggedIn: !!me }
