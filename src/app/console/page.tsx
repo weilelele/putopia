@@ -613,8 +613,7 @@ function GuestHero({ newHref, mcFunctions, stats }: { newHref: string; mcFunctio
         fontFamily: 'var(--font-body)', fontSize: 'clamp(1rem, 4.5vw, 1.25rem)',
         lineHeight: 1.55, color: 'var(--color-star)', ...line(1),
       }}>
-        There is a device that looks into worlds that aren&apos;t ours.{' '}
-        <span style={{ color: 'var(--color-star-dim)' }}>We&apos;re learning to listen.</span>
+        We own devices that look into worlds that aren&apos;t ours.
       </p>
 
       {/* Three headline numbers — tap to reveal an explanation */}
