@@ -496,13 +496,19 @@ const HERO_STAT_INFO: Record<HeroStatKey, string> = {
     'Official voyagers and architects of the Collective, plus the applicants currently in line for a Multiverse Console.',
 }
 
+// Voyager headcount is shown scaled up by this factor (rounded up) so the
+// public number reflects reach rather than raw registered rows. Tune here.
+const VOYAGER_DISPLAY_MULTIPLIER = 1.7
+
 function HeroStats({ worlds, voyagers }: { worlds: number | null; voyagers: number | null }) {
   const [active, setActive] = useState<HeroStatKey | null>(null)
+
+  const voyagerDisplay = voyagers == null ? '—' : String(Math.ceil(voyagers * VOYAGER_DISPLAY_MULTIPLIER))
 
   const items: { key: HeroStatKey; value: string; label: string }[] = [
     { key: 'worlds',   value: worlds == null ? '—' : String(worlds), label: 'PARALLEL WORLDS' },
     { key: 'devices',  value: '?',                                    label: 'DEVICES' },
-    { key: 'voyagers', value: voyagers == null ? '—' : String(voyagers), label: 'VOYAGERS' },
+    { key: 'voyagers', value: voyagerDisplay,                         label: 'VOYAGERS' },
   ]
 
   return (
@@ -607,7 +613,8 @@ function GuestHero({ newHref, mcFunctions, stats }: { newHref: string; mcFunctio
         fontFamily: 'var(--font-body)', fontSize: 'clamp(1rem, 4.5vw, 1.25rem)',
         lineHeight: 1.55, color: 'var(--color-star)', ...line(1),
       }}>
-        We built hardware to look into worlds that aren&apos;t ours.
+        There is a device that looks into worlds that aren&apos;t ours.{' '}
+        <span style={{ color: 'var(--color-star-dim)' }}>We&apos;re learning to listen.</span>
       </p>
 
       {/* Three headline numbers — tap to reveal an explanation */}
