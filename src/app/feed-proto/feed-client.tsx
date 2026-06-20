@@ -273,9 +273,9 @@ function VoteTofu({ vote, onVote, onLocked }: { vote: VoteCard; onVote: () => vo
           borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
         }}
       >
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.18em', color: ORANGE, marginBottom: 5 }}>VOTE</div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.38, color: LORANGE }}>{vote.title}</div>
         <VoyagerOnlyCover minHeight={64} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap', marginTop: 9 }}>{vote.ends}</div>
       </div>
     )
   }
@@ -460,7 +460,7 @@ function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () =>
 
 function VoyagerGateModal({ kind, title, packHref, onClose }: { kind: 'intel' | 'vote'; title: string; packHref: string; onClose: () => void }) {
   const body = kind === 'vote'
-    ? 'Only Voyagers can take part in this signal vote.'
+    ? 'Only Voyagers can take part in this vote.'
     : 'This intelligence is restricted to Voyagers.'
   return (
     <div
