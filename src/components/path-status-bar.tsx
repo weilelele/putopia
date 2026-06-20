@@ -43,9 +43,13 @@ export function PathStatusBar({
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' },
     onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = 'transparent' },
   }
-  // Borderless HUD — cells sit flush with no divider lines. Keep a small spacer
-  // so the avatar / identity / dispatch / device cells don't run together.
-  const diag = <div style={{ width: 12, flex: '0 0 auto' }} />
+  // Diagonal slash divider between cells (top row: avatar | identity; bottom
+  // row: Signal Dispatch | device days).
+  const diag = (
+    <div style={{ width: 16, alignSelf: 'stretch', position: 'relative', flex: '0 0 auto' }}>
+      <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: 'rgba(255,107,53,0.22)', transform: 'skewX(-22deg)' }} />
+    </div>
+  )
 
   return (
     <div style={{
