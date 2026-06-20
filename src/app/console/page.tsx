@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import Link from 'next/link'
@@ -894,6 +895,37 @@ function UtcClock() {
 }
 
 /* ─── Page ──────────────────────────────────────────────── */
+// Session-lived cache of the Signal Feed. Back-navigation remounts this page and
+// resets component state, which would otherwise drop the feed to empty, re-show
+// the skeleton, and re-defer the (2-3s) fetch behind the wordmark — collapsing
+// the page height so a restored deep scroll snaps back to the top. Seeding state
+// from this cache makes a return render the full-height feed immediately (no
+// skeleton, no collapse), so scroll restoration is instant and stable.
+//
+// The in-memory copy is the fast path for soft (client) navigations. It's also
+// mirrored to sessionStorage so a FULL document reload — which some back actions
+// trigger (e.g. an iOS Safari bfcache miss) and which wipes module memory — can
+// still seed the feed synchronously and land at the saved offset.
+const FEED_CACHE_KEY = 'console:feed'
+let feedCache: FeedEntry[] = []
+
+function readFeedCache(): FeedEntry[] {
+  if (feedCache.length) return feedCache
+  try {
+    const raw = sessionStorage.getItem(FEED_CACHE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length) { feedCache = parsed; return parsed }
+    }
+  } catch { /* sessionStorage unavailable / quota / parse — fall through to empty */ }
+  return []
+}
+
+function writeFeedCache(d: FeedEntry[]) {
+  feedCache = d
+  try { sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify(d)) } catch { /* quota — keep in-memory only */ }
+}
+
 export default function ConsolePage() {
   return <Suspense><ConsoleInner /></Suspense>
 }
@@ -903,7 +935,9 @@ function ConsoleInner() {
   const searchParams = useSearchParams()
   const utmTracked = useRef(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const scrollRestored = useRef(false)
+  // True while a restore is in flight — suspends the save listener so the
+  // fresh-mount scrollTop (0) can't overwrite the real saved offset.
+  const restoringRef = useRef(true)
 
   useEffect(() => {
     if (utmTracked.current) return
@@ -924,7 +958,7 @@ function ConsoleInner() {
 
   // Preserve UTM params when forwarding to /new
   const newHref = searchParams.toString() ? `/new?${searchParams.toString()}` : '/new'
-  const [feedEntries, setFeedEntries] = useState<FeedEntry[]>([])
+  const [feedEntries, setFeedEntries] = useState<FeedEntry[]>(() => feedCache)
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
   const [heroStats, setHeroStats] = useState<GuestHeroStats | null>(null)
   const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
@@ -951,11 +985,15 @@ function ConsoleInner() {
     const load = () => {
       if (feedRequested.current) return
       feedRequested.current = true
-      getSignalFeed().then(setFeedEntries).catch((e) =>
+      getSignalFeed().then((d) => { writeFeedCache(d); setFeedEntries(d) }).catch((e) =>
         console.error('[console] getSignalFeed failed:', (e as Error)?.message ?? e))
     }
     const heroHasWordmark = user.role === 'guest' || user.role === 'applicant'
-    if (!heroHasWordmark) { load(); return }
+    // If we already have a cached feed (a return visit, incl. full reloads via
+    // sessionStorage), the page is full-height and the wordmark is static —
+    // refresh immediately instead of deferring, so we never reintroduce the
+    // skeleton/collapse window.
+    if (!heroHasWordmark || readFeedCache().length > 0) { load(); return }
     window.addEventListener(WORDMARK_READY_EVENT, load, { once: true })
     const fallback = setTimeout(load, 6000)
     return () => { window.removeEventListener(WORDMARK_READY_EVENT, load); clearTimeout(fallback) }
@@ -972,64 +1010,132 @@ function ConsoleInner() {
   // ── Scroll restoration ──────────────────────────────────────────────────
   // The dashboard scrolls inside `.landing-main`, not the window, so Next's
   // built-in (window-based) restoration can't return you to where you left off
-  // after visiting a world / device / signal page. Persist the container's
-  // scrollTop to sessionStorage and restore it once the feed — whose skeletons
-  // reserve height up front — has rendered, so the target offset is valid.
+  // after visiting a world / device / signal page. We persist the container's
+  // scrollTop to sessionStorage and restore it on return.
+  //
+  // Two things make this genuinely hard:
+  //  1. Back-navigation REMOUNTS this component: a fresh `.landing-main` mounts
+  //     at scrollTop 0, `feedEntries` resets to [] (the skeleton shows), and the
+  //     real feed is re-fetched and re-deferred behind the wordmark (seconds
+  //     later). So the page is far too short to hold a deep offset for a while,
+  //     and the browser silently clamps scrollTop toward the top.
+  //  2. The save listener races the restore: while the fresh mount sits at 0 (or
+  //     a clamped value) the debounced save would happily overwrite the real
+  //     saved offset with 0, destroying the target before we can use it.
+  //
+  // Fix: SUSPEND saving until a restore finishes (`restoringRef`), and drive the
+  // restore from a `setInterval` that re-pins to the saved offset until the feed
+  // has actually grown the page tall enough to reach it (or the user scrolls, or
+  // a deadline). setInterval is used deliberately over requestAnimationFrame: rAF
+  // is paused in background tabs, whereas the interval keeps correcting through
+  // the skeleton→feed reflow regardless.
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
     let timer: ReturnType<typeof setTimeout> | undefined
-    const save = () => sessionStorage.setItem('console:scrollTop', String(el.scrollTop))
+    // Only persist positions the USER actually scrolled to. Navigating away
+    // makes the router reset the container to the top, firing a scroll-to-0 that
+    // would otherwise clobber the saved offset; the restore loop's own pinning
+    // fires scroll events too. We distinguish these from real scrolling by
+    // requiring a recent genuine input (wheel / touchmove / scroll-key). Taps on
+    // a feed link don't count, so the leave-reset is correctly ignored.
+    let lastInputAt = 0
+    const markInput = () => { lastInputAt = Date.now() }
+    const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar'])
+    const onKey = (e: KeyboardEvent) => { if (SCROLL_KEYS.has(e.key)) markInput() }
+    const save = () => {
+      if (restoringRef.current) return            // don't clobber mid-restore
+      if (Date.now() - lastInputAt > 2000) return // ignore router / programmatic scrolls
+      sessionStorage.setItem('console:scrollTop', String(el.scrollTop))
+    }
     const onScroll = () => {
       // Debounce so we write at most every ~120ms while scrolling.
       if (timer) return
       timer = setTimeout(() => { timer = undefined; save() }, 120)
     }
+    el.addEventListener('wheel', markInput, { passive: true })
+    el.addEventListener('touchmove', markInput, { passive: true })
+    window.addEventListener('keydown', onKey, true)
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => {
+      el.removeEventListener('wheel', markInput)
+      el.removeEventListener('touchmove', markInput)
+      window.removeEventListener('keydown', onKey, true)
       el.removeEventListener('scroll', onScroll)
       if (timer) clearTimeout(timer)
-      save() // flush the final position on unmount (navigating away)
+      save() // flush the final user position on unmount (gated like the rest)
     }
   }, [])
 
-  useEffect(() => {
-    if (scrollRestored.current) return
+  // useLayoutEffect so the first pin happens BEFORE the browser paints — with the
+  // feed seeded from cache the page is already full-height on a return, so this
+  // lands us at the saved offset with no visible jump-from-top at all.
+  useLayoutEffect(() => {
     const el = scrollRef.current
-    if (!el || feedEntries.length === 0) return
-    scrollRestored.current = true
+    if (!el) return
+
+    // On a full reload the module cache is gone and we mount as a skeleton. Seed
+    // the feed synchronously from the persistent cache BEFORE we pin, so the page
+    // is already full-height and the pin lands exactly — no flash, no land-near-
+    // top. flushSync forces the commit before the next line reads scrollHeight.
+    if (feedEntries.length === 0) {
+      const cached = readFeedCache()
+      if (cached.length) flushSync(() => setFeedEntries(cached))
+    }
+
     const saved = Number(sessionStorage.getItem('console:scrollTop') ?? '')
-    if (!saved) return
-    // Deep offsets are fragile: lazy images and async hero content reflow for a
-    // while after the feed mounts, and until the container is tall enough the
-    // browser silently clamps scrollTop to the current scrollHeight. So instead
-    // of restoring once, re-apply the saved offset across a short window until it
-    // sticks — but bail the moment the user scrolls themselves, so we never fight
-    // a deliberate scroll.
-    el.scrollTop = saved
-    let userScrolled = false
-    const onUserScroll = () => {
-      // A reflow-driven clamp lands near `saved`; a real user scroll moves far
-      // from it. Only treat large deviations as intentional.
-      if (Math.abs(el.scrollTop - saved) > 120) userScrolled = true
+    if (!saved) { restoringRef.current = false; return }
+    restoringRef.current = true
+
+    // Immediate pre-paint pin (clamped to current height; the interval keeps
+    // correcting as a deferred feed grows the page on a cold load).
+    el.scrollTop = Math.min(saved, el.scrollHeight - el.clientHeight)
+
+    let done = false
+    let aborted = false
+    const onIntent = () => { aborted = true }
+    // Only genuine input aborts — a raw `scroll` event is ambiguous (our own pin
+    // and layout reflow both fire it), so we key off wheel / touch / scroll-keys.
+    const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar'])
+    const onKey = (e: KeyboardEvent) => { if (SCROLL_KEYS.has(e.key)) aborted = true }
+    el.addEventListener('wheel', onIntent, { passive: true })
+    el.addEventListener('touchstart', onIntent, { passive: true })
+    window.addEventListener('keydown', onKey, true)
+
+    const stop = () => {
+      if (done) return
+      done = true
+      clearInterval(id)
+      restoringRef.current = false // hand scroll-tracking back to the save effect
+      el.removeEventListener('wheel', onIntent)
+      el.removeEventListener('touchstart', onIntent)
+      window.removeEventListener('keydown', onKey, true)
     }
-    el.addEventListener('wheel', () => { userScrolled = true }, { passive: true, once: true })
-    el.addEventListener('touchmove', () => { userScrolled = true }, { passive: true, once: true })
-    el.addEventListener('scroll', onUserScroll, { passive: true })
-    const timers: ReturnType<typeof setTimeout>[] = []
-    for (const delay of [16, 60, 150, 300, 500, 800]) {
-      timers.push(setTimeout(() => {
-        if (userScrolled) return
-        if (Math.abs(el.scrollTop - saved) > 2) el.scrollTop = saved
-      }, delay))
-    }
-    const stop = setTimeout(() => el.removeEventListener('scroll', onUserScroll), 850)
-    return () => {
-      timers.forEach(clearTimeout)
-      clearTimeout(stop)
-      el.removeEventListener('scroll', onUserScroll)
-    }
-  }, [feedEntries])
+
+    const start = Date.now()
+    let reachedAt = 0
+    const id = setInterval(() => {
+      if (aborted) { stop(); return }
+      const max = el.scrollHeight - el.clientHeight
+      const target = Math.min(saved, max) // follow the page up as the feed grows
+      if (Math.abs(el.scrollTop - target) > 1) el.scrollTop = target
+      // Settled only once the page is genuinely tall enough to reach `saved`
+      // (not a skeleton-height clamp) and we've held there briefly.
+      if (max >= saved - 1 && Math.abs(el.scrollTop - saved) <= 1) {
+        if (!reachedAt) reachedAt = Date.now()
+        if (Date.now() - reachedAt >= 300) { stop(); return }
+      } else {
+        reachedAt = 0
+      }
+      if (Date.now() - start >= 12000) { stop(); return } // hard deadline
+    }, 50)
+
+    return stop
+    // Mount-only: feedEntries.length is read once to decide the initial seed; the
+    // restore must NOT re-run when the feed updates, or it would re-pin scroll
+    // after the user has moved.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const isGuest = !loading && user.role === 'guest'
 
