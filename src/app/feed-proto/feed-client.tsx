@@ -78,9 +78,12 @@ function Avatar({ p, size = 20 }: { p: Person; size?: number }) {
 }
 
 function Cover({ src }: { src: string }) {
+  // Fixed 3:2 banner so square / portrait images don't blow up the card height.
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt="" style={{ width: '100%', display: 'block', objectFit: 'cover', filter: 'brightness(0.85) saturate(0.85)' }} />
+    <div style={{ width: '100%', aspectRatio: '3 / 2', overflow: 'hidden' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.85) saturate(0.85)' }} />
+    </div>
   )
 }
 
@@ -196,8 +199,8 @@ function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
         </div>
       )}
 
-      <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.15em', padding: '11px 0', borderRadius: 2 }}>
-        MAKE A DECISION ▸
+      <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', whiteSpace: 'nowrap', padding: '11px 0', borderRadius: 2 }}>
+        MAKE A DECISION
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
@@ -237,7 +240,7 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
         <div
           onClick={() => { setCast(true); setTimeout(onClose, 800) }}
           style={{ marginTop: 14, background: cast ? GREEN : ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_CAPTION, letterSpacing: '0.15em', padding: 11, borderRadius: 3, cursor: 'pointer' }}
-        >{cast ? '✓ DECISION MADE' : 'MAKE A DECISION ▸'}</div>
+        >{cast ? '✓ DECISION MADE' : 'MAKE A DECISION'}</div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, textAlign: 'center', color: 'rgba(245,245,245,0.35)', marginTop: 10 }}>{vote.count} signals in · {vote.ends}</div>
       </div>
     </div>
@@ -257,7 +260,7 @@ export function FeedProtoClient({ entries, embedded = false }: { entries: FeedEn
 
   return (
     <div style={outer}>
-      <div style={{ maxWidth: embedded ? 820 : 600, margin: '0 auto' }}>
+      <div style={{ maxWidth: 920, margin: '0 auto' }}>
         {embedded ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />

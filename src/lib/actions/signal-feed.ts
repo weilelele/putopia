@@ -59,7 +59,9 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
 
   const worldCols = 'id, name, name_en, description, image_path, lifecycle_state, gradient_from, gradient_to, discoverer_name, discoverer_id, submitted_at, created_at'
   const [intelR, wProposedR, wSyncingR, wStableR, deviceR, voyagerR, voteR] = await Promise.all([
-    db.from('intel').select('id, title, content, images, classified, publisher_name, publisher_id, timestamp').order('timestamp', { ascending: false }).limit(6),
+    // Classified intel (e.g. "Rumor:" reports) is gated — keep it out of the
+    // public-facing feed; it stays reachable on the permissioned /intel pages.
+    db.from('intel').select('id, title, content, images, classified, publisher_name, publisher_id, timestamp').eq('classified', false).order('timestamp', { ascending: false }).limit(6),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'proposed').order('submitted_at', { ascending: false }).limit(6),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'syncing').order('created_at', { ascending: false }).limit(5),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'stable').order('created_at', { ascending: false }).limit(2),
