@@ -409,6 +409,19 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entri
     ? { color: 'var(--color-star)' as const }
     : { height: '100dvh', overflowY: 'auto' as const, background: 'var(--color-deep)', color: 'var(--color-star)' }
 
+  // Row-major two-column split: even-index entries fill the left column, odd the
+  // right. The on-page reading order (left→right, top→down) then matches the
+  // newest-first `entries` order. Plain CSS `column-count` is column-major — it
+  // fills the entire left column before the right, floating an older card (top
+  // of the right column) above a newer one (bottom of the left).
+  const leftCol: FeedEntry[] = []
+  const rightCol: FeedEntry[] = []
+  entries.forEach((e, i) => (i % 2 === 0 ? leftCol : rightCol).push(e))
+  const renderEntry = (e: FeedEntry) =>
+    e.kind === 'vote'
+      ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setActiveVote(e.vote)} />
+      : <ContentCard key={e.item.id} item={e.item} onMember={it => setActiveVoyager(it.actor ?? null)} />
+
   return (
     <div style={outer}>
       {/* Skeleton shimmer for image placeholders — inlined so it ships without
@@ -435,13 +448,16 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entri
           </div>
         )}
 
-        <div style={{ padding: embedded ? 0 : 10, columnCount: 2, columnGap: 8 }}>
-          {leadSlot && (
-            <div style={{ breakInside: 'avoid', marginBottom: 11 }}>{leadSlot}</div>
-          )}
-          {entries.map(e => e.kind === 'vote'
-            ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setActiveVote(e.vote)} />
-            : <ContentCard key={e.item.id} item={e.item} onMember={it => setActiveVoyager(it.actor ?? null)} />)}
+        <div style={{ padding: embedded ? 0 : 10, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {leadSlot && (
+              <div style={{ marginBottom: 11 }}>{leadSlot}</div>
+            )}
+            {leftCol.map(renderEntry)}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {rightCol.map(renderEntry)}
+          </div>
         </div>
 
         {!embedded && (
