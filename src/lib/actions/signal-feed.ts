@@ -155,7 +155,7 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
   const voteCards = voteRows.map(buildVoteCard)
 
   const person = (name?: string | null, id?: string | null): Person | null =>
-    name ? { name: String(name), initial: initialOf(String(name)), avatar: id ? avatarMap[String(id)] ?? null : null } : null
+    name ? { name: String(name), initial: initialOf(String(name)), avatar: id ? avatarMap[String(id)] ?? null : null, id: id ? String(id) : null } : null
 
   const HL = { vision: 24, tuning: 72, established: 168, intel: 168, device: 48, member: 24 }
   type Built = { ts: number; bucket: string; item: FeedItem }
