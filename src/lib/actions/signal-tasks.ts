@@ -1142,28 +1142,57 @@ export async function getTuningCovers(): Promise<Record<string, string>> {
     .not('world_id', 'is', null)
   const covers: Record<string, string> = {}
 
+  type AssetRow = { id: string; media: string; processed_url: string | null; display_url: string | null }
+
   for (const th of (threads ?? []) as { id: string; world_id: string }[]) {
-    const { data: latest } = await admin
+    // Latest two published days (newest first) — try the latest, fall back to the prior day.
+    const { data: tasks } = await admin
       .from('signal_tasks')
       .select('id')
       .eq('thread_id', th.id)
       .eq('is_published', true)
       .order('day_index', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (!latest) continue
+      .limit(2)
+    const taskList = (tasks ?? []) as { id: string }[]
+    if (!taskList.length) continue
 
-    const { data: assets } = await admin
-      .from('signal_task_assets')
-      .select('media, processed_url, display_url, display_order')
-      .eq('task_id', latest.id)
-      .eq('is_selected', true)
-      .order('display_order', { ascending: true })
+    let fallbackUrl: string | null = null  // first-by-order option, used if no day had any votes
 
-    const visual = ((assets ?? []) as { media: string; processed_url: string | null; display_url: string | null }[])
-      .find((a) => a.media === 'image' || a.media === 'video')
-    const url = visual?.display_url || visual?.processed_url
-    if (url) covers[th.world_id] = url
+    for (const task of taskList) {
+      const { data: assets } = await admin
+        .from('signal_task_assets')
+        .select('id, media, processed_url, display_url, display_order')
+        .eq('task_id', task.id)
+        .eq('is_selected', true)
+        .order('display_order', { ascending: true })
+      const visuals = ((assets ?? []) as AssetRow[]).filter((a) => a.media === 'image' || a.media === 'video')
+      if (!visuals.length) continue
+
+      // Tally how many voyagers selected each asset on this day.
+      const { data: resp } = await admin
+        .from('signal_responses')
+        .select('selected_asset_id')
+        .eq('task_id', task.id)
+      const counts: Record<string, number> = {}
+      for (const r of (resp ?? []) as { selected_asset_id: string | null }[]) {
+        if (r.selected_asset_id) counts[r.selected_asset_id] = (counts[r.selected_asset_id] ?? 0) + 1
+      }
+
+      // Most-selected visual; ties / no votes keep the first by display_order.
+      let best = visuals[0]
+      let bestCount = counts[best.id] ?? 0
+      for (const a of visuals) {
+        const c = counts[a.id] ?? 0
+        if (c > bestCount) { best = a; bestCount = c }
+      }
+      const url = best.display_url || best.processed_url
+      if (!url) continue
+
+      if (bestCount > 0) { covers[th.world_id] = url; fallbackUrl = null; break }  // this day had votes — done
+      if (!fallbackUrl) fallbackUrl = url  // remember in case neither day was voted on
+    }
+
+    if (!covers[th.world_id] && fallbackUrl) covers[th.world_id] = fallbackUrl
   }
 
   return covers

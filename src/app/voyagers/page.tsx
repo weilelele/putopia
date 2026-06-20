@@ -173,6 +173,15 @@ export default function VoyagersPage() {
   const shownMembers = batchExpanded ? currentMembers : currentMembers.slice(0, BATCH_COLLAPSE)
   const hasMoreBatchMembers = currentMembers.length > BATCH_COLLAPSE
 
+  // Newest batch (getAllVoyagers is ordered by joined_at asc, so it's the last one).
+  const latestBatch = batches[batches.length - 1]
+
+  // Stat-board click: jump to a section, optionally selecting a batch first.
+  const jumpTo = (id: string, batchLabel?: string) => {
+    if (batchLabel) selectBatch(batchLabel)
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <div className="main">
       <SectionTracker section="voyagers" />
@@ -183,21 +192,17 @@ export default function VoyagersPage() {
         </div>
       </div>
 
-      <div className="page-head">
-        <div>
-          <div className="h-eyebrow">{"// NETWORK"}</div>
-          <h1>ACTIVE <span className="accent">VOYAGERS</span></h1>
-          <p className="sub">
-            {loading ? 'Loading registry...' : `Voyager Registry — ${voyagers.length} active members`}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div className="page-head" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: '1rem' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ whiteSpace: 'nowrap' }}>ACTIVE <span className="accent">VOYAGERS</span></h1>
+          {/* Voyager Logs — sits below the title */}
           <Link
             href="/logs"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
+              marginTop: '0.75rem',
               border: '1px solid rgba(255,107,53,0.4)',
               color: 'rgba(255,107,53,0.85)',
               background: 'transparent',
@@ -214,43 +219,51 @@ export default function VoyagersPage() {
             VOYAGER LOGS
             <ArrowRight size={14} />
           </Link>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem', flexShrink: 0 }}>
+          {/* Avatar + identity — borderless, on the title row, links to profile */}
           {user.role !== 'guest' && (() => {
             const idColor = user.role === 'applicant' ? '#E8A020' : user.role === 'architect' ? '#FF6B35' : '#FFB07A'
             const idLabel = user.role === 'applicant' ? 'APPLICANT' : user.role === 'architect' ? 'ARCHITECT' : 'VOYAGER'
             const profileName = user.name || user.email?.split('@')[0] || 'Voyager'
             const profileInitials = profileName.slice(0, 2).toUpperCase()
             return (
-              <Link
-                href="/profile"
-                title="My profile"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  border: '1px solid var(--color-nucleus)',
-                  background: 'rgba(232,93,4,0.08)',
-                  padding: '0.3rem 0.6rem 0.3rem 0.35rem',
-                  borderRadius: 8,
-                  textDecoration: 'none',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {user.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={user.avatarUrl} alt={profileName} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', display: 'block', border: `1.5px solid ${idColor}66` }} />
-                ) : (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: '50%', border: `1.5px solid ${idColor}66`, background: '#0A0D1A', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: idColor }}>
-                    {profileInitials}
-                  </span>
-                )}
-                <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
+              <Link href="/profile" title="My profile" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.1em', color: idColor }}>{idLabel}</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.08em', color: 'rgba(245,245,245,0.45)' }}>MY PROFILE</span>
                 </span>
+                {user.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.avatarUrl} alt={profileName} style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', display: 'block', border: `1.5px solid ${idColor}66` }} />
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', border: `1.5px solid ${idColor}66`, background: '#0A0D1A', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: idColor }}>
+                    {profileInitials}
+                  </span>
+                )}
               </Link>
             )
           })()}
         </div>
+      </div>
+
+      {/* ── Stat board — Architect Council / new Voyagers / total Voyagers ── */}
+      <div style={{
+        display: 'flex', gap: '0.75rem', marginBottom: '2rem', padding: '0.875rem 1rem',
+        justifyContent: 'space-between', background: 'var(--bg-card)',
+        border: '1px solid rgba(255,107,53,0.12)',
+        boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
+      }}>
+        {[
+          { val: architects.length,            label: 'ARCHITECTS',   color: 'var(--color-nucleus)', onClick: () => jumpTo('section-architects') },
+          { val: latestBatch?.members.length ?? 0, label: 'NEW BATCH',  color: 'var(--color-ok)',     onClick: () => jumpTo('section-voyagers', latestBatch?.label) },
+          { val: voyagers.length,              label: 'ALL VOYAGERS', color: 'var(--color-warn)',    onClick: () => jumpTo('section-voyagers') },
+        ].map(({ val, label, color, onClick }) => (
+          <button key={label} onClick={onClick} style={{ minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color, lineHeight: 1 }}>{loading ? '—' : val}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em', marginTop: 3, whiteSpace: 'nowrap' }}>{label}</div>
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -260,7 +273,7 @@ export default function VoyagersPage() {
       ) : (
         <>
           {architects.length > 0 && (
-            <section style={{ marginBottom: '2.5rem' }}>
+            <section id="section-architects" style={{ marginBottom: '2.5rem', scrollMarginTop: '1rem' }}>
               <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>{"// ARCHITECT COUNCIL"}</div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {architects.map(v => (
@@ -272,7 +285,7 @@ export default function VoyagersPage() {
           )}
 
           {activeVoyagers.length > 0 && (
-            <section>
+            <section id="section-voyagers" style={{ scrollMarginTop: '1rem' }}>
               <style>{`.batch-rail::-webkit-scrollbar{display:none}.batch-rail{scrollbar-width:none}`}</style>
 
               {/* Batch selector — horizontal scroll rail */}
