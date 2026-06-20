@@ -920,43 +920,66 @@ function ConsoleInner() {
     }
   }, [])
 
+  // Restoring the saved offset is hard because the page is NOT at full height when
+  // we mount: the Signal Feed is client-loaded into state that starts empty and
+  // only arrives after the wordmark animation settles (~2-3s), so for the first
+  // few seconds the container is too short to hold a deep offset and the browser
+  // silently clamps scrollTop toward the top. A one-shot (or 800ms) restore gives
+  // up long before the feed lands, so the position "holds then snaps to top".
+  //
+  // Instead, pin to the saved offset every frame until it actually STICKS — i.e.
+  // the content has grown tall enough that scrollTop === saved holds — or until
+  // the user scrolls themselves, or a hard deadline passes. This rides through the
+  // empty→skeleton→feed reflow without fighting a deliberate scroll.
   useEffect(() => {
     if (scrollRestored.current) return
     const el = scrollRef.current
-    if (!el || feedEntries.length === 0) return
-    scrollRestored.current = true
+    if (!el) return
     const saved = Number(sessionStorage.getItem('console:scrollTop') ?? '')
-    if (!saved) return
-    // Deep offsets are fragile: lazy images and async hero content reflow for a
-    // while after the feed mounts, and until the container is tall enough the
-    // browser silently clamps scrollTop to the current scrollHeight. So instead
-    // of restoring once, re-apply the saved offset across a short window until it
-    // sticks — but bail the moment the user scrolls themselves, so we never fight
-    // a deliberate scroll.
-    el.scrollTop = saved
-    let userScrolled = false
-    const onUserScroll = () => {
-      // A reflow-driven clamp lands near `saved`; a real user scroll moves far
-      // from it. Only treat large deviations as intentional.
-      if (Math.abs(el.scrollTop - saved) > 120) userScrolled = true
+    if (!saved) { scrollRestored.current = true; return }
+    scrollRestored.current = true
+
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      window.removeEventListener('wheel', onUserIntent, true)
+      window.removeEventListener('touchstart', onUserIntent, true)
+      window.removeEventListener('keydown', onScrollKey, true)
     }
-    el.addEventListener('wheel', () => { userScrolled = true }, { passive: true, once: true })
-    el.addEventListener('touchmove', () => { userScrolled = true }, { passive: true, once: true })
-    el.addEventListener('scroll', onUserScroll, { passive: true })
-    const timers: ReturnType<typeof setTimeout>[] = []
-    for (const delay of [16, 60, 150, 300, 500, 800]) {
-      timers.push(setTimeout(() => {
-        if (userScrolled) return
-        if (Math.abs(el.scrollTop - saved) > 2) el.scrollTop = saved
-      }, delay))
+    // Only genuine input aborts the restore — a raw `scroll` event is ambiguous
+    // (our own pin and layout reflow both fire it), so we key off wheel / touch /
+    // scroll-keys instead.
+    const onUserIntent = () => finish()
+    const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar'])
+    const onScrollKey = (e: KeyboardEvent) => { if (SCROLL_KEYS.has(e.key)) finish() }
+    window.addEventListener('wheel', onUserIntent, { capture: true, passive: true })
+    window.addEventListener('touchstart', onUserIntent, { capture: true, passive: true })
+    window.addEventListener('keydown', onScrollKey, { capture: true })
+
+    const deadline = performance.now() + 8000 // cover wordmark (~2-3s) + feed load
+    let stableFrames = 0
+    const tick = () => {
+      if (done) return
+      if (Math.abs(el.scrollTop - saved) > 1) {
+        el.scrollTop = saved
+        stableFrames = 0
+      } else {
+        stableFrames++
+      }
+      const maxScroll = el.scrollHeight - el.clientHeight
+      // Settled: we're at the target AND the page is tall enough that it's a real
+      // landing, not a clamp. Hold a few frames to absorb late reflow, then stop.
+      if (Math.abs(el.scrollTop - saved) <= 1 && maxScroll >= saved - 1 && stableFrames >= 3) {
+        finish()
+        return
+      }
+      if (performance.now() > deadline) { finish(); return }
+      requestAnimationFrame(tick)
     }
-    const stop = setTimeout(() => el.removeEventListener('scroll', onUserScroll), 850)
-    return () => {
-      timers.forEach(clearTimeout)
-      clearTimeout(stop)
-      el.removeEventListener('scroll', onUserScroll)
-    }
-  }, [feedEntries])
+    requestAnimationFrame(tick)
+    return finish
+  }, [])
 
   const isGuest = !loading && user.role === 'guest'
 
