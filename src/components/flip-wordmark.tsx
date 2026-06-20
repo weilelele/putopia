@@ -113,6 +113,14 @@ function FlipCell({ cell, pool, spread, runId, scale }: { cell: Placed; pool: st
 // main cost of re-entering the page.
 const PLAY_KEY = 'mc-wordmark-played-on'
 
+// Fired once the wordmark is done demanding resources — animation settled, or
+// immediately in static mode. The dashboard listens for this to defer loading
+// its heavy below-the-fold feed until the animation has the main thread to itself.
+export const WORDMARK_READY_EVENT = 'mc:wordmark-ready'
+function emitWordmarkReady() {
+  try { window.dispatchEvent(new Event(WORDMARK_READY_EVENT)) } catch { /* SSR / no window */ }
+}
+
 export function FlipWordmark({
   maxWidth = 600,
   fill = 0.92,
@@ -144,11 +152,24 @@ export function FlipWordmark({
     } catch {
       shouldAnimate = true
     }
-    if (!shouldAnimate) return
+    if (!shouldAnimate) {
+      // Static path: nothing heavy to load — let the page load its deferred
+      // content right away. rAF so parent listeners are attached first.
+      const raf = requestAnimationFrame(() => emitWordmarkReady())
+      return () => cancelAnimationFrame(raf)
+    }
     fetch('/assets/letters/manifest.json').then((r) => r.json()).then(setM).catch(() => {})
   }, [forceAnimate])
 
   const geom = useMemo(() => (m ? buildGeom(m) : null), [m])
+
+  // Animating: signal "ready" once the cells have finished their flicker-settle,
+  // so the page can load the heavy below-the-fold feed without competing with it.
+  useEffect(() => {
+    if (!geom) return
+    const t = setTimeout(() => emitWordmarkReady(), geom.lastSettle)
+    return () => clearTimeout(t)
+  }, [geom])
 
   // responsive scale: fit container, capped at maxWidth
   useEffect(() => {

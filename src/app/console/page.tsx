@@ -15,7 +15,7 @@ import { FeedProtoClient, type FeedEntry } from '@/app/feed-proto/feed-client'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import type { ExperimentGroup } from '@/lib/actions/experiment'
 import { SectionTracker } from '@/components/section-tracker'
-import { FlipWordmark } from '@/components/flip-wordmark'
+import { FlipWordmark, WORDMARK_READY_EVENT } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
 import type { Device, World, McFunction, IntelWithAvatar } from '@/types/database'
@@ -779,6 +779,34 @@ function AuthHero({ user }: {
 /* ─── Live UTC clock ─────────────────────────────────────── */
 // Renders an empty placeholder on the server + first client paint (so the two
 // match — no hydration mismatch), then fills in and ticks every second after
+// Placeholder that mirrors the embedded Signal Feed (2-column masonry, maxWidth
+// 820, "INTERNAL UPDATES" divider). Rendered while the real feed is deferred so
+// its height is reserved up front and the hero never gets shoved upward.
+function FeedSkeleton() {
+  const heights = [150, 210, 120, 190, 160, 230, 140, 180]
+  return (
+    <div style={{ maxWidth: 820, margin: '0 auto' }}>
+      <style>{`
+        .feed-skel-ph { background-image: linear-gradient(100deg, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.02) 70%); background-size: 200% 100%; animation: feed-skel-ph-shimmer 1.4s ease-in-out infinite; }
+        @keyframes feed-skel-ph-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+      `}</style>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)', opacity: 0.5 }}>INTERNAL UPDATES</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+      </div>
+      {/* min-height keeps the reserved feed area taller than the viewport's
+          leftover space, so the hero stays at its natural height (not stretched)
+          in both the skeleton and the loaded-feed state — no upward jump. */}
+      <div style={{ columnCount: 2, columnGap: 8, padding: '0 0.5rem', minHeight: '70vh' }} aria-hidden="true">
+        {heights.map((h, i) => (
+          <div key={i} className="feed-skel-ph" style={{ breakInside: 'avoid', marginBottom: 8, height: h, borderRadius: 3, border: '1px solid rgba(255,255,255,0.05)' }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // mount. The previous inline `new Date()` differed between server and client by
 // a second or two, forcing React to discard and rebuild the whole tree.
 function UtcClock() {
@@ -835,10 +863,30 @@ function ConsoleInner() {
     const onErr = (where: string) => (e: unknown) =>
       console.error(`[console] ${where} failed:`, (e as Error)?.message ?? e)
 
-    getSignalFeed().then(setFeedEntries).catch(onErr('getSignalFeed'))
     getMcFunctions().then((fns) => setMcFunctions(fns as McFunction[])).catch(onErr('getMcFunctions'))
     getGuestHeroStats().then(setHeroStats).catch(onErr('getGuestHeroStats'))
   }, [])
+
+  // Defer the heavy Signal Feed load until the wordmark animation has settled, so
+  // the once-per-day split-flap gets the main thread/network to itself on first
+  // paint. Heroes without a wordmark (voyager/architect) load immediately. A
+  // skeleton reserves the feed's height meanwhile, so the hero never jumps. A
+  // fallback timer guarantees the feed still loads if the ready signal is missed.
+  const feedRequested = useRef(false)
+  useEffect(() => {
+    if (loading || feedRequested.current) return
+    const load = () => {
+      if (feedRequested.current) return
+      feedRequested.current = true
+      getSignalFeed().then(setFeedEntries).catch((e) =>
+        console.error('[console] getSignalFeed failed:', (e as Error)?.message ?? e))
+    }
+    const heroHasWordmark = user.role === 'guest' || user.role === 'applicant'
+    if (!heroHasWordmark) { load(); return }
+    window.addEventListener(WORDMARK_READY_EVENT, load, { once: true })
+    const fallback = setTimeout(load, 6000)
+    return () => { window.removeEventListener(WORDMARK_READY_EVENT, load); clearTimeout(fallback) }
+  }, [loading, user.role])
 
   // Load the experiment group for any signed-in member (drives the ad-slot
   // variant). Guests stay null and fall back to the 'direct' variant below.
@@ -920,11 +968,13 @@ function ConsoleInner() {
            Feed + per-type content blocks). The Voyager ad rides as the pinned
            top-left block (A → /voyager-pack · B → /voyager-path), kept until the
            user becomes a Voyager (role flips off 'applicant'); sales-gated. ── */}
-      {feedEntries.length > 0 && (
-        // Cancel .landing-main's mobile horizontal padding (1.25rem) so the
-        // two-column feed gets the full width on portrait. On desktop the feed's
-        // own maxWidth (820) + margin auto re-centers it.
-        <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
+      {/* Cancel .landing-main's mobile horizontal padding (1.25rem) so the
+          two-column feed gets the full width on portrait. On desktop the feed's
+          own maxWidth (820) + margin auto re-centers it. The section is always
+          present — a skeleton reserves its height while the feed is deferred, so
+          the hero settles into its final position and never jumps upward. */}
+      <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
+        {feedEntries.length > 0 ? (
           <FeedProtoClient
             entries={feedEntries}
             embedded
@@ -932,8 +982,10 @@ function ConsoleInner() {
               ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
               : undefined}
           />
-        </section>
-      )}
+        ) : (
+          <FeedSkeleton />
+        )}
+      </section>
 
       <div className="footer-bar" style={{ marginTop: '2rem', justifyContent: 'center' }}>
         <div className="tag">EXPLORE PARALLEL WORLDS</div>
