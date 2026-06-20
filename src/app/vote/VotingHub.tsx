@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { FilterBar } from '@/components/filter-bar'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
@@ -73,7 +73,13 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
   const { isAtLeast } = useAuth()
   const router = useRouter()
   const [showCreate, setShowCreate] = useState(false)
-  const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
+  // Deep-link support: /vote?tab=classified opens the Classified tab directly
+  // (used by the Voyager-pack confirmation email). useSearchParams returns the
+  // same value on server and client, so this is hydration-safe.
+  const tabParam = useSearchParams().get('tab')
+  const [activeFilter, setActiveFilter] = useState<FilterTab>(
+    tabParam === 'classified' || tabParam === 'public' ? tabParam : 'all',
+  )
 
   const myResponseMap = Object.fromEntries(myResponses.map((r) => [r.vote_id, r.selected_options]))
 
