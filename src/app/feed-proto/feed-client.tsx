@@ -129,7 +129,6 @@ function VoyagerOnlyCover({ minHeight = 54 }: { minHeight?: number }) {
       background: 'repeating-linear-gradient(45deg, rgba(255,107,53,0.12) 0 9px, rgba(255,107,53,0.03) 9px 18px)',
       border: '1px solid rgba(255,107,53,0.22)',
     }}>
-      <span aria-hidden style={{ fontSize: FS_CAPTION, lineHeight: 1 }}>🔒</span>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.2em', color: ORANGE }}>VOYAGER ONLY</span>
     </div>
   )
@@ -469,8 +468,7 @@ function VoyagerGateModal({ kind, title, packHref, onClose }: { kind: 'intel' | 
       style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(5,8,20,0.78)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}
     >
       <div style={{ background: 'var(--color-void)', border: `1px solid ${ORANGE}`, borderRadius: 6, padding: 20, width: '100%', maxWidth: 360, textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
-          <span aria-hidden style={{ fontSize: FS_LABEL, lineHeight: 1 }}>🔒</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
           <span style={{ fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.22em', color: ORANGE }}>VOYAGER ONLY</span>
         </div>
         <div style={{ fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.4, color: 'var(--color-star)', marginBottom: 8 }}>{title}</div>
@@ -478,9 +476,6 @@ function VoyagerGateModal({ kind, title, packHref, onClose }: { kind: 'intel' | 
         <Link href={packHref} style={{ display: 'block', background: ORANGE, color: '#0A0E27', textDecoration: 'none', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', padding: '12px 0', borderRadius: 3 }}>
           BECOME A VOYAGER
         </Link>
-        <button onClick={onClose} style={{ marginTop: 12, background: 'none', border: 'none', color: 'rgba(245,245,245,0.4)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, letterSpacing: '0.1em' }}>
-          NOT NOW
-        </button>
       </div>
     </div>
   )
