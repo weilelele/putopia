@@ -633,6 +633,79 @@ function GuestHero({ newHref, mcFunctions, stats }: { newHref: string; mcFunctio
 }
 
 
+/* ─── Ask-us strip — three architect contacts, visible to logged-in users ─── */
+const ASK_US_CONTACTS = [
+  {
+    name: 'Ryo Tanaka',
+    handle: 'ryotanakaputo',
+    avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/86fadca3-8739-4553-9179-c4d0e84895ee/avatar.jpg',
+    href: 'https://x.com/ryotanakaputo',
+  },
+  {
+    name: 'Valentina Cruz',
+    handle: 'ValentinaCruzi',
+    avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/403b32a7-8d85-4cdd-9c7f-4f2c7919d726/avatar.jpg',
+    href: 'https://x.com/ValentinaCruzi',
+  },
+  {
+    name: 'Weile Yang',
+    handle: 'weilelele',
+    avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/6fc6e5cd-35fe-4812-ac04-f9074c6ee0c7/avatar.png',
+    href: 'https://x.com/weilelele',
+  },
+] as const
+
+function AskUsStrip() {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+      padding: '0 1.25rem', marginTop: '1rem',
+    }}>
+      <span style={{
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+        letterSpacing: '0.12em', color: 'var(--color-star-dim)',
+        whiteSpace: 'nowrap', opacity: 0.55,
+      }}>
+        QUESTIONS ABOUT US:
+      </span>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        {ASK_US_CONTACTS.map(({ name, handle, avatar, href }) => (
+          <a
+            key={name}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Ask ${name} on X`}
+            style={{ display: 'inline-block', flexShrink: 0, opacity: 0.7 }}
+            onClick={() => posthog.capture('ask_us_clicked', { architect: name, x_handle: handle })}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '1' }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '0.7' }}
+          >
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatar}
+                alt={name}
+                style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', display: 'block', border: '1px solid rgba(245,245,245,0.15)' }}
+              />
+            ) : (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 28, height: 28, borderRadius: '50%',
+                border: '1px solid rgba(255,107,53,0.35)', background: '#0A0D1A',
+                fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
+                color: 'rgba(255,107,53,0.8)', letterSpacing: '0.02em',
+              }}>
+                WL
+              </span>
+            )}
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Device popup — days held + reservation entry (gated until devices open) ── */
 function DeviceComingSoonModal({ days, onClose }: { days: number; onClose: () => void }) {
   const hasDevice = days > 0
@@ -986,6 +1059,9 @@ function ConsoleInner() {
       ) : (
         <AuthHero user={user} />
       )}
+
+      {/* ── Ask-us strip — only for logged-in members ── */}
+      {!loading && !isGuest && <AskUsStrip />}
 
       {/* ── Signal Feed — the unified two-column stream (replaces the old Status
            Feed + per-type content blocks). The Voyager ad rides as the pinned
