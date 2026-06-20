@@ -67,14 +67,14 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'stable').order('created_at', { ascending: false }).limit(2),
     db.from('devices').select('id, name, description, knowledge, image_path, status, location, current_user_name, current_user_id, updated_at').order('updated_at', { ascending: false }).limit(4),
     db.from('activity_events').select('actor_id, actor_name, target_title, created_at').eq('event_type', 'voyager_activated').eq('is_visible', true).order('created_at', { ascending: false }).limit(3),
-    db.from('votes').select('id, title, options, ends_at, created_at').eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    db.from('votes').select('id, title, options, ends_at, created_at').eq('is_active', true).order('created_at', { ascending: false }).limit(5),
   ])
 
   const intelRows = (intelR.data ?? []) as Record<string, unknown>[]
   const worldRows = [...(wProposedR.data ?? []), ...(wSyncingR.data ?? []), ...(wStableR.data ?? [])] as Record<string, unknown>[]
   const deviceRows = (deviceR.data ?? []) as Record<string, unknown>[]
   const voyagerRows = (voyagerR.data ?? []) as { actor_id: string | null; actor_name: string; target_title: string | null; created_at: string }[]
-  const vote = voteR.data as Record<string, unknown> | null
+  const voteRows = (voteR.data ?? []) as Record<string, unknown>[]
 
   // Signal Tuning timestamps: a world enters tuning when its signal_thread is created.
   const syncingIds = worldRows.filter(w => w.lifecycle_state === 'syncing').map(w => String(w.id))
@@ -92,12 +92,34 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
   deviceRows.forEach(r => r.current_user_id && ids.add(String(r.current_user_id)))
   voyagerRows.forEach(r => r.actor_id && ids.add(r.actor_id))
 
-  // Active vote + most-recent voters (with their chosen option).
-  let voters: Person[] = []
-  let voteCount = 0
-  let voteOptions: string[] = []
-  if (vote) {
-    voteOptions = coerceOptions(vote.options)
+  // All active votes: batch-fetch responses for all vote IDs in one query.
+  type RawResponse = { vote_id: string; voter_name: string | null; user_id: string | null; selected_options: unknown; created_at: string }
+  const voteIds = voteRows.map(v => String(v.id))
+  let allResponses: RawResponse[] = []
+  const countByVote: Record<string, number> = {}
+  if (voteIds.length) {
+    const { data: respData } = await db
+      .from('vote_responses')
+      .select('vote_id, voter_name, user_id, selected_options, created_at')
+      .in('vote_id', voteIds)
+      .order('created_at', { ascending: false })
+    allResponses = (respData ?? []) as RawResponse[]
+    // count per vote from the fetched rows (accurate enough; full count not needed for display)
+    for (const r of allResponses) countByVote[r.vote_id] = (countByVote[r.vote_id] ?? 0) + 1
+    // collect voter user_ids for avatar lookup
+    allResponses.forEach(r => { if (r.user_id) ids.add(r.user_id) })
+  }
+
+  const avatarMap: Record<string, string | null> = {}
+  if (ids.size) {
+    const { data: profs } = await db.from('voyager_profiles').select('id, avatar_url').in('id', [...ids])
+    for (const p of (profs ?? []) as { id: string; avatar_url: string | null }[]) avatarMap[p.id] = p.avatar_url
+  }
+
+  // Build one VoteCard per active vote using the pre-fetched responses.
+  function buildVoteCard(vote: Record<string, unknown>): VoteCard {
+    const vid = String(vote.id)
+    const options = coerceOptions(vote.options)
     const labelById: Record<string, string> = {}
     if (Array.isArray(vote.options)) {
       for (const o of vote.options as unknown[]) {
@@ -107,32 +129,30 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
         }
       }
     }
-    const { data: vr } = await db.from('vote_responses').select('voter_name, user_id, selected_options, created_at').eq('vote_id', vote.id).order('created_at', { ascending: false }).limit(15)
-    const { count } = await db.from('vote_responses').select('*', { count: 'exact', head: true }).eq('vote_id', vote.id)
-    voteCount = count ?? 0
+    const rows = allResponses.filter(r => r.vote_id === vid)
     const seen = new Set<string>()
     const picked: { name: string; user_id: string | null; option?: string }[] = []
-    const rows = (vr ?? []) as { voter_name: string | null; user_id: string | null; selected_options: unknown }[]
     for (let i = 0; i < rows.length && picked.length < 5; i++) {
       const r = rows[i]
       const key = r.user_id ?? r.voter_name ?? `anon-${i}`
       if (seen.has(key)) continue
       seen.add(key)
       const sel = Array.isArray(r.selected_options) ? r.selected_options[0] : r.selected_options
-      const option = typeof sel === 'number' ? voteOptions[sel] : typeof sel === 'string' ? (labelById[sel] ?? sel) : undefined
+      const option = typeof sel === 'number' ? options[sel] : typeof sel === 'string' ? (labelById[sel] ?? sel) : undefined
       picked.push({ name: r.voter_name ?? 'Voyager', user_id: r.user_id, option })
-      if (r.user_id) ids.add(r.user_id)
     }
-    voters = picked.map(p => ({ name: p.name, initial: initialOf(p.name), option: p.option }))
-    ;(voters as (Person & { _uid?: string | null })[]).forEach((v, i) => { v._uid = picked[i].user_id })
+    const voters: Person[] = picked.map(p => ({
+      name: p.name, initial: initialOf(p.name), option: p.option,
+      avatar: p.user_id ? avatarMap[p.user_id] ?? null : null,
+    }))
+    return {
+      id: vid, title: String(vote.title ?? 'Open signal vote'), options,
+      voters, count: countByVote[vid] ?? 0,
+      ends: until(vote.ends_at as string), time: rel(vote.created_at as string),
+    }
   }
 
-  const avatarMap: Record<string, string | null> = {}
-  if (ids.size) {
-    const { data: profs } = await db.from('voyager_profiles').select('id, avatar_url').in('id', [...ids])
-    for (const p of (profs ?? []) as { id: string; avatar_url: string | null }[]) avatarMap[p.id] = p.avatar_url
-  }
-  voters = (voters as (Person & { _uid?: string | null })[]).map(v => ({ name: v.name, initial: v.initial, option: v.option, avatar: v._uid ? avatarMap[v._uid] ?? null : null }))
+  const voteCards = voteRows.map(buildVoteCard)
 
   const person = (name?: string | null, id?: string | null): Person | null =>
     name ? { name: String(name), initial: initialOf(String(name)), avatar: id ? avatarMap[String(id)] ?? null : null } : null
@@ -213,11 +233,7 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
     grouped[b.bucket]?.push({ kind: 'content', item: b.item })
   }
 
-  const voteCard: VoteCard | null = vote ? {
-    id: String(vote.id), title: String(vote.title ?? 'Open signal vote'), options: voteOptions,
-    voters, count: voteCount, ends: until(vote.ends_at as string), time: rel(vote.created_at as string),
-  } : null
-  grouped.vote = voteCard ? [{ kind: 'vote', vote: voteCard }] : []
+  grouped.vote = voteCards.map(vc => ({ kind: 'vote' as const, vote: vc }))
 
   // Round-robin across buckets — most take 1 per round; Intelligence and New
   // Voyager take 2 (higher-volume, lighter cards). Vote stays in its bucket for
