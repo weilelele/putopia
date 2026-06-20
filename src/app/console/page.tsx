@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import Link from 'next/link'
@@ -826,9 +827,31 @@ function UtcClock() {
 // the skeleton, and re-defer the (2-3s) fetch behind the wordmark — collapsing
 // the page height so a restored deep scroll snaps back to the top. Seeding state
 // from this cache makes a return render the full-height feed immediately (no
-// skeleton, no collapse), so scroll restoration is instant and stable. It's
-// refreshed on every mount; a full reload clears it (first visit defers as before).
+// skeleton, no collapse), so scroll restoration is instant and stable.
+//
+// The in-memory copy is the fast path for soft (client) navigations. It's also
+// mirrored to sessionStorage so a FULL document reload — which some back actions
+// trigger (e.g. an iOS Safari bfcache miss) and which wipes module memory — can
+// still seed the feed synchronously and land at the saved offset.
+const FEED_CACHE_KEY = 'console:feed'
 let feedCache: FeedEntry[] = []
+
+function readFeedCache(): FeedEntry[] {
+  if (feedCache.length) return feedCache
+  try {
+    const raw = sessionStorage.getItem(FEED_CACHE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length) { feedCache = parsed; return parsed }
+    }
+  } catch { /* sessionStorage unavailable / quota / parse — fall through to empty */ }
+  return []
+}
+
+function writeFeedCache(d: FeedEntry[]) {
+  feedCache = d
+  try { sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify(d)) } catch { /* quota — keep in-memory only */ }
+}
 
 export default function ConsolePage() {
   return <Suspense><ConsoleInner /></Suspense>
@@ -889,14 +912,15 @@ function ConsoleInner() {
     const load = () => {
       if (feedRequested.current) return
       feedRequested.current = true
-      getSignalFeed().then((d) => { feedCache = d; setFeedEntries(d) }).catch((e) =>
+      getSignalFeed().then((d) => { writeFeedCache(d); setFeedEntries(d) }).catch((e) =>
         console.error('[console] getSignalFeed failed:', (e as Error)?.message ?? e))
     }
     const heroHasWordmark = user.role === 'guest' || user.role === 'applicant'
-    // If we already have a cached feed (a return visit), the page is full-height
-    // and the wordmark is static — refresh immediately instead of deferring, so
-    // we never reintroduce the skeleton/collapse window.
-    if (!heroHasWordmark || feedCache.length > 0) { load(); return }
+    // If we already have a cached feed (a return visit, incl. full reloads via
+    // sessionStorage), the page is full-height and the wordmark is static —
+    // refresh immediately instead of deferring, so we never reintroduce the
+    // skeleton/collapse window.
+    if (!heroHasWordmark || readFeedCache().length > 0) { load(); return }
     window.addEventListener(WORDMARK_READY_EVENT, load, { once: true })
     const fallback = setTimeout(load, 6000)
     return () => { window.removeEventListener(WORDMARK_READY_EVENT, load); clearTimeout(fallback) }
@@ -976,6 +1000,16 @@ function ConsoleInner() {
   useLayoutEffect(() => {
     const el = scrollRef.current
     if (!el) return
+
+    // On a full reload the module cache is gone and we mount as a skeleton. Seed
+    // the feed synchronously from the persistent cache BEFORE we pin, so the page
+    // is already full-height and the pin lands exactly — no flash, no land-near-
+    // top. flushSync forces the commit before the next line reads scrollHeight.
+    if (feedEntries.length === 0) {
+      const cached = readFeedCache()
+      if (cached.length) flushSync(() => setFeedEntries(cached))
+    }
+
     const saved = Number(sessionStorage.getItem('console:scrollTop') ?? '')
     if (!saved) { restoringRef.current = false; return }
     restoringRef.current = true
@@ -1024,6 +1058,10 @@ function ConsoleInner() {
     }, 50)
 
     return stop
+    // Mount-only: feedEntries.length is read once to decide the initial seed; the
+    // restore must NOT re-run when the feed updates, or it would re-pin scroll
+    // after the user has moved.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const isGuest = !loading && user.role === 'guest'
