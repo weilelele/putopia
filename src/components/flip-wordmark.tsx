@@ -121,6 +121,7 @@ function emitWordmarkReady() {
   try { window.dispatchEvent(new Event(WORDMARK_READY_EVENT)) } catch { /* SSR / no window */ }
 }
 
+
 export function FlipWordmark({
   maxWidth = 600,
   fill = 0.92,

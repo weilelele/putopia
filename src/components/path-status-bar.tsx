@@ -43,11 +43,14 @@ export function PathStatusBar({
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' },
     onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = 'transparent' },
   }
-  // Diagonal slash divider between cells (top row: avatar | identity; bottom
-  // row: Signal Dispatch | device days).
-  const diag = (
+  const diagTop = (
     <div style={{ width: 16, alignSelf: 'stretch', position: 'relative', flex: '0 0 auto' }}>
-      <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: 'rgba(255,107,53,0.22)', transform: 'skewX(-22deg)' }} />
+      <div style={{ position: 'absolute', top: '10%', bottom: '10%', left: 'calc(50% + 4px)', width: 1, background: 'rgba(255,107,53,0.22)', transform: 'skewX(-22deg)' }} />
+    </div>
+  )
+  const diagBottom = (
+    <div style={{ width: 16, alignSelf: 'stretch', position: 'relative', flex: '0 0 auto' }}>
+      <div style={{ position: 'absolute', top: '10%', bottom: '10%', left: '50%', width: 1, background: 'rgba(255,107,53,0.22)', transform: 'skewX(-22deg)' }} />
     </div>
   )
 
@@ -76,7 +79,7 @@ export function PathStatusBar({
           </span>
         </Link>
 
-        {diag}
+        {diagTop}
 
         <Link href="/voyager-path" title="View your path" style={{ ...cell, flex: 1, minWidth: 0 }} {...hov}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
@@ -99,7 +102,7 @@ export function PathStatusBar({
           </span>
         </Link>
 
-        {diag}
+        {diagBottom}
 
         {/* Right half — device days; clicking opens the device modal */}
         <button onClick={onDeviceClick} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1 1 0', minWidth: 0, gap: 11 }} {...hov}>
