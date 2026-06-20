@@ -545,7 +545,7 @@ function GuestHero({ newHref, mcFunctions, stats }: { newHref: string; mcFunctio
         fontFamily: 'var(--font-body)', fontSize: 'clamp(1rem, 4.5vw, 1.25rem)',
         lineHeight: 1.55, color: 'var(--color-star)', ...line(1),
       }}>
-        We own devices that look into worlds that aren&apos;t ours.
+        We own devices looking into parallel worlds.
       </p>
 
       {/* Three headline numbers — tap to reveal an explanation */}
