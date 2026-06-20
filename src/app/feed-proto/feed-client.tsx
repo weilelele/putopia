@@ -246,32 +246,46 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
 
 // ─── Page client ──────────────────────────────────────────────────────────────
 
-export function FeedProtoClient({ entries }: { entries: FeedEntry[] }) {
+export function FeedProtoClient({ entries, embedded = false }: { entries: FeedEntry[]; embedded?: boolean }) {
   const [voteOpen, setVoteOpen] = useState(false)
   const voteEntry = entries.find(e => e.kind === 'vote')
   const vote = voteEntry && voteEntry.kind === 'vote' ? voteEntry.vote : null
 
-  return (
-    <div style={{ height: '100dvh', overflowY: 'auto', background: 'var(--color-deep)', color: 'var(--color-star)' }}>
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px',
-          borderBottom: '1px solid #161c30', position: 'sticky', top: 0, zIndex: 10,
-          background: 'rgba(10,14,39,0.92)', backdropFilter: 'blur(12px)',
-        }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.24em', color: ORANGE }}>SIGNAL FEED</span>
-          <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: FS_LABEL }}>⌖</span>
-        </div>
+  const outer = embedded
+    ? { color: 'var(--color-star)' as const }
+    : { height: '100dvh', overflowY: 'auto' as const, background: 'var(--color-deep)', color: 'var(--color-star)' }
 
-        <div style={{ padding: 10, columnCount: 2, columnGap: 8 }}>
+  return (
+    <div style={outer}>
+      <div style={{ maxWidth: 600, margin: '0 auto' }}>
+        {embedded ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.3em', color: ORANGE }}>SIGNAL FEED</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+          </div>
+        ) : (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px',
+            borderBottom: '1px solid #161c30', position: 'sticky', top: 0, zIndex: 10,
+            background: 'rgba(10,14,39,0.92)', backdropFilter: 'blur(12px)',
+          }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.24em', color: ORANGE }}>SIGNAL FEED</span>
+            <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: FS_LABEL }}>⌖</span>
+          </div>
+        )}
+
+        <div style={{ padding: embedded ? 0 : 10, columnCount: 2, columnGap: 8 }}>
           {entries.map(e => e.kind === 'vote'
             ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setVoteOpen(true)} />
             : <ContentCard key={e.item.id} item={e.item} />)}
         </div>
 
-        <div style={{ textAlign: 'center', color: 'rgba(245,245,245,0.25)', fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, padding: '12px 0 96px', letterSpacing: '0.2em' }}>
-          ↓ END OF SIGNAL WINDOW
-        </div>
+        {!embedded && (
+          <div style={{ textAlign: 'center', color: 'rgba(245,245,245,0.25)', fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, padding: '12px 0 96px', letterSpacing: '0.2em' }}>
+            ↓ END OF SIGNAL WINDOW
+          </div>
+        )}
       </div>
 
       {voteOpen && vote && <VoteModal vote={vote} onClose={() => setVoteOpen(false)} />}
