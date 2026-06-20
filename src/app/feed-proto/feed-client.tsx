@@ -194,7 +194,7 @@ function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
             </div>
           ))}
           {extra > 0 && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.4)', paddingLeft: 27 }}>+{extra} more signals</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.4)', paddingLeft: 27, whiteSpace: 'nowrap' }}>+{extra} more</div>
           )}
         </div>
       )}
@@ -203,9 +203,9 @@ function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
         MAKE A DECISION
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.45)' }}>{vote.count} signals in</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>{vote.ends}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 9 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.45)', whiteSpace: 'nowrap' }}>{vote.count} votes</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap' }}>{vote.ends}</span>
       </div>
     </div>
   )
