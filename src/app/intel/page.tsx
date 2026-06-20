@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { MessageSquare, Plus, Vote, ArrowRight } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import type { IntelWithAvatar } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
 import { useAuth } from '@/lib/auth-context'
@@ -208,11 +209,24 @@ const INTEL_FILTERS = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function IntelPage() {
+  return (
+    <Suspense fallback={null}>
+      <IntelPageContent />
+    </Suspense>
+  )
+}
+
+function IntelPageContent() {
   const { isAtLeast } = useAuth()
   const [intel, setIntel] = useState<IntelWithAvatar[]>([])
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
   const [showCreate, setShowCreate] = useState(false)
-  const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
+  // Deep-link support: /intel?tab=classified opens the Classified tab directly
+  // (used by the Voyager-pack confirmation email).
+  const tabParam = useSearchParams().get('tab')
+  const [activeFilter, setActiveFilter] = useState<FilterTab>(
+    tabParam === 'classified' || tabParam === 'public' ? tabParam : 'all',
+  )
 
   const loadIntel = async () => {
     const data = await getAllIntel()
