@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import Link from 'next/link'
@@ -821,6 +821,15 @@ function UtcClock() {
 }
 
 /* ─── Page ──────────────────────────────────────────────── */
+// Session-lived cache of the Signal Feed. Back-navigation remounts this page and
+// resets component state, which would otherwise drop the feed to empty, re-show
+// the skeleton, and re-defer the (2-3s) fetch behind the wordmark — collapsing
+// the page height so a restored deep scroll snaps back to the top. Seeding state
+// from this cache makes a return render the full-height feed immediately (no
+// skeleton, no collapse), so scroll restoration is instant and stable. It's
+// refreshed on every mount; a full reload clears it (first visit defers as before).
+let feedCache: FeedEntry[] = []
+
 export default function ConsolePage() {
   return <Suspense><ConsoleInner /></Suspense>
 }
@@ -853,7 +862,7 @@ function ConsoleInner() {
 
   // Preserve UTM params when forwarding to /new
   const newHref = searchParams.toString() ? `/new?${searchParams.toString()}` : '/new'
-  const [feedEntries, setFeedEntries] = useState<FeedEntry[]>([])
+  const [feedEntries, setFeedEntries] = useState<FeedEntry[]>(() => feedCache)
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
   const [heroStats, setHeroStats] = useState<GuestHeroStats | null>(null)
   const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
@@ -880,11 +889,14 @@ function ConsoleInner() {
     const load = () => {
       if (feedRequested.current) return
       feedRequested.current = true
-      getSignalFeed().then(setFeedEntries).catch((e) =>
+      getSignalFeed().then((d) => { feedCache = d; setFeedEntries(d) }).catch((e) =>
         console.error('[console] getSignalFeed failed:', (e as Error)?.message ?? e))
     }
     const heroHasWordmark = user.role === 'guest' || user.role === 'applicant'
-    if (!heroHasWordmark) { load(); return }
+    // If we already have a cached feed (a return visit), the page is full-height
+    // and the wordmark is static — refresh immediately instead of deferring, so
+    // we never reintroduce the skeleton/collapse window.
+    if (!heroHasWordmark || feedCache.length > 0) { load(); return }
     window.addEventListener(WORDMARK_READY_EVENT, load, { once: true })
     const fallback = setTimeout(load, 6000)
     return () => { window.removeEventListener(WORDMARK_READY_EVENT, load); clearTimeout(fallback) }
@@ -958,12 +970,19 @@ function ConsoleInner() {
     }
   }, [])
 
-  useEffect(() => {
+  // useLayoutEffect so the first pin happens BEFORE the browser paints — with the
+  // feed seeded from cache the page is already full-height on a return, so this
+  // lands us at the saved offset with no visible jump-from-top at all.
+  useLayoutEffect(() => {
     const el = scrollRef.current
     if (!el) return
     const saved = Number(sessionStorage.getItem('console:scrollTop') ?? '')
     if (!saved) { restoringRef.current = false; return }
     restoringRef.current = true
+
+    // Immediate pre-paint pin (clamped to current height; the interval keeps
+    // correcting as a deferred feed grows the page on a cold load).
+    el.scrollTop = Math.min(saved, el.scrollHeight - el.clientHeight)
 
     let done = false
     let aborted = false
