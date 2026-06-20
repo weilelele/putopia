@@ -1077,6 +1077,7 @@ function ConsoleInner() {
           <FeedProtoClient
             entries={feedEntries}
             embedded
+            packHref={(experimentGroup ?? 'direct') === 'direct' ? '/voyager-pack' : '/voyager-path'}
             leadSlot={!loading && SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
               ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
               : undefined}

@@ -36,6 +36,9 @@ export type FeedItem = {
   time: string
   established?: boolean
   world?: PosterWorld
+  // Voyager-only intel the current viewer cannot see: body/image/byline are
+  // stripped server-side; the client renders a cover + gate modal on tap.
+  locked?: boolean
 }
 
 export type VoteCard = {
@@ -46,6 +49,9 @@ export type VoteCard = {
   count: number
   ends: string
   time: string
+  // Voyager-only vote the current viewer cannot see: options/voters stripped
+  // server-side; the client renders a cover + gate modal on tap.
+  locked?: boolean
 }
 
 export type FeedEntry =
@@ -113,9 +119,25 @@ function Footer({ actor, time, align = 'space-between' }: { actor?: Person | nul
   )
 }
 
+// ─── Voyager-only cover — sits where the gated body would be ──────────────────
+
+function VoyagerOnlyCover({ minHeight = 54 }: { minHeight?: number }) {
+  return (
+    <div style={{
+      marginTop: 8, minHeight, borderRadius: 3,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      background: 'repeating-linear-gradient(45deg, rgba(255,107,53,0.12) 0 9px, rgba(255,107,53,0.03) 9px 18px)',
+      border: '1px solid rgba(255,107,53,0.22)',
+    }}>
+      <span aria-hidden style={{ fontSize: FS_CAPTION, lineHeight: 1 }}>🔒</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.2em', color: ORANGE }}>VOYAGER ONLY</span>
+    </div>
+  )
+}
+
 // ─── Content card (info / device / member) — navigates to the real route ──────
 
-function ContentCard({ item, onMember }: { item: FeedItem; onMember?: (item: FeedItem) => void }) {
+function ContentCard({ item, onMember, onLocked }: { item: FeedItem; onMember?: (item: FeedItem) => void; onLocked?: (item: FeedItem) => void }) {
   if (item.kind === 'world' && item.world) {
     return (
       <div style={{ breakInside: 'avoid', marginBottom: 11 }}>
@@ -136,6 +158,7 @@ function ContentCard({ item, onMember }: { item: FeedItem; onMember?: (item: Fee
   }
 
   const isMember = item.kind === 'member'
+  const isLocked = !!item.locked
   const hasImage = !!item.image
   // Text-only cards (no cover, not a member portrait) used to collapse to a
   // squat block when the copy was short. Give them a floor height and let flex
@@ -186,6 +209,8 @@ function ContentCard({ item, onMember }: { item: FeedItem; onMember?: (item: Fee
           }}>{item.snippet}</div>
         )}
 
+        {isLocked && <VoyagerOnlyCover />}
+
         {textOnly && <div style={{ flex: '1 1 0', minHeight: 6 }} />}
 
         {isMember
@@ -194,6 +219,23 @@ function ContentCard({ item, onMember }: { item: FeedItem; onMember?: (item: Fee
       </div>
     </>
   )
+
+  // Gated intel: tap opens the Voyager gate modal instead of the (RLS-blocked)
+  // detail route. Takes precedence over the member-intro branch (mutually
+  // exclusive in practice — members are never gated).
+  if (isLocked) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => onLocked?.(item)}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onLocked?.(item) } }}
+        style={{ ...cardStyle, cursor: 'pointer' }}
+      >
+        {inner}
+      </div>
+    )
+  }
 
   if (opensIntro) {
     return (
@@ -218,8 +260,27 @@ function ContentCard({ item, onMember }: { item: FeedItem; onMember?: (item: Fee
 
 // ─── Vote card — recent voters listed line by line + solid CTA ────────────────
 
-function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
+function VoteTofu({ vote, onVote, onLocked }: { vote: VoteCard; onVote: () => void; onLocked?: () => void }) {
   const shown = vote.voters.slice(0, 5)
+
+  // Voyager-only vote the viewer can't participate in: title teaser + cover,
+  // tap opens the gate modal. Options/voters/tallies were stripped server-side.
+  if (vote.locked) {
+    return (
+      <div
+        onClick={() => onLocked?.()}
+        style={{
+          breakInside: 'avoid', marginBottom: 11, background: '#1A1107',
+          borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
+        }}
+      >
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.38, color: LORANGE }}>{vote.title}</div>
+        <VoyagerOnlyCover minHeight={64} />
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap', marginTop: 9 }}>{vote.ends}</div>
+      </div>
+    )
+  }
+
   return (
     <div
       onClick={onVote}
@@ -396,14 +457,45 @@ function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () =>
   )
 }
 
+// ─── Voyager gate modal — shown when a non-Voyager taps gated intel / a vote ──
+
+function VoyagerGateModal({ kind, title, packHref, onClose }: { kind: 'intel' | 'vote'; title: string; packHref: string; onClose: () => void }) {
+  const body = kind === 'vote'
+    ? 'Only Voyagers can take part in this signal vote.'
+    : 'This intelligence is restricted to Voyagers.'
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(5,8,20,0.78)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}
+    >
+      <div style={{ background: 'var(--color-void)', border: `1px solid ${ORANGE}`, borderRadius: 6, padding: 20, width: '100%', maxWidth: 360, textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
+          <span aria-hidden style={{ fontSize: FS_LABEL, lineHeight: 1 }}>🔒</span>
+          <span style={{ fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.22em', color: ORANGE }}>VOYAGER ONLY</span>
+        </div>
+        <div style={{ fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.4, color: 'var(--color-star)', marginBottom: 8 }}>{title}</div>
+        <div style={{ fontSize: FS_CAPTION, lineHeight: 1.55, color: 'rgba(245,245,245,0.6)', marginBottom: 18 }}>{body}</div>
+        <Link href={packHref} style={{ display: 'block', background: ORANGE, color: '#0A0E27', textDecoration: 'none', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', padding: '12px 0', borderRadius: 3 }}>
+          BECOME A VOYAGER
+        </Link>
+        <button onClick={onClose} style={{ marginTop: 12, background: 'none', border: 'none', color: 'rgba(245,245,245,0.4)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, letterSpacing: '0.1em' }}>
+          NOT NOW
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page client ──────────────────────────────────────────────────────────────
 
-export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entries: FeedEntry[]; embedded?: boolean; leadSlot?: ReactNode }) {
+export function FeedProtoClient({ entries, embedded = false, leadSlot, packHref = '/voyager-pack' }: { entries: FeedEntry[]; embedded?: boolean; leadSlot?: ReactNode; packHref?: string }) {
   // Track the specific vote that was clicked — every vote must open its own
   // options, not the first vote's.
   const [activeVote, setActiveVote] = useState<VoteCard | null>(null)
   // The new-voyager whose intro popup is open (null = none).
   const [activeVoyager, setActiveVoyager] = useState<Person | null>(null)
+  // The gated item (intel / vote) whose Voyager-gate modal is open (null = none).
+  const [gate, setGate] = useState<{ kind: 'intel' | 'vote'; title: string } | null>(null)
 
   const outer = embedded
     ? { color: 'var(--color-star)' as const }
@@ -419,8 +511,8 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entri
   entries.forEach((e, i) => (i % 2 === 0 ? leftCol : rightCol).push(e))
   const renderEntry = (e: FeedEntry) =>
     e.kind === 'vote'
-      ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setActiveVote(e.vote)} />
-      : <ContentCard key={e.item.id} item={e.item} onMember={it => setActiveVoyager(it.actor ?? null)} />
+      ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setActiveVote(e.vote)} onLocked={() => setGate({ kind: 'vote', title: e.vote.title })} />
+      : <ContentCard key={e.item.id} item={e.item} onMember={it => setActiveVoyager(it.actor ?? null)} onLocked={it => setGate({ kind: 'intel', title: it.title })} />
 
   return (
     <div style={outer}>
@@ -469,6 +561,7 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entri
 
       {activeVote && <VoteModal vote={activeVote} onClose={() => setActiveVote(null)} />}
       {activeVoyager && <VoyagerIntroModal person={activeVoyager} onClose={() => setActiveVoyager(null)} />}
+      {gate && <VoyagerGateModal kind={gate.kind} title={gate.title} packHref={packHref} onClose={() => setGate(null)} />}
     </div>
   )
 }
