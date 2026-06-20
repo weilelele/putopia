@@ -7,25 +7,18 @@ import Link from 'next/link'
 import { MessageSquare } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
-import { getAllDevices } from '@/lib/actions/devices'
-import { getPublicIntel } from '@/lib/actions/intel'
-import { getCommentCountsBulk } from '@/lib/actions/comments'
-import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actions/votes'
-import { getAllWorlds } from '@/lib/actions/worlds'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { getGuestHeroStats } from '@/lib/actions/hero-stats'
 import type { GuestHeroStats } from '@/lib/actions/hero-stats'
-import { getActivityFeed } from '@/lib/actions/activity-events'
+import { getSignalFeed } from '@/lib/actions/signal-feed'
+import { FeedProtoClient, type FeedEntry } from '@/app/feed-proto/feed-client'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import type { ExperimentGroup } from '@/lib/actions/experiment'
-import { ActivityFeed } from '@/components/activity-feed'
-import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
-import { FlipWordmark } from '@/components/flip-wordmark'
+import { FlipWordmark, WORDMARK_READY_EVENT } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
-import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/types/database'
-import type { ActivityEvent } from '@/lib/actions/activity-events'
+import type { Device, World, McFunction, IntelWithAvatar } from '@/types/database'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
 const SALES_OPEN = true
@@ -719,9 +712,8 @@ function DeviceBarIcon({ size = 16, color = 'currentColor' }: { size?: number; c
 }
 
 /* ─── Auth Hero — Welcome Voyager (voyager+) / status-led (applicant) ──── */
-function AuthHero({ user, activityEvents }: {
+function AuthHero({ user }: {
   user: { role: string; name?: string; email?: string; avatarUrl?: string | null }
-  activityEvents: ActivityEvent[]
 }) {
   const isApplicant = user.role === 'applicant'
   const [deviceModal, setDeviceModal] = useState(false)
@@ -776,17 +768,10 @@ function AuthHero({ user, activityEvents }: {
         </>
       )}
 
-      {/* ── Path status bar (above the Status Feed) ── */}
+      {/* ── Path status bar ── */}
       <div style={{ width: '100%', margin: isApplicant ? '0 auto' : '0.75rem auto 0', padding: '0 1.25rem' }}>
         <PathStatusBar user={user} deviceDays={deviceDays} onDeviceClick={() => setDeviceModal(true)} />
       </div>
-
-      {/* ── Status Feed ── */}
-      {activityEvents.length > 0 && (
-        <div style={{ width: '100%', maxWidth: '560px', margin: '0.75rem auto 0', padding: '0 1.25rem' }}>
-          <ActivityFeed events={activityEvents} />
-        </div>
-      )}
     </section>
   )
 }
@@ -794,6 +779,34 @@ function AuthHero({ user, activityEvents }: {
 /* ─── Live UTC clock ─────────────────────────────────────── */
 // Renders an empty placeholder on the server + first client paint (so the two
 // match — no hydration mismatch), then fills in and ticks every second after
+// Placeholder that mirrors the embedded Signal Feed (2-column masonry, maxWidth
+// 820, "INTERNAL UPDATES" divider). Rendered while the real feed is deferred so
+// its height is reserved up front and the hero never gets shoved upward.
+function FeedSkeleton() {
+  const heights = [150, 210, 120, 190, 160, 230, 140, 180]
+  return (
+    <div style={{ maxWidth: 820, margin: '0 auto' }}>
+      <style>{`
+        .feed-skel-ph { background-image: linear-gradient(100deg, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.02) 70%); background-size: 200% 100%; animation: feed-skel-ph-shimmer 1.4s ease-in-out infinite; }
+        @keyframes feed-skel-ph-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+      `}</style>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)', opacity: 0.5 }}>INTERNAL UPDATES</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+      </div>
+      {/* min-height keeps the reserved feed area taller than the viewport's
+          leftover space, so the hero stays at its natural height (not stretched)
+          in both the skeleton and the loaded-feed state — no upward jump. */}
+      <div style={{ columnCount: 2, columnGap: 8, padding: '0 0.5rem', minHeight: '70vh' }} aria-hidden="true">
+        {heights.map((h, i) => (
+          <div key={i} className="feed-skel-ph" style={{ breakInside: 'avoid', marginBottom: 8, height: h, borderRadius: 3, border: '1px solid rgba(255,255,255,0.05)' }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // mount. The previous inline `new Date()` differed between server and client by
 // a second or two, forcing React to discard and rebuild the whole tree.
 function UtcClock() {
@@ -816,6 +829,8 @@ function ConsoleInner() {
   const { user, loading } = useAuth()
   const searchParams = useSearchParams()
   const utmTracked = useRef(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollRestored = useRef(false)
 
   useEffect(() => {
     if (utmTracked.current) return
@@ -836,14 +851,7 @@ function ConsoleInner() {
 
   // Preserve UTM params when forwarding to /new
   const newHref = searchParams.toString() ? `/new?${searchParams.toString()}` : '/new'
-  const [devices, setDevices] = useState<Device[]>([])
-  const [latestIntel, setLatestIntel] = useState<IntelWithAvatar[]>([])
-  const [intelCommentCounts, setIntelCommentCounts] = useState<Record<string, number>>({})
-  const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([])
-  const [latestVotes, setLatestVotes] = useState<Vote[]>([])
-  const [voteTallies, setVoteTallies] = useState<Record<string, Record<string, number>>>({})
-  const [myVoteResponses, setMyVoteResponses] = useState<{ vote_id: string; selected_options: string[] }[]>([])
-  const [latestWorlds, setLatestWorlds] = useState<World[]>([])
+  const [feedEntries, setFeedEntries] = useState<FeedEntry[]>([])
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
   const [heroStats, setHeroStats] = useState<GuestHeroStats | null>(null)
   const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
@@ -855,45 +863,105 @@ function ConsoleInner() {
     const onErr = (where: string) => (e: unknown) =>
       console.error(`[console] ${where} failed:`, (e as Error)?.message ?? e)
 
-    getAllDevices().then((all) => {
-      const unknown = all.filter((dev) => dev.knowledge === 'unknown').slice(0, 1)
-      const known = all.filter((dev) => dev.knowledge === 'known').slice(0, 2)
-      setDevices([...unknown, ...known])
-    }).catch(onErr('getAllDevices'))
-    getPublicIntel().then(async (intel) => {
-      const slice = (intel as IntelWithAvatar[]).slice(0, 3)
-      setLatestIntel(slice)
-      if (slice.length > 0) {
-        const counts = await getCommentCountsBulk('intel', slice.map(e => e.id))
-        setIntelCommentCounts(counts)
-      }
-    }).catch(onErr('getPublicIntel'))
-    getActivityFeed(7).then(setActivityEvents).catch(onErr('getActivityFeed'))
-    getAllWorlds().then((w) => setLatestWorlds([...w].reverse().slice(0, 4))).catch(onErr('getAllWorlds'))
     getMcFunctions().then((fns) => setMcFunctions(fns as McFunction[])).catch(onErr('getMcFunctions'))
     getGuestHeroStats().then(setHeroStats).catch(onErr('getGuestHeroStats'))
-    getAllVotes().then(async (votes) => {
-      const active = votes.filter((v) => v.is_active).slice(0, 3)
-      setLatestVotes(active)
-      if (active.length > 0) {
-        const tallies = await getVoteResultsBulk(active.map((v) => v.id))
-        setVoteTallies(tallies)
-      }
-    }).catch(onErr('getAllVotes'))
-    getMyVoteResponses().then(setMyVoteResponses).catch(onErr('getMyVoteResponses'))
   }, [])
 
-  // Load experiment group for applicants (drives the ad-slot variant)
+  // Defer the heavy Signal Feed load until the wordmark animation has settled, so
+  // the once-per-day split-flap gets the main thread/network to itself on first
+  // paint. Heroes without a wordmark (voyager/architect) load immediately. A
+  // skeleton reserves the feed's height meanwhile, so the hero never jumps. A
+  // fallback timer guarantees the feed still loads if the ready signal is missed.
+  const feedRequested = useRef(false)
   useEffect(() => {
-    if (!loading && user.role === 'applicant') {
+    if (loading || feedRequested.current) return
+    const load = () => {
+      if (feedRequested.current) return
+      feedRequested.current = true
+      getSignalFeed().then(setFeedEntries).catch((e) =>
+        console.error('[console] getSignalFeed failed:', (e as Error)?.message ?? e))
+    }
+    const heroHasWordmark = user.role === 'guest' || user.role === 'applicant'
+    if (!heroHasWordmark) { load(); return }
+    window.addEventListener(WORDMARK_READY_EVENT, load, { once: true })
+    const fallback = setTimeout(load, 6000)
+    return () => { window.removeEventListener(WORDMARK_READY_EVENT, load); clearTimeout(fallback) }
+  }, [loading, user.role])
+
+  // Load the experiment group for any signed-in member (drives the ad-slot
+  // variant). Guests stay null and fall back to the 'direct' variant below.
+  useEffect(() => {
+    if (!loading && user.role !== 'guest') {
       getOrAssignExperimentGroup().then(setExperimentGroup)
     }
   }, [loading, user.role])
 
+  // ── Scroll restoration ──────────────────────────────────────────────────
+  // The dashboard scrolls inside `.landing-main`, not the window, so Next's
+  // built-in (window-based) restoration can't return you to where you left off
+  // after visiting a world / device / signal page. Persist the container's
+  // scrollTop to sessionStorage and restore it once the feed — whose skeletons
+  // reserve height up front — has rendered, so the target offset is valid.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const save = () => sessionStorage.setItem('console:scrollTop', String(el.scrollTop))
+    const onScroll = () => {
+      // Debounce so we write at most every ~120ms while scrolling.
+      if (timer) return
+      timer = setTimeout(() => { timer = undefined; save() }, 120)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      if (timer) clearTimeout(timer)
+      save() // flush the final position on unmount (navigating away)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (scrollRestored.current) return
+    const el = scrollRef.current
+    if (!el || feedEntries.length === 0) return
+    scrollRestored.current = true
+    const saved = Number(sessionStorage.getItem('console:scrollTop') ?? '')
+    if (!saved) return
+    // Deep offsets are fragile: lazy images and async hero content reflow for a
+    // while after the feed mounts, and until the container is tall enough the
+    // browser silently clamps scrollTop to the current scrollHeight. So instead
+    // of restoring once, re-apply the saved offset across a short window until it
+    // sticks — but bail the moment the user scrolls themselves, so we never fight
+    // a deliberate scroll.
+    el.scrollTop = saved
+    let userScrolled = false
+    const onUserScroll = () => {
+      // A reflow-driven clamp lands near `saved`; a real user scroll moves far
+      // from it. Only treat large deviations as intentional.
+      if (Math.abs(el.scrollTop - saved) > 120) userScrolled = true
+    }
+    el.addEventListener('wheel', () => { userScrolled = true }, { passive: true, once: true })
+    el.addEventListener('touchmove', () => { userScrolled = true }, { passive: true, once: true })
+    el.addEventListener('scroll', onUserScroll, { passive: true })
+    const timers: ReturnType<typeof setTimeout>[] = []
+    for (const delay of [16, 60, 150, 300, 500, 800]) {
+      timers.push(setTimeout(() => {
+        if (userScrolled) return
+        if (Math.abs(el.scrollTop - saved) > 2) el.scrollTop = saved
+      }, delay))
+    }
+    const stop = setTimeout(() => el.removeEventListener('scroll', onUserScroll), 850)
+    return () => {
+      timers.forEach(clearTimeout)
+      clearTimeout(stop)
+      el.removeEventListener('scroll', onUserScroll)
+    }
+  }, [feedEntries])
+
   const isGuest = !loading && user.role === 'guest'
 
   return (
-    <div className="landing-main">
+    <div className="landing-main" ref={scrollRef}>
       <SectionTracker section="dashboard" />
       <div className="nebula-bg" />
 
@@ -916,114 +984,34 @@ function ConsoleInner() {
       ) : isGuest ? (
         <GuestHero newHref={newHref} mcFunctions={mcFunctions} stats={heroStats} />
       ) : (
-        <AuthHero user={user} activityEvents={activityEvents} />
+        <AuthHero user={user} />
       )}
 
-      {/* ── Voyager ad slot — between Status Feed and Device Registry ──
-           A (direct) → /voyager-pack · B (task_gated) → /voyager-path.
-           Hidden for non-applicants and while sales are closed. */}
-      {!loading && SALES_OPEN && user.role === 'applicant' && experimentGroup && (
-        <section style={{ padding: '0.5rem 2.5rem 0' }}>
-          <div style={{ maxWidth: 360, margin: '0 auto' }}>
-            <VoyagerAdSlot group={experimentGroup} />
-          </div>
-        </section>
-      )}
+      {/* ── Signal Feed — the unified two-column stream (replaces the old Status
+           Feed + per-type content blocks). The Voyager ad rides as the pinned
+           top-left block (A → /voyager-pack · B → /voyager-path), kept until the
+           user becomes a Voyager (role flips off 'applicant'); sales-gated. ── */}
+      {/* Cancel .landing-main's mobile horizontal padding (1.25rem) so the
+          two-column feed gets the full width on portrait. On desktop the feed's
+          own maxWidth (820) + margin auto re-centers it. The section is always
+          present — a skeleton reserves its height while the feed is deferred, so
+          the hero settles into its final position and never jumps upward. */}
+      <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
+        {feedEntries.length > 0 ? (
+          <FeedProtoClient
+            entries={feedEntries}
+            embedded
+            leadSlot={!loading && SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
+              ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
+              : undefined}
+          />
+        ) : (
+          <FeedSkeleton />
+        )}
+      </section>
 
-      {/* ── Devices (unknown + known) ── */}
-      {devices.length > 0 && (
-        <section style={{ padding: '3rem 2.5rem 2rem' }}>
-          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>
-                DEVICE REGISTRY
-              </div>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
-              {devices.map((device) => (
-                device.knowledge === 'unknown'
-                  ? <UnknownDevicePreviewCard key={device.id} device={device} />
-                  : <DevicePreviewCard key={device.id} device={device} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Latest Intel ── */}
-      {latestIntel.length > 0 && (
-        <section style={{ padding: '1rem 2.5rem 2rem' }}>
-          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-star-dim)' }}>
-                LATEST INTEL
-              </div>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-              {latestIntel.map((entry) => (
-                <IntelPreviewCard key={entry.id} entry={entry} commentCount={intelCommentCounts[entry.id] ?? 0} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Worlds ── */}
-      {latestWorlds.length > 0 && (
-        <section style={{ padding: '1rem 2.5rem 2rem' }}>
-          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-nebula)' }}>
-                WORLD RECORDS
-              </div>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
-              {latestWorlds.map((world) => (
-                <WorldPreviewCard key={world.id} world={world} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Active Votes ── */}
-      {latestVotes.length > 0 && (
-        <section style={{ padding: '1rem 2.5rem 2rem' }}>
-          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: '#20D890' }}>
-                ● ACTIVE VOTES
-              </div>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            </div>
-            <div className="votes-grid">
-              {latestVotes.map((vote) => {
-                const myResp = myVoteResponses.find((r) => r.vote_id === vote.id)
-                return (
-                  <VoteCard
-                    key={vote.id}
-                    vote={vote}
-                    hasVoted={!!myResp}
-                    mySelections={myResp?.selected_options ?? []}
-                    tally={voteTallies[vote.id] ?? {}}
-                  />
-                )
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <div className="footer-bar" style={{ marginTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>MULTIVERSE.COLLECTIVE</div>
+      <div className="footer-bar" style={{ marginTop: '2rem', justifyContent: 'center' }}>
+        <div className="tag">EXPLORE PARALLEL WORLDS</div>
       </div>
     </div>
   )

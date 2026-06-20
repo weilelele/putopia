@@ -1471,10 +1471,19 @@ export async function getDispatchDashboard(): Promise<DispatchDashboard | null> 
   const { data: resp } = await admin.from('signal_responses').select('task_id').eq('user_id', me.id)
   const responded = new Set(((resp ?? []) as { task_id: string }[]).map((r) => r.task_id))
 
-  let awaitingYou = 0
+  // A world's currently-OPEN day is its latest revealed day; earlier revealed
+  // days are past (expired) and must not inflate "awaiting you". Count at most
+  // one per world — the current day, if unanswered and votable.
+  const currentOpen = new Map<string, { id: string; day_index: number | null }>()
   for (const t of tasks) {
+    const cur = currentOpen.get(t.thread_id)
+    if (!cur || (t.day_index ?? 0) > (cur.day_index ?? 0)) currentOpen.set(t.thread_id, t)
+  }
+
+  let awaitingYou = 0
+  for (const [threadId, t] of currentOpen) {
     if (responded.has(t.id)) continue
-    const wid = threadWorld.get(t.thread_id) ?? null
+    const wid = threadWorld.get(threadId) ?? null
     const wm = wid ? meta.get(wid) : undefined
     if (eligibleToVote(me.role, me.id, wm?.vote_scope ?? 'all', wm?.discoverer_id ?? null)) awaitingYou++
   }
