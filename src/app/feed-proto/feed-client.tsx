@@ -106,7 +106,7 @@ function Footer({ actor, time, align = 'space-between' }: { actor?: Person | nul
 function ContentCard({ item }: { item: FeedItem }) {
   if (item.kind === 'world' && item.world) {
     return (
-      <div style={{ breakInside: 'avoid', marginBottom: 8 }}>
+      <div style={{ breakInside: 'avoid', marginBottom: 11 }}>
         <WorldPoster
           world={item.world}
           eyebrow={item.eyebrow}
@@ -129,7 +129,7 @@ function ContentCard({ item }: { item: FeedItem }) {
     <Link
       href={item.href}
       style={{
-        display: 'block', textDecoration: 'none', breakInside: 'avoid', marginBottom: 8,
+        display: 'block', textDecoration: 'none', breakInside: 'avoid', marginBottom: 11,
         background: 'var(--color-void)', border: '1px solid rgba(245,245,245,0.08)', borderRadius: 3, overflow: 'hidden',
       }}
     >
@@ -176,7 +176,7 @@ function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
     <div
       onClick={onVote}
       style={{
-        breakInside: 'avoid', marginBottom: 8, background: '#1A1107', border: `1px solid ${LORANGE}`,
+        breakInside: 'avoid', marginBottom: 11, background: '#1A1107', border: `1px solid ${LORANGE}`,
         borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
       }}
     >
