@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { BackLink } from '@/components/back-link'
+import { LazyImage } from '@/components/lazy-image'
 import { getInvestigationFeed, submitSignalResponse } from '@/lib/actions/signal-tasks'
 import type {
   InvestigationFeedData,
@@ -176,24 +177,31 @@ export function InvestigationCard({
   )
 }
 
+// Square dark slot that holds layout while the image lazy-loads + fades in over it.
+function AssetImage({ src }: { src: string }) {
+  return (
+    <div style={{ width: '100%', aspectRatio: '1', background: '#070912', display: 'block' }}>
+      <LazyImage src={src} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+    </div>
+  )
+}
+
 function AssetView({ asset }: { asset: PublicSignalAsset }) {
   if (asset.media === 'video') {
-    if (asset.display_url) {
-      // eslint-disable-next-line @next/next/no-img-element
-      return <img src={asset.display_url} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
-    }
-    return <video src={asset.processed_url || ''} controls loop muted playsInline style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+    // Prefer the animated WebP (display_url); only fall back to a real <video>
+    // element when there's no still, and don't pre-fetch its stream.
+    if (asset.display_url) return <AssetImage src={asset.display_url} />
+    return <video src={asset.processed_url || ''} controls loop muted playsInline preload="none" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
   }
   if (asset.media === 'audio') {
     return (
       <div style={{ background: '#070912', padding: '28px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, aspectRatio: '1', justifyContent: 'center' }}>
         <span style={{ fontSize: 34 }}>🔊</span>
-        <audio src={asset.processed_url || ''} controls style={{ width: '100%' }} />
+        <audio src={asset.processed_url || ''} controls preload="none" style={{ width: '100%' }} />
       </div>
     )
   }
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={asset.processed_url || ''} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+  return <AssetImage src={asset.processed_url || ''} />
 }
 
 const TYPE_HINT: Record<string, string> = {

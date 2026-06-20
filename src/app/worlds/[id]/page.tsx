@@ -11,6 +11,7 @@ import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
 import { InvestigationCard } from '@/app/signal/SignalFeed'
+import { LazyImage } from '@/components/lazy-image'
 
 const DESC_CLAMP = 320 // chars before the "expand all" fold
 
@@ -96,12 +97,15 @@ export default function WorldDetailPage() {
         {/* Hero — image or gradient */}
         <div style={{ width: '100%', height: '280px', position: 'relative', overflow: 'hidden', marginBottom: '1.5rem', border: '1px solid var(--bd-faint)' }}>
           {hasImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={world.image_path!}
-              alt={displayName}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
+            <>
+              {/* gradient placeholder shows until the hero image fades in */}
+              <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
+              <LazyImage
+                src={world.image_path!}
+                alt={displayName}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            </>
           ) : (
             <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
           )}

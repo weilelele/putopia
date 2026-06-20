@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { CSSProperties, ReactNode } from 'react'
+import { LazyImage } from '@/components/lazy-image'
 
 // Unified world card: the chosen atmosphere color (or uploaded image) fills the
 // whole card as a background; eyebrow / title / description / author sit on top.
@@ -74,10 +75,9 @@ export function WorldPoster({
       }}
     >
       {bg && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        // Gradient (parent background) shows until the cover lazy-loads + fades in.
+        <LazyImage
           src={bg}
-          alt=""
           className="world-poster-img"
           loading="lazy"
           decoding="async"
@@ -109,7 +109,7 @@ export function WorldPoster({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, paddingTop: 9, borderTop: '1px solid rgba(255,255,255,0.14)' }}>
           {world.discoverer_avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={world.discoverer_avatar_url} alt="" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(255,255,255,0.25)' }} />
+            <img src={world.discoverer_avatar_url} alt="" loading="lazy" decoding="async" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(255,255,255,0.25)' }} />
           ) : (
             <div style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, background: 'rgba(255,255,255,0.16)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.25)' }}>
               {initialsOf(world.discoverer_name)}
