@@ -42,7 +42,7 @@ export function WorldPoster({
 }: {
   world: PosterWorld
   cover?: string | null
-  eyebrow: string
+  eyebrow?: string
   eyebrowColor?: string
   date?: string | null
   descLines?: number
@@ -86,9 +86,11 @@ export function WorldPoster({
       {badge && <div style={{ position: 'absolute', top: 8, right: 8 }}>{badge}</div>}
 
       <div style={{ position: 'relative', padding: '13px 13px 12px', display: 'flex', flexDirection: 'column', minHeight, boxSizing: 'border-box' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: eyebrowColor, ...eyebrowStyle }}>
-          {eyebrow}
-        </div>
+        {eyebrow && (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: eyebrowColor, ...eyebrowStyle }}>
+            {eyebrow}
+          </div>
+        )}
         <div style={{ flex: 1 }} />
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.02em', marginBottom: 6, lineHeight: 1.25 }}>
           {displayName}

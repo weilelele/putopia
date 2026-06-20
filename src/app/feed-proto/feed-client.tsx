@@ -46,6 +46,10 @@ export type VoteCard = {
   time: string
 }
 
+export type FeedEntry =
+  | { kind: 'content'; item: FeedItem }
+  | { kind: 'vote'; vote: VoteCard }
+
 const ORANGE = '#FF6B35'
 const LORANGE = '#FF8A5C'
 const AMBER = '#FFB020'
@@ -148,7 +152,7 @@ function ContentCard({ item }: { item: FeedItem }) {
         {!isMember && item.snippet && (
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, lineHeight: 1.5, color: 'rgba(245,245,245,0.5)',
-            marginTop: 7, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            marginTop: 7, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>{item.snippet}</div>
         )}
 
@@ -242,10 +246,10 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
 
 // ─── Page client ──────────────────────────────────────────────────────────────
 
-export function FeedProtoClient({ items, vote }: { items: FeedItem[]; vote: VoteCard | null }) {
+export function FeedProtoClient({ entries }: { entries: FeedEntry[] }) {
   const [voteOpen, setVoteOpen] = useState(false)
-  const head = items.slice(0, 2)
-  const tail = items.slice(2)
+  const voteEntry = entries.find(e => e.kind === 'vote')
+  const vote = voteEntry && voteEntry.kind === 'vote' ? voteEntry.vote : null
 
   return (
     <div style={{ height: '100dvh', overflowY: 'auto', background: 'var(--color-deep)', color: 'var(--color-star)' }}>
@@ -260,9 +264,9 @@ export function FeedProtoClient({ items, vote }: { items: FeedItem[]; vote: Vote
         </div>
 
         <div style={{ padding: 10, columnCount: 2, columnGap: 8 }}>
-          {head.map(it => <ContentCard key={it.id} item={it} />)}
-          {vote && <VoteTofu vote={vote} onVote={() => setVoteOpen(true)} />}
-          {tail.map(it => <ContentCard key={it.id} item={it} />)}
+          {entries.map(e => e.kind === 'vote'
+            ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setVoteOpen(true)} />
+            : <ContentCard key={e.item.id} item={e.item} />)}
         </div>
 
         <div style={{ textAlign: 'center', color: 'rgba(245,245,245,0.25)', fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, padding: '12px 0 96px', letterSpacing: '0.2em' }}>

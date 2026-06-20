@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { getTuningCovers } from '@/lib/actions/signal-tasks'
-import { worldStage, WORLD_STAGE_META, type WorldLifecycle } from '@/types/database'
-import { FeedProtoClient, type FeedItem, type Person, type PosterWorld, type VoteCard } from './feed-client'
+import { worldStage, type WorldLifecycle } from '@/types/database'
+import { FeedProtoClient, type FeedEntry, type FeedItem, type Person, type PosterWorld, type VoteCard } from './feed-client'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +37,12 @@ function until(ts?: string | null): string {
   if (diff <= 0) return 'closed'
   const d = Math.floor(diff / 86400000)
   return d >= 1 ? `ends ${d}d` : `ends ${Math.max(1, Math.floor(diff / 3600000))}h`
+}
+
+// Half-life decay: score = 0.5 ^ (ageHours / halfLife). Module-scoped so the
+// Date.now() call stays out of the component body.
+function decayScore(ts: number, halfLifeHours: number): number {
+  return Math.pow(0.5, ((Date.now() - ts) / 3_600_000) / halfLifeHours)
 }
 
 function coerceOptions(raw: unknown): string[] {
@@ -98,6 +104,7 @@ export default async function FeedProtoPage() {
   let voters: Person[] = []
   let voteCount = 0
   let voteOptions: string[] = []
+  let voteLastCast = 0
   if (vote) {
     voteOptions = coerceOptions(vote.options)
     // Map option id (e.g. "opt_3") → readable label, since vote_responses store ids.
@@ -113,6 +120,8 @@ export default async function FeedProtoPage() {
     const { data: vr } = await db.from('vote_responses').select('voter_name, user_id, selected_options, created_at').eq('vote_id', vote.id).order('created_at', { ascending: false }).limit(15)
     const { count } = await db.from('vote_responses').select('*', { count: 'exact', head: true }).eq('vote_id', vote.id)
     voteCount = count ?? 0
+    const lastCastStr = (vr as { created_at?: string }[] | null)?.[0]?.created_at
+    voteLastCast = lastCastStr ? new Date(lastCastStr).getTime() : new Date(String(vote.created_at ?? 0)).getTime()
     const seen = new Set<string>()
     const picked: { name: string; user_id: string | null; option?: string }[] = []
     const rows = (vr ?? []) as { voter_name: string | null; user_id: string | null; selected_options: unknown }[]
@@ -143,14 +152,19 @@ export default async function FeedProtoPage() {
   const person = (name?: string | null, id?: string | null): Person | null =>
     name ? { name: String(name), initial: initialOf(String(name)), avatar: id ? avatarMap[String(id)] ?? null : null } : null
 
-  const intelItems: { ts: number; item: FeedItem }[] = intelRows.map(r => {
+  // Per-type half-life (hours): how fast an item sinks. Vote has none — it stays
+  // for its whole active window and re-surfaces on each new vote.
+  const HL = { vision: 24, tuning: 72, established: 168, intel: 168, device: 48, member: 24, vote: 240 }
+  type Built = { ts: number; hl: number; item: FeedItem }
+
+  const intelItems: Built[] = intelRows.map(r => {
     const images = (r.images as string[] | null) ?? []
     return {
-      ts: new Date(String(r.timestamp ?? 0)).getTime(),
+      ts: new Date(String(r.timestamp ?? 0)).getTime(), hl: HL.intel,
       item: {
         id: `intel-${r.id}`, kind: 'info', color: ORANGE, eyebrow: 'INTELLIGENCE',
         title: String(r.title ?? 'Untitled report'),
-        snippet: images[0] ? undefined : snippet(r.content as string, 120),
+        snippet: snippet(r.content as string, 140),
         image: images[0] ?? null,
         actor: person(r.publisher_name as string, r.publisher_id as string),
         href: `/intel/${r.id}`, time: rel(r.timestamp as string),
@@ -160,71 +174,76 @@ export default async function FeedProtoPage() {
 
   const tuningCovers = await tuningCoversP
 
-  const worldItems: { ts: number; item: FeedItem }[] = worldRows.map(r => {
+  const worldItems: Built[] = worldRows.map(r => {
     const id = String(r.id)
-    const state = (r.lifecycle_state as WorldLifecycle) ?? 'proposed'
-    const stage = worldStage(state)
+    const stage = worldStage((r.lifecycle_state as WorldLifecycle) ?? 'proposed')
     const name = String(r.name ?? 'Unnamed world')
-    const eyebrow = stage === 'raw' ? 'A NEW INITIAL VISION' : stage === 'tuning' ? 'SIGNAL TUNING BEGINS' : WORLD_STAGE_META[stage].label.toUpperCase()
+    const eyebrow = stage === 'raw' ? 'A NEW INITIAL VISION' : stage === 'tuning' ? 'SIGNAL TUNING BEGINS' : 'ESTABLISHED WORLD'
+    const hl = stage === 'raw' ? HL.vision : stage === 'tuning' ? HL.tuning : HL.established
     // tuning timestamp overrides the original vision timestamp
     const tsStr = stage === 'tuning' ? (tuningAt[id] ?? (r.submitted_at as string)) : (r.submitted_at as string) ?? (r.created_at as string)
+    const ts = new Date(tsStr ?? 0).getTime()
     const href = `/worlds/${encodeURIComponent(id)}`
     const actor = person(r.discoverer_name as string, r.discoverer_id as string)
+    const image = (r.image_path as string) || (stage === 'tuning' ? tuningCovers[id] : undefined) || null
 
-    // Signal Tuning with a chosen candidate image → render like an image-led
-    // Intel card (cover + title) instead of a flat colour poster.
-    const cover = tuningCovers[id]
-    if (stage === 'tuning' && cover) {
+    // With an image (uploaded cover or chosen tuning asset) → image-led card:
+    // cover on top, then title + up to 3 lines. Colour-only → Words-style poster.
+    if (image) {
       return {
-        ts: new Date(tsStr ?? 0).getTime(),
-        item: { id: `world-${id}`, kind: 'info', color: AMBER, eyebrow: 'SIGNAL TUNING', label: 'SIGNAL TUNING BEGINS', title: name, image: cover, actor, href, time: rel(tsStr) },
+        ts, hl,
+        item: {
+          id: `world-${id}`, kind: 'info', color: AMBER, eyebrow, label: eyebrow,
+          title: name, snippet: snippet(r.description as string, 140), image, actor, href, time: rel(tsStr),
+        },
       }
     }
-
     const world: PosterWorld = {
-      id, name, name_en: r.name_en as string,
-      description: r.description as string, gradient_from: r.gradient_from as string, gradient_to: r.gradient_to as string,
-      image_path: r.image_path as string,
-      discoverer_name: r.discoverer_name as string,
+      id, name, name_en: r.name_en as string, description: r.description as string,
+      gradient_from: r.gradient_from as string, gradient_to: r.gradient_to as string,
+      image_path: r.image_path as string, discoverer_name: r.discoverer_name as string,
       discoverer_avatar_url: r.discoverer_id ? avatarMap[String(r.discoverer_id)] ?? null : null,
     }
-    return {
-      ts: new Date(tsStr ?? 0).getTime(),
-      item: { id: `world-${id}`, kind: 'world', color: AMBER, eyebrow, title: name, href, time: rel(tsStr), established: stage === 'established', world },
-    }
+    return { ts, hl, item: { id: `world-${id}`, kind: 'world', color: AMBER, eyebrow, title: name, href, time: rel(tsStr), established: stage === 'established', world } }
   })
 
-  const deviceItems: { ts: number; item: FeedItem }[] = deviceRows.map(r => ({
-    ts: new Date(String(r.updated_at ?? 0)).getTime(),
+  const deviceItems: Built[] = deviceRows.map(r => ({
+    ts: new Date(String(r.updated_at ?? 0)).getTime(), hl: HL.device,
     item: {
       id: `device-${r.id}`, kind: 'device', color: GREEN, eyebrow: 'DEVICE',
       title: String(r.name ?? 'Device'),
-      snippet: snippet((r.description as string) || (r.knowledge as string) || (r.status as string), 100),
+      snippet: snippet((r.description as string) || (r.knowledge as string) || (r.status as string), 140),
       image: (r.image_path as string) || null,
       actor: person(r.current_user_name as string, r.current_user_id as string),
       href: `/devices/${r.id}`, time: rel(r.updated_at as string),
     },
   }))
 
-  const memberItems: { ts: number; item: FeedItem }[] = voyagerRows.map((v, i) => ({
-    ts: new Date(v.created_at ?? 0).getTime(),
+  const memberItems: Built[] = voyagerRows.map((v, i) => ({
+    ts: new Date(v.created_at ?? 0).getTime(), hl: HL.member,
     item: {
       id: `voyager-${i}-${v.actor_id ?? v.actor_name}`, kind: 'member', color: STAR, eyebrow: 'NEW VOYAGER',
       title: v.target_title || 'Become a new Voyager: World Builder',
-      actor: person(v.actor_name, v.actor_id),
-      href: '/voyagers', time: rel(v.created_at),
+      actor: person(v.actor_name, v.actor_id), href: '/voyagers', time: rel(v.created_at),
     },
   }))
 
-  // Sort each bucket by recency, then round-robin interleave for variety.
-  const buckets = [worldItems, intelItems, deviceItems, memberItems].map(b => b.sort((a, b2) => b2.ts - a.ts).map(x => x.item))
-  const items: FeedItem[] = []
-  for (let i = 0; i < 12; i++) for (const b of buckets) if (b[i]) items.push(b[i])
+  // Rank by half-life decay: score = 0.5 ^ (ageHours / halfLife). Fresher and
+  // longer-lived items rank higher; nothing is hard-dropped so the feed stays
+  // populated even on aged data.
+  const content: Built[] = [...worldItems, ...intelItems, ...deviceItems, ...memberItems]
+  const scored: { score: number; entry: FeedEntry }[] = content.map(b => ({ score: decayScore(b.ts, b.hl), entry: { kind: 'content', item: b.item } }))
 
   const voteCard: VoteCard | null = vote ? {
     id: String(vote.id), title: String(vote.title ?? 'Open signal vote'), options: voteOptions,
     voters, count: voteCount, ends: until(vote.ends_at as string), time: rel(vote.created_at as string),
   } : null
+  if (voteCard) {
+    // Vote ranked by last-cast (bumps on every new vote, sinks slowly otherwise).
+    scored.push({ score: decayScore(voteLastCast, HL.vote), entry: { kind: 'vote', vote: voteCard } })
+  }
 
-  return <FeedProtoClient items={items} vote={voteCard} />
+  const entries: FeedEntry[] = scored.sort((a, b) => b.score - a.score).map(s => s.entry)
+
+  return <FeedProtoClient entries={entries} />
 }
