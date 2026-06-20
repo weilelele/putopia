@@ -107,16 +107,25 @@ function FlipCell({ cell, pool, spread, runId, scale }: { cell: Placed; pool: st
   )
 }
 
+// Play the split-flap animation at most once per calendar day per browser. Repeat
+// visits to the dashboard the same day render the static wordmark instead — the
+// animated version mounts dozens of rapidly-src-swapping <img> cells, which is the
+// main cost of re-entering the page.
+const PLAY_KEY = 'mc-wordmark-played-on'
+
 export function FlipWordmark({
   maxWidth = 600,
   fill = 0.92,
   className,
   ariaLabel = 'Multiverse Collective',
+  forceAnimate = false,
 }: {
   maxWidth?: number
   fill?: number
   className?: string
   ariaLabel?: string
+  /** Always replay the animation, ignoring the once-per-day gate (e.g. demos). */
+  forceAnimate?: boolean
 }) {
   const [m, setM] = useState<Manifest | null>(null)
   const [runId, setRunId] = useState(0)
@@ -124,9 +133,20 @@ export function FlipWordmark({
   const [containerW, setContainerW] = useState(maxWidth)
   const wrapRef = useRef<HTMLDivElement>(null)
 
+  // Decide once-per-day (in an effect so render stays pure / SSR-safe), and only
+  // fetch the glyph manifest when we're actually going to animate.
   useEffect(() => {
-    fetch('/assets/letters/manifest.json').then((r) => r.json()).then(setM)
-  }, [])
+    let shouldAnimate = true
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      shouldAnimate = forceAnimate || window.localStorage.getItem(PLAY_KEY) !== today
+      if (shouldAnimate && !forceAnimate) window.localStorage.setItem(PLAY_KEY, today)
+    } catch {
+      shouldAnimate = true
+    }
+    if (!shouldAnimate) return
+    fetch('/assets/letters/manifest.json').then((r) => r.json()).then(setM).catch(() => {})
+  }, [forceAnimate])
 
   const geom = useMemo(() => (m ? buildGeom(m) : null), [m])
 
