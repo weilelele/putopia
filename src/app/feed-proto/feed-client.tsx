@@ -197,7 +197,7 @@ function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
       )}
 
       <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.15em', padding: '11px 0', borderRadius: 2 }}>
-        CAST YOUR SIGNAL ▸
+        MAKE A DECISION ▸
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
@@ -237,7 +237,7 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
         <div
           onClick={() => { setCast(true); setTimeout(onClose, 800) }}
           style={{ marginTop: 14, background: cast ? GREEN : ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_CAPTION, letterSpacing: '0.15em', padding: 11, borderRadius: 3, cursor: 'pointer' }}
-        >{cast ? '✓ SIGNAL CAST' : 'CAST SIGNAL ▸'}</div>
+        >{cast ? '✓ DECISION MADE' : 'MAKE A DECISION ▸'}</div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, textAlign: 'center', color: 'rgba(245,245,245,0.35)', marginTop: 10 }}>{vote.count} signals in · {vote.ends}</div>
       </div>
     </div>
@@ -257,11 +257,11 @@ export function FeedProtoClient({ entries, embedded = false }: { entries: FeedEn
 
   return (
     <div style={outer}>
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ maxWidth: embedded ? 820 : 600, margin: '0 auto' }}>
         {embedded ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.3em', color: ORANGE }}>SIGNAL FEED</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.3em', color: ORANGE }}>INTERNAL UPDATES</span>
             <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
           </div>
         ) : (
@@ -270,7 +270,7 @@ export function FeedProtoClient({ entries, embedded = false }: { entries: FeedEn
             borderBottom: '1px solid #161c30', position: 'sticky', top: 0, zIndex: 10,
             background: 'rgba(10,14,39,0.92)', backdropFilter: 'blur(12px)',
           }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.24em', color: ORANGE }}>SIGNAL FEED</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.24em', color: ORANGE }}>INTERNAL UPDATES</span>
             <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: FS_LABEL }}>⌖</span>
           </div>
         )}

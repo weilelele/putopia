@@ -167,10 +167,11 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
     const image = (r.image_path as string) || (stage === 'tuning' ? tuningCovers[id] : undefined) || null
     const bucket = stage === 'raw' ? 'vision' : stage === 'tuning' ? 'tuning' : 'established'
 
+    const displayName = (r.name_en as string) || name
     if (image) {
       return {
         ts, bucket,
-        item: { id: `world-${id}`, kind: 'info', color: AMBER, eyebrow, label: eyebrow, title: name, snippet: snippet(r.description as string, 140), image, actor, href, time: rel(tsStr) },
+        item: { id: `world-${id}`, kind: 'info', color: AMBER, eyebrow, label: eyebrow, title: displayName, snippet: snippet(r.description as string, 140), image, actor, href, time: rel(tsStr) },
       }
     }
     const world: PosterWorld = {
