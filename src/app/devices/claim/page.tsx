@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { mockClaimFirstPack } from '@/lib/actions/claim'
+import { BackLink } from '@/components/back-link'
 
 const ORANGE = '#FF6B35'
 
@@ -104,7 +105,7 @@ export default function ClaimPage() {
       {/* Page head */}
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">{"// FIRST DISCOVERY"}</div>
+          <BackLink href="/devices" label="DEVICE ARCHIVE" />
           <h1>CAIRO <span className="accent">BATCH 01</span></h1>
           <p className="sub">First parts pack · Antique markets, Cairo · Multiverse Console components</p>
         </div>

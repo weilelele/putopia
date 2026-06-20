@@ -5,15 +5,19 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { StoryInsert, StoryUpdate } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
 
-// Voyager+: list all published stories (with author avatar)
+// List all published stories (with author avatar). Read via the admin client:
+// published logs are member-facing content, but the `stories_select_published`
+// RLS policy only grants reads to voyager/architect — which silently hid the
+// whole feed from applicants. Filtering to is_published keeps drafts private.
 export async function getPublishedStories() {
-  const supabase = await createClient()
-  const { data: stories } = await supabase
+  const supabase = createAdminClient()
+  const { data: stories, error } = await supabase
     .from('stories')
     .select('*')
     .eq('is_published', true)
     .order('date', { ascending: false })
 
+  if (error) console.error('[getPublishedStories]', error.message)
   if (!stories?.length) return []
 
   const authorIds = [...new Set(stories.filter(s => s.author_id).map(s => s.author_id!))]
@@ -32,13 +36,16 @@ export async function getPublishedStories() {
   }))
 }
 
-// Voyager+: get one story by slug (with author avatar)
+// Get one published story by id (with author avatar). Admin client + an explicit
+// is_published filter so any signed-in member can open a published log entry,
+// while drafts stay private. (See getPublishedStories for the RLS rationale.)
 export async function getStoryById(id: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: story } = await supabase
     .from('stories')
     .select('*')
     .eq('id', id)
+    .eq('is_published', true)
     .single()
 
   if (!story) return null

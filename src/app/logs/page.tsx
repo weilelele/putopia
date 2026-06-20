@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { getPublishedStories } from '@/lib/actions/stories'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
+import { BackLink } from '@/components/back-link'
 import { Plus, ArrowRight } from 'lucide-react'
 import type { StoryWithAvatar } from '@/types/database'
 
@@ -41,7 +42,7 @@ export default function LogsPage() {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">{"// FIELD ARCHIVE"}</div>
+          <BackLink href="/voyagers" label="VOYAGERS" />
           <h1>VOYAGER <span className="accent">LOGS</span></h1>
           <p className="sub">{stories.length} entries on record</p>
         </div>

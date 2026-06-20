@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 // Unified world card: the chosen atmosphere color (or uploaded image) fills the
 // whole card as a background; eyebrow / title / description / author sit on top.
@@ -38,10 +38,12 @@ export function WorldPoster({
   badge,
   hoverBorder = 'rgba(255,255,255,0.28)',
   orangeMask = false,
+  eyebrowStyle,
+  hideDescription = false,
 }: {
   world: PosterWorld
   cover?: string | null
-  eyebrow: string
+  eyebrow?: string
   eyebrowColor?: string
   date?: string | null
   descLines?: number
@@ -49,6 +51,8 @@ export function WorldPoster({
   badge?: ReactNode
   hoverBorder?: string
   orangeMask?: boolean
+  eyebrowStyle?: CSSProperties
+  hideDescription?: boolean
 }) {
   const displayName = world.name_en || world.name
   const bg = cover ?? world.image_path ?? null
@@ -84,14 +88,16 @@ export function WorldPoster({
       {badge && <div style={{ position: 'absolute', top: 8, right: 8 }}>{badge}</div>}
 
       <div style={{ position: 'relative', padding: '13px 13px 12px', display: 'flex', flexDirection: 'column', minHeight, boxSizing: 'border-box' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: eyebrowColor }}>
-          {eyebrow}
-        </div>
+        {eyebrow && (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: eyebrowColor, ...eyebrowStyle }}>
+            {eyebrow}
+          </div>
+        )}
         <div style={{ flex: 1 }} />
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.02em', marginBottom: 6, lineHeight: 1.25 }}>
           {displayName}
         </div>
-        {world.description && (
+        {!hideDescription && world.description && (
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', lineHeight: 1.55, color: 'rgba(255,255,255,0.85)', marginBottom: 11, display: '-webkit-box', WebkitLineClamp: descLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {world.description}
           </div>
