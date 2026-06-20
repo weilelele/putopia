@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
+import { getTuningCovers } from '@/lib/actions/signal-tasks'
 import { worldStage, WORLD_STAGE_META, type WorldLifecycle } from '@/types/database'
 import { FeedProtoClient, type FeedItem, type Person, type PosterWorld, type VoteCard } from './feed-client'
 
@@ -53,6 +54,9 @@ function coerceOptions(raw: unknown): string[] {
 export default async function FeedProtoPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = createAdminClient() as any
+
+  // Candidate cover images for worlds in Signal Tuning (selected visual assets).
+  const tuningCoversP = getTuningCovers()
 
   const worldCols = 'id, name, name_en, description, image_path, lifecycle_state, gradient_from, gradient_to, discoverer_name, discoverer_id, submitted_at, created_at'
   // Fetch per lifecycle state so Signal Tuning + Established worlds are guaranteed
@@ -154,14 +158,31 @@ export default async function FeedProtoPage() {
     }
   })
 
+  const tuningCovers = await tuningCoversP
+
   const worldItems: { ts: number; item: FeedItem }[] = worldRows.map(r => {
+    const id = String(r.id)
     const state = (r.lifecycle_state as WorldLifecycle) ?? 'proposed'
     const stage = worldStage(state)
+    const name = String(r.name ?? 'Unnamed world')
     const eyebrow = stage === 'raw' ? 'A NEW INITIAL VISION' : stage === 'tuning' ? 'SIGNAL TUNING BEGINS' : WORLD_STAGE_META[stage].label.toUpperCase()
     // tuning timestamp overrides the original vision timestamp
-    const tsStr = stage === 'tuning' ? (tuningAt[String(r.id)] ?? (r.submitted_at as string)) : (r.submitted_at as string) ?? (r.created_at as string)
+    const tsStr = stage === 'tuning' ? (tuningAt[id] ?? (r.submitted_at as string)) : (r.submitted_at as string) ?? (r.created_at as string)
+    const href = `/worlds/${encodeURIComponent(id)}`
+    const actor = person(r.discoverer_name as string, r.discoverer_id as string)
+
+    // Signal Tuning with a chosen candidate image → render like an image-led
+    // Intel card (cover + title) instead of a flat colour poster.
+    const cover = tuningCovers[id]
+    if (stage === 'tuning' && cover) {
+      return {
+        ts: new Date(tsStr ?? 0).getTime(),
+        item: { id: `world-${id}`, kind: 'info', color: AMBER, eyebrow: 'SIGNAL TUNING', label: 'SIGNAL TUNING BEGINS', title: name, image: cover, actor, href, time: rel(tsStr) },
+      }
+    }
+
     const world: PosterWorld = {
-      id: String(r.id), name: String(r.name ?? 'Unnamed world'), name_en: r.name_en as string,
+      id, name, name_en: r.name_en as string,
       description: r.description as string, gradient_from: r.gradient_from as string, gradient_to: r.gradient_to as string,
       image_path: r.image_path as string,
       discoverer_name: r.discoverer_name as string,
@@ -169,10 +190,7 @@ export default async function FeedProtoPage() {
     }
     return {
       ts: new Date(tsStr ?? 0).getTime(),
-      item: {
-        id: `world-${r.id}`, kind: 'world', color: AMBER, eyebrow, title: world.name,
-        href: `/worlds/${encodeURIComponent(String(r.id))}`, time: rel(tsStr), established: stage === 'established', world,
-      },
+      item: { id: `world-${id}`, kind: 'world', color: AMBER, eyebrow, title: name, href, time: rel(tsStr), established: stage === 'established', world },
     }
   })
 

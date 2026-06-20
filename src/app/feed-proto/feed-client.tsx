@@ -25,6 +25,7 @@ export type FeedItem = {
   kind: 'info' | 'world' | 'device' | 'member'
   color: string
   eyebrow: string
+  label?: string
   title: string
   snippet?: string
   image?: string | null
@@ -50,10 +51,13 @@ const LORANGE = '#FF8A5C'
 const AMBER = '#FFB020'
 const GREEN = '#20D890'
 const BURNT = '#E85D04'
+// Font tokens — never below --fs-caption (12px floor).
+const FS_LABEL = 'var(--fs-label)'      // 13
+const FS_CAPTION = 'var(--fs-caption)'  // 12
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
-function Avatar({ p, size = 18 }: { p: Person; size?: number }) {
+function Avatar({ p, size = 20 }: { p: Person; size?: number }) {
   if (p.avatar) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
@@ -64,7 +68,7 @@ function Avatar({ p, size = 18 }: { p: Person; size?: number }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: BURNT, color: '#0A0E27', fontWeight: 700, fontSize: size * 0.46, fontFamily: 'var(--font-mono)',
+      background: BURNT, color: '#0A0E27', fontWeight: 700, fontSize: Math.max(12, Math.round(size * 0.42)), fontFamily: 'var(--font-mono)',
     }}>{p.initial}</span>
   )
 }
@@ -81,11 +85,11 @@ function Footer({ actor, time, align = 'space-between' }: { actor?: Person | nul
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: align, marginTop: 10 }}>
       {actor ? (
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-          <Avatar p={actor} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.45)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{actor.name}</span>
+          <Avatar p={actor} size={18} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.45)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{actor.name}</span>
         </span>
       ) : <span />}
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.35)', flexShrink: 0, marginLeft: 6 }}>{time}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', flexShrink: 0, marginLeft: 6 }}>{time}</span>
     </div>
   )
 }
@@ -99,7 +103,8 @@ function ContentCard({ item }: { item: FeedItem }) {
         <WorldPoster
           world={item.world}
           eyebrow={item.eyebrow}
-          eyebrowColor={item.established ? '#FF8A5C' : AMBER}
+          eyebrowColor={item.established ? LORANGE : AMBER}
+          eyebrowStyle={{ whiteSpace: 'nowrap', letterSpacing: '0.06em' }}
           date={item.time}
           descLines={3}
           minHeight={166}
@@ -130,19 +135,25 @@ function ContentCard({ item }: { item: FeedItem }) {
       )}
 
       <div style={{ padding: '10px 11px' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, lineHeight: 1.38, color: item.color, textAlign: isMember ? 'center' : 'left' }}>
+        {item.label && !isMember && (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, letterSpacing: '0.06em', color: item.color, marginBottom: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {item.label}
+          </div>
+        )}
+
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.38, color: item.color, textAlign: isMember ? 'center' : 'left' }}>
           {item.title}
         </div>
 
         {!isMember && item.snippet && (
           <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.55, color: 'rgba(245,245,245,0.5)',
+            fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, lineHeight: 1.5, color: 'rgba(245,245,245,0.5)',
             marginTop: 7, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>{item.snippet}</div>
         )}
 
         {isMember
-          ? <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}><span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.35)' }}>{item.time}</span></div>
+          ? <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}><span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>{item.time}</span></div>
           : <Footer actor={item.actor} time={item.time} />}
       </div>
     </Link>
@@ -162,32 +173,32 @@ function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
         borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
       }}
     >
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, lineHeight: 1.38, color: LORANGE }}>{vote.title}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.38, color: LORANGE }}>{vote.title}</div>
 
       {shown.length > 0 && (
         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 7 }}>
           {shown.map((v, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
               <Avatar p={v} size={20} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(245,245,245,0.8)', flexShrink: 0 }}>{v.name}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.8)', flexShrink: 0 }}>{v.name}</span>
               {v.option && (
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>· {v.option}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>· {v.option}</span>
               )}
             </div>
           ))}
           {extra > 0 && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.4)', paddingLeft: 27 }}>+{extra} more signals</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.4)', paddingLeft: 27 }}>+{extra} more signals</div>
           )}
         </div>
       )}
 
-      <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, letterSpacing: '0.15em', padding: '11px 0', borderRadius: 2 }}>
+      <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.15em', padding: '11px 0', borderRadius: 2 }}>
         CAST YOUR SIGNAL ▸
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.45)' }}>{vote.count} signals in</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.35)' }}>{vote.ends}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.45)' }}>{vote.count} signals in</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>{vote.ends}</span>
       </div>
     </div>
   )
@@ -204,7 +215,7 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(5,8,20,0.74)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}
     >
       <div style={{ background: 'var(--color-void)', border: `1px solid ${LORANGE}`, borderRadius: 6, padding: 16, width: '100%', maxWidth: 380 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, lineHeight: 1.4, color: LORANGE, marginBottom: 14 }}>{vote.title}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.4, color: LORANGE, marginBottom: 14 }}>{vote.title}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
           {vote.options.map((o, i) => {
             const on = i === picked
@@ -212,7 +223,7 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
               <div key={i} onClick={() => setPicked(i)} style={{
                 border: `1px solid ${on ? ORANGE : 'rgba(245,245,245,0.12)'}`, background: on ? 'rgba(255,107,53,0.12)' : 'transparent',
                 borderRadius: 3, padding: '9px 10px', color: on ? LORANGE : 'rgba(245,245,245,0.6)', fontFamily: 'var(--font-mono)',
-                fontSize: 11, lineHeight: 1.4, display: 'flex', justifyContent: 'space-between', gap: 8, cursor: 'pointer',
+                fontSize: FS_CAPTION, lineHeight: 1.4, display: 'flex', justifyContent: 'space-between', gap: 8, cursor: 'pointer',
               }}>
                 <span>{o}</span><span>{on ? '◉' : '○'}</span>
               </div>
@@ -221,9 +232,9 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
         </div>
         <div
           onClick={() => { setCast(true); setTimeout(onClose, 800) }}
-          style={{ marginTop: 14, background: cast ? GREEN : ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11, letterSpacing: '0.15em', padding: 11, borderRadius: 3, cursor: 'pointer' }}
+          style={{ marginTop: 14, background: cast ? GREEN : ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_CAPTION, letterSpacing: '0.15em', padding: 11, borderRadius: 3, cursor: 'pointer' }}
         >{cast ? '✓ SIGNAL CAST' : 'CAST SIGNAL ▸'}</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, textAlign: 'center', color: 'rgba(245,245,245,0.35)', marginTop: 10 }}>{vote.count} signals in · {vote.ends}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, textAlign: 'center', color: 'rgba(245,245,245,0.35)', marginTop: 10 }}>{vote.count} signals in · {vote.ends}</div>
       </div>
     </div>
   )
@@ -244,8 +255,8 @@ export function FeedProtoClient({ items, vote }: { items: FeedItem[]; vote: Vote
           borderBottom: '1px solid #161c30', position: 'sticky', top: 0, zIndex: 10,
           background: 'rgba(10,14,39,0.92)', backdropFilter: 'blur(12px)',
         }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, letterSpacing: '0.24em', color: ORANGE }}>SIGNAL FEED</span>
-          <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: 14 }}>⌖</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.24em', color: ORANGE }}>SIGNAL FEED</span>
+          <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: FS_LABEL }}>⌖</span>
         </div>
 
         <div style={{ padding: 10, columnCount: 2, columnGap: 8 }}>
@@ -254,7 +265,7 @@ export function FeedProtoClient({ items, vote }: { items: FeedItem[]; vote: Vote
           {tail.map(it => <ContentCard key={it.id} item={it} />)}
         </div>
 
-        <div style={{ textAlign: 'center', color: 'rgba(245,245,245,0.25)', fontFamily: 'var(--font-mono)', fontSize: 10, padding: '12px 0 96px', letterSpacing: '0.2em' }}>
+        <div style={{ textAlign: 'center', color: 'rgba(245,245,245,0.25)', fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, padding: '12px 0 96px', letterSpacing: '0.2em' }}>
           ↓ END OF SIGNAL WINDOW
         </div>
       </div>
