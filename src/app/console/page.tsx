@@ -7,25 +7,18 @@ import Link from 'next/link'
 import { MessageSquare } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
-import { getAllDevices } from '@/lib/actions/devices'
-import { getPublicIntel } from '@/lib/actions/intel'
-import { getCommentCountsBulk } from '@/lib/actions/comments'
-import { getAllVotes, getVoteResultsBulk, getMyVoteResponses } from '@/lib/actions/votes'
-import { getAllWorlds } from '@/lib/actions/worlds'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { getGuestHeroStats } from '@/lib/actions/hero-stats'
 import type { GuestHeroStats } from '@/lib/actions/hero-stats'
-import { getActivityFeed } from '@/lib/actions/activity-events'
+import { getSignalFeed } from '@/lib/actions/signal-feed'
+import { FeedProtoClient, type FeedEntry } from '@/app/feed-proto/feed-client'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import type { ExperimentGroup } from '@/lib/actions/experiment'
-import { ActivityFeed } from '@/components/activity-feed'
-import { VoteCard } from '@/components/VoteCard'
 import { SectionTracker } from '@/components/section-tracker'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
-import type { Device, Intel, Vote, World, McFunction, IntelWithAvatar } from '@/types/database'
-import type { ActivityEvent } from '@/lib/actions/activity-events'
+import type { Device, World, McFunction, IntelWithAvatar } from '@/types/database'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
 const SALES_OPEN = true
@@ -719,9 +712,8 @@ function DeviceBarIcon({ size = 16, color = 'currentColor' }: { size?: number; c
 }
 
 /* ─── Auth Hero — Welcome Voyager (voyager+) / status-led (applicant) ──── */
-function AuthHero({ user, activityEvents }: {
+function AuthHero({ user }: {
   user: { role: string; name?: string; email?: string; avatarUrl?: string | null }
-  activityEvents: ActivityEvent[]
 }) {
   const isApplicant = user.role === 'applicant'
   const [deviceModal, setDeviceModal] = useState(false)
@@ -776,17 +768,10 @@ function AuthHero({ user, activityEvents }: {
         </>
       )}
 
-      {/* ── Path status bar (above the Status Feed) ── */}
+      {/* ── Path status bar ── */}
       <div style={{ width: '100%', margin: isApplicant ? '0 auto' : '0.75rem auto 0', padding: '0 1.25rem' }}>
         <PathStatusBar user={user} deviceDays={deviceDays} onDeviceClick={() => setDeviceModal(true)} />
       </div>
-
-      {/* ── Status Feed ── */}
-      {activityEvents.length > 0 && (
-        <div style={{ width: '100%', maxWidth: '560px', margin: '0.75rem auto 0', padding: '0 1.25rem' }}>
-          <ActivityFeed events={activityEvents} />
-        </div>
-      )}
     </section>
   )
 }
@@ -836,14 +821,7 @@ function ConsoleInner() {
 
   // Preserve UTM params when forwarding to /new
   const newHref = searchParams.toString() ? `/new?${searchParams.toString()}` : '/new'
-  const [devices, setDevices] = useState<Device[]>([])
-  const [latestIntel, setLatestIntel] = useState<IntelWithAvatar[]>([])
-  const [intelCommentCounts, setIntelCommentCounts] = useState<Record<string, number>>({})
-  const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([])
-  const [latestVotes, setLatestVotes] = useState<Vote[]>([])
-  const [voteTallies, setVoteTallies] = useState<Record<string, Record<string, number>>>({})
-  const [myVoteResponses, setMyVoteResponses] = useState<{ vote_id: string; selected_options: string[] }[]>([])
-  const [latestWorlds, setLatestWorlds] = useState<World[]>([])
+  const [feedEntries, setFeedEntries] = useState<FeedEntry[]>([])
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
   const [heroStats, setHeroStats] = useState<GuestHeroStats | null>(null)
   const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
@@ -855,37 +833,15 @@ function ConsoleInner() {
     const onErr = (where: string) => (e: unknown) =>
       console.error(`[console] ${where} failed:`, (e as Error)?.message ?? e)
 
-    getAllDevices().then((all) => {
-      const unknown = all.filter((dev) => dev.knowledge === 'unknown').slice(0, 1)
-      const known = all.filter((dev) => dev.knowledge === 'known').slice(0, 2)
-      setDevices([...unknown, ...known])
-    }).catch(onErr('getAllDevices'))
-    getPublicIntel().then(async (intel) => {
-      const slice = (intel as IntelWithAvatar[]).slice(0, 3)
-      setLatestIntel(slice)
-      if (slice.length > 0) {
-        const counts = await getCommentCountsBulk('intel', slice.map(e => e.id))
-        setIntelCommentCounts(counts)
-      }
-    }).catch(onErr('getPublicIntel'))
-    getActivityFeed(7).then(setActivityEvents).catch(onErr('getActivityFeed'))
-    getAllWorlds().then((w) => setLatestWorlds([...w].reverse().slice(0, 4))).catch(onErr('getAllWorlds'))
+    getSignalFeed().then(setFeedEntries).catch(onErr('getSignalFeed'))
     getMcFunctions().then((fns) => setMcFunctions(fns as McFunction[])).catch(onErr('getMcFunctions'))
     getGuestHeroStats().then(setHeroStats).catch(onErr('getGuestHeroStats'))
-    getAllVotes().then(async (votes) => {
-      const active = votes.filter((v) => v.is_active).slice(0, 3)
-      setLatestVotes(active)
-      if (active.length > 0) {
-        const tallies = await getVoteResultsBulk(active.map((v) => v.id))
-        setVoteTallies(tallies)
-      }
-    }).catch(onErr('getAllVotes'))
-    getMyVoteResponses().then(setMyVoteResponses).catch(onErr('getMyVoteResponses'))
   }, [])
 
-  // Load experiment group for applicants (drives the ad-slot variant)
+  // Load the experiment group for any signed-in member (drives the ad-slot
+  // variant). Guests stay null and fall back to the 'direct' variant below.
   useEffect(() => {
-    if (!loading && user.role === 'applicant') {
+    if (!loading && user.role !== 'guest') {
       getOrAssignExperimentGroup().then(setExperimentGroup)
     }
   }, [loading, user.role])
@@ -916,114 +872,30 @@ function ConsoleInner() {
       ) : isGuest ? (
         <GuestHero newHref={newHref} mcFunctions={mcFunctions} stats={heroStats} />
       ) : (
-        <AuthHero user={user} activityEvents={activityEvents} />
+        <AuthHero user={user} />
       )}
 
-      {/* ── Voyager ad slot — between Status Feed and Device Registry ──
-           A (direct) → /voyager-pack · B (task_gated) → /voyager-path.
-           Hidden for non-applicants and while sales are closed. */}
-      {!loading && SALES_OPEN && user.role === 'applicant' && experimentGroup && (
-        <section style={{ padding: '0.5rem 2.5rem 0' }}>
-          <div style={{ maxWidth: 360, margin: '0 auto' }}>
-            <VoyagerAdSlot group={experimentGroup} />
-          </div>
+      {/* ── Signal Feed — the unified two-column stream (replaces the old Status
+           Feed + per-type content blocks). The Voyager ad rides as the pinned
+           top-left block (A → /voyager-pack · B → /voyager-path), kept until the
+           user becomes a Voyager (role flips off 'applicant'); sales-gated. ── */}
+      {feedEntries.length > 0 && (
+        // Cancel .landing-main's mobile horizontal padding (1.25rem) so the
+        // two-column feed gets the full width on portrait. On desktop the feed's
+        // own maxWidth (820) + margin auto re-centers it.
+        <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
+          <FeedProtoClient
+            entries={feedEntries}
+            embedded
+            leadSlot={!loading && SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
+              ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
+              : undefined}
+          />
         </section>
       )}
 
-      {/* ── Devices (unknown + known) ── */}
-      {devices.length > 0 && (
-        <section style={{ padding: '3rem 2.5rem 2rem' }}>
-          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>
-                DEVICE REGISTRY
-              </div>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
-              {devices.map((device) => (
-                device.knowledge === 'unknown'
-                  ? <UnknownDevicePreviewCard key={device.id} device={device} />
-                  : <DevicePreviewCard key={device.id} device={device} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Latest Intel ── */}
-      {latestIntel.length > 0 && (
-        <section style={{ padding: '1rem 2.5rem 2rem' }}>
-          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-star-dim)' }}>
-                LATEST INTEL
-              </div>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-              {latestIntel.map((entry) => (
-                <IntelPreviewCard key={entry.id} entry={entry} commentCount={intelCommentCounts[entry.id] ?? 0} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Worlds ── */}
-      {latestWorlds.length > 0 && (
-        <section style={{ padding: '1rem 2.5rem 2rem' }}>
-          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-nebula)' }}>
-                WORLD RECORDS
-              </div>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
-              {latestWorlds.map((world) => (
-                <WorldPreviewCard key={world.id} world={world} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Active Votes ── */}
-      {latestVotes.length > 0 && (
-        <section style={{ padding: '1rem 2.5rem 2rem' }}>
-          <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: '#20D890' }}>
-                ● ACTIVE VOTES
-              </div>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            </div>
-            <div className="votes-grid">
-              {latestVotes.map((vote) => {
-                const myResp = myVoteResponses.find((r) => r.vote_id === vote.id)
-                return (
-                  <VoteCard
-                    key={vote.id}
-                    vote={vote}
-                    hasVoted={!!myResp}
-                    mySelections={myResp?.selected_options ?? []}
-                    tally={voteTallies[vote.id] ?? {}}
-                  />
-                )
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <div className="footer-bar" style={{ marginTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>MULTIVERSE.COLLECTIVE</div>
+      <div className="footer-bar" style={{ marginTop: '2rem', justifyContent: 'center' }}>
+        <div className="tag">EXPLORE PARALLEL WORLDS</div>
       </div>
     </div>
   )

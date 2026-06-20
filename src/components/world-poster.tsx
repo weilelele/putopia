@@ -40,6 +40,7 @@ export function WorldPoster({
   orangeMask = false,
   eyebrowStyle,
   hideDescription = false,
+  noBorder = false,
 }: {
   world: PosterWorld
   cover?: string | null
@@ -53,6 +54,7 @@ export function WorldPoster({
   orangeMask?: boolean
   eyebrowStyle?: CSSProperties
   hideDescription?: boolean
+  noBorder?: boolean
 }) {
   const displayName = world.name_en || world.name
   const bg = cover ?? world.image_path ?? null
@@ -66,7 +68,7 @@ export function WorldPoster({
       style={{
         display: 'block', textDecoration: 'none', position: 'relative',
         minHeight, overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: noBorder ? 'none' : '1px solid rgba(255,255,255,0.08)',
         background: `linear-gradient(155deg, ${from}, ${to})`,
         ['--poster-hover' as string]: hoverBorder,
       }}
@@ -77,6 +79,8 @@ export function WorldPoster({
           src={bg}
           alt=""
           className="world-poster-img"
+          loading="lazy"
+          decoding="async"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
         />
       )}
