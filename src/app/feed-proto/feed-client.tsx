@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { WorldPoster } from '@/components/world-poster'
+import { getVoyagerById } from '@/lib/actions/profile'
+import type { VoyagerProfile } from '@/types/database'
 
 // ─── Shared types (also consumed by the server page) ──────────────────────────
 
-export type Person = { name: string; initial: string; avatar?: string | null; option?: string }
+export type Person = { name: string; initial: string; avatar?: string | null; option?: string; id?: string | null }
 
 export type PosterWorld = {
   id: string
@@ -113,7 +115,7 @@ function Footer({ actor, time, align = 'space-between' }: { actor?: Person | nul
 
 // ─── Content card (info / device / member) — navigates to the real route ──────
 
-function ContentCard({ item }: { item: FeedItem }) {
+function ContentCard({ item, onMember }: { item: FeedItem; onMember?: (item: FeedItem) => void }) {
   if (item.kind === 'world' && item.world) {
     return (
       <div style={{ breakInside: 'avoid', marginBottom: 11 }}>
@@ -139,16 +141,18 @@ function ContentCard({ item }: { item: FeedItem }) {
   // squat block when the copy was short. Give them a floor height and let flex
   // spacers open up breathing room — biased toward the top — when content is thin.
   const textOnly = !hasImage && !isMember
+  // A new-voyager card opens an intro popup for that person rather than jumping
+  // straight to the roster — restoring the old dashboard's quick-view step.
+  const opensIntro = isMember && !!item.actor?.id && !!onMember
 
-  return (
-    <Link
-      href={item.href}
-      style={{
-        display: 'flex', flexDirection: 'column', textDecoration: 'none', breakInside: 'avoid', marginBottom: 11,
-        background: 'var(--color-void)', borderRadius: 3, overflow: 'hidden',
-        ...(textOnly ? { minHeight: 178 } : {}),
-      }}
-    >
+  const cardStyle: React.CSSProperties = {
+    display: 'flex', flexDirection: 'column', textDecoration: 'none', breakInside: 'avoid', marginBottom: 11,
+    background: 'var(--color-void)', borderRadius: 3, overflow: 'hidden',
+    ...(textOnly ? { minHeight: 178 } : {}),
+  }
+
+  const inner = (
+    <>
       {hasImage && !isMember && <Cover src={item.image as string} />}
 
       {isMember && item.actor && (
@@ -183,6 +187,26 @@ function ContentCard({ item }: { item: FeedItem }) {
           ? <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}><span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>{item.time}</span></div>
           : <Footer actor={item.actor} time={item.time} />}
       </div>
+    </>
+  )
+
+  if (opensIntro) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => onMember!(item)}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onMember!(item) } }}
+        style={{ ...cardStyle, cursor: 'pointer' }}
+      >
+        {inner}
+      </div>
+    )
+  }
+
+  return (
+    <Link href={item.href} style={cardStyle}>
+      {inner}
     </Link>
   )
 }
@@ -262,12 +286,119 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
   )
 }
 
+// ─── Voyager intro modal ──────────────────────────────────────────────────────
+
+function fmtDate(iso?: string | null) {
+  if (!iso) return ''
+  return new Date(iso).toISOString().slice(0, 10).replace(/-/g, '.')
+}
+
+function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () => void }) {
+  const [profile, setProfile] = useState<VoyagerProfile | null>(null)
+  const [loading, setLoading] = useState(!!person.id)
+
+  useEffect(() => {
+    if (!person.id) return
+    let live = true
+    getVoyagerById(person.id).then(p => { if (live) { setProfile(p); setLoading(false) } })
+    return () => { live = false }
+  }, [person.id])
+
+  const isArch = profile?.role === 'architect'
+  const accent = isArch ? ORANGE : LORANGE
+  const name = profile?.display_name ?? person.name
+  const initials = (name ?? '').slice(0, 2).toUpperCase()
+  const avatar = profile?.avatar_url ?? person.avatar ?? null
+
+  const socials = ([
+    profile?.social_x && { label: 'X', href: profile.social_x },
+    profile?.social_instagram && { label: 'INSTAGRAM', href: profile.social_instagram },
+    profile?.social_linkedin && { label: 'LINKEDIN', href: profile.social_linkedin },
+  ].filter(Boolean)) as { label: string; href: string }[]
+
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(5,8,18,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+    >
+      <div style={{ background: '#0F1430', border: `1px solid ${accent}59`, borderRadius: 6, width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', fontFamily: 'var(--font-mono)' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid rgba(255,107,53,0.14)', background: '#090D1A' }}>
+          <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: FS_CAPTION, letterSpacing: '0.25em' }}>{'// VOYAGER PROFILE'}</span>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '2px 6px' }}>✕</button>
+        </div>
+
+        {/* Identity */}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '20px 18px 16px' }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: '50%', flexShrink: 0, overflow: 'hidden',
+            border: `2px solid ${accent}55`, background: avatar ? 'transparent' : `${accent}18`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, fontSize: '1.4rem', fontWeight: 700,
+          }}>
+            {avatar
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={avatar} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : initials}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: 4 }}>
+              <span style={{ fontSize: FS_LABEL, fontWeight: 700, color: '#F5F5F5', letterSpacing: '0.04em' }}>{name}</span>
+              <span style={{ fontSize: FS_CAPTION, padding: '2px 7px', border: `1px solid ${accent}55`, color: accent, letterSpacing: '0.15em', background: `${accent}0D` }}>
+                {isArch ? 'ARCHITECT' : 'VOYAGER'}
+              </span>
+            </div>
+            {profile?.batch_label && <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', letterSpacing: '0.1em', marginBottom: 2 }}>{profile.batch_label}</div>}
+            {profile?.location && <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>{profile.location}</div>}
+            {profile?.joined_at && <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.25)', marginTop: 2 }}>joined {fmtDate(profile.joined_at)}</div>}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: 'flex', borderTop: '1px solid rgba(255,107,53,0.1)', borderBottom: '1px solid rgba(255,107,53,0.1)', margin: '0 18px' }}>
+          <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#E85D04', textShadow: '0 0 10px rgba(232,93,4,0.35)' }}>{profile?.observation_days ?? '—'}</div>
+            <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: 2 }}>OBS DAYS</div>
+          </div>
+          <div style={{ width: 1, background: 'rgba(255,107,53,0.1)' }} />
+          <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: GREEN, textShadow: '0 0 10px rgba(32,216,144,0.25)' }}>{profile?.worlds_discovered ?? '—'}</div>
+            <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: 2 }}>WORLDS</div>
+          </div>
+        </div>
+
+        {/* Bio */}
+        {loading
+          ? <div style={{ padding: '14px 18px', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>Loading profile…</div>
+          : profile?.bio && <div style={{ padding: '14px 18px', fontSize: FS_LABEL, color: 'rgba(245,245,245,0.55)', lineHeight: 1.65 }}>{profile.bio}</div>}
+
+        {/* Footer: socials + proceed */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 18px', borderTop: '1px solid rgba(255,107,53,0.1)' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {socials.map(s => (
+              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                style={{ fontSize: FS_CAPTION, letterSpacing: '0.15em', color: 'rgba(245,245,245,0.35)', border: '1px solid rgba(255,107,53,0.2)', padding: '3px 8px', textDecoration: 'none' }}>
+                {s.label} ↗
+              </a>
+            ))}
+          </div>
+          <Link href="/voyagers" onClick={onClose}
+            style={{ fontSize: FS_CAPTION, letterSpacing: '0.12em', color: ORANGE, border: '1px solid rgba(255,107,53,0.45)', padding: '6px 14px', textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            SEE ALL →
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page client ──────────────────────────────────────────────────────────────
 
 export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entries: FeedEntry[]; embedded?: boolean; leadSlot?: ReactNode }) {
   // Track the specific vote that was clicked — every vote must open its own
   // options, not the first vote's.
   const [activeVote, setActiveVote] = useState<VoteCard | null>(null)
+  // The new-voyager whose intro popup is open (null = none).
+  const [activeVoyager, setActiveVoyager] = useState<Person | null>(null)
 
   const outer = embedded
     ? { color: 'var(--color-star)' as const }
@@ -305,7 +436,7 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entri
           )}
           {entries.map(e => e.kind === 'vote'
             ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setActiveVote(e.vote)} />
-            : <ContentCard key={e.item.id} item={e.item} />)}
+            : <ContentCard key={e.item.id} item={e.item} onMember={it => setActiveVoyager(it.actor ?? null)} />)}
         </div>
 
         {!embedded && (
@@ -316,6 +447,7 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entri
       </div>
 
       {activeVote && <VoteModal vote={activeVote} onClose={() => setActiveVote(null)} />}
+      {activeVoyager && <VoyagerIntroModal person={activeVoyager} onClose={() => setActiveVoyager(null)} />}
     </div>
   )
 }
