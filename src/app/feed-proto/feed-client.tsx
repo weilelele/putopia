@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { WorldPoster } from '@/components/world-poster'
 
@@ -117,6 +117,7 @@ function ContentCard({ item }: { item: FeedItem }) {
           minHeight={166}
           hoverBorder="rgba(255,176,32,0.4)"
           orangeMask={item.established}
+          noBorder
         />
       </div>
     )
@@ -130,7 +131,7 @@ function ContentCard({ item }: { item: FeedItem }) {
       href={item.href}
       style={{
         display: 'block', textDecoration: 'none', breakInside: 'avoid', marginBottom: 11,
-        background: 'var(--color-void)', border: '1px solid rgba(245,245,245,0.08)', borderRadius: 3, overflow: 'hidden',
+        background: 'var(--color-void)', borderRadius: 3, overflow: 'hidden',
       }}
     >
       {hasImage && !isMember && <Cover src={item.image as string} />}
@@ -171,12 +172,11 @@ function ContentCard({ item }: { item: FeedItem }) {
 
 function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
   const shown = vote.voters.slice(0, 5)
-  const extra = Math.max(0, vote.count - shown.length)
   return (
     <div
       onClick={onVote}
       style={{
-        breakInside: 'avoid', marginBottom: 11, background: '#1A1107', border: `1px solid ${LORANGE}`,
+        breakInside: 'avoid', marginBottom: 11, background: '#1A1107',
         borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
       }}
     >
@@ -193,9 +193,6 @@ function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
               )}
             </div>
           ))}
-          {extra > 0 && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.4)', paddingLeft: 27, whiteSpace: 'nowrap' }}>+{extra} more</div>
-          )}
         </div>
       )}
 
@@ -248,7 +245,7 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
 
 // ─── Page client ──────────────────────────────────────────────────────────────
 
-export function FeedProtoClient({ entries, embedded = false }: { entries: FeedEntry[]; embedded?: boolean }) {
+export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entries: FeedEntry[]; embedded?: boolean; leadSlot?: ReactNode }) {
   const [voteOpen, setVoteOpen] = useState(false)
   const voteEntry = entries.find(e => e.kind === 'vote')
   const vote = voteEntry && voteEntry.kind === 'vote' ? voteEntry.vote : null
@@ -278,6 +275,9 @@ export function FeedProtoClient({ entries, embedded = false }: { entries: FeedEn
         )}
 
         <div style={{ padding: embedded ? 0 : 10, columnCount: 2, columnGap: 8 }}>
+          {leadSlot && (
+            <div style={{ breakInside: 'avoid', marginBottom: 11 }}>{leadSlot}</div>
+          )}
           {entries.map(e => e.kind === 'vote'
             ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setVoteOpen(true)} />
             : <ContentCard key={e.item.id} item={e.item} />)}

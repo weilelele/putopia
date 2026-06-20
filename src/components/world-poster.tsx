@@ -39,6 +39,8 @@ export function WorldPoster({
   hoverBorder = 'rgba(255,255,255,0.28)',
   orangeMask = false,
   eyebrowStyle,
+  hideDescription = false,
+  noBorder = false,
 }: {
   world: PosterWorld
   cover?: string | null
@@ -51,6 +53,8 @@ export function WorldPoster({
   hoverBorder?: string
   orangeMask?: boolean
   eyebrowStyle?: CSSProperties
+  hideDescription?: boolean
+  noBorder?: boolean
 }) {
   const displayName = world.name_en || world.name
   const bg = cover ?? world.image_path ?? null
@@ -64,7 +68,7 @@ export function WorldPoster({
       style={{
         display: 'block', textDecoration: 'none', position: 'relative',
         minHeight, overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: noBorder ? 'none' : '1px solid rgba(255,255,255,0.08)',
         background: `linear-gradient(155deg, ${from}, ${to})`,
         ['--poster-hover' as string]: hoverBorder,
       }}
@@ -95,7 +99,7 @@ export function WorldPoster({
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.02em', marginBottom: 6, lineHeight: 1.25 }}>
           {displayName}
         </div>
-        {world.description && (
+        {!hideDescription && world.description && (
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', lineHeight: 1.55, color: 'rgba(255,255,255,0.85)', marginBottom: 11, display: '-webkit-box', WebkitLineClamp: descLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {world.description}
           </div>

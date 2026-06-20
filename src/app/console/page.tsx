@@ -874,25 +874,22 @@ function ConsoleInner() {
         <AuthHero user={user} />
       )}
 
-      {/* ── Voyager ad slot — between Status Feed and Device Registry ──
-           A (direct) → /voyager-pack · B (task_gated) → /voyager-path.
-           Hidden for non-applicants and while sales are closed. */}
-      {!loading && SALES_OPEN && user.role === 'applicant' && experimentGroup && (
-        <section style={{ padding: '0.5rem 2.5rem 0' }}>
-          <div style={{ maxWidth: 360, margin: '0 auto' }}>
-            <VoyagerAdSlot group={experimentGroup} />
-          </div>
-        </section>
-      )}
-
       {/* ── Signal Feed — the unified two-column stream (replaces the old Status
-           Feed + per-type content blocks) ── */}
+           Feed + per-type content blocks). The Voyager ad rides as the pinned
+           top-left block (A → /voyager-pack · B → /voyager-path), kept until the
+           user becomes a Voyager (role flips off 'applicant'); sales-gated. ── */}
       {feedEntries.length > 0 && (
         // Cancel .landing-main's mobile horizontal padding (1.25rem) so the
         // two-column feed gets the full width on portrait. On desktop the feed's
         // own maxWidth (820) + margin auto re-centers it.
         <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
-          <FeedProtoClient entries={feedEntries} embedded />
+          <FeedProtoClient
+            entries={feedEntries}
+            embedded
+            leadSlot={!loading && SALES_OPEN && user.role === 'applicant' && experimentGroup
+              ? <VoyagerAdSlot group={experimentGroup} />
+              : undefined}
+          />
         </section>
       )}
 
