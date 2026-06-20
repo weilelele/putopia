@@ -62,11 +62,11 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
     // Classified intel (e.g. "Rumor:" reports) is gated — keep it out of the
     // public-facing feed; it stays reachable on the permissioned /intel pages.
     db.from('intel').select('id, title, content, images, classified, publisher_name, publisher_id, timestamp').eq('classified', false).order('timestamp', { ascending: false }).limit(6),
-    db.from('worlds').select(worldCols).eq('lifecycle_state', 'proposed').order('submitted_at', { ascending: false }).limit(6),
+    db.from('worlds').select(worldCols).eq('lifecycle_state', 'proposed').order('submitted_at', { ascending: false }).limit(8),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'syncing').order('created_at', { ascending: false }).limit(5),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'stable').order('created_at', { ascending: false }).limit(2),
     db.from('devices').select('id, name, description, knowledge, image_path, status, location, current_user_name, current_user_id, updated_at').order('updated_at', { ascending: false }).limit(4),
-    db.from('activity_events').select('actor_id, actor_name, target_title, created_at').eq('event_type', 'voyager_activated').eq('is_visible', true).order('created_at', { ascending: false }).limit(3),
+    db.from('activity_events').select('actor_id, actor_name, target_title, created_at').eq('event_type', 'voyager_activated').eq('is_visible', true).order('created_at', { ascending: false }).limit(8),
     db.from('votes').select('id, title, options, ends_at, created_at').eq('is_active', true).order('created_at', { ascending: false }).limit(5),
   ])
 
