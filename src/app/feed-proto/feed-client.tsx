@@ -135,13 +135,18 @@ function ContentCard({ item }: { item: FeedItem }) {
 
   const isMember = item.kind === 'member'
   const hasImage = !!item.image
+  // Text-only cards (no cover, not a member portrait) used to collapse to a
+  // squat block when the copy was short. Give them a floor height and let flex
+  // spacers open up breathing room — biased toward the top — when content is thin.
+  const textOnly = !hasImage && !isMember
 
   return (
     <Link
       href={item.href}
       style={{
-        display: 'block', textDecoration: 'none', breakInside: 'avoid', marginBottom: 11,
+        display: 'flex', flexDirection: 'column', textDecoration: 'none', breakInside: 'avoid', marginBottom: 11,
         background: 'var(--color-void)', borderRadius: 3, overflow: 'hidden',
+        ...(textOnly ? { minHeight: 178 } : {}),
       }}
     >
       {hasImage && !isMember && <Cover src={item.image as string} />}
@@ -152,7 +157,9 @@ function ContentCard({ item }: { item: FeedItem }) {
         </div>
       )}
 
-      <div style={{ padding: '10px 11px' }}>
+      <div style={{ padding: '10px 11px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {textOnly && <div style={{ flex: '1.6 1 0', minHeight: 6 }} />}
+
         {item.label && !isMember && (
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, letterSpacing: '0.06em', color: item.color, marginBottom: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {item.label}
@@ -169,6 +176,8 @@ function ContentCard({ item }: { item: FeedItem }) {
             marginTop: 7, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>{item.snippet}</div>
         )}
+
+        {textOnly && <div style={{ flex: '1 1 0', minHeight: 6 }} />}
 
         {isMember
           ? <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}><span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>{item.time}</span></div>
@@ -256,9 +265,9 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
 // ─── Page client ──────────────────────────────────────────────────────────────
 
 export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entries: FeedEntry[]; embedded?: boolean; leadSlot?: ReactNode }) {
-  const [voteOpen, setVoteOpen] = useState(false)
-  const voteEntry = entries.find(e => e.kind === 'vote')
-  const vote = voteEntry && voteEntry.kind === 'vote' ? voteEntry.vote : null
+  // Track the specific vote that was clicked — every vote must open its own
+  // options, not the first vote's.
+  const [activeVote, setActiveVote] = useState<VoteCard | null>(null)
 
   const outer = embedded
     ? { color: 'var(--color-star)' as const }
@@ -295,7 +304,7 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entri
             <div style={{ breakInside: 'avoid', marginBottom: 11 }}>{leadSlot}</div>
           )}
           {entries.map(e => e.kind === 'vote'
-            ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setVoteOpen(true)} />
+            ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setActiveVote(e.vote)} />
             : <ContentCard key={e.item.id} item={e.item} />)}
         </div>
 
@@ -306,7 +315,7 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entri
         )}
       </div>
 
-      {voteOpen && vote && <VoteModal vote={vote} onClose={() => setVoteOpen(false)} />}
+      {activeVote && <VoteModal vote={activeVote} onClose={() => setActiveVote(null)} />}
     </div>
   )
 }

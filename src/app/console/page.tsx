@@ -538,7 +538,7 @@ function GuestHero({ newHref, mcFunctions, stats }: { newHref: string; mcFunctio
         fontFamily: 'var(--font-body)', fontSize: 'clamp(1rem, 4.5vw, 1.25rem)',
         lineHeight: 1.55, color: 'var(--color-star)', ...line(1),
       }}>
-        We own devices that look into worlds that aren&apos;t ours.
+        We own devices looking into parallel worlds.
       </p>
 
       {/* Three headline numbers — tap to reveal an explanation */}
@@ -838,9 +838,10 @@ function ConsoleInner() {
     getGuestHeroStats().then(setHeroStats).catch(onErr('getGuestHeroStats'))
   }, [])
 
-  // Load experiment group for applicants (drives the ad-slot variant)
+  // Load the experiment group for any signed-in member (drives the ad-slot
+  // variant). Guests stay null and fall back to the 'direct' variant below.
   useEffect(() => {
-    if (!loading && user.role === 'applicant') {
+    if (!loading && user.role !== 'guest') {
       getOrAssignExperimentGroup().then(setExperimentGroup)
     }
   }, [loading, user.role])
@@ -886,8 +887,8 @@ function ConsoleInner() {
           <FeedProtoClient
             entries={feedEntries}
             embedded
-            leadSlot={!loading && SALES_OPEN && user.role === 'applicant' && experimentGroup
-              ? <VoyagerAdSlot group={experimentGroup} />
+            leadSlot={!loading && SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
+              ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
               : undefined}
           />
         </section>
