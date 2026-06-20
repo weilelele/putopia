@@ -893,9 +893,8 @@ function ConsoleInner() {
         </section>
       )}
 
-      <div className="footer-bar" style={{ marginTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>MULTIVERSE.COLLECTIVE</div>
+      <div className="footer-bar" style={{ marginTop: '2rem', justifyContent: 'center' }}>
+        <div className="tag">EXPLORE PARALLEL WORLDS</div>
       </div>
     </div>
   )

@@ -65,7 +65,7 @@ function Avatar({ p, size = 20 }: { p: Person; size?: number }) {
   if (p.avatar) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={p.avatar} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, display: 'block' }} />
+      <img src={p.avatar} alt="" loading="lazy" decoding="async" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, display: 'block' }} />
     )
   }
   return (
@@ -79,10 +79,20 @@ function Avatar({ p, size = 20 }: { p: Person; size?: number }) {
 
 function Cover({ src }: { src: string }) {
   // Fixed 3:2 banner so square / portrait images don't blow up the card height.
+  // Show a placeholder block first, then fade the image in once it decodes — and
+  // lazy-load so off-screen covers never block the initial paint.
+  const [loaded, setLoaded] = useState(false)
   return (
-    <div style={{ width: '100%', aspectRatio: '3 / 2', overflow: 'hidden' }}>
+    <div className={loaded ? undefined : 'feed-skel'} style={{ width: '100%', aspectRatio: '3 / 2', overflow: 'hidden', background: 'var(--color-void)' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.85) saturate(0.85)' }} />
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.85) saturate(0.85)', opacity: loaded ? 1 : 0, transition: 'opacity 0.35s ease' }}
+      />
     </div>
   )
 }
@@ -256,6 +266,12 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot }: { entri
 
   return (
     <div style={outer}>
+      {/* Skeleton shimmer for image placeholders — inlined so it ships without
+          depending on globals.css (which the dev server's CSS HMR misses). */}
+      <style>{`
+        .feed-skel { background-image: linear-gradient(100deg, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.02) 70%); background-size: 200% 100%; animation: feed-skel-shimmer 1.4s ease-in-out infinite; }
+        @keyframes feed-skel-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+      `}</style>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
         {embedded ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
