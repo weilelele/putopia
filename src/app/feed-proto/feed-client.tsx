@@ -260,7 +260,7 @@ export function FeedProtoClient({ entries, embedded = false }: { entries: FeedEn
 
   return (
     <div style={outer}>
-      <div style={{ maxWidth: 920, margin: '0 auto' }}>
+      <div style={{ maxWidth: 820, margin: '0 auto' }}>
         {embedded ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />

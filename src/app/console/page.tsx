@@ -888,7 +888,10 @@ function ConsoleInner() {
       {/* ── Signal Feed — the unified two-column stream (replaces the old Status
            Feed + per-type content blocks) ── */}
       {feedEntries.length > 0 && (
-        <section style={{ padding: '2.5rem 1.25rem 2rem' }}>
+        // Cancel .landing-main's mobile horizontal padding (1.25rem) so the
+        // two-column feed gets the full width on portrait. On desktop the feed's
+        // own maxWidth (820) + margin auto re-centers it.
+        <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
           <FeedProtoClient entries={feedEntries} embedded />
         </section>
       )}
