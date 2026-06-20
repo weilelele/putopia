@@ -590,20 +590,7 @@ function GuestHero({ newHref, mcFunctions, stats }: { newHref: string; mcFunctio
         }}>
           QUESTIONS ABOUT US:
         </span>
-        {([
-          {
-            name: 'Ryo Tanaka',
-            handle: 'ryotanakaputo',
-            avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/86fadca3-8739-4553-9179-c4d0e84895ee/avatar.jpg',
-            href: 'https://x.com/ryotanakaputo',
-          },
-          {
-            name: 'Valentina Cruz',
-            handle: 'ValentinaCruzi',
-            avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/403b32a7-8d85-4cdd-9c7f-4f2c7919d726/avatar.jpg',
-            href: 'https://x.com/ValentinaCruzi',
-          },
-        ] as const).map(({ name, handle, avatar, href }) => (
+        {ASK_US_CONTACTS.map(({ name, handle, avatar, href }) => (
           <a
             key={name}
             href={href}
