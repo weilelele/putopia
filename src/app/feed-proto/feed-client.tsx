@@ -125,7 +125,7 @@ function ContentCard({ item, onMember }: { item: FeedItem; onMember?: (item: Fee
           eyebrowColor={item.established ? LORANGE : AMBER}
           eyebrowStyle={{ whiteSpace: 'nowrap', letterSpacing: '0.06em' }}
           date={item.time}
-          descLines={3}
+          descLines={2}
           minHeight={166}
           hoverBorder="rgba(255,176,32,0.4)"
           orangeMask={item.established}
@@ -143,7 +143,12 @@ function ContentCard({ item, onMember }: { item: FeedItem; onMember?: (item: Fee
   const textOnly = !hasImage && !isMember
   // A new-voyager card opens an intro popup for that person rather than jumping
   // straight to the roster — restoring the old dashboard's quick-view step.
-  const opensIntro = isMember && !!item.actor?.id && !!onMember
+  // Gate only on the card being a member with an actor present; we deliberately
+  // do NOT require actor.id, so a payload missing the id still opens the popup
+  // (the modal fetches the full profile when an id exists and degrades to the
+  // card's own name/avatar when it doesn't) rather than silently falling through
+  // to the roster link.
+  const opensIntro = isMember && !!item.actor && !!onMember
 
   const cardStyle: React.CSSProperties = {
     display: 'flex', flexDirection: 'column', textDecoration: 'none', breakInside: 'avoid', marginBottom: 11,
@@ -177,7 +182,7 @@ function ContentCard({ item, onMember }: { item: FeedItem; onMember?: (item: Fee
         {!isMember && item.snippet && (
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, lineHeight: 1.5, color: 'rgba(245,245,245,0.5)',
-            marginTop: 7, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            marginTop: 7, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>{item.snippet}</div>
         )}
 

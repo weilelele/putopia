@@ -264,7 +264,9 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
 
 // Cached 30s — /console is the highest-traffic page; this collapses concurrent
 // loads onto one set of queries while keeping the feed feeling live.
-const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed'], { revalidate: 30 })
+// Cache key bumped to -v2 to bust pre-existing entries built before actor.id was
+// carried into member items; the old payload could omit it and break the popup.
+const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v2'], { revalidate: 30 })
 
 export async function getSignalFeed(): Promise<FeedEntry[]> {
   return getSignalFeedCached()
