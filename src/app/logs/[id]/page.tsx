@@ -191,9 +191,9 @@ export default function StoryPage() {
         <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
       </div>
 
-      {/* Comments */}
+      {/* Comments — newest first */}
       <div className="space-y-4 mb-8">
-        {comments.map((comment) => (
+        {comments.slice().reverse().map((comment) => (
           <div
             key={comment.id}
             className="border p-4"

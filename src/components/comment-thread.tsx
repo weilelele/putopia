@@ -94,7 +94,10 @@ export function CommentThread({
     if (isArchitect) listImpersonatableProfiles().then(setIdentities)
   }, [isArchitect])
 
-  // Group replies under their parent for tree rendering.
+  // Group replies under their parent for tree rendering. `comments` arrives
+  // oldest→newest. We show top-level transmissions newest-first (reverse roots),
+  // but keep each parent's replies in chronological order so a reply never
+  // renders above the message it answers.
   const { roots, childrenOf } = useMemo(() => {
     const childrenOf = new Map<string, Comment[]>()
     const roots: Comment[] = []
@@ -107,6 +110,7 @@ export function CommentThread({
         roots.push(c)
       }
     }
+    roots.reverse()
     return { roots, childrenOf }
   }, [comments])
 
