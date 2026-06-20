@@ -1,10 +1,24 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { WorldPoster } from '@/components/world-poster'
 
 // ─── Shared types (also consumed by the server page) ──────────────────────────
 
-export type Person = { name: string; initial: string; avatar?: string | null }
+export type Person = { name: string; initial: string; avatar?: string | null; option?: string }
+
+export type PosterWorld = {
+  id: string
+  name: string
+  name_en?: string | null
+  description?: string | null
+  gradient_from?: string | null
+  gradient_to?: string | null
+  image_path?: string | null
+  discoverer_name?: string | null
+  discoverer_avatar_url?: string | null
+}
 
 export type FeedItem = {
   id: string
@@ -14,10 +28,11 @@ export type FeedItem = {
   title: string
   snippet?: string
   image?: string | null
-  gradient?: [string, string] | null
   actor?: Person | null
-  memberSub?: string
+  href: string
   time: string
+  established?: boolean
+  world?: PosterWorld
 }
 
 export type VoteCard = {
@@ -32,6 +47,7 @@ export type VoteCard = {
 
 const ORANGE = '#FF6B35'
 const LORANGE = '#FF8A5C'
+const AMBER = '#FFB020'
 const GREEN = '#20D890'
 const BURNT = '#E85D04'
 
@@ -48,8 +64,7 @@ function Avatar({ p, size = 18 }: { p: Person; size?: number }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: BURNT, color: '#0A0E27', fontWeight: 700, fontSize: size * 0.46,
-      fontFamily: 'var(--font-mono)',
+      background: BURNT, color: '#0A0E27', fontWeight: 700, fontSize: size * 0.46, fontFamily: 'var(--font-mono)',
     }}>{p.initial}</span>
   )
 }
@@ -67,9 +82,7 @@ function Footer({ actor, time, align = 'space-between' }: { actor?: Person | nul
       {actor ? (
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
           <Avatar p={actor} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.45)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {actor.name}
-          </span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.45)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{actor.name}</span>
         </span>
       ) : <span />}
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.35)', flexShrink: 0, marginLeft: 6 }}>{time}</span>
@@ -77,27 +90,42 @@ function Footer({ actor, time, align = 'space-between' }: { actor?: Person | nul
   )
 }
 
-// ─── Content card ─────────────────────────────────────────────────────────────
+// ─── Content card (info / device / member) — navigates to the real route ──────
 
-function ContentCard({ item, onOpen }: { item: FeedItem; onOpen: (i: FeedItem) => void }) {
+function ContentCard({ item }: { item: FeedItem }) {
+  if (item.kind === 'world' && item.world) {
+    return (
+      <div style={{ breakInside: 'avoid', marginBottom: 8 }}>
+        <WorldPoster
+          world={item.world}
+          eyebrow={item.eyebrow}
+          eyebrowColor={item.established ? '#FF8A5C' : AMBER}
+          date={item.time}
+          descLines={3}
+          minHeight={166}
+          hoverBorder="rgba(255,176,32,0.4)"
+          orangeMask={item.established}
+        />
+      </div>
+    )
+  }
+
   const isMember = item.kind === 'member'
   const hasImage = !!item.image
+
   return (
-    <div
-      onClick={() => onOpen(item)}
+    <Link
+      href={item.href}
       style={{
-        breakInside: 'avoid', marginBottom: 8, background: 'var(--color-void)',
-        border: '1px solid rgba(245,245,245,0.08)', borderRadius: 3, overflow: 'hidden', cursor: 'pointer',
+        display: 'block', textDecoration: 'none', breakInside: 'avoid', marginBottom: 8,
+        background: 'var(--color-void)', border: '1px solid rgba(245,245,245,0.08)', borderRadius: 3, overflow: 'hidden',
       }}
     >
       {hasImage && !isMember && <Cover src={item.image as string} />}
-      {!hasImage && !isMember && item.gradient && (
-        <div style={{ height: 84, background: `linear-gradient(150deg, ${item.gradient[0]}, ${item.gradient[1]})` }} />
-      )}
 
-      {isMember && (
-        <div style={{ paddingTop: 14, textAlign: 'center' }}>
-          {item.actor && <Avatar p={item.actor} size={54} />}
+      {isMember && item.actor && (
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 14 }}>
+          <Avatar p={item.actor} size={54} />
         </div>
       )}
 
@@ -106,29 +134,22 @@ function ContentCard({ item, onOpen }: { item: FeedItem; onOpen: (i: FeedItem) =
           {item.title}
         </div>
 
-        {/* No-image info: show a content preview to carry more information */}
-        {!hasImage && !isMember && item.snippet && (
+        {!isMember && item.snippet && (
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.55, color: 'rgba(245,245,245,0.5)',
-            marginTop: 7, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            marginTop: 7, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>{item.snippet}</div>
         )}
 
-        {isMember && item.memberSub && (
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,176,32,0.85)', textAlign: 'center', marginTop: 5, letterSpacing: '0.04em' }}>
-            {item.memberSub}
-          </div>
-        )}
-
         {isMember
-          ? <Footer time={item.time} align="flex-end" />
+          ? <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}><span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.35)' }}>{item.time}</span></div>
           : <Footer actor={item.actor} time={item.time} />}
       </div>
-    </div>
+    </Link>
   )
 }
 
-// ─── Vote card (stronger CTA + recent voters embedded) ────────────────────────
+// ─── Vote card — recent voters listed line by line + solid CTA ────────────────
 
 function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
   const shown = vote.voters.slice(0, 5)
@@ -137,78 +158,36 @@ function VoteTofu({ vote, onVote }: { vote: VoteCard; onVote: () => void }) {
     <div
       onClick={onVote}
       style={{
-        breakInside: 'avoid', marginBottom: 8, background: '#1A1107',
-        border: `1px solid ${LORANGE}`, borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
+        breakInside: 'avoid', marginBottom: 8, background: '#1A1107', border: `1px solid ${LORANGE}`,
+        borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
       }}
     >
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, lineHeight: 1.38, color: LORANGE }}>
-        {vote.title}
-      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, lineHeight: 1.38, color: LORANGE }}>{vote.title}</div>
 
-      {/* Recent voters embedded — makes the act of voting feel alive */}
       {shown.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
-          <span style={{ display: 'flex' }}>
-            {shown.map((v, i) => (
-              <span key={i} style={{ marginLeft: i === 0 ? 0 : -7, position: 'relative', zIndex: shown.length - i, border: '1.5px solid #1A1107', borderRadius: '50%', display: 'inline-flex' }}>
-                <Avatar p={v} size={20} />
-              </span>
-            ))}
-          </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.5)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {shown.map(v => v.name).join(', ')}{extra > 0 ? ` +${extra}` : ''}
-          </span>
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {shown.map((v, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+              <Avatar p={v} size={20} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(245,245,245,0.8)', flexShrink: 0 }}>{v.name}</span>
+              {v.option && (
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>· {v.option}</span>
+              )}
+            </div>
+          ))}
+          {extra > 0 && (
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.4)', paddingLeft: 27 }}>+{extra} more signals</div>
+          )}
         </div>
       )}
 
-      {/* Full solid button */}
-      <div style={{
-        marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center',
-        fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, letterSpacing: '0.15em',
-        padding: '11px 0', borderRadius: 2,
-      }}>CAST YOUR SIGNAL ▸</div>
+      <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, letterSpacing: '0.15em', padding: '11px 0', borderRadius: 2 }}>
+        CAST YOUR SIGNAL ▸
+      </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.45)' }}>{vote.count} signals in</span>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(245,245,245,0.35)' }}>{vote.ends}</span>
-      </div>
-    </div>
-  )
-}
-
-// ─── Detail push screen ───────────────────────────────────────────────────────
-
-function Detail({ item, onBack }: { item: FeedItem; onBack: () => void }) {
-  const isMember = item.kind === 'member'
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'var(--color-deep)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', borderBottom: '1px solid #161c30', flexShrink: 0 }}>
-        <span onClick={onBack} style={{ color: ORANGE, fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>‹</span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.18em', color: item.color }}>{item.eyebrow}</span>
-      </div>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {item.image && !isMember && <Cover src={item.image} />}
-        {isMember && item.actor && (
-          <div style={{ padding: '28px 0', textAlign: 'center' }}><Avatar p={item.actor} size={84} /></div>
-        )}
-        <div style={{ padding: 16, maxWidth: 600, margin: '0 auto' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, lineHeight: 1.35, color: item.color, marginBottom: 14 }}>{item.title}</div>
-          {item.snippet && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, lineHeight: 1.7, color: 'rgba(245,245,245,0.7)', marginBottom: 18 }}>{item.snippet}</div>
-          )}
-          {item.memberSub && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'rgba(255,176,32,0.9)', marginBottom: 18 }}>{item.memberSub}</div>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #161c30', paddingTop: 12 }}>
-            {item.actor ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Avatar p={item.actor} size={24} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(245,245,245,0.6)' }}>{item.actor.name}</span>
-              </span>
-            ) : <span />}
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(245,245,245,0.35)' }}>{item.time}</span>
-          </div>
-        </div>
       </div>
     </div>
   )
@@ -253,10 +232,7 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
 // ─── Page client ──────────────────────────────────────────────────────────────
 
 export function FeedProtoClient({ items, vote }: { items: FeedItem[]; vote: VoteCard | null }) {
-  const [detail, setDetail] = useState<FeedItem | null>(null)
   const [voteOpen, setVoteOpen] = useState(false)
-
-  // Insert the vote card after the first two items so it surfaces high.
   const head = items.slice(0, 2)
   const tail = items.slice(2)
 
@@ -273,9 +249,9 @@ export function FeedProtoClient({ items, vote }: { items: FeedItem[]; vote: Vote
         </div>
 
         <div style={{ padding: 10, columnCount: 2, columnGap: 8 }}>
-          {head.map(it => <ContentCard key={it.id} item={it} onOpen={setDetail} />)}
+          {head.map(it => <ContentCard key={it.id} item={it} />)}
           {vote && <VoteTofu vote={vote} onVote={() => setVoteOpen(true)} />}
-          {tail.map(it => <ContentCard key={it.id} item={it} onOpen={setDetail} />)}
+          {tail.map(it => <ContentCard key={it.id} item={it} />)}
         </div>
 
         <div style={{ textAlign: 'center', color: 'rgba(245,245,245,0.25)', fontFamily: 'var(--font-mono)', fontSize: 10, padding: '12px 0 96px', letterSpacing: '0.2em' }}>
@@ -283,7 +259,6 @@ export function FeedProtoClient({ items, vote }: { items: FeedItem[]; vote: Vote
         </div>
       </div>
 
-      {detail && <Detail item={detail} onBack={() => setDetail(null)} />}
       {voteOpen && vote && <VoteModal vote={vote} onClose={() => setVoteOpen(false)} />}
     </div>
   )
