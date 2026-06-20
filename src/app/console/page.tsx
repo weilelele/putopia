@@ -801,6 +801,8 @@ function ConsoleInner() {
   const { user, loading } = useAuth()
   const searchParams = useSearchParams()
   const utmTracked = useRef(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollRestored = useRef(false)
 
   useEffect(() => {
     if (utmTracked.current) return
@@ -846,10 +848,49 @@ function ConsoleInner() {
     }
   }, [loading, user.role])
 
+  // ── Scroll restoration ──────────────────────────────────────────────────
+  // The dashboard scrolls inside `.landing-main`, not the window, so Next's
+  // built-in (window-based) restoration can't return you to where you left off
+  // after visiting a world / device / signal page. Persist the container's
+  // scrollTop to sessionStorage and restore it once the feed — whose skeletons
+  // reserve height up front — has rendered, so the target offset is valid.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const save = () => sessionStorage.setItem('console:scrollTop', String(el.scrollTop))
+    const onScroll = () => {
+      // Debounce so we write at most every ~120ms while scrolling.
+      if (timer) return
+      timer = setTimeout(() => { timer = undefined; save() }, 120)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      if (timer) clearTimeout(timer)
+      save() // flush the final position on unmount (navigating away)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (scrollRestored.current) return
+    const el = scrollRef.current
+    if (!el || feedEntries.length === 0) return
+    scrollRestored.current = true
+    const saved = Number(sessionStorage.getItem('console:scrollTop') ?? '')
+    if (!saved) return
+    // The feed reserves height via skeletons, so layout is stable once it
+    // renders — restore immediately, then re-apply once more after a tick to
+    // absorb any late reflow (fonts, async hero) without a visible jump.
+    el.scrollTop = saved
+    const t = setTimeout(() => { el.scrollTop = saved }, 60)
+    return () => clearTimeout(t)
+  }, [feedEntries])
+
   const isGuest = !loading && user.role === 'guest'
 
   return (
-    <div className="landing-main">
+    <div className="landing-main" ref={scrollRef}>
       <SectionTracker section="dashboard" />
       <div className="nebula-bg" />
 

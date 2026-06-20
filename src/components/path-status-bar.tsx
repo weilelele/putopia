@@ -43,18 +43,16 @@ export function PathStatusBar({
     onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' },
     onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = 'transparent' },
   }
-  // Diagonal divider (slash) between cells — replaces the old vertical line.
-  const diag = (
-    <div style={{ width: 16, alignSelf: 'stretch', position: 'relative', flex: '0 0 auto' }}>
-      <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: 'rgba(255,107,53,0.22)', transform: 'skewX(-22deg)' }} />
-    </div>
-  )
+  // Borderless HUD — cells sit flush with no divider lines. Keep a small spacer
+  // so the avatar / identity / dispatch / device cells don't run together.
+  const diag = <div style={{ width: 12, flex: '0 0 auto' }} />
 
   return (
-    <div className="hud-frame hud-frame--orange" style={{
+    <div style={{
       width: '100%', maxWidth: 560, margin: '0 auto',
       display: 'flex', flexDirection: 'column',
       padding: 0, background: 'var(--color-void)',
+      borderRadius: 3, overflow: 'hidden',
     }}>
       {/* ── Identity row ── */}
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
@@ -86,7 +84,6 @@ export function PathStatusBar({
       </div>
 
       {/* ── Bottom row: Signal Dispatch (left) + device days (right), split 50/50 ── */}
-      <div style={{ height: 1, background: 'rgba(255,107,53,0.22)' }} />
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
         {/* Left half — Signal Dispatch focal number. Wider than the right half so
             the "// SIGNAL DISPATCH" label + number never overrun the slash. */}
