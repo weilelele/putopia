@@ -927,12 +927,35 @@ function ConsoleInner() {
     scrollRestored.current = true
     const saved = Number(sessionStorage.getItem('console:scrollTop') ?? '')
     if (!saved) return
-    // The feed reserves height via skeletons, so layout is stable once it
-    // renders — restore immediately, then re-apply once more after a tick to
-    // absorb any late reflow (fonts, async hero) without a visible jump.
+    // Deep offsets are fragile: lazy images and async hero content reflow for a
+    // while after the feed mounts, and until the container is tall enough the
+    // browser silently clamps scrollTop to the current scrollHeight. So instead
+    // of restoring once, re-apply the saved offset across a short window until it
+    // sticks — but bail the moment the user scrolls themselves, so we never fight
+    // a deliberate scroll.
     el.scrollTop = saved
-    const t = setTimeout(() => { el.scrollTop = saved }, 60)
-    return () => clearTimeout(t)
+    let userScrolled = false
+    const onUserScroll = () => {
+      // A reflow-driven clamp lands near `saved`; a real user scroll moves far
+      // from it. Only treat large deviations as intentional.
+      if (Math.abs(el.scrollTop - saved) > 120) userScrolled = true
+    }
+    el.addEventListener('wheel', () => { userScrolled = true }, { passive: true, once: true })
+    el.addEventListener('touchmove', () => { userScrolled = true }, { passive: true, once: true })
+    el.addEventListener('scroll', onUserScroll, { passive: true })
+    const timers: ReturnType<typeof setTimeout>[] = []
+    for (const delay of [16, 60, 150, 300, 500, 800]) {
+      timers.push(setTimeout(() => {
+        if (userScrolled) return
+        if (Math.abs(el.scrollTop - saved) > 2) el.scrollTop = saved
+      }, delay))
+    }
+    const stop = setTimeout(() => el.removeEventListener('scroll', onUserScroll), 850)
+    return () => {
+      timers.forEach(clearTimeout)
+      clearTimeout(stop)
+      el.removeEventListener('scroll', onUserScroll)
+    }
   }, [feedEntries])
 
   const isGuest = !loading && user.role === 'guest'
