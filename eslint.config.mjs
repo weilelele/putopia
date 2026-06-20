@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import designTokens from "./eslint-rules/min-font-size.mjs";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -25,6 +26,17 @@ const eslintConfig = defineConfig([
       "react-hooks/purity": "error",
       "react-hooks/immutability": "error",
       "react-hooks/refs": "error",
+    },
+  },
+  {
+    // Design-system type-scale floor. --fs-caption (12px) is the smallest
+    // permitted size; inline fontSize literals below it are flagged. Tracked
+    // as a warning for now because the codebase predates enforcement and has
+    // a backlog of sub-floor sizes — promote to "error" once those are
+    // reconciled (bump to 12px / a --fs-* token, or design sign-off).
+    plugins: { "design-tokens": designTokens },
+    rules: {
+      "design-tokens/min-font-size": "warn",
     },
   },
 ]);

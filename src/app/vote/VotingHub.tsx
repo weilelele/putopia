@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
 import { Plus } from 'lucide-react'
 import { VoteCard } from '@/components/VoteCard'
+import { BackLink } from '@/components/back-link'
 import { CreateVoteModal } from './CreateVoteModal'
 import type { Vote } from '@/types/database'
 
@@ -105,7 +106,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">{"// DECISION ZONE"}</div>
+          <BackLink href="/intel" label="INTEL FEED" />
           <h1>VOTING <span className="accent">HUB</span></h1>
           <p className="sub">{votes.filter(v => v.is_active).length} active / {votes.filter(v => !v.is_active).length} closed</p>
         </div>

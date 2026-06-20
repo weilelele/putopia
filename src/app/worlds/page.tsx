@@ -3,7 +3,6 @@ import { getAllWorlds, getPipelineWorlds } from '@/lib/actions/worlds'
 import { getTuningCovers } from '@/lib/actions/signal-tasks'
 import { SectionTracker } from '@/components/section-tracker'
 import { WorldPoster } from '@/components/world-poster'
-import type { WorldLifecycle } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,25 +18,6 @@ function UploadIcon() {
 }
 
 // ─── Lifecycle badge ──────────────────────────────────────────────────────────
-
-function LifecycleBadge({ state }: { state: WorldLifecycle | string }) {
-  const config: Record<string, { label: string; color: string }> = {
-    proposed: { label: 'UNREVIEWED',  color: 'var(--color-warn)' },
-    picked:   { label: 'IN REVIEW',   color: 'var(--color-ok)'   },
-    syncing:  { label: 'BUILDING',    color: '#60B0FF'           },
-    stable:   { label: 'CONFIRMED',   color: 'var(--color-nucleus)' },
-  }
-  const c = config[state] ?? config.stable
-  return (
-    <span style={{
-      fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
-      color: c.color, background: `${c.color}18`,
-      padding: '2px 6px', border: `1px solid ${c.color}40`,
-    }}>
-      {c.label}
-    </span>
-  )
-}
 
 // ─── Section header ───────────────────────────────────────────────────────────
 
@@ -138,9 +118,7 @@ export default async function WorldsPage({
       {/* ── Page head ── */}
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">{'// ARCHIVE'}</div>
           <h1>WORLD <span className="accent">RECORDS</span></h1>
-          <p className="sub">{worlds.length} confirmed parallel worlds</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignSelf: 'flex-start', marginTop: '0.25rem', flexWrap: 'wrap' }}>
           <Link
@@ -180,21 +158,21 @@ export default async function WorldsPage({
         </div>
       </div>
 
-      {/* ── Stats bar ── */}
+      {/* ── Stats bar — three stages, always one row ── */}
       <div style={{
-        display: 'flex', gap: '2rem', marginBottom: '2rem', padding: '0.875rem 1rem',
-        flexWrap: 'wrap', background: 'var(--bg-card)',
+        display: 'flex', gap: '0.75rem', marginBottom: '2rem', padding: '0.875rem 1rem',
+        justifyContent: 'space-between', background: 'var(--bg-card)',
         border: '1px solid rgba(255,107,53,0.12)',
         boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
       }}>
         {[
-          { val: rawImagination.length, label: 'INITIAL VISION', color: 'var(--color-warn)',    anchor: '#section-initial-vision' },
-          { val: worldBuilding.length,  label: 'SIGNAL TUNING',  color: 'var(--color-ok)',      anchor: '#section-signal-tuning'  },
-          { val: worlds.length,         label: 'ESTABLISHED',    color: 'var(--color-nucleus)', anchor: '#section-established'    },
+          { val: rawImagination.length, label: 'INITIAL',     color: 'var(--color-warn)',    anchor: '#section-initial-vision' },
+          { val: worldBuilding.length,  label: 'TUNING',      color: 'var(--color-ok)',      anchor: '#section-signal-tuning'  },
+          { val: worlds.length,         label: 'ESTABLISHED', color: 'var(--color-nucleus)', anchor: '#section-established'    },
         ].map(({ val, label, color, anchor }) => (
-          <a key={label} href={anchor} style={{ textDecoration: 'none', cursor: 'pointer' }}>
+          <a key={label} href={anchor} style={{ textDecoration: 'none', cursor: 'pointer', minWidth: 0 }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color, lineHeight: 1 }}>{val}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.12em', marginTop: 3 }}>{label}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em', marginTop: 3, whiteSpace: 'nowrap' }}>{label}</div>
           </a>
         ))}
       </div>
@@ -212,7 +190,6 @@ export default async function WorldsPage({
               <WorldPoster
                 key={world.id}
                 world={world}
-                eyebrow="◌ INITIAL VISION"
                 date={formatSubmitted(world.submitted_at)}
               />
             ))}
@@ -234,9 +211,8 @@ export default async function WorldsPage({
                 key={world.id}
                 world={world}
                 cover={covers[world.id]}
-                eyebrow={world.id}
                 date={formatSubmitted(world.submitted_at)}
-                badge={<LifecycleBadge state={world.lifecycle_state} />}
+                hideDescription
                 hoverBorder="rgba(32,216,144,0.5)"
               />
             ))}

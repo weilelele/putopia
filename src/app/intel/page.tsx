@@ -246,39 +246,11 @@ export default function IntelPage() {
         </div>
       </div>
 
-      <div className="page-head">
-        <div>
-          <div className="h-eyebrow">{"// INTELLIGENCE"}</div>
+      <div className="page-head" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: '1rem' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1>INTEL <span className="accent">FEED</span></h1>
-          <p className="sub">Known intelligence — {intel.length} entries on record</p>
-        </div>
-        {/* Right side: Voting Hub entry + color legend */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem' }}>
-          <Link
-            href="/vote"
-            style={{
-              flex: '0 0 auto',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              border: '1px solid var(--color-nucleus)',
-              color: 'var(--color-nucleus)',
-              background: 'rgba(232,93,4,0.08)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-caption)',
-              letterSpacing: '0.1em',
-              padding: '0.5rem 0.75rem',
-              borderRadius: 8,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <Vote size={15} />
-            VOTING HUB
-            <ArrowRight size={14} />
-          </Link>
-          {/* Color legend */}
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Type legend — sits in the old subtitle slot */}
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.6rem' }}>
             {(['NOTICE', 'DEVICE', 'ORG'] as const).map((tag) => (
               <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: TAG_COLOR[tag] }} />
@@ -287,6 +259,30 @@ export default function IntelPage() {
             ))}
           </div>
         </div>
+        {/* Voting Hub entry — right-aligned beside the title */}
+        <Link
+          href="/vote"
+          style={{
+            flex: '0 0 auto',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            border: '1px solid var(--color-nucleus)',
+            color: 'var(--color-nucleus)',
+            background: 'rgba(232,93,4,0.08)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--fs-caption)',
+            letterSpacing: '0.1em',
+            padding: '0.5rem 0.75rem',
+            borderRadius: 8,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Vote size={15} />
+          VOTING HUB
+          <ArrowRight size={14} />
+        </Link>
       </div>
 
       <FilterBar

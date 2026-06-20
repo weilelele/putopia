@@ -92,7 +92,35 @@ Type scale: `--fs-display` `--fs-h1`(48) `--fs-h2`(32) `--fs-h3`(24) `--fs-title
 
 ---
 
-## 3. HUD component conventions
+## 3. Layout & viewport — portrait-first (DEFAULT)
+
+> **~90% of users arrive on a phone in portrait.** Portrait mobile is the
+> default design target, not an afterthought. Design, build, and verify every
+> page at a narrow viewport FIRST; widescreen/landscape is progressive
+> enhancement layered on top.
+
+- **Mobile-first Tailwind.** Base (unprefixed) classes = portrait phone. Add
+  `sm:`/`md:`/`lg:` only to *enhance* for wider screens — never the reverse. A
+  page must be complete and usable with zero responsive prefixes.
+- **Single column by default.** Multi-column / side-by-side layouts go behind
+  `sm:`/`md:`. Wide tables and grids need a portrait plan (stack, horizontal
+  scroll, or card view) — don't ship a desktop grid that overflows a phone.
+- **Don't hide essential content on small screens.** The `hidden sm:block`
+  pattern is fine for *decorative/secondary* extras (e.g. a card's side image),
+  never for primary information or actions.
+- **Touch, not hover.** Touch has no hover state — never make hover the *only*
+  way to reveal info or an action. Keep interactive targets ≥ 44×44px.
+- **Mind the mobile chrome.** Account for the address bar, the on-screen
+  keyboard, and safe-area insets; avoid fixed elements that cover content or
+  inputs.
+- **The type floor matters most here.** `--fs-caption` (12px) is the floor on
+  mobile too — enforced by `design-tokens/min-font-size` (see §2 type scale).
+- **Verify in portrait first.** Check at ~390×844 before desktop — the branch
+  preview URL opened on an actual phone is the gold standard.
+
+---
+
+## 4. HUD component conventions
 
 - **Buttons** (`.btn-primary` filled, `.btn-secondary` outline, `.btn-orange`/`.btn-amber`
   aliases of primary, `.btn-ghost` small/link): bevelled corners via `clip-path`
@@ -112,7 +140,7 @@ Type scale: `--fs-display` `--fs-h1`(48) `--fs-h2`(32) `--fs-h3`(24) `--fs-title
 
 ---
 
-## 4. DEPRECATED tokens — DO NOT USE (map to canonical)
+## 5. DEPRECATED tokens — DO NOT USE (map to canonical)
 
 These exist in `:root` and resolve to the same colors, so existing usages still
 work — but they fragment the system and caused a bad "design spec" readout. **Do
@@ -144,7 +172,7 @@ not add new usages.** Map to the canonical token instead:
 
 ---
 
-## 5. Known naming debts (don't "fix" silently — they're load-bearing)
+## 6. Known naming debts (don't "fix" silently — they're load-bearing)
 
 - `--bd-cyan` / `--bd-cyan-2` / `--glow-cyan` / `.hr-cyan` are **orange**, not cyan
   (the brand dropped cyan; names were kept to avoid a mass rename). Treat them as
@@ -156,7 +184,7 @@ not add new usages.** Map to the canonical token instead:
 
 ---
 
-## 6. Why this doc exists
+## 7. Why this doc exists
 
 A "research the design spec" pass returned a Frankenstein list (`--or-retro`,
 `--tx-primary`, `--bg-panel`, mixed with `--bd-faint`/`--font-mono`) because the

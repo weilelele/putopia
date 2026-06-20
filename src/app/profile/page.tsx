@@ -6,6 +6,7 @@ import { Camera, LogOut } from 'lucide-react'
 import { getMyProfile, updateProfile, uploadAvatar } from '@/lib/actions/profile'
 import { getMyOrders, type VoyagerOrder } from '@/lib/actions/orders'
 import { useAuth } from '@/lib/auth-context'
+import { BackLink } from '@/components/back-link'
 
 // ── helpers (mirrors /voyagers) ─────────────────────────────────────────────
 const ACCENT_COLORS = [
@@ -221,7 +222,7 @@ export default function ProfilePage() {
 
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">{"// YOUR DOSSIER"}</div>
+          <BackLink href="/voyagers" label="VOYAGERS" />
           <h1><span className="accent">PROFILE</span></h1>
         </div>
         <button

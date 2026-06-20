@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { BackLink } from '@/components/back-link'
 import { getInvestigationFeed, submitSignalResponse } from '@/lib/actions/signal-tasks'
 import type {
   InvestigationFeedData,
@@ -57,7 +58,7 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
       <div style={{ maxWidth: 880, margin: '0 auto' }}>
         {/* header */}
         <div style={{ borderBottom: '1px solid rgba(255,107,53,0.2)', paddingBottom: 16, marginBottom: 28 }}>
-          <div style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.3em', marginBottom: 8 }}>{'// SIGNAL DISPATCH'}</div>
+          <BackLink href="/worlds" label="WORLD RECORDS" />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>SIGNAL DISPATCH</h1>
             <button
