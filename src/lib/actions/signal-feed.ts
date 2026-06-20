@@ -1,7 +1,7 @@
 'use server'
 
 import { unstable_cache } from 'next/cache'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getTuningCovers } from '@/lib/actions/signal-tasks'
 import { worldStage, type WorldLifecycle } from '@/types/database'
 import type { FeedEntry, FeedItem, Person, PosterWorld, VoteCard } from '@/app/feed-proto/feed-client'
@@ -40,6 +40,20 @@ function until(ts?: string | null): string {
   return d >= 1 ? `ends ${d}d` : `ends ${Math.max(1, Math.floor(diff / 3600000))}h`
 }
 
+// Converts legacy single-string scope (pre-schema_v8) to a role array. Mirrors
+// normalizeScope in actions/votes.ts — kept local because a 'use server' module
+// can only export async functions.
+function normalizeScope(scope: unknown): string[] {
+  if (Array.isArray(scope)) return scope as string[]
+  switch (scope) {
+    case 'public':
+    case 'applicant': return ['applicant', 'voyager', 'architect']
+    case 'voyager':   return ['voyager', 'architect']
+    case 'architect': return ['architect']
+    default:          return ['applicant', 'voyager', 'architect']
+  }
+}
+
 function coerceOptions(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []
   return raw.map(o => {
@@ -52,22 +66,28 @@ function coerceOptions(raw: unknown): string[] {
   }).filter(Boolean)
 }
 
-async function buildSignalFeed(): Promise<FeedEntry[]> {
+// `canSeeGated` = the viewer is a voyager/architect. Gated items (classified
+// intel, voyager-only votes) stay in the single feed pool for everyone, but for
+// ineligible viewers their bodies are STRIPPED here on the server (not merely
+// hidden in CSS) — only the title survives, plus a `locked` flag the client
+// renders as a "VOYAGER ONLY" cover. The cache is bucketed by this boolean so an
+// ineligible viewer's payload never carries the protected content.
+async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = createAdminClient() as any
   const tuningCoversP = getTuningCovers()
 
   const worldCols = 'id, name, name_en, description, image_path, lifecycle_state, gradient_from, gradient_to, discoverer_name, discoverer_id, submitted_at, created_at'
   const [intelR, wProposedR, wSyncingR, wStableR, deviceR, voyagerR, voteR] = await Promise.all([
-    // Classified intel (e.g. "Rumor:" reports) is gated — keep it out of the
-    // public-facing feed; it stays reachable on the permissioned /intel pages.
-    db.from('intel').select('id, title, content, images, classified, publisher_name, publisher_id, timestamp').eq('classified', false).order('timestamp', { ascending: false }).limit(6),
+    // All intel enters the pool; classified rows are teased (title only) to
+    // ineligible viewers and gated below — the body is never sent to them.
+    db.from('intel').select('id, title, content, images, classified, publisher_name, publisher_id, timestamp').order('timestamp', { ascending: false }).limit(6),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'proposed').order('submitted_at', { ascending: false }).limit(8),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'syncing').order('created_at', { ascending: false }).limit(5),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'stable').order('created_at', { ascending: false }).limit(2),
     db.from('devices').select('id, name, description, knowledge, image_path, status, location, current_user_name, current_user_id, updated_at').order('updated_at', { ascending: false }).limit(4),
     db.from('activity_events').select('actor_id, actor_name, target_title, created_at').eq('event_type', 'voyager_activated').eq('is_visible', true).order('created_at', { ascending: false }).limit(8),
-    db.from('votes').select('id, title, options, ends_at, created_at').eq('is_active', true).order('created_at', { ascending: false }).limit(5),
+    db.from('votes').select('id, title, options, scope, ends_at, created_at').eq('is_active', true).order('created_at', { ascending: false }).limit(5),
   ])
 
   const intelRows = (intelR.data ?? []) as Record<string, unknown>[]
@@ -119,6 +139,19 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
   // Build one VoteCard per active vote using the pre-fetched responses.
   function buildVoteCard(vote: Record<string, unknown>): VoteCard {
     const vid = String(vote.id)
+    // A vote is gated when applicants cannot participate (scope excludes
+    // 'applicant') — same definition the /vote page uses for "classified".
+    const gated = !normalizeScope(vote.scope).includes('applicant')
+    const locked = gated && !canSeeGated
+    if (locked) {
+      // Tease the title only — strip options, voters and tallies entirely.
+      return {
+        id: vid, title: String(vote.title ?? 'Open signal vote'), options: [],
+        voters: [], count: 0,
+        ends: until(vote.ends_at as string), time: rel(vote.created_at as string),
+        locked: true,
+      }
+    }
     const options = coerceOptions(vote.options)
     const labelById: Record<string, string> = {}
     if (Array.isArray(vote.options)) {
@@ -162,15 +195,19 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
 
   const intelItems: Built[] = intelRows.map(r => {
     const images = (r.images as string[] | null) ?? []
+    // Classified intel is gated. For ineligible viewers strip the body, cover
+    // image and publisher byline — only the title and a `locked` flag ship.
+    const locked = r.classified === true && !canSeeGated
     return {
       ts: new Date(String(r.timestamp ?? 0)).getTime(), bucket: 'intel',
       item: {
         id: `intel-${r.id}`, kind: 'info', color: ORANGE, eyebrow: 'INTELLIGENCE',
         title: String(r.title ?? 'Untitled report'),
-        snippet: snippet(r.content as string, 140),
-        image: images[0] ?? null,
-        actor: person(r.publisher_name as string, r.publisher_id as string),
+        snippet: locked ? undefined : snippet(r.content as string, 140),
+        image: locked ? null : (images[0] ?? null),
+        actor: locked ? null : person(r.publisher_name as string, r.publisher_id as string),
         href: `/intel/${r.id}`, time: rel(r.timestamp as string),
+        locked,
       },
     }
   })
@@ -263,11 +300,31 @@ async function buildSignalFeed(): Promise<FeedEntry[]> {
 }
 
 // Cached 30s — /console is the highest-traffic page; this collapses concurrent
-// loads onto one set of queries while keeping the feed feeling live.
-// Cache key bumped to -v2 to bust pre-existing entries built before actor.id was
-// carried into member items; the old payload could omit it and break the popup.
-const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v2'], { revalidate: 30 })
+// loads onto one set of queries while keeping the feed feeling live. The
+// `canSeeGated` argument is part of the cache key, so there are two buckets:
+// one for voyager/architect (full content) and one for everyone else (gated
+// bodies stripped). Key bumped to -v3 for the gating payload shape.
+const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v3'], { revalidate: 30 })
+
+// Derived per request (uncached) from the session — never trust a client-passed
+// role. Only voyager/architect may receive gated content.
+async function viewerCanSeeGated(): Promise<boolean> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+    const { data: profile } = await supabase
+      .from('voyager_profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    return profile?.role === 'voyager' || profile?.role === 'architect'
+  } catch {
+    return false
+  }
+}
 
 export async function getSignalFeed(): Promise<FeedEntry[]> {
-  return getSignalFeedCached()
+  const canSeeGated = await viewerCanSeeGated()
+  return getSignalFeedCached(canSeeGated)
 }
