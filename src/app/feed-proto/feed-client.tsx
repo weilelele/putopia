@@ -197,7 +197,13 @@ function ContentCard({ item, onMember, onLocked }: { item: FeedItem; onMember?: 
           </div>
         )}
 
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.38, color: item.color, textAlign: isMember ? 'center' : 'left' }}>
+        {isMember && item.actor?.name && (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.3, color: 'var(--color-star)', textAlign: 'center', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {item.actor.name}
+          </div>
+        )}
+
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMember ? FS_CAPTION : FS_LABEL, fontWeight: isMember ? 400 : 700, lineHeight: 1.38, color: item.color, textAlign: isMember ? 'center' : 'left' }}>
           {item.title}
         </div>
 
