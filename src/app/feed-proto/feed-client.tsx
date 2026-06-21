@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { MessageSquare, Radio } from 'lucide-react'
 import Link from 'next/link'
 import { WorldPoster } from '@/components/world-poster'
 import { getVoyagerById } from '@/lib/actions/profile'
@@ -22,6 +23,9 @@ export type PosterWorld = {
   discoverer_avatar_url?: string | null
 }
 
+// Bottom-right engagement metric: an icon + count, not a worded label.
+export type FeedStat = { kind: 'comment' | 'signal'; count: number }
+
 export type FeedItem = {
   id: string
   kind: 'info' | 'world' | 'device' | 'member'
@@ -34,6 +38,10 @@ export type FeedItem = {
   actor?: Person | null
   href: string
   time: string
+  // Highest-priority quantitative metric for the bottom-right, shown as an icon +
+  // count (comments / dispatch signals). Null/absent → the card falls back to
+  // showing `time`.
+  stat?: FeedStat | null
   established?: boolean
   world?: PosterWorld
   // Voyager-only intel the current viewer cannot see: body/image/byline are
@@ -105,7 +113,25 @@ function Cover({ src }: { src: string }) {
   )
 }
 
-function Footer({ actor, time, align = 'space-between' }: { actor?: Person | null; time: string; align?: string }) {
+// Engagement metric as an icon + count (never a worded label). The count uses
+// the same muted tone as the timestamp it replaces.
+function StatBadge({ stat }: { stat: FeedStat }) {
+  const Icon = stat.kind === 'comment' ? MessageSquare : Radio
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.4)' }}>
+      <Icon size={12} strokeWidth={1.75} aria-hidden style={{ flexShrink: 0 }} />
+      {stat.count}
+    </span>
+  )
+}
+
+// Bottom-right content: the engagement metric (icon + count) when present,
+// otherwise the timestamp.
+function statOrTime(item: FeedItem): ReactNode {
+  return item.stat ? <StatBadge stat={item.stat} /> : item.time
+}
+
+function Footer({ actor, time, align = 'space-between' }: { actor?: Person | null; time: ReactNode; align?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: align, marginTop: 10 }}>
       {actor ? (
@@ -114,7 +140,7 @@ function Footer({ actor, time, align = 'space-between' }: { actor?: Person | nul
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.45)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{actor.name}</span>
         </span>
       ) : <span />}
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', flexShrink: 0, marginLeft: 6 }}>{time}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', flexShrink: 0, marginLeft: 6, display: 'inline-flex', alignItems: 'center' }}>{time}</span>
     </div>
   )
 }
@@ -145,7 +171,7 @@ function ContentCard({ item, onMember, onLocked }: { item: FeedItem; onMember?: 
           eyebrow={item.eyebrow}
           eyebrowColor={item.established ? LORANGE : AMBER}
           eyebrowStyle={{ whiteSpace: 'nowrap', letterSpacing: '0.06em' }}
-          date={item.time}
+          date={statOrTime(item)}
           descLines={2}
           minHeight={166}
           hoverBorder="rgba(255,176,32,0.4)"
@@ -220,7 +246,7 @@ function ContentCard({ item, onMember, onLocked }: { item: FeedItem; onMember?: 
 
         {isMember
           ? <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}><span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>{item.time}</span></div>
-          : <Footer actor={item.actor} time={item.time} />}
+          : <Footer actor={item.actor} time={statOrTime(item)} />}
       </div>
     </>
   )
@@ -314,8 +340,9 @@ function VoteTofu({ vote, onVote, onLocked }: { vote: VoteCard; onVote: () => vo
         MAKE A DECISION
       </div>
 
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap', marginTop: 9 }}>
-        {vote.count} votes · {vote.ends}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap', marginTop: 9 }}>
+        <Radio size={12} strokeWidth={1.75} aria-hidden style={{ flexShrink: 0 }} />
+        {vote.count} · {vote.ends}
       </div>
     </div>
   )
@@ -351,7 +378,10 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
           onClick={() => { setCast(true); setTimeout(onClose, 800) }}
           style={{ marginTop: 14, background: cast ? GREEN : ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_CAPTION, letterSpacing: '0.15em', padding: 11, borderRadius: 3, cursor: 'pointer' }}
         >{cast ? '✓ DECISION MADE' : 'MAKE A DECISION'}</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, textAlign: 'center', color: 'rgba(245,245,245,0.35)', marginTop: 10 }}>{vote.count} signals in · {vote.ends}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', marginTop: 10 }}>
+          <Radio size={12} strokeWidth={1.75} aria-hidden style={{ flexShrink: 0 }} />
+          {vote.count} · {vote.ends}
+        </div>
       </div>
     </div>
   )

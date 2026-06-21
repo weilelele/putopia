@@ -4,7 +4,7 @@ import { unstable_cache } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getTuningCovers } from '@/lib/actions/signal-tasks'
 import { worldStage, type WorldLifecycle } from '@/types/database'
-import type { FeedEntry, FeedItem, Person, PosterWorld, VoteCard } from '@/app/feed-proto/feed-client'
+import type { FeedEntry, FeedItem, FeedStat, Person, PosterWorld, VoteCard } from '@/app/feed-proto/feed-client'
 
 const ORANGE = '#FF6B35'
 const AMBER = '#FFB020'
@@ -96,13 +96,54 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   const voyagerRows = (voyagerR.data ?? []) as { actor_id: string | null; actor_name: string; target_title: string | null; created_at: string }[]
   const voteRows = (voteR.data ?? []) as Record<string, unknown>[]
 
-  // Signal Tuning timestamps: a world enters tuning when its signal_thread is created.
+  // Signal Tuning timestamps + dispatch engagement. A world enters tuning when its
+  // signal_thread is created; the dispatch responses on that thread's tasks
+  // (world → signal_threads → signal_tasks → signal_responses) are the tuning
+  // engagement count shown on the card.
   const syncingIds = worldRows.filter(w => w.lifecycle_state === 'syncing').map(w => String(w.id))
   const tuningAt: Record<string, string> = {}
+  const dispatchCount: Record<string, number> = {}
   if (syncingIds.length) {
-    const { data: threads } = await db.from('signal_threads').select('world_id, created_at').in('world_id', syncingIds).order('created_at', { ascending: false })
-    for (const t of (threads ?? []) as { world_id: string | null; created_at: string }[]) {
-      if (t.world_id && !tuningAt[t.world_id]) tuningAt[t.world_id] = t.created_at
+    const { data: threads } = await db.from('signal_threads').select('id, world_id, created_at').in('world_id', syncingIds).order('created_at', { ascending: false })
+    const threadToWorld: Record<string, string> = {}
+    for (const t of (threads ?? []) as { id: string; world_id: string | null; created_at: string }[]) {
+      if (!t.world_id) continue
+      if (!tuningAt[t.world_id]) tuningAt[t.world_id] = t.created_at
+      threadToWorld[t.id] = t.world_id
+    }
+    const threadIds = Object.keys(threadToWorld)
+    if (threadIds.length) {
+      const { data: tasks } = await db.from('signal_tasks').select('id, thread_id').in('thread_id', threadIds)
+      const taskToWorld: Record<string, string> = {}
+      for (const tk of (tasks ?? []) as { id: string; thread_id: string | null }[]) {
+        if (tk.thread_id && threadToWorld[tk.thread_id]) taskToWorld[tk.id] = threadToWorld[tk.thread_id]
+      }
+      const taskIds = Object.keys(taskToWorld)
+      if (taskIds.length) {
+        const { data: resp } = await db.from('signal_responses').select('task_id').in('task_id', taskIds)
+        for (const r of (resp ?? []) as { task_id: string | null }[]) {
+          const w = r.task_id ? taskToWorld[r.task_id] : null
+          if (w) dispatchCount[w] = (dispatchCount[w] ?? 0) + 1
+        }
+      }
+    }
+  }
+
+  // Comment counts power the engagement metric on intel / world / device cards
+  // (one generic `comments` table, keyed by subject_type + subject_id).
+  const commentCount: Record<string, number> = {} // key = `${subject_type}:${subject_id}`
+  {
+    const subjectIds = [
+      ...intelRows.map(r => String(r.id)),
+      ...worldRows.map(r => String(r.id)),
+      ...deviceRows.map(r => String(r.id)),
+    ]
+    if (subjectIds.length) {
+      const { data: cRows } = await db.from('comments').select('subject_type, subject_id').in('subject_id', subjectIds)
+      for (const c of (cRows ?? []) as { subject_type: string; subject_id: string }[]) {
+        const k = `${c.subject_type}:${c.subject_id}`
+        commentCount[k] = (commentCount[k] ?? 0) + 1
+      }
     }
   }
 
@@ -193,6 +234,14 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   const HL = { vision: 24, tuning: 72, established: 168, intel: 168, device: 48, member: 24 }
   type Built = { ts: number; bucket: string; item: FeedItem }
 
+  // Highest-priority quantitative metric per card type, shown bottom-right (as an
+  // icon + count on the client) in place of the timestamp. Returns null (→ the
+  // card keeps showing time) whenever the metric isn't collected yet or is zero.
+  const commentStat = (type: 'intel' | 'world' | 'device', id: string): FeedStat | null => {
+    const n = commentCount[`${type}:${id}`] ?? 0
+    return n > 0 ? { kind: 'comment', count: n } : null
+  }
+
   const intelItems: Built[] = intelRows.map(r => {
     const images = (r.images as string[] | null) ?? []
     // Classified intel is gated. For ineligible viewers strip the body, cover
@@ -207,6 +256,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
         image: locked ? null : (images[0] ?? null),
         actor: locked ? null : person(r.publisher_name as string, r.publisher_id as string),
         href: `/intel/${r.id}`, time: rel(r.timestamp as string),
+        stat: locked ? null : commentStat('intel', String(r.id)),
         locked,
       },
     }
@@ -225,12 +275,16 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
     const actor = person(r.discoverer_name as string, r.discoverer_id as string)
     const image = (r.image_path as string) || (stage === 'tuning' ? tuningCovers[id] : undefined) || null
     const bucket = stage === 'raw' ? 'vision' : stage === 'tuning' ? 'tuning' : 'established'
+    // Tuning worlds: dispatch responses ("signals"); raw/established: comments.
+    const stat: FeedStat | null = stage === 'tuning'
+      ? (dispatchCount[id] ? { kind: 'signal', count: dispatchCount[id] } : null)
+      : commentStat('world', id)
 
     const displayName = (r.name_en as string) || name
     if (image) {
       return {
         ts, bucket,
-        item: { id: `world-${id}`, kind: 'info', color: AMBER, eyebrow, label: eyebrow, title: displayName, snippet: snippet(r.description as string, 140), image, actor, href, time: rel(tsStr) },
+        item: { id: `world-${id}`, kind: 'info', color: AMBER, eyebrow, label: eyebrow, title: displayName, snippet: snippet(r.description as string, 140), image, actor, href, time: rel(tsStr), stat },
       }
     }
     const world: PosterWorld = {
@@ -239,7 +293,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
       image_path: r.image_path as string, discoverer_name: r.discoverer_name as string,
       discoverer_avatar_url: r.discoverer_id ? avatarMap[String(r.discoverer_id)] ?? null : null,
     }
-    return { ts, bucket, item: { id: `world-${id}`, kind: 'world', color: AMBER, eyebrow, title: name, href, time: rel(tsStr), established: stage === 'established', world } }
+    return { ts, bucket, item: { id: `world-${id}`, kind: 'world', color: AMBER, eyebrow, title: name, href, time: rel(tsStr), stat, established: stage === 'established', world } }
   })
 
   const deviceItems: Built[] = deviceRows.map(r => ({
@@ -251,6 +305,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
       image: (r.image_path as string) || null,
       actor: person(r.current_user_name as string, r.current_user_id as string),
       href: `/devices/${r.id}`, time: rel(r.updated_at as string),
+      stat: commentStat('device', String(r.id)),
     },
   }))
 
@@ -304,7 +359,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
 // `canSeeGated` argument is part of the cache key, so there are two buckets:
 // one for voyager/architect (full content) and one for everyone else (gated
 // bodies stripped). Key bumped to -v3 for the gating payload shape.
-const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v3'], { revalidate: 30 })
+const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v5'], { revalidate: 30 })
 
 // Derived per request (uncached) from the session — never trust a client-passed
 // role. Only voyager/architect may receive gated content.

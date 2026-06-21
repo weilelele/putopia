@@ -46,7 +46,7 @@ export function WorldPoster({
   cover?: string | null
   eyebrow?: string
   eyebrowColor?: string
-  date?: string | null
+  date?: ReactNode
   descLines?: number
   minHeight?: number
   badge?: ReactNode
