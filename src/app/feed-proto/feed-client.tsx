@@ -34,6 +34,9 @@ export type FeedItem = {
   actor?: Person | null
   href: string
   time: string
+  // Highest-priority quantitative metric for the bottom-right (e.g. "12 comments",
+  // "34 signals"). Null/absent → the card falls back to showing `time`.
+  stat?: string | null
   established?: boolean
   world?: PosterWorld
   // Voyager-only intel the current viewer cannot see: body/image/byline are
@@ -145,7 +148,7 @@ function ContentCard({ item, onMember, onLocked }: { item: FeedItem; onMember?: 
           eyebrow={item.eyebrow}
           eyebrowColor={item.established ? LORANGE : AMBER}
           eyebrowStyle={{ whiteSpace: 'nowrap', letterSpacing: '0.06em' }}
-          date={item.time}
+          date={item.stat ?? item.time}
           descLines={2}
           minHeight={166}
           hoverBorder="rgba(255,176,32,0.4)"
@@ -220,7 +223,7 @@ function ContentCard({ item, onMember, onLocked }: { item: FeedItem; onMember?: 
 
         {isMember
           ? <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}><span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>{item.time}</span></div>
-          : <Footer actor={item.actor} time={item.time} />}
+          : <Footer actor={item.actor} time={item.stat ?? item.time} />}
       </div>
     </>
   )
