@@ -4,7 +4,7 @@ import { unstable_cache } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getTuningCovers } from '@/lib/actions/signal-tasks'
 import { worldStage, type WorldLifecycle } from '@/types/database'
-import type { FeedEntry, FeedItem, Person, PosterWorld, VoteCard } from '@/app/feed-proto/feed-client'
+import type { FeedEntry, FeedItem, FeedStat, Person, PosterWorld, VoteCard } from '@/app/feed-proto/feed-client'
 
 const ORANGE = '#FF6B35'
 const AMBER = '#FFB020'
@@ -234,13 +234,12 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   const HL = { vision: 24, tuning: 72, established: 168, intel: 168, device: 48, member: 24 }
   type Built = { ts: number; bucket: string; item: FeedItem }
 
-  // Highest-priority quantitative metric per card type, shown bottom-right in
-  // place of the timestamp. Falls back to null (→ the card keeps showing time)
-  // whenever the metric isn't collected yet or is zero.
-  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
-  const commentStat = (type: 'intel' | 'world' | 'device', id: string): string | null => {
+  // Highest-priority quantitative metric per card type, shown bottom-right (as an
+  // icon + count on the client) in place of the timestamp. Returns null (→ the
+  // card keeps showing time) whenever the metric isn't collected yet or is zero.
+  const commentStat = (type: 'intel' | 'world' | 'device', id: string): FeedStat | null => {
     const n = commentCount[`${type}:${id}`] ?? 0
-    return n > 0 ? plural(n, 'comment', 'comments') : null
+    return n > 0 ? { kind: 'comment', count: n } : null
   }
 
   const intelItems: Built[] = intelRows.map(r => {
@@ -277,8 +276,8 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
     const image = (r.image_path as string) || (stage === 'tuning' ? tuningCovers[id] : undefined) || null
     const bucket = stage === 'raw' ? 'vision' : stage === 'tuning' ? 'tuning' : 'established'
     // Tuning worlds: dispatch responses ("signals"); raw/established: comments.
-    const stat = stage === 'tuning'
-      ? (dispatchCount[id] ? plural(dispatchCount[id], 'signal', 'signals') : null)
+    const stat: FeedStat | null = stage === 'tuning'
+      ? (dispatchCount[id] ? { kind: 'signal', count: dispatchCount[id] } : null)
       : commentStat('world', id)
 
     const displayName = (r.name_en as string) || name
@@ -360,7 +359,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
 // `canSeeGated` argument is part of the cache key, so there are two buckets:
 // one for voyager/architect (full content) and one for everyone else (gated
 // bodies stripped). Key bumped to -v3 for the gating payload shape.
-const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v4'], { revalidate: 30 })
+const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v5'], { revalidate: 30 })
 
 // Derived per request (uncached) from the session — never trust a client-passed
 // role. Only voyager/architect may receive gated content.
