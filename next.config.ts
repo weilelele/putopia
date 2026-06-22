@@ -8,13 +8,9 @@ const nextConfig: NextConfig = {
   // `bin/linux/**` glob did not get picked up — and key broadly so it lands in
   // whichever function bundles the Forge server actions.
   outputFileTracingIncludes: {
-    '/admin/**': [
-      './node_modules/ffmpeg-static/ffmpeg',
-      './node_modules/ffprobe-static/bin/linux/x64/ffprobe',
-    ],
-    '/admin/signal-tasks': [
-      './node_modules/ffmpeg-static/ffmpeg',
-      './node_modules/ffprobe-static/bin/linux/x64/ffprobe',
+    '/**': [
+      'node_modules/ffmpeg-static/ffmpeg',
+      'node_modules/ffprobe-static/bin/linux/x64/ffprobe',
     ],
   },
   experimental: {
