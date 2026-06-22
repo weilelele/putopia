@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import posthog from 'posthog-js'
 import { getDispatchDashboard } from '@/lib/actions/signal-tasks'
 import type { DispatchDashboard } from '@/lib/actions/signal-tasks'
 
@@ -63,7 +64,9 @@ export function PathStatusBar({
     }}>
       {/* ── Identity row ── */}
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
-        <Link href="/profile" title="Edit your profile" style={{ ...cell, flex: '0 0 auto' }} {...hov}>
+        <Link href="/profile" title="Edit your profile" style={{ ...cell, flex: '0 0 auto' }} {...hov}
+          onClick={() => posthog.capture('pathbar_avatar_clicked', { role: user.role })}
+        >
           <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -81,7 +84,9 @@ export function PathStatusBar({
 
         {diagTop}
 
-        <Link href="/voyager-path" title="View your path" style={{ ...cell, flex: 1, minWidth: 0 }} {...hov}>
+        <Link href="/voyager-path" title="View your path" style={{ ...cell, flex: 1, minWidth: 0 }} {...hov}
+          onClick={() => posthog.capture('pathbar_view_path_clicked', { role: user.role })}
+        >
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.25 }}>
             <span style={{ fontSize: 'var(--fs-label)', color: idColor, letterSpacing: '0.14em', fontWeight: 700, whiteSpace: 'nowrap' }}>{idLabel}</span>
@@ -94,7 +99,9 @@ export function PathStatusBar({
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
         {/* Left half — Signal Dispatch focal number. Wider than the right half so
             the "// SIGNAL DISPATCH" label + number never overrun the slash. */}
-        <Link href="/signal" style={{ ...cell, flex: '1.7 1 0', minWidth: 0, flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 4 }} {...hov}>
+        <Link href="/signal" style={{ ...cell, flex: '1.7 1 0', minWidth: 0, flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 4 }} {...hov}
+          onClick={() => posthog.capture('pathbar_signal_clicked', { role: user.role, awaiting_you: board?.awaitingYou ?? null })}
+        >
           <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: '#E85D04', whiteSpace: 'nowrap' }}>{'// SIGNAL DISPATCH'}</span>
           <span style={{ display: 'flex', alignItems: 'baseline', gap: 9 }}>
             <span style={{ fontSize: 42, color: '#FF6B35', lineHeight: 0.85 }}>{board ? board.awaitingYou : '—'}</span>
@@ -105,7 +112,7 @@ export function PathStatusBar({
         {diagBottom}
 
         {/* Right half — device days; clicking opens the device modal */}
-        <button onClick={onDeviceClick} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1 1 0', minWidth: 0, gap: 11 }} {...hov}>
+        <button onClick={() => { posthog.capture('pathbar_device_clicked', { role: user.role, has_device: hasDevice, device_days: deviceDays }); onDeviceClick() }} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1 1 0', minWidth: 0, gap: 11 }} {...hov}>
           <span aria-label={hasDevice ? 'Device active' : 'No device'} style={{
             display: 'inline-block', width: 54, height: 32, flexShrink: 0,
             background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.4)',
