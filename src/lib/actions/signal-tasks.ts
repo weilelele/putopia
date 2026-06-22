@@ -432,6 +432,53 @@ export async function pullForgeAssets(
   return { ok: errors.length === 0, created, errors }
 }
 
+/**
+ * Store a Forge video candidate processed in the BROWSER (ffmpeg.wasm): the
+ * client sends the finished animated WebP/GIF; we upload it and insert the row.
+ * Used because Vercel serverless can't run the ffmpeg binary (Next.js #53791).
+ */
+export async function storeForgeVideoCandidate(form: FormData): Promise<{ ok: boolean; error?: string }> {
+  const me = await currentUser()
+  if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
+  const supabase = createAdminClient() as DB
+
+  const taskId = String(form.get('taskId') || '')
+  const file = form.get('display')
+  if (!taskId || !(file instanceof File)) return { ok: false, error: 'missing taskId/display' }
+  const ext = String(form.get('ext') || 'webp')
+  const mime = String(form.get('mime') || 'image/webp')
+  let meta: Record<string, unknown> = {}
+  try { meta = JSON.parse(String(form.get('source') || '{}')) } catch { /* ignore */ }
+
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  let up: { path: string; url: string }
+  try {
+    up = await uploadProcessed(taskId, key, buffer, mime, ext)
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+
+  const { error } = await supabase.from('signal_task_assets').insert({
+    task_id: taskId,
+    media: 'video',
+    source_channel_id: meta.channelId ?? null,
+    source_channel_name: meta.channelName ?? null,
+    source_freq: meta.freq ?? null,
+    source_band_id: meta.bandId ?? null,
+    source_band_name: meta.bandName ?? null,
+    source_asset_id: meta.assetId ?? null,
+    source_url: meta.url ?? null,
+    processed_path: up.path,
+    processed_url: up.url,        // animated WebP/GIF (no separate mp4 in the wasm path)
+    display_url: up.url,
+    crop_config: meta.crop ?? {},
+    asset_role: 'option',
+    is_selected: false,
+  })
+  return error ? { ok: false, error: error.message } : { ok: true }
+}
+
 // ─── Candidate curation ───────────────────────────────────────────────────────
 
 export async function setAssetSelected(
