@@ -6,9 +6,10 @@
  * - Audio puzzles: extract a short clip from a video's audio track → MP3. ~25% of
  *   Cosmo videos have NO audio track, so callers must skip those (probeHasAudio).
  *
- * Requires ffmpeg + ffprobe on PATH (present in dev + must be on the deploy target;
- * Vercel serverless does NOT ship ffmpeg — video/audio generation needs a runtime
- * that has it, see project memory).
+ * Uses the bundled static binaries (ffmpeg-static / ffprobe-static) by default, so
+ * it runs on Vercel serverless (no system ffmpeg) and in local dev alike. The
+ * binaries are force-included into the function bundle via next.config
+ * `outputFileTracingIncludes`. Override with FFMPEG_PATH / FFPROBE_PATH.
  */
 import { execFile } from 'child_process'
 import { promisify } from 'util'
@@ -17,11 +18,19 @@ import { join } from 'path'
 import { writeFile, readFile, unlink } from 'fs/promises'
 import { randomUUID } from 'crypto'
 import sharp from 'sharp'
+import ffmpegStatic from 'ffmpeg-static'
+import ffprobeStatic from 'ffprobe-static'
 import type { CropConfig, FilterPreset } from './presets'
 
 /** Page background colour — circular video crops paint the corners with this so
  *  they read as a circle on the dark UI. */
 const BG = '#070912'
+
+// Vercel serverless has no system ffmpeg, so default to the bundled static
+// binaries (these also work in local dev — no system install needed). Override
+// via FFMPEG_PATH / FFPROBE_PATH, or fall back to PATH if the packages are gone.
+const FFMPEG = process.env.FFMPEG_PATH || ffmpegStatic || 'ffmpeg'
+const FFPROBE = process.env.FFPROBE_PATH || ffprobeStatic?.path || 'ffprobe'
 
 const pexec = promisify(execFile)
 
@@ -47,7 +56,7 @@ async function safeUnlink(path: string) {
 /** True if the video file has at least one audio stream. */
 export async function probeHasAudio(path: string): Promise<boolean> {
   try {
-    const { stdout } = await pexec('ffprobe', [
+    const { stdout } = await pexec(FFPROBE, [
       '-v', 'error',
       '-select_streams', 'a',
       '-show_entries', 'stream=codec_name',
@@ -61,7 +70,7 @@ export async function probeHasAudio(path: string): Promise<boolean> {
 }
 
 async function probeVideoMeta(path: string): Promise<{ width: number; height: number; duration: number }> {
-  const { stdout } = await pexec('ffprobe', [
+  const { stdout } = await pexec(FFPROBE, [
     '-v', 'error',
     '-select_streams', 'v:0',
     '-show_entries', 'stream=width,height:format=duration',
@@ -195,7 +204,7 @@ export async function renderVideoClip(
       out,
     )
 
-    await pexec('ffmpeg', args, { maxBuffer: 1024 * 1024 * 64 })
+    await pexec(FFMPEG, args, { maxBuffer: 1024 * 1024 * 64 })
     const buffer = await readFile(out)
 
     // Convert the glitched MP4 → animated WebP for frontend display.
@@ -204,7 +213,7 @@ export async function renderVideoClip(
     let displayBuffer: Buffer | null = null
     try {
       outWebp = join(tmpdir(), `sig-${randomUUID()}.gif`) // reuse var for cleanup
-      await pexec('ffmpeg', [
+      await pexec(FFMPEG, [
         '-y', '-v', 'error',
         '-i', out,
         '-vf', 'fps=12,scale=320:-2',
@@ -253,7 +262,7 @@ export async function extractAudioClip(
     const meta = await probeVideoMeta(src)
     const start = meta.duration > dur ? Math.random() * (meta.duration - dur) : 0
     await pexec(
-      'ffmpeg',
+      FFMPEG,
       [
         '-y', '-v', 'error',
         '-ss', start.toFixed(2),

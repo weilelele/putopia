@@ -5,6 +5,9 @@ import Link from 'next/link'
 import type { Database } from '@/types/database'
 import WikiSyncButton from './WikiSyncButton'
 
+// Forge video processing (ffmpeg) can take tens of seconds across several clips.
+export const maxDuration = 60
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
 
