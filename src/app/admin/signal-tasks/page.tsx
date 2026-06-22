@@ -866,7 +866,14 @@ function AssetCard({ asset, showRole, onChanged }: { asset: SignalTaskAsset; sho
   return (
     <div style={{ border: asset.is_selected ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: 6, opacity: busy ? 0.5 : 1 }}>
       {asset.media === 'video' ? (
-        <video src={asset.processed_url || ''} controls muted loop style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+        // Video candidates display as an animated WebP/GIF (auto-loops as <img>).
+        // Only fall back to a <video> player for legacy mp4-only rows.
+        (asset.display_url || /\.(webp|gif)(\?|$)/i.test(asset.processed_url || '')) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={asset.display_url || asset.processed_url || ''} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+        ) : (
+          <video src={asset.processed_url || ''} controls muted loop style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+        )
       ) : asset.media === 'audio' ? (
         <div style={{ background: '#070912', padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 20 }}>🔊</span>
