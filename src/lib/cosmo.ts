@@ -41,6 +41,9 @@ export interface CosmoAsset {
   assetId: string
   media: CosmoMedia
   url: string
+  /** Still preview for video assets — the AI clip's start frame (an ai-image
+   *  .webp). Lets the picker show the first frame instead of a black <video>. */
+  posterUrl?: string | null
   duration?: number | null
   prompt?: string | null
   tags?: string[]
@@ -170,10 +173,30 @@ export async function getBandAssets(
     .find({ _id: { $in: poolIds }, status: 'completed', deletedAt: null, url: { $ne: null } })
     .toArray()
 
+  // For video, resolve each clip's start frame (an ai-image .webp) as a still
+  // poster so the picker can show the first frame instead of a black <video>.
+  const posterById = new Map<string, string>()
+  if (media === 'video') {
+    const frameOids = toObjectIds(docs.map((doc) => doc.startFrameId).filter(Boolean))
+    if (frameOids.length) {
+      const frames = await d
+        .collection(COLL_IMAGE)
+        .find({ _id: { $in: frameOids }, url: { $ne: null } })
+        .project({ url: 1 })
+        .toArray()
+      const frameUrl = new Map(frames.map((f) => [String(f._id), f.url as string]))
+      for (const doc of docs) {
+        const fid = doc.startFrameId ? String(doc.startFrameId) : null
+        if (fid && frameUrl.has(fid)) posterById.set(String(doc._id), frameUrl.get(fid)!)
+      }
+    }
+  }
+
   return docs.map((doc) => ({
     assetId: String(doc._id),
     media,
     url: doc.url as string,
+    posterUrl: posterById.get(String(doc._id)) ?? null,
     duration: typeof doc.duration === 'number' ? doc.duration : null,
     prompt: doc.prompt ?? null,
     tags: Array.isArray(doc.tags) ? doc.tags : [],

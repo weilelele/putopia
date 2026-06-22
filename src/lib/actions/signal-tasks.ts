@@ -382,10 +382,10 @@ export async function listBandAssets(
   channelId: string,
   bandId: string,
   media: 'image' | 'video',
-): Promise<{ assetId: string; url: string; prompt: string | null }[]> {
+): Promise<{ assetId: string; url: string; posterUrl: string | null; prompt: string | null }[]> {
   try {
     const assets = await cosmoGetBandAssets(channelId, bandId, media)
-    return assets.map((a) => ({ assetId: a.assetId, url: a.url, prompt: a.prompt ?? null }))
+    return assets.map((a) => ({ assetId: a.assetId, url: a.url, posterUrl: a.posterUrl ?? null, prompt: a.prompt ?? null }))
   } catch (e) {
     console.error('[signal] listBandAssets failed', e)
     return []
