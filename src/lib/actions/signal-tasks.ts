@@ -313,6 +313,7 @@ async function processAndInsertCandidate(
       return e ? { created: false, error: e } : { created: true }
     }
   } catch (e) {
+    console.error('[signal] candidate pipeline failed', src.media, (e as Error).message)
     return { created: false, error: (e as Error).message }
   }
 }

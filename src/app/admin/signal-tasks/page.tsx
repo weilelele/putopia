@@ -768,7 +768,8 @@ function ForgePicker({
     )
     setBusy(false)
     setPicked(new Set())
-    onResult(`Pulled ${r.created} candidate(s)` + (r.errors.length ? ` · ${r.errors.length} error(s)` : ''))
+    // Surface the actual error text (not just a count) so failures are diagnosable.
+    onResult(`Pulled ${r.created} candidate(s)` + (r.errors.length ? ` · ${r.errors.length} error(s): ${r.errors.join(' | ')}` : ''))
   }
 
   return (
