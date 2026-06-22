@@ -115,11 +115,6 @@ function parseAspect(aspect?: string): number {
   return w / h
 }
 
-const evenClamp = (v: number, lo: number, hi: number) => {
-  const c = clamp(Math.round(v), lo, hi)
-  return c - (c % 2)
-}
-
 /** A square PNG painted with the page bg, with a transparent centre circle — used
  *  as an ffmpeg overlay so a video crop reads as a circle on the dark UI. */
 async function cornerMaskPng(size: number): Promise<Buffer> {
@@ -164,36 +159,30 @@ export async function renderVideoClip(
   let maskPath: string | null = null
   let outWebp: string | null = null
   try {
-    const meta = await probeVideoMeta(src)
-    if (!meta.width || !meta.height) throw new Error('could not read video dimensions')
+    // No ffprobe on Vercel — express the crop via the input dims (iw/ih) and let
+    // ffmpeg compute it (commas inside the expressions are single-quoted so the
+    // filtergraph parser doesn't treat them as filter separators). Square/circle:
+    // a centred square of the requested area, scaled to a fixed 480² so the
+    // circle mask has a known size. Rect: honour the aspect, cap the long edge.
+    const ratio = clamp(cfg.areaRatio || 1 / 6, 0.02, 0.9).toFixed(4)
+    const glitch = videoGlitchChain(cfg.filter ?? 'signal_decay', clamp01((cfg.glitchIntensity ?? 50) / 100))
 
-    // crop box from area ratio (same geometry as images). circle ⇒ square.
-    const ratio = clamp(cfg.areaRatio || 1 / 6, 0.02, 0.9)
-    const area = meta.width * meta.height * ratio
-    const ar = cfg.shape === 'rect' ? parseAspect(cfg.aspect) : 1
-    const cw = evenClamp(Math.sqrt(area * ar), 8, meta.width)
-    let ch = evenClamp(area / Math.max(1, cw), 8, meta.height)
-    if (cfg.shape !== 'rect') ch = cw // square / circle
-    const cx = Math.floor(Math.random() * (meta.width - cw + 1))
-    const cy = Math.floor(Math.random() * (meta.height - ch + 1))
-
-    // final output dims (downscale longest edge)
-    let outW = cw
-    let outH = ch
-    if (Math.max(cw, ch) > LONGEST_EDGE) {
-      const s = LONGEST_EDGE / Math.max(cw, ch)
-      outW = evenClamp(cw * s, 2, LONGEST_EDGE)
-      outH = evenClamp(ch * s, 2, LONGEST_EDGE)
+    let chain: string
+    if (cfg.shape === 'rect') {
+      const ar = parseAspect(cfg.aspect)
+      const cw = `min(iw,sqrt(iw*ih*${ratio}*${ar}))`
+      const ch = `min(ih,sqrt(iw*ih*${ratio}/${ar}))`
+      chain = `crop=w='${cw}':h='${ch}',${glitch},scale=${LONGEST_EDGE}:-2`
+    } else {
+      const side = `min(min(iw,ih),sqrt(iw*ih*${ratio}))` // ffmpeg min() is binary
+      chain = `crop=w='${side}':h='${side}',${glitch},scale=${LONGEST_EDGE}:${LONGEST_EDGE}`
     }
 
-    const i = clamp01((cfg.glitchIntensity ?? 50) / 100)
-    const start = meta.duration > dur ? Math.random() * (meta.duration - dur) : 0
-    const chain = `crop=${cw}:${ch}:${cx}:${cy},${videoGlitchChain(cfg.filter ?? 'signal_decay', i)},scale=${outW}:${outH}`
-
-    const args = ['-y', '-v', 'error', '-ss', start.toFixed(2), '-t', String(dur), '-i', src]
+    // Take the opening seconds — no probe means no random in-point.
+    const args = ['-y', '-v', 'error', '-t', String(dur), '-i', src]
     if (cfg.shape === 'circle') {
       maskPath = join(tmpdir(), `sig-${randomUUID()}.png`)
-      await writeFile(maskPath, await cornerMaskPng(outW)) // outW === outH for circle
+      await writeFile(maskPath, await cornerMaskPng(LONGEST_EDGE)) // output is LONGEST_EDGE²
       args.push('-i', maskPath, '-filter_complex', `[0:v]${chain}[v0];[v0][1:v]overlay=0:0[v]`, '-map', '[v]')
     } else {
       args.push('-vf', chain)
@@ -233,7 +222,7 @@ export async function renderVideoClip(
       buffer,
       contentType: 'video/mp4',
       ext: 'mp4',
-      box: { left: cx, top: cy, width: cw, height: ch },
+      box: { left: 0, top: 0, width: 0, height: 0 }, // unknown without a probe; not used for display
       displayBuffer,
       displayContentType: 'image/webp',
       displayExt: 'webp',
