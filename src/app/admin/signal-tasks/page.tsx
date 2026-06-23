@@ -719,7 +719,7 @@ function ForgePicker({
   const [channelId, setChannelId] = useState(freqs[0]?.channelId ?? '')
   const [bandId, setBandId] = useState('')
   const [media, setMedia] = useState<'image' | 'video'>(audioMode ? 'video' : 'image')
-  const [assets, setAssets] = useState<{ assetId: string; url: string; prompt: string | null }[]>([])
+  const [assets, setAssets] = useState<{ assetId: string; url: string; posterUrl: string | null; prompt: string | null }[]>([])
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
 
@@ -836,10 +836,12 @@ function ForgePicker({
                 key={a.assetId} onClick={() => toggle(a.assetId)} title={a.prompt ?? ''}
                 style={{ position: 'relative', cursor: 'pointer', border: on ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)', background: '#070912', aspectRatio: '1' }}
               >
-                {effMedia === 'video'
-                  ? <video src={a.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                {effMedia === 'video' && !a.posterUrl
+                  // no start frame resolved — fall back to a metadata-preloaded <video> (shows a frame, not black)
+                  ? <video src={a.url} muted preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  // image, or video with a start-frame poster: show the still frame
                   // eslint-disable-next-line @next/next/no-img-element
-                  : <img src={a.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                  : <img src={a.posterUrl ?? a.url} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 {on && <div style={{ position: 'absolute', top: 2, right: 3, color: '#20D890', fontSize: 12 }}>✓</div>}
               </div>
             )
