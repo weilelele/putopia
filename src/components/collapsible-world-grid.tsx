@@ -55,7 +55,7 @@ export function CollapsibleWorldGrid({ worlds }: { worlds: PosterWorld[] }) {
             className="btn-ghost"
             style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em' }}
           >
-            {fullyExpanded ? '▲ COLLAPSE' : `▼ MORE (${worlds.length})`}
+            {fullyExpanded ? '▲ COLLAPSE' : '▼ MORE'}
           </button>
         </div>
       )}

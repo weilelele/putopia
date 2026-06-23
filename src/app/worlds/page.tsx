@@ -187,7 +187,6 @@ export default async function WorldsPage({
         <section id="section-initial-vision" style={{ marginBottom: '2rem' }}>
           <SectionHeader
             title="INITIAL VISION"
-            count={rawImagination.length}
             accentColor="var(--color-warn)"
           />
           <CollapsibleWorldGrid worlds={rawImagination} />
@@ -199,7 +198,6 @@ export default async function WorldsPage({
         <section id="section-signal-tuning" style={{ marginBottom: '2rem' }}>
           <SectionHeader
             title="SIGNAL TUNING"
-            count={worldBuilding.length}
             accentColor="var(--color-ok)"
           />
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -221,7 +219,6 @@ export default async function WorldsPage({
       <section id="section-established">
         <SectionHeader
           title="ESTABLISHED WORLD"
-          count={worlds.length}
           accentColor="var(--color-nucleus)"
         />
 
