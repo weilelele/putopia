@@ -13,20 +13,31 @@ function formatSubmitted(submitted_at?: string | null) {
 }
 
 /**
- * Grid of world posters that collapses to a short preview with a "More" toggle
- * (Voyager-style), so a long Initial Vision list doesn't push Signal Tuning off
- * screen. Collapsed shows: mobile (2-col) 6 = 3 rows, lg (3-col) 6 = 2 rows,
- * xl (4-col) 8 = 2 rows. The 7th/8th cells reveal only at xl to fill its 2nd row.
+ * Initial Vision grid with an incremental "More" reveal, so a long proposed-worlds
+ * list doesn't push Signal Tuning off screen.
+ *
+ * Default (step 0): one row on PC, four items on mobile.
+ *   mobile (2-col) 4 · lg (3-col) 3 · xl (4-col) 4
+ * Each click reveals two more rows (≈6 on mobile/lg, 8 on xl):
+ *   mobile/lg +6 · xl +8
  */
 export function CollapsibleWorldGrid({ worlds }: { worlds: PosterWorld[] }) {
-  const [expanded, setExpanded] = useState(false)
-  const hasMore = worlds.length > 6
+  const [step, setStep] = useState(0)
 
-  const cellClass = (i: number) => {
-    if (expanded || i < 6) return ''
-    if (i < 8) return 'hidden xl:block' // fill the 2nd row only on 4-col layouts
-    return 'hidden'
-  }
+  const mobileVisible = 4 + 6 * step
+  const lgVisible = 3 + 6 * step
+  const xlVisible = 4 + 8 * step
+
+  // lg shows the fewest at every step, so once it covers everything we're done.
+  const fullyExpanded = lgVisible >= worlds.length
+  const hasMore = worlds.length > 4
+
+  const cellClass = (i: number) =>
+    [
+      i < mobileVisible ? 'block' : 'hidden',
+      i < lgVisible ? 'lg:block' : 'lg:hidden',
+      i < xlVisible ? 'xl:block' : 'xl:hidden',
+    ].join(' ')
 
   return (
     <>
@@ -40,11 +51,11 @@ export function CollapsibleWorldGrid({ worlds }: { worlds: PosterWorld[] }) {
       {hasMore && (
         <div style={{ textAlign: 'center', marginTop: '0.85rem' }}>
           <button
-            onClick={() => setExpanded((e) => !e)}
+            onClick={() => setStep((s) => (fullyExpanded ? 0 : s + 1))}
             className="btn-ghost"
             style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em' }}
           >
-            {expanded ? '▲ COLLAPSE' : `▼ MORE (${worlds.length})`}
+            {fullyExpanded ? '▲ COLLAPSE' : `▼ MORE (${worlds.length})`}
           </button>
         </div>
       )}
