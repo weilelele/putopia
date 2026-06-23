@@ -2,10 +2,11 @@
 
 import { useEffect } from 'react'
 
-// Full-screen ceremony shown the instant a sighting is filed. Deliberately raw
-// and retro: flickering electric snow (feTurbulence static), a "SCANNING" title,
-// and terminal lines printing out one by one. Auto-advances to the world's
-// Signal Scanning countdown after `durationMs`.
+// Full-screen ceremony shown the instant a sighting is filed. The whole screen
+// IS electric snow — a dense feTurbulence static field whose grain shimmers
+// (animated baseFrequency), like a detuned TV. No strobing overlay; the title
+// and terminal lines sit steady on top, lines printing one by one. Auto-advances
+// to the world's Signal Scanning countdown after `durationMs`.
 
 export function ScanInitiation({
   worldName,
@@ -30,31 +31,40 @@ export function ScanInitiation({
   ]
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#05060D', overflow: 'hidden', fontFamily: 'var(--font-mono)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#000', overflow: 'hidden', fontFamily: 'var(--font-mono)' }}>
 
-      {/* Electric snow — animated, flickering TV static */}
-      <svg className="scan-snow" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} xmlns="http://www.w3.org/2000/svg">
+      {/* The whole screen IS the snow — dense, constant, grain shimmers via the
+          animated turbulence (not a strobing opacity overlay). */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', opacity: 0.9 }} xmlns="http://www.w3.org/2000/svg">
         <filter id="scan-snow-f">
-          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch">
-            <animate attributeName="baseFrequency" dur="0.4s" values="0.85;0.7;1;0.78;0.92" repeatCount="indefinite" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch">
+            <animate attributeName="baseFrequency" dur="0.2s" values="0.9;0.8;1;0.85;0.95" repeatCount="indefinite" />
           </feTurbulence>
           <feColorMatrix type="saturate" values="0" />
+          <feComponentTransfer>
+            <feFuncR type="linear" slope="2.2" intercept="-0.45" />
+            <feFuncG type="linear" slope="2.2" intercept="-0.45" />
+            <feFuncB type="linear" slope="2.2" intercept="-0.45" />
+          </feComponentTransfer>
         </filter>
         <rect width="100%" height="100%" filter="url(#scan-snow-f)" />
       </svg>
 
       {/* Faint CRT scanlines */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 3px)' }} />
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.22) 2px, rgba(0,0,0,0.22) 3px)' }} />
+
+      {/* Legibility pool — darkens the center so the text reads over the static */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 60% 45% at 50% 50%, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 45%, transparent 75%)' }} />
 
       {/* Content */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-        <div className="scan-title" style={{ fontSize: '2.6rem', fontWeight: 700, letterSpacing: '0.32em', color: '#F5F5F5', textShadow: '0 0 18px rgba(245,245,245,0.25)' }}>
+        <div style={{ fontSize: '2.6rem', fontWeight: 700, letterSpacing: '0.32em', color: '#FFFFFF', textShadow: '0 0 2px #000, 0 2px 16px rgba(0,0,0,0.9)' }}>
           SCANNING
         </div>
 
         <div style={{ marginTop: '1.6rem', width: 260, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {lines.map((line, i) => (
-            <div key={line} className="scan-init-line" style={{ animationDelay: `${0.5 + i * 0.85}s`, fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'var(--color-star-dim)' }}>
+            <div key={line} className="scan-init-line" style={{ animationDelay: `${0.5 + i * 0.85}s`, fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(245,245,245,0.85)', textShadow: '0 0 2px #000, 0 1px 6px rgba(0,0,0,0.9)' }}>
               {line}
             </div>
           ))}
@@ -62,10 +72,6 @@ export function ScanInitiation({
       </div>
 
       <style>{`
-        .scan-snow { opacity: 0.45; mix-blend-mode: screen; animation: scanSnowFlicker 0.18s steps(1) infinite; }
-        @keyframes scanSnowFlicker { 0% { opacity: 0.32; } 20% { opacity: 0.6; } 40% { opacity: 0.22; } 60% { opacity: 0.55; } 80% { opacity: 0.3; } 100% { opacity: 0.48; } }
-        .scan-title { animation: scanTitleFlicker 2.4s steps(1) infinite; }
-        @keyframes scanTitleFlicker { 0%,100% { opacity: 1; } 47% { opacity: 1; } 48% { opacity: 0.4; } 49% { opacity: 1; } 88% { opacity: 1; } 89% { opacity: 0.55; } 90% { opacity: 1; } }
         .scan-init-line { opacity: 0; animation: scanLineIn 0.3s steps(2) forwards; }
         @keyframes scanLineIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
