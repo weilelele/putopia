@@ -377,6 +377,40 @@ export async function generateCandidates(
   return { ok: errors.length === 0, created, errors }
 }
 
+/**
+ * Random-pull SAMPLING for the browser (ffmpeg.wasm) video/audio path: pick the
+ * random assets per source server-side, but return them for the client to process
+ * (Vercel can't run ffmpeg). Audio oversamples 2× (the client skips no-audio).
+ */
+export async function sampleForgeAssets(
+  taskId: string,
+  sources: GenerateSource[],
+): Promise<{ ok: boolean; groups: { source: SourceMeta; count: number; assets: { assetId: string; url: string }[] }[]; errors: string[] }> {
+  const me = await currentUser()
+  if (!me || me.role !== 'architect') return { ok: false, groups: [], errors: ['Architect role required'] }
+  const supabase = createAdminClient() as DB
+  const { data: task } = await supabase.from('signal_tasks').select('type').eq('id', taskId).single()
+  const audioMode = task?.type === 'audio_odd_one' || task?.type === 'audio_match'
+
+  const groups: { source: SourceMeta; count: number; assets: { assetId: string; url: string }[] }[] = []
+  const errors: string[] = []
+  for (const src of sources) {
+    const cosmoMedia = audioMode || src.media === 'video' ? 'video' : 'image'
+    const sampleN = audioMode ? src.count * 2 : src.count
+    try {
+      const assets = await sampleBandAssets(src.channelId, src.bandId, cosmoMedia, sampleN)
+      groups.push({
+        source: { channelId: src.channelId, channelName: src.channelName, freq: src.freq, bandId: src.bandId, bandName: src.bandName, media: src.media },
+        count: src.count,
+        assets: assets.map((a) => ({ assetId: a.assetId, url: a.url })),
+      })
+    } catch (e) {
+      errors.push(`${src.channelName}/${src.bandName}: ${(e as Error).message}`)
+    }
+  }
+  return { ok: errors.length === 0, groups, errors }
+}
+
 /** Browse a Cosmo band's assets for the precise-pick UI (doc 5.2 precise pick). */
 export async function listBandAssets(
   channelId: string,
