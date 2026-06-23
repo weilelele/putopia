@@ -85,23 +85,64 @@ export async function processForgeVideo(srcUrl: string, cfg: Partial<CropConfig>
     crop = `crop=w='min(iw,sqrt(iw*ih*${ratio}*${ar}))':h='min(ih,sqrt(iw*ih*${ratio}/${ar}))'`
     scale = 'scale=320:-2'
   } else {
-    // square / circle (circle is rendered square in this build)
     crop = `crop=w='min(min(iw,ih),sqrt(iw*ih*${ratio}))':h='min(min(iw,ih),sqrt(iw*ih*${ratio}))'`
-    scale = 'scale=320:320'
+    scale = 'scale=320:320' // square output → circle mask (320²) fits exactly
   }
-  const vf = `${crop},${glitch},fps=12,${scale}`
+  const baseVf = `${crop},${glitch},fps=12,${scale}`
 
-  const run = async (out: string) => {
-    await ff.exec(['-y', '-t', dur, '-i', inName, '-vf', vf, '-loop', '0', '-an', out])
-    return ff.readFile(out) as Promise<Uint8Array>
+  // Circle: overlay a 320² mask (dark corners, transparent centre) so the square
+  // crop reads as a circle on the dark UI — same idea as the server pipeline.
+  let hasMask = false
+  if (cfg.shape === 'circle') {
+    try {
+      await ff.writeFile('mask.png', await cornerMaskPng(320))
+      hasMask = true
+    } catch { /* canvas unavailable → fall back to a plain square */ }
   }
 
-  try {
-    const data = await run('out.webp')
-    if (!data?.length) throw new Error('empty webp')
-    return { data, ext: 'webp', mime: 'image/webp' }
-  } catch {
-    const data = await run('out.gif')
-    return { data, ext: 'gif', mime: 'image/gif' }
+  const encode = async (mask: boolean, ext: 'webp' | 'gif'): Promise<Uint8Array> => {
+    const out = `out.${ext}`
+    if (mask) {
+      await ff.exec(['-y', '-t', dur, '-i', inName, '-i', 'mask.png', '-filter_complex', `[0:v]${baseVf}[v0];[v0][1:v]overlay=0:0[v]`, '-map', '[v]', '-loop', '0', '-an', out])
+    } else {
+      await ff.exec(['-y', '-t', dur, '-i', inName, '-vf', baseVf, '-loop', '0', '-an', out])
+    }
+    const data = (await ff.readFile(out)) as Uint8Array
+    if (!data?.length) throw new Error(`empty ${ext}`)
+    return data
   }
+
+  // Try (mask) webp → (mask) gif → plain webp → plain gif, so a missing webp
+  // encoder or a circle-overlay hiccup still yields an animated result.
+  const attempts: Array<[boolean, 'webp' | 'gif']> = hasMask
+    ? [[true, 'webp'], [true, 'gif'], [false, 'webp'], [false, 'gif']]
+    : [[false, 'webp'], [false, 'gif']]
+  for (const [mask, ext] of attempts) {
+    try {
+      const data = await encode(mask, ext)
+      return { data, ext, mime: ext === 'webp' ? 'image/webp' : 'image/gif' }
+    } catch { /* try next */ }
+  }
+  throw new Error('ffmpeg.wasm produced no output')
+}
+
+/** 320² PNG: dark (#070912) corners with a transparent centre circle, drawn in a
+ *  browser canvas — overlaid so a square video crop reads as a circle. */
+async function cornerMaskPng(size: number): Promise<Uint8Array> {
+  if (typeof document === 'undefined') throw new Error('no canvas')
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('no 2d context')
+  ctx.fillStyle = '#070912'
+  ctx.fillRect(0, 0, size, size)
+  ctx.globalCompositeOperation = 'destination-out'
+  ctx.beginPath()
+  ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
+  ctx.fill()
+  const blob: Blob = await new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png'),
+  )
+  return new Uint8Array(await blob.arrayBuffer())
 }
