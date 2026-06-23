@@ -20,7 +20,7 @@ import {
   listInvestigationTasks,
   listBandAssets,
   pullForgeAssets,
-  storeForgeVideoCandidate,
+  storeForgeWasmCandidate,
   getInvestigationConfig,
   updateInvestigationConfig,
 } from '@/lib/actions/signal-tasks'
@@ -37,7 +37,7 @@ import type { CosmoFrequency } from '@/lib/cosmo'
 import type { WorldVoteScope } from '@/types/database'
 import type { CropShape, FilterPreset } from '@/lib/signal/presets'
 import { FILTER_PRESETS } from '@/lib/signal/presets'
-import { processForgeVideo } from '@/lib/signal/ffmpeg-wasm'
+import { processForgeVideo, processForgeAudio } from '@/lib/signal/ffmpeg-wasm'
 import { revealAt as computeRevealAt, isRevealed } from '@/lib/signal/reveal'
 
 // Compact local datetime, e.g. "Jun 21, 14:30"
@@ -763,6 +763,44 @@ function ForgePicker({
     const source = { channelId, channelName: freq.name, freq: freq.freq, bandId, bandName: band?.name || '', media: effMedia }
     setBusy(true); onResult('')
 
+    // Audio puzzles: extract the audio track in the browser (ffmpeg.wasm), skip
+    // clips that have none, then upload. (audioMode also sets effMedia=video, so
+    // this must come before the video branch.)
+    if (audioMode) {
+      const ids = [...picked]
+      const byId = new Map(assets.map((a) => [a.assetId, a]))
+      let created = 0, skipped = 0
+      const errors: string[] = []
+      for (let i = 0; i < ids.length; i++) {
+        const a = byId.get(ids[i])
+        if (!a) continue
+        onResult(`Processing ${i + 1}/${ids.length}… (audio; first also loads ffmpeg, ~10–20s)`)
+        try {
+          const proxied = `/api/forge/cosmo-proxy?url=${encodeURIComponent(a.url)}`
+          const clip = await processForgeAudio(proxied, durationSec)
+          if (!clip) { skipped++; continue } // no audio track
+          const fd = new FormData()
+          fd.set('taskId', taskId)
+          fd.set('kind', 'audio')
+          fd.set('source', JSON.stringify({ ...source, assetId: a.assetId, url: a.url }))
+          fd.set('ext', clip.ext)
+          fd.set('mime', clip.mime)
+          const bytes = new Uint8Array(clip.data.byteLength)
+          bytes.set(clip.data)
+          fd.set('display', new Blob([bytes], { type: clip.mime }), `clip.${clip.ext}`)
+          const r = await storeForgeWasmCandidate(fd)
+          if (r.ok) created++
+          else errors.push(`${a.assetId}: ${r.error}`)
+        } catch (e) {
+          errors.push(`${a.assetId}: ${(e as Error).message}`)
+        }
+      }
+      setBusy(false)
+      setPicked(new Set())
+      onResult(`Pulled ${created} candidate(s)` + (skipped ? ` · ${skipped} skipped (no audio)` : '') + (errors.length ? ` · ${errors.length} error(s): ${errors.join(' | ')}` : ''))
+      return
+    }
+
     // Video: process in the browser with ffmpeg.wasm (Vercel has no ffmpeg
     // binary), then upload each finished clip. Image: server-side as before.
     if (effMedia === 'video') {
@@ -779,6 +817,7 @@ function ForgePicker({
           const clip = await processForgeVideo(proxied, crop, durationSec)
           const fd = new FormData()
           fd.set('taskId', taskId)
+          fd.set('kind', 'video')
           fd.set('source', JSON.stringify({ ...source, assetId: a.assetId, url: a.url, crop }))
           fd.set('ext', clip.ext)
           fd.set('mime', clip.mime)
@@ -786,7 +825,7 @@ function ForgePicker({
           const bytes = new Uint8Array(clip.data.byteLength)
           bytes.set(clip.data)
           fd.set('display', new Blob([bytes], { type: clip.mime }), `clip.${clip.ext}`)
-          const r = await storeForgeVideoCandidate(fd)
+          const r = await storeForgeWasmCandidate(fd)
           if (r.ok) created++
           else errors.push(`${a.assetId}: ${r.error}`)
         } catch (e) {
