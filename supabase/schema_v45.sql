@@ -1,0 +1,11 @@
+-- schema_v45: post-submission Signal Scanning ceremony
+--
+-- When a member files a sighting the world now enters a "Signal Scanning" wait
+-- instead of dropping straight into the pipeline. scan_until is the moment the
+-- first reading returns (rolled to a random 8-10h from submit). The detail page
+-- derives state from it:
+--   now < scan_until            -> SCANNING (countdown shown to the proposer)
+--   now >= scan_until + thread  -> READY    (Signal Tuning opens)
+--   now >= scan_until + no thread-> FAILED   (no signal was tuned in time)
+-- Null = legacy / architect-created worlds with no scan ceremony.
+ALTER TABLE public.worlds ADD COLUMN IF NOT EXISTS scan_until TIMESTAMPTZ;

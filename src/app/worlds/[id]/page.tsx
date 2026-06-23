@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { getWorldById } from '@/lib/actions/worlds'
+import { getWorldById, rescanWorld } from '@/lib/actions/worlds'
 import { getWorldInvestigation, setWorldVoteScope } from '@/lib/actions/signal-tasks'
 import type { WorldInvestigationData } from '@/lib/actions/signal-tasks'
 import type { World, WorldVoteScope } from '@/types/database'
@@ -12,6 +12,8 @@ import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
 import { InvestigationCard } from '@/app/signal/SignalFeed'
 import { LazyImage } from '@/components/lazy-image'
+import { WorldScanHero } from '@/components/world-scan-hero'
+import { worldScanState } from '@/lib/signal/scan'
 
 const DESC_CLAMP = 320 // chars before the "expand all" fold
 
@@ -28,6 +30,10 @@ export default function WorldDetailPage() {
   const [descExpanded, setDescExpanded] = useState(false)
   const [scope, setScope] = useState<WorldVoteScope>('all')
   const [scopeSaving, setScopeSaving] = useState(false)
+  // Failed-scan retry: revise field notes and re-roll the scan window.
+  const [retryOpen, setRetryOpen] = useState(false)
+  const [retryDesc, setRetryDesc] = useState('')
+  const [retrySaving, setRetrySaving] = useState(false)
 
   useEffect(() => {
     getWorldById(id).then((w) => {
@@ -53,6 +59,18 @@ export default function WorldDetailPage() {
   }
 
   const refreshInvestigation = () => getWorldInvestigation(id).then(setInv)
+  const refreshAll = () => {
+    getWorldById(id).then((w) => setWorld(w ?? null))
+    refreshInvestigation()
+  }
+
+  const openRetry = () => { setRetryDesc(world?.description ?? ''); setRetryOpen(true) }
+  const doRescan = async () => {
+    setRetrySaving(true)
+    const res = await rescanWorld(id, { description: retryDesc })
+    setRetrySaving(false)
+    if (res.ok) { setRetryOpen(false); refreshAll() }
+  }
 
   if (world === undefined) {
     return (
@@ -74,6 +92,11 @@ export default function WorldDetailPage() {
 
   const displayName = world.name_en || world.name
   const hasImage = !!world.image_path
+  // Signal Scanning gate: while the scan window is open the proposer sees a
+  // countdown; when it closes the world is READY (a signal was tuned) or FAILED.
+  const scanState = worldScanState(world.scan_until, !!inv?.investigation)
+  const scanning = scanState === 'scanning'
+  const scanFailed = scanState === 'failed'
 
   return (
     <div className="main">
@@ -94,7 +117,18 @@ export default function WorldDetailPage() {
           <Link href={backHref} className="btn-ghost" style={{ display: 'inline-flex' }}>{backLabel}</Link>
         </div>
 
-        {/* Hero — image or gradient */}
+        {/* Hero — Signal Scanning countdown / no-signal, else image or gradient */}
+        {scanning || scanFailed ? (
+          <WorldScanHero
+            displayName={displayName}
+            gradientFrom={world.gradient_from}
+            gradientTo={world.gradient_to}
+            scanUntil={world.scan_until}
+            variant={scanFailed ? 'failed' : 'scanning'}
+            onComplete={refreshAll}
+            onRetry={isOwner ? openRetry : undefined}
+          />
+        ) : (
         <div style={{ width: '100%', height: '280px', position: 'relative', overflow: 'hidden', marginBottom: '1.5rem', border: '1px solid var(--bd-faint)' }}>
           {hasImage ? (
             <>
@@ -134,6 +168,39 @@ export default function WorldDetailPage() {
             </div>
           </div>
         </div>
+        )}
+
+        {/* Revise & re-scan — owner only, from the failed state */}
+        {scanFailed && isOwner && retryOpen && (
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid rgba(255,107,53,0.25)', background: 'rgba(255,107,53,0.04)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'var(--color-star-dim)', marginBottom: '0.5rem' }}>
+              REVISE FIELD NOTES &mdash; THEN RE-SCAN
+            </div>
+            <textarea
+              value={retryDesc}
+              onChange={(e) => setRetryDesc(e.target.value)}
+              rows={6}
+              disabled={retrySaving}
+              style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-panel)', border: '1px solid var(--bd-cyan-2)', color: 'var(--tx-primary)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box', minHeight: '120px' }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem' }}>
+              <button
+                onClick={doRescan}
+                disabled={retrySaving || retryDesc.trim().length < 20}
+                style={{ padding: '0.6rem 1.1rem', background: retryDesc.trim().length >= 20 && !retrySaving ? 'linear-gradient(135deg, #E85D04, #C04000)' : 'rgba(255,107,53,0.08)', border: '1px solid rgba(232,93,4,0.5)', color: retryDesc.trim().length >= 20 && !retrySaving ? '#F5F5F5' : 'rgba(245,245,245,0.3)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.16em', cursor: retryDesc.trim().length >= 20 && !retrySaving ? 'pointer' : 'not-allowed' }}
+              >
+                {retrySaving ? 'RE-SCANNING…' : 'RE-SCAN →'}
+              </button>
+              <button
+                onClick={() => setRetryOpen(false)}
+                disabled={retrySaving}
+                style={{ padding: '0.6rem 1.1rem', background: 'none', border: '1px solid var(--bd-faint)', color: 'var(--color-star-dim)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', cursor: 'pointer' }}
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Meta bar */}
         <div className="hud-frame" style={{ marginBottom: '1.5rem' }}>
@@ -159,8 +226,18 @@ export default function WorldDetailPage() {
           </div>
         </div>
 
+        {/* Signal Tuning locked until the scan completes */}
+        {scanning && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2rem', padding: '0.85rem 1rem', border: '1px dashed rgba(255,176,32,0.25)', background: 'rgba(255,176,32,0.04)' }}>
+            <span style={{ color: 'var(--color-warn)', fontSize: '0.9rem', flexShrink: 0 }}>⧗</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: 'var(--color-star-dim)' }}>
+              SIGNAL TUNING — UNLOCKS WHEN THE SCAN COMPLETES
+            </span>
+          </div>
+        )}
+
         {/* Active Voting Node — the world's Signal Tuning, votable inline */}
-        {inv?.investigation && (
+        {!scanning && inv?.investigation && (
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-nebula)' }}>
