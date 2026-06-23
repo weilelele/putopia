@@ -20,6 +20,7 @@ import {
   listInvestigationTasks,
   listBandAssets,
   pullForgeAssets,
+  storeForgeVideoCandidate,
   getInvestigationConfig,
   updateInvestigationConfig,
 } from '@/lib/actions/signal-tasks'
@@ -36,6 +37,7 @@ import type { CosmoFrequency } from '@/lib/cosmo'
 import type { WorldVoteScope } from '@/types/database'
 import type { CropShape, FilterPreset } from '@/lib/signal/presets'
 import { FILTER_PRESETS } from '@/lib/signal/presets'
+import { processForgeVideo } from '@/lib/signal/ffmpeg-wasm'
 import { revealAt as computeRevealAt, isRevealed } from '@/lib/signal/reveal'
 
 // Compact local datetime, e.g. "Jun 21, 14:30"
@@ -758,14 +760,46 @@ function ForgePicker({
   const pull = async () => {
     if (!freq || !bandId || picked.size === 0) return
     const band = freq.bands.find((b) => b.bandId === bandId)
+    const source = { channelId, channelName: freq.name, freq: freq.freq, bandId, bandName: band?.name || '', media: effMedia }
     setBusy(true); onResult('')
-    const r = await pullForgeAssets(
-      taskId,
-      { channelId, channelName: freq.name, freq: freq.freq, bandId, bandName: band?.name || '', media: effMedia },
-      [...picked],
-      crop,
-      { durationSec },
-    )
+
+    // Video: process in the browser with ffmpeg.wasm (Vercel has no ffmpeg
+    // binary), then upload each finished clip. Image: server-side as before.
+    if (effMedia === 'video') {
+      const ids = [...picked]
+      const byId = new Map(assets.map((a) => [a.assetId, a]))
+      let created = 0
+      const errors: string[] = []
+      for (let i = 0; i < ids.length; i++) {
+        const a = byId.get(ids[i])
+        if (!a) continue
+        onResult(`Processing ${i + 1}/${ids.length}… (first clip also loads ffmpeg, ~10–20s)`)
+        try {
+          const proxied = `/api/forge/cosmo-proxy?url=${encodeURIComponent(a.url)}`
+          const clip = await processForgeVideo(proxied, crop, durationSec)
+          const fd = new FormData()
+          fd.set('taskId', taskId)
+          fd.set('source', JSON.stringify({ ...source, assetId: a.assetId, url: a.url, crop }))
+          fd.set('ext', clip.ext)
+          fd.set('mime', clip.mime)
+          // copy into an ArrayBuffer-backed array so it's a valid BlobPart
+          const bytes = new Uint8Array(clip.data.byteLength)
+          bytes.set(clip.data)
+          fd.set('display', new Blob([bytes], { type: clip.mime }), `clip.${clip.ext}`)
+          const r = await storeForgeVideoCandidate(fd)
+          if (r.ok) created++
+          else errors.push(`${a.assetId}: ${r.error}`)
+        } catch (e) {
+          errors.push(`${a.assetId}: ${(e as Error).message}`)
+        }
+      }
+      setBusy(false)
+      setPicked(new Set())
+      onResult(`Pulled ${created} candidate(s)` + (errors.length ? ` · ${errors.length} error(s): ${errors.join(' | ')}` : ''))
+      return
+    }
+
+    const r = await pullForgeAssets(taskId, source, [...picked], crop, { durationSec })
     setBusy(false)
     setPicked(new Set())
     onResult(`Pulled ${r.created} candidate(s)` + (r.errors.length ? ` · ${r.errors.length} error(s)` : ''))
@@ -832,7 +866,14 @@ function AssetCard({ asset, showRole, onChanged }: { asset: SignalTaskAsset; sho
   return (
     <div style={{ border: asset.is_selected ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: 6, opacity: busy ? 0.5 : 1 }}>
       {asset.media === 'video' ? (
-        <video src={asset.processed_url || ''} controls muted loop style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+        // Video candidates display as an animated WebP/GIF (auto-loops as <img>).
+        // Only fall back to a <video> player for legacy mp4-only rows.
+        (asset.display_url || /\.(webp|gif)(\?|$)/i.test(asset.processed_url || '')) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={asset.display_url || asset.processed_url || ''} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+        ) : (
+          <video src={asset.processed_url || ''} controls muted loop style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+        )
       ) : asset.media === 'audio' ? (
         <div style={{ background: '#070912', padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 20 }}>🔊</span>
