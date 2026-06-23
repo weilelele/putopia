@@ -16,7 +16,8 @@ const getAllWorldsCached = unstable_cache(
       .select('*')
       .eq('lifecycle_state', 'stable')
       .order('discovery_date', { ascending: true })
-    return data ?? []
+    // Exclude test-console worlds (JS-side so a missing column never errors).
+    return (data ?? []).filter((w) => !w.is_test)
   },
   ['all-worlds-stable'],
   { revalidate: 60 },
@@ -37,7 +38,8 @@ export async function getPipelineWorlds() {
     .in('lifecycle_state', ['proposed', 'picked', 'syncing'])
     .order('submitted_at', { ascending: false })
 
-  const worlds = data ?? []
+  // Exclude test-console worlds (JS-side so a missing column never errors).
+  const worlds = (data ?? []).filter((w) => !w.is_test)
   if (!worlds.length) return []
 
   // Enrich each world with its discoverer's avatar (cards show author + avatar).
@@ -125,6 +127,76 @@ export async function submitWorld(payload: {
   })
 
   return { error: null, data }
+}
+
+/**
+ * File a TEST world from the hidden /worlds/test-submit console. Identical to a
+ * real sighting except: flagged is_test (excluded from public listings), a
+ * caller-set scan window (default short, for quick end-to-end testing), and no
+ * activity-feed event. Lets us exercise the full submit → scan → ready/failed
+ * flow against the live DB without polluting the real World Records.
+ */
+export async function submitTestWorld(payload: {
+  name: string
+  description: string
+  gradient_from?: string
+  gradient_to?: string
+  scanMinutes?: number
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated', data: null }
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin
+    .from('voyager_profiles')
+    .select('id, display_name')
+    .eq('id', user.id)
+    .single()
+  if (!profile) return { error: 'Profile not found', data: null }
+
+  const discovererName = profile.display_name?.trim() || user.email?.split('@')[0] || 'Test Operative'
+  const worldId = `TEST-${Date.now().toString(36).toUpperCase()}`
+  const minutes = Math.max(0, payload.scanMinutes ?? 2)
+  const scanUntil = new Date(Date.now() + minutes * 60_000).toISOString()
+
+  const { data, error } = await admin
+    .from('worlds')
+    .insert({
+      id: worldId,
+      name: payload.name,
+      name_en: payload.name,
+      discoverer_id: user.id,
+      discoverer_name: discovererName,
+      discovery_date: new Date().toISOString().split('T')[0],
+      gradient_from: payload.gradient_from ?? '#080F1E',
+      gradient_to: payload.gradient_to ?? '#1A4A7A',
+      image_path: null,
+      description: payload.description,
+      is_verified: false,
+      lifecycle_state: 'proposed',
+      submitted_by: user.id,
+      submitted_at: new Date().toISOString(),
+      scan_until: scanUntil,
+      is_test: true,
+    })
+    .select()
+    .single()
+
+  if (error) return { error: error.message, data: null }
+  return { error: null, data }
+}
+
+/** Recent test-console worlds, for the test console's manage/cleanup list. */
+export async function listTestWorlds() {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('worlds')
+    .select('id, name, scan_until, lifecycle_state, submitted_at')
+    .eq('is_test', true)
+    .order('submitted_at', { ascending: false })
+    .limit(50)
+  return data ?? []
 }
 
 /**
