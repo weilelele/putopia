@@ -377,6 +377,40 @@ export async function generateCandidates(
   return { ok: errors.length === 0, created, errors }
 }
 
+/**
+ * Random-pull SAMPLING for the browser (ffmpeg.wasm) video/audio path: pick the
+ * random assets per source server-side, but return them for the client to process
+ * (Vercel can't run ffmpeg). Audio oversamples 2× (the client skips no-audio).
+ */
+export async function sampleForgeAssets(
+  taskId: string,
+  sources: GenerateSource[],
+): Promise<{ ok: boolean; groups: { source: SourceMeta; count: number; assets: { assetId: string; url: string }[] }[]; errors: string[] }> {
+  const me = await currentUser()
+  if (!me || me.role !== 'architect') return { ok: false, groups: [], errors: ['Architect role required'] }
+  const supabase = createAdminClient() as DB
+  const { data: task } = await supabase.from('signal_tasks').select('type').eq('id', taskId).single()
+  const audioMode = task?.type === 'audio_odd_one' || task?.type === 'audio_match'
+
+  const groups: { source: SourceMeta; count: number; assets: { assetId: string; url: string }[] }[] = []
+  const errors: string[] = []
+  for (const src of sources) {
+    const cosmoMedia = audioMode || src.media === 'video' ? 'video' : 'image'
+    const sampleN = audioMode ? src.count * 2 : src.count
+    try {
+      const assets = await sampleBandAssets(src.channelId, src.bandId, cosmoMedia, sampleN)
+      groups.push({
+        source: { channelId: src.channelId, channelName: src.channelName, freq: src.freq, bandId: src.bandId, bandName: src.bandName, media: src.media },
+        count: src.count,
+        assets: assets.map((a) => ({ assetId: a.assetId, url: a.url })),
+      })
+    } catch (e) {
+      errors.push(`${src.channelName}/${src.bandName}: ${(e as Error).message}`)
+    }
+  }
+  return { ok: errors.length === 0, groups, errors }
+}
+
 /** Browse a Cosmo band's assets for the precise-pick UI (doc 5.2 precise pick). */
 export async function listBandAssets(
   channelId: string,
@@ -433,11 +467,12 @@ export async function pullForgeAssets(
 }
 
 /**
- * Store a Forge video candidate processed in the BROWSER (ffmpeg.wasm): the
- * client sends the finished animated WebP/GIF; we upload it and insert the row.
- * Used because Vercel serverless can't run the ffmpeg binary (Next.js #53791).
+ * Store a Forge candidate processed in the BROWSER (ffmpeg.wasm): the client sends
+ * the finished file (animated WebP/GIF for video, or mp3/m4a/wav for audio); we
+ * upload it and insert the row. Used because Vercel serverless can't run the
+ * ffmpeg binary (Next.js #53791). `kind` is 'video' (default) or 'audio'.
  */
-export async function storeForgeVideoCandidate(form: FormData): Promise<{ ok: boolean; error?: string }> {
+export async function storeForgeWasmCandidate(form: FormData): Promise<{ ok: boolean; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
   const supabase = createAdminClient() as DB
@@ -445,8 +480,9 @@ export async function storeForgeVideoCandidate(form: FormData): Promise<{ ok: bo
   const taskId = String(form.get('taskId') || '')
   const file = form.get('display')
   if (!taskId || !(file instanceof File)) return { ok: false, error: 'missing taskId/display' }
-  const ext = String(form.get('ext') || 'webp')
-  const mime = String(form.get('mime') || 'image/webp')
+  const kind = String(form.get('kind') || 'video') as 'video' | 'audio'
+  const ext = String(form.get('ext') || (kind === 'audio' ? 'mp3' : 'webp'))
+  const mime = String(form.get('mime') || (kind === 'audio' ? 'audio/mpeg' : 'image/webp'))
   let meta: Record<string, unknown> = {}
   try { meta = JSON.parse(String(form.get('source') || '{}')) } catch { /* ignore */ }
 
@@ -461,7 +497,7 @@ export async function storeForgeVideoCandidate(form: FormData): Promise<{ ok: bo
 
   const { error } = await supabase.from('signal_task_assets').insert({
     task_id: taskId,
-    media: 'video',
+    media: kind, // 'video' (animated WebP) or 'audio' (mp3/m4a/wav)
     source_channel_id: meta.channelId ?? null,
     source_channel_name: meta.channelName ?? null,
     source_freq: meta.freq ?? null,
@@ -470,8 +506,8 @@ export async function storeForgeVideoCandidate(form: FormData): Promise<{ ok: bo
     source_asset_id: meta.assetId ?? null,
     source_url: meta.url ?? null,
     processed_path: up.path,
-    processed_url: up.url,        // animated WebP/GIF (no separate mp4 in the wasm path)
-    display_url: up.url,
+    processed_url: up.url,
+    display_url: kind === 'video' ? up.url : null, // audio has no still display
     crop_config: meta.crop ?? {},
     asset_role: 'option',
     is_selected: false,

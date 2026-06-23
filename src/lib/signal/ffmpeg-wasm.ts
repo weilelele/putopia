@@ -60,8 +60,8 @@ function glitchChain(filter: FilterPreset, i: number): string {
 
 export interface WasmClip {
   data: Uint8Array
-  ext: 'webp' | 'gif'
-  mime: 'image/webp' | 'image/gif'
+  ext: string
+  mime: string
 }
 
 /**
@@ -145,4 +145,33 @@ async function cornerMaskPng(size: number): Promise<Uint8Array> {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png'),
   )
   return new Uint8Array(await blob.arrayBuffer())
+}
+
+/**
+ * Extract a short mono audio clip from a video, in the browser. Tries mp3 → m4a →
+ * wav (first encoder the wasm core supports wins). Returns null when the clip has
+ * no audio track (every attempt fails on the strict audio-stream map), so callers
+ * can skip it — mirrors the server's probeHasAudio behaviour without ffprobe.
+ */
+export async function processForgeAudio(srcUrl: string, durSec: number): Promise<WasmClip | null> {
+  const ff = await getFFmpeg()
+  const inName = 'in.mp4'
+  await ff.writeFile(inName, await fetchFile(srcUrl))
+  const dur = String(clamp(durSec ?? 4, 1, 15))
+
+  const attempts: Array<{ out: string; ext: string; mime: string; codec: string[] }> = [
+    { out: 'out.mp3', ext: 'mp3', mime: 'audio/mpeg', codec: ['-c:a', 'libmp3lame', '-b:a', '96k'] },
+    { out: 'out.m4a', ext: 'm4a', mime: 'audio/mp4', codec: ['-c:a', 'aac', '-b:a', '96k'] },
+    { out: 'out.wav', ext: 'wav', mime: 'audio/wav', codec: [] },
+  ]
+  for (const a of attempts) {
+    try {
+      // strict `-map 0:a:0` → a video with no audio errors out and we move on;
+      // if even wav fails the clip genuinely has no audio track.
+      await ff.exec(['-y', '-ss', '0', '-t', dur, '-i', inName, '-vn', '-map', '0:a:0', '-ac', '1', '-ar', '44100', ...a.codec, a.out])
+      const data = (await ff.readFile(a.out)) as Uint8Array
+      if (data?.length > 64) return { data, ext: a.ext, mime: a.mime }
+    } catch { /* try next encoder, or (on the last) treat as no-audio */ }
+  }
+  return null // no audio track
 }
