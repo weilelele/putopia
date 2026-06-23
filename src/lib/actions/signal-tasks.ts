@@ -1212,6 +1212,38 @@ export async function listInvestigationTasks(threadId: string): Promise<SignalTa
 }
 
 /**
+ * For every world in Signal Tuning, the ISO time of its most recent published
+ * day — i.e. when its latest puzzle was found. Used to sort the Signal Tuning
+ * grid newest-first (a more dynamic, "freshly tuned floats up" feel).
+ * Returns { [worldId]: latestPublishedAt }.
+ */
+export async function getTuningActivity(): Promise<Record<string, string>> {
+  const admin = createAdminClient() as DB
+  const { data: threads } = await admin
+    .from('signal_threads')
+    .select('id, world_id')
+    .not('world_id', 'is', null)
+  const threadWorld = new Map<string, string>()
+  for (const t of (threads ?? []) as { id: string; world_id: string }[]) threadWorld.set(t.id, t.world_id)
+  if (!threadWorld.size) return {}
+
+  const { data: tasks } = await admin
+    .from('signal_tasks')
+    .select('thread_id, published_at')
+    .eq('is_published', true)
+    .not('published_at', 'is', null)
+    .in('thread_id', [...threadWorld.keys()])
+
+  const latest: Record<string, string> = {}
+  for (const t of (tasks ?? []) as { thread_id: string; published_at: string }[]) {
+    const wid = threadWorld.get(t.thread_id)
+    if (!wid) continue
+    if (!latest[wid] || t.published_at > latest[wid]) latest[wid] = t.published_at
+  }
+  return latest
+}
+
+/**
  * For every world in Signal Tuning, the latest live cover image — the first
  * selected visual asset from its most recent published day (doc 4.2.1: card
  * cover updates in real time). Audio-only days yield no cover. Returns
