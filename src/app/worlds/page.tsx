@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { getAllWorlds, getPipelineWorlds } from '@/lib/actions/worlds'
-import { getTuningCovers } from '@/lib/actions/signal-tasks'
+import { getTuningCovers, getTuningActivity } from '@/lib/actions/signal-tasks'
 import { SectionTracker } from '@/components/section-tracker'
 import { WorldPoster } from '@/components/world-poster'
+import { CollapsibleWorldGrid } from '@/components/collapsible-world-grid'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,15 +71,19 @@ export default async function WorldsPage({
   const params = await searchParams
   const submittedName = params.submitted
 
-  const [worlds, pipeline, covers] = await Promise.all([
+  const [worlds, pipeline, covers, tuningActivity] = await Promise.all([
     getAllWorlds(),
     getPipelineWorlds(),
     getTuningCovers(),
+    getTuningActivity(),
   ])
 
   // Split pipeline by lifecycle tier (3-stage model)
   const rawImagination = pipeline.filter((w) => w.lifecycle_state === 'proposed')
-  const worldBuilding  = pipeline.filter((w) => w.lifecycle_state === 'picked' || w.lifecycle_state === 'syncing')
+  const worldBuilding  = pipeline
+    .filter((w) => w.lifecycle_state === 'picked' || w.lifecycle_state === 'syncing')
+    // Newest puzzle first — most recently tuned worlds float to the top.
+    .sort((a, b) => (tuningActivity[b.id] ?? b.submitted_at ?? '').localeCompare(tuningActivity[a.id] ?? a.submitted_at ?? ''))
 
   return (
     <div className="main">
@@ -185,15 +190,7 @@ export default async function WorldsPage({
             count={rawImagination.length}
             accentColor="var(--color-warn)"
           />
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {rawImagination.map((world) => (
-              <WorldPoster
-                key={world.id}
-                world={world}
-                date={formatSubmitted(world.submitted_at)}
-              />
-            ))}
-          </div>
+          <CollapsibleWorldGrid worlds={rawImagination} />
         </section>
       )}
 
