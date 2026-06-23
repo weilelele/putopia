@@ -24,7 +24,7 @@ export default function TestSubmitPage() {
 
   const [name, setName] = useState('Test World')
   const [description, setDescription] = useState('End-to-end scan flow test. This is throwaway test data and is excluded from the public World Records.')
-  const [scanMinutes, setScanMinutes] = useState(2)
+  const [scanMinutes, setScanMinutes] = useState(30)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [launched, setLaunched] = useState<{ id: string; name: string } | null>(null)
@@ -87,7 +87,7 @@ export default function TestSubmitPage() {
             <label style={label}>SCAN WINDOW (MINUTES)</label>
             <input type="number" min={0} max={600} step={1} value={scanMinutes} onChange={(e) => setScanMinutes(Math.max(0, Math.round(Number(e.target.value) || 0)))} disabled={isGuest || loading} style={{ ...field, width: 120 }} />
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginTop: 6 }}>
-              0 = scan completes immediately (lands on FAILED unless a thread exists). 2 = watch a short countdown.
+              0 = scan completes immediately (lands on FAILED unless a thread exists). 30 = a half-hour window.
             </div>
           </div>
 
