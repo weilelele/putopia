@@ -62,17 +62,72 @@ npx cap open android   # opens Android Studio → Run
 
 You should see the live console load inside a native frame.
 
-## Known follow-ups before this is shippable
+## Auth / login flow (deep links)
 
-These are **not** done yet — the scaffold above only proves the shell loads.
+**Finding:** login is actually **email + password** (`signInWithPassword`), not
+magic-link. Because the shell is a remote-URL WebView pointed at the live site,
+**returning-user login already works in the app** with no deep links — session
+cookies persist exactly as on the website.
 
-1. **Magic-link auth deep links (highest priority).** Login is Supabase email
-   magic-link → `/auth/callback`. In a native shell that callback must return to
-   the app, not Safari/Chrome. Configure **Universal Links (iOS)** + **App Links
-   (Android)** for `multiverseco.org`, and add the Supabase redirect URL.
-   Verify the session survives killing and reopening the app.
+The only seam is **first-time onboarding** (`/new` → invite email → set
+password): the email link opens in Safari, not the app. We close it with iOS
+**Universal Links** + Android **App Links** for `multiverseco.org/auth/*`.
 
-2. **Payments / App Store compliance (highest risk).** The $12 Initial Voyager
+### Done in code (this branch)
+
+- `App.entitlements` → `applinks:multiverseco.org` (+ `www`), wired into the iOS
+  target (`CODE_SIGN_ENTITLEMENTS`).
+- `AndroidManifest.xml` → `autoVerify` intent-filter for `https` `/auth` +
+  `/register`.
+- `/.well-known/apple-app-site-association` + `/.well-known/assetlinks.json`
+  route handlers (served as `application/json`; `proxy.ts` matcher excludes
+  `.well-known` so they are not auth-gated).
+- `@capacitor/app` + `NativeBridge` (`src/components/native-bridge.tsx`):
+  listens for `appUrlOpen` and routes the incoming https link into the WebView.
+  No-op on web.
+- `resendAccessLink` now emails a link on **our** domain (`/auth/callback?
+  token_hash=…`) instead of the `*.supabase.co` action link, so it is
+  Universal-Link-eligible. Web-compatible (the callback already verifies
+  `token_hash`).
+
+### You must do (external — can't be done from code)
+
+1. **Xcode signing.** Open `ios/App/App.xcodeproj` → target **App** → *Signing &
+   Capabilities* → select your **Team**. The Associated Domains capability is
+   already present via the entitlements file.
+2. **Set `APPLE_TEAM_ID`** (your 10-char Team ID) in the **production** env
+   (Vercel). The AASA file embeds it; Universal Links won't verify until it's the
+   real ID, not the `TEAMID` placeholder.
+3. **Deploy** so `https://multiverseco.org/.well-known/apple-app-site-association`
+   is live **before** installing the app (iOS fetches it at install time).
+   Verify: `curl -i https://multiverseco.org/.well-known/apple-app-site-association`
+   → `200` + `content-type: application/json`, no redirect.
+4. **Supabase email template (the load-bearing step).** Universal Links do **not**
+   fire on the `*.supabase.co` redirect that `inviteUserByEmail` sends. In the
+   Supabase dashboard → *Authentication → Email Templates → Invite user*, point
+   the link at our domain so it's tapped directly:
+
+   ```html
+   <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite&next=/register">Accept your invitation</a>
+   ```
+
+   (`/auth/callback` already handles `token_hash` + `type`, so web is unaffected.)
+   ⚠️ This is **production** Supabase shared with the website — change the
+   template, send yourself a test invite, confirm web still works.
+5. **Android (later).** Set `ANDROID_CERT_SHA256` (release/Play signing cert
+   fingerprint) in prod so `assetlinks.json` is non-empty. Needs Android Studio +
+   a signing key first.
+
+### Verify (iOS)
+
+After 1–4 and a deploy: on the device, submit `/new` with a test email → open
+the invite email in **Mail** → tapping the link should open the **app** (not
+Safari) → `/auth/callback` → `/register`. Session should survive killing and
+reopening the app.
+
+## Other follow-ups before this is shippable
+
+1. **Payments / App Store compliance (highest risk).** The $12 Initial Voyager
    Pack is a *physical* shipped item (≈4-week fulfilment) — physical goods are
    exempt from Apple/Google in-app-purchase rules and may use Stripe. But the
    purchase also unlocks Voyager membership, which a reviewer could read as a
@@ -81,19 +136,20 @@ These are **not** done yet — the scaffold above only proves the shell loads.
    (not the in-app WebView) via `@capacitor/browser`. Resolve this *before*
    submitting — it can block the whole release.
 
-3. **Safe areas / status bar.** Add `@capacitor/status-bar` and verify notch /
+2. **Safe areas / status bar.** Add `@capacitor/status-bar` and verify notch /
    home-indicator insets on a real phone (the app is portrait-first already, so
    this is polish, not a rebuild).
 
-4. **External links.** Make outbound links (email, social) open in the system
+3. **External links.** Make outbound links (email, social) open in the system
    browser, not navigate the shell.
 
-5. **Push notifications (optional, likely wanted).** Today reminders are email +
+4. **Push notifications (optional, likely wanted).** Today reminders are email +
    the `signal-recall` cron. To go native: `@capacitor/push-notifications` +
    APNs/FCM + store device tokens in Supabase + send from the server. ~1 week.
 
-6. **Store assets.** App icons, splash screens, iOS Privacy Manifest, listing
-   copy + screenshots.
+5. **Store assets.** App icons + splash **done** (`@capacitor/assets` from
+   `assets/icon.png`; re-run after replacing the source with a crisp 1024²).
+   Still needed: iOS Privacy Manifest, listing copy + screenshots.
 
 ## Config reference
 

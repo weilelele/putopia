@@ -6,6 +6,7 @@ import { AuthProvider } from '@/lib/auth-context'
 import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
 import { ScrollRestorer } from '@/components/scroll-restorer'
+import { NativeBridge } from '@/components/native-bridge'
 
 const courierPrime = Courier_Prime({
   variable: '--font-mono',
@@ -45,6 +46,7 @@ export default function RootLayout({
           twq('config','rd22u');
         `}</Script>
         <AuthProvider>
+          <NativeBridge />
           <ScrollRestorer />
           <div className="app-shell w-full">
             <Sidebar />

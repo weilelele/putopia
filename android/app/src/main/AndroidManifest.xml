@@ -18,6 +18,16 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- App Links: open https://multiverseco.org auth paths in-app
+                 instead of the browser. Requires assetlinks.json at the domain. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="multiverseco.org" android:pathPrefix="/auth" />
+                <data android:pathPrefix="/register" />
+            </intent-filter>
         </activity>
 
         <provider

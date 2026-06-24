@@ -44,7 +44,13 @@ export async function resendAccessLink(email: string): Promise<ResendResult> {
   })
 
   if (error) return { ok: false, error: error.message.toUpperCase() }
-  const actionLink = data.properties?.action_link
+  // Build the link on our own domain (not the *.supabase.co action_link) so that
+  // on mobile it is eligible for iOS Universal Links / Android App Links and opens
+  // the native app instead of Safari. /auth/callback verifies the token_hash.
+  const tokenHash = data.properties?.hashed_token
+  const actionLink = tokenHash
+    ? `${siteUrl}/auth/callback?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink&next=${encodeURIComponent(next)}`
+    : data.properties?.action_link
   if (!actionLink) return { ok: false, error: 'ACCESS LINK COULD NOT BE GENERATED.' }
 
   const send = await sendEmail({
