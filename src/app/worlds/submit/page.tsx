@@ -124,7 +124,7 @@ export default function SubmitWorldPage() {
               REPORT A <span style={{ color: '#FF6B35' }}>SIGHTING</span>
             </h1>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.7, maxWidth: '520px' }}>
-              Describe a parallel world you believe exists. Your account will be reviewed by Architects and added to the community pipeline. Evidence, observations, and field notes all welcome.
+              Report a world you&rsquo;ve glimpsed or believe is out there. We&rsquo;ll train our instruments on it and scan the multiverse until we find the signal.
             </p>
           </div>
 
