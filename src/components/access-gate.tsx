@@ -127,7 +127,7 @@ export function AccessGate({
               <p style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star)', opacity: 0.9, lineHeight: 1.65, margin: '0.8rem 0 0' }}>
                 {everUsed
                   ? 'Your look has ended. Step inside for good, or take another minute.'
-                  : 'Members only. We’ll let you look inside for 5 minutes.'}
+                  : 'For Collective members only. You’ve been granted a 5-minute viewing privilege. Will you enter?'}
               </p>
 
               <button
@@ -136,7 +136,7 @@ export function AccessGate({
                 style={{ width: '100%', justifyContent: 'center', marginTop: '1.4rem' }}
                 onClick={startPeek}
               >
-                {everUsed ? 'Look again' : 'Yes, I need it'}
+                {everUsed ? 'Look again' : 'Yes, I will'}
               </button>
 
               {everUsed && (
