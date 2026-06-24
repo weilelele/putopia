@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BackLink } from '@/components/back-link'
 import { LazyImage } from '@/components/lazy-image'
 import { getInvestigationFeed, submitSignalResponse } from '@/lib/actions/signal-tasks'
@@ -9,7 +9,9 @@ import type {
   PublicInvestigation,
   PublicSignalTask,
   PublicSignalAsset,
+  SearchingState,
 } from '@/lib/actions/signal-tasks'
+import { scanSecondsLeft } from '@/lib/signal/scan'
 
 function AboutModal({ onClose }: { onClose: () => void }) {
   return (
@@ -108,13 +110,16 @@ export function InvestigationCard({
   /** When false, the title is omitted (e.g. the world page already shows it in the hero). */
   showTitle?: boolean
 }) {
-  const [selectedDay, setSelectedDay] = useState(investigation.days.length - 1) // default: latest day
+  const searching = investigation.searching
+  const slots = investigation.days.length + (searching ? 1 : 0)
+  const [selectedSlot, setSelectedSlot] = useState(slots - 1) // default: newest (the search, if present)
 
-  const current = investigation.days[selectedDay]
-  if (!current) return null
+  const onSearching = !!searching && selectedSlot >= investigation.days.length
+  const current = onSearching ? null : investigation.days[selectedSlot]
+  if (!onSearching && !current) return null
 
-  const canGoBack = selectedDay > 0
-  const canGoForward = selectedDay < investigation.days.length - 1
+  const canGoBack = selectedSlot > 0
+  const canGoForward = selectedSlot < slots - 1
 
   return (
     <div style={{ marginBottom: 32 }}>
@@ -137,7 +142,7 @@ export function InvestigationCard({
         {/* day navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
-            onClick={() => canGoBack && setSelectedDay((d) => d - 1)}
+            onClick={() => canGoBack && setSelectedSlot((d) => d - 1)}
             disabled={!canGoBack}
             style={{
               background: 'none', border: '1px solid rgba(255,107,53,0.3)', color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
@@ -145,10 +150,10 @@ export function InvestigationCard({
             }}
           >◀</button>
           <span style={{ fontSize: 12, color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', minWidth: 48, textAlign: 'center' }}>
-            DAY {current.dayIndex + 1}
+            {onSearching ? 'SEARCHING' : `DAY ${current!.dayIndex + 1}`}
           </span>
           <button
-            onClick={() => canGoForward && setSelectedDay((d) => d + 1)}
+            onClick={() => canGoForward && setSelectedSlot((d) => d + 1)}
             disabled={!canGoForward}
             style={{
               background: 'none', border: '1px solid rgba(255,107,53,0.3)', color: canGoForward ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
@@ -159,20 +164,76 @@ export function InvestigationCard({
       </div>
 
       {/* Architect preview: this day hasn't revealed to members yet. */}
-      {!current.revealed && (
+      {current && !current.revealed && (
         <div style={{ fontSize: 11, color: '#E8A020', letterSpacing: '0.05em', marginBottom: 10 }}>
           ◷ Not yet revealed to members{current.revealAt ? ` — reveals ${new Date(current.revealAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}
         </div>
       )}
 
-      {/* task for selected day */}
-      <TaskCard
-        key={current.task.id}
-        task={current.task}
-        canParticipate={investigation.canParticipate}
-        lockReason={investigation.lockReason}
-        onFiled={onFiled}
-      />
+      {/* Inter-day searching interstitial, else the task for the selected day */}
+      {onSearching && searching ? (
+        <SearchingPanel searching={searching} />
+      ) : current ? (
+        <TaskCard
+          key={current.task.id}
+          task={current.task}
+          canParticipate={investigation.canParticipate}
+          lockReason={investigation.lockReason}
+          onFiled={onFiled}
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function fmtCountdown(total: number): string {
+  const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = Math.floor(total % 60)
+  return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':')
+}
+
+// Inter-day "Signal Searching" interstitial — the previous day's crowd-chosen
+// signal, the searching copy, and a countdown to the next reading (or a "came up
+// empty" state once the window elapses with no next day published yet).
+function SearchingPanel({ searching }: { searching: SearchingState }) {
+  const [left, setLeft] = useState(() => scanSecondsLeft(searching.searchUntil))
+  useEffect(() => {
+    if (searching.failed) return
+    const id = setInterval(() => setLeft(scanSecondsLeft(searching.searchUntil)), 1000)
+    return () => clearInterval(id)
+  }, [searching.searchUntil, searching.failed])
+
+  const failed = searching.failed
+  const accent = failed ? '#E83030' : '#FFB020'
+  return (
+    <div style={{ background: '#0F1430', border: `1px solid ${failed ? 'rgba(232,48,48,0.32)' : 'rgba(255,176,32,0.3)'}`, padding: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: accent }} />
+        <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: accent }}>
+          {failed ? 'SEARCH CAME UP EMPTY' : 'SIGNAL SEARCHING'}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        {searching.prevAsset && (
+          <div style={{ width: 72, flexShrink: 0, border: '1px solid rgba(255,107,53,0.25)' }}>
+            <AssetView asset={searching.prevAsset} />
+          </div>
+        )}
+        <div style={{ fontSize: 13, lineHeight: 1.7, color: 'rgba(245,245,245,0.72)' }}>
+          Widening the sweep, guided by the signal everyone converged on in Day {searching.prevDayIndex + 1}.
+        </div>
+      </div>
+
+      {failed ? (
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', letterSpacing: '0.04em', lineHeight: 1.7 }}>
+          No new reading has returned yet — the next signal will appear the moment it&apos;s found.
+        </div>
+      ) : (
+        <>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: 'rgba(245,245,245,0.5)', marginBottom: 4 }}>NEXT SIGNAL IN</div>
+          <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.04em', color: '#F5F5F5', fontVariantNumeric: 'tabular-nums' }}>{fmtCountdown(left)}</div>
+        </>
+      )}
     </div>
   )
 }

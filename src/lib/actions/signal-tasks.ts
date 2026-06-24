@@ -19,6 +19,7 @@ import type { WorldVoteScope, WorldLifecycle, WorldStage } from '@/types/databas
 import { worldStage } from '@/types/database'
 import { renderVideoClip, extractAudioClip } from '@/lib/signal/av'
 import { revealAt as computeRevealAt, isRevealed, DEFAULT_REVEAL_INTERVAL_HOURS } from '@/lib/signal/reveal'
+import { rollSearchUntil } from '@/lib/signal/scan'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -846,6 +847,17 @@ export interface PublicInvestigation {
     revealAt: string | null   // when this day surfaces (ISO); null if schedule unstarted
     revealed: boolean         // already surfaced as of now (always true for public viewers)
   }[]
+  // Inter-day "Signal Searching" state (member view only): the window between the
+  // latest unlocked day and the next. null for architects / when not applicable.
+  searching: SearchingState | null
+}
+
+// The "searching for the next signal" interstitial shown after the latest day.
+export interface SearchingState {
+  searchUntil: string | null        // countdown end (ISO)
+  failed: boolean                   // window elapsed AND no next day is published yet
+  prevDayIndex: number              // the day whose crowd-chosen signal we're searching from
+  prevAsset: PublicSignalAsset | null // that day's winning option (what everyone judged)
 }
 
 export interface InvestigationFeedData {
@@ -1413,19 +1425,81 @@ function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSig
   })
 }
 
-/** Published+visible days for ONE thread (world page). 4 queries regardless of
- *  day count: tasks + schedule (parallel), then assets + responses (batched). */
-async function buildPublishedDays(admin: DB, threadId: string, me: Viewer, isArchitect: boolean): Promise<PublicInvestigation['days']> {
+/** A day's crowd-chosen option ("what everyone judged") — the most-voted option,
+ *  falling back to the first option. Anchors the searching interstitial. */
+function pickWinnerAsset(assets: PublicSignalAsset[] | undefined, responses: RespRow[] | undefined): PublicSignalAsset | null {
+  const options = (assets ?? []).filter((a) => a.asset_role !== 'main')
+  if (!options.length) return null
+  if (responses?.length) {
+    const counts: Record<string, number> = {}
+    for (const r of responses) counts[r.selected_asset_id] = (counts[r.selected_asset_id] ?? 0) + 1
+    let best = options[0], bestN = counts[best.id] ?? 0
+    for (const o of options) { const n = counts[o.id] ?? 0; if (n > bestN) { best = o; bestN = n } }
+    return best
+  }
+  return options[0]
+}
+
+/** Published days for ONE thread (world page), with the inter-day search gate.
+ *  Architects see every published day (unchanged preview). Members see days
+ *  unlocked one at a time behind random 8-20h search windows, plus the current
+ *  "Signal Searching" state for the gap after the latest unlocked day. */
+async function buildPublishedDays(
+  admin: DB, threadId: string, me: Viewer, isArchitect: boolean,
+): Promise<{ days: PublicInvestigation['days']; searching: SearchingState | null }> {
   const [{ data: taskRows }, { data: sched }] = await Promise.all([
     admin.from('signal_tasks').select('id, type, prompt, day_index').eq('thread_id', threadId).eq('is_published', true).order('day_index', { ascending: true }),
-    admin.from('signal_threads').select('reveal_anchor_at, reveal_interval_hours').eq('id', threadId).maybeSingle(),
+    admin.from('signal_threads').select('reveal_anchor_at, reveal_interval_hours, next_search_until').eq('id', threadId).maybeSingle(),
   ])
+  const rows = (taskRows ?? []) as TaskRow[]
+  const now = new Date(); const nowMs = now.getTime()
   const anchorAt: string | null = sched?.reveal_anchor_at ?? null
-  const intervalHours: number = sched?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
-  const visible = computeVisibleDays((taskRows ?? []) as TaskRow[], anchorAt, intervalHours, isArchitect, new Date())
-  if (!visible.length) return []
+
+  // Architects: full preview, no search gate (keeps the existing reveal-meta view).
+  if (isArchitect) {
+    const intervalHours: number = sched?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
+    const visible = computeVisibleDays(rows, anchorAt, intervalHours, true, now)
+    if (!visible.length) return { days: [], searching: null }
+    const { assetsByTask, respByTask } = await fetchDayData(admin, visible.map((v) => v.taskId))
+    return { days: assembleDays(visible, assetsByTask, respByTask, me, true), searching: null }
+  }
+
+  // Members: day 0 unlocks once the thread anchor passes; each later day unlocks
+  // when the current search window elapses (and it's published).
+  const anchorMs = anchorAt ? Date.parse(anchorAt) : NaN
+  if (Number.isNaN(anchorMs) || nowMs < anchorMs) return { days: [], searching: null }
+
+  const N = rows.length
+  let unlocked = 1
+  let su: string | null = sched?.next_search_until ?? null
+  if (!su) {
+    su = rollSearchUntil(nowMs, Math.random())
+    await admin.from('signal_threads').update({ next_search_until: su }).eq('id', threadId).is('next_search_until', null)
+  }
+  // Advance through elapsed windows where the next day is already published.
+  while (su && nowMs >= Date.parse(su) && unlocked < N) {
+    const newSu = rollSearchUntil(nowMs, Math.random())
+    const { data: adv } = await admin.from('signal_threads').update({ next_search_until: newSu }).eq('id', threadId).eq('next_search_until', su).select('id')
+    if (!adv?.length) break // another reader advanced; resync on next load
+    unlocked++; su = newSu
+  }
+
+  const visibleRows = rows.slice(0, unlocked)
+  const visible: VisibleDay[] = visibleRows.map((t) => ({
+    taskId: t.id, type: t.type, prompt: t.prompt, dayIndex: t.day_index ?? 0, revealAtISO: null, revealed: true,
+  }))
   const { assetsByTask, respByTask } = await fetchDayData(admin, visible.map((v) => v.taskId))
-  return assembleDays(visible, assetsByTask, respByTask, me, isArchitect)
+  const days = assembleDays(visible, assetsByTask, respByTask, me, false)
+
+  const lastRow = visibleRows[unlocked - 1]
+  const elapsed = su ? nowMs >= Date.parse(su) : false
+  const searching: SearchingState = {
+    searchUntil: su,
+    failed: elapsed && unlocked >= N, // window over, next day not published yet
+    prevDayIndex: lastRow.day_index ?? 0,
+    prevAsset: pickWinnerAsset(assetsByTask.get(lastRow.id), respByTask.get(lastRow.id)),
+  }
+  return { days, searching }
 }
 
 type ThreadRow = { id: string; title: string | null; type: SignalTaskType; world_id: string | null }
@@ -1436,6 +1510,7 @@ function buildInvestigation(
   wm: WorldMeta | undefined,
   days: PublicInvestigation['days'],
   me: Viewer,
+  searching: SearchingState | null = null,
 ): PublicInvestigation {
   const voteScope = wm?.vote_scope ?? 'all'
   const can = eligibleToVote(me?.role ?? null, me?.id ?? null, voteScope, wm?.discoverer_id ?? null)
@@ -1449,6 +1524,7 @@ function buildInvestigation(
     canParticipate: can,
     lockReason: can ? null : lockReason(voteScope, !!me),
     days,
+    searching,
   }
 }
 
@@ -1535,14 +1611,14 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
 
   if (!thread) return { investigation: null, role, loggedIn: !!me }
 
-  const days = await buildPublishedDays(admin, thread.id, me, isArchitect)
+  const { days, searching } = await buildPublishedDays(admin, thread.id, me, isArchitect)
   if (days.length === 0) return { investigation: null, role, loggedIn: !!me }
 
   const meta = await worldMetaMap(admin, [(thread as ThreadRow).world_id])
   const wm = (thread as ThreadRow).world_id ? meta.get((thread as ThreadRow).world_id!) : undefined
 
   return {
-    investigation: buildInvestigation(thread as ThreadRow, wm, days, me),
+    investigation: buildInvestigation(thread as ThreadRow, wm, days, me, searching),
     role,
     loggedIn: !!me,
   }
