@@ -19,6 +19,7 @@ import { SectionTracker } from '@/components/section-tracker'
 import { FlipWordmark, WORDMARK_READY_EVENT } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
+import { AccessGate } from '@/components/access-gate'
 import type { Device, World, McFunction, IntelWithAvatar } from '@/types/database'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
@@ -489,7 +490,7 @@ function HeroStats({ worlds, voyagers }: { worlds: number | null; voyagers: numb
   )
 }
 
-function GuestHero({ newHref, mcFunctions, stats }: { newHref: string; mcFunctions: McFunction[]; stats: GuestHeroStats | null }) {
+function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats | null }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
 
   useEffect(() => {
@@ -545,11 +546,6 @@ function GuestHero({ newHref, mcFunctions, stats }: { newHref: string; mcFunctio
       {/* Three headline numbers — tap to reveal an explanation */}
       <div style={{ width: '100%', ...line(2) }}>
         <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
-      </div>
-
-      {/* MC Unit panel — full width */}
-      <div style={{ width: '100%', margin: '1.75rem auto 0' }}>
-        <McConsolePanel mcFunctions={mcFunctions} />
       </div>
 
       {/* CTA row — always horizontal, equal-width buttons */}
@@ -950,6 +946,10 @@ function ConsoleInner() {
   const [heroStats, setHeroStats] = useState<GuestHeroStats | null>(null)
   const [experimentGroup, setExperimentGroup] = useState<ExperimentGroup | null>(null)
 
+  // Guest access window: masked until the visitor opens a 10-minute viewing
+  // window ("Yes, I will"). Hydrate from localStorage so an in-window refresh
+  // stays revealed; an elapsed window re-masks. Members never see the mask.
+
   useEffect(() => {
     // Each section loads independently — a single failed query must not become an
     // unhandled rejection or leave the whole dashboard hanging. Catch + log per
@@ -1126,6 +1126,16 @@ function ConsoleInner() {
 
   const isGuest = !loading && user.role === 'guest'
 
+  // Shared feed node — rendered inside the guest access gate, or standalone for
+  // members. The Voyager ad slot rides as the lead block (door + ad coexist).
+  const packHref = (experimentGroup ?? 'direct') === 'direct' ? '/voyager-pack' : '/voyager-path'
+  const leadSlot = !loading && SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
+    ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
+    : undefined
+  const feedNode = feedEntries.length > 0
+    ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} />
+    : <FeedSkeleton />
+
   return (
     <div className="landing-main" ref={scrollRef}>
       <SectionTracker section="dashboard" />
@@ -1148,7 +1158,7 @@ function ConsoleInner() {
       {loading ? (
         <section className="hero" style={{ flex: 1 }} />
       ) : isGuest ? (
-        <GuestHero newHref={newHref} mcFunctions={mcFunctions} stats={heroStats} />
+        <GuestHero newHref={newHref} stats={heroStats} />
       ) : (
         <AuthHero user={user} />
       )}
@@ -1156,29 +1166,32 @@ function ConsoleInner() {
       {/* ── Ask-us strip — only for logged-in members ── */}
       {!loading && !isGuest && <AskUsStrip />}
 
-      {/* ── Signal Feed — the unified two-column stream (replaces the old Status
-           Feed + per-type content blocks). The Voyager ad rides as the pinned
-           top-left block (A → /voyager-pack · B → /voyager-path), kept until the
-           user becomes a Voyager (role flips off 'applicant'); sales-gated. ── */}
-      {/* Cancel .landing-main's mobile horizontal padding (1.25rem) so the
-          two-column feed gets the full width on portrait. On desktop the feed's
-          own maxWidth (820) + margin auto re-centers it. The section is always
-          present — a skeleton reserves its height while the feed is deferred, so
-          the hero settles into its final position and never jumps upward. */}
-      <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
-        {feedEntries.length > 0 ? (
-          <FeedProtoClient
-            entries={feedEntries}
-            embedded
-            packHref={(experimentGroup ?? 'direct') === 'direct' ? '/voyager-pack' : '/voyager-path'}
-            leadSlot={!loading && SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
-              ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
-              : undefined}
-          />
-        ) : (
+      {/* ── Device showcase (public) + Signal Feed ──
+           For a guest the device intro is shown openly (the showcase, full feed
+           width) and the live feed renders frosted as "More Internal Information"
+           — visible-but-unreadable, the reward for activating. For members both
+           render openly. The feed cancels .landing-main's mobile horizontal
+           padding so the two-column stream spans the full portrait width. */}
+      {loading ? (
+        <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
           <FeedSkeleton />
-        )}
-      </section>
+        </section>
+      ) : isGuest ? (
+        <>
+          <section style={{ width: '100%', maxWidth: 820, margin: '1.5rem auto 0', padding: '0 0.5rem' }}>
+            <McConsolePanel mcFunctions={mcFunctions} />
+          </section>
+          <section style={{ margin: '2rem -1.25rem 0', padding: '0 0.5rem' }}>
+            <AccessGate permanentHref={newHref}>
+              {feedNode}
+            </AccessGate>
+          </section>
+        </>
+      ) : (
+        <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
+          {feedNode}
+        </section>
+      )}
 
       <div className="footer-bar" style={{ marginTop: '2rem', justifyContent: 'center' }}>
         <div className="tag">EXPLORE PARALLEL WORLDS</div>
