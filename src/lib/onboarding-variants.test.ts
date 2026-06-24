@@ -8,6 +8,7 @@ function row(over: Partial<OnboardingVariantRow> = {}): OnboardingVariantRow {
     id: 'id',
     match_key: '',
     label: 'label',
+    console_headline: null,
     q1_headline: null,
     q2_headline: null,
     affirm_line1: null,
@@ -15,6 +16,8 @@ function row(over: Partial<OnboardingVariantRow> = {}): OnboardingVariantRow {
     cta_invitation: null,
     cta_label: null,
     video_url: null,
+    video_url_q2: null,
+    video_url_cta: null,
     sort_order: 0,
     enabled: true,
     updated_at: '2026-01-01',
@@ -27,7 +30,10 @@ describe('resolveVariant', () => {
     const r = resolveVariant([], {})
     expect(r.key).toBe('default')
     expect(r.q1Headline).toBe(FALLBACK_COPY.q1Headline)
-    expect(r.video).toBe(FALLBACK_COPY.video)
+    // Every step falls back to the bundled reel.
+    expect(r.videoQ1).toBe(FALLBACK_COPY.videoQ1)
+    expect(r.videoQ2).toBe(FALLBACK_COPY.videoQ1)
+    expect(r.videoCta).toBe(FALLBACK_COPY.videoQ1)
   })
 
   it('uses the default row (match_key === "") as the base and its label as the key', () => {
@@ -80,5 +86,40 @@ describe('resolveVariant', () => {
     const a3 = row({ match_key: 'a3', label: 'variant-a3' })
     const r = resolveVariant([def, a3], { utmContent: 'zz' })
     expect(r.key).toBe('baseline')
+  })
+
+  describe('per-step videos', () => {
+    it('continues the previous step when a step video is unset', () => {
+      const def = row({ match_key: '', label: 'baseline', video_url: '/q1.mp4' })
+      const r = resolveVariant([def], {})
+      expect(r.videoQ1).toBe('/q1.mp4')
+      expect(r.videoQ2).toBe('/q1.mp4')   // inherits Q1
+      expect(r.videoCta).toBe('/q1.mp4')  // inherits Q2 → Q1
+    })
+
+    it('lets each step override independently, later steps chaining from the last set', () => {
+      const def = row({ match_key: '', label: 'baseline', video_url: '/q1.mp4', video_url_q2: '/q2.mp4' })
+      const r = resolveVariant([def], {})
+      expect(r.videoQ1).toBe('/q1.mp4')
+      expect(r.videoQ2).toBe('/q2.mp4')   // own
+      expect(r.videoCta).toBe('/q2.mp4')  // inherits Q2, not Q1
+    })
+
+    it('resolves a CTA-only override while Q1/Q2 inherit the base', () => {
+      const def = row({ match_key: '', label: 'baseline', video_url: '/q1.mp4', video_url_cta: '/cta.mp4' })
+      const r = resolveVariant([def], {})
+      expect(r.videoQ1).toBe('/q1.mp4')
+      expect(r.videoQ2).toBe('/q1.mp4')
+      expect(r.videoCta).toBe('/cta.mp4')
+    })
+
+    it('layers a variant step video over the default, leaving unset steps to inherit', () => {
+      const def = row({ match_key: '', label: 'baseline', video_url: '/def-q1.mp4' })
+      const a3  = row({ match_key: 'a3', label: 'variant-a3', video_url_q2: '/a3-q2.mp4' })
+      const r = resolveVariant([def, a3], { utmContent: 'a3' })
+      expect(r.videoQ1).toBe('/def-q1.mp4')   // inherited from default row
+      expect(r.videoQ2).toBe('/a3-q2.mp4')    // variant override
+      expect(r.videoCta).toBe('/a3-q2.mp4')   // chains from Q2
+    })
   })
 })

@@ -119,6 +119,8 @@ export type Application = {
   fbclid: string | null
   landing_page_variant: string | null
   submission_count: number
+  console_interest: string | null   // Q1 — Multiverse Console curiosity (option id)
+  join_urgency: number | null       // Q3 — join-urgency slider value (0–5)
 }
 
 export type ApplicationInsert = Pick<Application, 'email' | 'reason'> & {
@@ -130,6 +132,8 @@ export type ApplicationInsert = Pick<Application, 'email' | 'reason'> & {
   utm_content?: string | null
   fbclid?: string | null
   landing_page_variant?: string | null
+  console_interest?: string | null
+  join_urgency?: number | null
 }
 
 // ---------- devices ----------
@@ -270,13 +274,16 @@ export type OnboardingVariantRow = {
   id: string
   match_key: string
   label: string
-  q1_headline: string | null
-  q2_headline: string | null
+  console_headline: string | null  // Q1 — Multiverse Console curiosity headline
+  q1_headline: string | null       // Q3 — join-urgency slider headline (legacy column name)
+  q2_headline: string | null       // Q2 — world-choice headline
   affirm_line1: string | null
   affirm_line2: string | null
   cta_invitation: string | null
   cta_label: string | null
-  video_url: string | null
+  video_url: string | null      // Q1 / base video (also the flow-wide default)
+  video_url_q2: string | null   // null = continue Q1's video
+  video_url_cta: string | null  // null = continue Q2's video
   sort_order: number
   enabled: boolean
   updated_at: string

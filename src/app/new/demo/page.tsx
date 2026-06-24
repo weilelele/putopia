@@ -110,7 +110,7 @@ export default function OnboardingDemoPage() {
 
               {step === 'q2' && (
                 <QuestionShell index="02 / 03" accent="var(--color-nebula)"
-                  headline="If the Multiverse Console powered on for you right now, which world would you want to see first?">
+                  headline="Which world should the Console show you first?">
                   <WorldChoiceCards selected={world} onSelect={handleWorld} />
                 </QuestionShell>
               )}
