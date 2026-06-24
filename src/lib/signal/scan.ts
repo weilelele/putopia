@@ -15,6 +15,11 @@ export const SCAN_MAX_HOURS = 10
 export const SEARCH_MIN_HOURS = 8
 export const SEARCH_MAX_HOURS = 20
 
+// DEMO BRANCH ONLY: collapse every scan/search window to ~30s so the whole flow
+// can be reviewed in under a minute. Never merge this `true` to main.
+export const SCAN_DEMO = true
+const DEMO_WINDOW_MS = 30_000
+
 export type WorldScanState = 'scanning' | 'ready' | 'failed' | 'none'
 
 /**
@@ -28,6 +33,7 @@ export function rollScanUntil(
   minHours: number = SCAN_MIN_HOURS,
   maxHours: number = SCAN_MAX_HOURS,
 ): string {
+  if (SCAN_DEMO) return new Date(fromMs + DEMO_WINDOW_MS).toISOString()
   const r = Math.max(0, Math.min(1, rand))
   const span = Math.max(0, maxHours - minHours) * 3_600_000
   return new Date(fromMs + minHours * 3_600_000 + r * span).toISOString()

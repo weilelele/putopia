@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
 import { InvestigationCard } from '@/app/signal/SignalFeed'
 import { WorldScanHero } from '@/components/world-scan-hero'
-import { worldScanState, scanComplete } from '@/lib/signal/scan'
+import { worldScanState, scanComplete, SCAN_DEMO } from '@/lib/signal/scan'
 import { resolveWorldScan } from '@/lib/signal/scan-resolve'
 
 const DESC_CLAMP = 320 // chars before the "expand all" fold
@@ -34,6 +34,8 @@ export default function WorldDetailPage() {
   const [retryOpen, setRetryOpen] = useState(false)
   const [retryDesc, setRetryDesc] = useState('')
   const [retrySaving, setRetrySaving] = useState(false)
+  // DEMO ONLY: a synthesized ~30s scan window for existing pre-scan worlds.
+  const [demoScanUntil, setDemoScanUntil] = useState<string | null>(null)
 
   useEffect(() => {
     getWorldById(id).then((w) => {
@@ -41,10 +43,15 @@ export default function WorldDetailPage() {
       if (w) {
         setScope(w.vote_scope ?? 'all')
         posthog.capture('world_viewed', { world_id: id, world_name: w.name_en || w.name })
-        // Opportunistic: if the scan window just closed and hasn't been settled,
-        // resolve it now (sends the success/failure email) so a viewer doesn't
-        // have to wait for the cron. Idempotent server-side.
-        if (w.scan_until && scanComplete(w.scan_until) && !w.scan_resolved_at) {
+        if (SCAN_DEMO) {
+          // Replay the new visuals on existing pre-scan worlds with a short
+          // synthetic window — no DB write, no email.
+          if (!w.scan_until && w.lifecycle_state === 'proposed') {
+            setDemoScanUntil(new Date(Date.now() + 30_000).toISOString())
+          }
+        } else if (w.scan_until && scanComplete(w.scan_until) && !w.scan_resolved_at) {
+          // Opportunistic resolution (sends the success/failure email) so a
+          // viewer doesn't wait for the cron. Idempotent server-side.
           resolveWorldScan(id).catch(() => {})
         }
       }
@@ -100,7 +107,9 @@ export default function WorldDetailPage() {
   const hasImage = !!world.image_path
   // Signal Scanning gate: while the scan window is open the proposer sees a
   // countdown; when it closes the world is READY (a signal was tuned) or FAILED.
-  const scanState = worldScanState(world.scan_until, !!inv?.investigation)
+  // DEMO: fall back to the synthesized short window for existing pre-scan worlds.
+  const effScanUntil = world.scan_until ?? demoScanUntil
+  const scanState = worldScanState(effScanUntil, !!inv?.investigation)
   const scanning = scanState === 'scanning'
   const scanFailed = scanState === 'failed'
   // A world in tuning leads with its Signal Tuning (top slot), not a hero image.
@@ -131,7 +140,7 @@ export default function WorldDetailPage() {
             displayName={displayName}
             gradientFrom={world.gradient_from}
             gradientTo={world.gradient_to}
-            scanUntil={world.scan_until}
+            scanUntil={effScanUntil}
             variant={scanFailed ? 'failed' : 'scanning'}
             onComplete={refreshAll}
             onRetry={isOwner ? openRetry : undefined}
