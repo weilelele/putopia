@@ -1,0 +1,23 @@
+{
+  "appId": "org.multiverseco.app",
+  "appName": "Multiverse Collective",
+  "webDir": "public",
+  "server": {
+    "url": "https://multiverseco.org",
+    "cleartext": false,
+    "allowNavigation": [
+      "multiverseco.org",
+      "*.multiverseco.org",
+      "*.supabase.co",
+      "checkout.stripe.com",
+      "js.stripe.com"
+    ]
+  },
+  "ios": {
+    "contentInset": "always",
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Multiverse Collective</string>
+    <string name="title_activity_main">Multiverse Collective</string>
+    <string name="package_name">org.multiverseco.app</string>
+    <string name="custom_url_scheme">org.multiverseco.app</string>
+</resources>
