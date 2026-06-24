@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_cache } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import type { WorldInsert, WorldUpdate } from '@/types/database'
+import { rollScanUntil } from '@/lib/signal/scan'
 import { logActivity } from './activity-events'
 
 /** Stable / verified worlds (the main archive). Public + identical for everyone,
@@ -15,7 +16,8 @@ const getAllWorldsCached = unstable_cache(
       .select('*')
       .eq('lifecycle_state', 'stable')
       .order('discovery_date', { ascending: true })
-    return data ?? []
+    // Exclude test-console worlds (JS-side so a missing column never errors).
+    return (data ?? []).filter((w) => !w.is_test)
   },
   ['all-worlds-stable'],
   { revalidate: 60 },
@@ -36,7 +38,8 @@ export async function getPipelineWorlds() {
     .in('lifecycle_state', ['proposed', 'picked', 'syncing'])
     .order('submitted_at', { ascending: false })
 
-  const worlds = data ?? []
+  // Exclude test-console worlds (JS-side so a missing column never errors).
+  const worlds = (data ?? []).filter((w) => !w.is_test)
   if (!worlds.length) return []
 
   // Enrich each world with its discoverer's avatar (cards show author + avatar).
@@ -103,6 +106,8 @@ export async function submitWorld(payload: {
       lifecycle_state: 'proposed',
       submitted_by: user.id,
       submitted_at: new Date().toISOString(),
+      // Roll the Signal Scanning window — the first reading returns in 8-10h.
+      scan_until: rollScanUntil(Date.now(), Math.random()),
     })
     .select()
     .single()
@@ -122,6 +127,40 @@ export async function submitWorld(payload: {
   })
 
   return { error: null, data }
+}
+
+/**
+ * Re-run the Signal Scanning ceremony for a world (owner only). Used from the
+ * "no signal returned" state: the proposer can revise their field notes and try
+ * again — each retry re-rolls a fresh 8-10h scan window.
+ */
+export async function rescanWorld(worldId: string, patch?: { description?: string }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+  const { data: world } = await admin
+    .from('worlds')
+    .select('submitted_by, discoverer_id')
+    .eq('id', worldId)
+    .maybeSingle()
+  if (!world) return { ok: false, error: 'World not found' }
+  if (user.id !== world.submitted_by && user.id !== world.discoverer_id) {
+    return { ok: false, error: 'Not allowed' }
+  }
+
+  // Re-roll the scan window and clear the prior outcome so it re-resolves
+  // (success/failure email) when this fresh scan completes.
+  const update: WorldUpdate = { scan_until: rollScanUntil(Date.now(), Math.random()), scan_resolved_at: null }
+  const desc = patch?.description?.trim()
+  if (desc && desc.length >= 20) update.description = desc
+
+  const { error } = await admin.from('worlds').update(update).eq('id', worldId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/worlds/${worldId}`)
+  return { ok: true }
 }
 
 /**

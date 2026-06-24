@@ -194,21 +194,27 @@ export type World = {
   vote_scope: WorldVoteScope
   submitted_by: string | null
   submitted_at: string | null
+  scan_until: string | null   // Signal Scanning completes at this ISO ts (null = no scan ceremony)
+  scan_resolved_at: string | null // outcome (success/failure email) settled at this ts; null = pending
+  is_test: boolean            // test-console world; excluded from public listings
   created_at: string
 }
 
 // lifecycle_state / vote_scope / submitted_by / submitted_at have DB defaults — optional on insert
-export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'vote_scope' | 'submitted_by' | 'submitted_at'> & {
+export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'vote_scope' | 'submitted_by' | 'submitted_at' | 'scan_until' | 'scan_resolved_at' | 'is_test'> & {
   lifecycle_state?: WorldLifecycle
   vote_scope?: WorldVoteScope
   submitted_by?: string | null
   submitted_at?: string | null
+  scan_until?: string | null
+  scan_resolved_at?: string | null
+  is_test?: boolean
 }
 export type WorldUpdate = Partial<Pick<
   World,
   'name' | 'name_en' | 'discoverer_id' | 'discoverer_name' | 'discovery_date' |
   'gradient_from' | 'gradient_to' | 'image_path' | 'description' | 'is_verified' |
-  'lifecycle_state' | 'vote_scope'
+  'lifecycle_state' | 'vote_scope' | 'scan_until' | 'scan_resolved_at'
 >>
 
 export type WorldImage = {

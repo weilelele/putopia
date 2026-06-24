@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { submitWorld } from '@/lib/actions/worlds'
+import { ScanInitiation } from '@/components/scan-initiation'
 
 // Atmosphere tones — the chosen color becomes the whole world card's mood.
 // Kept deep enough for white text to read, but with real hue so cards don't
@@ -52,6 +53,8 @@ export default function SubmitWorldPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Set once the sighting is filed — drives the Signal Scanning ceremony overlay.
+  const [launched, setLaunched] = useState<{ id: string; name: string } | null>(null)
 
   const isGuest = user.role === 'guest'
   const canSubmit = form.name.trim().length > 0 && form.description.trim().length >= 20 && !loading
@@ -95,7 +98,8 @@ export default function SubmitWorldPage() {
         fetch('/api/worlds/upload-image', { method: 'POST', body: fd }).catch(() => null)
       }
 
-      router.push(`/worlds?submitted=${encodeURIComponent(form.name.trim())}`)
+      // Hand off to the Signal Scanning ceremony; it routes to the world after.
+      setLaunched({ id: result.data.id, name: form.name.trim() })
     } catch {
       setError('An unexpected error occurred')
       setLoading(false)
@@ -104,6 +108,12 @@ export default function SubmitWorldPage() {
 
   return (
     <div style={{ height: '100vh', overflowY: 'auto' }}>
+      {launched && (
+        <ScanInitiation
+          worldName={launched.name}
+          onComplete={() => router.push(`/worlds/${encodeURIComponent(launched.id)}`)}
+        />
+      )}
       <div className="main">
         {/* Top bar */}
         <div className="top-bar">

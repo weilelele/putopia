@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import reactHooks from "eslint-plugin-react-hooks";
 import designTokens from "./eslint-rules/min-font-size.mjs";
 
 const eslintConfig = defineConfig([
@@ -13,14 +14,27 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build output — flat config doesn't read .gitignore, so generated/compiled
+    // JS (Netlify functions bundles, etc.) must be excluded explicitly or a
+    // whole-repo `eslint .` lints minified vendor code.
+    ".netlify/**",
+    ".vercel/**",
+    "coverage/**",
   ]),
   {
-    // React Compiler correctness rules (eslint-plugin-react-hooks v6),
+    // React Compiler correctness rules (eslint-plugin-react-hooks v7),
     // enforced as errors. The existing intentional exceptions — data fetch-on-
     // mount, prop->state sync, animation resets, the latest-ref pattern, and
     // imperative typewriter/animation code — carry inline
     // `eslint-disable-next-line <rule> -- <reason>` comments at their call
     // sites. New violations should be fixed, not disabled without a reason.
+    //
+    // Register the plugin and scope to JS/TS here: eslint-config-next only
+    // registers `react-hooks` within its own React-file globs, so a whole-repo
+    // `eslint .` run hit non-React files where this block applied but the plugin
+    // wasn't found. Explicit registration + files scope makes it self-contained.
+    files: ["**/*.{js,jsx,ts,tsx,mjs,cjs}"],
+    plugins: { "react-hooks": reactHooks },
     rules: {
       "react-hooks/set-state-in-effect": "error",
       "react-hooks/purity": "error",
