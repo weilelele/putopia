@@ -61,13 +61,15 @@ export function WorldScanHero({
         ? 'linear-gradient(to bottom, rgba(20,8,8,0.25) 25%, rgba(40,12,12,0.5) 60%, rgba(10,5,5,0.92) 100%)'
         : 'linear-gradient(to bottom, transparent 25%, rgba(160,90,4,0.30) 60%, rgba(10,7,2,0.9) 100%)', pointerEvents: 'none' }} />
 
-      {/* status badge */}
-      <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(7,9,18,0.75)', border: `1px solid ${accent}66`, padding: '3px 9px' }}>
-        <span className={failed ? undefined : 'scan-hero-dot'} style={{ width: 7, height: 7, borderRadius: '50%', background: accent, flexShrink: 0 }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: accent }}>
-          {failed ? 'NO SIGNAL' : 'SIGNAL SCANNING'}
-        </span>
-      </div>
+      {/* status badge — scanning only; the failed hero's center text says enough */}
+      {!failed && (
+        <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(7,9,18,0.75)', border: `1px solid ${accent}66`, padding: '3px 9px' }}>
+          <span className="scan-hero-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: accent }}>
+            SIGNAL SCANNING
+          </span>
+        </div>
+      )}
 
       {/* center block */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 1rem', textAlign: 'center' }}>
