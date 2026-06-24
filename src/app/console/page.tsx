@@ -1166,27 +1166,24 @@ function ConsoleInner() {
       {/* ── Ask-us strip — only for logged-in members ── */}
       {!loading && !isGuest && <AskUsStrip />}
 
-      {/* ── Device showcase (public) + Signal Feed ──
-           For a guest the device intro is shown openly (the showcase, full feed
-           width) and the live feed renders frosted as "More Internal Information"
-           — visible-but-unreadable, the reward for activating. For members both
-           render openly. The feed cancels .landing-main's mobile horizontal
-           padding so the two-column stream spans the full portrait width. */}
+      {/* ── Device intro + Signal Feed ──
+           For a guest both sit under the access gate: frosted as one block (the
+           glimpse grants a clear look at the top, the rest stays inside). For
+           members the feed renders openly. The wrapper cancels .landing-main's
+           mobile horizontal padding so the two-column stream spans portrait. */}
       {loading ? (
         <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
           <FeedSkeleton />
         </section>
       ) : isGuest ? (
-        <>
-          <section style={{ width: '100%', maxWidth: 820, margin: '1.5rem auto 0', padding: '0 0.5rem' }}>
-            <McConsolePanel mcFunctions={mcFunctions} />
-          </section>
-          <section style={{ margin: '2rem -1.25rem 0', padding: '0 0.5rem' }}>
-            <AccessGate>
-              {feedNode}
-            </AccessGate>
-          </section>
-        </>
+        <section style={{ margin: '1.5rem -1.25rem 0', padding: '0 0.5rem' }}>
+          <AccessGate permanentHref={newHref}>
+            <div style={{ width: '100%', maxWidth: 820, margin: '0 auto 1.5rem', padding: '0 0.25rem' }}>
+              <McConsolePanel mcFunctions={mcFunctions} />
+            </div>
+            {feedNode}
+          </AccessGate>
+        </section>
       ) : (
         <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
           {feedNode}
