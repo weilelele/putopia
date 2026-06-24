@@ -11,6 +11,10 @@
 export const SCAN_MIN_HOURS = 8
 export const SCAN_MAX_HOURS = 10
 
+// Inter-day "Signal Searching" windows are longer than the initial scan.
+export const SEARCH_MIN_HOURS = 8
+export const SEARCH_MAX_HOURS = 20
+
 export type WorldScanState = 'scanning' | 'ready' | 'failed' | 'none'
 
 /**
@@ -27,6 +31,11 @@ export function rollScanUntil(
   const r = Math.max(0, Math.min(1, rand))
   const span = Math.max(0, maxHours - minHours) * 3_600_000
   return new Date(fromMs + minHours * 3_600_000 + r * span).toISOString()
+}
+
+/** Roll an inter-day search-window end (random 8-20h out from `fromMs`). */
+export function rollSearchUntil(fromMs: number, rand: number): string {
+  return rollScanUntil(fromMs, rand, SEARCH_MIN_HOURS, SEARCH_MAX_HOURS)
 }
 
 /** Whole seconds until the scan completes; 0 once it has (or if unset/invalid). */

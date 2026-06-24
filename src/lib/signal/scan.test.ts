@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import {
   rollScanUntil,
+  rollSearchUntil,
   scanSecondsLeft,
   scanComplete,
   worldScanState,
   SCAN_MIN_HOURS,
   SCAN_MAX_HOURS,
+  SEARCH_MIN_HOURS,
+  SEARCH_MAX_HOURS,
 } from './scan'
 
 const H = 3_600_000
@@ -31,6 +34,14 @@ describe('rollScanUntil', () => {
 
   it('honours a custom window', () => {
     expect(rollScanUntil(T0, 1, 8, 20)).toBe(new Date(T0 + 20 * H).toISOString())
+  })
+})
+
+describe('rollSearchUntil', () => {
+  it('rolls within the 8-20h inter-day window', () => {
+    expect(rollSearchUntil(T0, 0)).toBe(new Date(T0 + SEARCH_MIN_HOURS * H).toISOString())
+    expect(rollSearchUntil(T0, 1)).toBe(new Date(T0 + SEARCH_MAX_HOURS * H).toISOString())
+    expect(rollSearchUntil(T0, 0.5)).toBe(new Date(T0 + 14 * H).toISOString())
   })
 })
 
