@@ -16,8 +16,8 @@
  * — lowest priority; for now an elapsed window simply re-masks.
  */
 
-/** Length of the guest viewing window, in seconds (10 minutes). */
-export const VISIBLE_SECONDS = 600
+/** Length of the granted glimpse, in seconds (5 minutes). */
+export const VISIBLE_SECONDS = 300
 /** Price of the Initial Pack, surfaced only at the code prompt / pack page. */
 export const PRICE_LABEL = '$12'
 /** Estimated fulfilment time, for honest disclosure copy + waiting-period comms. */

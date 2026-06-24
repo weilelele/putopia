@@ -1182,7 +1182,7 @@ function ConsoleInner() {
             <McConsolePanel mcFunctions={mcFunctions} />
           </section>
           <section style={{ margin: '2rem -1.25rem 0', padding: '0 0.5rem' }}>
-            <AccessGate permanentHref={newHref}>
+            <AccessGate>
               {feedNode}
             </AccessGate>
           </section>
