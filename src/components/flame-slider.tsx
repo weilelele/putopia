@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useCallback } from 'react'
 
-/* ── Shared constants used by both the onboarding and apply form ── */
+/* ── Shared constants used by the onboarding flow (and the legacy /demo) ── */
 
 export const WORLD_OPTIONS = [
   { id: 'new_life', text: 'A new possibility for life — a world where everything could be different.' },
@@ -13,6 +13,19 @@ export const WORLD_OPTIONS = [
 
 export type WorldId = typeof WORLD_OPTIONS[number]['id']
 
+/* Q1 — what the visitor most wants to know about the Multiverse Console. */
+export const CONSOLE_OPTIONS = [
+  { id: 'mechanism', text: 'How does it actually work?' },
+  { id: 'worlds',    text: 'Which parallel worlds can it reach?' },
+  { id: 'personal',  text: 'Can it show me worlds connected to my own?' },
+  { id: 'access',    text: 'The tech, the price, and how to get one.' },
+] as const
+
+export type ConsoleInterestId = typeof CONSOLE_OPTIONS[number]['id']
+
+/* ── Slider copy ──
+   The slider mechanic is shared; the copy is swappable via props. */
+
 export const BELIEF_READINGS = [
   '',
   'A faint signal.',
@@ -21,17 +34,44 @@ export const BELIEF_READINGS = [
   'Strong resonance.',
   'FREQUENCY CONFIRMED.',
 ]
+const BELIEF_END_LABELS: Record<number, string> = { 0: 'Not at all', 5: 'I can feel it' }
 
-/** Converts a slider value (0–5) into the `reason` string stored in the DB */
+/* Q3 — join-urgency slider. */
+export const URGENCY_READINGS = [
+  '',
+  'A quiet curiosity.',
+  'The pull begins.',
+  'I want in.',
+  'Barely able to wait.',
+  'TAKE ME IN.',
+]
+export const URGENCY_END_LABELS: Record<number, string> = { 0: 'Just curious', 5: "I'm ready now" }
+
+/** Converts the old belief slider value (0–5) into a `reason` string. */
 export function beliefToReason(value: number): string {
   return `Signal level ${value}/5 — ${BELIEF_READINGS[value] ?? ''}`
 }
 
-/* ── FlameSlider component ── */
+/** Converts the join-urgency slider value (0–5) into the `reason` string stored in the DB. */
+export function urgencyToReason(value: number): string {
+  return `Join urgency ${value}/5 — ${URGENCY_READINGS[value] ?? ''}`
+}
 
-export function FlameSlider({ value, onChange }: {
+/* ── FlameSlider component ──
+   Copy (end labels + per-step readings) is parametrised; defaults preserve the
+   original belief-slider wording so legacy callers are unaffected. Tick marks
+   are absolutely positioned at value/5 so they line up exactly with the thumb. */
+
+export function FlameSlider({
+  value,
+  onChange,
+  readings = BELIEF_READINGS,
+  endLabels = BELIEF_END_LABELS,
+}: {
   value: number
   onChange: (v: number) => void
+  readings?: readonly string[]
+  endLabels?: Record<number, string>
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
@@ -57,8 +97,6 @@ export function FlameSlider({ value, onChange }: {
   const glowPx   = value > 0 ? 8 + value * 5 : 0
   const glowAlph = value > 0 ? 0.28 + value * 0.08 : 0
 
-  const LABELS: Record<number, string> = { 0: 'Not at all', 5: 'I can feel it' }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
@@ -67,7 +105,7 @@ export function FlameSlider({ value, onChange }: {
         onMouseDown={e => { dragging.current = true; onChange(valueFromX(e.clientX)) }}
         onTouchStart={e => { e.preventDefault(); onChange(valueFromX(e.touches[0].clientX)) }}
         onTouchMove={e  => { e.preventDefault(); onChange(valueFromX(e.touches[0].clientX)) }}
-        style={{ padding: '10px 0', cursor: 'pointer', userSelect: 'none' }}
+        style={{ padding: '10px 0', cursor: 'pointer', userSelect: 'none', touchAction: 'none' }}
       >
         <div ref={trackRef} style={{ position: 'relative', height: 10, background: 'rgba(26,31,43,0.9)' }}>
           {/* Flame fill */}
@@ -94,33 +132,40 @@ export function FlameSlider({ value, onChange }: {
             pointerEvents: 'none', zIndex: 2,
           }} />
         </div>
-      </div>
 
-      {/* Tick marks + end labels */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 1px' }}>
-        {[0, 1, 2, 3, 4, 5].map(i => (
-          <div key={i} onClick={() => onChange(i)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            gap: '0.3rem', cursor: 'pointer', flex: 1,
-          }}>
-            <div style={{
+        {/* Tick marks — absolutely positioned at value/5 so they align with the thumb */}
+        <div style={{ position: 'relative', height: 4, marginTop: '0.55rem' }}>
+          {[0, 1, 2, 3, 4, 5].map(i => (
+            <div key={i} onClick={() => onChange(i)} style={{
+              position: 'absolute', left: `${(i / 5) * 100}%`, transform: 'translateX(-50%)',
               width: 1, height: 4,
               background: i <= value && value > 0
                 ? `rgba(255,${140 - i * 8},32,0.75)`
                 : 'rgba(242,240,230,0.12)',
-              transition: 'background 0.12s',
+              transition: 'background 0.12s', cursor: 'pointer',
             }} />
-            <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.05em',
-              color: i <= value && value > 0
-                ? `rgba(255,${140 - i * 5},32,0.85)`
-                : 'rgba(242,240,230,0.25)',
-              transition: 'color 0.12s', textAlign: 'center', whiteSpace: 'nowrap',
-            }}>
-              {LABELS[i] ?? i}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
+      </div>
+
+      {/* End labels — pinned to the true extremes */}
+      <div style={{ position: 'relative', height: '1.1rem' }}>
+        <span style={{
+          position: 'absolute', left: 0,
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.05em',
+          color: value === 0 ? 'rgba(242,240,230,0.6)' : 'rgba(242,240,230,0.3)',
+          transition: 'color 0.12s',
+        }}>
+          {endLabels[0]}
+        </span>
+        <span style={{
+          position: 'absolute', right: 0,
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.05em',
+          color: value === 5 ? 'rgba(255,135,32,0.85)' : 'rgba(242,240,230,0.3)',
+          transition: 'color 0.12s',
+        }}>
+          {endLabels[5]}
+        </span>
       </div>
 
       {/* Live reading */}
@@ -131,22 +176,23 @@ export function FlameSlider({ value, onChange }: {
         transition: 'opacity 0.25s ease',
         opacity: value > 0 ? 1 : 0,
       }}>
-        {value > 0 && `${value} / 5 — ${BELIEF_READINGS[value]}`}
+        {value > 0 && `${value} / 5 — ${readings[value]}`}
       </div>
 
     </div>
   )
 }
 
-/* ── WorldChoiceCards — shared card-style single-choice widget ── */
+/* ── ChoiceCards — shared card-style single-choice widget ── */
 
-export function WorldChoiceCards({ selected, onSelect }: {
+export function ChoiceCards({ options, selected, onSelect }: {
+  options: readonly { id: string; text: string }[]
   selected: string
   onSelect: (id: string) => void
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-      {WORLD_OPTIONS.map(opt => {
+      {options.map(opt => {
         const isSelected = selected === opt.id
         return (
           <button
@@ -183,4 +229,20 @@ export function WorldChoiceCards({ selected, onSelect }: {
       })}
     </div>
   )
+}
+
+/* World-choice (Q2) — thin wrapper over ChoiceCards. */
+export function WorldChoiceCards({ selected, onSelect }: {
+  selected: string
+  onSelect: (id: string) => void
+}) {
+  return <ChoiceCards options={WORLD_OPTIONS} selected={selected} onSelect={onSelect} />
+}
+
+/* Console-curiosity (Q1) — thin wrapper over ChoiceCards. */
+export function ConsoleChoiceCards({ selected, onSelect }: {
+  selected: string
+  onSelect: (id: string) => void
+}) {
+  return <ChoiceCards options={CONSOLE_OPTIONS} selected={selected} onSelect={onSelect} />
 }
