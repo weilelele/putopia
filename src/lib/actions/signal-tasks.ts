@@ -1343,31 +1343,61 @@ function computeVisibleDays(taskRows: TaskRow[], anchorAt: string | null, interv
   return out
 }
 
+/**
+ * Fetch EVERY row of a query, paging past PostgREST's per-request row cap
+ * (Supabase defaults to 1000). Without this, a query matching more than the cap
+ * silently returns only the first page. For signal_responses that means some
+ * members' filings get dropped — their answer then looks unsubmitted (no
+ * mySelection, no distribution), and re-submitting trips the unique constraint
+ * with "already responded". The platform crossed 1000 total responses, so the
+ * batched feed fetch below must page through all of them.
+ */
+async function fetchAllRows<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null }>,
+): Promise<T[]> {
+  const SIZE = 1000
+  const all: T[] = []
+  for (let from = 0; ; from += SIZE) {
+    const { data } = await page(from, from + SIZE - 1)
+    const rows = data ?? []
+    all.push(...rows)
+    if (rows.length < SIZE) break
+  }
+  return all
+}
+
 /** One batched fetch of selected assets + responses for many tasks, grouped by
- *  task id — replaces the per-day, per-aspect N+1 queries. */
+ *  task id — replaces the per-day, per-aspect N+1 queries. Paged so it never
+ *  truncates at PostgREST's row cap (see fetchAllRows). */
 async function fetchDayData(admin: DB, taskIds: string[]): Promise<{ assetsByTask: Map<string, PublicSignalAsset[]>; respByTask: Map<string, RespRow[]> }> {
   const assetsByTask = new Map<string, PublicSignalAsset[]>()
   const respByTask = new Map<string, RespRow[]>()
   if (!taskIds.length) return { assetsByTask, respByTask }
-  const [{ data: assets }, { data: resp }] = await Promise.all([
-    admin
-      .from('signal_task_assets')
-      .select('id, media, processed_url, display_url, asset_role, display_order, task_id')
-      .in('task_id', taskIds)
-      .eq('is_selected', true)
-      .order('display_order', { ascending: true })
-      .order('created_at', { ascending: true }),
-    admin
-      .from('signal_responses')
-      .select('task_id, user_id, selected_asset_id')
-      .in('task_id', taskIds),
+  const [assets, resp] = await Promise.all([
+    fetchAllRows<PublicSignalAsset & { task_id: string }>((from, to) =>
+      admin
+        .from('signal_task_assets')
+        .select('id, media, processed_url, display_url, asset_role, display_order, task_id')
+        .in('task_id', taskIds)
+        .eq('is_selected', true)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: true })
+        .range(from, to),
+    ),
+    fetchAllRows<RespRow & { task_id: string }>((from, to) =>
+      admin
+        .from('signal_responses')
+        .select('task_id, user_id, selected_asset_id')
+        .in('task_id', taskIds)
+        .range(from, to),
+    ),
   ])
-  for (const a of (assets ?? []) as (PublicSignalAsset & { task_id: string })[]) {
+  for (const a of assets) {
     const arr = assetsByTask.get(a.task_id) ?? []
     arr.push({ id: a.id, media: a.media, processed_url: a.processed_url, display_url: a.display_url, asset_role: a.asset_role, display_order: a.display_order })
     assetsByTask.set(a.task_id, arr)
   }
-  for (const r of (resp ?? []) as (RespRow & { task_id: string })[]) {
+  for (const r of resp) {
     const arr = respByTask.get(r.task_id) ?? []
     arr.push({ user_id: r.user_id, selected_asset_id: r.selected_asset_id })
     respByTask.set(r.task_id, arr)
