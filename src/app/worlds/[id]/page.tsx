@@ -13,7 +13,8 @@ import { CommentThread } from '@/components/comment-thread'
 import { InvestigationCard } from '@/app/signal/SignalFeed'
 import { LazyImage } from '@/components/lazy-image'
 import { WorldScanHero } from '@/components/world-scan-hero'
-import { worldScanState } from '@/lib/signal/scan'
+import { worldScanState, scanComplete } from '@/lib/signal/scan'
+import { resolveWorldScan } from '@/lib/signal/scan-resolve'
 
 const DESC_CLAMP = 320 // chars before the "expand all" fold
 
@@ -41,6 +42,12 @@ export default function WorldDetailPage() {
       if (w) {
         setScope(w.vote_scope ?? 'all')
         posthog.capture('world_viewed', { world_id: id, world_name: w.name_en || w.name })
+        // Opportunistic: if the scan window just closed and hasn't been settled,
+        // resolve it now (sends the success/failure email) so a viewer doesn't
+        // have to wait for the cron. Idempotent server-side.
+        if (w.scan_until && scanComplete(w.scan_until) && !w.scan_resolved_at) {
+          resolveWorldScan(id).catch(() => {})
+        }
       }
     })
     getWorldInvestigation(id).then(setInv)

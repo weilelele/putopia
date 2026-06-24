@@ -220,7 +220,9 @@ export async function rescanWorld(worldId: string, patch?: { description?: strin
     return { ok: false, error: 'Not allowed' }
   }
 
-  const update: WorldUpdate = { scan_until: rollScanUntil(Date.now(), Math.random()) }
+  // Re-roll the scan window and clear the prior outcome so it re-resolves
+  // (success/failure email) when this fresh scan completes.
+  const update: WorldUpdate = { scan_until: rollScanUntil(Date.now(), Math.random()), scan_resolved_at: null }
   const desc = patch?.description?.trim()
   if (desc && desc.length >= 20) update.description = desc
 

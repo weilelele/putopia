@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
-import { runSignalRecall } from '@/lib/signal/recall'
-import { runEngagementEmails } from '@/lib/signal/engagement'
 import { resolveCompletedScans } from '@/lib/signal/scan-resolve'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
+// Resolves worlds whose Signal Scanning window has closed — sends the proposer
+// the success or "scan came back empty" email. Runs frequently so the email
+// lands shortly after the countdown ends (a page view resolves it sooner).
 export async function GET(request: NextRequest) {
   // Auth: a valid CRON_SECRET (Vercel Cron) OR an authenticated architect.
   const secret = process.env.CRON_SECRET
@@ -29,11 +30,6 @@ export async function GET(request: NextRequest) {
     if (!isArchitect) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Re-engagement (owner-absent + voter-churn) runs first and caps at one email
-  // per user; recall then skips anyone already emailed this run.
-  const engagement = await runEngagementEmails()
-  const recall = await runSignalRecall({ skipUserIds: new Set(engagement.emailedUserIds) })
-  // Daily fallback for scan resolution (the dedicated cron runs more often).
-  const scan = await resolveCompletedScans()
-  return Response.json({ ok: true, engagement, recall, scan })
+  const result = await resolveCompletedScans()
+  return Response.json({ ok: true, ...result })
 }

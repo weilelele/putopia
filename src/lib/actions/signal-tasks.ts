@@ -213,10 +213,20 @@ export async function setTaskPublished(
           )
         }
         // First time a world's signals go live: email the original proposer
-        // ("your world really exists"). Idempotent — no-ops after the first send.
+        // ("your world really exists"). Scan-flow worlds get this at scan
+        // completion (scan-resolve), NOT at publish — so the email lands when the
+        // countdown ends, not the moment an Architect adds the day. Only legacy /
+        // architect-created worlds with no scan window keep the publish-time send.
         if (thread?.world_id) {
-          const { maybeSendWorldConfirmedEmail } = await import('@/lib/signal/world-confirmed-email')
-          await maybeSendWorldConfirmedEmail(thread.world_id)
+          const { data: w } = await supabase
+            .from('worlds')
+            .select('scan_until')
+            .eq('id', thread.world_id)
+            .maybeSingle()
+          if (!w?.scan_until) {
+            const { maybeSendWorldConfirmedEmail } = await import('@/lib/signal/world-confirmed-email')
+            await maybeSendWorldConfirmedEmail(thread.world_id)
+          }
         }
       }
     } catch { /* feed post + proposer email are best-effort */ }
