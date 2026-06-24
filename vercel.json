@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/signal-recall",
       "schedule": "0 10 * * *"
-    },
-    {
-      "path": "/api/cron/scan-resolve",
-      "schedule": "*/15 * * * *"
     }
   ]
 }
