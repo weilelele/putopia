@@ -104,6 +104,8 @@ export default function WorldDetailPage() {
   const scanState = worldScanState(world.scan_until, !!inv?.investigation)
   const scanning = scanState === 'scanning'
   const scanFailed = scanState === 'failed'
+  // A world in tuning leads with its Signal Tuning (top slot), not a hero image.
+  const investigation = inv?.investigation ?? null
 
   return (
     <div className="main">
@@ -135,6 +137,39 @@ export default function WorldDetailPage() {
             onComplete={refreshAll}
             onRetry={isOwner ? openRetry : undefined}
           />
+        ) : investigation ? (
+          <div style={{ marginBottom: '1.75rem' }}>
+            {/* World title — relocated here from the (dropped) hero */}
+            <div style={{ marginBottom: '1.1rem' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, letterSpacing: '0.02em' }}>{displayName}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-star-deep)', marginTop: 5 }}>{world.id}</div>
+            </div>
+            {/* Signal Tuning leads the page */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-nebula)' }}>
+                {'// SIGNAL TUNING'}
+              </div>
+              {investigation.lockReason && (
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: '#E8A020' }}>
+                  ● {investigation.lockReason}
+                </div>
+              )}
+            </div>
+            {isOwner && (
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '0.85rem', padding: '0.65rem 0.85rem', border: '1px solid rgba(255,107,53,0.18)', background: 'rgba(255,107,53,0.04)' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>WHO CAN VOTE</span>
+                <select value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', background: 'var(--bg-card)', color: 'var(--color-star)', border: '1px solid rgba(255,107,53,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
+                  <option value="all">Open to everyone</option>
+                  <option value="voters">Voyagers only</option>
+                  <option value="self">Just me (private)</option>
+                </select>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', color: 'var(--color-star-deep)' }}>
+                  {scopeSaving ? 'Saving…' : 'You can change this anytime.'}
+                </span>
+              </div>
+            )}
+            <InvestigationCard investigation={investigation} onFiled={refreshInvestigation} showTitle={false} />
+          </div>
         ) : (
         <div style={{ width: '100%', height: '280px', position: 'relative', overflow: 'hidden', marginBottom: '1.5rem', border: '1px solid var(--bd-faint)' }}>
           {hasImage ? (
@@ -232,65 +267,6 @@ export default function WorldDetailPage() {
             </div>
           </div>
         </div>
-
-        {/* Signal Tuning locked until the scan completes */}
-        {scanning && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2rem', padding: '0.85rem 1rem', border: '1px dashed rgba(255,176,32,0.25)', background: 'rgba(255,176,32,0.04)' }}>
-            <span style={{ color: 'var(--color-warn)', fontSize: '0.9rem', flexShrink: 0 }}>⧗</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: 'var(--color-star-dim)' }}>
-              SIGNAL TUNING — UNLOCKS WHEN THE SCAN COMPLETES
-            </span>
-          </div>
-        )}
-
-        {/* Active Voting Node — the world's Signal Tuning, votable inline */}
-        {!scanning && inv?.investigation && (
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-nebula)' }}>
-                {'// SIGNAL TUNING'}
-              </div>
-              {inv.investigation.lockReason && (
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: '#E8A020' }}>
-                  ● {inv.investigation.lockReason}
-                </div>
-              )}
-            </div>
-            {isOwner && (
-              <div style={{
-                display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem',
-                marginBottom: '0.85rem', padding: '0.65rem 0.85rem',
-                border: '1px solid rgba(255,107,53,0.18)', background: 'rgba(255,107,53,0.04)',
-              }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>
-                  WHO CAN VOTE
-                </span>
-                <select
-                  value={scope}
-                  disabled={scopeSaving}
-                  onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)}
-                  style={{
-                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em',
-                    background: 'var(--bg-card)', color: 'var(--color-star)',
-                    border: '1px solid rgba(255,107,53,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer',
-                  }}
-                >
-                  <option value="all">Open to everyone</option>
-                  <option value="voters">Voyagers only</option>
-                  <option value="self">Just me (private)</option>
-                </select>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.04em', color: 'var(--color-star-deep)' }}>
-                  {scopeSaving ? 'Saving…' : 'You can change this anytime.'}
-                </span>
-              </div>
-            )}
-            <InvestigationCard
-              investigation={inv.investigation}
-              onFiled={refreshInvestigation}
-              showTitle={false}
-            />
-          </div>
-        )}
 
         {/* Detail Text — creator's initial vision (collapsible) */}
         <div className="hud-frame" style={{ marginBottom: '2rem' }}>
