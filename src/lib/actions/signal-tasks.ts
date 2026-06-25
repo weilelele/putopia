@@ -19,7 +19,6 @@ import type { WorldVoteScope, WorldLifecycle, WorldStage } from '@/types/databas
 import { worldStage } from '@/types/database'
 import { renderVideoClip, extractAudioClip } from '@/lib/signal/av'
 import { revealAt as computeRevealAt, isRevealed, DEFAULT_REVEAL_INTERVAL_HOURS } from '@/lib/signal/reveal'
-import { rollSearchUntil } from '@/lib/signal/scan'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -1479,7 +1478,7 @@ async function buildPublishedDays(
 ): Promise<{ days: PublicInvestigation['days']; searching: SearchingState | null }> {
   const [{ data: taskRows }, { data: sched }] = await Promise.all([
     admin.from('signal_tasks').select('id, type, prompt, day_index').eq('thread_id', threadId).eq('is_published', true).order('day_index', { ascending: true }),
-    admin.from('signal_threads').select('reveal_anchor_at, reveal_interval_hours, next_search_until').eq('id', threadId).maybeSingle(),
+    admin.from('signal_threads').select('reveal_anchor_at, reveal_interval_hours').eq('id', threadId).maybeSingle(),
   ])
   const rows = (taskRows ?? []) as TaskRow[]
   const now = new Date(); const nowMs = now.getTime()
@@ -1494,41 +1493,32 @@ async function buildPublishedDays(
     return { days: assembleDays(visible, assetsByTask, respByTask, me, true), searching: null }
   }
 
-  // Members: day 0 unlocks once the thread anchor passes; each later day unlocks
-  // when the current search window elapses (and it's published).
+  // Members: days unlock on the deterministic reveal schedule (anchor + k·interval),
+  // so every day that has reached its reveal time is immediately visible. The
+  // "Signal Searching" interstitial then counts down to the next day's reveal.
+  const intervalHours: number = sched?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
   const anchorMs = anchorAt ? Date.parse(anchorAt) : NaN
   if (Number.isNaN(anchorMs) || nowMs < anchorMs) return { days: [], searching: null }
 
-  const N = rows.length
-  let unlocked = 1
-  let su: string | null = sched?.next_search_until ?? null
-  if (!su) {
-    su = rollSearchUntil(nowMs, Math.random())
-    await admin.from('signal_threads').update({ next_search_until: su }).eq('id', threadId).is('next_search_until', null)
-  }
-  // Advance through elapsed windows where the next day is already published.
-  while (su && nowMs >= Date.parse(su) && unlocked < N) {
-    const newSu = rollSearchUntil(nowMs, Math.random())
-    const { data: adv } = await admin.from('signal_threads').update({ next_search_until: newSu }).eq('id', threadId).eq('next_search_until', su).select('id')
-    if (!adv?.length) break // another reader advanced; resync on next load
-    unlocked++; su = newSu
-  }
-
-  const visibleRows = rows.slice(0, unlocked)
-  const visible: VisibleDay[] = visibleRows.map((t) => ({
-    taskId: t.id, type: t.type, prompt: t.prompt, dayIndex: t.day_index ?? 0, revealAtISO: null, revealed: true,
-  }))
+  const visible = computeVisibleDays(rows, anchorAt, intervalHours, false, now)
+  if (!visible.length) return { days: [], searching: null }
   const { assetsByTask, respByTask } = await fetchDayData(admin, visible.map((v) => v.taskId))
   const days = assembleDays(visible, assetsByTask, respByTask, me, false)
 
-  const lastRow = visibleRows[unlocked - 1]
-  const elapsed = su ? nowMs >= Date.parse(su) : false
-  const searching: SearchingState = {
-    searchUntil: su,
-    failed: elapsed && unlocked >= N, // window over, next day not published yet
-    prevDayIndex: lastRow.day_index ?? 0,
-    prevAsset: pickWinnerAsset(assetsByTask.get(lastRow.id), respByTask.get(lastRow.id)),
-  }
+  // Searching: count down to the next day's scheduled reveal. If that time has
+  // already passed with no day published for it, the search "came up empty".
+  const last = visible[visible.length - 1]
+  const nextDayIndex = last.dayIndex + 1
+  const nextRevealAt = computeRevealAt(anchorAt, intervalHours, nextDayIndex)
+  const nextPublished = rows.some((r) => (r.day_index ?? 0) === nextDayIndex)
+  const searching: SearchingState | null = nextRevealAt
+    ? {
+        searchUntil: nextRevealAt.toISOString(),
+        failed: nowMs >= nextRevealAt.getTime() && !nextPublished,
+        prevDayIndex: last.dayIndex,
+        prevAsset: pickWinnerAsset(assetsByTask.get(last.taskId), respByTask.get(last.taskId)),
+      }
+    : null
   return { days, searching }
 }
 

@@ -353,7 +353,6 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
                 onClick={submit} disabled={!pick || busy}
                 style={{ padding: '7px 18px', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', border: 'none', cursor: !pick || busy ? 'default' : 'pointer', background: !pick || busy ? 'rgba(255,107,53,0.25)' : '#FF6B35', color: '#070912' }}
               >{busy ? 'Submitting…' : 'SUBMIT'}</button>
-              <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>Submit to see how others responded</span>
               {err && <span style={{ fontSize: 'var(--fs-caption)', color: '#E83030' }}>{err}</span>}
             </div>
           ) : (
