@@ -278,13 +278,14 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
   const [err, setErr] = useState('')
 
   const responded = !!task.mySelection
+  const closed = task.closed // a newer day has revealed — read-only, voting ended
   const main = task.assets.find((a) => a.asset_role === 'main')
   const options = task.assets.filter((a) => a.asset_role !== 'main')
   const total = task.distribution ? Object.values(task.distribution).reduce((s, n) => s + n, 0) : 0
 
-  // The current front-runner (most-selected option) — flagged with a ★ once results show.
+  // The current front-runner (most-selected option) — flagged with a ★ wherever results show.
   const maxCount = task.distribution ? Math.max(0, ...options.map((a) => task.distribution?.[a.id] ?? 0)) : 0
-  const leaderId = responded && task.distribution && maxCount > 0
+  const leaderId = task.distribution && maxCount > 0
     ? options.find((a) => (task.distribution?.[a.id] ?? 0) === maxCount)?.id ?? null
     : null
 
@@ -319,7 +320,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
           const isLeader = a.id === leaderId
           const count = task.distribution?.[a.id] ?? 0
           const pct = total > 0 ? Math.round((count / total) * 100) : 0
-          const selectable = canParticipate && !responded
+          const selectable = canParticipate && !responded && !closed
           return (
             <div
               key={a.id}
@@ -331,7 +332,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
             >
               {isMine && <div style={{ position: 'absolute', top: 6, right: 7, zIndex: 2, color: '#20D890', fontSize: 14, lineHeight: 1 }}>✓</div>}
               <AssetView asset={a} />
-              {responded && task.distribution && (
+              {task.distribution && (
                 <span style={{ position: 'absolute', left: 7, bottom: 7, zIndex: 2, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(7,9,18,0.82)', padding: '2px 8px', borderRadius: 4 }}>
                   {isLeader && <span style={{ color: '#FF8A3D', fontSize: 'var(--fs-caption)', lineHeight: 1 }}>★</span>}
                   <span style={{ fontSize: 'var(--fs-caption)', fontWeight: isLeader ? 600 : 400, color: isLeader ? '#FF8A3D' : 'rgba(245,245,245,0.82)' }}>{pct}%</span>
@@ -345,7 +346,13 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
       {/* Footer — status on the left, response count anchored bottom-right. */}
       <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ minWidth: 0 }}>
-          {responded ? (
+          {closed ? (
+            responded ? (
+              <div style={{ fontSize: 'var(--fs-caption)', color: '#20D890', letterSpacing: '0.05em' }}>● Response recorded.</div>
+            ) : (
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.05em' }}>○ Voting closed.</div>
+            )
+          ) : responded ? (
             <div style={{ fontSize: 'var(--fs-caption)', color: '#20D890', letterSpacing: '0.05em' }}>● Response recorded.</div>
           ) : canParticipate ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>

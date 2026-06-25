@@ -598,8 +598,11 @@ export interface PublicSignalTask {
   participantCount: number
   /** the asset this user picked, or null if not yet filed */
   mySelection: string | null
-  /** counts per asset id — only present once the user has filed (or is architect) */
+  /** counts per asset id — present once the user has filed, the day has closed,
+   *  or the viewer is an architect */
   distribution: Record<string, number> | null
+  /** true once a newer day has revealed: the day is read-only (results shown, no voting) */
+  closed: boolean
   /** investigation-thread continuity (if this task is part of a thread). Never
    *  exposes the hidden target. */
   thread: {
@@ -738,6 +741,7 @@ export async function getSignalFeed(date?: string): Promise<SignalFeed> {
       participantCount: count ?? 0,
       mySelection,
       distribution,
+      closed: false,
       thread,
     })
   }
@@ -784,7 +788,7 @@ export async function submitSignalResponse(
   // resolve the owning world's vote scope + owner via the task's thread
   const { data: task } = await admin
     .from('signal_tasks')
-    .select('is_published, thread_id')
+    .select('is_published, thread_id, day_index')
     .eq('id', taskId)
     .maybeSingle()
   if (!task?.is_published) return { ok: false, error: 'Task is not published' }
@@ -792,11 +796,31 @@ export async function submitSignalResponse(
   let voteScope: WorldVoteScope = 'all'
   let ownerId: string | null = null
   if (task.thread_id) {
-    const { data: thread } = await admin.from('signal_threads').select('world_id').eq('id', task.thread_id).maybeSingle()
+    const { data: thread } = await admin
+      .from('signal_threads')
+      .select('world_id, reveal_anchor_at, reveal_interval_hours')
+      .eq('id', task.thread_id)
+      .maybeSingle()
     if (thread?.world_id) {
       const { data: world } = await admin.from('worlds').select('vote_scope, discoverer_id').eq('id', thread.world_id).maybeSingle()
       voteScope = (world?.vote_scope as WorldVoteScope) ?? 'all'
       ownerId = world?.discoverer_id ?? null
+    }
+    // Voting closes once a newer day has revealed — reject filings on ended days.
+    const { data: siblings } = await admin
+      .from('signal_tasks')
+      .select('day_index')
+      .eq('thread_id', task.thread_id)
+      .eq('is_published', true)
+    const interval = thread?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
+    const now = new Date()
+    let activeDayIndex = -1
+    for (const s of (siblings ?? []) as { day_index: number | null }[]) {
+      const di = s.day_index ?? 0
+      if (isRevealed(thread?.reveal_anchor_at ?? null, interval, di, now) && di > activeDayIndex) activeDayIndex = di
+    }
+    if ((task.day_index ?? 0) < activeDayIndex) {
+      return { ok: false, error: 'Voting for this day has closed' }
     }
   }
   if (!eligibleToVote(me.role, me.id, voteScope, ownerId)) {
@@ -1428,11 +1452,16 @@ async function fetchDayData(admin: DB, taskIds: string[]): Promise<{ assetsByTas
 
 /** Assemble day objects from pre-fetched, grouped data — no queries. */
 function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSignalAsset[]>, respByTask: Map<string, RespRow[]>, me: Viewer, isArchitect: boolean): PublicInvestigation['days'] {
+  // The active (votable) day is the latest one that has actually revealed; every
+  // earlier revealed day is closed — read-only results, voting has ended.
+  const revealedIdx = visible.filter((v) => v.revealed).map((v) => v.dayIndex)
+  const activeDayIndex = revealedIdx.length ? Math.max(...revealedIdx) : -1
   return visible.map((v) => {
     const responses = respByTask.get(v.taskId) ?? []
     const mySelection = me ? (responses.find((r) => r.user_id === me.id)?.selected_asset_id ?? null) : null
+    const closed = v.revealed && v.dayIndex < activeDayIndex
     let distribution: Record<string, number> | null = null
-    if (mySelection || isArchitect) {
+    if (closed || mySelection || isArchitect) {
       distribution = {}
       for (const r of responses) distribution[r.selected_asset_id] = (distribution[r.selected_asset_id] ?? 0) + 1
     }
@@ -1448,6 +1477,7 @@ function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSig
         participantCount: responses.length,
         mySelection,
         distribution,
+        closed,
         thread: null,
       },
     }
