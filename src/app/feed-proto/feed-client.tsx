@@ -519,7 +519,7 @@ function VoyagerGateModal({ kind, title, packHref, onClose }: { kind: 'intel' | 
 
 // ─── Page client ──────────────────────────────────────────────────────────────
 
-export function FeedProtoClient({ entries, embedded = false, leadSlot, packHref = '/voyager-pack' }: { entries: FeedEntry[]; embedded?: boolean; leadSlot?: ReactNode; packHref?: string }) {
+export function FeedProtoClient({ entries, embedded = false, hideHeader = false, leadSlot, packHref = '/voyager-pack' }: { entries: FeedEntry[]; embedded?: boolean; hideHeader?: boolean; leadSlot?: ReactNode; packHref?: string }) {
   // Track the specific vote that was clicked — every vote must open its own
   // options, not the first vote's.
   const [activeVote, setActiveVote] = useState<VoteCard | null>(null)
@@ -554,13 +554,13 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot, packHref 
         @keyframes feed-skel-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
       `}</style>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
-        {embedded ? (
+        {embedded ? (hideHeader ? null : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.3em', color: ORANGE }}>INTERNAL UPDATES</span>
             <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
           </div>
-        ) : (
+        )) : (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px',
             borderBottom: '1px solid #161c30', position: 'sticky', top: 0, zIndex: 10,
