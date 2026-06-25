@@ -282,6 +282,12 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
   const options = task.assets.filter((a) => a.asset_role !== 'main')
   const total = task.distribution ? Object.values(task.distribution).reduce((s, n) => s + n, 0) : 0
 
+  // The current front-runner (most-selected option) — flagged with a ★ once results show.
+  const maxCount = task.distribution ? Math.max(0, ...options.map((a) => task.distribution?.[a.id] ?? 0)) : 0
+  const leaderId = responded && task.distribution && maxCount > 0
+    ? options.find((a) => (task.distribution?.[a.id] ?? 0) === maxCount)?.id ?? null
+    : null
+
   const submit = async () => {
     if (!pick) return
     setBusy(true); setErr('')
@@ -293,14 +299,10 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
 
   return (
     <div style={{ background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', padding: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12, gap: 12 }}>
-        <p style={{ fontSize: 13.5, margin: 0, lineHeight: 1.55, color: 'rgba(245,245,245,0.85)' }}>
-          {task.prompt || TYPE_HINT[task.type] || 'Make your judgment.'}
-        </p>
-        <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap' }}>
-          {task.participantCount} response{task.participantCount !== 1 ? 's' : ''}
-        </span>
-      </div>
+      {/* Prompt spans the full width — the response count moved to the footer. */}
+      <p style={{ fontSize: 14.5, margin: '0 0 14px', lineHeight: 1.6, color: 'rgba(245,245,245,0.88)' }}>
+        {task.prompt || TYPE_HINT[task.type] || 'Make your judgment.'}
+      </p>
 
       {main && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -309,11 +311,12 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
         </div>
       )}
 
-      {/* Options — 2 cols on portrait mobile, 4 cols on wider screens */}
+      {/* Signal fragments — a large 2x2 grid (no A/B/C/D labels) */}
       <div className="signal-options">
-        {options.map((a, i) => {
+        {options.map((a) => {
           const isMine = task.mySelection === a.id
           const isPicked = pick === a.id
+          const isLeader = a.id === leaderId
           const count = task.distribution?.[a.id] ?? 0
           const pct = total > 0 ? Math.round((count / total) * 100) : 0
           const selectable = canParticipate && !responded
@@ -322,48 +325,49 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
               key={a.id}
               onClick={() => selectable && setPick(a.id)}
               style={{
-                border: isMine ? '2px solid #20D890' : isPicked ? '2px solid #FF6B35' : '1px solid rgba(255,107,53,0.16)',
+                border: isMine ? '2px solid #20D890' : isPicked ? '2px solid #FF6B35' : isLeader ? '1px solid rgba(232,93,4,0.5)' : '1px solid rgba(255,107,53,0.16)',
                 background: '#070912', cursor: selectable ? 'pointer' : 'default', position: 'relative',
               }}
             >
-              <div style={{ position: 'absolute', top: 4, left: 4, zIndex: 2, background: 'rgba(7,9,18,0.8)', color: 'rgba(245,245,245,0.65)', fontSize: 'var(--fs-caption)', padding: '1px 4px', letterSpacing: '0.08em' }}>
-                {String.fromCharCode(65 + i)}
-              </div>
-              {isMine && <div style={{ position: 'absolute', top: 4, right: 4, zIndex: 2, color: '#20D890', fontSize: 'var(--fs-caption)', lineHeight: 1 }}>✓</div>}
+              {isMine && <div style={{ position: 'absolute', top: 6, right: 7, zIndex: 2, color: '#20D890', fontSize: 14, lineHeight: 1 }}>✓</div>}
               <AssetView asset={a} />
               {responded && task.distribution && (
-                <div style={{ padding: '4px 5px' }}>
-                  <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
-                    <div style={{ width: `${pct}%`, height: '100%', background: isMine ? '#20D890' : '#E85D04' }} />
-                  </div>
-                  <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.45)', marginTop: 2 }}>{pct}%</div>
-                </div>
+                <span style={{ position: 'absolute', left: 7, bottom: 7, zIndex: 2, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(7,9,18,0.82)', padding: '2px 8px', borderRadius: 4 }}>
+                  {isLeader && <span style={{ color: '#FF8A3D', fontSize: 'var(--fs-caption)', lineHeight: 1 }}>★</span>}
+                  <span style={{ fontSize: 'var(--fs-caption)', fontWeight: isLeader ? 600 : 400, color: isLeader ? '#FF8A3D' : 'rgba(245,245,245,0.82)' }}>{pct}%</span>
+                </span>
               )}
             </div>
           )
         })}
       </div>
 
-      <div style={{ marginTop: 14 }}>
-        {responded ? (
-          <div style={{ fontSize: 'var(--fs-caption)', color: '#20D890', letterSpacing: '0.05em' }}>● Response recorded.</div>
-        ) : canParticipate ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button
-              onClick={submit} disabled={!pick || busy}
-              style={{ padding: '7px 18px', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', border: 'none', cursor: !pick || busy ? 'default' : 'pointer', background: !pick || busy ? 'rgba(255,107,53,0.25)' : '#FF6B35', color: '#070912' }}
-            >{busy ? 'Submitting…' : 'SUBMIT'}</button>
-            <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>Submit to see how others responded</span>
-            {err && <span style={{ fontSize: 'var(--fs-caption)', color: '#E83030' }}>{err}</span>}
-          </div>
-        ) : (
-          <div style={{ fontSize: 12, color: 'rgba(245,245,245,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ color: 'rgba(245,245,245,0.5)' }}>🔒</span>
-            {lockReason === 'Log in to respond'
-              ? <span><a href="/login" style={{ color: '#E85D04' }}>Log in</a> to respond.</span>
-              : <span>{lockReason || 'Voting is restricted for this world.'}</span>}
-          </div>
-        )}
+      {/* Footer — status on the left, response count anchored bottom-right. */}
+      <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          {responded ? (
+            <div style={{ fontSize: 'var(--fs-caption)', color: '#20D890', letterSpacing: '0.05em' }}>● Response recorded.</div>
+          ) : canParticipate ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <button
+                onClick={submit} disabled={!pick || busy}
+                style={{ padding: '7px 18px', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', border: 'none', cursor: !pick || busy ? 'default' : 'pointer', background: !pick || busy ? 'rgba(255,107,53,0.25)' : '#FF6B35', color: '#070912' }}
+              >{busy ? 'Submitting…' : 'SUBMIT'}</button>
+              <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>Submit to see how others responded</span>
+              {err && <span style={{ fontSize: 'var(--fs-caption)', color: '#E83030' }}>{err}</span>}
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: 'rgba(245,245,245,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ color: 'rgba(245,245,245,0.5)' }}>🔒</span>
+              {lockReason === 'Log in to respond'
+                ? <span><a href="/login" style={{ color: '#E85D04' }}>Log in</a> to respond.</span>
+                : <span>{lockReason || 'Voting is restricted for this world.'}</span>}
+            </div>
+          )}
+        </div>
+        <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          {task.participantCount} response{task.participantCount !== 1 ? 's' : ''}
+        </span>
       </div>
     </div>
   )
