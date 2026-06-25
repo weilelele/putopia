@@ -95,38 +95,42 @@ export function PathStatusBar({
         </Link>
       </div>
 
-      {/* ── Bottom row: Signal Dispatch (left) + device days (right), split 50/50 ── */}
+      {/* ── Bottom row: Console Holding (left, promoted) + Signal Dispatch (right) ── */}
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
-        {/* Left half — Signal Dispatch focal number. Wider than the right half so
-            the "// SIGNAL DISPATCH" label + number never overrun the slash. */}
-        <Link href="/signal" style={{ ...cell, flex: '1.7 1 0', minWidth: 0, flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 4 }} {...hov}
-          onClick={() => posthog.capture('pathbar_signal_clicked', { role: user.role, awaiting_you: board?.awaitingYou ?? null })}
-        >
-          <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: '#E85D04', whiteSpace: 'nowrap' }}>{'// SIGNAL DISPATCH'}</span>
-          <span style={{ display: 'flex', alignItems: 'baseline', gap: 9 }}>
-            <span style={{ fontSize: 42, color: '#FF6B35', lineHeight: 0.85 }}>{board ? board.awaitingYou : '—'}</span>
-            <span style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star)', whiteSpace: 'nowrap' }}>awaiting you</span>
+        {/* Left — device holding, promoted to the focal position to drive clicks.
+            Clicking opens the device modal. Icon + number follow device state
+            colour (green when held, dim when none). Wider than the right half so
+            "// CONSOLE HOLDING" never overruns the slash. */}
+        <button onClick={() => { posthog.capture('pathbar_device_clicked', { role: user.role, has_device: hasDevice, device_days: deviceDays }); onDeviceClick() }} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1.8 1 0', minWidth: 0, flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 4 }} {...hov}>
+          <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: '#E85D04', whiteSpace: 'nowrap' }}>{'// CONSOLE HOLDING'}</span>
+          <span style={{ display: 'flex', alignItems: 'baseline', gap: 11 }}>
+            <span aria-label={hasDevice ? 'Device active' : 'No device'} style={{
+              display: 'inline-block', width: 54, height: 40, flexShrink: 0, alignSelf: 'center',
+              background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.4)',
+              WebkitMaskImage: 'url(/assets/vi-icon.png)', maskImage: 'url(/assets/vi-icon.png)',
+              WebkitMaskSize: 'contain', maskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center', maskPosition: 'center',
+              filter: hasDevice ? 'drop-shadow(0 0 5px rgba(32,216,144,0.5))' : 'none',
+            }} />
+            <span style={{ fontSize: 42, lineHeight: 1, color: hasDevice ? '#20D890' : 'rgba(245,245,245,0.5)' }}>{deviceDays}</span>
+            <span style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star)', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{deviceDays === 1 ? 'DAY' : 'DAYS'}</span>
           </span>
-        </Link>
+        </button>
 
         {diagBottom}
 
-        {/* Right half — device days; clicking opens the device modal */}
-        <button onClick={() => { posthog.capture('pathbar_device_clicked', { role: user.role, has_device: hasDevice, device_days: deviceDays }); onDeviceClick() }} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1 1 0', minWidth: 0, gap: 11 }} {...hov}>
-          <span aria-label={hasDevice ? 'Device active' : 'No device'} style={{
-            display: 'inline-block', width: 54, height: 32, flexShrink: 0,
-            background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.4)',
-            WebkitMaskImage: 'url(/assets/vi-icon.png)', maskImage: 'url(/assets/vi-icon.png)',
-            WebkitMaskSize: 'contain', maskSize: 'contain',
-            WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-            WebkitMaskPosition: 'center', maskPosition: 'center',
-            filter: hasDevice ? 'drop-shadow(0 0 5px rgba(32,216,144,0.5))' : 'none',
-          }} />
-          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.15 }}>
-            <span style={{ fontSize: 20, fontWeight: 700, color: hasDevice ? '#20D890' : 'rgba(245,245,245,0.5)' }}>{deviceDays}</span>
-            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em' }}>{deviceDays === 1 ? 'DAY' : 'DAYS'}</span>
+        {/* Right — Signal Dispatch focal number. The hidden label line keeps this
+            big number's baseline aligned with the Console Holding number. */}
+        <Link href="/signal" style={{ ...cell, flex: '1 1 0', minWidth: 0, flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 4 }} {...hov}
+          onClick={() => posthog.capture('pathbar_signal_clicked', { role: user.role, awaiting_you: board?.awaitingYou ?? null })}
+        >
+          <span aria-hidden style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', visibility: 'hidden' }}>{'//'}</span>
+          <span style={{ display: 'flex', alignItems: 'baseline', gap: 9 }}>
+            <span style={{ fontSize: 42, color: '#FF6B35', lineHeight: 1 }}>{board ? board.awaitingYou : '—'}</span>
+            <span style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star)', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>SIGNAL DISPATCH</span>
           </span>
-        </button>
+        </Link>
       </div>
 
       <style>{`
