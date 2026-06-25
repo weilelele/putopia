@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect } from 'react'
+import { getCapacitor, getPlatform } from '@/lib/platform'
 
 // Bridges native deep links (iOS Universal Links / Android App Links) into the
-// remote-URL WebView. Capacitor injects `window.Capacitor` on native; this is a
-// no-op on the web. When the OS opens the app via an https://multiverseco.org
-// link (e.g. an auth callback), we route the WebView to that path so the
-// existing /auth/callback logic runs in-app instead of in Safari.
+// remote-URL WebView. On the web this is a no-op. When the OS opens the app via
+// an https://multiverseco.org link (e.g. an auth callback), we route the WebView
+// to that path so the existing /auth/callback logic runs in-app, not in Safari.
+//
+// Runtime detection and Capacitor access go through @/lib/platform — see
+// docs/cross-platform.md.
 
 interface CapacitorAppPlugin {
   addListener(
@@ -15,16 +18,13 @@ interface CapacitorAppPlugin {
   ): Promise<{ remove: () => void }> | { remove: () => void }
 }
 
-interface CapacitorGlobal {
-  isNativePlatform?: () => boolean
-  Plugins?: { App?: CapacitorAppPlugin }
-}
-
 export function NativeBridge() {
   useEffect(() => {
-    const cap = (window as unknown as { Capacitor?: CapacitorGlobal }).Capacitor
-    if (!cap?.isNativePlatform?.()) return
-    const appPlugin = cap.Plugins?.App
+    if (!getPlatform().isNative) return
+    const plugins = getCapacitor()?.Plugins as
+      | { App?: CapacitorAppPlugin }
+      | undefined
+    const appPlugin = plugins?.App
     if (!appPlugin) return
 
     let remove: (() => void) | undefined

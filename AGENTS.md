@@ -21,6 +21,28 @@ rules to keep front of mind:
   never hard-code a smaller inline `fontSize`. `design-tokens/min-font-size`
   flags it.
 
+# Cross-platform (web + iOS app + Android PWA)
+
+This is **one Next.js site loaded three ways** — a browser tab (`web`), a
+Capacitor WKWebView (`ios-native`, loads `server.url`), and an installed PWA
+(`android-pwa`). ~99% of the code is shared; only a narrow boundary diverges.
+
+- **Branch on capabilities, never on the platform name.** All runtime detection
+  lives in `src/lib/platform.ts` (the single source of truth). Feature code reads
+  capabilities — `platform.canNativePush`, `platform.storePaymentRestricted`,
+  `platform.isStandalone`, … — via `usePlatform()` (client) or `getPlatform()`
+  (effects / non-React). Write `if (platform.canNativePush)`, not `if (isIOS)`.
+- Raw `window.Capacitor`, `navigator.standalone`, and display-mode media queries
+  in `src/app` / `src/components` are **blocked** by the ESLint rule
+  `platform/no-raw-platform-check`. Add new platform branches to `platform.ts`,
+  not inline.
+- Every capability needs a **graceful web fallback** so the worst case is a
+  normal working website. End `switch (platform.runtime)` blocks with
+  `assertNever()` for exhaustiveness.
+- The full divergence registry + verification matrix is in
+  `docs/cross-platform.md` — consult it before touching push, auth return,
+  payment, safe-area, external links, or the update flow.
+
 # Deployments & preview environments
 
 `main` is the production trunk. Work happens on `feat/*` (human) or `claude/*`
