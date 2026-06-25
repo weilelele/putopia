@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Courier_Prime } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
@@ -7,6 +7,7 @@ import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
 import { ScrollRestorer } from '@/components/scroll-restorer'
 import { NativeBridge } from '@/components/native-bridge'
+import { PwaRegister } from '@/components/pwa-register'
 
 const courierPrime = Courier_Prime({
   variable: '--font-mono',
@@ -17,6 +18,19 @@ const courierPrime = Courier_Prime({
 export const metadata: Metadata = {
   title: 'MULTIVERSE COLLECTIVE — Explore Parallel Worlds',
   description: 'Classified internal workspace. Authorized personnel only.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Multiverse',
+  },
+  icons: {
+    apple: '/assets/icons/icon-192.webp',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#01040B',
 }
 
 export default function RootLayout({
@@ -47,6 +61,7 @@ export default function RootLayout({
         `}</Script>
         <AuthProvider>
           <NativeBridge />
+          <PwaRegister />
           <ScrollRestorer />
           <div className="app-shell w-full">
             <Sidebar />

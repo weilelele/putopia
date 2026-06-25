@@ -305,6 +305,29 @@ export type StoryUpdate = Partial<Pick<
   'title' | 'author_id' | 'author_name' | 'date' | 'tags' | 'excerpt' | 'content' | 'youtube_id' | 'is_published'
 >>
 
+// ---------- push_subscriptions ----------
+export type PushSubscriptionRow = {
+  id: string
+  user_id: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  user_agent: string | null
+  created_at: string
+  last_used_at: string | null
+}
+
+export type PushSubscriptionInsert = {
+  id?: string
+  user_id: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  user_agent?: string | null
+  created_at?: string
+  last_used_at?: string | null
+}
+
 // ---------- Supabase Database shape (for createClient generic) ----------
 export type Database = {
   public: {
@@ -362,6 +385,12 @@ export type Database = {
         Row: VoyagerProfile
         Insert: Omit<VoyagerProfile, 'joined_at' | 'registered_at' | 'updated_at'>
         Update: VoyagerProfileUpdate
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: PushSubscriptionRow
+        Insert: PushSubscriptionInsert
+        Update: Partial<PushSubscriptionInsert>
         Relationships: []
       }
       votes: {
