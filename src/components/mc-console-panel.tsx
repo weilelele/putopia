@@ -9,31 +9,37 @@ const STATUS_META: Record<McFunctionStatus, { label: string; color: string }> = 
   unknown:        { label: '???',    color: 'rgba(245,245,245,0.35)' },
 }
 
-/** Staggered "boot flicker" reveal — returns the index revealed so far. */
-function useFnAnimation(count: number) {
+/**
+ * Staggered "boot flicker" reveal — once `start` is true, reveals one entry at a
+ * time. Returns the index revealed so far (-1 until the scan begins).
+ */
+function useFnAnimation(count: number, start: boolean) {
   const [readyIdx, setReadyIdx] = useState(-1)
 
   useEffect(() => {
+    if (!start) return
     const timers: ReturnType<typeof setTimeout>[] = []
     for (let i = 0; i < count; i++) {
-      timers.push(setTimeout(() => setReadyIdx(i), 300 + i * 160))
+      timers.push(setTimeout(() => setReadyIdx(i), 400 + i * 240))
     }
     return () => timers.forEach(clearTimeout)
-  }, [count])
+  }, [count, start])
 
   return { readyIdx }
 }
 
 /**
- * Multiverse Console showcase panel: device-desk.png image + CONFIRMED FUNCTIONS
- * list with the point-light boot-flicker sequence. Shared by the guest console
- * hero and the device archive.
+ * Multiverse Console showcase panel: device-desk.png image + CONFIRMED FUNCTIONS.
+ * The functions module isn't present at all until the visitor taps the device
+ * image — then the whole module slides in and its entries scan in one at a time.
+ * Shared by the guest console hero / device archive.
  */
 export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
   )
-  const { readyIdx } = useFnAnimation(mcFunctions.length)
+  const [started, setStarted] = useState(false)
+  const { readyIdx } = useFnAnimation(mcFunctions.length, started)
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
@@ -44,70 +50,91 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
 
   return (
     <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto', border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', overflow: 'hidden' }}>
-      {/* Header bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: '#090D1A', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-nebula)' }}>{'// MULTIVERSE CONSOLE'}</span>
+      <style>{`@keyframes mcScanHint{0%,100%{opacity:0.55}50%{opacity:1}}@keyframes mcModuleIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {/* Section divider title — matches the "INTERNAL UPDATES" feed divider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '14px 16px' }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>MULTIVERSE CONSOLE</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
       </div>
 
-      {/* Content: image left, functions right — stacked on mobile */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
-        {/* Device image */}
-        <div style={{ borderRight: isMobile ? 'none' : '1px solid rgba(255,107,53,0.16)', borderBottom: isMobile ? '1px solid rgba(255,107,53,0.16)' : 'none' }}>
+      {/* Content: image only until tapped; the functions module appears after. */}
+      <div style={{ display: 'grid', gridTemplateColumns: !started ? '1fr' : isMobile ? '1fr' : '1fr 1fr' }}>
+        {/* Device image — tap to scan */}
+        <button
+          type="button"
+          onClick={() => setStarted(true)}
+          aria-label={started ? 'Multiverse Console' : 'Tap to scan the device functions'}
+          style={{
+            position: 'relative',
+            display: 'block',
+            width: '100%',
+            padding: 0,
+            border: 'none',
+            background: 'none',
+            cursor: started ? 'default' : 'pointer',
+            borderRight: started && !isMobile ? '1px solid rgba(255,107,53,0.16)' : 'none',
+            borderBottom: started && isMobile ? '1px solid rgba(255,107,53,0.16)' : 'none',
+          }}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/device-desk.png" alt="Multiverse Console" style={{ width: '100%', height: 'auto', display: 'block' }} />
-        </div>
+          <img src="/assets/device-console.jpg" alt="Multiverse Console" style={{ width: '100%', height: 'auto', display: 'block' }} />
+        </button>
 
-        {/* Confirmed functions */}
-        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'auto' : '260px', position: 'relative' }}>
-          {/* Section label */}
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: 'rgba(245,245,245,0.35)', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
-            CONFIRMED FUNCTIONS
-          </div>
+        {/* Confirmed functions — the whole module appears only after the tap */}
+        {started && (
+          <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'auto' : '260px', position: 'relative', animation: 'mcModuleIn 0.4s ease-out' }}>
+            {/* Section label */}
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: 'rgba(245,245,245,0.35)', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
+              CONFIRMED FUNCTIONS
+            </div>
 
-          {/* Function rows — flicker boot sequence */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            {mcFunctions.length > 0 ? mcFunctions.map((fn, i) => {
-              const meta = STATUS_META[fn.status]
-              const visible = i <= readyIdx
-              return (
-                <div key={fn.id} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 0', borderBottom: '1px solid #0D1220',
-                  opacity: visible ? 1 : 0,
-                  animation: visible ? 'fnFlicker 0.55s ease-out forwards' : 'none',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{
-                      width: 6, height: 6, borderRadius: '50%',
-                      background: visible ? meta.color : 'rgba(255,107,53,0.28)',
-                      boxShadow: visible ? `0 0 7px ${meta.color}` : 'none',
-                      flexShrink: 0, display: 'inline-block',
-                      transition: 'background 0.3s, box-shadow 0.3s',
-                    }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', letterSpacing: '0.02em' }}>
-                      {fn.name}
+            {/* Function rows — revealed one by one */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              {mcFunctions.length > 0 ? mcFunctions.map((fn, i) => {
+                const meta = STATUS_META[fn.status]
+                const visible = i <= readyIdx
+                return (
+                  <div key={fn.id} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 0', borderBottom: '1px solid #0D1220',
+                    opacity: visible ? 1 : 0,
+                    animation: visible ? 'fnFlicker 0.55s ease-out forwards' : 'none',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: visible ? meta.color : 'rgba(255,107,53,0.28)',
+                        boxShadow: visible ? `0 0 7px ${meta.color}` : 'none',
+                        flexShrink: 0, display: 'inline-block',
+                        transition: 'background 0.3s, box-shadow 0.3s',
+                      }} />
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', letterSpacing: '0.02em' }}>
+                        {fn.name}
+                      </span>
+                    </div>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: meta.color, opacity: 0.9 }}>
+                      {meta.label}
                     </span>
                   </div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: meta.color, opacity: 0.9 }}>
-                    {meta.label}
-                  </span>
-                </div>
-              )
-            }) : (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #0D1220', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#151E30', flexShrink: 0, display: 'inline-block' }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#1A2438' }}>——————————</span>
-                </div>
-              ))
-            )}
-          </div>
+                )
+              }) : (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #0D1220', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#151E30', flexShrink: 0, display: 'inline-block' }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#1A2438' }}>——————————</span>
+                  </div>
+                ))
+              )}
+            </div>
 
-          {/* Footer */}
-          <div style={{ marginTop: '14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#283048', letterSpacing: '0.16em', textAlign: 'right' }}>
-            + MORE FUNCTIONS UNDER ACTIVE RESEARCH
+            {/* Footer */}
+            <div style={{ marginTop: '14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#283048', letterSpacing: '0.16em', textAlign: 'right' }}>
+              + MORE FUNCTIONS UNDER ACTIVE RESEARCH
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
