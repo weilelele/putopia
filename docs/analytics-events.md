@@ -26,7 +26,7 @@ strip's behaviour can be segmented by user type.
 | `pathbar_avatar_clicked` | Avatar tapped → `/profile` | `role` |
 | `pathbar_view_path_clicked` | "VIEW YOUR PATH" tapped → `/voyager-path` | `role` |
 | `pathbar_signal_clicked` | "SIGNAL DISPATCH" tapped → `/signal` | `role`, `awaiting_you` (backlog count at click time) |
-| `pathbar_device_clicked` | Camera / DAYS tapped → opens device modal | `role`, `has_device`, `device_days` |
+| `pathbar_device_clicked` | "// CONSOLE HOLDING" (device days) tapped → opens device modal | `role`, `has_device`, `device_days` |
 
 ---
 
