@@ -806,20 +806,14 @@ export async function submitSignalResponse(
       voteScope = (world?.vote_scope as WorldVoteScope) ?? 'all'
       ownerId = world?.discoverer_id ?? null
     }
-    // Voting closes once a newer day has revealed — reject filings on ended days.
-    const { data: siblings } = await admin
-      .from('signal_tasks')
-      .select('day_index')
-      .eq('thread_id', task.thread_id)
-      .eq('is_published', true)
-    const interval = thread?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
-    const now = new Date()
-    let activeDayIndex = -1
-    for (const s of (siblings ?? []) as { day_index: number | null }[]) {
-      const di = s.day_index ?? 0
-      if (isRevealed(thread?.reveal_anchor_at ?? null, interval, di, now) && di > activeDayIndex) activeDayIndex = di
-    }
-    if ((task.day_index ?? 0) < activeDayIndex) {
+    // Only the day the schedule is currently on is votable — reject filings on a
+    // day that has ended (or one not yet revealed).
+    const activeDayIndex = currentScheduleDay(
+      thread?.reveal_anchor_at ?? null,
+      thread?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS,
+      Date.now(),
+    )
+    if (activeDayIndex >= 0 && (task.day_index ?? 0) !== activeDayIndex) {
       return { ok: false, error: 'Voting for this day has closed' }
     }
   }
@@ -1388,6 +1382,16 @@ function computeVisibleDays(taskRows: TaskRow[], anchorAt: string | null, interv
   return out
 }
 
+/** The day index the schedule is currently on (anchor + k·interval ≤ now), or -1
+ *  if the schedule hasn't started. This is the day that should be live right now;
+ *  if no puzzle is published for it, the world is between days ("Signal Searching"). */
+function currentScheduleDay(anchorAt: string | null, intervalHours: number, nowMs: number): number {
+  const anchorMs = anchorAt ? Date.parse(anchorAt) : NaN
+  if (Number.isNaN(anchorMs) || nowMs < anchorMs) return -1
+  const interval = (intervalHours > 0 ? intervalHours : DEFAULT_REVEAL_INTERVAL_HOURS) * 3_600_000
+  return Math.floor((nowMs - anchorMs) / interval)
+}
+
 /**
  * Fetch EVERY row of a query, paging past PostgREST's per-request row cap
  * (Supabase defaults to 1000). Without this, a query matching more than the cap
@@ -1451,11 +1455,9 @@ async function fetchDayData(admin: DB, taskIds: string[]): Promise<{ assetsByTas
 }
 
 /** Assemble day objects from pre-fetched, grouped data — no queries. */
-function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSignalAsset[]>, respByTask: Map<string, RespRow[]>, me: Viewer, isArchitect: boolean): PublicInvestigation['days'] {
-  // The active (votable) day is the latest one that has actually revealed; every
-  // earlier revealed day is closed — read-only results, voting has ended.
-  const revealedIdx = visible.filter((v) => v.revealed).map((v) => v.dayIndex)
-  const activeDayIndex = revealedIdx.length ? Math.max(...revealedIdx) : -1
+function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSignalAsset[]>, respByTask: Map<string, RespRow[]>, me: Viewer, isArchitect: boolean, activeDayIndex: number): PublicInvestigation['days'] {
+  // Only the day the schedule is currently on (activeDayIndex) is open for voting;
+  // every earlier revealed day is closed — read-only results, voting has ended.
   return visible.map((v) => {
     const responses = respByTask.get(v.taskId) ?? []
     const mySelection = me ? (responses.find((r) => r.user_id === me.id)?.selected_asset_id ?? null) : null
@@ -1520,12 +1522,14 @@ async function buildPublishedDays(
     const visible = computeVisibleDays(rows, anchorAt, intervalHours, true, now)
     if (!visible.length) return { days: [], searching: null }
     const { assetsByTask, respByTask } = await fetchDayData(admin, visible.map((v) => v.taskId))
-    return { days: assembleDays(visible, assetsByTask, respByTask, me, true), searching: null }
+    const activeDayIndex = currentScheduleDay(anchorAt, intervalHours, nowMs)
+    return { days: assembleDays(visible, assetsByTask, respByTask, me, true, activeDayIndex), searching: null }
   }
 
-  // Members: days unlock on the deterministic reveal schedule (anchor + k·interval),
-  // so every day that has reached its reveal time is immediately visible. The
-  // "Signal Searching" interstitial then counts down to the next day's reveal.
+  // Members: days unlock on the deterministic reveal schedule (anchor + k·interval).
+  // Only the day the schedule is currently on is open for voting; earlier days are
+  // closed (read-only results). The "Signal Searching" interstitial appears ONLY in
+  // the gap where that current day has ended but its successor isn't published yet.
   const intervalHours: number = sched?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
   const anchorMs = anchorAt ? Date.parse(anchorAt) : NaN
   if (Number.isNaN(anchorMs) || nowMs < anchorMs) return { days: [], searching: null }
@@ -1533,22 +1537,23 @@ async function buildPublishedDays(
   const visible = computeVisibleDays(rows, anchorAt, intervalHours, false, now)
   if (!visible.length) return { days: [], searching: null }
   const { assetsByTask, respByTask } = await fetchDayData(admin, visible.map((v) => v.taskId))
-  const days = assembleDays(visible, assetsByTask, respByTask, me, false)
 
-  // Searching: count down to the next day's scheduled reveal. If that time has
-  // already passed with no day published for it, the search "came up empty".
-  const last = visible[visible.length - 1]
-  const nextDayIndex = last.dayIndex + 1
-  const nextRevealAt = computeRevealAt(anchorAt, intervalHours, nextDayIndex)
-  const nextPublished = rows.some((r) => (r.day_index ?? 0) === nextDayIndex)
-  const searching: SearchingState | null = nextRevealAt
-    ? {
-        searchUntil: nextRevealAt.toISOString(),
-        failed: nowMs >= nextRevealAt.getTime() && !nextPublished,
-        prevDayIndex: last.dayIndex,
-        prevAsset: pickWinnerAsset(assetsByTask.get(last.taskId), respByTask.get(last.taskId)),
-      }
-    : null
+  const activeDayIndex = currentScheduleDay(anchorAt, intervalHours, nowMs)
+  const days = assembleDays(visible, assetsByTask, respByTask, me, false, activeDayIndex)
+
+  // No searching while the current scheduled day has a live puzzle — only show it
+  // once that day has passed with no successor published yet (still searching).
+  const currentPublished = rows.some((r) => (r.day_index ?? 0) === activeDayIndex)
+  let searching: SearchingState | null = null
+  if (!currentPublished) {
+    const last = visible[visible.length - 1]
+    searching = {
+      searchUntil: computeRevealAt(anchorAt, intervalHours, activeDayIndex)?.toISOString() ?? null,
+      failed: true, // the scheduled day arrived but no puzzle is published for it
+      prevDayIndex: last.dayIndex,
+      prevAsset: pickWinnerAsset(assetsByTask.get(last.taskId), respByTask.get(last.taskId)),
+    }
+  }
   return { days, searching }
 }
 
@@ -1626,11 +1631,13 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
     worldMetaMap(admin, threads.map((t) => t.world_id)),
   ])
 
+  const nowMs = now.getTime()
   const investigations: PublicInvestigation[] = []
   for (const th of threads) {
     const visible = visibleByThread.get(th.id)
     if (!visible) continue
-    const days = assembleDays(visible, dayData.assetsByTask, dayData.respByTask, me, isArchitect)
+    const activeDayIndex = currentScheduleDay(th.reveal_anchor_at ?? null, th.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS, nowMs)
+    const days = assembleDays(visible, dayData.assetsByTask, dayData.respByTask, me, isArchitect, activeDayIndex)
     const wm = th.world_id ? meta.get(th.world_id) : undefined
     investigations.push(buildInvestigation(th, wm, days, me))
   }
