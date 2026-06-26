@@ -3,18 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePlatform } from '@/lib/platform'
 import { useAuth } from '@/lib/auth-context'
-
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-
-// VAPID public keys are base64url; the Push API wants an ArrayBuffer-backed view.
-function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const raw = atob(base64)
-  const out = new Uint8Array(new ArrayBuffer(raw.length))
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i)
-  return out
-}
+import { subscribeToPush, hasActiveSubscription } from '@/lib/push/client'
 
 type State = 'idle' | 'busy' | 'enabled' | 'denied' | 'error'
 
@@ -35,10 +24,8 @@ export function EnableNotifications() {
         if (!cancelled) setState('denied')
         return
       }
-      if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-        const reg = await navigator.serviceWorker.ready
-        const sub = await reg.pushManager.getSubscription()
-        if (!cancelled && sub) setState('enabled')
+      if (await hasActiveSubscription()) {
+        if (!cancelled) setState('enabled')
       }
     }
     sync().catch(() => {})
@@ -48,36 +35,16 @@ export function EnableNotifications() {
   }, [])
 
   async function enable() {
-    if (!VAPID_PUBLIC_KEY) {
-      setState('error')
-      setNote('Push is not configured.')
-      return
-    }
     setState('busy')
     setNote(null)
-    try {
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') {
-        setState('denied')
-        return
-      }
-      const reg = await navigator.serviceWorker.ready
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-        }))
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(sub),
-      })
-      if (!res.ok) throw new Error('save failed')
+    const result = await subscribeToPush()
+    if (result.ok) {
       setState('enabled')
-    } catch {
+    } else if (result.reason === 'denied') {
+      setState('denied')
+    } else {
       setState('error')
-      setNote('Could not enable notifications.')
+      setNote(result.reason === 'unconfigured' ? 'Push is not configured.' : 'Could not enable notifications.')
     }
   }
 

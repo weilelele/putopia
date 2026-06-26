@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/bottom-nav'
 import { ScrollRestorer } from '@/components/scroll-restorer'
 import { NativeBridge } from '@/components/native-bridge'
 import { PwaRegister } from '@/components/pwa-register'
+import { NotificationPrompt } from '@/components/notification-prompt'
 
 const courierPrime = Courier_Prime({
   variable: '--font-mono',
@@ -62,6 +63,7 @@ export default function RootLayout({
         <AuthProvider>
           <NativeBridge />
           <PwaRegister />
+          <NotificationPrompt />
           <ScrollRestorer />
           <div className="app-shell w-full">
             <Sidebar />
