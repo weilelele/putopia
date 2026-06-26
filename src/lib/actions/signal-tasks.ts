@@ -1568,17 +1568,27 @@ async function buildPublishedDays(
   const { assetsByTask, respByTask } = await fetchDayData(admin, view.visible.map((v) => v.taskId))
   const days = assembleDays(view.visible, assetsByTask, respByTask, me, isArchitect, view.openIndex)
 
-  let searching: SearchingState | null = null
-  if (view.searching) {
-    const prev = view.visible.find((v) => v.dayIndex === view.searching!.prevDayIndex)
-    searching = {
-      searchUntil: view.searching.nextOpenAtISO,
-      failed: view.searching.failed,
-      prevDayIndex: view.searching.prevDayIndex,
-      prevAsset: prev ? pickWinnerAsset(assetsByTask.get(prev.taskId), respByTask.get(prev.taskId)) : null,
-    }
-  }
+  const searching = buildSearchingState(view.searching, view.visible, assetsByTask, respByTask)
   return { days, searching }
+}
+
+/** Turn a scheduleView's raw searching info into the public SearchingState,
+ *  resolving the previous day's crowd-chosen image. Shared by the world page
+ *  and the /signal feed. */
+function buildSearchingState(
+  raw: { failed: boolean; prevDayIndex: number; nextOpenAtISO: string | null } | null,
+  visible: VisibleDay[],
+  assetsByTask: Map<string, PublicSignalAsset[]>,
+  respByTask: Map<string, RespRow[]>,
+): SearchingState | null {
+  if (!raw) return null
+  const prev = visible.find((v) => v.dayIndex === raw.prevDayIndex)
+  return {
+    searchUntil: raw.nextOpenAtISO,
+    failed: raw.failed,
+    prevDayIndex: raw.prevDayIndex,
+    prevAsset: prev ? pickWinnerAsset(assetsByTask.get(prev.taskId), respByTask.get(prev.taskId)) : null,
+  }
 }
 
 type ThreadRow = { id: string; title: string | null; type: SignalTaskType; world_id: string | null }
@@ -1640,30 +1650,38 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   const meta = await worldMetaMap(admin, threads.map((t) => t.world_id))
 
   // Resolve each thread's timeline (in memory), gathering all task ids to batch.
-  const perThread = new Map<string, { visible: VisibleDay[]; openIndex: number }>()
+  type Resolved = { visible: VisibleDay[]; openIndex: number; searching: ReturnType<typeof scheduleView>['searching'] }
+  const perThread = new Map<string, Resolved>()
   const allTaskIds: string[] = []
   for (const th of threads) {
     const rows = (tasksByThread.get(th.id) ?? []).sort((a, b) => (a.day_index ?? 0) - (b.day_index ?? 0))
     const anchorAt = th.reveal_anchor_at ?? (th.world_id ? meta.get(th.world_id)?.scan_until ?? null : null)
     const view = scheduleView(rows, anchorAt, th.gap_hours ?? DEFAULT_GAP_HOURS, false, now)
     if (view.visible.length) {
-      perThread.set(th.id, { visible: view.visible, openIndex: view.openIndex })
+      perThread.set(th.id, { visible: view.visible, openIndex: view.openIndex, searching: view.searching })
       for (const v of view.visible) allTaskIds.push(v.taskId)
     }
   }
 
   const dayData = await fetchDayData(admin, allTaskIds)
 
-  const investigations: PublicInvestigation[] = []
+  // Build cards, ranked by the most recently OPENED question (freshest floats to
+  // the top; the list reorders as each new question reveals). A searching world
+  // ranks by its last opened day until its next question surfaces.
+  const ranked: { inv: PublicInvestigation; freshness: number }[] = []
   for (const th of threads) {
     const pt = perThread.get(th.id)
     if (!pt) continue
     const days = assembleDays(pt.visible, dayData.assetsByTask, dayData.respByTask, me, false, pt.openIndex)
+    const searching = buildSearchingState(pt.searching, pt.visible, dayData.assetsByTask, dayData.respByTask)
     const wm = th.world_id ? meta.get(th.world_id) : undefined
-    investigations.push(buildInvestigation(th, wm, days, me))
+    const latestOpen = pt.visible[pt.visible.length - 1]?.revealAtISO
+    const freshness = latestOpen ? Date.parse(latestOpen) : 0
+    ranked.push({ inv: buildInvestigation(th, wm, days, me, searching), freshness })
   }
+  ranked.sort((a, b) => b.freshness - a.freshness)
 
-  return { investigations, role, loggedIn: !!me }
+  return { investigations: ranked.map((r) => r.inv), role, loggedIn: !!me }
 }
 
 export interface WorldInvestigationData {
