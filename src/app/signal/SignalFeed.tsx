@@ -227,7 +227,7 @@ function SearchingPanel({ searching }: { searching: SearchingState }) {
       ) : (
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(245,245,245,0.72)', marginBottom: 12 }}>
-            Locked onto this signal — searching the multiverse for the next world.
+            Locked onto this signal — searching for the next reading of this world.
           </div>
           <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: 'rgba(245,245,245,0.5)', marginBottom: 4 }}>NEXT SIGNAL IN</div>
           <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.04em', color: '#F5F5F5', fontVariantNumeric: 'tabular-nums' }}>{fmtCountdown(left)}</div>
