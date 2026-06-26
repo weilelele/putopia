@@ -74,25 +74,32 @@ export async function deleteOnboardingVariant(id: string) {
   return { error: null }
 }
 
-/** Upload a video to the `onboarding` bucket; returns its public URL. */
-export async function uploadOnboardingVideo(formData: FormData) {
+/**
+ * Mint a short-lived signed upload URL for a video in the `onboarding` bucket.
+ *
+ * The browser then PUTs the file straight to Supabase Storage
+ * (`uploadToSignedUrl`), bypassing the Next.js server-action / Vercel
+ * request-body cap (~4.5 MB on Vercel) that previously made larger videos fail.
+ * The signed token carries its own auth, so the upload itself doesn't depend on
+ * the caller's storage RLS — page access is already gated in /admin.
+ * Bucket-level limits (50 MB, video MIME) still apply, so oversized/wrong files
+ * are rejected by Storage with a clear error.
+ */
+export async function createOnboardingVideoUploadUrl(ext: string) {
   const admin = createAdminClient()
 
-  const file = formData.get('video') as File
-  if (!file || file.size === 0) return { error: 'No file provided', url: null }
+  const safeExt = (ext || '').replace(/[^a-z0-9]/gi, '').slice(0, 5).toLowerCase() || 'mp4'
+  const path = `${Date.now()}.${safeExt}`
 
-  const ext = file.name.split('.').pop() ?? 'mp4'
-  const path = `${Date.now()}.${ext}`
-
-  const { error: uploadError } = await admin.storage
+  const { data, error } = await admin.storage
     .from('onboarding')
-    .upload(path, file, { upsert: true, contentType: file.type || undefined })
+    .createSignedUploadUrl(path)
 
-  if (uploadError) return { error: uploadError.message, url: null }
+  if (error || !data) {
+    return { error: error?.message ?? '创建上传地址失败', path: null, token: null, publicUrl: null }
+  }
 
-  const { data: { publicUrl } } = admin.storage
-    .from('onboarding')
-    .getPublicUrl(path)
+  const { data: { publicUrl } } = admin.storage.from('onboarding').getPublicUrl(data.path)
 
-  return { error: null, url: publicUrl }
+  return { error: null, path: data.path, token: data.token, publicUrl }
 }
