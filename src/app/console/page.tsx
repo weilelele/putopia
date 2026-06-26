@@ -1029,7 +1029,7 @@ function ConsoleInner() {
     ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
     : undefined
   const feedNode = feedEntries.length > 0
-    ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} />
+    ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} canVote={!isGuest} />
     : <FeedSkeleton />
 
   return (
@@ -1085,7 +1085,7 @@ function ConsoleInner() {
           <section style={{ margin: '0.75rem -1.25rem 0', padding: '0 0.5rem' }}>
             <AccessGate permanentHref={newHref}>
               {feedEntries.length > 0
-                ? <FeedProtoClient entries={feedEntries} embedded hideHeader packHref={packHref} leadSlot={leadSlot} />
+                ? <FeedProtoClient entries={feedEntries} embedded hideHeader packHref={packHref} leadSlot={leadSlot} canVote={!isGuest} />
                 : <FeedSkeleton hideHeader />}
             </AccessGate>
           </section>

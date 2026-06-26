@@ -188,7 +188,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
     if (locked) {
       // Tease the title only — strip options, voters and tallies entirely.
       return {
-        id: vid, title: String(vote.title ?? 'Open signal vote'), options: [],
+        id: vid, title: String(vote.title ?? 'Open signal vote'), options: [], choices: [], multi: false,
         voters: [], count: 0,
         ends: until(vote.ends_at as string), time: rel(vote.created_at as string),
         locked: true,
@@ -196,14 +196,21 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
     }
     const options = coerceOptions(vote.options)
     const labelById: Record<string, string> = {}
+    // Option {id,label} pairs — the modal needs the IDs to record a response and
+    // to highlight the viewer's prior pick (vote_responses stores option IDs).
+    const choices: { id: string; label: string }[] = []
     if (Array.isArray(vote.options)) {
       for (const o of vote.options as unknown[]) {
         if (o && typeof o === 'object') {
           const r = o as Record<string, unknown>
+          const id = String(r.id ?? r.value ?? r.label ?? '')
+          const label = String(r.label ?? r.text ?? r.option ?? r.value ?? id)
           if (r.id) labelById[String(r.id)] = String(r.label ?? r.text ?? r.id)
+          if (id) choices.push({ id, label })
         }
       }
     }
+    const multi = vote.type === 'multi'
     const rows = allResponses.filter(r => r.vote_id === vid)
     const seen = new Set<string>()
     const picked: { name: string; user_id: string | null; option?: string }[] = []
@@ -221,7 +228,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
       avatar: p.user_id ? avatarMap[p.user_id] ?? null : null,
     }))
     return {
-      id: vid, title: String(vote.title ?? 'Open signal vote'), options,
+      id: vid, title: String(vote.title ?? 'Open signal vote'), options, choices, multi,
       voters, count: countByVote[vid] ?? 0,
       ends: until(vote.ends_at as string), time: rel(vote.created_at as string),
     }
@@ -359,7 +366,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
 // `canSeeGated` argument is part of the cache key, so there are two buckets:
 // one for voyager/architect (full content) and one for everyone else (gated
 // bodies stripped). Key bumped to -v3 for the gating payload shape.
-const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v6'], { revalidate: 30 })
+const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v7'], { revalidate: 30 })
 
 // Derived per request (uncached) from the session — never trust a client-passed
 // role. Only voyager/architect may receive gated content.
