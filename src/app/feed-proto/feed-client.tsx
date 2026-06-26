@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { MessageSquare, Radio } from 'lucide-react'
 import Link from 'next/link'
 import { WorldPoster } from '@/components/world-poster'
@@ -74,6 +75,18 @@ const BURNT = '#E85D04'
 // Font tokens — never below --fs-caption (12px floor).
 const FS_LABEL = 'var(--fs-label)'      // 13
 const FS_CAPTION = 'var(--fs-caption)'  // 12
+
+// Renders children into document.body, escaping any ancestor that establishes a
+// containing block for fixed-position elements (e.g. the AccessGate's
+// `filter: blur(...)` frost). Without this, modals below such an ancestor are
+// positioned relative to that element instead of the viewport — the backdrop
+// covers only the frosted region and the centered card lands off-screen.
+function Portal({ children }: { children: ReactNode }) {
+  // Modals only render after a client interaction (their state starts null), so
+  // this never runs during SSR; the guard is just belt-and-suspenders.
+  if (typeof document === 'undefined') return null
+  return createPortal(children, document.body)
+}
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
@@ -590,9 +603,12 @@ export function FeedProtoClient({ entries, embedded = false, hideHeader = false,
         )}
       </div>
 
-      {activeVote && <VoteModal vote={activeVote} onClose={() => setActiveVote(null)} />}
-      {activeVoyager && <VoyagerIntroModal person={activeVoyager} onClose={() => setActiveVoyager(null)} />}
-      {gate && <VoyagerGateModal kind={gate.kind} title={gate.title} packHref={packHref} onClose={() => setGate(null)} />}
+      {/* Portaled to <body> so the fixed-position overlays escape the AccessGate's
+          `filter` containing block (otherwise they're trapped in the frosted feed
+          region and the card centers off-screen — a black-screen-only modal). */}
+      {activeVote && <Portal><VoteModal vote={activeVote} onClose={() => setActiveVote(null)} /></Portal>}
+      {activeVoyager && <Portal><VoyagerIntroModal person={activeVoyager} onClose={() => setActiveVoyager(null)} /></Portal>}
+      {gate && <Portal><VoyagerGateModal kind={gate.kind} title={gate.title} packHref={packHref} onClose={() => setGate(null)} /></Portal>}
     </div>
   )
 }
