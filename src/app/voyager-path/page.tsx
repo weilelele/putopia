@@ -1,7 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/lib/auth-context'
+import { getVoyagerPathStatus } from '@/lib/actions/tasks'
+import type { VoyagerPathStatus } from '@/lib/actions/tasks'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -73,17 +76,6 @@ function WorldPackIcon({ size = 28 }: { size?: number }) {
   )
 }
 
-function DevicePackIcon({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
-      <rect x="4" y="7" width="20" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-      <line x1="4" y1="12" x2="24" y2="12" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-      <rect x="7" y="14.5" width="4" height="3" rx="0.5" stroke="currentColor" strokeWidth="1" opacity="0.6" />
-      <rect x="13" y="14.5" width="8" height="1.2" rx="0.3" fill="currentColor" opacity="0.3" />
-      <rect x="13" y="17"   width="5" height="1.2" rx="0.3" fill="currentColor" opacity="0.2" />
-    </svg>
-  )
-}
 
 function ConsoleIcon({ size = 28 }: { size?: number }) {
   return (
@@ -145,15 +137,18 @@ function QuizIcon() {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TaskKey    = 'report_sighting' | 'pass_quiz'
+type TaskKey    = 'report_sighting' | 'pass_quiz' | 'get_pack'
 type ViewStage  = 'applicant' | 'voyager' | 'console'
 type ModalKind  = 'device_seeker' | 'console_locked' | 'signal_locked'
 
 // ─── Task definitions ─────────────────────────────────────────────────────────
+// Three EQUAL, independent steps — any order, no prerequisites. Completing all
+// three (including the $12 pack) unlocks Voyager status. The pack is just one of
+// the three: a user can buy it first, last, or anywhere in between.
 
 const TASKS: {
   key: TaskKey; num: string; label: string; description: string
-  href: string; icon: React.ReactNode; accentColor: string
+  href: string; icon: React.ReactNode; accentColor: string; chip?: string
 }[] = [
   {
     key: 'report_sighting', num: '01', label: 'Report a Sighting',
@@ -163,7 +158,12 @@ const TASKS: {
   {
     key: 'pass_quiz', num: '02', label: 'Qualify for Active Service',
     description: 'Complete the field assessment to demonstrate you are ready for active service.',
-    href: '/quiz', icon: <QuizIcon />, accentColor: '#C04000',
+    href: '/quiz', icon: <QuizIcon />, accentColor: '#FF6B35',
+  },
+  {
+    key: 'get_pack', num: '03', label: 'Get Your Voyager Pack',
+    description: 'Claim your physical badge, member number and cohort placement.',
+    href: '/voyager-pack', icon: <WorldPackIcon size={18} />, accentColor: '#FF6B35', chip: '$12',
   },
 ]
 
@@ -443,163 +443,121 @@ function PathRail({
   )
 }
 
-// ─── APPLICANT stage: unified unlock track (tasks → pack → voyager) ───────────
+// ─── APPLICANT stage: three EQUAL parallel tasks → Voyager ────────────────────
+// No prerequisites between tasks. Sighting, Quiz and Pack are peers; finishing
+// all three (in any order) unlocks Voyager status.
 
 function VoyagerUnlockTrack({
-  completed, allDone, onDeviceSeeker,
-}: { completed: Record<TaskKey, boolean>; allDone: boolean; onDeviceSeeker: () => void }) {
+  completed, allDone, doneCount,
+}: {
+  completed: Record<TaskKey, boolean>
+  allDone: boolean
+  doneCount: number
+}) {
   const gold    = (a: number) => `rgba(196,169,106,${a})`
   const green   = '#20D890'
   const orange  = '#FF6B35'
-  const dimLine = 'rgba(255,255,255,0.07)'
 
-  const t1 = completed.report_sighting
-  const t2 = completed.pass_quiz
-
-  // ── Nodes ──
+  // Task node — identical treatment for all three (equal weight).
   const taskNode = (done: boolean, icon: React.ReactNode) => (
     <div style={{
-      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+      width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: done ? 'rgba(32,216,144,0.12)' : 'rgba(255,107,53,0.07)',
-      border: `1.5px solid ${done ? green : 'rgba(255,107,53,0.45)'}`,
+      border: `1.5px solid ${done ? green : 'rgba(255,107,53,0.5)'}`,
       color: done ? green : orange,
+      transition: 'all 0.25s ease',
     }}>
-      {done ? <CheckIcon size={14} /> : icon}
+      {done ? <CheckIcon size={15} /> : icon}
     </div>
   )
-  const packNode = allDone ? (
-    <div style={{
-      width: 26, height: 26, flexShrink: 0, transform: 'rotate(45deg)',
-      background: gold(0.14), border: `1.5px solid ${gold(0.7)}`,
-    }} />
-  ) : (
-    <div style={{
-      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'rgba(255,255,255,0.02)', border: '1.5px solid rgba(255,255,255,0.12)',
-      color: 'rgba(245,245,245,0.28)',
-    }}>
-      <LockIcon size={13} />
-    </div>
-  )
-  const voyagerNode = (
-    <div style={{
-      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: gold(allDone ? 0.1 : 0.03), border: `1.5px solid ${gold(allDone ? 0.45 : 0.18)}`,
-      color: gold(allDone ? 0.75 : 0.32),
-    }}>
-      <VoyagerIcon size={15} />
-    </div>
-  )
-
-  // ── Row wrapper with the connecting spine segment below the node ──
-  const row = (node: React.ReactNode, lineColor: string, isLast: boolean, content: React.ReactNode) => (
-    <div style={{ display: 'flex', gap: 13, alignItems: 'stretch' }}>
-      <div style={{ width: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-        {node}
-        {!isLast && <div style={{ flex: 1, width: 2, minHeight: 16, background: lineColor, margin: '3px 0' }} />}
-      </div>
-      <div style={{ flex: 1, minWidth: 0, paddingBottom: isLast ? 0 : 16 }}>{content}</div>
-    </div>
-  )
-
-  const taskContent = (task: typeof TASKS[number], done: boolean) => (
-    <Link href={task.href} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, textDecoration: 'none' }}>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-          <span style={{ fontSize: 'var(--fs-label)', color: done ? 'rgba(32,216,144,0.7)' : '#F5F5F5' }}>{task.label}</span>
-          {done && (
-            <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: green, border: '1px solid rgba(32,216,144,0.25)', padding: '1px 5px', background: 'rgba(32,216,144,0.08)' }}>DONE</span>
-          )}
+  // A single equal task card. All three look identical (no order). The card
+  // links to the real task page; a green/DONE state reflects live status.
+  const taskCard = (task: typeof TASKS[number]) => {
+    const done = completed[task.key]
+    return (
+      <Link
+        key={task.key}
+        href={task.href}
+        className="dd-panel"
+        style={{
+          ['--dd-bd' as string]: done ? 'rgba(32,216,144,0.45)' : 'rgba(255,107,53,0.32)',
+          ['--dd-fill' as string]: done ? 'rgba(32,216,144,0.05)' : '#0F1430',
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+          width: '100%', textAlign: 'left', cursor: 'pointer', textDecoration: 'none',
+          padding: '13px 14px', fontFamily: 'var(--font-mono)', background: 'none',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        <i className="dd-node" /><i className="dd-dash" />
+        {taskNode(done, task.icon)}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'var(--fs-label)', color: done ? 'rgba(32,216,144,0.85)' : '#F5F5F5' }}>{task.label}</span>
+            {task.chip && (
+              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: done ? green : orange, border: `1px solid ${done ? 'rgba(32,216,144,0.3)' : 'rgba(255,107,53,0.35)'}`, padding: '1px 6px', background: done ? 'rgba(32,216,144,0.08)' : 'rgba(255,107,53,0.08)' }}>{task.chip}</span>
+            )}
+            {done && (
+              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: green, border: '1px solid rgba(32,216,144,0.25)', padding: '1px 6px', background: 'rgba(32,216,144,0.08)' }}>DONE</span>
+            )}
+          </div>
+          <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.42)', lineHeight: 1.5 }}>{task.description}</div>
         </div>
-        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.38)', lineHeight: 1.5 }}>{task.description}</div>
-      </div>
-      <div style={{ flexShrink: 0, color: done ? 'rgba(32,216,144,0.5)' : task.accentColor }}>
-        {done ? <CheckIcon size={14} /> : <ArrowIcon size={14} />}
-      </div>
-    </Link>
-  )
-
-  // ── Pack choice chip (two options, side by side, smaller) ──
-  const chipInner = (icon: React.ReactNode, label: string, sub: string, active: boolean) => (
-    <>
-      <i className="dd-node" /><i className="dd-dash" />
-      {icon}
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>{label}</div>
-        <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', marginTop: 3, fontFamily: 'var(--font-mono)', color: active ? 'rgba(255,107,53,0.55)' : 'rgba(245,245,245,0.25)' }}>{sub}</div>
-      </div>
-    </>
-  )
-  // active = fully unlocked; preview = clickable but not yet unlocked; false = disabled
-  const chipStyle = (state: boolean | 'preview'): React.CSSProperties => ({
-    ['--dd-bd' as string]: state === true ? 'rgba(255,107,53,0.5)' : state === 'preview' ? 'rgba(255,107,53,0.28)' : 'rgba(255,255,255,0.1)',
-    ['--dd-fill' as string]: state === true ? '#1B1330' : state === 'preview' ? '#0F1128' : '#0C1029',
-    flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7,
-    padding: '11px 8px', textDecoration: 'none',
-    color: state === true ? '#FF6B35' : state === 'preview' ? 'rgba(255,107,53,0.65)' : 'rgba(245,245,245,0.4)',
-    cursor: state !== false ? 'pointer' : 'default',
-    opacity: state === false ? 0.5 : 1,
-    background: 'none', fontFamily: 'var(--font-mono)',
-  })
+        <div style={{ flexShrink: 0, marginTop: 7, color: done ? 'rgba(32,216,144,0.55)' : task.accentColor }}>
+          {done ? <CheckIcon size={15} /> : <ArrowIcon size={15} />}
+        </div>
+      </Link>
+    )
+  }
 
   return (
-    <div className="dd-panel" style={{
-      ['--dd-bd' as string]: allDone ? gold(0.4) : 'rgba(255,107,53,0.28)',
-      ['--dd-fill' as string]: 'var(--bg-panel)',
-      padding: '18px',
-    }}>
-      <i className="dd-node" />
-      <i className="dd-dash" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* three EQUAL tasks — stacked as peers, no connecting spine (no order) */}
+      {TASKS.map(taskCard)}
 
-      {row(taskNode(t1, <WorldIcon />), t1 ? green : dimLine, false, taskContent(TASKS[0], t1))}
-      {row(taskNode(t2, <QuizIcon />), allDone ? gold(0.45) : dimLine, false, taskContent(TASKS[1], t2))}
+      {/* convergence arrow → all three feed the single unlock */}
+      <div style={{ textAlign: 'center', color: allDone ? gold(0.7) : 'rgba(245,245,245,0.25)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '1px 0' }}>
+        ⌄ ALL THREE UNLOCK ⌄
+      </div>
 
-      {/* Pack milestone — two choices (A or B), gated until tasks done */}
-      {row(packNode, dimLine, false, (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
-            <span style={{ fontSize: 'var(--fs-label)', color: allDone ? gold(0.85) : 'rgba(245,245,245,0.55)' }}>Get your Voyager Pack</span>
-            {!allDone && <span style={{ color: 'rgba(245,245,245,0.3)', display: 'inline-flex' }}><LockIcon size={12} /></span>}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* World Builder: always clickable — links to /voyager-pack even before tasks done */}
-            <Link
-              href="/voyager-pack"
-              className="dd-panel"
-              style={chipStyle(allDone ? true : 'preview')}
-            >
-              {chipInner(<WorldPackIcon size={22} />, 'WORLD BUILDER', allDone ? 'VIEW PACK →' : '$12 PACK', allDone)}
-            </Link>
-            <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: 'rgba(245,245,245,0.3)', flexShrink: 0 }}>or</span>
-            <button
-              onClick={allDone ? onDeviceSeeker : undefined}
-              className="dd-panel"
-              style={chipStyle(allDone ? true : false)}
-              disabled={!allDone}
-            >
-              {chipInner(<DevicePackIcon size={22} />, 'DEVICE SEEKER', 'COMING SOON', allDone)}
-            </button>
-          </div>
-          {!allDone && (
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.28)', letterSpacing: '0.05em', marginTop: 9 }}>
-              Complete both tasks above to unlock.
-            </div>
-          )}
+      {/* Voyager unlock — lights up only when all three are done */}
+      <div className="dd-panel" style={{
+        ['--dd-bd' as string]: allDone ? gold(0.55) : 'rgba(255,255,255,0.12)',
+        ['--dd-fill' as string]: allDone ? '#161329' : '#0C1029',
+        padding: '15px 16px',
+        display: 'flex', alignItems: 'center', gap: 13,
+        boxShadow: allDone ? `0 0 22px ${gold(0.18)}` : 'none',
+        transition: 'all 0.35s ease',
+      }}>
+        <i className="dd-node" /><i className="dd-dash" />
+        <div style={{
+          width: 36, height: 36, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transform: allDone ? 'rotate(45deg)' : 'none',
+          borderRadius: allDone ? 0 : '50%',
+          background: allDone ? gold(0.16) : 'rgba(255,255,255,0.02)',
+          border: `1.5px solid ${allDone ? gold(0.8) : 'rgba(255,255,255,0.14)'}`,
+          color: allDone ? gold(0.9) : 'rgba(245,245,245,0.3)',
+          transition: 'all 0.35s ease',
+        }}>
+          <span style={{ transform: allDone ? 'rotate(-45deg)' : 'none', display: 'inline-flex' }}>
+            {allDone ? <VoyagerIcon size={18} /> : <LockIcon size={15} />}
+          </span>
         </div>
-      ))}
-
-      {/* Voyager goal */}
-      {row(voyagerNode, dimLine, true, (
-        <div>
-          <div style={{ fontSize: 'var(--fs-label)', color: gold(allDone ? 0.85 : 0.5), marginBottom: 2 }}>Voyager Status</div>
-          <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.32)', lineHeight: 1.5 }}>
-            Unlocked when you claim your pack.
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'var(--fs-label)', color: allDone ? gold(0.92) : 'rgba(245,245,245,0.55)' }}>Voyager Status</span>
+            {allDone && (
+              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: gold(0.9), border: `1px solid ${gold(0.45)}`, padding: '1px 6px', background: gold(0.12) }}>UNLOCKED ✦</span>
+            )}
+          </div>
+          <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.42)', lineHeight: 1.5 }}>
+            {allDone
+              ? 'All three steps complete — welcome to the Collective, Voyager.'
+              : `Complete all three steps above, in any order. ${doneCount} of 3 done.`}
           </div>
         </div>
-      ))}
+      </div>
     </div>
   )
 }
@@ -846,20 +804,35 @@ function VoyagerWelcomeBlock({ onConsoleClick, onSignalClick }: { onConsoleClick
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function DashboardDemoPage() {
+export default function VoyagerPathPage() {
+  const { user } = useAuth()
   const [viewedStage, setViewedStage] = useState<ViewStage>('applicant')
   const [modal, setModal]             = useState<ModalKind | null>(null)
   const [detailItem, setDetailItem]   = useState<BenefitDetail | null>(null)
+  const [status, setStatus]           = useState<VoyagerPathStatus | null>(null)
+  // Preview override: /voyager-path?view=applicant forces the Applicant 3-task
+  // track even for voyager/architect, so the task_gated experience can be QA'd
+  // without an applicant account.
+  const [forceApplicant, setForceApplicant] = useState(false)
 
-  // Static prototype state: the live page reflects an Applicant viewing
-  // their path. (Real role-driven state is wired in separately.)
+  // Live task state for the signed-in user (sighting · quiz · pack), any order.
+  useEffect(() => {
+    getVoyagerPathStatus().then(setStatus).catch(() => {})
+    // Read the client-only ?view= override once after mount (avoids a hydration
+    // mismatch from reading window during render).
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only URL read post-mount
+    setForceApplicant(new URLSearchParams(window.location.search).get('view') === 'applicant')
+  }, [])
+
   const completed: Record<TaskKey, boolean> = {
-    report_sighting: false, pass_quiz: false,
+    report_sighting: status?.sighting ?? false,
+    pass_quiz:       status?.quiz ?? false,
+    get_pack:        status?.pack ?? false,
   }
   const completedCount = Object.values(completed).filter(Boolean).length
   const totalTasks     = TASKS.length
-  const allDone        = completedCount === totalTasks
-  const isVoyager      = false
+  const allDone        = status?.allDone ?? false
+  const isVoyager      = !forceApplicant && (user.role === 'voyager' || user.role === 'architect')
 
   function handleStageClick(stage: ViewStage) {
     if (stage === 'console') {
@@ -901,13 +874,13 @@ export default function DashboardDemoPage() {
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.22em' }}>— BECOME A VOYAGER —</span>
                 <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: allDone ? '#20D890' : 'rgba(245,245,245,0.3)' }}>
-                  {allDone ? 'TASKS COMPLETE ✓' : `${completedCount} / ${totalTasks} TASKS`}
+                  {allDone ? 'VOYAGER UNLOCKED ✦' : `${completedCount} / ${totalTasks} COMPLETE`}
                 </span>
               </div>
               <VoyagerUnlockTrack
                 completed={completed}
                 allDone={allDone}
-                onDeviceSeeker={() => setModal('device_seeker')}
+                doneCount={completedCount}
               />
             </>
           ) : (
@@ -915,9 +888,6 @@ export default function DashboardDemoPage() {
           )}
         </section>
 
-        <div style={{ marginTop: 20, textAlign: 'center' }}>
-          <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.08)', letterSpacing: '0.15em' }}>DASHBOARD DEMO — STATIC PROTOTYPE</span>
-        </div>
       </div>
 
       <style>{`

@@ -144,8 +144,11 @@ function DevicePreviewCard({ device }: { device: Device }) {
 }
 
 /* ─── Voyager Ad Slot — homepage promo block between Status Feed & Device Registry ───
- *  A (direct)     → orange, "Initial Voyager Pack" → /voyager-pack (buy)
- *  B (task_gated) → amber,  "Earn Your Status"     → /voyager-path (watch track)
+ *  Both groups now land on the product page (/voyager-pack) on click; the
+ *  task-completion gate for group B is enforced at the pack's buy button, not
+ *  the ad slot. Group styling/copy still differs (A orange, B amber).
+ *  A (direct)     → orange, "Initial Voyager Pack" → /voyager-pack (buy now)
+ *  B (task_gated) → amber,  "Earn Your Status"     → /voyager-pack (gated at checkout)
  *  Hero photo fades top + bottom into the card; faint breathing glow. */
 function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
   const direct = group === 'direct'
@@ -154,7 +157,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
   const eyebrow = direct ? 'VOYAGER INITIATION' : 'VOYAGER RECRUITMENT'
   const title   = direct ? 'INITIAL VOYAGER PACK' : 'EARN YOUR STATUS'
   const cta     = 'ACTIVATE'
-  const href    = direct ? '/voyager-pack' : '/voyager-path'
+  const href    = '/voyager-pack'
 
   return (
     <Link
@@ -1024,12 +1027,20 @@ function ConsoleInner() {
 
   // Shared feed node — rendered inside the guest access gate, or standalone for
   // members. The Voyager ad slot rides as the lead block (door + ad coexist).
-  const packHref = (experimentGroup ?? 'direct') === 'direct' ? '/voyager-pack' : '/voyager-path'
-  const leadSlot = !loading && SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
-    ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
+  // Both A/B groups go to the product page; group B's task gate is enforced at checkout.
+  const packHref = '/voyager-pack'
+  // Preview override: ?ad=direct or ?ad=task_gated forces the ad slot to render
+  // with that variant (so you can try both without an applicant account).
+  const adParam = searchParams.get('ad')
+  const adOverride: ExperimentGroup | null =
+    adParam === 'direct' || adParam === 'task_gated' ? adParam : null
+  const showAd = !loading && SALES_OPEN &&
+    (adOverride !== null || (user.role !== 'voyager' && user.role !== 'architect'))
+  const leadSlot = showAd
+    ? <VoyagerAdSlot group={adOverride ?? experimentGroup ?? 'direct'} />
     : undefined
   const feedNode = feedEntries.length > 0
-    ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} canVote={!isGuest} />
+    ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} />
     : <FeedSkeleton />
 
   return (
@@ -1085,7 +1096,7 @@ function ConsoleInner() {
           <section style={{ margin: '0.75rem -1.25rem 0', padding: '0 0.5rem' }}>
             <AccessGate permanentHref={newHref}>
               {feedEntries.length > 0
-                ? <FeedProtoClient entries={feedEntries} embedded hideHeader packHref={packHref} leadSlot={leadSlot} canVote={!isGuest} />
+                ? <FeedProtoClient entries={feedEntries} embedded hideHeader packHref={packHref} leadSlot={leadSlot} />
                 : <FeedSkeleton hideHeader />}
             </AccessGate>
           </section>
