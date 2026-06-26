@@ -222,7 +222,7 @@ function SearchingPanel({ searching }: { searching: SearchingState }) {
 
       {failed ? (
         <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', letterSpacing: '0.04em', lineHeight: 1.7, textAlign: 'center' }}>
-          No new world has surfaced yet — the next signal appears the moment it&apos;s found.
+          No new reading has returned yet — the next signal appears the moment it&apos;s found.
         </div>
       ) : (
         <div style={{ textAlign: 'center' }}>
