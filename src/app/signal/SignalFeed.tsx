@@ -213,26 +213,25 @@ function SearchingPanel({ searching }: { searching: SearchingState }) {
         </span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        {searching.prevAsset && (
-          <div style={{ width: 72, flexShrink: 0, border: '1px solid rgba(255,107,53,0.25)' }}>
-            <AssetView asset={searching.prevAsset} />
-          </div>
-        )}
-        <div style={{ fontSize: 13, lineHeight: 1.7, color: 'rgba(245,245,245,0.72)' }}>
-          Widening the sweep, guided by the signal everyone converged on in Day {searching.prevDayIndex + 1}.
+      {/* The signal everyone locked onto, enlarged to one option-tile size. */}
+      {searching.prevAsset && (
+        <div style={{ width: 'calc(50% - 5px)', margin: '0 auto 16px', border: '1px solid rgba(255,107,53,0.25)' }}>
+          <AssetView asset={searching.prevAsset} />
         </div>
-      </div>
+      )}
 
       {failed ? (
-        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', letterSpacing: '0.04em', lineHeight: 1.7 }}>
-          No new reading has returned yet — the next signal will appear the moment it&apos;s found.
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', letterSpacing: '0.04em', lineHeight: 1.7, textAlign: 'center' }}>
+          No new reading has returned yet — the next signal appears the moment it&apos;s found.
         </div>
       ) : (
-        <>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(245,245,245,0.72)', marginBottom: 12 }}>
+            Locked onto this signal — searching for the next reading of this world.
+          </div>
           <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: 'rgba(245,245,245,0.5)', marginBottom: 4 }}>NEXT SIGNAL IN</div>
           <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.04em', color: '#F5F5F5', fontVariantNumeric: 'tabular-nums' }}>{fmtCountdown(left)}</div>
-        </>
+        </div>
       )}
     </div>
   )
