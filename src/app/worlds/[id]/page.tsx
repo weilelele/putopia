@@ -143,14 +143,8 @@ export default function WorldDetailPage() {
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, letterSpacing: '0.02em' }}>{displayName}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-star-deep)', marginTop: 5 }}>{world.id}</div>
             </div>
-            {/* Signal Tuning is the lead content — the '// SIGNAL TUNING' label is dropped */}
-            {investigation.lockReason && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.85rem' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: '#E8A020' }}>
-                  ● {investigation.lockReason}
-                </div>
-              </div>
-            )}
+            {/* Signal Tuning is the lead content — the '// SIGNAL TUNING' label is dropped.
+                The vote-lock hint lives in the question footer, not a floating header. */}
             {isOwner && (
               <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '0.85rem', padding: '0.65rem 0.85rem', border: '1px solid rgba(255,107,53,0.18)', background: 'rgba(255,107,53,0.04)' }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>WHO CAN VOTE</span>
