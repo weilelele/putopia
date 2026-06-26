@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { PACK_HTML } from './packHtml'
 import { PackViewTracker } from './pack-view-tracker'
 
@@ -89,7 +89,6 @@ function buildPackHtml(state: CtaState): string {
 // never overlaid; only the CTA button reflects the visitor's state.
 export default async function VoyagerPackPage() {
   let alreadyVoyager  = false
-  let tasksIncomplete = false
   let group: string   = 'none'   // experiment group for analytics
 
   try {
@@ -105,29 +104,20 @@ export default async function VoyagerPackPage() {
 
       if (profile?.experiment_group) group = profile.experiment_group
 
+      // The pack is now a peer task: BOTH groups can buy directly, no task gate.
+      // (Sighting/quiz are independent steps on /voyager-path, not prerequisites.)
       if (profile?.role === 'voyager' || profile?.role === 'architect') {
         alreadyVoyager = true
-      } else if (SALES_OPEN && profile?.experiment_group === 'task_gated') {
-        // Only evaluate the task gate when sales are actually open.
-        const quiz = !!profile.task_quiz_at
-        const admin = createAdminClient()
-        const { count: sightingCount } = await admin
-          .from('worlds')
-          .select('id', { count: 'exact', head: true })
-          .eq('submitted_by', user.id)
-        const sighting = (sightingCount ?? 0) > 0
-        if (!(quiz && sighting)) tasksIncomplete = true
       }
     }
   } catch {
     // Non-critical — fall through and show the default (buy) button.
   }
 
-  // Resolve the single CTA state (priority: voyager → closed → tasks → buy).
+  // Resolve the single CTA state (priority: voyager → closed → buy).
   let state: CtaState = 'buy'
   if (alreadyVoyager)        state = 'voyager'
   else if (!SALES_OPEN)      state = 'closed'
-  else if (tasksIncomplete)  state = 'tasks'
 
   return (
     <>
