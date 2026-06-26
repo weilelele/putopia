@@ -1588,7 +1588,8 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   const admin = createAdminClient() as DB
   const me = await currentUser()
   const role = me?.role ?? null
-  const isArchitect = role === 'architect'
+  // Architects see the same member view here — future (not-yet-revealed) days are
+  // hidden. The full authoring preview lives in /admin/signal-tasks.
 
   const now = new Date()
 
@@ -1619,7 +1620,7 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   const allTaskIds: string[] = []
   for (const th of threads) {
     const rows = (tasksByThread.get(th.id) ?? []).sort((a, b) => (a.day_index ?? 0) - (b.day_index ?? 0))
-    const visible = computeVisibleDays(rows, th.reveal_anchor_at ?? null, th.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS, isArchitect, now)
+    const visible = computeVisibleDays(rows, th.reveal_anchor_at ?? null, th.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS, false, now)
     if (visible.length) {
       visibleByThread.set(th.id, visible)
       for (const v of visible) allTaskIds.push(v.taskId)
@@ -1637,7 +1638,7 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
     const visible = visibleByThread.get(th.id)
     if (!visible) continue
     const activeDayIndex = currentScheduleDay(th.reveal_anchor_at ?? null, th.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS, nowMs)
-    const days = assembleDays(visible, dayData.assetsByTask, dayData.respByTask, me, isArchitect, activeDayIndex)
+    const days = assembleDays(visible, dayData.assetsByTask, dayData.respByTask, me, false, activeDayIndex)
     const wm = th.world_id ? meta.get(th.world_id) : undefined
     investigations.push(buildInvestigation(th, wm, days, me))
   }
@@ -1656,7 +1657,8 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
   const admin = createAdminClient() as DB
   const me = await currentUser()
   const role = me?.role ?? null
-  const isArchitect = role === 'architect'
+  // Architects see the same member view here — future (not-yet-revealed) days are
+  // hidden. The full authoring preview lives in /admin/signal-tasks.
 
   const { data: thread } = await admin
     .from('signal_threads')
@@ -1668,7 +1670,7 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
 
   if (!thread) return { investigation: null, role, loggedIn: !!me }
 
-  const { days, searching } = await buildPublishedDays(admin, thread.id, me, isArchitect)
+  const { days, searching } = await buildPublishedDays(admin, thread.id, me, false)
   if (days.length === 0) return { investigation: null, role, loggedIn: !!me }
 
   const meta = await worldMetaMap(admin, [(thread as ThreadRow).world_id])
