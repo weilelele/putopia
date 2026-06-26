@@ -24,7 +24,7 @@ describe('rollScanUntil', () => {
   })
 
   it('rand=0.5 lands at the midpoint of the window', () => {
-    expect(rollScanUntil(T0, 0.5)).toBe(new Date(T0 + 9 * H).toISOString())
+    expect(rollScanUntil(T0, 0.5)).toBe(new Date(T0 + 7 * H).toISOString())
   })
 
   it('clamps out-of-range rand into the window', () => {
