@@ -6,6 +6,7 @@ import { NewsletterPanel } from './newsletter-panel'
 import { RefreshButton } from './refresh-button'
 import { FunnelTabs } from './tabs'
 import { MembershipPanel } from './membership-panel'
+import { DaySelector } from './day-selector'
 
 const ACCENT   = '#E85D04'
 const MUTED    = 'rgba(245,245,245,0.35)'
@@ -69,18 +70,20 @@ function pct(a: number, b: number) {
   return `${Math.round((a / b) * 100)}%`
 }
 
-function TrafficRef({ count, count30d }: { count: number; count30d: number }) {
+function TrafficRef({ count, count30d, hide30d = false }: { count: number; count30d: number; hide30d?: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '0.75rem 1rem', background: '#070c1a', border: `1px solid ${BORDER}`, marginBottom: '0.5rem' }}>
       <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: MUTED }}>
         HOMEPAGE TRAFFIC (去重浏览器)
       </div>
       <div style={{ fontFamily: 'monospace', fontSize: 13, color: DIM }}>
-        {count.toLocaleString()} <span style={{ fontSize: 9, color: MUTED }}>all-time</span>
+        {count.toLocaleString()} <span style={{ fontSize: 9, color: MUTED }}>{hide30d ? '当日' : 'all-time'}</span>
       </div>
-      <div style={{ fontFamily: 'monospace', fontSize: 11, color: MUTED }}>
-        {count30d.toLocaleString()} <span style={{ fontSize: 9 }}>30d</span>
-      </div>
+      {!hide30d && (
+        <div style={{ fontFamily: 'monospace', fontSize: 11, color: MUTED }}>
+          {count30d.toLocaleString()} <span style={{ fontSize: 9 }}>30d</span>
+        </div>
+      )}
       <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginLeft: 'auto' }}>
         ↓ 不计入漏斗转化率
       </div>
@@ -106,8 +109,8 @@ function FunnelBar({ count, max, color = ACCENT }: { count: number; max: number;
   )
 }
 
-function StepRow({ step, prev, maxCount, color = ACCENT }: {
-  step: SnapshotRow; prev?: SnapshotRow; maxCount: number; color?: string
+function StepRow({ step, prev, maxCount, color = ACCENT, hide30d = false }: {
+  step: SnapshotRow; prev?: SnapshotRow; maxCount: number; color?: string; hide30d?: boolean
 }) {
   // Only show conversion rate within the same data source
   const sameSource = prev && (
@@ -131,15 +134,17 @@ function StepRow({ step, prev, maxCount, color = ACCENT }: {
         <div style={{ fontFamily: 'monospace', fontSize: 11, color: STAR, width: 48, textAlign: 'right', flexShrink: 0 }}>
           {step.count_all_time.toLocaleString()}
         </div>
-        <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, width: 52, textAlign: 'right', flexShrink: 0 }}>
-          30d: {step.count_30d}
-        </div>
+        {!hide30d && (
+          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, width: 52, textAlign: 'right', flexShrink: 0 }}>
+            30d: {step.count_30d}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-function RetentionCard({ step, registered }: { step: SnapshotRow; registered: number }) {
+function RetentionCard({ step, registered, hide30d = false }: { step: SnapshotRow; registered: number; hide30d?: boolean }) {
   const rate = registered > 0 ? Math.round((step.count_all_time / registered) * 100) : 0
   return (
     <div style={{ marginTop: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(232,93,4,0.03)', border: '1px solid rgba(232,93,4,0.15)', borderRadius: 2 }}>
@@ -154,9 +159,11 @@ function RetentionCard({ step, registered }: { step: SnapshotRow; registered: nu
           <div style={{ fontFamily: 'monospace', fontSize: 22, color: '#E8A020', fontWeight: 700, lineHeight: 1 }}>
             {step.count_all_time.toLocaleString()}
           </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' }}>
-            30d: {step.count_30d}
-          </div>
+          {!hide30d && (
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' }}>
+              30d: {step.count_30d}
+            </div>
+          )}
         </div>
         {registered > 0 && (
           <div style={{ borderLeft: `1px solid rgba(232,93,4,0.15)`, paddingLeft: '1.5rem' }}>
@@ -399,6 +406,209 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
             </>
           )
         })()}
+      </div>
+    </div>
+  )
+}
+
+/* ── Single-day funnel: each day's own numbers (not cumulative) ─────────────── */
+
+type DailyFunnel = {
+  day: string            // 'YYYY-MM-DD' (UTC)
+  homepage: number
+  ad: number
+  started: number
+  slider: number
+  q1: number
+  q2: number
+  email: number
+  inviteClicked: number
+  registered: number
+  loginClicked: number
+}
+
+// Last `days` UTC calendar dates, newest first.
+function utcDaysBack(days: number): string[] {
+  const now = new Date()
+  const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  return Array.from({ length: days }, (_, i) =>
+    new Date(todayUTC - i * 86_400_000).toISOString().slice(0, 10),
+  )
+}
+
+// Per-day funnel counts straight from source — PostHog grouped by toDate(timestamp)
+// (UTC), Supabase tables bucketed by their date columns, invite-link clicks via the
+// confirmed_auth_users_by_day RPC. Mirrors the snapshot route's step definitions but
+// one row per day instead of one cumulative total.
+async function getDailyFunnel(days = 30): Promise<DailyFunnel[]> {
+  const supabase = createAdminClient()
+  const dayList  = utcDaysBack(days)
+  const cutoffISO = `${dayList[dayList.length - 1]}T00:00:00.000Z`
+
+  const [phRows, appRows, regRows, clickedRows] = await Promise.all([
+    queryPostHog(`
+      SELECT
+        toDate(timestamp) AS day,
+        count(distinct if(event = '$pageview' AND properties.$pathname = '/', person_id, NULL))           AS homepage,
+        count(distinct if(event = 'onboarding_started' AND properties.utm_source IS NOT NULL, person_id, NULL)) AS ad,
+        count(distinct if(event = 'onboarding_started', person_id, NULL))                                  AS started,
+        count(distinct if(event = 'onboarding_slider_touched', person_id, NULL))                           AS slider,
+        count(distinct if(event = 'onboarding_q1_completed', person_id, NULL))                             AS q1,
+        count(distinct if(event = 'onboarding_q2_completed', person_id, NULL))                             AS q2,
+        count(distinct if(event = 'console_login_clicked', person_id, NULL))                               AS loginClicked
+      FROM events
+      WHERE toDate(timestamp) >= today() - ${days - 1}
+      GROUP BY day
+      ORDER BY day DESC
+    `),
+    // Email submitted = applications (full history, has created_at)
+    supabase.from('applications').select('created_at').gte('created_at', cutoffISO),
+    // Registered = completed /register
+    supabase.from('voyager_profiles').select('registered_at').not('registered_at', 'is', null).gte('registered_at', cutoffISO),
+    // Invite link clicked = confirmed auth.users, per day (SECURITY DEFINER RPC)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).rpc('confirmed_auth_users_by_day', { cutoff: cutoffISO }),
+  ])
+
+  const map = new Map<string, DailyFunnel>(
+    dayList.map(day => [day, {
+      day, homepage: 0, ad: 0, started: 0, slider: 0, q1: 0, q2: 0,
+      email: 0, inviteClicked: 0, registered: 0, loginClicked: 0,
+    }]),
+  )
+
+  // email is sourced from Supabase applications below (full history); registered &
+  // inviteClicked likewise come from Supabase — PostHog supplies the rest.
+  for (const r of phRows as [string, number, number, number, number, number, number, number][]) {
+    const row = map.get(String(r[0]))
+    if (!row) continue
+    row.homepage     = Number(r[1]) || 0
+    row.ad           = Number(r[2]) || 0
+    row.started      = Number(r[3]) || 0
+    row.slider       = Number(r[4]) || 0
+    row.q1           = Number(r[5]) || 0
+    row.q2           = Number(r[6]) || 0
+    row.loginClicked = Number(r[7]) || 0
+  }
+
+  const bucket = (rows: { [k: string]: unknown }[] | null, col: string, field: keyof DailyFunnel) => {
+    for (const r of rows ?? []) {
+      const ts = r[col]
+      if (typeof ts !== 'string') continue
+      const row = map.get(new Date(ts).toISOString().slice(0, 10))
+      if (row) (row[field] as number) += 1
+    }
+  }
+  bucket(appRows.data, 'created_at',    'email')
+  bucket(regRows.data, 'registered_at', 'registered')
+
+  // "Invite Link Clicked" = confirmed auth.users that day, via the SECURITY DEFINER
+  // RPC (auth.users isn't reachable through PostgREST). Absent until schema_v52 is
+  // applied to prod → rpc returns no data → count stays 0 (graceful).
+  for (const r of (clickedRows.data ?? []) as { day: string; cnt: number }[]) {
+    const row = map.get(String(r.day).slice(0, 10))
+    if (row) row.inviteClicked = Number(r.cnt) || 0
+  }
+
+  return dayList.map(day => map.get(day)!)
+}
+
+// Reshape one day into the SnapshotRow[] the funnel renderers expect.
+function dailyToRun(d: DailyFunnel): Run {
+  const mk = (step_key: string, step_label: string, step_order: number, count: number): SnapshotRow =>
+    ({ step_key, step_label, step_order, count_all_time: count, count_30d: 0 })
+  return {
+    run_id: `daily-${d.day}`,
+    captured_at: `${d.day}T00:00:00.000Z`,
+    version_tag: null,
+    steps: [
+      mk('homepage_visit',             'Homepage (traffic ref)',  0, d.homepage),
+      mk('ad_landing',                 'Ad Landing (utm_source)', 0, d.ad),
+      mk('onboarding_started',         'Onboarding Started',      1, d.started),
+      mk('onboarding_slider_touched',  'Slider Touched',          2, d.slider),
+      mk('onboarding_q1_completed',    'Q1 Completed',            3, d.q1),
+      mk('onboarding_q2_completed',    'Q2 Completed',            4, d.q2),
+      mk('onboarding_email_submitted', 'Email Submitted',         5, d.email),
+      mk('invite_link_clicked',        'Invite Link Clicked',     6, d.inviteClicked),
+      mk('registered',                 'Account Registered',      7, d.registered),
+      mk('console_login_clicked',      'Returned to Login',       8, d.loginClicked),
+    ],
+  }
+}
+
+function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: string }) {
+  const days = rows.map(r => r.day)
+  const day  = rows.find(r => r.day === selected) ?? rows[0]
+  if (!day) return null
+
+  const run            = dailyToRun(day)
+  const allSteps       = [...run.steps].sort((a, b) => a.step_order - b.step_order)
+  const trafficRef     = allSteps.find(s => s.step_key === 'homepage_visit')
+  const adRef          = allSteps.find(s => AD_REF_KEYS.has(s.step_key))
+  const phSteps        = allSteps.filter(s => POSTHOG_KEYS.has(s.step_key))
+  const sbSteps        = allSteps.filter(s => SUPABASE_KEYS.has(s.step_key))
+  const retentionStep  = allSteps.find(s => RETENTION_KEYS.has(s.step_key))
+  const phMax          = phSteps[0]?.count_all_time || 1
+  const sbMax          = sbSteps[0]?.count_all_time || 1
+  const registeredCount = sbSteps.find(s => s.step_key === 'registered')?.count_all_time ?? 0
+
+  return (
+    <div style={{ background: CARD_BG, border: `1px solid ${ACCENT}`, padding: '1.25rem 1.5rem', borderRadius: 2, marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: ACCENT }}>
+          单日漏斗 · DAILY FUNNEL
+        </div>
+        <DaySelector days={days} selected={day.day} />
+      </div>
+
+      {trafficRef && <TrafficRef count={trafficRef.count_all_time} count30d={0} hide30d />}
+
+      {adRef && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '0.75rem 1rem', background: '#070c1a', border: `1px solid ${BORDER}`, marginBottom: '0.5rem' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: MUTED }}>
+            AD TRAFFIC (utm_source 存在)
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 13, color: DIM }}>
+            {adRef.count_all_time.toLocaleString()} <span style={{ fontSize: 9, color: MUTED }}>当日</span>
+          </div>
+          {phSteps[0]?.count_all_time > 0 && (
+            <div style={{ fontFamily: 'monospace', fontSize: 11, color: ACCENT, marginLeft: 'auto' }}>
+              占 Started {Math.round((adRef.count_all_time / phSteps[0].count_all_time) * 100)}%
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ marginTop: '0.75rem' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: '#2A3A5A', marginBottom: '0.5rem' }}>
+          ONBOARDING INTERACTION · POSTHOG · 当日
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {phSteps.map((step, i) => (
+            <StepRow key={step.step_key} step={step} prev={phSteps[i - 1]} maxCount={phMax} hide30d />
+          ))}
+        </div>
+      </div>
+
+      <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
+        <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#2A3A5A', letterSpacing: '0.2em' }}>SUPABASE · 当日</div>
+        <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {sbSteps.map((step, i) => (
+          <StepRow key={step.step_key} step={step} prev={sbSteps[i - 1]} maxCount={sbMax} color='#E8A020' hide30d />
+        ))}
+      </div>
+
+      {retentionStep && (
+        <RetentionCard step={retentionStep} registered={registeredCount} hide30d />
+      )}
+
+      <div style={{ marginTop: '1rem', fontFamily: 'monospace', fontSize: 9, color: MUTED, lineHeight: 1.8 }}>
+        {'// 仅显示选中那一天发生的事件（UTC 日历日），与上方 LATEST 累计卡不同。'}<br />
+        {'// PostHog 步骤按埋点上线起有数据 · Supabase 步骤为完整历史。'}
       </div>
     </div>
   )
@@ -718,13 +928,18 @@ function DailyLoginsPanel({ rows }: { rows: DailyRow[] }) {
   )
 }
 
-export default async function AnalyticsPage() {
-  const [runs, recovery, daily, membership, newsletter] = await Promise.all([
-    getLatestRuns(10), getRecoveryCohort(), getDailyActivity(30), getMembershipFunnel(), getNewsletterFunnel(),
+export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ day?: string }> }) {
+  const [{ day: selectedDay }, [runs, recovery, daily, membership, newsletter, dailyFunnel]] = await Promise.all([
+    searchParams,
+    Promise.all([
+      getLatestRuns(10), getRecoveryCohort(), getDailyActivity(30), getMembershipFunnel(), getNewsletterFunnel(), getDailyFunnel(30),
+    ]),
   ])
+  const selected = dailyFunnel.some(r => r.day === selectedDay) ? selectedDay! : (dailyFunnel[0]?.day ?? '')
 
   const conversion = (
     <>
+      {dailyFunnel.length > 0 && <DailyFunnelCard rows={dailyFunnel} selected={selected} />}
       {runs.length === 0 ? (
         <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, padding: '2rem', textAlign: 'center' }}>
           <div style={{ fontFamily: 'monospace', fontSize: 11, color: DIM, lineHeight: 2 }}>
