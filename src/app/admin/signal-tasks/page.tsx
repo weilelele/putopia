@@ -39,7 +39,7 @@ import type { WorldVoteScope } from '@/types/database'
 import type { CropShape, FilterPreset, CropConfig } from '@/lib/signal/presets'
 import { FILTER_PRESETS } from '@/lib/signal/presets'
 import { processForgeVideo, processForgeAudio } from '@/lib/signal/ffmpeg-wasm'
-import { revealAt as computeRevealAt, isRevealed } from '@/lib/signal/reveal'
+import { buildSchedule, hasOpened } from '@/lib/signal/reveal'
 
 // Browser ffmpeg.wasm Forge step (shared by Pick + Random): fetch the Cosmo clip
 // via the same-origin proxy, process it locally, then upload via a server action.
@@ -327,7 +327,7 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
 
   if (!cfg) return null
 
-  const patch = async (p: { voteScope?: WorldVoteScope; revealIntervalHours?: number; revealAnchorAt?: string | null }) => {
+  const patch = async (p: { voteScope?: WorldVoteScope; gapHours?: number; revealAnchorAt?: string | null }) => {
     await updateInvestigationConfig(threadId, p)
     await reload()
   }
@@ -355,21 +355,25 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
         <div>
           <label style={S.label}>SCHEDULE</label>
           <div style={{ fontSize: 11, color: anchorDate ? '#20D890' : 'rgba(245,245,245,0.45)' }}>
-            {anchorDate ? `Started ${fmtReveal(anchorDate)}` : 'Not started — publishing Day 1 begins it'}
+            {anchorDate ? `Restarted ${fmtReveal(anchorDate)}` : 'Anchors at the world’s scan end (first question opens then)'}
           </div>
         </div>
         <div>
-          <label style={S.label}>REVEAL EVERY (HOURS)</label>
+          <label style={S.label}>VOTING WINDOW</label>
+          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.55)', padding: '5px 0' }}>{cfg.voteWindowHours}h (fixed)</div>
+        </div>
+        <div>
+          <label style={S.label}>GAP BETWEEN QUESTIONS (HOURS)</label>
           <input
-            type="number" min={1} defaultValue={cfg.revealIntervalHours}
+            type="number" min={0} defaultValue={cfg.gapHours}
             style={{ ...S.input, width: 80, padding: '5px 8px' }}
-            onBlur={(e) => { const v = Number(e.target.value); if (v >= 1 && v !== cfg.revealIntervalHours) patch({ revealIntervalHours: v }) }}
+            onBlur={(e) => { const v = Number(e.target.value); if (v >= 0 && v !== cfg.gapHours) patch({ gapHours: v }) }}
           />
         </div>
         {anchorDate && (
           <button
             style={{ ...S.btn, ...S.btnGhost, padding: '4px 10px', fontSize: 10, alignSelf: 'flex-end' }}
-            onClick={async () => { if (confirm('Restart the reveal timeline from now? Already-revealed days stay visible; pending days shift to the new schedule.')) await patch({ revealAnchorAt: new Date().toISOString() }) }}
+            onClick={async () => { if (confirm('Restart the timeline from now? Already-opened questions stay visible; pending ones shift to the new schedule.')) await patch({ revealAnchorAt: new Date().toISOString() }) }}
           >↻ Restart from now</button>
         )}
       </div>
@@ -423,6 +427,15 @@ function DayList({
     onDayAdded(r.id)
   }
 
+  // Resolve each day's open time via the gap chain (anchor = restart, else scan end).
+  const anchorAt = cfg?.revealAnchorAt ?? cfg?.scanUntil ?? null
+  const schedule = buildSchedule(
+    anchorAt,
+    cfg?.gapHours ?? 4,
+    tasks.filter((t) => t.is_published && t.published_at).map((t) => ({ dayIndex: t.day_index ?? 0, publishedAtISO: t.published_at! })),
+  )
+  const openByDay = new Map(schedule.map((s) => [s.dayIndex, s.openAt]))
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
@@ -443,18 +456,15 @@ function DayList({
       {tasks.map((t) => {
         const dayNum = (t.day_index ?? 0) + 1
         const isActive = t.id === activeTaskId
-        // Reveal status for the badge.
-        const anchor = cfg?.revealAnchorAt ?? null
-        const interval = cfg?.revealIntervalHours ?? 24
-        const dayIdx = t.day_index ?? 0
+        // Reveal status for the badge — from the gap chain.
+        const openAt = openByDay.get(t.day_index ?? 0)
         let status: { label: string; color: string }
         if (!t.is_published) {
           status = { label: '○ DRAFT', color: 'rgba(245,245,245,0.3)' }
-        } else if (isRevealed(anchor, interval, dayIdx)) {
+        } else if (hasOpened(openAt ?? null)) {
           status = { label: '● LIVE', color: '#20D890' }
         } else {
-          const at = computeRevealAt(anchor, interval, dayIdx)
-          status = { label: at ? `◷ ${fmtReveal(at)}` : '◷ scheduled', color: '#E8A020' }
+          status = { label: openAt ? `◷ ${fmtReveal(openAt)}` : '◷ scheduled', color: '#E8A020' }
         }
         return (
           <button

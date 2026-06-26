@@ -109,6 +109,12 @@ export function buildSchedule(
   return out
 }
 
+/** True once `openAt` has arrived (the question has opened). `now` is injectable
+ *  so render code can call this without an impure `Date.now()` inline. */
+export function hasOpened(openAt: Date | null, now: number = Date.now()): boolean {
+  return !!openAt && openAt.getTime() <= now
+}
+
 /** The current phase of a thread's tuning timeline. */
 export type TuningPhase =
   | { kind: 'before' }                                      // now < day 0 open (still scanning)

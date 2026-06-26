@@ -18,7 +18,7 @@ import type { CropConfig } from '@/lib/signal/process'
 import type { WorldVoteScope, WorldLifecycle, WorldStage } from '@/types/database'
 import { worldStage } from '@/types/database'
 import { renderVideoClip, extractAudioClip } from '@/lib/signal/av'
-import { buildSchedule, tuningPhase, DEFAULT_GAP_HOURS, DEFAULT_REVEAL_INTERVAL_HOURS, type PublishedDay } from '@/lib/signal/reveal'
+import { buildSchedule, tuningPhase, DEFAULT_GAP_HOURS, VOTE_WINDOW_HOURS, type PublishedDay } from '@/lib/signal/reveal'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -34,6 +34,7 @@ export interface SignalTask {
   type: SignalTaskType
   prompt: string | null
   is_published: boolean
+  published_at: string | null
   sort_order: number
   created_at: string
   day_index: number | null
@@ -1029,8 +1030,10 @@ export interface InvestigationConfig {
   title: string
   visionText: string | null
   voteScope: WorldVoteScope
-  revealAnchorAt: string | null      // schedule origin (set when day 0 publishes)
-  revealIntervalHours: number        // cadence between day reveals
+  revealAnchorAt: string | null      // schedule origin (null = anchors at the world's scan_until)
+  scanUntil: string | null           // the world's scan end — the anchor fallback
+  gapHours: number                   // inter-question gap; voting window is a fixed 24h
+  voteWindowHours: number            // the fixed 24h window (read-only, for display)
 }
 
 /** Full config for one investigation — world identity + owner vote scope.
@@ -1039,7 +1042,7 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
   const admin = createAdminClient() as DB
   const { data: thread } = await admin
     .from('signal_threads')
-    .select('id, title, world_id, reveal_anchor_at, reveal_interval_hours')
+    .select('id, title, world_id, reveal_anchor_at, gap_hours')
     .eq('id', threadId)
     .maybeSingle()
   if (!thread) return null
@@ -1047,16 +1050,18 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
   let title = thread.title ?? '(untitled)'
   let visionText: string | null = null
   let voteScope: WorldVoteScope = 'all'
+  let scanUntil: string | null = null
   if (thread.world_id) {
     const { data: world } = await admin
       .from('worlds')
-      .select('name, description, vote_scope')
+      .select('name, description, vote_scope, scan_until')
       .eq('id', thread.world_id)
       .maybeSingle()
     if (world) {
       title = world.name
       visionText = world.description ?? null
       voteScope = (world.vote_scope as WorldVoteScope) ?? 'all'
+      scanUntil = world.scan_until ?? null
     }
   }
 
@@ -1067,16 +1072,18 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
     visionText,
     voteScope,
     revealAnchorAt: thread.reveal_anchor_at ?? null,
-    revealIntervalHours: thread.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS,
+    scanUntil,
+    gapHours: thread.gap_hours ?? DEFAULT_GAP_HOURS,
+    voteWindowHours: VOTE_WINDOW_HOURS,
   }
 }
 
 /** Update the owner vote scope (on the world) and/or the reveal schedule (on the
- *  thread). `revealIntervalHours` tunes the cadence; `revealAnchorAt` lets the
- *  architect start/reset the timeline (null = not started). */
+ *  thread). `gapHours` tunes the inter-question gap (voting window is fixed 24h);
+ *  `revealAnchorAt` lets the architect restart the timeline from now. */
 export async function updateInvestigationConfig(
   threadId: string,
-  patch: { voteScope?: WorldVoteScope; revealIntervalHours?: number; revealAnchorAt?: string | null },
+  patch: { voteScope?: WorldVoteScope; gapHours?: number; revealAnchorAt?: string | null },
 ): Promise<{ ok: boolean; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
@@ -1091,8 +1098,8 @@ export async function updateInvestigationConfig(
   }
 
   const threadPatch: Record<string, unknown> = {}
-  if (patch.revealIntervalHours != null) {
-    threadPatch.reveal_interval_hours = Math.max(1, Math.round(patch.revealIntervalHours))
+  if (patch.gapHours != null) {
+    threadPatch.gap_hours = Math.max(0, Math.round(patch.gapHours))
   }
   if (patch.revealAnchorAt !== undefined) {
     threadPatch.reveal_anchor_at = patch.revealAnchorAt // ISO string or null to reset
@@ -1244,7 +1251,7 @@ export async function listInvestigationTasks(threadId: string): Promise<SignalTa
   const admin = createAdminClient() as DB
   const { data } = await admin
     .from('signal_tasks')
-    .select('id, task_date, type, prompt, is_published, sort_order, created_at, day_index, thread_id')
+    .select('id, task_date, type, prompt, is_published, published_at, sort_order, created_at, day_index, thread_id')
     .eq('thread_id', threadId)
     .order('day_index', { ascending: true })
   return (data ?? []) as SignalTask[]

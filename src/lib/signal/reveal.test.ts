@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   revealAt, isRevealed, DEFAULT_REVEAL_INTERVAL_HOURS,
-  buildSchedule, tuningPhase, VOTE_WINDOW_HOURS,
+  buildSchedule, tuningPhase, hasOpened, VOTE_WINDOW_HOURS,
   type PublishedDay,
 } from './reveal'
 
@@ -66,6 +66,19 @@ const pub = (...days: number[]): PublishedDay[] => days.map((d) => ({ dayIndex: 
 describe('VOTE_WINDOW_HOURS', () => {
   it('is the fixed 24h voting window', () => {
     expect(VOTE_WINDOW_HOURS).toBe(24)
+  })
+})
+
+describe('hasOpened', () => {
+  it('is false for a null open time', () => {
+    expect(hasOpened(null, T0_MS)).toBe(false)
+  })
+  it('is true once the open time has passed', () => {
+    expect(hasOpened(at(10), T0_MS + 11 * H)).toBe(true)
+    expect(hasOpened(at(10), T0_MS + 10 * H)).toBe(true)
+  })
+  it('is false before the open time', () => {
+    expect(hasOpened(at(10), T0_MS + 9 * H)).toBe(false)
   })
 })
 
