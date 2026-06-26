@@ -402,13 +402,10 @@ function PathRail({
 // all three (in any order) unlocks Voyager status.
 
 function VoyagerUnlockTrack({
-  completed, allDone, doneCount,
+  completed,
 }: {
   completed: Record<TaskKey, boolean>
-  allDone: boolean
-  doneCount: number
 }) {
-  const gold    = (a: number) => `rgba(196,169,106,${a})`
   const green   = '#20D890'
   const orange  = '#FF6B35'
 
@@ -466,52 +463,10 @@ function VoyagerUnlockTrack({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {/* three EQUAL tasks — stacked as peers, no connecting spine (no order) */}
+      {/* three EQUAL tasks — stacked as peers, no connecting spine (no order).
+          The unlock/progress is shown in the section header + the path rail,
+          so no separate "Voyager Status" summary card here. */}
       {TASKS.map(taskCard)}
-
-      {/* convergence arrow → all three feed the single unlock */}
-      <div style={{ textAlign: 'center', color: allDone ? gold(0.7) : 'rgba(245,245,245,0.25)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '1px 0' }}>
-        ⌄ ALL THREE UNLOCK ⌄
-      </div>
-
-      {/* Voyager unlock — lights up only when all three are done */}
-      <div className="dd-panel" style={{
-        ['--dd-bd' as string]: allDone ? gold(0.55) : 'rgba(255,255,255,0.12)',
-        ['--dd-fill' as string]: allDone ? '#161329' : '#0C1029',
-        padding: '15px 16px',
-        display: 'flex', alignItems: 'center', gap: 13,
-        boxShadow: allDone ? `0 0 22px ${gold(0.18)}` : 'none',
-        transition: 'all 0.35s ease',
-      }}>
-        <i className="dd-node" /><i className="dd-dash" />
-        <div style={{
-          width: 36, height: 36, flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transform: allDone ? 'rotate(45deg)' : 'none',
-          borderRadius: allDone ? 0 : '50%',
-          background: allDone ? gold(0.16) : 'rgba(255,255,255,0.02)',
-          border: `1.5px solid ${allDone ? gold(0.8) : 'rgba(255,255,255,0.14)'}`,
-          color: allDone ? gold(0.9) : 'rgba(245,245,245,0.3)',
-          transition: 'all 0.35s ease',
-        }}>
-          <span style={{ transform: allDone ? 'rotate(-45deg)' : 'none', display: 'inline-flex' }}>
-            {allDone ? <VoyagerIcon size={18} /> : <LockIcon size={15} />}
-          </span>
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 'var(--fs-label)', color: allDone ? gold(0.92) : 'rgba(245,245,245,0.55)' }}>Voyager Status</span>
-            {allDone && (
-              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: gold(0.9), border: `1px solid ${gold(0.45)}`, padding: '1px 6px', background: gold(0.12) }}>UNLOCKED ✦</span>
-            )}
-          </div>
-          <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.42)', lineHeight: 1.5 }}>
-            {allDone
-              ? 'All three steps complete — welcome to the Collective, Voyager.'
-              : `Complete all three steps above, in any order. ${doneCount} of 3 done.`}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
@@ -733,11 +688,7 @@ export default function VoyagerPathPage() {
                   {allDone ? 'VOYAGER UNLOCKED ✦' : `${completedCount} / ${totalTasks} COMPLETE`}
                 </span>
               </div>
-              <VoyagerUnlockTrack
-                completed={completed}
-                allDone={allDone}
-                doneCount={completedCount}
-              />
+              <VoyagerUnlockTrack completed={completed} />
             </>
           )}
         </section>
