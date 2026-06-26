@@ -200,6 +200,12 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     setShowConfirm(true)
     // Enable click-anywhere to trigger scan after all lines have appeared
     setTimeout(() => setAwaitClick(true), 2400)
+    // Auto-advance into the console after a beat so the user doesn't have to tap
+    // (the click-anywhere overlay still lets the impatient skip ahead).
+    setTimeout(() => {
+      localStorage.setItem('putopia_voyager_registered', '1')
+      window.location.href = '/console'
+    }, 3500)
   }
 
   /* ── Returning user: already submitted email, hasn't completed /register ── */
