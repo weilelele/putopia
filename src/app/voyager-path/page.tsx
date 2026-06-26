@@ -161,8 +161,8 @@ const TASKS: {
     href: '/quiz', icon: <QuizIcon />, accentColor: '#FF6B35',
   },
   {
-    key: 'get_pack', num: '03', label: 'Get Your Voyager Pack',
-    description: 'Claim your physical badge, member number and cohort placement.',
+    key: 'get_pack', num: '03', label: 'Claim Your Voyager Pack',
+    description: 'Claim Your Voyager Badge, Welcome Letter and digital cohort placement',
     href: '/voyager-pack', icon: <WorldPackIcon size={18} />, accentColor: '#FF6B35', chip: '$12',
   },
 ]
