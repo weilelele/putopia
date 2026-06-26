@@ -2,14 +2,14 @@
  * Signal Scanning ceremony — pure time math, shared by server (submit, gating)
  * and client (countdown hero). No DB / env / DOM imports: keep it testable.
  *
- * Model: filing a sighting rolls a `scan_until` a random 8-10h out. Until then
+ * Model: filing a sighting rolls a `scan_until` a random 6-8h out. Until then
  * the world is SCANNING (the proposer watches a countdown). When the scan
  * completes the world is READY if an Architect tuned a signal in the window,
  * otherwise FAILED. Legacy worlds (scan_until = null) skip the ceremony.
  */
 
-export const SCAN_MIN_HOURS = 8
-export const SCAN_MAX_HOURS = 10
+export const SCAN_MIN_HOURS = 6
+export const SCAN_MAX_HOURS = 8
 
 // Inter-day "Signal Searching" windows are longer than the initial scan.
 export const SEARCH_MIN_HOURS = 8
