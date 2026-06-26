@@ -92,7 +92,7 @@ function TrafficRef({ count, count30d, hide30d = false }: { count: number; count
 }
 
 // PostHog-tracked steps (accumulate from today onward)
-const POSTHOG_KEYS   = new Set(['onboarding_started', 'onboarding_slider_touched', 'onboarding_q1_completed', 'onboarding_q2_completed'])
+const POSTHOG_KEYS   = new Set(['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_slider_touched', 'onboarding_q3_completed'])
 // Supabase-backed steps (full historical data)
 const SUPABASE_KEYS  = new Set(['onboarding_email_submitted', 'invite_link_clicked', 'registered'])
 // Retention step — shown separately below the funnel
@@ -367,7 +367,7 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
       <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
         {phSteps.length >= 2 && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Q1→Q2</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Started→末题完成</div>
             <div style={{ fontFamily: 'monospace', fontSize: 12, color: ACCENT, fontWeight: 700 }}>
               {pct(phSteps[phSteps.length - 1]?.count_all_time ?? 0, phSteps[0].count_all_time)}
             </div>
@@ -418,9 +418,10 @@ type DailyFunnel = {
   homepage: number
   ad: number
   started: number
-  slider: number
   q1: number
   q2: number
+  slider: number
+  q3: number
   email: number
   inviteClicked: number
   registered: number
@@ -452,19 +453,22 @@ async function getDailyFunnel(days = 30): Promise<DailyFunnel[]> {
         count(distinct if(event = '$pageview' AND properties.$pathname = '/', person_id, NULL))           AS homepage,
         count(distinct if(event = 'onboarding_started' AND properties.utm_source IS NOT NULL, person_id, NULL)) AS ad,
         count(distinct if(event = 'onboarding_started', person_id, NULL))                                  AS started,
-        count(distinct if(event = 'onboarding_slider_touched', person_id, NULL))                           AS slider,
         count(distinct if(event = 'onboarding_q1_completed', person_id, NULL))                             AS q1,
         count(distinct if(event = 'onboarding_q2_completed', person_id, NULL))                             AS q2,
+        count(distinct if(event = 'onboarding_slider_touched', person_id, NULL))                           AS slider,
+        count(distinct if(event = 'onboarding_q3_completed', person_id, NULL))                             AS q3,
         count(distinct if(event = 'console_login_clicked', person_id, NULL))                               AS loginClicked
       FROM events
       WHERE toDate(timestamp) >= today() - ${days - 1}
       GROUP BY day
       ORDER BY day DESC
     `),
-    // Email submitted = applications (full history, has created_at)
-    supabase.from('applications').select('created_at').gte('created_at', cutoffISO),
-    // Registered = completed /register
-    supabase.from('voyager_profiles').select('registered_at').not('registered_at', 'is', null).gte('registered_at', cutoffISO),
+    // Email submitted = applications (full history, has created_at). Newest-first +
+    // explicit high limit: a bare select caps at PostgREST's 1000-row default, which
+    // for a 30-day window of thousands of rows silently drops the most recent days.
+    supabase.from('applications').select('created_at').gte('created_at', cutoffISO).order('created_at', { ascending: false }).limit(50_000),
+    // Registered = completed /register (same 1000-row-default guard)
+    supabase.from('voyager_profiles').select('registered_at').not('registered_at', 'is', null).gte('registered_at', cutoffISO).order('registered_at', { ascending: false }).limit(50_000),
     // Invite link clicked = confirmed auth.users, per day (SECURITY DEFINER RPC)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any).rpc('confirmed_auth_users_by_day', { cutoff: cutoffISO }),
@@ -472,23 +476,24 @@ async function getDailyFunnel(days = 30): Promise<DailyFunnel[]> {
 
   const map = new Map<string, DailyFunnel>(
     dayList.map(day => [day, {
-      day, homepage: 0, ad: 0, started: 0, slider: 0, q1: 0, q2: 0,
+      day, homepage: 0, ad: 0, started: 0, q1: 0, q2: 0, slider: 0, q3: 0,
       email: 0, inviteClicked: 0, registered: 0, loginClicked: 0,
     }]),
   )
 
   // email is sourced from Supabase applications below (full history); registered &
   // inviteClicked likewise come from Supabase — PostHog supplies the rest.
-  for (const r of phRows as [string, number, number, number, number, number, number, number][]) {
+  for (const r of phRows as [string, number, number, number, number, number, number, number, number][]) {
     const row = map.get(String(r[0]))
     if (!row) continue
     row.homepage     = Number(r[1]) || 0
     row.ad           = Number(r[2]) || 0
     row.started      = Number(r[3]) || 0
-    row.slider       = Number(r[4]) || 0
-    row.q1           = Number(r[5]) || 0
-    row.q2           = Number(r[6]) || 0
-    row.loginClicked = Number(r[7]) || 0
+    row.q1           = Number(r[4]) || 0
+    row.q2           = Number(r[5]) || 0
+    row.slider       = Number(r[6]) || 0
+    row.q3           = Number(r[7]) || 0
+    row.loginClicked = Number(r[8]) || 0
   }
 
   const bucket = (rows: { [k: string]: unknown }[] | null, col: string, field: keyof DailyFunnel) => {
@@ -524,14 +529,16 @@ function dailyToRun(d: DailyFunnel): Run {
     steps: [
       mk('homepage_visit',             'Homepage (traffic ref)',  0, d.homepage),
       mk('ad_landing',                 'Ad Landing (utm_source)', 0, d.ad),
+      // v3 flow order (since 2026-06-26): started → q1 console → q2 world → slider → q3 urgency
       mk('onboarding_started',         'Onboarding Started',      1, d.started),
-      mk('onboarding_slider_touched',  'Slider Touched',          2, d.slider),
-      mk('onboarding_q1_completed',    'Q1 Completed',            3, d.q1),
-      mk('onboarding_q2_completed',    'Q2 Completed',            4, d.q2),
-      mk('onboarding_email_submitted', 'Email Submitted',         5, d.email),
-      mk('invite_link_clicked',        'Invite Link Clicked',     6, d.inviteClicked),
-      mk('registered',                 'Account Registered',      7, d.registered),
-      mk('console_login_clicked',      'Returned to Login',       8, d.loginClicked),
+      mk('onboarding_q1_completed',    'Q1 · Console',            2, d.q1),
+      mk('onboarding_q2_completed',    'Q2 · World',              3, d.q2),
+      mk('onboarding_slider_touched',  'Slider Touched',          4, d.slider),
+      mk('onboarding_q3_completed',    'Q3 · Urgency',            5, d.q3),
+      mk('onboarding_email_submitted', 'Email Submitted',         6, d.email),
+      mk('invite_link_clicked',        'Invite Link Clicked',     7, d.inviteClicked),
+      mk('registered',                 'Account Registered',      8, d.registered),
+      mk('console_login_clicked',      'Returned to Login',       9, d.loginClicked),
     ],
   }
 }
@@ -614,8 +621,8 @@ function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: st
   )
 }
 
-const HISTORY_KEYS   = ['onboarding_started', 'onboarding_slider_touched', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_email_submitted', 'invite_link_clicked', 'registered']
-const HISTORY_LABELS = ['Started', 'Slider', 'Q1', 'Q2', 'Email', 'Clicked', 'Reg.']
+const HISTORY_KEYS   = ['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_slider_touched', 'onboarding_q3_completed', 'onboarding_email_submitted', 'invite_link_clicked', 'registered']
+const HISTORY_LABELS = ['Started', 'Q1', 'Q2', 'Slider', 'Q3', 'Email', 'Clicked', 'Reg.']
 
 function HistoryTable({ runs }: { runs: Run[] }) {
   if (runs.length < 2) return null
