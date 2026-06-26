@@ -1,4 +1,4 @@
--- schema_v46.sql
+-- schema_v51.sql
 -- Onboarding 3-question flow go-live.
 --
 -- The flow changed from 2 questions to 3:

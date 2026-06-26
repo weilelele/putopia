@@ -1,4 +1,4 @@
--- schema_v45.sql — per-step onboarding videos + onboarding bucket upload limits
+-- schema_v50.sql — per-step onboarding videos + onboarding bucket upload limits
 --
 -- (a) Q1 / Q2 / CTA each get an independently uploadable video. The existing
 --     `video_url` column stays the Q1 (base) video; the two new columns are
