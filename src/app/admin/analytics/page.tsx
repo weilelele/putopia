@@ -95,8 +95,6 @@ function TrafficRef({ count, count30d, hide30d = false }: { count: number; count
 const POSTHOG_KEYS   = new Set(['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_slider_touched', 'onboarding_q3_completed'])
 // Supabase-backed steps (full historical data)
 const SUPABASE_KEYS  = new Set(['onboarding_email_submitted', 'invite_link_clicked', 'registered'])
-// Retention step — shown separately below the funnel
-const RETENTION_KEYS = new Set(['console_login_clicked'])
 // Ad traffic reference — shown above funnel, not in conversion rates
 const AD_REF_KEYS    = new Set(['ad_landing'])
 
@@ -144,41 +142,40 @@ function StepRow({ step, prev, maxCount, color = ACCENT, hide30d = false }: {
   )
 }
 
-function RetentionCard({ step, registered, hide30d = false }: { step: SnapshotRow; registered: number; hide30d?: boolean }) {
-  const rate = registered > 0 ? Math.round((step.count_all_time / registered) * 100) : 0
+// Two core conversion rates: email capture (email / started) and register rate
+// (registered / email). `daily` adds the same-day-cohort caveat for register rate.
+function CoreRatesCard({ started, email, registered, daily = false }: {
+  started: number; email: number; registered: number; daily?: boolean
+}) {
+  const emailRate = started > 0 ? Math.round((email / started) * 100) : 0
+  const regRate   = email   > 0 ? Math.round((registered / email) * 100) : 0
+
+  const labelStyle = { fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' } as const
+  const numStyle   = { fontFamily: 'monospace', fontSize: 22, color: ACCENT, fontWeight: 700, lineHeight: 1 } as const
+  const denStyle   = { fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' } as const
+
   return (
     <div style={{ marginTop: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(232,93,4,0.03)', border: '1px solid rgba(232,93,4,0.15)', borderRadius: 2 }}>
       <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: '#6E6B5E', marginBottom: '0.75rem' }}>
-        RETENTION · RETURNING USERS
+        CORE CONVERSION · 核心转化
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' }}>
-            CONSOLE → LOGIN COLLECTIVE 点击
-          </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 22, color: '#E8A020', fontWeight: 700, lineHeight: 1 }}>
-            {step.count_all_time.toLocaleString()}
-          </div>
-          {!hide30d && (
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' }}>
-              30d: {step.count_30d}
-            </div>
-          )}
+          <div style={labelStyle}>留邮箱率（Email / 进入 onboarding）</div>
+          <div style={numStyle}>{emailRate}%</div>
+          <div style={denStyle}>{email.toLocaleString()} / {started.toLocaleString()} started</div>
         </div>
-        {registered > 0 && (
-          <div style={{ borderLeft: `1px solid rgba(232,93,4,0.15)`, paddingLeft: '1.5rem' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' }}>
-              回归率（登录 / 注册用户）
-            </div>
-            <div style={{ fontFamily: 'monospace', fontSize: 22, color: '#E8A020', fontWeight: 700, lineHeight: 1 }}>
-              {rate}%
-            </div>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' }}>
-              {step.count_all_time} / {registered} 已注册用户
-            </div>
-          </div>
-        )}
+        <div style={{ borderLeft: '1px solid rgba(232,93,4,0.15)', paddingLeft: '1.5rem' }}>
+          <div style={labelStyle}>注册完成率（注册 / 留邮箱）</div>
+          <div style={numStyle}>{regRate}%</div>
+          <div style={denStyle}>{registered.toLocaleString()} / {email.toLocaleString()} email</div>
+        </div>
       </div>
+      {daily && (
+        <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, marginTop: '0.75rem', lineHeight: 1.7 }}>
+          {'* 单日注册完成率为同日比值——留邮箱与完成注册往往不是同一批人（注册常晚邮箱数天），仅作方向参考；准确口径看 LATEST 累计卡。'}
+        </div>
+      )}
     </div>
   )
 }
@@ -282,9 +279,10 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
   const adRef        = allSteps.find(s => AD_REF_KEYS.has(s.step_key))
   const phSteps      = allSteps.filter(s => POSTHOG_KEYS.has(s.step_key))
   const sbSteps      = allSteps.filter(s => SUPABASE_KEYS.has(s.step_key))
-  const retentionStep = allSteps.find(s => RETENTION_KEYS.has(s.step_key))
   const phMax        = phSteps[0]?.count_all_time || 1
   const sbMax        = sbSteps[0]?.count_all_time || 1
+  const startedCount    = phSteps.find(s => s.step_key === 'onboarding_started')?.count_all_time ?? 0
+  const emailCount      = sbSteps.find(s => s.step_key === 'onboarding_email_submitted')?.count_all_time ?? 0
   const registeredCount = sbSteps.find(s => s.step_key === 'registered')?.count_all_time ?? 0
 
   return (
@@ -355,10 +353,8 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
         ))}
       </div>
 
-      {/* Retention */}
-      {retentionStep && (
-        <RetentionCard step={retentionStep} registered={registeredCount} />
-      )}
+      {/* Core conversion rates */}
+      <CoreRatesCard started={startedCount} email={emailCount} registered={registeredCount} />
 
       {/* Before / After slider comparison */}
       <BeforeAfterComparison steps={run.steps} />
@@ -554,9 +550,10 @@ function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: st
   const adRef          = allSteps.find(s => AD_REF_KEYS.has(s.step_key))
   const phSteps        = allSteps.filter(s => POSTHOG_KEYS.has(s.step_key))
   const sbSteps        = allSteps.filter(s => SUPABASE_KEYS.has(s.step_key))
-  const retentionStep  = allSteps.find(s => RETENTION_KEYS.has(s.step_key))
   const phMax          = phSteps[0]?.count_all_time || 1
   const sbMax          = sbSteps[0]?.count_all_time || 1
+  const startedCount    = phSteps.find(s => s.step_key === 'onboarding_started')?.count_all_time ?? 0
+  const emailCount      = sbSteps.find(s => s.step_key === 'onboarding_email_submitted')?.count_all_time ?? 0
   const registeredCount = sbSteps.find(s => s.step_key === 'registered')?.count_all_time ?? 0
 
   return (
@@ -609,9 +606,7 @@ function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: st
         ))}
       </div>
 
-      {retentionStep && (
-        <RetentionCard step={retentionStep} registered={registeredCount} hide30d />
-      )}
+      <CoreRatesCard started={startedCount} email={emailCount} registered={registeredCount} daily />
 
       <div style={{ marginTop: '1rem', fontFamily: 'monospace', fontSize: 9, color: MUTED, lineHeight: 1.8 }}>
         {'// 仅显示选中那一天发生的事件（UTC 日历日），与上方 LATEST 累计卡不同。'}<br />
