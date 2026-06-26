@@ -232,6 +232,52 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
   )
 }
 
+// ─── Benefit detail modal (Applicant preview: explains what each benefit is) ──
+
+type BenefitDetail = { title: string; sublabel: string; body: string }
+
+function BenefitDetailModal({ item, onClose }: { item: BenefitDetail; onClose: () => void }) {
+  const gold = (a: number) => `rgba(196,169,106,${a})`
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(10,14,39,0.82)',
+        backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 60, padding: '24px',
+        animation: 'modal-backdrop-in 0.15s ease-out',
+      }}
+    >
+      <div className="dd-panel" style={{
+        maxWidth: 400, width: '100%',
+        ['--dd-bd' as string]: gold(0.45),
+        ['--dd-fill' as string]: '#0F1430',
+        padding: '22px 26px 18px',
+        animation: 'modal-in 0.18s cubic-bezier(0.34,1.56,0.64,1)',
+        filter: 'drop-shadow(0 0 40px rgba(10,14,39,0.6))',
+      }}>
+        <i className="dd-node" />
+        <i className="dd-dash" />
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 'var(--fs-label)', color: gold(0.85), letterSpacing: '0.12em', marginBottom: 4 }}>
+            {item.title}
+          </div>
+          <div style={{ fontSize: 'var(--fs-caption)', color: gold(0.45), letterSpacing: '0.1em' }}>
+            {item.sublabel}
+          </div>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.75 }}>
+          {item.body}
+        </p>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.15)', letterSpacing: '0.14em', textAlign: 'center' }}>
+          TAP ANYWHERE TO DISMISS
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ─── Demo controls bar ────────────────────────────────────────────────────────
 
@@ -464,9 +510,105 @@ function VoyagerUnlockTrack({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* three EQUAL tasks — stacked as peers, no connecting spine (no order).
-          The unlock/progress is shown in the section header + the path rail,
+          Progress + unlock are shown in the section header and the path rail,
           so no separate "Voyager Status" summary card here. */}
       {TASKS.map(taskCard)}
+    </div>
+  )
+}
+
+// ─── VOYAGER stage content ────────────────────────────────────────────────────
+
+function VoyagerStageContent({ onItemClick }: { onItemClick: (item: BenefitDetail) => void }) {
+  const gold = (a: number) => `rgba(196,169,106,${a})`
+
+  const preview: (BenefitDetail & { icon: React.ReactNode })[] = [
+    {
+      icon: <ConsoleIcon size={18} />,
+      title: 'CONSOLE — PRIORITY APPLICATION',
+      sublabel: 'First in line for limited hardware',
+      body: 'Voyagers are first in line to apply for the next Multiverse Console. Reserve limited hardware before public availability.',
+    },
+    {
+      icon: <IntelIcon />,
+      title: 'INTEL & DECISIONS',
+      sublabel: 'Access reports and shape Collective decisions',
+      body: 'Access all Architect intelligence dispatches and participate in Collective votes — stay informed and help shape the mission.',
+    },
+    {
+      icon: <VoyagerIcon size={18} />,
+      title: 'VOYAGER IDENTITY',
+      sublabel: 'Your permanent number and cohort placement',
+      body: 'Receive a permanent Voyager number and cohort designation — your unique position and rank within the Collective.',
+    },
+    {
+      icon: <SignalIcon />,
+      title: 'SIGNAL ANALYSIS & DEVICE TRACKING',
+      sublabel: 'Active field operations — coming soon',
+      body: 'Decode anomalous signal transmissions and trace active Multiverse Consoles in the field. Signal missions are available to Voyagers only.',
+    },
+  ]
+
+  return (
+    <div className="dd-panel" style={{ ['--dd-bd' as string]: gold(0.3) }}>
+      <i className="dd-node" />
+      <i className="dd-dash" />
+
+      {/* Header */}
+      <div style={{
+        padding: '12px 18px',
+        borderBottom: `1px solid ${gold(0.07)}`,
+        display: 'flex', alignItems: 'center', gap: 9,
+      }}>
+        <div style={{ color: gold(0.45) }}><VoyagerIcon size={14} /></div>
+        <span style={{ fontSize: 'var(--fs-label)', letterSpacing: '0.14em', color: gold(0.5) }}>
+          VOYAGER BENEFITS
+        </span>
+      </div>
+
+      {/* Rows — all clickable, show detail modal on click */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {preview.map(({ icon, title, sublabel, body }, i) => {
+          const isLast = i === preview.length - 1
+          return (
+            <div
+              key={title}
+              onClick={() => onItemClick({ title, sublabel, body })}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 13,
+                padding: '12px 18px',
+                borderBottom: isLast ? 'none' : `1px solid ${gold(0.05)}`,
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = gold(0.04) }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+            >
+              <div style={{
+                width: 32, height: 32, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: `1px solid ${gold(0.18)}`,
+                background: gold(0.04),
+                color: gold(0.42),
+              }}>
+                {icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', marginBottom: 3, color: gold(0.62) }}>
+                  {title}
+                </div>
+                <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.22)', letterSpacing: '0.04em' }}>
+                  {sublabel}
+                </div>
+              </div>
+              <div style={{ flexShrink: 0, color: gold(0.3) }}>
+                <ArrowIcon size={11} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -621,6 +763,7 @@ export default function VoyagerPathPage() {
   const { user } = useAuth()
   const [viewedStage, setViewedStage] = useState<ViewStage>('applicant')
   const [modal, setModal]             = useState<ModalKind | null>(null)
+  const [detailItem, setDetailItem]   = useState<BenefitDetail | null>(null)
   const [status, setStatus]           = useState<VoyagerPathStatus | null>(null)
   // Preview override: /voyager-path?view=applicant forces the Applicant 3-task
   // track even for voyager/architect, so the task_gated experience can be QA'd
@@ -659,6 +802,7 @@ export default function VoyagerPathPage() {
 
       {/* ── Modals ── */}
       <Modal kind={modal} onClose={() => setModal(null)} />
+      {detailItem && <BenefitDetailModal item={detailItem} onClose={() => setDetailItem(null)} />}
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 20px 80px' }}>
 
@@ -680,7 +824,7 @@ export default function VoyagerPathPage() {
         <section style={{ marginBottom: 16 }}>
           {isVoyager ? (
             <VoyagerWelcomeBlock onConsoleClick={() => setModal('console_locked')} onSignalClick={() => setModal('signal_locked')} />
-          ) : (
+          ) : viewedStage === 'applicant' ? (
             <>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.22em' }}>— BECOME A VOYAGER —</span>
@@ -690,6 +834,8 @@ export default function VoyagerPathPage() {
               </div>
               <VoyagerUnlockTrack completed={completed} />
             </>
+          ) : (
+            <VoyagerStageContent onItemClick={setDetailItem} />
           )}
         </section>
 
