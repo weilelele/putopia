@@ -596,6 +596,8 @@ export interface PublicSignalTask {
   distribution: Record<string, number> | null
   /** true once a newer day has revealed: the day is read-only (results shown, no voting) */
   closed: boolean
+  /** when this question's 24h voting window closes (ISO); null if unscheduled */
+  closeAt: string | null
   /** investigation-thread continuity (if this task is part of a thread). Never
    *  exposes the hidden target. */
   thread: {
@@ -735,6 +737,7 @@ export async function getSignalFeed(date?: string): Promise<SignalFeed> {
       mySelection,
       distribution,
       closed: false,
+      closeAt: null,
       thread,
     })
   }
@@ -1371,6 +1374,7 @@ type VisibleDay = {
   prompt: string | null
   dayIndex: number
   revealAtISO: string | null
+  closeAtISO: string | null
   revealed: boolean
 }
 type TaskRow = { id: string; type: SignalTaskType; prompt: string | null; day_index: number | null }
@@ -1413,7 +1417,7 @@ function scheduleView(
     const ds = byDay.get(dayIndex)
     const revealed = !!ds && ds.openAt.getTime() <= nowMs
     if (!revealed && !isArchitect) continue // members only see days that have opened
-    visible.push({ taskId: r.id, type: r.type, prompt: r.prompt, dayIndex, revealAtISO: ds ? ds.openAt.toISOString() : null, revealed })
+    visible.push({ taskId: r.id, type: r.type, prompt: r.prompt, dayIndex, revealAtISO: ds ? ds.openAt.toISOString() : null, closeAtISO: ds ? ds.closeAt.toISOString() : null, revealed })
   }
 
   let searching: { failed: boolean; prevDayIndex: number; nextOpenAtISO: string | null } | null = null
@@ -1516,6 +1520,7 @@ function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSig
         mySelection,
         distribution,
         closed,
+        closeAt: v.closeAtISO,
         thread: null,
       },
     }

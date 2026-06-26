@@ -279,6 +279,15 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
 
   const responded = !!task.mySelection
   const closed = task.closed // a newer day has revealed — read-only, voting ended
+
+  // Live countdown to this question's voting close (the 24h identification window).
+  const [closeLeft, setCloseLeft] = useState(() => scanSecondsLeft(task.closeAt))
+  useEffect(() => {
+    if (closed || !task.closeAt) return
+    const id = setInterval(() => setCloseLeft(scanSecondsLeft(task.closeAt)), 1000)
+    return () => clearInterval(id)
+  }, [task.closeAt, closed])
+
   const main = task.assets.find((a) => a.asset_role === 'main')
   const options = task.assets.filter((a) => a.asset_role !== 'main')
   const total = task.distribution ? Object.values(task.distribution).reduce((s, n) => s + n, 0) : 0
@@ -346,15 +355,15 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
       {/* Footer — status on the left, response count anchored bottom-right. */}
       <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ minWidth: 0 }}>
+          {/* Identification window status — live countdown while open, else ended. */}
           {closed ? (
-            responded ? (
-              <div style={{ fontSize: 'var(--fs-caption)', color: '#20D890', letterSpacing: '0.05em' }}>● Response recorded.</div>
-            ) : (
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.05em' }}>○ Voting closed.</div>
-            )
-          ) : responded ? (
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.4)', letterSpacing: '0.12em', marginBottom: 6 }}>○ IDENTIFICATION CLOSED</div>
+          ) : task.closeAt ? (
+            <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', letterSpacing: '0.12em', marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>◷ IDENTIFYING · {fmtCountdown(closeLeft)}</div>
+          ) : null}
+          {responded ? (
             <div style={{ fontSize: 'var(--fs-caption)', color: '#20D890', letterSpacing: '0.05em' }}>● Response recorded.</div>
-          ) : canParticipate ? (
+          ) : closed ? null : canParticipate ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <button
                 onClick={submit} disabled={!pick || busy}
