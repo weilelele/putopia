@@ -327,12 +327,10 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
 
   if (!cfg) return null
 
-  const patch = async (p: { voteScope?: WorldVoteScope; gapHours?: number; revealAnchorAt?: string | null }) => {
+  const patch = async (p: { voteScope?: WorldVoteScope; gapHours?: number }) => {
     await updateInvestigationConfig(threadId, p)
     await reload()
   }
-
-  const anchorDate = cfg.revealAnchorAt ? new Date(cfg.revealAnchorAt) : null
 
   return (
     <div style={{ ...S.card, padding: 14 }}>
@@ -350,14 +348,9 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
           </select>
         </div>
       </div>
-      {/* Reveal schedule */}
+      {/* Tuning cadence — the first question opens at the world's scan end; each
+          question runs a fixed 24h, then this gap before the next. */}
       <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,107,53,0.12)', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-        <div>
-          <label style={S.label}>SCHEDULE</label>
-          <div style={{ fontSize: 11, color: anchorDate ? '#20D890' : 'rgba(245,245,245,0.45)' }}>
-            {anchorDate ? `Restarted ${fmtReveal(anchorDate)}` : 'Anchors at the world’s scan end (first question opens then)'}
-          </div>
-        </div>
         <div>
           <label style={S.label}>VOTING WINDOW</label>
           <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.55)', padding: '5px 0' }}>{cfg.voteWindowHours}h (fixed)</div>
@@ -370,12 +363,6 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
             onBlur={(e) => { const v = Number(e.target.value); if (v >= 0 && v !== cfg.gapHours) patch({ gapHours: v }) }}
           />
         </div>
-        {anchorDate && (
-          <button
-            style={{ ...S.btn, ...S.btnGhost, padding: '4px 10px', fontSize: 10, alignSelf: 'flex-end' }}
-            onClick={async () => { if (confirm('Restart the timeline from now? Already-opened questions stay visible; pending ones shift to the new schedule.')) await patch({ revealAnchorAt: new Date().toISOString() }) }}
-          >↻ Restart from now</button>
-        )}
       </div>
       {cfg.visionText && (
         <div style={{ marginTop: 10 }}>

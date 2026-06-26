@@ -1081,12 +1081,12 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
   }
 }
 
-/** Update the owner vote scope (on the world) and/or the reveal schedule (on the
- *  thread). `gapHours` tunes the inter-question gap (voting window is fixed 24h);
- *  `revealAnchorAt` lets the architect restart the timeline from now. */
+/** Update the owner vote scope (on the world) and/or the inter-question gap
+ *  (on the thread). The timeline always anchors at the world's scan end; voting
+ *  window is a fixed 24h. */
 export async function updateInvestigationConfig(
   threadId: string,
-  patch: { voteScope?: WorldVoteScope; gapHours?: number; revealAnchorAt?: string | null },
+  patch: { voteScope?: WorldVoteScope; gapHours?: number },
 ): Promise<{ ok: boolean; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
@@ -1103,9 +1103,6 @@ export async function updateInvestigationConfig(
   const threadPatch: Record<string, unknown> = {}
   if (patch.gapHours != null) {
     threadPatch.gap_hours = Math.max(0, Math.round(patch.gapHours))
-  }
-  if (patch.revealAnchorAt !== undefined) {
-    threadPatch.reveal_anchor_at = patch.revealAnchorAt // ISO string or null to reset
   }
   if (Object.keys(threadPatch).length) {
     const { error } = await admin.from('signal_threads').update(threadPatch).eq('id', threadId)
