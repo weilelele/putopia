@@ -301,7 +301,7 @@ switch phase.kind:
 **Phase 1 — 纯逻辑（可先单测）** ✅
 - [x] `scan.ts`：`SCAN_MIN_HOURS = 6`, `SCAN_MAX_HOURS = 8`
 - [x] `reveal.ts`：新增 `VOTE_WINDOW_HOURS`、`buildSchedule`、`tuningPhase`（含 `search_failed`）、`hasOpened` + 单测（正常/迟到/搜索失败/恢复）
-- [x] 迁移 `schema_v49.sql`：`signal_threads.gap_hours INTEGER NOT NULL DEFAULT 4`（`published_at` 已存在，无需新增）
+- [x] 迁移 `schema_v51.sql`：`signal_threads.gap_hours INTEGER NOT NULL DEFAULT 4`（`published_at` 已存在，无需新增）
 
 **Phase 2 — 服务端** ✅
 - [x] `submitSignalResponse`：改用 `buildSchedule`+`tuningPhase` 做开放/关闭判定
@@ -316,4 +316,4 @@ switch phase.kind:
 **Phase 4 — 验证 & 迁移收尾**
 - [x] `tsc --noEmit`（0 error）/ `lint`（0 error）/ `vitest`（58 passed）
 - [ ] preview 上端到端：提交 → scan → Q0 开 → 关 → gap → Q1；并验证「搜索失败 → 补题 → 立即放出」
-- [ ] 生产跑 §6 的在飞行世界 SELECT，按需 re-anchor；应用 `schema_v49.sql`
+- [ ] 生产跑 §6 的在飞行世界 SELECT，按需 re-anchor；应用 `schema_v51.sql`

@@ -361,9 +361,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
           ) : task.closeAt ? (
             <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', letterSpacing: '0.12em', marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>◷ IDENTIFYING · {fmtCountdown(closeLeft)}</div>
           ) : null}
-          {responded ? (
-            <div style={{ fontSize: 'var(--fs-caption)', color: '#20D890', letterSpacing: '0.05em' }}>● Response recorded.</div>
-          ) : closed ? null : canParticipate ? (
+          {!responded && !closed && (canParticipate ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <button
                 onClick={submit} disabled={!pick || busy}
@@ -378,7 +376,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
                 ? <span><a href="/login" style={{ color: '#E85D04' }}>Log in</a> to respond.</span>
                 : <span>{lockReason || 'Voting is restricted for this world.'}</span>}
             </div>
-          )}
+          ))}
         </div>
         <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap', flexShrink: 0 }}>
           {task.participantCount} response{task.participantCount !== 1 ? 's' : ''}
