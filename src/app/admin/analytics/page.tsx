@@ -616,6 +616,96 @@ function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: st
   )
 }
 
+/* ── Onboarding before/after: email-capture rate by version (v2 → v3) ────────── */
+
+// waitlist_submitted shipped 2026-06-01 — ~4 days after onboarding_started. Floor
+// the comparison here so v2's denominator isn't padded by its early window where
+// `started` fired but the email event didn't exist yet. v3 is entirely post-06-26,
+// so this floor only trims v2's untracked head, making the two rates comparable.
+const EMAIL_EVENT_FLOOR = '2026-06-01 00:00:00'
+// The v2 → v3 cutover (3-question flow go-live), for the panel subtitle.
+const V3_CUTOVER_LABEL  = '2026-06-26 09:11 UTC'
+
+type VersionCapture = { version: string; started: number; email: number }
+
+// Email-capture rate (waitlist_submitted / onboarding_started) split by the
+// onboarding_version event property — the actual treatment, so it's immune to the
+// cutover-day mixing that confuses a date-based split. Both events carry the version.
+async function getEmailCaptureByVersion(): Promise<VersionCapture[]> {
+  const rows = await queryPostHog(`
+    SELECT
+      properties.onboarding_version AS version,
+      count(distinct if(event = 'onboarding_started', person_id, NULL)) AS started,
+      count(distinct if(event = 'waitlist_submitted', person_id, NULL)) AS email
+    FROM events
+    WHERE event IN ('onboarding_started', 'waitlist_submitted')
+      AND properties.onboarding_version IN ('v2', 'v3')
+      AND timestamp >= '${EMAIL_EVENT_FLOOR}'
+    GROUP BY version
+    ORDER BY version
+  `)
+  return (rows as [string, number, number][]).map(r => ({
+    version: String(r[0]), started: Number(r[1]) || 0, email: Number(r[2]) || 0,
+  }))
+}
+
+function EmailCaptureComparison({ rows }: { rows: VersionCapture[] }) {
+  const v2 = rows.find(r => r.version === 'v2')
+  const v3 = rows.find(r => r.version === 'v3')
+  const rateOf = (r?: VersionCapture) => (r && r.started > 0) ? (r.email / r.started) * 100 : null
+  const r2 = rateOf(v2)
+  const r3 = rateOf(v3)
+  const delta = (r2 != null && r3 != null) ? r3 - r2 : null
+  const thin  = (v3?.started ?? 0) < 100   // v3 sample still firming up
+
+  const col = (tag: string, tagColor: string, cap: VersionCapture | undefined) => {
+    const rate = rateOf(cap)
+    return (
+      <div style={{ flex: 1, minWidth: 150 }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: '0.15em', color: tagColor, marginBottom: '0.4rem' }}>{tag}</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 30, color: rate != null ? STAR : MUTED, fontWeight: 700, lineHeight: 1 }}>
+          {rate != null ? `${rate.toFixed(1)}%` : '—'}
+        </div>
+        <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.4rem' }}>
+          {(cap?.email ?? 0).toLocaleString()} 留邮箱 / {(cap?.started ?? 0).toLocaleString()} 进入
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ background: CARD_BG, border: `1px solid ${ACCENT}`, padding: '1.25rem 1.5rem', borderRadius: 2, marginBottom: '2rem' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: ACCENT, marginBottom: '0.35rem' }}>
+        ONBOARDING 改版前后 · 邮箱留资率 (v2 → v3)
+      </div>
+      <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '1.1rem', lineHeight: 1.7 }}>
+        进入流程 → 留邮箱 = waitlist_submitted / onboarding_started，按 onboarding_version 拆分。切换点 {V3_CUTOVER_LABEL}。
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
+        {col('BEFORE · v2', DIM, v2)}
+        <div style={{ fontFamily: 'monospace', fontSize: 20, color: MUTED, alignSelf: 'center' }}>→</div>
+        {col('AFTER · v3', ACCENT, v3)}
+        <div style={{ borderLeft: `1px solid ${BORDER}`, paddingLeft: '1.5rem', alignSelf: 'center' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.4rem' }}>变化 (pp)</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 30, fontWeight: 700, lineHeight: 1, color: delta == null ? MUTED : delta >= 0 ? OK_COLOR : '#D8203A' }}>
+            {delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`}
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.4rem' }}>
+            {delta == null ? '待 v3 数据' : delta >= 0 ? '↑ 提升' : '↓ 下降'}
+          </div>
+        </div>
+      </div>
+
+      {thin && (
+        <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#E8A020', marginTop: '0.9rem', lineHeight: 1.7 }}>
+          {`* v3 样本仍小（${(v3?.started ?? 0).toLocaleString()} 进入），比例尚未稳定——切换点 06-26 当天后满一整天（06-27 起）再看更可靠。`}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const HISTORY_KEYS   = ['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_slider_touched', 'onboarding_q3_completed', 'onboarding_email_submitted', 'invite_link_clicked', 'registered']
 const HISTORY_LABELS = ['Started', 'Q1', 'Q2', 'Slider', 'Q3', 'Email', 'Clicked', 'Reg.']
 
@@ -931,16 +1021,17 @@ function DailyLoginsPanel({ rows }: { rows: DailyRow[] }) {
 }
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ day?: string }> }) {
-  const [{ day: selectedDay }, [runs, recovery, daily, membership, newsletter, dailyFunnel]] = await Promise.all([
+  const [{ day: selectedDay }, [runs, recovery, daily, membership, newsletter, dailyFunnel, versionCapture]] = await Promise.all([
     searchParams,
     Promise.all([
-      getLatestRuns(10), getRecoveryCohort(), getDailyActivity(30), getMembershipFunnel(), getNewsletterFunnel(), getDailyFunnel(30),
+      getLatestRuns(10), getRecoveryCohort(), getDailyActivity(30), getMembershipFunnel(), getNewsletterFunnel(), getDailyFunnel(30), getEmailCaptureByVersion(),
     ]),
   ])
   const selected = dailyFunnel.some(r => r.day === selectedDay) ? selectedDay! : (dailyFunnel[0]?.day ?? '')
 
   const conversion = (
     <>
+      <EmailCaptureComparison rows={versionCapture} />
       {dailyFunnel.length > 0 && <DailyFunnelCard rows={dailyFunnel} selected={selected} />}
       {runs.length === 0 ? (
         <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, padding: '2rem', textAlign: 'center' }}>
