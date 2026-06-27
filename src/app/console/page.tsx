@@ -494,7 +494,7 @@ function HeroStats({ worlds, voyagers }: { worlds: number | null; voyagers: numb
   )
 }
 
-function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats | null }) {
+function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: GuestHeroStats | null; mcFunctions: McFunction[] }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
 
   useEffect(() => {
@@ -551,8 +551,13 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
         We own devices looking into parallel worlds.
       </p>
 
+      {/* Device showcase — leads the hero so the product hits first */}
+      <div style={{ width: '100%', maxWidth: 820, margin: '1.75rem auto 0', ...line(2) }}>
+        <McConsolePanel mcFunctions={mcFunctions} />
+      </div>
+
       {/* Three headline numbers — tap to reveal an explanation */}
-      <div style={{ width: '100%', ...line(2) }}>
+      <div style={{ width: '100%', marginTop: '1.75rem', ...line(2) }}>
         <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
       </div>
 
@@ -1065,7 +1070,7 @@ function ConsoleInner() {
       {loading ? (
         <section className="hero" style={{ flex: 1 }} />
       ) : isGuest ? (
-        <GuestHero newHref={newHref} stats={heroStats} />
+        <GuestHero newHref={newHref} stats={heroStats} mcFunctions={mcFunctions} />
       ) : (
         <AuthHero user={user} />
       )}
@@ -1082,10 +1087,7 @@ function ConsoleInner() {
         </section>
       ) : isGuest ? (
         <>
-          {/* Device — public showcase, full feed width */}
-          <section style={{ width: '100%', maxWidth: 820, margin: '1.5rem auto 0', padding: '0 0.75rem' }}>
-            <McConsolePanel mcFunctions={mcFunctions} />
-          </section>
+          {/* Device now leads the hero (see GuestHero); here just the gated feed. */}
           {/* INTERNAL UPDATES label — exposed above the frosted feed */}
           <div style={{ maxWidth: 820, margin: '1.75rem auto 0.25rem', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 1.25rem' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
