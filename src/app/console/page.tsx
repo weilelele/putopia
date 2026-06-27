@@ -556,14 +556,9 @@ function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: Gu
         <McConsolePanel mcFunctions={mcFunctions} />
       </div>
 
-      {/* Three headline numbers — tap to reveal an explanation */}
-      <div style={{ width: '100%', marginTop: '1.75rem', ...line(2) }}>
-        <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
-      </div>
-
       {/* CTA row — always horizontal, equal-width buttons */}
       <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.25rem',
+        display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.75rem',
         width: '100%', maxWidth: '620px',
       }}>
         <button type="button" className="btn-primary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
@@ -584,6 +579,11 @@ function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: Gu
           </svg>
           LOGIN
         </Link>
+      </div>
+
+      {/* Three headline numbers — supporting proof, below the action buttons */}
+      <div style={{ width: '100%', marginTop: '1.75rem', ...line(2) }}>
+        <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
       </div>
 
       {requestAccessModal}
