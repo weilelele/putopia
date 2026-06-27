@@ -525,12 +525,13 @@ function dailyToRun(d: DailyFunnel): Run {
     steps: [
       mk('homepage_visit',             'Homepage (traffic ref)',  0, d.homepage),
       mk('ad_landing',                 'Ad Landing (utm_source)', 0, d.ad),
-      // v3 flow order (since 2026-06-26): started → q1 console → q2 world → slider → q3 urgency
+      // v3 = 3 questions; Q3 (urgency slider) is one question measured at two points:
+      // 滑块触达 (first drag) → 完成 (clicked continue).
       mk('onboarding_started',         'Onboarding Started',      1, d.started),
       mk('onboarding_q1_completed',    'Q1 · Console',            2, d.q1),
       mk('onboarding_q2_completed',    'Q2 · World',              3, d.q2),
-      mk('onboarding_slider_touched',  'Slider Touched',          4, d.slider),
-      mk('onboarding_q3_completed',    'Q3 · Urgency',            5, d.q3),
+      mk('onboarding_slider_touched',  'Q3 · 滑块触达',           4, d.slider),
+      mk('onboarding_q3_completed',    'Q3 · 完成',               5, d.q3),
       mk('onboarding_email_submitted', 'Email Submitted',         6, d.email),
       mk('invite_link_clicked',        'Invite Link Clicked',     7, d.inviteClicked),
       mk('registered',                 'Account Registered',      8, d.registered),
@@ -707,7 +708,7 @@ function EmailCaptureComparison({ rows }: { rows: VersionCapture[] }) {
 }
 
 const HISTORY_KEYS   = ['onboarding_started', 'onboarding_q1_completed', 'onboarding_q2_completed', 'onboarding_slider_touched', 'onboarding_q3_completed', 'onboarding_email_submitted', 'invite_link_clicked', 'registered']
-const HISTORY_LABELS = ['Started', 'Q1', 'Q2', 'Slider', 'Q3', 'Email', 'Clicked', 'Reg.']
+const HISTORY_LABELS = ['Started', 'Q1', 'Q2', 'Q3滑', 'Q3完', 'Email', 'Clicked', 'Reg.']
 
 function HistoryTable({ runs }: { runs: Run[] }) {
   if (runs.length < 2) return null
