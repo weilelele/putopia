@@ -13,6 +13,7 @@ import { CommentThread } from '@/components/comment-thread'
 import { InvestigationCard } from '@/app/signal/SignalFeed'
 import { LazyImage } from '@/components/lazy-image'
 import { WorldScanHero } from '@/components/world-scan-hero'
+import { ArchiveReelView } from '@/components/archive-reel'
 import { worldScanState, scanComplete } from '@/lib/signal/scan'
 import { resolveWorldScan } from '@/lib/signal/scan-resolve'
 
@@ -103,6 +104,8 @@ export default function WorldDetailPage() {
   const scanFailed = scanState === 'failed'
   // A world in tuning leads with its Signal Tuning (top slot), not a hero image.
   const investigation = inv?.investigation ?? null
+  // Established worlds lead with their Archive reel (final form → days → vision).
+  const isEstablished = world.lifecycle_state === 'stable'
 
   return (
     <div className="main">
@@ -136,6 +139,8 @@ export default function WorldDetailPage() {
             onComplete={refreshAll}
             onRetry={isOwner ? openRetry : undefined}
           />
+        ) : isEstablished ? (
+          <ArchiveReelView world={world} />
         ) : investigation ? (
           <div style={{ marginBottom: '1.75rem' }}>
             {/* World title — relocated here from the (dropped) hero */}
