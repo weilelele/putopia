@@ -1721,6 +1721,71 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
   }
 }
 
+// ─── Archive World reel (Established worlds) ──────────────────────────────────
+
+export interface ArchiveDay {
+  dayIndex: number
+  dispatchAt: string | null          // when the day's signal went out (published_at)
+  winner: PublicSignalAsset | null   // the crowd-chosen reading for that day
+}
+export interface ArchiveFinalAsset {
+  id: string
+  media: 'image' | 'video'
+  url: string
+  posterUrl: string | null
+}
+export interface ArchiveReel {
+  finalAssets: ArchiveFinalAsset[]   // the world's final form (newest end of the reel)
+  days: ArchiveDay[]                 // each tuned day's chosen signal, ascending
+}
+
+/**
+ * Assemble an Established world's Archive reel: its Final Form media plus every
+ * tuned day's crowd-chosen signal (read-only). Standalone worlds with no tuning
+ * thread return empty `days` (the page degrades to just the poster + field notes).
+ */
+export async function getArchiveReel(worldId: string): Promise<ArchiveReel> {
+  const admin = createAdminClient() as DB
+
+  const { data: finals } = await admin
+    .from('world_final_assets')
+    .select('id, media, url, poster_url')
+    .eq('world_id', worldId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+  const finalAssets: ArchiveFinalAsset[] = ((finals ?? []) as { id: string; media: 'image' | 'video'; url: string; poster_url: string | null }[])
+    .map((f) => ({ id: f.id, media: f.media, url: f.url, posterUrl: f.poster_url ?? null }))
+
+  const { data: thread } = await admin
+    .from('signal_threads')
+    .select('id')
+    .eq('world_id', worldId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  let days: ArchiveDay[] = []
+  if (thread?.id) {
+    const { data: taskRows } = await admin
+      .from('signal_tasks')
+      .select('id, day_index, published_at')
+      .eq('thread_id', thread.id)
+      .eq('is_published', true)
+      .order('day_index', { ascending: true })
+    const tasks = (taskRows ?? []) as { id: string; day_index: number | null; published_at: string | null }[]
+    if (tasks.length) {
+      const { assetsByTask, respByTask } = await fetchDayData(admin, tasks.map((t) => t.id))
+      days = tasks.map((t) => ({
+        dayIndex: t.day_index ?? 0,
+        dispatchAt: t.published_at ?? null,
+        winner: pickWinnerAsset(assetsByTask.get(t.id), respByTask.get(t.id)),
+      }))
+    }
+  }
+
+  return { finalAssets, days }
+}
+
 // ─── Console dashboard board (doc 4.1) ────────────────────────────────────────
 
 export interface DispatchDashboard {

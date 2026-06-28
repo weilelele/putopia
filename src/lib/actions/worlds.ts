@@ -2,7 +2,7 @@
 
 import { revalidatePath, unstable_cache } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
-import type { WorldInsert, WorldUpdate } from '@/types/database'
+import type { WorldInsert, WorldUpdate, WorldFinalAsset, WorldFinalMedia } from '@/types/database'
 import { rollScanUntil } from '@/lib/signal/scan'
 import { logActivity } from './activity-events'
 
@@ -206,6 +206,111 @@ export async function addWorldImage(params: {
   if (dbError) return { error: dbError.message, url: null }
 
   return { error: null, url: publicUrl }
+}
+
+// ─── Final Form (the exit from Signal Tuning → Archive World) ──────────────────
+
+/** True if the caller is a signed-in architect. */
+async function callerIsArchitect(): Promise<boolean> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+  const admin = createAdminClient()
+  const { data } = await admin.from('voyager_profiles').select('role').eq('id', user.id).maybeSingle()
+  return data?.role === 'architect'
+}
+
+/**
+ * Upload one Final Form asset (image or video) for a world. For video the caller
+ * passes a poster Buffer (the first frame, captured client-side) so the world gets
+ * a still poster; for images the asset itself is the poster. Architect only.
+ */
+export async function addFinalFormAsset(params: {
+  worldId: string
+  media: WorldFinalMedia
+  file: Buffer
+  fileName: string
+  contentType: string
+  poster?: Buffer
+  posterContentType?: string
+}): Promise<{ error: string | null; asset: WorldFinalAsset | null }> {
+  if (!(await callerIsArchitect())) return { error: 'Architect role required', asset: null }
+  const admin = createAdminClient()
+  const stamp = Date.now()
+  const path = `${params.worldId}/final/${stamp}-${params.fileName}`
+
+  const { error: upErr } = await admin.storage
+    .from('world-images')
+    .upload(path, params.file, { contentType: params.contentType, upsert: false })
+  if (upErr) return { error: upErr.message, asset: null }
+  const { data: { publicUrl } } = admin.storage.from('world-images').getPublicUrl(path)
+
+  let posterUrl: string | null = publicUrl // images are their own poster
+  if (params.media === 'video' && params.poster) {
+    const posterPath = `${params.worldId}/final/${stamp}-poster.jpg`
+    const { error: pErr } = await admin.storage
+      .from('world-images')
+      .upload(posterPath, params.poster, { contentType: params.posterContentType ?? 'image/jpeg', upsert: false })
+    posterUrl = pErr ? null : admin.storage.from('world-images').getPublicUrl(posterPath).data.publicUrl
+  }
+
+  // Append after any existing assets.
+  const { count } = await admin.from('world_final_assets').select('id', { count: 'exact', head: true }).eq('world_id', params.worldId)
+  const { data, error } = await admin
+    .from('world_final_assets')
+    .insert({ world_id: params.worldId, media: params.media, url: publicUrl, poster_url: posterUrl, storage_path: path, sort_order: count ?? 0 })
+    .select()
+    .single()
+  if (error) return { error: error.message, asset: null }
+  return { error: null, asset: data as WorldFinalAsset }
+}
+
+/** A world's Final Form assets, carousel order. */
+export async function listFinalFormAssets(worldId: string): Promise<WorldFinalAsset[]> {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('world_final_assets')
+    .select('*')
+    .eq('world_id', worldId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+  return (data ?? []) as WorldFinalAsset[]
+}
+
+/** Remove a Final Form asset (and its storage object). Architect only. */
+export async function removeFinalFormAsset(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (!(await callerIsArchitect())) return { ok: false, error: 'Architect role required' }
+  const admin = createAdminClient()
+  const { data: row } = await admin.from('world_final_assets').select('storage_path').eq('id', id).maybeSingle()
+  if (row?.storage_path) await admin.storage.from('world-images').remove([row.storage_path])
+  const { error } = await admin.from('world_final_assets').delete().eq('id', id)
+  return error ? { ok: false, error: error.message } : { ok: true }
+}
+
+/**
+ * Graduate a world from Signal Tuning to an Established (Archive) World: requires
+ * at least one Final Form asset, sets lifecycle_state → 'stable', and makes the
+ * first asset's poster the world's list image. Architect only.
+ */
+export async function graduateWorld(worldId: string): Promise<{ ok: boolean; error?: string }> {
+  if (!(await callerIsArchitect())) return { ok: false, error: 'Architect role required' }
+  const admin = createAdminClient()
+  const { data: first } = await admin
+    .from('world_final_assets')
+    .select('url, poster_url')
+    .eq('world_id', worldId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  if (!first) return { ok: false, error: 'Add a Final Form asset before graduating' }
+
+  const poster = first.poster_url ?? first.url
+  const { error } = await admin.from('worlds').update({ lifecycle_state: 'stable', image_path: poster }).eq('id', worldId)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath('/worlds')
+  revalidatePath(`/worlds/${worldId}`)
+  return { ok: true }
 }
 
 export async function getWorldById(id: string) {
