@@ -20,6 +20,11 @@ CREATE TABLE IF NOT EXISTS public.world_final_assets (
 
 CREATE INDEX IF NOT EXISTS world_final_assets_world_idx ON public.world_final_assets (world_id);
 
+-- Postgres needs BOTH a GRANT and an RLS policy; custom tables require the GRANT
+-- explicitly (the service-role admin client otherwise hits "permission denied").
+GRANT ALL ON TABLE public.world_final_assets TO service_role;
+GRANT SELECT ON TABLE public.world_final_assets TO anon, authenticated;
+
 ALTER TABLE public.world_final_assets ENABLE ROW LEVEL SECURITY;
 
 -- Public, like the worlds it belongs to (the app reads via the service role).
