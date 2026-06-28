@@ -265,6 +265,36 @@ export async function addFinalFormAsset(params: {
   return { error: null, asset: data as WorldFinalAsset }
 }
 
+/**
+ * Record a Final Form asset already uploaded to storage (browser-direct, so big
+ * videos don't hit the serverless body limit). Architect only.
+ */
+export async function recordFinalFormAsset(params: {
+  worldId: string
+  media: WorldFinalMedia
+  url: string
+  posterUrl?: string | null
+  storagePath?: string | null
+}): Promise<{ error: string | null; asset: WorldFinalAsset | null }> {
+  if (!(await callerIsArchitect())) return { error: 'Architect role required', asset: null }
+  const admin = createAdminClient()
+  const { count } = await admin.from('world_final_assets').select('id', { count: 'exact', head: true }).eq('world_id', params.worldId)
+  const { data, error } = await admin
+    .from('world_final_assets')
+    .insert({
+      world_id: params.worldId,
+      media: params.media,
+      url: params.url,
+      poster_url: params.posterUrl ?? (params.media === 'image' ? params.url : null),
+      storage_path: params.storagePath ?? null,
+      sort_order: count ?? 0,
+    })
+    .select()
+    .single()
+  if (error) return { error: error.message, asset: null }
+  return { error: null, asset: data as WorldFinalAsset }
+}
+
 /** A world's Final Form assets, carousel order. */
 export async function listFinalFormAssets(worldId: string): Promise<WorldFinalAsset[]> {
   const admin = createAdminClient()

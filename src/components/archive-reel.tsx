@@ -6,9 +6,8 @@ import type { ArchiveReel } from '@/lib/actions/signal-tasks'
 import type { World } from '@/types/database'
 
 type Slide =
-  | { kind: 'vision' }
-  | { kind: 'day'; dayIndex: number; dispatchAt: string | null; src: string }
-  | { kind: 'final'; media: 'image' | 'video'; url: string; posterUrl: string | null }
+  | { kind: 'day'; dayIndex: number; date: string | null; src: string }
+  | { kind: 'final'; media: 'image' | 'video'; url: string; posterUrl: string | null; date: string | null }
 
 /** "SIGNAL DISPATCH 6/21" from an ISO timestamp, or null. */
 function dispatchLabel(iso: string | null): string | null {
@@ -18,26 +17,26 @@ function dispatchLabel(iso: string | null): string | null {
   return `SIGNAL DISPATCH ${d.getMonth() + 1}/${d.getDate()}`
 }
 
-/** Reel slides, oldest→newest: INITIAL VISION → each day's winner → final form.
+/** Date portion (YYYY-MM-DD) of an ISO timestamp or date string. */
+function ymd(s: string | null): string | null {
+  if (!s) return null
+  return s.slice(0, 10)
+}
+
+/** Reel slides, oldest→newest: each day's chosen result → the final form.
  *  Empty when the world has neither a tuning history nor a final form. */
 function buildSlides(reel: ArchiveReel): Slide[] {
-  if (reel.finalAssets.length === 0 && reel.days.length === 0) return []
-  const slides: Slide[] = [{ kind: 'vision' }]
+  const slides: Slide[] = []
   for (const d of reel.days) {
     if (!d.winner) continue
-    slides.push({ kind: 'day', dayIndex: d.dayIndex, dispatchAt: d.dispatchAt, src: d.winner.display_url || d.winner.processed_url || '' })
+    slides.push({ kind: 'day', dayIndex: d.dayIndex, date: d.dispatchAt, src: d.winner.display_url || d.winner.processed_url || '' })
   }
   for (const f of reel.finalAssets) {
-    slides.push({ kind: 'final', media: f.media, url: f.url, posterUrl: f.posterUrl })
+    slides.push({ kind: 'final', media: f.media, url: f.url, posterUrl: f.posterUrl, date: f.createdAt })
   }
   return slides
 }
 
-/**
- * Archive World reel — the Established world's final form plus a page-back through
- * each tuned day's chosen signal to the initial vision. Standalone worlds (no
- * tuning history, no final form) degrade to a simple poster hero.
- */
 export function ArchiveReelView({ world }: { world: World }) {
   const [reel, setReel] = useState<ArchiveReel | null>(null)
   const [i, setI] = useState(0)
@@ -53,57 +52,52 @@ export function ArchiveReelView({ world }: { world: World }) {
   const displayName = world.name_en || world.name
   const slides = reel ? buildSlides(reel) : []
 
-  // Loading / degraded poster hero (legacy standalone worlds, or pre-load).
   if (!reel || slides.length === 0) {
     return <PosterHero world={world} displayName={displayName} loading={!reel} />
   }
 
   const s = slides[Math.min(i, slides.length - 1)]
-  const label = s.kind === 'vision' ? 'INITIAL VISION' : s.kind === 'final' ? 'FINAL FORM' : `DAY ${s.dayIndex + 1}`
-  const sub = s.kind === 'day' ? dispatchLabel(s.dispatchAt) : null
-  const tagColor = s.kind === 'final' ? '#20D890' : s.kind === 'vision' ? '#FFB020' : '#FF8A3D'
+  const label = s.kind === 'final' ? 'FINAL FORM' : `DAY ${s.dayIndex + 1}`
+  const sub = dispatchLabel(s.date)
+  const tagColor = s.kind === 'final' ? '#20D890' : '#FF8A3D'
+  const lockedAt = ymd(reel.lockedAt)
 
   return (
     <div style={{ marginBottom: '1.75rem' }}>
       <div style={{ marginBottom: '1.1rem' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, letterSpacing: '0.02em' }}>{displayName}</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-star-deep)', marginTop: 5 }}>{world.id}</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem 1rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)', marginTop: 6 }}>
+          <span>{world.id}</span>
+          <span>DISCOVERED {world.discovery_date}</span>
+          {lockedAt && <span style={{ color: '#20D890' }}>OBSERVED {lockedAt}</span>}
+        </div>
       </div>
 
-      {/* Media viewer */}
-      <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', aspectRatio: '1', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,107,53,0.25)', background: '#070912' }}>
-        {s.kind === 'vision' && (
-          <>
-            <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
-            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '16px', background: 'linear-gradient(transparent, rgba(10,14,39,0.92))', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', lineHeight: 1.7, color: 'rgba(245,245,245,0.82)', maxHeight: '70%', overflow: 'hidden' }}>
-              {world.description}
-            </div>
-          </>
-        )}
+      {/* Media viewer — day signals fill a square; the final form keeps its own
+          aspect (letterboxed) so a landscape video reads cleanly. */}
+      <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,107,53,0.25)', background: '#070912', ...(s.kind === 'day' ? { aspectRatio: '1' } : {}) }}>
         {s.kind === 'day' && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={s.src} alt={`Day ${s.dayIndex + 1} signal`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         )}
         {s.kind === 'final' && (
           s.media === 'video'
-            ? <video key={s.url} src={s.url} poster={s.posterUrl ?? undefined} autoPlay loop muted playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', background: '#070912' }} />
+            ? <video key={s.url} src={s.url} poster={s.posterUrl ?? undefined} autoPlay loop muted playsInline style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain', background: '#070912' }} />
             // eslint-disable-next-line @next/next/no-img-element
-            : <img src={s.url} alt="Final form" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            : <img src={s.url} alt="Final form" style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} />
         )}
-        {/* scanline overlay */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)', pointerEvents: 'none' }} />
-        {/* phase tag (top-left only — no top-right counter) */}
         <div style={{ position: 'absolute', top: 10, left: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', background: 'rgba(7,9,18,0.72)', padding: '3px 8px', color: tagColor }}>
-          {s.kind === 'final' ? '● FINAL FORM' : s.kind === 'vision' ? 'INITIAL VISION' : `◉ DAY ${s.dayIndex + 1}`}
+          {s.kind === 'final' ? '● FINAL FORM' : `◉ DAY ${s.dayIndex + 1}`}
         </div>
       </div>
 
       {/* Nav */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 12, maxWidth: 480, margin: '12px auto 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, maxWidth: 480, margin: '12px auto 0' }}>
         <button onClick={() => setI((v) => Math.max(0, v - 1))} disabled={i <= 0} aria-label="Earlier" style={navBtn(i <= 0)}>◀</button>
         <div style={{ flex: 1, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, letterSpacing: '0.16em', color: 'var(--color-star)' }}>{label}</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)', marginTop: 3, minHeight: 14 }}>{sub ?? ' '}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)', marginTop: 3, minHeight: 14 }}>{sub ?? ' '}</div>
         </div>
         <button onClick={() => setI((v) => Math.min(slides.length - 1, v + 1))} disabled={i >= slides.length - 1} aria-label="Later" style={navBtn(i >= slides.length - 1)}>▶</button>
       </div>

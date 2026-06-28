@@ -1733,10 +1733,12 @@ export interface ArchiveFinalAsset {
   media: 'image' | 'video'
   url: string
   posterUrl: string | null
+  createdAt: string | null           // when this final form went up
 }
 export interface ArchiveReel {
   finalAssets: ArchiveFinalAsset[]   // the world's final form (newest end of the reel)
   days: ArchiveDay[]                 // each tuned day's chosen signal, ascending
+  lockedAt: string | null            // when the world was locked/observed (first final form)
 }
 
 /**
@@ -1749,12 +1751,14 @@ export async function getArchiveReel(worldId: string): Promise<ArchiveReel> {
 
   const { data: finals } = await admin
     .from('world_final_assets')
-    .select('id, media, url, poster_url')
+    .select('id, media, url, poster_url, created_at')
     .eq('world_id', worldId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
-  const finalAssets: ArchiveFinalAsset[] = ((finals ?? []) as { id: string; media: 'image' | 'video'; url: string; poster_url: string | null }[])
-    .map((f) => ({ id: f.id, media: f.media, url: f.url, posterUrl: f.poster_url ?? null }))
+  const finalRows = (finals ?? []) as { id: string; media: 'image' | 'video'; url: string; poster_url: string | null; created_at: string | null }[]
+  const finalAssets: ArchiveFinalAsset[] = finalRows.map((f) => ({ id: f.id, media: f.media, url: f.url, posterUrl: f.poster_url ?? null, createdAt: f.created_at ?? null }))
+  // Locked/observed = when the world's final form first went up.
+  const lockedAt = finalRows.reduce<string | null>((min, f) => (f.created_at && (!min || f.created_at < min) ? f.created_at : min), null)
 
   const { data: thread } = await admin
     .from('signal_threads')
@@ -1783,7 +1787,7 @@ export async function getArchiveReel(worldId: string): Promise<ArchiveReel> {
     }
   }
 
-  return { finalAssets, days }
+  return { finalAssets, days, lockedAt }
 }
 
 // ─── Console dashboard board (doc 4.1) ────────────────────────────────────────

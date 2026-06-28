@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
+import { FinalFormPanel } from '@/components/final-form-panel'
 import {
   getFrequencies,
   getTask,
@@ -394,6 +395,7 @@ function DayList({
   const [tasks, setTasks] = useState<SignalTask[]>([])
   const [cfg, setCfg] = useState<InvestigationConfig | null>(null)
   const [busy, setBusy] = useState(false)
+  const [finalOpen, setFinalOpen] = useState(false)
 
   const reload = useCallback(async () => {
     const [t, c] = await Promise.all([listInvestigationTasks(investigationId), getInvestigationConfig(investigationId)])
@@ -429,12 +431,20 @@ function DayList({
         <span style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.15em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
           {investigationTitle || 'DAYS'}
         </span>
-        <button
-          style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', opacity: busy ? 0.5 : 1 }}
-          disabled={busy}
-          onClick={addDay}
-        >{busy ? '…' : '+ Day'}</button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', color: finalOpen ? '#20D890' : undefined }}
+            onClick={() => setFinalOpen((v) => !v)}
+          >Final Form</button>
+          <button
+            style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', opacity: busy ? 0.5 : 1 }}
+            disabled={busy}
+            onClick={addDay}
+          >{busy ? '…' : '+ Day'}</button>
+        </div>
       </div>
+
+      {finalOpen && cfg?.worldId && <FinalFormPanel worldId={cfg.worldId} />}
 
       {tasks.length === 0 && (
         <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.3)' }}>No days yet — click + Day.</div>
