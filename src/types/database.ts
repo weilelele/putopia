@@ -232,6 +232,21 @@ export type WorldImage = {
   created_at: string
 }
 
+// ---------- world_final_assets ----------
+// The "final form" of a world — the media that graduates it into Archive World.
+export type WorldFinalMedia = 'image' | 'video'
+export type WorldFinalAsset = {
+  id: string
+  world_id: string
+  media: WorldFinalMedia
+  url: string                  // the asset's public URL
+  poster_url: string | null    // video first-frame still (= url for images)
+  storage_path: string | null
+  sort_order: number
+  created_at: string
+}
+export type WorldFinalAssetInsert = Omit<WorldFinalAsset, 'id' | 'created_at'> & { id?: string; created_at?: string }
+
 // ---------- intel ----------
 export type Intel = {
   id: string
@@ -411,6 +426,12 @@ export type Database = {
         Row: WorldImage
         Insert: Omit<WorldImage, 'id' | 'created_at'> & { id?: string; created_at?: string }
         Update: Partial<Omit<WorldImage, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      world_final_assets: {
+        Row: WorldFinalAsset
+        Insert: WorldFinalAssetInsert
+        Update: Partial<Omit<WorldFinalAsset, 'id' | 'created_at'>>
         Relationships: []
       }
       intel: {
