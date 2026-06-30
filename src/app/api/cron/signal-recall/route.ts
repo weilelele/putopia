@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
-import { runSignalRecall } from '@/lib/signal/recall'
 import { runEngagementEmails } from '@/lib/signal/engagement'
 import { resolveCompletedScans } from '@/lib/signal/scan-resolve'
 
@@ -29,10 +28,11 @@ export async function GET(request: NextRequest) {
     if (!isArchitect) return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Re-engagement (owner-absent + voter-churn) runs first and caps at one email
-  // per user; recall then skips anyone already emailed this run.
+  // Re-engagement (owner-absent + voter-churn): one email per user per run.
+  // Scan resolution then closes out worlds whose scan window has elapsed
+  // (signal / no-signal publisher notice). The old per-day single-miss "recall"
+  // mechanism was removed — these two are the only Signal Dispatch emails.
   const engagement = await runEngagementEmails()
-  const recall = await runSignalRecall({ skipUserIds: new Set(engagement.emailedUserIds) })
   const scan = await resolveCompletedScans()
-  return Response.json({ ok: true, engagement, recall, scan })
+  return Response.json({ ok: true, engagement, scan })
 }

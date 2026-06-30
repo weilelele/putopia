@@ -66,12 +66,14 @@ World（世界，stage=syncing）
 > 注意：DB 的 RLS 仍要求 `signal_responses` 插入者为 voyager+（`signal_responses_insert_voyager`），
 > 服务端 action 再叠加 per-world 的 `vote_scope` 判定——两层共同决定最终资格。
 
-## 6. 召回（Recall）再参与机制
+## 6. 邮件触达机制
 
-- 一天的解谜发布 24 小时后，对"之前参与过这个世界、但还没填新一天"的玩家提醒"出现了新信号"。
-- 计时基准是 `signal_tasks.published_at`；`recall_sent_at` 作为 cron 不重复扫描的护栏；
-  `signal_recall_log`（task_id+user_id）做逐人去重。
-- 由 cron 端点 `/api/cron/signal-recall` 驱动（`src/lib/signal/recall.ts`）。
+Signal Dispatch 只保留两类邮件，都由每日 cron 端点 `/api/cron/signal-recall` 驱动：
+
+1. **Re-engagement（掉队再参与）** — 针对**连续一段时间没回来**的参与者。`owner_absent`（世界主人连漏最近 2 个已揭示天）与 `voter_churn`（投过票的成员连漏最近 3 个已揭示天）两条规则，每人每次运行最多发一封（`src/lib/signal/engagement.ts`）。
+2. **发布者提醒（信号 / 无信号）** — 提交目击后该世界进入 `scan_until` 倒计时（随机 6–8h，`src/lib/signal/scan.ts`）。倒计时结束由 `resolveCompletedScans` 判定（`src/lib/signal/scan-resolve.ts`，`scan_resolved_at` 幂等）：窗口内 architect 调谐了信号 → 发"有信号"（`world-confirmed-email.ts`）；否则 → 发"无信号"（`scan-failed-email.ts`）。
+
+> **已移除：** 旧的 **Recall** 机制（`recall.ts`）——「每解锁一新天就提醒所有参与者」。它单次未填即触发、无频率上限，会对流失用户造成近乎每日的轰炸，且职责与 re-engagement 重叠。`signal_tasks.published_at / recall_sent_at`、`signal_recall_log` 等遗留字段/表保留但不再写入。
 
 ## 7. 出题工作流（Architect 后台 `/admin/signal-tasks`）
 
