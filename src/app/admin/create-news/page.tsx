@@ -25,8 +25,8 @@ const TAG_LABELS: Record<IntelTag, string> = { ORG: 'ORG — 组织', NOTICE: 'N
 // Putopia 固定风格后缀 — 每张图都强制应用，保证视觉一致性
 const STYLE_SUFFIX = [
   'cinematic still frame',
-  'deep void background',
-  'single dramatic light source amber or cyan',
+  'deep space blue background',
+  'single dramatic light source retro-orange or amber',
   'no people no text no typography',
   'dark science fiction aesthetic',
   'subtle film grain',

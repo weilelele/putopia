@@ -199,10 +199,10 @@ function VideoSection() {
       {/* ── Layer 2: Vignette (dark corners) ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
-        background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(5,8,22,0.72) 100%)',
+        background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(10,14,39,0.72) 100%)',
       }} />
 
-      {/* ── Layer 3: Cyan inset glow — screen edge bleed ── */}
+      {/* ── Layer 3: Orange inset glow — screen edge bleed ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
         boxShadow: 'inset 0 0 35px rgba(232,93,4,0.07), inset 0 0 70px rgba(232,93,4,0.03)',
@@ -466,7 +466,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
 }
 
 /* ─────────────────────────────────────────────────────
-   SCAN TRANSITION — cyan beam sweeps top→bottom,
+   SCAN TRANSITION — orange beam sweeps top→bottom,
    revealing the Welcome page beneath. ~720 ms total.
    Audio: sine tone rises with the beam + chime on lock.
 ───────────────────────────────────────────────────── */
@@ -549,7 +549,7 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
       {/* Dim the current demo page */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'rgba(5,8,16,0.70)',
+        background: 'rgba(10,14,39,0.70)',
       }} />
 
       {/* Welcome destination — clips in beneath the beam */}

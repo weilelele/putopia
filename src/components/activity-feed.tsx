@@ -317,7 +317,7 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(5,8,18,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(10,14,39,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
       onClick={onClose}
     >
       <div
@@ -437,7 +437,7 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
 function ProfileLoadingModal({ onClose }: { onClose: () => void }) {
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(5,8,18,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(10,14,39,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
       onClick={onClose}
     >
       <div style={{ background: '#0F1430', border: '1px solid rgba(255,107,53,0.35)', width: '100%', maxWidth: '480px', padding: '48px 18px', textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'rgba(245,245,245,0.25)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em' }}>
