@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
+import { resolveUserEmail } from '@/lib/signal/world-confirmed-email'
 import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types/database'
 
 // Path to revalidate when a thread changes (only device threads have a route today)
@@ -14,6 +15,10 @@ function subjectPath(type: CommentSubjectType, id: string): string | null {
 }
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
+
+// Inbox-facing source tag, prefixed to every notification subject so the email
+// reads as an attention-worthy dispatch from the Collective.
+const SUBJECT_PREFIX = 'Multiverse Collective'
 
 const SUBJECT_LABEL: Record<CommentSubjectType, string> = {
   device: 'device',
@@ -138,6 +143,11 @@ export async function postComment(
   let authorName = caller?.display_name ?? 'Voyager'
   let authorAvatar = (caller?.role === 'voyager' || caller?.role === 'architect') ? (caller?.avatar_url ?? null) : null
   let postedById: string | null = null
+  // The role of the FACE identity — what other members see in the thread. For a
+  // normal post that's the caller; under impersonation it's the impersonated
+  // member. Notifications key off this, not the real caller, so an architect
+  // posting AS a voyager reads as a voyager and does NOT notify.
+  let effectiveRole = caller?.role ?? null
 
   const admin = createAdminClient()
 
@@ -157,6 +167,7 @@ export async function postComment(
     authorName = target.display_name
     authorAvatar = target.avatar_url ?? null
     postedById = user.id
+    effectiveRole = target.role
   }
 
   // Validate parent (if replying): must belong to the same thread.
@@ -190,11 +201,20 @@ export async function postComment(
 
   if (error) return { error: error.message, data: null }
 
-  // Notify the parent author by email — only when a real architect hits send
-  // (regardless of which identity they're posting as via impersonation).
-  // Regular members (applicant / voyager) replying does NOT trigger an email.
-  if (parentId && caller?.role === 'architect') {
-    await notifyReply({ parentId, replierName: authorName, replyBody: text, effectiveAuthorId: authorId, subjectType, subjectId, subjectTitle: opts?.subjectTitle })
+  // Email notifications fire only when the FACE identity is an architect. An
+  // architect impersonating a voyager reads as a voyager and stays silent;
+  // regular members (applicant / voyager) never trigger an email.
+  //  • Reply (any subject): notify the parent comment's author.
+  //  • Top-level comment on a world: worlds are user-initiated, so an architect
+  //    chiming in on the thread notifies the world's owner (proposer).
+  if (effectiveRole === 'architect') {
+    // Notifications only fire for architects, so the actor carries the title.
+    const actorName = `Architect ${authorName}`
+    if (parentId) {
+      await notifyReply({ parentId, replierName: actorName, replyBody: text, effectiveAuthorId: authorId, subjectType, subjectId, subjectTitle: opts?.subjectTitle })
+    } else if (subjectType === 'world') {
+      await notifyWorldComment({ worldId: subjectId, commenterName: actorName, commentBody: text, effectiveAuthorId: authorId, subjectTitle: opts?.subjectTitle })
+    }
   }
 
   const path = subjectPath(subjectType, subjectId)
@@ -241,22 +261,82 @@ async function notifyReply(args: {
       : `a ${SUBJECT_LABEL[args.subjectType]}`
     const snippet = args.replyBody.length > 280 ? `${args.replyBody.slice(0, 280)}…` : args.replyBody
     const greetName = recipient?.display_name ?? 'Voyager'
+    const line = `${args.replierName} replied to your transmission on ${where}`
 
-    const html = `
-      <div style="font-family:'Courier New',monospace;background:#0A0E27;color:#F5F5F5;padding:32px;">
-        <p style="letter-spacing:0.2em;color:#FF6B35;font-size:12px;margin:0 0 16px;">MULTIVERSE COLLECTIVE — TRANSMISSION</p>
-        <p style="margin:0 0 12px;">${escapeHtml(greetName)},</p>
-        <p style="margin:0 0 12px;color:#cfd2e0;">${escapeHtml(args.replierName)} replied to your transmission on ${escapeHtml(where)}:</p>
-        <blockquote style="border-left:2px solid #E85D04;margin:0 0 20px;padding:8px 16px;color:#cfd2e0;white-space:pre-wrap;">${escapeHtml(snippet)}</blockquote>
-        <a href="${link}" style="display:inline-block;background:#FF6B35;color:#0A0E27;text-decoration:none;padding:10px 20px;font-weight:700;letter-spacing:0.1em;font-size:13px;">VIEW THE THREAD</a>
-        <p style="margin:24px 0 0;color:#6b7088;font-size:11px;">— BUILDING BETTER WORLDS, TOGETHER.</p>
-      </div>`
-    const plain = `${greetName},\n\n${args.replierName} replied to your transmission on ${where}:\n\n"${snippet}"\n\nView the thread: ${link}\n\n— Multiverse Collective`
-
-    await sendEmail({ to, subject: `${args.replierName} replied to your transmission`, html, text: plain })
+    const { html, text } = buildTransmissionEmail({ greetName, line, snippet, link })
+    await sendEmail({ to, subject: `${SUBJECT_PREFIX} — An Architect has responded to your transmission`, html, text })
   } catch (e) {
     console.error('[comments] notifyReply failed', e)
   }
+}
+
+// ─── World top-level-comment notification email ───────────────────────────────
+
+// An architect commenting (top-level) on a world thread notifies the world's
+// owner (proposer). Recipient resolution mirrors the world-confirmed email:
+// auth.users is authoritative, voyager_profiles is the fallback.
+async function notifyWorldComment(args: {
+  worldId: string
+  commenterName: string
+  commentBody: string
+  effectiveAuthorId: string
+  subjectTitle?: string
+}) {
+  try {
+    const admin = createAdminClient()
+    const { data: world } = await admin
+      .from('worlds')
+      .select('name, submitted_by, discoverer_id')
+      .eq('id', args.worldId)
+      .maybeSingle()
+    if (!world) return
+    const ownerId = world.submitted_by || world.discoverer_id
+    if (!ownerId) return
+    // Don't email the owner about their own comment (e.g. an architect-owner).
+    if (ownerId === args.effectiveAuthorId) return
+
+    const to = await resolveUserEmail(admin, ownerId)
+    if (!to) return
+
+    const { data: ownerProfile } = await admin
+      .from('voyager_profiles')
+      .select('display_name')
+      .eq('id', ownerId)
+      .maybeSingle()
+    const greetName = ownerProfile?.display_name ?? 'Voyager'
+
+    const worldName = world.name ?? args.subjectTitle ?? 'your world'
+    const link = `${SITE_URL}/worlds/${args.worldId}`
+    const snippet = args.commentBody.length > 280 ? `${args.commentBody.slice(0, 280)}…` : args.commentBody
+    const line = `${args.commenterName} commented on your world ${worldName}`
+
+    const { html, text } = buildTransmissionEmail({ greetName, line, snippet, link })
+    await sendEmail({ to, subject: `${SUBJECT_PREFIX} — An Architect has taken notice of your world`, html, text })
+  } catch (e) {
+    console.error('[comments] notifyWorldComment failed', e)
+  }
+}
+
+// Shared TRANSMISSION email shell. `line` is the one-sentence lead (raw text,
+// escaped here); `snippet` is the quoted body. Keeps reply + world-comment
+// notifications visually identical.
+function buildTransmissionEmail(args: {
+  greetName: string
+  line: string
+  snippet: string
+  link: string
+}): { html: string; text: string } {
+  const html = `
+      <div style="font-family:'Courier New',monospace;background:#0A0E27;color:#F5F5F5;padding:32px;">
+        <p style="letter-spacing:0.2em;color:#FF6B35;font-size:12px;margin:0 0 16px;">MULTIVERSE COLLECTIVE — TRANSMISSION</p>
+        <p style="margin:0 0 12px;">${escapeHtml(args.greetName)},</p>
+        <p style="margin:0 0 12px;color:#cfd2e0;">${escapeHtml(args.line)}:</p>
+        <blockquote style="border-left:2px solid #E85D04;margin:0 0 20px;padding:8px 16px;color:#cfd2e0;white-space:pre-wrap;">${escapeHtml(args.snippet)}</blockquote>
+        <a href="${args.link}" style="display:inline-block;background:#FF6B35;color:#0A0E27;text-decoration:none;padding:10px 20px;font-weight:700;letter-spacing:0.1em;font-size:13px;">VIEW THE THREAD</a>
+        <p style="margin:24px 0 0;color:#6b7088;font-size:11px;">— BUILDING BETTER WORLDS, TOGETHER.</p>
+      </div>`
+  const text = `${args.greetName},\n\n${args.line}:\n\n"${args.snippet}"\n\nView the thread: ${args.link}\n\n— Multiverse Collective`
+  return { html, text }
 }
 
 function escapeHtml(s: string): string {
