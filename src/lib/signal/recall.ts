@@ -12,7 +12,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
 import { resolveUserEmail } from '@/lib/signal/world-confirmed-email'
-import { isRevealed, DEFAULT_REVEAL_INTERVAL_HOURS } from '@/lib/signal/reveal'
+import { buildSchedule, DEFAULT_GAP_HOURS } from '@/lib/signal/reveal'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -64,22 +64,34 @@ export async function runSignalRecall(opts?: { skipUserIds?: Set<string> }): Pro
     try {
       const dayIndex = task.day_index ?? 0
 
-      // world (name + id) + reveal schedule via the thread
+      // world (name + id + scan anchor) + gap schedule via the thread
       const { data: thread } = await admin
         .from('signal_threads')
-        .select('world_id, reveal_anchor_at, reveal_interval_hours')
+        .select('world_id, reveal_anchor_at, gap_hours')
         .eq('id', task.thread_id)
         .maybeSingle()
-      // Skip days that haven't surfaced yet — recall only after the day is live.
-      if (!isRevealed(thread?.reveal_anchor_at ?? null, thread?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS, dayIndex, now)) {
-        continue
-      }
       const worldId: string | null = thread?.world_id ?? null
       let worldName = 'a world you follow'
+      let scanUntil: string | null = null
       if (worldId) {
-        const { data: world } = await admin.from('worlds').select('name').eq('id', worldId).maybeSingle()
+        const { data: world } = await admin.from('worlds').select('name, scan_until').eq('id', worldId).maybeSingle()
         worldName = world?.name ?? worldName
+        scanUntil = world?.scan_until ?? null
       }
+      // Skip days that haven't opened yet — recall only after the day is live.
+      const { data: pubDays } = await admin
+        .from('signal_tasks')
+        .select('day_index, published_at')
+        .eq('thread_id', task.thread_id)
+        .eq('is_published', true)
+        .not('published_at', 'is', null)
+      const schedule = buildSchedule(
+        thread?.reveal_anchor_at ?? scanUntil,
+        thread?.gap_hours ?? DEFAULT_GAP_HOURS,
+        ((pubDays ?? []) as { day_index: number | null; published_at: string }[]).map((r) => ({ dayIndex: r.day_index ?? 0, publishedAtISO: r.published_at })),
+      )
+      const openAt = schedule.find((s) => s.dayIndex === dayIndex)?.openAt
+      if (!openAt || openAt.getTime() > now.getTime()) continue
 
       // prior days of this thread (day_index < current)
       const { data: priorTasks } = await admin

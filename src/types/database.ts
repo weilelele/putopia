@@ -119,6 +119,8 @@ export type Application = {
   fbclid: string | null
   landing_page_variant: string | null
   submission_count: number
+  console_interest: string | null   // Q1 — Multiverse Console curiosity (option id)
+  join_urgency: number | null       // Q3 — join-urgency slider value (0–5)
 }
 
 export type ApplicationInsert = Pick<Application, 'email' | 'reason'> & {
@@ -130,6 +132,8 @@ export type ApplicationInsert = Pick<Application, 'email' | 'reason'> & {
   utm_content?: string | null
   fbclid?: string | null
   landing_page_variant?: string | null
+  console_interest?: string | null
+  join_urgency?: number | null
 }
 
 // ---------- devices ----------
@@ -194,21 +198,27 @@ export type World = {
   vote_scope: WorldVoteScope
   submitted_by: string | null
   submitted_at: string | null
+  scan_until: string | null   // Signal Scanning completes at this ISO ts (null = no scan ceremony)
+  scan_resolved_at: string | null // outcome (success/failure email) settled at this ts; null = pending
+  is_test: boolean            // test-console world; excluded from public listings
   created_at: string
 }
 
 // lifecycle_state / vote_scope / submitted_by / submitted_at have DB defaults — optional on insert
-export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'vote_scope' | 'submitted_by' | 'submitted_at'> & {
+export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'vote_scope' | 'submitted_by' | 'submitted_at' | 'scan_until' | 'scan_resolved_at' | 'is_test'> & {
   lifecycle_state?: WorldLifecycle
   vote_scope?: WorldVoteScope
   submitted_by?: string | null
   submitted_at?: string | null
+  scan_until?: string | null
+  scan_resolved_at?: string | null
+  is_test?: boolean
 }
 export type WorldUpdate = Partial<Pick<
   World,
   'name' | 'name_en' | 'discoverer_id' | 'discoverer_name' | 'discovery_date' |
   'gradient_from' | 'gradient_to' | 'image_path' | 'description' | 'is_verified' |
-  'lifecycle_state' | 'vote_scope'
+  'lifecycle_state' | 'vote_scope' | 'scan_until' | 'scan_resolved_at'
 >>
 
 export type WorldImage = {
@@ -221,6 +231,21 @@ export type WorldImage = {
   uploaded_by: string | null
   created_at: string
 }
+
+// ---------- world_final_assets ----------
+// The "final form" of a world — the media that graduates it into Archive World.
+export type WorldFinalMedia = 'image' | 'video'
+export type WorldFinalAsset = {
+  id: string
+  world_id: string
+  media: WorldFinalMedia
+  url: string                  // the asset's public URL
+  poster_url: string | null    // video first-frame still (= url for images)
+  storage_path: string | null
+  sort_order: number
+  created_at: string
+}
+export type WorldFinalAssetInsert = Omit<WorldFinalAsset, 'id' | 'created_at'> & { id?: string; created_at?: string }
 
 // ---------- intel ----------
 export type Intel = {
@@ -264,13 +289,16 @@ export type OnboardingVariantRow = {
   id: string
   match_key: string
   label: string
-  q1_headline: string | null
-  q2_headline: string | null
+  console_headline: string | null  // Q1 — Multiverse Console curiosity headline
+  q1_headline: string | null       // Q3 — join-urgency slider headline (legacy column name)
+  q2_headline: string | null       // Q2 — world-choice headline
   affirm_line1: string | null
   affirm_line2: string | null
   cta_invitation: string | null
   cta_label: string | null
-  video_url: string | null
+  video_url: string | null      // Q1 / base video (also the flow-wide default)
+  video_url_q2: string | null   // null = continue Q1's video
+  video_url_cta: string | null  // null = continue Q2's video
   sort_order: number
   enabled: boolean
   updated_at: string
@@ -427,6 +455,12 @@ export type Database = {
         Row: WorldImage
         Insert: Omit<WorldImage, 'id' | 'created_at'> & { id?: string; created_at?: string }
         Update: Partial<Omit<WorldImage, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      world_final_assets: {
+        Row: WorldFinalAsset
+        Insert: WorldFinalAssetInsert
+        Update: Partial<Omit<WorldFinalAsset, 'id' | 'created_at'>>
         Relationships: []
       }
       intel: {

@@ -1,11 +1,40 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { MessageSquare, Radio } from 'lucide-react'
 import Link from 'next/link'
 import { WorldPoster } from '@/components/world-poster'
 import { getVoyagerById } from '@/lib/actions/profile'
+import { submitVoteResponse, getMyVoteResponses } from '@/lib/actions/votes'
 import type { VoyagerProfile } from '@/types/database'
+
+// ─── Vote persistence helpers ─────────────────────────────────────────────────
+// A vote is final once cast. We track the viewer's choice two ways: a stable
+// per-browser anon token (so guests are deduped server-side via the
+// unique(vote_id, anon_token) constraint) and a localStorage record of what this
+// browser picked (instant "you voted X" without a round-trip). Authed viewers are
+// also reconciled against the server (getMyVoteResponses) when the modal opens.
+const ANON_KEY = 'putopia-anon-id'
+const VOTED_KEY = 'putopia-voted'
+
+function getAnonToken(): string {
+  try {
+    let t = localStorage.getItem(ANON_KEY)
+    if (!t) { t = crypto.randomUUID(); localStorage.setItem(ANON_KEY, t) }
+    return t
+  } catch { return '' }
+}
+function readVotedMap(): Record<string, string[]> {
+  try { return JSON.parse(localStorage.getItem(VOTED_KEY) || '{}') as Record<string, string[]> } catch { return {} }
+}
+function recordVoted(voteId: string, selected: string[]) {
+  try {
+    const m = readVotedMap()
+    m[voteId] = selected
+    localStorage.setItem(VOTED_KEY, JSON.stringify(m))
+  } catch { /* private mode / quota — server constraint is still the source of truth */ }
+}
 
 // ─── Shared types (also consumed by the server page) ──────────────────────────
 
@@ -53,6 +82,10 @@ export type VoteCard = {
   id: string
   title: string
   options: string[]
+  // Option {id,label} pairs — needed to record a response and highlight the
+  // viewer's prior pick (vote_responses stores option IDs, not labels).
+  choices: { id: string; label: string }[]
+  multi: boolean
   voters: Person[]
   count: number
   ends: string
@@ -74,6 +107,18 @@ const BURNT = '#E85D04'
 // Font tokens — never below --fs-caption (12px floor).
 const FS_LABEL = 'var(--fs-label)'      // 13
 const FS_CAPTION = 'var(--fs-caption)'  // 12
+
+// Renders children into document.body, escaping any ancestor that establishes a
+// containing block for fixed-position elements (e.g. the AccessGate's
+// `filter: blur(...)` frost). Without this, modals below such an ancestor are
+// positioned relative to that element instead of the viewport — the backdrop
+// covers only the frosted region and the centered card lands off-screen.
+function Portal({ children }: { children: ReactNode }) {
+  // Modals only render after a client interaction (their state starts null), so
+  // this never runs during SSR; the guard is just belt-and-suspenders.
+  if (typeof document === 'undefined') return null
+  return createPortal(children, document.body)
+}
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
@@ -291,15 +336,21 @@ function ContentCard({ item, onMember, onLocked }: { item: FeedItem; onMember?: 
 
 // ─── Vote card — recent voters listed line by line + solid CTA ────────────────
 
-function VoteTofu({ vote, onVote, onLocked }: { vote: VoteCard; onVote: () => void; onLocked?: () => void }) {
+function VoteTofu({ vote, onVote, onLocked, onSignIn, canVote = true }: { vote: VoteCard; onVote: () => void; onLocked?: () => void; onSignIn?: () => void; canVote?: boolean }) {
   const shown = vote.voters.slice(0, 5)
+  // This browser's recorded vote (client-only; the card never SSRs since feed
+  // entries are client-loaded). Authed cross-device state surfaces in the modal.
+  const [voted] = useState<boolean>(() => (readVotedMap()[vote.id]?.length ?? 0) > 0)
+  // Guests must sign in before casting a ballot; a tap routes to the sign-in gate
+  // (taking priority over both the ballot and the Voyager-only gate).
+  const tap = !canVote ? () => onSignIn?.() : (vote.locked ? () => onLocked?.() : onVote)
 
   // Voyager-only vote the viewer can't participate in: title teaser + cover,
   // tap opens the gate modal. Options/voters/tallies were stripped server-side.
   if (vote.locked) {
     return (
       <div
-        onClick={() => onLocked?.()}
+        onClick={tap}
         style={{
           breakInside: 'avoid', marginBottom: 11, background: '#1A1107',
           borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
@@ -314,7 +365,7 @@ function VoteTofu({ vote, onVote, onLocked }: { vote: VoteCard; onVote: () => vo
 
   return (
     <div
-      onClick={onVote}
+      onClick={tap}
       style={{
         breakInside: 'avoid', marginBottom: 11, background: '#1A1107',
         borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
@@ -336,9 +387,19 @@ function VoteTofu({ vote, onVote, onLocked }: { vote: VoteCard; onVote: () => vo
         </div>
       )}
 
-      <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', whiteSpace: 'nowrap', padding: '11px 0', borderRadius: 2 }}>
-        MAKE A DECISION
-      </div>
+      {!canVote ? (
+        <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', whiteSpace: 'nowrap', padding: '11px 0', borderRadius: 2 }}>
+          SIGN IN TO VOTE
+        </div>
+      ) : voted ? (
+        <div style={{ marginTop: 11, border: `1px solid ${GREEN}`, color: GREEN, textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', whiteSpace: 'nowrap', padding: '10px 0', borderRadius: 2 }}>
+          ✓ YOU VOTED
+        </div>
+      ) : (
+        <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', whiteSpace: 'nowrap', padding: '11px 0', borderRadius: 2 }}>
+          MAKE A DECISION
+        </div>
+      )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', whiteSpace: 'nowrap', marginTop: 9 }}>
         <Radio size={12} strokeWidth={1.75} aria-hidden style={{ flexShrink: 0 }} />
@@ -351,36 +412,96 @@ function VoteTofu({ vote, onVote, onLocked }: { vote: VoteCard; onVote: () => vo
 // ─── Vote modal ───────────────────────────────────────────────────────────────
 
 function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
-  const [picked, setPicked] = useState(0)
-  const [cast, setCast] = useState(false)
+  // Seed from this browser's record (instant); reconcile with the server below.
+  const [selected, setSelected] = useState<string[]>(() => readVotedMap()[vote.id] ?? [])
+  const [voted, setVoted] = useState<boolean>(() => (readVotedMap()[vote.id]?.length ?? 0) > 0)
+  const [count, setCount] = useState(vote.count)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Signed-in viewers: pull the authoritative prior response (covers a vote cast
+  // on another device, which localStorage can't know about). Guests get [].
+  useEffect(() => {
+    let live = true
+    getMyVoteResponses().then(rows => {
+      if (!live) return
+      const mine = rows.find(r => r.vote_id === vote.id)
+      if (mine && Array.isArray(mine.selected_options) && mine.selected_options.length) {
+        setSelected(mine.selected_options as string[])
+        setVoted(true)
+        recordVoted(vote.id, mine.selected_options as string[])
+      }
+    }).catch(() => {})
+    return () => { live = false }
+  }, [vote.id])
+
+  const canVote = !voted && !submitting
+  const list = vote.choices.length ? vote.choices : vote.options.map((label, i) => ({ id: String(i), label }))
+
+  const toggle = (id: string) => {
+    if (!canVote) return
+    setSelected(prev => vote.multi ? (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]) : [id])
+  }
+
+  const submit = async () => {
+    if (!selected.length || submitting || voted) return
+    setSubmitting(true); setError(null)
+    const anon = getAnonToken()
+    const res = await submitVoteResponse({ vote_id: vote.id, selected_options: selected, anon_token: null }, anon)
+    if (res.error) {
+      // The unique(vote_id, identity) constraint fires if this identity already
+      // voted — that's not a failure, it just means the decision is already made.
+      if (/duplicate|unique|one_response|already/i.test(res.error)) {
+        recordVoted(vote.id, selected); setVoted(true)
+      } else { setError(res.error) }
+      setSubmitting(false); return
+    }
+    recordVoted(vote.id, selected)
+    setCount(c => c + 1)
+    setVoted(true); setSubmitting(false)
+  }
+
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(5,8,20,0.74)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}
     >
       <div style={{ background: 'var(--color-void)', border: `1px solid ${LORANGE}`, borderRadius: 6, padding: 16, width: '100%', maxWidth: 380 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.4, color: LORANGE, marginBottom: 14 }}>{vote.title}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.4, color: LORANGE, marginBottom: voted ? 8 : 14 }}>{vote.title}</div>
+        {voted && (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: GREEN, marginBottom: 12, letterSpacing: '0.06em' }}>✓ YOU VOTED · your choice is final</div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {vote.options.map((o, i) => {
-            const on = i === picked
+          {list.map((c) => {
+            const on = selected.includes(c.id)
             return (
-              <div key={i} onClick={() => setPicked(i)} style={{
-                border: `1px solid ${on ? ORANGE : 'rgba(245,245,245,0.12)'}`, background: on ? 'rgba(255,107,53,0.12)' : 'transparent',
-                borderRadius: 3, padding: '9px 10px', color: on ? LORANGE : 'rgba(245,245,245,0.6)', fontFamily: 'var(--font-mono)',
-                fontSize: FS_CAPTION, lineHeight: 1.4, display: 'flex', justifyContent: 'space-between', gap: 8, cursor: 'pointer',
+              <div key={c.id} onClick={() => toggle(c.id)} aria-disabled={!canVote} style={{
+                border: `1px solid ${on ? ORANGE : 'rgba(245,245,245,0.12)'}`,
+                background: on ? 'rgba(255,107,53,0.12)' : 'transparent',
+                borderRadius: 3, padding: '9px 10px',
+                color: on ? LORANGE : 'rgba(245,245,245,0.6)',
+                fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, lineHeight: 1.4,
+                display: 'flex', justifyContent: 'space-between', gap: 8,
+                cursor: canVote ? 'pointer' : 'default', opacity: voted && !on ? 0.5 : 1,
               }}>
-                <span>{o}</span><span>{on ? '◉' : '○'}</span>
+                <span>{c.label}</span><span>{on ? '◉' : '○'}</span>
               </div>
             )
           })}
         </div>
-        <div
-          onClick={() => { setCast(true); setTimeout(onClose, 800) }}
-          style={{ marginTop: 14, background: cast ? GREEN : ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_CAPTION, letterSpacing: '0.15em', padding: 11, borderRadius: 3, cursor: 'pointer' }}
-        >{cast ? '✓ DECISION MADE' : 'MAKE A DECISION'}</div>
+        {error && <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: '#FF6B6B', marginTop: 10 }}>{error}</div>}
+        {voted ? (
+          <div style={{ marginTop: 14, border: `1px solid ${GREEN}`, color: GREEN, textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_CAPTION, letterSpacing: '0.15em', padding: 11, borderRadius: 3 }}>✓ DECISION MADE</div>
+        ) : (
+          <div
+            onClick={submit}
+            aria-disabled={!selected.length || submitting}
+            style={{ marginTop: 14, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_CAPTION, letterSpacing: '0.15em', padding: 11, borderRadius: 3, cursor: selected.length && !submitting ? 'pointer' : 'not-allowed', opacity: selected.length && !submitting ? 1 : 0.55 }}
+          >{submitting ? 'SUBMITTING…' : 'MAKE A DECISION'}</div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', marginTop: 10 }}>
           <Radio size={12} strokeWidth={1.75} aria-hidden style={{ flexShrink: 0 }} />
-          {vote.count} · {vote.ends}
+          {count} · {vote.ends}
         </div>
       </div>
     </div>
@@ -517,9 +638,30 @@ function VoyagerGateModal({ kind, title, packHref, onClose }: { kind: 'intel' | 
   )
 }
 
+// ─── Sign-in gate modal — shown when a guest taps a vote (voting requires login)
+function SignInGateModal({ title, signInHref, onClose }: { title: string; signInHref: string; onClose: () => void }) {
+  return (
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(5,8,20,0.78)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}
+    >
+      <div style={{ background: 'var(--color-void)', border: `1px solid ${ORANGE}`, borderRadius: 6, padding: 20, width: '100%', maxWidth: 360, textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.22em', color: ORANGE }}>SIGN IN TO VOTE</span>
+        </div>
+        <div style={{ fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.4, color: 'var(--color-star)', marginBottom: 8 }}>{title}</div>
+        <div style={{ fontSize: FS_CAPTION, lineHeight: 1.55, color: 'rgba(245,245,245,0.6)', marginBottom: 18 }}>Sign in to cast your vote — every decision is tied to your identity.</div>
+        <Link href={signInHref} style={{ display: 'block', background: ORANGE, color: '#0A0E27', textDecoration: 'none', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', padding: '12px 0', borderRadius: 3 }}>
+          SIGN IN
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page client ──────────────────────────────────────────────────────────────
 
-export function FeedProtoClient({ entries, embedded = false, leadSlot, packHref = '/voyager-pack' }: { entries: FeedEntry[]; embedded?: boolean; leadSlot?: ReactNode; packHref?: string }) {
+export function FeedProtoClient({ entries, embedded = false, hideHeader = false, leadSlot, packHref = '/voyager-pack', canVote = true, signInHref = '/login' }: { entries: FeedEntry[]; embedded?: boolean; hideHeader?: boolean; leadSlot?: ReactNode; packHref?: string; canVote?: boolean; signInHref?: string }) {
   // Track the specific vote that was clicked — every vote must open its own
   // options, not the first vote's.
   const [activeVote, setActiveVote] = useState<VoteCard | null>(null)
@@ -527,6 +669,8 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot, packHref 
   const [activeVoyager, setActiveVoyager] = useState<Person | null>(null)
   // The gated item (intel / vote) whose Voyager-gate modal is open (null = none).
   const [gate, setGate] = useState<{ kind: 'intel' | 'vote'; title: string } | null>(null)
+  // True while the "sign in to vote" prompt is open (guests can't cast a ballot).
+  const [signInTitle, setSignInTitle] = useState<string | null>(null)
 
   const outer = embedded
     ? { color: 'var(--color-star)' as const }
@@ -542,7 +686,7 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot, packHref 
   entries.forEach((e, i) => (i % 2 === 0 ? leftCol : rightCol).push(e))
   const renderEntry = (e: FeedEntry) =>
     e.kind === 'vote'
-      ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} onVote={() => setActiveVote(e.vote)} onLocked={() => setGate({ kind: 'vote', title: e.vote.title })} />
+      ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} canVote={canVote} onVote={() => setActiveVote(e.vote)} onLocked={() => setGate({ kind: 'vote', title: e.vote.title })} onSignIn={() => setSignInTitle(e.vote.title)} />
       : <ContentCard key={e.item.id} item={e.item} onMember={it => setActiveVoyager(it.actor ?? null)} onLocked={it => setGate({ kind: 'intel', title: it.title })} />
 
   return (
@@ -554,13 +698,13 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot, packHref 
         @keyframes feed-skel-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
       `}</style>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
-        {embedded ? (
+        {embedded ? (hideHeader ? null : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.3em', color: ORANGE }}>INTERNAL UPDATES</span>
             <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
           </div>
-        ) : (
+        )) : (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px',
             borderBottom: '1px solid #161c30', position: 'sticky', top: 0, zIndex: 10,
@@ -590,9 +734,13 @@ export function FeedProtoClient({ entries, embedded = false, leadSlot, packHref 
         )}
       </div>
 
-      {activeVote && <VoteModal vote={activeVote} onClose={() => setActiveVote(null)} />}
-      {activeVoyager && <VoyagerIntroModal person={activeVoyager} onClose={() => setActiveVoyager(null)} />}
-      {gate && <VoyagerGateModal kind={gate.kind} title={gate.title} packHref={packHref} onClose={() => setGate(null)} />}
+      {/* Portaled to <body> so the fixed-position overlays escape the AccessGate's
+          `filter` containing block (otherwise they're trapped in the frosted feed
+          region and the card centers off-screen — a black-screen-only modal). */}
+      {activeVote && <Portal><VoteModal vote={activeVote} onClose={() => setActiveVote(null)} /></Portal>}
+      {activeVoyager && <Portal><VoyagerIntroModal person={activeVoyager} onClose={() => setActiveVoyager(null)} /></Portal>}
+      {gate && <Portal><VoyagerGateModal kind={gate.kind} title={gate.title} packHref={packHref} onClose={() => setGate(null)} /></Portal>}
+      {signInTitle !== null && <Portal><SignInGateModal title={signInTitle} signInHref={signInHref} onClose={() => setSignInTitle(null)} /></Portal>}
     </div>
   )
 }

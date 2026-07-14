@@ -18,7 +18,7 @@ import type { CropConfig } from '@/lib/signal/process'
 import type { WorldVoteScope, WorldLifecycle, WorldStage } from '@/types/database'
 import { worldStage } from '@/types/database'
 import { renderVideoClip, extractAudioClip } from '@/lib/signal/av'
-import { revealAt as computeRevealAt, isRevealed, DEFAULT_REVEAL_INTERVAL_HOURS } from '@/lib/signal/reveal'
+import { buildSchedule, tuningPhase, DEFAULT_GAP_HOURS, VOTE_WINDOW_HOURS, type PublishedDay } from '@/lib/signal/reveal'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -34,6 +34,7 @@ export interface SignalTask {
   type: SignalTaskType
   prompt: string | null
   is_published: boolean
+  published_at: string | null
   sort_order: number
   created_at: string
   day_index: number | null
@@ -151,23 +152,15 @@ export async function setTaskPublished(
     .eq('id', taskId)
   if (error) return { ok: false, error: error.message }
 
-  // Schedule anchor: the whole reveal timeline follows the first published day.
-  // Set the thread anchor on the first publish; clear it once no published days
-  // remain (so re-publishing later restarts the clock cleanly).
-  try {
-    const { data: t } = await supabase.from('signal_tasks').select('thread_id').eq('id', taskId).maybeSingle()
-    const threadId: string | null = t?.thread_id ?? null
-    if (threadId) {
-      if (published) {
-        const { data: thread } = await supabase
-          .from('signal_threads')
-          .select('reveal_anchor_at')
-          .eq('id', threadId)
-          .maybeSingle()
-        if (!thread?.reveal_anchor_at) {
-          await supabase.from('signal_threads').update({ reveal_anchor_at: new Date().toISOString() }).eq('id', threadId)
-        }
-      } else {
+  // Schedule anchor: a scan world's timeline starts at its `scan_until` (resolved
+  // lazily at read time via `reveal_anchor_at ?? scan_until`), so publishing no
+  // longer stamps an anchor. We only CLEAR a stale anchor once a thread has no
+  // published days left, so a manual "Restart from now" re-arms cleanly.
+  if (!published) {
+    try {
+      const { data: t } = await supabase.from('signal_tasks').select('thread_id').eq('id', taskId).maybeSingle()
+      const threadId: string | null = t?.thread_id ?? null
+      if (threadId) {
         const { count } = await supabase
           .from('signal_tasks')
           .select('id', { count: 'exact', head: true })
@@ -177,8 +170,8 @@ export async function setTaskPublished(
           await supabase.from('signal_threads').update({ reveal_anchor_at: null }).eq('id', threadId)
         }
       }
-    }
-  } catch { /* anchor maintenance is best-effort */ }
+    } catch { /* anchor maintenance is best-effort */ }
+  }
 
   // When publishing a task that belongs to an investigation, post to the feed
   if (published) {
@@ -213,10 +206,20 @@ export async function setTaskPublished(
           )
         }
         // First time a world's signals go live: email the original proposer
-        // ("your world really exists"). Idempotent — no-ops after the first send.
+        // ("your world really exists"). Scan-flow worlds get this at scan
+        // completion (scan-resolve), NOT at publish — so the email lands when the
+        // countdown ends, not the moment an Architect adds the day. Only legacy /
+        // architect-created worlds with no scan window keep the publish-time send.
         if (thread?.world_id) {
-          const { maybeSendWorldConfirmedEmail } = await import('@/lib/signal/world-confirmed-email')
-          await maybeSendWorldConfirmedEmail(thread.world_id)
+          const { data: w } = await supabase
+            .from('worlds')
+            .select('scan_until')
+            .eq('id', thread.world_id)
+            .maybeSingle()
+          if (!w?.scan_until) {
+            const { maybeSendWorldConfirmedEmail } = await import('@/lib/signal/world-confirmed-email')
+            await maybeSendWorldConfirmedEmail(thread.world_id)
+          }
         }
       }
     } catch { /* feed post + proposer email are best-effort */ }
@@ -377,15 +380,49 @@ export async function generateCandidates(
   return { ok: errors.length === 0, created, errors }
 }
 
+/**
+ * Random-pull SAMPLING for the browser (ffmpeg.wasm) video/audio path: pick the
+ * random assets per source server-side, but return them for the client to process
+ * (Vercel can't run ffmpeg). Audio oversamples 2× (the client skips no-audio).
+ */
+export async function sampleForgeAssets(
+  taskId: string,
+  sources: GenerateSource[],
+): Promise<{ ok: boolean; groups: { source: SourceMeta; count: number; assets: { assetId: string; url: string }[] }[]; errors: string[] }> {
+  const me = await currentUser()
+  if (!me || me.role !== 'architect') return { ok: false, groups: [], errors: ['Architect role required'] }
+  const supabase = createAdminClient() as DB
+  const { data: task } = await supabase.from('signal_tasks').select('type').eq('id', taskId).single()
+  const audioMode = task?.type === 'audio_odd_one' || task?.type === 'audio_match'
+
+  const groups: { source: SourceMeta; count: number; assets: { assetId: string; url: string }[] }[] = []
+  const errors: string[] = []
+  for (const src of sources) {
+    const cosmoMedia = audioMode || src.media === 'video' ? 'video' : 'image'
+    const sampleN = audioMode ? src.count * 2 : src.count
+    try {
+      const assets = await sampleBandAssets(src.channelId, src.bandId, cosmoMedia, sampleN)
+      groups.push({
+        source: { channelId: src.channelId, channelName: src.channelName, freq: src.freq, bandId: src.bandId, bandName: src.bandName, media: src.media },
+        count: src.count,
+        assets: assets.map((a) => ({ assetId: a.assetId, url: a.url })),
+      })
+    } catch (e) {
+      errors.push(`${src.channelName}/${src.bandName}: ${(e as Error).message}`)
+    }
+  }
+  return { ok: errors.length === 0, groups, errors }
+}
+
 /** Browse a Cosmo band's assets for the precise-pick UI (doc 5.2 precise pick). */
 export async function listBandAssets(
   channelId: string,
   bandId: string,
   media: 'image' | 'video',
-): Promise<{ assetId: string; url: string; prompt: string | null }[]> {
+): Promise<{ assetId: string; url: string; posterUrl: string | null; prompt: string | null }[]> {
   try {
     const assets = await cosmoGetBandAssets(channelId, bandId, media)
-    return assets.map((a) => ({ assetId: a.assetId, url: a.url, prompt: a.prompt ?? null }))
+    return assets.map((a) => ({ assetId: a.assetId, url: a.url, posterUrl: a.posterUrl ?? null, prompt: a.prompt ?? null }))
   } catch (e) {
     console.error('[signal] listBandAssets failed', e)
     return []
@@ -430,6 +467,55 @@ export async function pullForgeAssets(
   }
 
   return { ok: errors.length === 0, created, errors }
+}
+
+/**
+ * Store a Forge candidate processed in the BROWSER (ffmpeg.wasm): the client sends
+ * the finished file (animated WebP/GIF for video, or mp3/m4a/wav for audio); we
+ * upload it and insert the row. Used because Vercel serverless can't run the
+ * ffmpeg binary (Next.js #53791). `kind` is 'video' (default) or 'audio'.
+ */
+export async function storeForgeWasmCandidate(form: FormData): Promise<{ ok: boolean; error?: string }> {
+  const me = await currentUser()
+  if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
+  const supabase = createAdminClient() as DB
+
+  const taskId = String(form.get('taskId') || '')
+  const file = form.get('display')
+  if (!taskId || !(file instanceof File)) return { ok: false, error: 'missing taskId/display' }
+  const kind = String(form.get('kind') || 'video') as 'video' | 'audio'
+  const ext = String(form.get('ext') || (kind === 'audio' ? 'mp3' : 'webp'))
+  const mime = String(form.get('mime') || (kind === 'audio' ? 'audio/mpeg' : 'image/webp'))
+  let meta: Record<string, unknown> = {}
+  try { meta = JSON.parse(String(form.get('source') || '{}')) } catch { /* ignore */ }
+
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  let up: { path: string; url: string }
+  try {
+    up = await uploadProcessed(taskId, key, buffer, mime, ext)
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+
+  const { error } = await supabase.from('signal_task_assets').insert({
+    task_id: taskId,
+    media: kind, // 'video' (animated WebP) or 'audio' (mp3/m4a/wav)
+    source_channel_id: meta.channelId ?? null,
+    source_channel_name: meta.channelName ?? null,
+    source_freq: meta.freq ?? null,
+    source_band_id: meta.bandId ?? null,
+    source_band_name: meta.bandName ?? null,
+    source_asset_id: meta.assetId ?? null,
+    source_url: meta.url ?? null,
+    processed_path: up.path,
+    processed_url: up.url,
+    display_url: kind === 'video' ? up.url : null, // audio has no still display
+    crop_config: meta.crop ?? {},
+    asset_role: 'option',
+    is_selected: false,
+  })
+  return error ? { ok: false, error: error.message } : { ok: true }
 }
 
 // ─── Candidate curation ───────────────────────────────────────────────────────
@@ -505,8 +591,13 @@ export interface PublicSignalTask {
   participantCount: number
   /** the asset this user picked, or null if not yet filed */
   mySelection: string | null
-  /** counts per asset id — only present once the user has filed (or is architect) */
+  /** counts per asset id — present once the user has filed, the day has closed,
+   *  or the viewer is an architect */
   distribution: Record<string, number> | null
+  /** true once a newer day has revealed: the day is read-only (results shown, no voting) */
+  closed: boolean
+  /** when this question's 24h voting window closes (ISO); null if unscheduled */
+  closeAt: string | null
   /** investigation-thread continuity (if this task is part of a thread). Never
    *  exposes the hidden target. */
   thread: {
@@ -645,6 +736,8 @@ export async function getSignalFeed(date?: string): Promise<SignalFeed> {
       participantCount: count ?? 0,
       mySelection,
       distribution,
+      closed: false,
+      closeAt: null,
       thread,
     })
   }
@@ -691,7 +784,7 @@ export async function submitSignalResponse(
   // resolve the owning world's vote scope + owner via the task's thread
   const { data: task } = await admin
     .from('signal_tasks')
-    .select('is_published, thread_id')
+    .select('is_published, thread_id, day_index')
     .eq('id', taskId)
     .maybeSingle()
   if (!task?.is_published) return { ok: false, error: 'Task is not published' }
@@ -699,11 +792,31 @@ export async function submitSignalResponse(
   let voteScope: WorldVoteScope = 'all'
   let ownerId: string | null = null
   if (task.thread_id) {
-    const { data: thread } = await admin.from('signal_threads').select('world_id').eq('id', task.thread_id).maybeSingle()
+    const { data: thread } = await admin
+      .from('signal_threads')
+      .select('world_id, reveal_anchor_at, gap_hours')
+      .eq('id', task.thread_id)
+      .maybeSingle()
+    let anchorAt: string | null = thread?.reveal_anchor_at ?? null
     if (thread?.world_id) {
-      const { data: world } = await admin.from('worlds').select('vote_scope, discoverer_id').eq('id', thread.world_id).maybeSingle()
+      const { data: world } = await admin.from('worlds').select('vote_scope, discoverer_id, scan_until').eq('id', thread.world_id).maybeSingle()
       voteScope = (world?.vote_scope as WorldVoteScope) ?? 'all'
       ownerId = world?.discoverer_id ?? null
+      anchorAt = anchorAt ?? world?.scan_until ?? null
+    }
+    // Only the question currently in its 24h window is votable — reject filings
+    // on a closed day, a not-yet-open day, or during the inter-question gap.
+    const { data: pubRows } = await admin
+      .from('signal_tasks')
+      .select('day_index, published_at')
+      .eq('thread_id', task.thread_id)
+      .eq('is_published', true)
+      .not('published_at', 'is', null)
+    const published: PublishedDay[] = (pubRows ?? []).map((r: { day_index: number | null; published_at: string }) => ({ dayIndex: r.day_index ?? 0, publishedAtISO: r.published_at }))
+    const gapHours = thread?.gap_hours ?? DEFAULT_GAP_HOURS
+    const phase = tuningPhase(buildSchedule(anchorAt, gapHours, published), gapHours)
+    if (phase.kind !== 'open' || (task.day_index ?? 0) !== phase.index) {
+      return { ok: false, error: 'Voting for this day has closed' }
     }
   }
   if (!eligibleToVote(me.role, me.id, voteScope, ownerId)) {
@@ -753,6 +866,17 @@ export interface PublicInvestigation {
     revealAt: string | null   // when this day surfaces (ISO); null if schedule unstarted
     revealed: boolean         // already surfaced as of now (always true for public viewers)
   }[]
+  // Inter-day "Signal Searching" state (member view only): the window between the
+  // latest unlocked day and the next. null for architects / when not applicable.
+  searching: SearchingState | null
+}
+
+// The "searching for the next signal" interstitial shown after the latest day.
+export interface SearchingState {
+  searchUntil: string | null        // countdown end (ISO)
+  failed: boolean                   // window elapsed AND no next day is published yet
+  prevDayIndex: number              // the day whose crowd-chosen signal we're searching from
+  prevAsset: PublicSignalAsset | null // that day's winning option (what everyone judged)
 }
 
 export interface InvestigationFeedData {
@@ -909,8 +1033,10 @@ export interface InvestigationConfig {
   title: string
   visionText: string | null
   voteScope: WorldVoteScope
-  revealAnchorAt: string | null      // schedule origin (set when day 0 publishes)
-  revealIntervalHours: number        // cadence between day reveals
+  revealAnchorAt: string | null      // schedule origin (null = anchors at the world's scan_until)
+  scanUntil: string | null           // the world's scan end — the anchor fallback
+  gapHours: number                   // inter-question gap; voting window is a fixed 24h
+  voteWindowHours: number            // the fixed 24h window (read-only, for display)
 }
 
 /** Full config for one investigation — world identity + owner vote scope.
@@ -919,7 +1045,7 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
   const admin = createAdminClient() as DB
   const { data: thread } = await admin
     .from('signal_threads')
-    .select('id, title, world_id, reveal_anchor_at, reveal_interval_hours')
+    .select('id, title, world_id, reveal_anchor_at, gap_hours')
     .eq('id', threadId)
     .maybeSingle()
   if (!thread) return null
@@ -927,16 +1053,18 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
   let title = thread.title ?? '(untitled)'
   let visionText: string | null = null
   let voteScope: WorldVoteScope = 'all'
+  let scanUntil: string | null = null
   if (thread.world_id) {
     const { data: world } = await admin
       .from('worlds')
-      .select('name, description, vote_scope')
+      .select('name, description, vote_scope, scan_until')
       .eq('id', thread.world_id)
       .maybeSingle()
     if (world) {
       title = world.name
       visionText = world.description ?? null
       voteScope = (world.vote_scope as WorldVoteScope) ?? 'all'
+      scanUntil = world.scan_until ?? null
     }
   }
 
@@ -947,16 +1075,18 @@ export async function getInvestigationConfig(threadId: string): Promise<Investig
     visionText,
     voteScope,
     revealAnchorAt: thread.reveal_anchor_at ?? null,
-    revealIntervalHours: thread.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS,
+    scanUntil,
+    gapHours: thread.gap_hours ?? DEFAULT_GAP_HOURS,
+    voteWindowHours: VOTE_WINDOW_HOURS,
   }
 }
 
-/** Update the owner vote scope (on the world) and/or the reveal schedule (on the
- *  thread). `revealIntervalHours` tunes the cadence; `revealAnchorAt` lets the
- *  architect start/reset the timeline (null = not started). */
+/** Update the owner vote scope (on the world) and/or the inter-question gap
+ *  (on the thread). The timeline always anchors at the world's scan end; voting
+ *  window is a fixed 24h. */
 export async function updateInvestigationConfig(
   threadId: string,
-  patch: { voteScope?: WorldVoteScope; revealIntervalHours?: number; revealAnchorAt?: string | null },
+  patch: { voteScope?: WorldVoteScope; gapHours?: number },
 ): Promise<{ ok: boolean; error?: string }> {
   const me = await currentUser()
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
@@ -971,11 +1101,8 @@ export async function updateInvestigationConfig(
   }
 
   const threadPatch: Record<string, unknown> = {}
-  if (patch.revealIntervalHours != null) {
-    threadPatch.reveal_interval_hours = Math.max(1, Math.round(patch.revealIntervalHours))
-  }
-  if (patch.revealAnchorAt !== undefined) {
-    threadPatch.reveal_anchor_at = patch.revealAnchorAt // ISO string or null to reset
+  if (patch.gapHours != null) {
+    threadPatch.gap_hours = Math.max(0, Math.round(patch.gapHours))
   }
   if (Object.keys(threadPatch).length) {
     const { error } = await admin.from('signal_threads').update(threadPatch).eq('id', threadId)
@@ -1091,19 +1218,21 @@ interface WorldMeta {
   discoverer_name: string | null
   discoverer_id: string | null
   vote_scope: WorldVoteScope
+  scan_until: string | null   // tuning timeline anchors here when reveal_anchor_at is unset
 }
 
 async function worldMetaMap(admin: DB, ids: (string | null)[]): Promise<Map<string, WorldMeta>> {
   const unique = [...new Set(ids.filter(Boolean))] as string[]
   const m = new Map<string, WorldMeta>()
   if (!unique.length) return m
-  const { data } = await admin.from('worlds').select('id, name, discoverer_name, discoverer_id, vote_scope').in('id', unique)
+  const { data } = await admin.from('worlds').select('id, name, discoverer_name, discoverer_id, vote_scope, scan_until').in('id', unique)
   for (const w of (data ?? []) as (WorldMeta & { id: string })[]) {
     m.set(w.id, {
       name: w.name,
       discoverer_name: w.discoverer_name,
       discoverer_id: w.discoverer_id,
       vote_scope: (w.vote_scope as WorldVoteScope) ?? 'all',
+      scan_until: w.scan_until ?? null,
     })
   }
   return m
@@ -1122,10 +1251,42 @@ export async function listInvestigationTasks(threadId: string): Promise<SignalTa
   const admin = createAdminClient() as DB
   const { data } = await admin
     .from('signal_tasks')
-    .select('id, task_date, type, prompt, is_published, sort_order, created_at, day_index, thread_id')
+    .select('id, task_date, type, prompt, is_published, published_at, sort_order, created_at, day_index, thread_id')
     .eq('thread_id', threadId)
     .order('day_index', { ascending: true })
   return (data ?? []) as SignalTask[]
+}
+
+/**
+ * For every world in Signal Tuning, the ISO time of its most recent published
+ * day — i.e. when its latest puzzle was found. Used to sort the Signal Tuning
+ * grid newest-first (a more dynamic, "freshly tuned floats up" feel).
+ * Returns { [worldId]: latestPublishedAt }.
+ */
+export async function getTuningActivity(): Promise<Record<string, string>> {
+  const admin = createAdminClient() as DB
+  const { data: threads } = await admin
+    .from('signal_threads')
+    .select('id, world_id')
+    .not('world_id', 'is', null)
+  const threadWorld = new Map<string, string>()
+  for (const t of (threads ?? []) as { id: string; world_id: string }[]) threadWorld.set(t.id, t.world_id)
+  if (!threadWorld.size) return {}
+
+  const { data: tasks } = await admin
+    .from('signal_tasks')
+    .select('thread_id, published_at')
+    .eq('is_published', true)
+    .not('published_at', 'is', null)
+    .in('thread_id', [...threadWorld.keys()])
+
+  const latest: Record<string, string> = {}
+  for (const t of (tasks ?? []) as { thread_id: string; published_at: string }[]) {
+    const wid = threadWorld.get(t.thread_id)
+    if (!wid) continue
+    if (!latest[wid] || t.published_at > latest[wid]) latest[wid] = t.published_at
+  }
+  return latest
 }
 
 /**
@@ -1210,49 +1371,118 @@ type VisibleDay = {
   prompt: string | null
   dayIndex: number
   revealAtISO: string | null
+  closeAtISO: string | null
   revealed: boolean
 }
 type TaskRow = { id: string; type: SignalTaskType; prompt: string | null; day_index: number | null }
 type RespRow = { user_id: string; selected_asset_id: string }
 
-/** Filter published tasks to the days this viewer may see, with reveal metadata. */
-function computeVisibleDays(taskRows: TaskRow[], anchorAt: string | null, intervalHours: number, isArchitect: boolean, now: Date): VisibleDay[] {
-  const out: VisibleDay[] = []
-  for (const t of taskRows) {
-    const dayIndex = t.day_index ?? 0
-    const at = computeRevealAt(anchorAt, intervalHours, dayIndex)
-    const revealed = isRevealed(anchorAt, intervalHours, dayIndex, now)
-    if (!revealed && !isArchitect) continue // public viewers only see revealed days
-    out.push({ taskId: t.id, type: t.type, prompt: t.prompt, dayIndex, revealAtISO: at ? at.toISOString() : null, revealed })
+type TaskRowPub = TaskRow & { published_at: string | null }
+
+/**
+ * Resolve one thread's tuning timeline from its published tasks (the forward
+ * gap chain — see src/lib/signal/reveal.ts):
+ *  - `visible`   days to render. Members see only opened days; architects see all.
+ *  - `openIndex` the single question currently votable (-1 if none — gap/failed).
+ *  - `searching` the inter-question interstitial: a normal gap (with a countdown
+ *                to the next question) or a stalled "search failed" (next overdue).
+ * Pure given `now`; callers fetch assets/responses for `visible` afterwards.
+ */
+function scheduleView(
+  rows: TaskRowPub[],
+  anchorAt: string | null,
+  gapHours: number,
+  isArchitect: boolean,
+  now: Date,
+): {
+  visible: VisibleDay[]
+  openIndex: number
+  searching: { failed: boolean; prevDayIndex: number; nextOpenAtISO: string | null } | null
+} {
+  const published: PublishedDay[] = rows
+    .filter((r) => r.published_at)
+    .map((r) => ({ dayIndex: r.day_index ?? 0, publishedAtISO: r.published_at! }))
+  const schedule = buildSchedule(anchorAt, gapHours, published)
+  const byDay = new Map(schedule.map((s) => [s.dayIndex, s]))
+  const phase = tuningPhase(schedule, gapHours, now)
+  const openIndex = phase.kind === 'open' ? phase.index : -1
+  const nowMs = now.getTime()
+
+  const visible: VisibleDay[] = []
+  for (const r of rows) {
+    const dayIndex = r.day_index ?? 0
+    const ds = byDay.get(dayIndex)
+    const revealed = !!ds && ds.openAt.getTime() <= nowMs
+    if (!revealed && !isArchitect) continue // members only see days that have opened
+    visible.push({ taskId: r.id, type: r.type, prompt: r.prompt, dayIndex, revealAtISO: ds ? ds.openAt.toISOString() : null, closeAtISO: ds ? ds.closeAt.toISOString() : null, revealed })
   }
-  return out
+
+  let searching: { failed: boolean; prevDayIndex: number; nextOpenAtISO: string | null } | null = null
+  if (!isArchitect && (phase.kind === 'gap' || phase.kind === 'search_failed')) {
+    searching = {
+      failed: phase.kind === 'search_failed',
+      prevDayIndex: phase.index,
+      nextOpenAtISO: phase.kind === 'gap' ? phase.nextOpenAt.toISOString() : null,
+    }
+  }
+  return { visible, openIndex, searching }
+}
+
+/**
+ * Fetch EVERY row of a query, paging past PostgREST's per-request row cap
+ * (Supabase defaults to 1000). Without this, a query matching more than the cap
+ * silently returns only the first page. For signal_responses that means some
+ * members' filings get dropped — their answer then looks unsubmitted (no
+ * mySelection, no distribution), and re-submitting trips the unique constraint
+ * with "already responded". The platform crossed 1000 total responses, so the
+ * batched feed fetch below must page through all of them.
+ */
+async function fetchAllRows<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null }>,
+): Promise<T[]> {
+  const SIZE = 1000
+  const all: T[] = []
+  for (let from = 0; ; from += SIZE) {
+    const { data } = await page(from, from + SIZE - 1)
+    const rows = data ?? []
+    all.push(...rows)
+    if (rows.length < SIZE) break
+  }
+  return all
 }
 
 /** One batched fetch of selected assets + responses for many tasks, grouped by
- *  task id — replaces the per-day, per-aspect N+1 queries. */
+ *  task id — replaces the per-day, per-aspect N+1 queries. Paged so it never
+ *  truncates at PostgREST's row cap (see fetchAllRows). */
 async function fetchDayData(admin: DB, taskIds: string[]): Promise<{ assetsByTask: Map<string, PublicSignalAsset[]>; respByTask: Map<string, RespRow[]> }> {
   const assetsByTask = new Map<string, PublicSignalAsset[]>()
   const respByTask = new Map<string, RespRow[]>()
   if (!taskIds.length) return { assetsByTask, respByTask }
-  const [{ data: assets }, { data: resp }] = await Promise.all([
-    admin
-      .from('signal_task_assets')
-      .select('id, media, processed_url, display_url, asset_role, display_order, task_id')
-      .in('task_id', taskIds)
-      .eq('is_selected', true)
-      .order('display_order', { ascending: true })
-      .order('created_at', { ascending: true }),
-    admin
-      .from('signal_responses')
-      .select('task_id, user_id, selected_asset_id')
-      .in('task_id', taskIds),
+  const [assets, resp] = await Promise.all([
+    fetchAllRows<PublicSignalAsset & { task_id: string }>((from, to) =>
+      admin
+        .from('signal_task_assets')
+        .select('id, media, processed_url, display_url, asset_role, display_order, task_id')
+        .in('task_id', taskIds)
+        .eq('is_selected', true)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: true })
+        .range(from, to),
+    ),
+    fetchAllRows<RespRow & { task_id: string }>((from, to) =>
+      admin
+        .from('signal_responses')
+        .select('task_id, user_id, selected_asset_id')
+        .in('task_id', taskIds)
+        .range(from, to),
+    ),
   ])
-  for (const a of (assets ?? []) as (PublicSignalAsset & { task_id: string })[]) {
+  for (const a of assets) {
     const arr = assetsByTask.get(a.task_id) ?? []
     arr.push({ id: a.id, media: a.media, processed_url: a.processed_url, display_url: a.display_url, asset_role: a.asset_role, display_order: a.display_order })
     assetsByTask.set(a.task_id, arr)
   }
-  for (const r of (resp ?? []) as (RespRow & { task_id: string })[]) {
+  for (const r of resp) {
     const arr = respByTask.get(r.task_id) ?? []
     arr.push({ user_id: r.user_id, selected_asset_id: r.selected_asset_id })
     respByTask.set(r.task_id, arr)
@@ -1261,12 +1491,16 @@ async function fetchDayData(admin: DB, taskIds: string[]): Promise<{ assetsByTas
 }
 
 /** Assemble day objects from pre-fetched, grouped data — no queries. */
-function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSignalAsset[]>, respByTask: Map<string, RespRow[]>, me: Viewer, isArchitect: boolean): PublicInvestigation['days'] {
+function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSignalAsset[]>, respByTask: Map<string, RespRow[]>, me: Viewer, isArchitect: boolean, activeDayIndex: number): PublicInvestigation['days'] {
+  // Only `activeDayIndex` (the question in its 24h window) is open; every other
+  // revealed day is closed — read-only results. activeDayIndex is -1 during the
+  // inter-question gap / search-failed, so the latest day closes then too.
   return visible.map((v) => {
     const responses = respByTask.get(v.taskId) ?? []
     const mySelection = me ? (responses.find((r) => r.user_id === me.id)?.selected_asset_id ?? null) : null
+    const closed = v.revealed && v.dayIndex !== activeDayIndex
     let distribution: Record<string, number> | null = null
-    if (mySelection || isArchitect) {
+    if (closed || mySelection || isArchitect) {
       distribution = {}
       for (const r of responses) distribution[r.selected_asset_id] = (distribution[r.selected_asset_id] ?? 0) + 1
     }
@@ -1282,25 +1516,79 @@ function assembleDays(visible: VisibleDay[], assetsByTask: Map<string, PublicSig
         participantCount: responses.length,
         mySelection,
         distribution,
+        closed,
+        closeAt: v.closeAtISO,
         thread: null,
       },
     }
   })
 }
 
-/** Published+visible days for ONE thread (world page). 4 queries regardless of
- *  day count: tasks + schedule (parallel), then assets + responses (batched). */
-async function buildPublishedDays(admin: DB, threadId: string, me: Viewer, isArchitect: boolean): Promise<PublicInvestigation['days']> {
+/** A day's crowd-chosen option ("what everyone judged") — the most-voted option,
+ *  falling back to the first option. Anchors the searching interstitial. */
+function pickWinnerAsset(assets: PublicSignalAsset[] | undefined, responses: RespRow[] | undefined): PublicSignalAsset | null {
+  const options = (assets ?? []).filter((a) => a.asset_role !== 'main')
+  if (!options.length) return null
+  if (responses?.length) {
+    const counts: Record<string, number> = {}
+    for (const r of responses) counts[r.selected_asset_id] = (counts[r.selected_asset_id] ?? 0) + 1
+    let best = options[0], bestN = counts[best.id] ?? 0
+    for (const o of options) { const n = counts[o.id] ?? 0; if (n > bestN) { best = o; bestN = n } }
+    return best
+  }
+  return options[0]
+}
+
+/** Published days for ONE thread (world page), with the inter-question gap gate.
+ *  Each question is open 24h, then a `gap_hours` interstitial counts down to the
+ *  next; the timeline anchors at the world's scan_until (or reveal_anchor_at if an
+ *  architect has restarted it). Members see opened days; the detail page treats
+ *  architects as members too (full authoring preview lives in /admin/signal-tasks). */
+async function buildPublishedDays(
+  admin: DB, threadId: string, me: Viewer, isArchitect: boolean,
+): Promise<{ days: PublicInvestigation['days']; searching: SearchingState | null }> {
   const [{ data: taskRows }, { data: sched }] = await Promise.all([
-    admin.from('signal_tasks').select('id, type, prompt, day_index').eq('thread_id', threadId).eq('is_published', true).order('day_index', { ascending: true }),
-    admin.from('signal_threads').select('reveal_anchor_at, reveal_interval_hours').eq('id', threadId).maybeSingle(),
+    admin.from('signal_tasks').select('id, type, prompt, day_index, published_at').eq('thread_id', threadId).eq('is_published', true).order('day_index', { ascending: true }),
+    admin.from('signal_threads').select('world_id, reveal_anchor_at, gap_hours').eq('id', threadId).maybeSingle(),
   ])
-  const anchorAt: string | null = sched?.reveal_anchor_at ?? null
-  const intervalHours: number = sched?.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS
-  const visible = computeVisibleDays((taskRows ?? []) as TaskRow[], anchorAt, intervalHours, isArchitect, new Date())
-  if (!visible.length) return []
-  const { assetsByTask, respByTask } = await fetchDayData(admin, visible.map((v) => v.taskId))
-  return assembleDays(visible, assetsByTask, respByTask, me, isArchitect)
+  const rows = (taskRows ?? []) as TaskRowPub[]
+  if (!rows.length) return { days: [], searching: null }
+
+  // Anchor: an explicit restart wins; otherwise the world's scan_until.
+  let anchorAt: string | null = sched?.reveal_anchor_at ?? null
+  if (!anchorAt && sched?.world_id) {
+    const { data: w } = await admin.from('worlds').select('scan_until').eq('id', sched.world_id).maybeSingle()
+    anchorAt = w?.scan_until ?? null
+  }
+  const gapHours: number = sched?.gap_hours ?? DEFAULT_GAP_HOURS
+
+  const view = scheduleView(rows, anchorAt, gapHours, isArchitect, new Date())
+  if (!view.visible.length) return { days: [], searching: null }
+
+  const { assetsByTask, respByTask } = await fetchDayData(admin, view.visible.map((v) => v.taskId))
+  const days = assembleDays(view.visible, assetsByTask, respByTask, me, isArchitect, view.openIndex)
+
+  const searching = buildSearchingState(view.searching, view.visible, assetsByTask, respByTask)
+  return { days, searching }
+}
+
+/** Turn a scheduleView's raw searching info into the public SearchingState,
+ *  resolving the previous day's crowd-chosen image. Shared by the world page
+ *  and the /signal feed. */
+function buildSearchingState(
+  raw: { failed: boolean; prevDayIndex: number; nextOpenAtISO: string | null } | null,
+  visible: VisibleDay[],
+  assetsByTask: Map<string, PublicSignalAsset[]>,
+  respByTask: Map<string, RespRow[]>,
+): SearchingState | null {
+  if (!raw) return null
+  const prev = visible.find((v) => v.dayIndex === raw.prevDayIndex)
+  return {
+    searchUntil: raw.nextOpenAtISO,
+    failed: raw.failed,
+    prevDayIndex: raw.prevDayIndex,
+    prevAsset: prev ? pickWinnerAsset(assetsByTask.get(prev.taskId), respByTask.get(prev.taskId)) : null,
+  }
 }
 
 type ThreadRow = { id: string; title: string | null; type: SignalTaskType; world_id: string | null }
@@ -1311,6 +1599,7 @@ function buildInvestigation(
   wm: WorldMeta | undefined,
   days: PublicInvestigation['days'],
   me: Viewer,
+  searching: SearchingState | null = null,
 ): PublicInvestigation {
   const voteScope = wm?.vote_scope ?? 'all'
   const can = eligibleToVote(me?.role ?? null, me?.id ?? null, voteScope, wm?.discoverer_id ?? null)
@@ -1324,6 +1613,7 @@ function buildInvestigation(
     canParticipate: can,
     lockReason: can ? null : lockReason(voteScope, !!me),
     days,
+    searching,
   }
 }
 
@@ -1332,59 +1622,66 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   const admin = createAdminClient() as DB
   const me = await currentUser()
   const role = me?.role ?? null
-  const isArchitect = role === 'architect'
+  // Architects see the same member view here — future (not-yet-revealed) days are
+  // hidden. The full authoring preview lives in /admin/signal-tasks.
 
   const now = new Date()
 
-  // One thread query (with schedule cols) + one published-task query, then a
-  // single batched assets+responses fetch and worldMetaMap — ~5 queries total
-  // regardless of thread/day count (was a per-thread, per-day N+1).
   const { data: threadData } = await admin
     .from('signal_threads')
-    .select('id, title, type, world_id, reveal_anchor_at, reveal_interval_hours')
+    .select('id, title, type, world_id, reveal_anchor_at, gap_hours')
     .order('created_at', { ascending: false })
-  const threads = (threadData ?? []) as (ThreadRow & { reveal_anchor_at: string | null; reveal_interval_hours: number | null })[]
+  const threads = (threadData ?? []) as (ThreadRow & { reveal_anchor_at: string | null; gap_hours: number | null })[]
   if (!threads.length) return { investigations: [], role, loggedIn: !!me }
 
   const { data: taskData } = await admin
     .from('signal_tasks')
-    .select('id, thread_id, type, prompt, day_index')
+    .select('id, thread_id, type, prompt, day_index, published_at')
     .eq('is_published', true)
     .in('thread_id', threads.map((t) => t.id))
-  const tasksByThread = new Map<string, TaskRow[]>()
-  for (const t of (taskData ?? []) as (TaskRow & { thread_id: string })[]) {
+  const tasksByThread = new Map<string, TaskRowPub[]>()
+  for (const t of (taskData ?? []) as (TaskRowPub & { thread_id: string })[]) {
     const arr = tasksByThread.get(t.thread_id) ?? []
-    arr.push({ id: t.id, type: t.type, prompt: t.prompt, day_index: t.day_index })
+    arr.push({ id: t.id, type: t.type, prompt: t.prompt, day_index: t.day_index, published_at: t.published_at })
     tasksByThread.set(t.thread_id, arr)
   }
 
-  // Compute visible days per thread (in memory), gathering all task ids to batch.
-  const visibleByThread = new Map<string, VisibleDay[]>()
+  // World meta first — it carries scan_until, the anchor fallback for each thread.
+  const meta = await worldMetaMap(admin, threads.map((t) => t.world_id))
+
+  // Resolve each thread's timeline (in memory), gathering all task ids to batch.
+  type Resolved = { visible: VisibleDay[]; openIndex: number; searching: ReturnType<typeof scheduleView>['searching'] }
+  const perThread = new Map<string, Resolved>()
   const allTaskIds: string[] = []
   for (const th of threads) {
     const rows = (tasksByThread.get(th.id) ?? []).sort((a, b) => (a.day_index ?? 0) - (b.day_index ?? 0))
-    const visible = computeVisibleDays(rows, th.reveal_anchor_at ?? null, th.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS, isArchitect, now)
-    if (visible.length) {
-      visibleByThread.set(th.id, visible)
-      for (const v of visible) allTaskIds.push(v.taskId)
+    const anchorAt = th.reveal_anchor_at ?? (th.world_id ? meta.get(th.world_id)?.scan_until ?? null : null)
+    const view = scheduleView(rows, anchorAt, th.gap_hours ?? DEFAULT_GAP_HOURS, false, now)
+    if (view.visible.length) {
+      perThread.set(th.id, { visible: view.visible, openIndex: view.openIndex, searching: view.searching })
+      for (const v of view.visible) allTaskIds.push(v.taskId)
     }
   }
 
-  const [dayData, meta] = await Promise.all([
-    fetchDayData(admin, allTaskIds),
-    worldMetaMap(admin, threads.map((t) => t.world_id)),
-  ])
+  const dayData = await fetchDayData(admin, allTaskIds)
 
-  const investigations: PublicInvestigation[] = []
+  // Build cards, ranked by the most recently OPENED question (freshest floats to
+  // the top; the list reorders as each new question reveals). A searching world
+  // ranks by its last opened day until its next question surfaces.
+  const ranked: { inv: PublicInvestigation; freshness: number }[] = []
   for (const th of threads) {
-    const visible = visibleByThread.get(th.id)
-    if (!visible) continue
-    const days = assembleDays(visible, dayData.assetsByTask, dayData.respByTask, me, isArchitect)
+    const pt = perThread.get(th.id)
+    if (!pt) continue
+    const days = assembleDays(pt.visible, dayData.assetsByTask, dayData.respByTask, me, false, pt.openIndex)
+    const searching = buildSearchingState(pt.searching, pt.visible, dayData.assetsByTask, dayData.respByTask)
     const wm = th.world_id ? meta.get(th.world_id) : undefined
-    investigations.push(buildInvestigation(th, wm, days, me))
+    const latestOpen = pt.visible[pt.visible.length - 1]?.revealAtISO
+    const freshness = latestOpen ? Date.parse(latestOpen) : 0
+    ranked.push({ inv: buildInvestigation(th, wm, days, me, searching), freshness })
   }
+  ranked.sort((a, b) => b.freshness - a.freshness)
 
-  return { investigations, role, loggedIn: !!me }
+  return { investigations: ranked.map((r) => r.inv), role, loggedIn: !!me }
 }
 
 export interface WorldInvestigationData {
@@ -1398,7 +1695,8 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
   const admin = createAdminClient() as DB
   const me = await currentUser()
   const role = me?.role ?? null
-  const isArchitect = role === 'architect'
+  // Architects see the same member view here — future (not-yet-revealed) days are
+  // hidden. The full authoring preview lives in /admin/signal-tasks.
 
   const { data: thread } = await admin
     .from('signal_threads')
@@ -1410,17 +1708,86 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
 
   if (!thread) return { investigation: null, role, loggedIn: !!me }
 
-  const days = await buildPublishedDays(admin, thread.id, me, isArchitect)
+  const { days, searching } = await buildPublishedDays(admin, thread.id, me, false)
   if (days.length === 0) return { investigation: null, role, loggedIn: !!me }
 
   const meta = await worldMetaMap(admin, [(thread as ThreadRow).world_id])
   const wm = (thread as ThreadRow).world_id ? meta.get((thread as ThreadRow).world_id!) : undefined
 
   return {
-    investigation: buildInvestigation(thread as ThreadRow, wm, days, me),
+    investigation: buildInvestigation(thread as ThreadRow, wm, days, me, searching),
     role,
     loggedIn: !!me,
   }
+}
+
+// ─── Archive World reel (Established worlds) ──────────────────────────────────
+
+export interface ArchiveDay {
+  dayIndex: number
+  dispatchAt: string | null          // when the day's signal went out (published_at)
+  winner: PublicSignalAsset | null   // the crowd-chosen reading for that day
+}
+export interface ArchiveFinalAsset {
+  id: string
+  media: 'image' | 'video'
+  url: string
+  posterUrl: string | null
+  createdAt: string | null           // when this final form went up
+}
+export interface ArchiveReel {
+  finalAssets: ArchiveFinalAsset[]   // the world's final form (newest end of the reel)
+  days: ArchiveDay[]                 // each tuned day's chosen signal, ascending
+  lockedAt: string | null            // when the world was locked/observed (first final form)
+}
+
+/**
+ * Assemble an Established world's Archive reel: its Final Form media plus every
+ * tuned day's crowd-chosen signal (read-only). Standalone worlds with no tuning
+ * thread return empty `days` (the page degrades to just the poster + field notes).
+ */
+export async function getArchiveReel(worldId: string): Promise<ArchiveReel> {
+  const admin = createAdminClient() as DB
+
+  const { data: finals } = await admin
+    .from('world_final_assets')
+    .select('id, media, url, poster_url, created_at')
+    .eq('world_id', worldId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+  const finalRows = (finals ?? []) as { id: string; media: 'image' | 'video'; url: string; poster_url: string | null; created_at: string | null }[]
+  const finalAssets: ArchiveFinalAsset[] = finalRows.map((f) => ({ id: f.id, media: f.media, url: f.url, posterUrl: f.poster_url ?? null, createdAt: f.created_at ?? null }))
+  // Locked/observed = when the world's final form first went up.
+  const lockedAt = finalRows.reduce<string | null>((min, f) => (f.created_at && (!min || f.created_at < min) ? f.created_at : min), null)
+
+  const { data: thread } = await admin
+    .from('signal_threads')
+    .select('id')
+    .eq('world_id', worldId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  let days: ArchiveDay[] = []
+  if (thread?.id) {
+    const { data: taskRows } = await admin
+      .from('signal_tasks')
+      .select('id, day_index, published_at')
+      .eq('thread_id', thread.id)
+      .eq('is_published', true)
+      .order('day_index', { ascending: true })
+    const tasks = (taskRows ?? []) as { id: string; day_index: number | null; published_at: string | null }[]
+    if (tasks.length) {
+      const { assetsByTask, respByTask } = await fetchDayData(admin, tasks.map((t) => t.id))
+      days = tasks.map((t) => ({
+        dayIndex: t.day_index ?? 0,
+        dispatchAt: t.published_at ?? null,
+        winner: pickWinnerAsset(assetsByTask.get(t.id), respByTask.get(t.id)),
+      }))
+    }
+  }
+
+  return { finalAssets, days, lockedAt }
 }
 
 // ─── Console dashboard board (doc 4.1) ────────────────────────────────────────
@@ -1439,53 +1806,57 @@ export async function getDispatchDashboard(): Promise<DispatchDashboard | null> 
 
   const { data: pubTasks } = await admin
     .from('signal_tasks')
-    .select('id, thread_id, day_index')
+    .select('id, thread_id, day_index, published_at')
     .eq('is_published', true)
     .not('thread_id', 'is', null)
-  const allTasks = (pubTasks ?? []) as { id: string; thread_id: string; day_index: number | null }[]
+  const allTasks = (pubTasks ?? []) as { id: string; thread_id: string; day_index: number | null; published_at: string | null }[]
 
-  // Reveal schedule per thread — only days that have actually surfaced count as
-  // live/actionable (a published-but-future day is not yet doable).
+  // Per-thread schedule (anchor + gap) so we can resolve which question is OPEN.
   const threadIds = [...new Set(allTasks.map((t) => t.thread_id))]
   const threadWorld = new Map<string, string | null>()
-  const threadSchedule = new Map<string, { anchor: string | null; interval: number }>()
+  const threadGap = new Map<string, { anchor: string | null; gap: number }>()
   if (threadIds.length) {
     const { data: threads } = await admin
       .from('signal_threads')
-      .select('id, world_id, reveal_anchor_at, reveal_interval_hours')
+      .select('id, world_id, reveal_anchor_at, gap_hours')
       .in('id', threadIds)
-    for (const t of (threads ?? []) as { id: string; world_id: string | null; reveal_anchor_at: string | null; reveal_interval_hours: number | null }[]) {
+    for (const t of (threads ?? []) as { id: string; world_id: string | null; reveal_anchor_at: string | null; gap_hours: number | null }[]) {
       threadWorld.set(t.id, t.world_id)
-      threadSchedule.set(t.id, { anchor: t.reveal_anchor_at ?? null, interval: t.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS })
+      threadGap.set(t.id, { anchor: t.reveal_anchor_at ?? null, gap: t.gap_hours ?? DEFAULT_GAP_HOURS })
     }
   }
   const meta = await worldMetaMap(admin, [...threadWorld.values()])
 
-  const now = new Date()
-  const tasks = allTasks.filter((t) => {
-    const s = threadSchedule.get(t.thread_id)
-    return isRevealed(s?.anchor ?? null, s?.interval ?? DEFAULT_REVEAL_INTERVAL_HOURS, t.day_index ?? 0, now)
-  })
-  const inTuning = tasks.length // revealed signals across worlds in tuning
-
   const { data: resp } = await admin.from('signal_responses').select('task_id').eq('user_id', me.id)
   const responded = new Set(((resp ?? []) as { task_id: string }[]).map((r) => r.task_id))
 
-  // A world's currently-OPEN day is its latest revealed day; earlier revealed
-  // days are past (expired) and must not inflate "awaiting you". Count at most
-  // one per world — the current day, if unanswered and votable.
-  const currentOpen = new Map<string, { id: string; day_index: number | null }>()
-  for (const t of tasks) {
-    const cur = currentOpen.get(t.thread_id)
-    if (!cur || (t.day_index ?? 0) > (cur.day_index ?? 0)) currentOpen.set(t.thread_id, t)
+  const tasksByThread = new Map<string, typeof allTasks>()
+  for (const t of allTasks) {
+    const arr = tasksByThread.get(t.thread_id) ?? []
+    arr.push(t)
+    tasksByThread.set(t.thread_id, arr)
   }
 
+  const now = new Date(); const nowMs = now.getTime()
+  let inTuning = 0   // surfaced (opened) signals across worlds in tuning
   let awaitingYou = 0
-  for (const [threadId, t] of currentOpen) {
-    if (responded.has(t.id)) continue
+  for (const [threadId, rows] of tasksByThread) {
+    const sg = threadGap.get(threadId)
     const wid = threadWorld.get(threadId) ?? null
     const wm = wid ? meta.get(wid) : undefined
-    if (eligibleToVote(me.role, me.id, wm?.vote_scope ?? 'all', wm?.discoverer_id ?? null)) awaitingYou++
+    const anchorAt = sg?.anchor ?? wm?.scan_until ?? null
+    const gap = sg?.gap ?? DEFAULT_GAP_HOURS
+    const published: PublishedDay[] = rows.filter((r) => r.published_at).map((r) => ({ dayIndex: r.day_index ?? 0, publishedAtISO: r.published_at! }))
+    const schedule = buildSchedule(anchorAt, gap, published)
+    inTuning += schedule.filter((s) => s.openAt.getTime() <= nowMs).length
+    // awaitingYou: the single open question, if this viewer may vote and hasn't.
+    const phase = tuningPhase(schedule, gap, now)
+    if (phase.kind === 'open') {
+      const openTask = rows.find((r) => (r.day_index ?? 0) === phase.index)
+      if (openTask && !responded.has(openTask.id) && eligibleToVote(me.role, me.id, wm?.vote_scope ?? 'all', wm?.discoverer_id ?? null)) {
+        awaitingYou++
+      }
+    }
   }
 
   const { data: mine } = await admin

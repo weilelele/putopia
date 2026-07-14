@@ -20,6 +20,7 @@ import { FlipWordmark, WORDMARK_READY_EVENT } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
 import { AccessGate } from '@/components/access-gate'
+import { useActivateAccess } from '@/components/activate-action'
 import type { Device, World, McFunction, IntelWithAvatar } from '@/types/database'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
@@ -143,8 +144,11 @@ function DevicePreviewCard({ device }: { device: Device }) {
 }
 
 /* ─── Voyager Ad Slot — homepage promo block between Status Feed & Device Registry ───
- *  A (direct)     → orange, "Initial Voyager Pack" → /voyager-pack (buy)
- *  B (task_gated) → amber,  "Earn Your Status"     → /voyager-path (watch track)
+ *  Both groups now land on the product page (/voyager-pack) on click; the
+ *  task-completion gate for group B is enforced at the pack's buy button, not
+ *  the ad slot. Group styling/copy still differs (A orange, B amber).
+ *  A (direct)     → orange, "Initial Voyager Pack" → /voyager-pack (buy now)
+ *  B (task_gated) → amber,  "Earn Your Status"     → /voyager-pack (gated at checkout)
  *  Hero photo fades top + bottom into the card; faint breathing glow. */
 function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
   const direct = group === 'direct'
@@ -153,7 +157,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
   const eyebrow = direct ? 'VOYAGER INITIATION' : 'VOYAGER RECRUITMENT'
   const title   = direct ? 'INITIAL VOYAGER PACK' : 'EARN YOUR STATUS'
   const cta     = 'ACTIVATE'
-  const href    = direct ? '/voyager-pack' : '/voyager-path'
+  const href    = '/voyager-pack'
 
   return (
     <Link
@@ -490,7 +494,7 @@ function HeroStats({ worlds, voyagers }: { worlds: number | null; voyagers: numb
   )
 }
 
-function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats | null }) {
+function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: GuestHeroStats | null; mcFunctions: McFunction[] }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
 
   useEffect(() => {
@@ -505,6 +509,10 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
     transform: shown[i] ? 'translateY(0)' : 'translateY(10px)',
     transition: 'opacity 0.55s ease, transform 0.55s ease',
   })
+
+  // Same "get full access" rule as the gate: returning emailers get the inbox
+  // popup; cold visitors go to onboarding.
+  const { trigger: requestAccess, modal: requestAccessModal } = useActivateAccess(newHref)
 
   return (
     <section className="hero">
@@ -543,24 +551,24 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
         We own devices looking into parallel worlds.
       </p>
 
-      {/* Three headline numbers — tap to reveal an explanation */}
-      <div style={{ width: '100%', ...line(2) }}>
-        <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
+      {/* Device showcase — leads the hero so the product hits first */}
+      <div style={{ width: '100%', maxWidth: 820, margin: '1.75rem auto 0', ...line(2) }}>
+        <McConsolePanel mcFunctions={mcFunctions} />
       </div>
 
       {/* CTA row — always horizontal, equal-width buttons */}
       <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.25rem',
+        display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.75rem',
         width: '100%', maxWidth: '620px',
       }}>
-        <Link href={newHref} className="btn-primary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
-          onClick={() => posthog.capture('workspace_request_access_clicked')}
+        <button type="button" className="btn-primary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
+          onClick={() => { posthog.capture('workspace_request_access_clicked'); requestAccess('hero') }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
             <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,255,255,0.25)" strokeLinejoin="round" />
           </svg>
           REQUEST ACCESS
-        </Link>
+        </button>
         <Link href="/login" className="btn-secondary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
           onClick={() => posthog.capture('workspace_login_clicked')}
         >
@@ -573,122 +581,16 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
         </Link>
       </div>
 
-      {/* ── Ask us strip ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '0.75rem',
-        marginTop: '1.25rem',
-        opacity: 0.55,
-      }}>
-        <span style={{
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.12em', color: 'var(--color-star-dim)',
-          whiteSpace: 'nowrap',
-        }}>
-          QUESTIONS ABOUT US:
-        </span>
-        {ASK_US_CONTACTS.map(({ name, handle, avatar, href }) => (
-          <a
-            key={name}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={`Ask ${name} on X`}
-            style={{ display: 'inline-block', flexShrink: 0 }}
-            onClick={() => posthog.capture('ask_us_clicked', { architect: name, x_handle: handle })}
-            onMouseEnter={e => { (e.currentTarget.querySelector('img') as HTMLImageElement).style.borderColor = 'var(--color-nebula)'; e.currentTarget.style.opacity = '1' }}
-            onMouseLeave={e => { (e.currentTarget.querySelector('img') as HTMLImageElement).style.borderColor = 'rgba(245,245,245,0.15)'; e.currentTarget.style.opacity = '0.85' }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={avatar}
-              alt={name}
-              style={{
-                width: 28, height: 28, borderRadius: '50%', objectFit: 'cover',
-                display: 'block',
-                border: '1px solid rgba(245,245,245,0.15)',
-                transition: 'border-color 0.15s',
-              }}
-            />
-          </a>
-        ))}
+      {/* Three headline numbers — supporting proof, below the action buttons */}
+      <div style={{ width: '100%', marginTop: '1.75rem', ...line(2) }}>
+        <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
       </div>
+
+      {requestAccessModal}
     </section>
   )
 }
 
-
-/* ─── Ask-us strip — three architect contacts, visible to logged-in users ─── */
-const ASK_US_CONTACTS = [
-  {
-    name: 'Ryo Tanaka',
-    handle: 'ryotanakaputo',
-    avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/86fadca3-8739-4553-9179-c4d0e84895ee/avatar.jpg',
-    href: 'https://x.com/ryotanakaputo',
-  },
-  {
-    name: 'Valentina Cruz',
-    handle: 'ValentinaCruzi',
-    avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/403b32a7-8d85-4cdd-9c7f-4f2c7919d726/avatar.jpg',
-    href: 'https://x.com/ValentinaCruzi',
-  },
-  {
-    name: 'Weile Yang',
-    handle: 'weilelele',
-    avatar: 'https://oxwfnmcwovxnrvagxzdz.supabase.co/storage/v1/object/public/avatars/6fc6e5cd-35fe-4812-ac04-f9074c6ee0c7/avatar.png',
-    href: 'https://x.com/weilelele',
-  },
-] as const
-
-function AskUsStrip() {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
-      padding: '0 1.25rem', marginTop: '1rem',
-    }}>
-      <span style={{
-        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-        letterSpacing: '0.12em', color: 'var(--color-star-dim)',
-        whiteSpace: 'nowrap', opacity: 0.55,
-      }}>
-        QUESTIONS ABOUT US:
-      </span>
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        {ASK_US_CONTACTS.map(({ name, handle, avatar, href }) => (
-          <a
-            key={name}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={`Ask ${name} on X`}
-            style={{ display: 'inline-block', flexShrink: 0, opacity: 0.7 }}
-            onClick={() => posthog.capture('ask_us_clicked', { architect: name, x_handle: handle })}
-            onMouseEnter={e => { e.currentTarget.style.opacity = '1' }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = '0.7' }}
-          >
-            {avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={avatar}
-                alt={name}
-                style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', display: 'block', border: '1px solid rgba(245,245,245,0.15)' }}
-              />
-            ) : (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 28, height: 28, borderRadius: '50%',
-                border: '1px solid rgba(255,107,53,0.35)', background: '#0A0D1A',
-                fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
-                color: 'rgba(255,107,53,0.8)', letterSpacing: '0.02em',
-              }}>
-                WL
-              </span>
-            )}
-          </a>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 /* ─── Device popup — days held + reservation entry (gated until devices open) ── */
 function DeviceComingSoonModal({ days, onClose }: { days: number; onClose: () => void }) {
@@ -839,7 +741,7 @@ function AuthHero({ user }: {
 // Placeholder that mirrors the embedded Signal Feed (2-column masonry, maxWidth
 // 820, "INTERNAL UPDATES" divider). Rendered while the real feed is deferred so
 // its height is reserved up front and the hero never gets shoved upward.
-function FeedSkeleton() {
+function FeedSkeleton({ hideHeader = false }: { hideHeader?: boolean }) {
   const heights = [150, 210, 120, 190, 160, 230, 140, 180]
   return (
     <div style={{ maxWidth: 820, margin: '0 auto' }}>
@@ -847,11 +749,13 @@ function FeedSkeleton() {
         .feed-skel-ph { background-image: linear-gradient(100deg, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.02) 70%); background-size: 200% 100%; animation: feed-skel-ph-shimmer 1.4s ease-in-out infinite; }
         @keyframes feed-skel-ph-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
       `}</style>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
-        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)', opacity: 0.5 }}>INTERNAL UPDATES</span>
-        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-      </div>
+      {!hideHeader && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 6px 14px' }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)', opacity: 0.5 }}>INTERNAL UPDATES</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+        </div>
+      )}
       {/* min-height keeps the reserved feed area taller than the viewport's
           leftover space, so the hero stays at its natural height (not stretched)
           in both the skeleton and the loaded-feed state — no upward jump. */}
@@ -1128,9 +1032,17 @@ function ConsoleInner() {
 
   // Shared feed node — rendered inside the guest access gate, or standalone for
   // members. The Voyager ad slot rides as the lead block (door + ad coexist).
-  const packHref = (experimentGroup ?? 'direct') === 'direct' ? '/voyager-pack' : '/voyager-path'
-  const leadSlot = !loading && SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
-    ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
+  // Both A/B groups go to the product page; group B's task gate is enforced at checkout.
+  const packHref = '/voyager-pack'
+  // Preview override: ?ad=direct or ?ad=task_gated forces the ad slot to render
+  // with that variant (so you can try both without an applicant account).
+  const adParam = searchParams.get('ad')
+  const adOverride: ExperimentGroup | null =
+    adParam === 'direct' || adParam === 'task_gated' ? adParam : null
+  const showAd = !loading && SALES_OPEN &&
+    (adOverride !== null || (user.role !== 'voyager' && user.role !== 'architect'))
+  const leadSlot = showAd
+    ? <VoyagerAdSlot group={adOverride ?? experimentGroup ?? 'direct'} />
     : undefined
   const feedNode = feedEntries.length > 0
     ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} />
@@ -1158,13 +1070,11 @@ function ConsoleInner() {
       {loading ? (
         <section className="hero" style={{ flex: 1 }} />
       ) : isGuest ? (
-        <GuestHero newHref={newHref} stats={heroStats} />
+        <GuestHero newHref={newHref} stats={heroStats} mcFunctions={mcFunctions} />
       ) : (
         <AuthHero user={user} />
       )}
 
-      {/* ── Ask-us strip — only for logged-in members ── */}
-      {!loading && !isGuest && <AskUsStrip />}
 
       {/* ── Device intro + Signal Feed ──
            For a guest both sit under the access gate: frosted as one block (the
@@ -1176,14 +1086,23 @@ function ConsoleInner() {
           <FeedSkeleton />
         </section>
       ) : isGuest ? (
-        <section style={{ margin: '1.5rem -1.25rem 0', padding: '0 0.5rem' }}>
-          <AccessGate permanentHref={newHref}>
-            <div style={{ width: '100%', maxWidth: 820, margin: '0 auto 1.5rem', padding: '0 0.25rem' }}>
-              <McConsolePanel mcFunctions={mcFunctions} />
-            </div>
-            {feedNode}
-          </AccessGate>
-        </section>
+        <>
+          {/* Device now leads the hero (see GuestHero); here just the gated feed. */}
+          {/* INTERNAL UPDATES label — exposed above the frosted feed */}
+          <div style={{ maxWidth: 820, margin: '1.75rem auto 0.25rem', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 1.25rem' }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>INTERNAL UPDATES</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+          </div>
+          {/* Only the feed is frosted now */}
+          <section style={{ margin: '0.75rem -1.25rem 0', padding: '0 0.5rem' }}>
+            <AccessGate permanentHref={newHref}>
+              {feedEntries.length > 0
+                ? <FeedProtoClient entries={feedEntries} embedded hideHeader packHref={packHref} leadSlot={leadSlot} />
+                : <FeedSkeleton hideHeader />}
+            </AccessGate>
+          </section>
+        </>
       ) : (
         <section style={{ margin: '0 -1.25rem', padding: '2.5rem 0.5rem 2rem' }}>
           {feedNode}
@@ -1196,3 +1115,4 @@ function ConsoleInner() {
     </div>
   )
 }
+

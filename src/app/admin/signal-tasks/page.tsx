@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
+import { FinalFormPanel } from '@/components/final-form-panel'
 import {
   getFrequencies,
   getTask,
@@ -20,6 +21,8 @@ import {
   listInvestigationTasks,
   listBandAssets,
   pullForgeAssets,
+  sampleForgeAssets,
+  storeForgeWasmCandidate,
   getInvestigationConfig,
   updateInvestigationConfig,
 } from '@/lib/actions/signal-tasks'
@@ -34,9 +37,43 @@ import type {
 } from '@/lib/actions/signal-tasks'
 import type { CosmoFrequency } from '@/lib/cosmo'
 import type { WorldVoteScope } from '@/types/database'
-import type { CropShape, FilterPreset } from '@/lib/signal/presets'
+import type { CropShape, FilterPreset, CropConfig } from '@/lib/signal/presets'
 import { FILTER_PRESETS } from '@/lib/signal/presets'
-import { revealAt as computeRevealAt, isRevealed } from '@/lib/signal/reveal'
+import { processForgeVideo, processForgeAudio } from '@/lib/signal/ffmpeg-wasm'
+import { buildSchedule, hasOpened } from '@/lib/signal/reveal'
+
+// Browser ffmpeg.wasm Forge step (shared by Pick + Random): fetch the Cosmo clip
+// via the same-origin proxy, process it locally, then upload via a server action.
+// Returns 'created', 'skipped' (audio with no track), or an error string.
+async function processAndStoreForgeClip(
+  kind: 'video' | 'audio',
+  taskId: string,
+  source: Record<string, unknown>,
+  asset: { assetId: string; url: string },
+  crop: Partial<CropConfig>,
+  durationSec: number,
+): Promise<'created' | 'skipped' | string> {
+  const proxied = `/api/forge/cosmo-proxy?url=${encodeURIComponent(asset.url)}`
+  try {
+    const clip = kind === 'audio'
+      ? await processForgeAudio(proxied, durationSec)
+      : await processForgeVideo(proxied, crop, durationSec)
+    if (!clip) return 'skipped' // audio with no track
+    const fd = new FormData()
+    fd.set('taskId', taskId)
+    fd.set('kind', kind)
+    fd.set('source', JSON.stringify({ ...source, assetId: asset.assetId, url: asset.url, ...(kind === 'video' ? { crop } : {}) }))
+    fd.set('ext', clip.ext)
+    fd.set('mime', clip.mime)
+    const bytes = new Uint8Array(clip.data.byteLength) // ArrayBuffer-backed → valid BlobPart
+    bytes.set(clip.data)
+    fd.set('display', new Blob([bytes], { type: clip.mime }), `clip.${clip.ext}`)
+    const r = await storeForgeWasmCandidate(fd)
+    return r.ok ? 'created' : (r.error ?? 'store failed')
+  } catch (e) {
+    return (e as Error).message
+  }
+}
 
 // Compact local datetime, e.g. "Jun 21, 14:30"
 function fmtReveal(d: Date): string {
@@ -291,12 +328,10 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
 
   if (!cfg) return null
 
-  const patch = async (p: { voteScope?: WorldVoteScope; revealIntervalHours?: number; revealAnchorAt?: string | null }) => {
+  const patch = async (p: { voteScope?: WorldVoteScope; gapHours?: number }) => {
     await updateInvestigationConfig(threadId, p)
     await reload()
   }
-
-  const anchorDate = cfg.revealAnchorAt ? new Date(cfg.revealAnchorAt) : null
 
   return (
     <div style={{ ...S.card, padding: 14 }}>
@@ -314,28 +349,21 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
           </select>
         </div>
       </div>
-      {/* Reveal schedule */}
+      {/* Tuning cadence — the first question opens at the world's scan end; each
+          question runs a fixed 24h, then this gap before the next. */}
       <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,107,53,0.12)', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
         <div>
-          <label style={S.label}>SCHEDULE</label>
-          <div style={{ fontSize: 11, color: anchorDate ? '#20D890' : 'rgba(245,245,245,0.45)' }}>
-            {anchorDate ? `Started ${fmtReveal(anchorDate)}` : 'Not started — publishing Day 1 begins it'}
-          </div>
+          <label style={S.label}>VOTING WINDOW</label>
+          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.55)', padding: '5px 0' }}>{cfg.voteWindowHours}h (fixed)</div>
         </div>
         <div>
-          <label style={S.label}>REVEAL EVERY (HOURS)</label>
+          <label style={S.label}>GAP BETWEEN QUESTIONS (HOURS)</label>
           <input
-            type="number" min={1} defaultValue={cfg.revealIntervalHours}
+            type="number" min={0} defaultValue={cfg.gapHours}
             style={{ ...S.input, width: 80, padding: '5px 8px' }}
-            onBlur={(e) => { const v = Number(e.target.value); if (v >= 1 && v !== cfg.revealIntervalHours) patch({ revealIntervalHours: v }) }}
+            onBlur={(e) => { const v = Number(e.target.value); if (v >= 0 && v !== cfg.gapHours) patch({ gapHours: v }) }}
           />
         </div>
-        {anchorDate && (
-          <button
-            style={{ ...S.btn, ...S.btnGhost, padding: '4px 10px', fontSize: 10, alignSelf: 'flex-end' }}
-            onClick={async () => { if (confirm('Restart the reveal timeline from now? Already-revealed days stay visible; pending days shift to the new schedule.')) await patch({ revealAnchorAt: new Date().toISOString() }) }}
-          >↻ Restart from now</button>
-        )}
       </div>
       {cfg.visionText && (
         <div style={{ marginTop: 10 }}>
@@ -367,6 +395,7 @@ function DayList({
   const [tasks, setTasks] = useState<SignalTask[]>([])
   const [cfg, setCfg] = useState<InvestigationConfig | null>(null)
   const [busy, setBusy] = useState(false)
+  const [finalOpen, setFinalOpen] = useState(false)
 
   const reload = useCallback(async () => {
     const [t, c] = await Promise.all([listInvestigationTasks(investigationId), getInvestigationConfig(investigationId)])
@@ -387,18 +416,35 @@ function DayList({
     onDayAdded(r.id)
   }
 
+  // Resolve each day's open time via the gap chain (anchor = restart, else scan end).
+  const anchorAt = cfg?.revealAnchorAt ?? cfg?.scanUntil ?? null
+  const schedule = buildSchedule(
+    anchorAt,
+    cfg?.gapHours ?? 4,
+    tasks.filter((t) => t.is_published && t.published_at).map((t) => ({ dayIndex: t.day_index ?? 0, publishedAtISO: t.published_at! })),
+  )
+  const openByDay = new Map(schedule.map((s) => [s.dayIndex, s.openAt]))
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <span style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.15em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
           {investigationTitle || 'DAYS'}
         </span>
-        <button
-          style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', opacity: busy ? 0.5 : 1 }}
-          disabled={busy}
-          onClick={addDay}
-        >{busy ? '…' : '+ Day'}</button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', color: finalOpen ? '#20D890' : undefined }}
+            onClick={() => setFinalOpen((v) => !v)}
+          >Final Form</button>
+          <button
+            style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', opacity: busy ? 0.5 : 1 }}
+            disabled={busy}
+            onClick={addDay}
+          >{busy ? '…' : '+ Day'}</button>
+        </div>
       </div>
+
+      {finalOpen && cfg?.worldId && <FinalFormPanel worldId={cfg.worldId} />}
 
       {tasks.length === 0 && (
         <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.3)' }}>No days yet — click + Day.</div>
@@ -407,18 +453,15 @@ function DayList({
       {tasks.map((t) => {
         const dayNum = (t.day_index ?? 0) + 1
         const isActive = t.id === activeTaskId
-        // Reveal status for the badge.
-        const anchor = cfg?.revealAnchorAt ?? null
-        const interval = cfg?.revealIntervalHours ?? 24
-        const dayIdx = t.day_index ?? 0
+        // Reveal status for the badge — from the gap chain.
+        const openAt = openByDay.get(t.day_index ?? 0)
         let status: { label: string; color: string }
         if (!t.is_published) {
           status = { label: '○ DRAFT', color: 'rgba(245,245,245,0.3)' }
-        } else if (isRevealed(anchor, interval, dayIdx)) {
+        } else if (hasOpened(openAt ?? null)) {
           status = { label: '● LIVE', color: '#20D890' }
         } else {
-          const at = computeRevealAt(anchor, interval, dayIdx)
-          status = { label: at ? `◷ ${fmtReveal(at)}` : '◷ scheduled', color: '#E8A020' }
+          status = { label: openAt ? `◷ ${fmtReveal(openAt)}` : '◷ scheduled', color: '#E8A020' }
         }
         return (
           <button
@@ -590,9 +633,43 @@ function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; f
   const runRandom = async () => {
     if (!sources.length) return
     setBusy(true); setResult('')
-    const r = await generateCandidates(taskId, sources, { shape, areaRatio, glitchIntensity: glitch, filter }, { durationSec })
+    const crop = { shape, areaRatio, glitchIntensity: glitch, filter }
+    let created = 0, skipped = 0
+    const errors: string[] = []
+
+    // Image sources still process server-side (sharp, no ffmpeg). Audio mode and
+    // video sources are processed in the browser (ffmpeg.wasm) — same path as Pick.
+    const imageSources = audioMode ? [] : sources.filter((s) => s.media === 'image')
+    const wasmSources = audioMode ? sources : sources.filter((s) => s.media === 'video')
+
+    if (imageSources.length) {
+      const r = await generateCandidates(taskId, imageSources, crop, { durationSec })
+      created += r.created
+      errors.push(...r.errors)
+    }
+
+    if (wasmSources.length) {
+      const kind: 'video' | 'audio' = audioMode ? 'audio' : 'video'
+      const { groups, errors: sErr } = await sampleForgeAssets(taskId, wasmSources)
+      errors.push(...sErr)
+      const total = groups.reduce((n, g) => n + g.assets.length, 0)
+      let done = 0
+      for (const g of groups) {
+        let made = 0
+        for (const a of g.assets) {
+          if (made >= g.count) break // honour per-source count (audio oversamples)
+          done++
+          setResult(`Processing ${done}/${total}… (first clip also loads ffmpeg, ~10–20s)`)
+          const res = await processAndStoreForgeClip(kind, taskId, g.source as Record<string, unknown>, a, crop, durationSec)
+          if (res === 'created') { created++; made++ }
+          else if (res === 'skipped') skipped++
+          else errors.push(`${a.assetId}: ${res}`)
+        }
+      }
+    }
+
     setBusy(false)
-    setResult(`Pulled ${r.created} candidate(s)` + (r.errors.length ? ` · ${r.errors.length} error(s)` : ''))
+    setResult(`Pulled ${created} candidate(s)` + (skipped ? ` · ${skipped} skipped (no audio)` : '') + (errors.length ? ` · ${errors.length} error(s): ${errors.join(' | ')}` : ''))
     onGenerated()
   }
 
@@ -717,7 +794,7 @@ function ForgePicker({
   const [channelId, setChannelId] = useState(freqs[0]?.channelId ?? '')
   const [bandId, setBandId] = useState('')
   const [media, setMedia] = useState<'image' | 'video'>(audioMode ? 'video' : 'image')
-  const [assets, setAssets] = useState<{ assetId: string; url: string; prompt: string | null }[]>([])
+  const [assets, setAssets] = useState<{ assetId: string; url: string; posterUrl: string | null; prompt: string | null }[]>([])
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
 
@@ -758,14 +835,33 @@ function ForgePicker({
   const pull = async () => {
     if (!freq || !bandId || picked.size === 0) return
     const band = freq.bands.find((b) => b.bandId === bandId)
+    const source = { channelId, channelName: freq.name, freq: freq.freq, bandId, bandName: band?.name || '', media: effMedia }
     setBusy(true); onResult('')
-    const r = await pullForgeAssets(
-      taskId,
-      { channelId, channelName: freq.name, freq: freq.freq, bandId, bandName: band?.name || '', media: effMedia },
-      [...picked],
-      crop,
-      { durationSec },
-    )
+
+    // Audio + video → browser (ffmpeg.wasm); image → server-side (Vercel can't
+    // run the ffmpeg binary). audioMode also forces effMedia=video.
+    if (audioMode || effMedia === 'video') {
+      const kind: 'video' | 'audio' = audioMode ? 'audio' : 'video'
+      const ids = [...picked]
+      const byId = new Map(assets.map((a) => [a.assetId, a]))
+      let created = 0, skipped = 0
+      const errors: string[] = []
+      for (let i = 0; i < ids.length; i++) {
+        const a = byId.get(ids[i])
+        if (!a) continue
+        onResult(`Processing ${i + 1}/${ids.length}… (first clip also loads ffmpeg, ~10–20s)`)
+        const res = await processAndStoreForgeClip(kind, taskId, source, a, crop, durationSec)
+        if (res === 'created') created++
+        else if (res === 'skipped') skipped++
+        else errors.push(`${a.assetId}: ${res}`)
+      }
+      setBusy(false)
+      setPicked(new Set())
+      onResult(`Pulled ${created} candidate(s)` + (skipped ? ` · ${skipped} skipped (no audio)` : '') + (errors.length ? ` · ${errors.length} error(s): ${errors.join(' | ')}` : ''))
+      return
+    }
+
+    const r = await pullForgeAssets(taskId, source, [...picked], crop, { durationSec })
     setBusy(false)
     setPicked(new Set())
     onResult(`Pulled ${r.created} candidate(s)` + (r.errors.length ? ` · ${r.errors.length} error(s)` : ''))
@@ -802,10 +898,12 @@ function ForgePicker({
                 key={a.assetId} onClick={() => toggle(a.assetId)} title={a.prompt ?? ''}
                 style={{ position: 'relative', cursor: 'pointer', border: on ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)', background: '#070912', aspectRatio: '1' }}
               >
-                {effMedia === 'video'
-                  ? <video src={a.url} muted style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                {effMedia === 'video' && !a.posterUrl
+                  // no start frame resolved — fall back to a metadata-preloaded <video> (shows a frame, not black)
+                  ? <video src={a.url} muted preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  // image, or video with a start-frame poster: show the still frame
                   // eslint-disable-next-line @next/next/no-img-element
-                  : <img src={a.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                  : <img src={a.posterUrl ?? a.url} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                 {on && <div style={{ position: 'absolute', top: 2, right: 3, color: '#20D890', fontSize: 12 }}>✓</div>}
               </div>
             )
@@ -832,7 +930,14 @@ function AssetCard({ asset, showRole, onChanged }: { asset: SignalTaskAsset; sho
   return (
     <div style={{ border: asset.is_selected ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: 6, opacity: busy ? 0.5 : 1 }}>
       {asset.media === 'video' ? (
-        <video src={asset.processed_url || ''} controls muted loop style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+        // Video candidates display as an animated WebP/GIF (auto-loops as <img>).
+        // Only fall back to a <video> player for legacy mp4-only rows.
+        (asset.display_url || /\.(webp|gif)(\?|$)/i.test(asset.processed_url || '')) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={asset.display_url || asset.processed_url || ''} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+        ) : (
+          <video src={asset.processed_url || ''} controls muted loop style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
+        )
       ) : asset.media === 'audio' ? (
         <div style={{ background: '#070912', padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 20 }}>🔊</span>

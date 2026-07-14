@@ -33,6 +33,27 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // Registration gate.
+  // The handle_new_user trigger auto-creates a shell voyager_profile on every
+  // auth signup, so a user who clicks an invite link gets a live session BEFORE
+  // ever completing /register — they have no password and no chosen identity
+  // (registered_at stays NULL). Force any such logged-in user through /register
+  // before they can browse or post anything.
+  if (user) {
+    const REGISTER_EXEMPT = ['/register', '/auth', '/api']
+    const exempt = REGISTER_EXEMPT.some((p) => pathname === p || pathname.startsWith(p + '/'))
+    if (!exempt) {
+      const { data: regProfile } = await supabase
+        .from('voyager_profiles')
+        .select('registered_at')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (!regProfile?.registered_at) {
+        return NextResponse.redirect(new URL('/register', request.url))
+      }
+    }
+  }
+
   // Smart routing for root /
   // Ad links (with UTM params) are transparently forwarded to /new so the
   // existing campaign URLs never need to change.

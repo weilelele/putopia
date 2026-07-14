@@ -21,7 +21,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
 import { resolveUserEmail } from '@/lib/signal/world-confirmed-email'
-import { isRevealed, revealAt as computeRevealAt, DEFAULT_REVEAL_INTERVAL_HOURS } from '@/lib/signal/reveal'
+import { buildSchedule, DEFAULT_GAP_HOURS } from '@/lib/signal/reveal'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -185,7 +185,7 @@ async function taskOptionUrls(admin: DB, taskId: string): Promise<string[]> {
 // ── Core ──────────────────────────────────────────────────────────────────────
 
 type RevealedTask = { taskId: string; dayIndex: number }
-type WorldInfo = { worldId: string; name: string; description: string; ownerId: string | null; voteScope: VoteScope }
+type WorldInfo = { worldId: string; name: string; description: string; ownerId: string | null; voteScope: VoteScope; scanUntil: string | null }
 
 interface Candidate {
   userId: string
@@ -205,12 +205,11 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
   const result: EngagementResult = { ownerAbsentSent: 0, voterChurnSent: 0, errors: [], emailedUserIds: [] }
   const now = new Date()
 
-  // 1. Started threads (schedule anchor set) + their world info.
+  // 1. All threads + their world info (incl scan_until, the anchor fallback).
   const { data: threadRows } = await admin
     .from('signal_threads')
-    .select('id, world_id, reveal_anchor_at, reveal_interval_hours')
-    .not('reveal_anchor_at', 'is', null)
-  const threads = (threadRows ?? []) as { id: string; world_id: string | null; reveal_anchor_at: string; reveal_interval_hours: number | null }[]
+    .select('id, world_id, reveal_anchor_at, gap_hours')
+  const threads = (threadRows ?? []) as { id: string; world_id: string | null; reveal_anchor_at: string | null; gap_hours: number | null }[]
   if (!threads.length) return result
 
   const worldIds = [...new Set(threads.map((t) => t.world_id).filter((w): w is string => !!w))]
@@ -218,35 +217,53 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
   if (worldIds.length) {
     const { data: worlds } = await admin
       .from('worlds')
-      .select('id, name, description, submitted_by, discoverer_id, vote_scope')
+      .select('id, name, description, submitted_by, discoverer_id, vote_scope, scan_until')
       .in('id', worldIds)
-    for (const w of (worlds ?? []) as { id: string; name: string; description: string | null; submitted_by: string | null; discoverer_id: string | null; vote_scope: string | null }[]) {
+    for (const w of (worlds ?? []) as { id: string; name: string; description: string | null; submitted_by: string | null; discoverer_id: string | null; vote_scope: string | null; scan_until: string | null }[]) {
       worldInfo.set(w.id, {
         worldId: w.id,
         name: w.name ?? 'your world',
         description: w.description ?? '',
         ownerId: w.submitted_by || w.discoverer_id,
         voteScope: (w.vote_scope as VoteScope) ?? 'all',
+        scanUntil: w.scan_until ?? null,
       })
     }
   }
 
-  // 2. Revealed tasks per thread (ascending by day_index).
+  // 2. Published tasks per thread → the gap-chain open schedule (day_index → openAt ms).
   const { data: taskRows } = await admin
     .from('signal_tasks')
-    .select('id, thread_id, day_index')
+    .select('id, thread_id, day_index, published_at')
     .eq('is_published', true)
     .in('thread_id', threads.map((t) => t.id))
+  const pubByThread = new Map<string, { id: string; dayIndex: number; publishedAtISO: string }[]>()
+  for (const t of (taskRows ?? []) as { id: string; thread_id: string; day_index: number | null; published_at: string | null }[]) {
+    if (!t.published_at) continue
+    const arr = pubByThread.get(t.thread_id) ?? []
+    arr.push({ id: t.id, dayIndex: t.day_index ?? 0, publishedAtISO: t.published_at })
+    pubByThread.set(t.thread_id, arr)
+  }
+  const openByThread = new Map<string, Map<number, number>>()
+  for (const th of threads) {
+    const anchorAt = th.reveal_anchor_at ?? (th.world_id ? worldInfo.get(th.world_id)?.scanUntil ?? null : null)
+    const schedule = buildSchedule(anchorAt, th.gap_hours ?? DEFAULT_GAP_HOURS, (pubByThread.get(th.id) ?? []).map((p) => ({ dayIndex: p.dayIndex, publishedAtISO: p.publishedAtISO })))
+    openByThread.set(th.id, new Map(schedule.map((s) => [s.dayIndex, s.openAt.getTime()])))
+  }
+
+  // Revealed (opened) tasks per thread, ascending by day_index.
+  const nowMs = now.getTime()
   const threadReveals = new Map<string, RevealedTask[]>()
-  const schedById = new Map(threads.map((t) => [t.id, { anchor: t.reveal_anchor_at, interval: t.reveal_interval_hours ?? DEFAULT_REVEAL_INTERVAL_HOURS }]))
-  for (const t of (taskRows ?? []) as { id: string; thread_id: string; day_index: number | null }[]) {
-    const s = schedById.get(t.thread_id)
-    if (!s) continue
-    const di = t.day_index ?? 0
-    if (!isRevealed(s.anchor, s.interval, di, now)) continue
-    const arr = threadReveals.get(t.thread_id) ?? []
-    arr.push({ taskId: t.id, dayIndex: di })
-    threadReveals.set(t.thread_id, arr)
+  for (const th of threads) {
+    const open = openByThread.get(th.id)
+    if (!open) continue
+    for (const p of pubByThread.get(th.id) ?? []) {
+      const openMs = open.get(p.dayIndex)
+      if (openMs == null || openMs > nowMs) continue
+      const arr = threadReveals.get(th.id) ?? []
+      arr.push({ taskId: p.id, dayIndex: p.dayIndex })
+      threadReveals.set(th.id, arr)
+    }
   }
   for (const arr of threadReveals.values()) arr.sort((a, b) => a.dayIndex - b.dayIndex)
 
@@ -303,8 +320,7 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
     const w = worldInfo.get(t.world_id)
     if (!w) continue
     const latest = reveals[reveals.length - 1]
-    const sched = schedById.get(t.id)!
-    const freshness = computeRevealAt(sched.anchor, sched.interval, latest.dayIndex)?.getTime() ?? 0
+    const freshness = openByThread.get(t.id)?.get(latest.dayIndex) ?? 0
 
     // Rule 1 — owner absent
     if (w.ownerId) {

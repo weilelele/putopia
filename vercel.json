@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/signal-recall",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/cosmo-sync",
+      "schedule": "0 5 * * *"
     }
   ]
 }

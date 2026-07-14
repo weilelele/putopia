@@ -52,9 +52,11 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
     <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto', border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', overflow: 'hidden' }}>
       <style>{`@keyframes mcScanHint{0%,100%{opacity:0.55}50%{opacity:1}}@keyframes mcModuleIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
-      {/* Header bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: '#090D1A', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-nebula)' }}>{'// MULTIVERSE CONSOLE'}</span>
+      {/* Section divider title — matches the "INTERNAL UPDATES" feed divider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '14px 16px' }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>MULTIVERSE CONSOLE</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
       </div>
 
       {/* Content: image only until tapped; the functions module appears after. */}
@@ -77,28 +79,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/device-desk.png" alt="Multiverse Console" style={{ width: '100%', height: 'auto', display: 'block' }} />
-          {!started && (
-            <span
-              style={{
-                position: 'absolute',
-                left: '50%',
-                bottom: 12,
-                transform: 'translateX(-50%)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 'var(--fs-caption)',
-                letterSpacing: '0.2em',
-                color: 'var(--color-nucleus)',
-                background: 'rgba(9,13,26,0.78)',
-                border: '1px solid rgba(255,107,53,0.4)',
-                padding: '5px 12px',
-                whiteSpace: 'nowrap',
-                animation: 'mcScanHint 1.8s ease-in-out infinite',
-              }}
-            >
-              ▶ TAP TO SCAN FUNCTIONS
-            </span>
-          )}
+          <img src="/assets/device-console.jpg" alt="Multiverse Console" style={{ width: '100%', height: 'auto', display: 'block' }} />
         </button>
 
         {/* Confirmed functions — the whole module appears only after the tap */}
@@ -158,3 +139,4 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
     </div>
   )
 }
+

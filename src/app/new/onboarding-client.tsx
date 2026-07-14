@@ -7,16 +7,17 @@ import posthog from 'posthog-js'
 import { getFirstTouch } from '@/lib/utm'
 import { resolveVariant, type ResolvedVariant } from '@/lib/onboarding-variants'
 import type { OnboardingVariantRow } from '@/types/database'
-import { FlameSlider, WorldChoiceCards, WORLD_OPTIONS, beliefToReason } from '@/components/flame-slider'
+import { FlameSlider, WorldChoiceCards, ConsoleChoiceCards, WORLD_OPTIONS, URGENCY_READINGS, URGENCY_END_LABELS, urgencyToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
 import { HudField } from '@/components/hud-field'
 import { getEmailProvider } from '@/lib/email-providers'
 
 /* ─── Onboarding Version ─────────────────────────── */
-const ONBOARDING_VERSION = 'v2'
+const ONBOARDING_VERSION = 'v3'
 
 /* ─── Types ──────────────────────────────────────── */
-type Step = 'q1' | 'q2' | 'cta' | 'success'
+/* Flow order: q1 Console curiosity → q2 world choice → q3 join-urgency → cta */
+type Step = 'q1' | 'q2' | 'q3' | 'cta' | 'success'
 
 /* ─── Root ───────────────────────────────────────── */
 export default function OnboardingClient({ variants }: { variants: OnboardingVariantRow[] }) {
@@ -28,8 +29,9 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
   const initStep = (params.get('step') as Step) ?? 'q1'
   const [step, setStep]                   = useState<Step>(initStep)
   const [exiting, setExiting]             = useState(false)
-  const [belief, setBelief]               = useState(0)
-  const [beliefTouched, setBeliefTouched] = useState(false)
+  const [consoleInterest, setConsoleInterest] = useState('')
+  const [urgency, setUrgency]             = useState(0)
+  const [urgencyTouched, setUrgencyTouched] = useState(false)
   const [emotion, setEmotion]             = useState('')
   const [email, setEmail]                 = useState('')
   const [submitting, setSubmitting]       = useState(false)
@@ -78,24 +80,36 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /* Which clip the current step shows (resolver already filled the inherit chain) */
+  const stepVideo = step === 'cta' ? v.videoCta : (step === 'q2' || step === 'q3') ? v.videoQ2 : v.videoQ1
+
   /* Animated step transition */
   const goTo = useCallback((next: Step) => {
     setExiting(true)
     setTimeout(() => { setStep(next); setExiting(false) }, 300)
   }, [])
 
-  const handleSlider = (v: number) => {
-    if (!beliefTouched) {
-      posthog.capture('onboarding_slider_touched', { initial_value: v, onboarding_version: ONBOARDING_VERSION })
-    }
-    setBelief(v)
-    if (!beliefTouched) setBeliefTouched(true)
+  /* Q1 — Multiverse Console curiosity (auto-advances) */
+  const handleConsoleSelect = (id: string) => {
+    setConsoleInterest(id)
+    posthog.capture('onboarding_q1_completed', { console_interest: id, onboarding_version: ONBOARDING_VERSION })
+    setTimeout(() => goTo('q2'), 380)
   }
 
-  const handleQ2Select = (id: string) => {
+  /* Q2 — world choice (auto-advances) */
+  const handleWorldSelect = (id: string) => {
     setEmotion(id)
     posthog.capture('onboarding_q2_completed', { world_selected: id, onboarding_version: ONBOARDING_VERSION })
-    setTimeout(() => goTo('cta'), 380)   // brief pause so user sees selection highlight
+    setTimeout(() => goTo('q3'), 380)   // brief pause so user sees selection highlight
+  }
+
+  /* Q3 — join-urgency slider */
+  const handleSlider = (val: number) => {
+    if (!urgencyTouched) {
+      posthog.capture('onboarding_slider_touched', { initial_value: val, onboarding_version: ONBOARDING_VERSION })
+    }
+    setUrgency(val)
+    if (!urgencyTouched) setUrgencyTouched(true)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,8 +124,10 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     const normalizedEmail = email.trim().toLowerCase()
     const result = await submitApplication({
       email:                normalizedEmail,
-      reason:               beliefToReason(belief),
+      reason:               urgencyToReason(urgency),
       location:             worldText,
+      console_interest:     consoleInterest || null,
+      join_urgency:         urgency,
       utm_source:           utm.utm_source,
       utm_medium:           utm.utm_medium,
       utm_campaign:         utm.utm_campaign,
@@ -130,8 +146,9 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
       utm_campaign: utm.utm_campaign ?? undefined,
       utm_content:  utm.utm_content  ?? undefined,
       fbclid:       utm.fbclid       ?? undefined,
-      belief_value: belief,
+      console_interest: consoleInterest,
       world_selected: emotion,
+      urgency_value: urgency,
       onboarding_version: ONBOARDING_VERSION,
       onboarding_variant: v.key,
     })
@@ -157,6 +174,12 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     setShowConfirm(true)
     // Enable click-anywhere to trigger scan after all lines have appeared
     setTimeout(() => setAwaitClick(true), 2400)
+    // Auto-advance into the console after a beat so the user doesn't have to tap
+    // (the click-anywhere overlay still lets the impatient skip ahead).
+    setTimeout(() => {
+      localStorage.setItem('putopia_voyager_registered', '1')
+      window.location.href = '/console'
+    }, 3500)
   }
 
   /* ── Returning user: already submitted email, hasn't completed /register ── */
@@ -170,7 +193,7 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
         alignItems: 'center', justifyContent: 'center',
       }}>
         <div style={{ width: '100%', maxWidth: 480, padding: '0 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-          <VideoSection src={v.video} />
+          <VideoSection key={v.videoCta} src={v.videoCta} />
           <PendingInboxScreen
             email={pendingEmail}
             onStartOver={() => {
@@ -217,30 +240,36 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
           padding: '0 1.5rem',
           display: 'flex', flexDirection: 'column', gap: '1.75rem',
         }}>
-          {/* Video stays visible throughout the entire flow */}
-          <VideoSection src={v.video} />
+          {/* Video stays visible throughout the flow. Each step shows its own clip;
+              an inherited (identical) src keeps the same element mounted so it
+              plays seamlessly, while a changed src remounts and swaps the clip. */}
+          <VideoSection key={stepVideo} src={stepVideo} />
 
           {/* Single card area — one step at a time */}
           <div style={{ width: '100%' }}>
             <AnimatedCard key={step} exiting={exiting}>
 
               {step === 'q1' && (
-                <Q1Card
-                  headline={v.q1Headline}
-                  value={belief}
-                  onChange={handleSlider}
-                  touched={beliefTouched}
-                  onContinue={() => {
-                    if (beliefTouched) {
-                      posthog.capture('onboarding_q1_completed', { belief_value: belief, onboarding_version: ONBOARDING_VERSION })
-                      goTo('q2')
-                    }
-                  }}
-                />
+                <ConsoleCard headline={v.consoleHeadline} selected={consoleInterest} onSelect={handleConsoleSelect} />
               )}
 
               {step === 'q2' && (
-                <Q2Card headline={v.q2Headline} selected={emotion} onSelect={handleQ2Select} />
+                <WorldCard headline={v.q2Headline} selected={emotion} onSelect={handleWorldSelect} />
+              )}
+
+              {step === 'q3' && (
+                <UrgencyCard
+                  headline={v.q1Headline}
+                  value={urgency}
+                  onChange={handleSlider}
+                  touched={urgencyTouched}
+                  onContinue={() => {
+                    if (urgencyTouched) {
+                      posthog.capture('onboarding_q3_completed', { urgency_value: urgency, onboarding_version: ONBOARDING_VERSION })
+                      goTo('cta')
+                    }
+                  }}
+                />
               )}
 
               {step === 'cta' && (
@@ -382,9 +411,31 @@ function VideoSection({ src }: { src: string }) {
 }
 
 /* ─────────────────────────────────────────────────────
-   Q1 — FLAME SLIDER
+   Q1 — MULTIVERSE CONSOLE CURIOSITY (auto-advancing cards)
 ───────────────────────────────────────────────────── */
-function Q1Card({ headline, value, onChange, touched, onContinue }: {
+function ConsoleCard({ headline, selected, onSelect }: { headline: string; selected: string; onSelect: (id: string) => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.38em', color: 'var(--color-nucleus)', opacity: 0.65 }}>
+          01 / 03
+        </div>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
+          {headline}
+        </h2>
+      </div>
+
+      <ConsoleChoiceCards selected={selected} onSelect={onSelect} />
+
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────
+   Q3 — JOIN-URGENCY FLAME SLIDER
+───────────────────────────────────────────────────── */
+function UrgencyCard({ headline, value, onChange, touched, onContinue }: {
   headline: string
   value: number; onChange: (v: number) => void
   touched: boolean; onContinue: () => void
@@ -394,14 +445,14 @@ function Q1Card({ headline, value, onChange, touched, onContinue }: {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.38em', color: 'var(--color-nucleus)', opacity: 0.65 }}>
-          01 / 02
+          03 / 03
         </div>
         <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
           {headline}
         </h2>
       </div>
 
-      <FlameSlider value={value} onChange={onChange} />
+      <FlameSlider value={value} onChange={onChange} readings={URGENCY_READINGS} endLabels={URGENCY_END_LABELS} />
 
       {/* Continue button — appears after first interaction */}
       <div style={{
@@ -443,13 +494,13 @@ function Q1Card({ headline, value, onChange, touched, onContinue }: {
 /* ─────────────────────────────────────────────────────
    Q2 — WORLD CHOICE (uses shared WorldChoiceCards)
 ───────────────────────────────────────────────────── */
-function Q2Card({ headline, selected, onSelect }: { headline: string; selected: string; onSelect: (id: string) => void }) {
+function WorldCard({ headline, selected, onSelect }: { headline: string; selected: string; onSelect: (id: string) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.38em', color: 'var(--color-nebula)', opacity: 0.65 }}>
-          02 / 02
+          02 / 03
         </div>
         <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', lineHeight: 1.5, color: 'var(--color-star)', margin: 0 }}>
           {headline}

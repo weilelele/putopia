@@ -78,11 +78,12 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   const tuningCoversP = getTuningCovers()
 
   const worldCols = 'id, name, name_en, description, image_path, lifecycle_state, gradient_from, gradient_to, discoverer_name, discoverer_id, submitted_at, created_at'
-  const [intelR, wProposedR, wSyncingR, wStableR, deviceR, voyagerR, voteR] = await Promise.all([
+  const [intelR, wSyncingR, wStableR, deviceR, voyagerR, voteR] = await Promise.all([
     // All intel enters the pool; classified rows are teased (title only) to
     // ineligible viewers and gated below — the body is never sent to them.
     db.from('intel').select('id, title, content, images, classified, publisher_name, publisher_id, timestamp').order('timestamp', { ascending: false }).limit(10),
-    db.from('worlds').select(worldCols).eq('lifecycle_state', 'proposed').order('submitted_at', { ascending: false }).limit(10),
+    // Raw "Initial Vision" (proposed) worlds are intentionally excluded from the
+    // feed; only Signal Tuning (syncing) and Established (stable) worlds show.
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'syncing').order('created_at', { ascending: false }).limit(8),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'stable').order('created_at', { ascending: false }).limit(4),
     db.from('devices').select('id, name, description, knowledge, image_path, status, location, current_user_name, current_user_id, updated_at').order('updated_at', { ascending: false }).limit(8),
@@ -91,7 +92,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   ])
 
   const intelRows = (intelR.data ?? []) as Record<string, unknown>[]
-  const worldRows = [...(wProposedR.data ?? []), ...(wSyncingR.data ?? []), ...(wStableR.data ?? [])] as Record<string, unknown>[]
+  const worldRows = [...(wSyncingR.data ?? []), ...(wStableR.data ?? [])] as Record<string, unknown>[]
   const deviceRows = (deviceR.data ?? []) as Record<string, unknown>[]
   const voyagerRows = (voyagerR.data ?? []) as { actor_id: string | null; actor_name: string; target_title: string | null; created_at: string }[]
   const voteRows = (voteR.data ?? []) as Record<string, unknown>[]
@@ -187,7 +188,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
     if (locked) {
       // Tease the title only — strip options, voters and tallies entirely.
       return {
-        id: vid, title: String(vote.title ?? 'Open signal vote'), options: [],
+        id: vid, title: String(vote.title ?? 'Open signal vote'), options: [], choices: [], multi: false,
         voters: [], count: 0,
         ends: until(vote.ends_at as string), time: rel(vote.created_at as string),
         locked: true,
@@ -195,14 +196,21 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
     }
     const options = coerceOptions(vote.options)
     const labelById: Record<string, string> = {}
+    // Option {id,label} pairs — the modal needs the IDs to record a response and
+    // to highlight the viewer's prior pick (vote_responses stores option IDs).
+    const choices: { id: string; label: string }[] = []
     if (Array.isArray(vote.options)) {
       for (const o of vote.options as unknown[]) {
         if (o && typeof o === 'object') {
           const r = o as Record<string, unknown>
+          const id = String(r.id ?? r.value ?? r.label ?? '')
+          const label = String(r.label ?? r.text ?? r.option ?? r.value ?? id)
           if (r.id) labelById[String(r.id)] = String(r.label ?? r.text ?? r.id)
+          if (id) choices.push({ id, label })
         }
       }
     }
+    const multi = vote.type === 'multi'
     const rows = allResponses.filter(r => r.vote_id === vid)
     const seen = new Set<string>()
     const picked: { name: string; user_id: string | null; option?: string }[] = []
@@ -220,7 +228,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
       avatar: p.user_id ? avatarMap[p.user_id] ?? null : null,
     }))
     return {
-      id: vid, title: String(vote.title ?? 'Open signal vote'), options,
+      id: vid, title: String(vote.title ?? 'Open signal vote'), options, choices, multi,
       voters, count: countByVote[vid] ?? 0,
       ends: until(vote.ends_at as string), time: rel(vote.created_at as string),
     }
@@ -320,7 +328,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
 
   // Seven buckets, each newest-first.
   void HL
-  const grouped: Record<string, FeedEntry[]> = { vision: [], tuning: [], established: [], intel: [], device: [], member: [] }
+  const grouped: Record<string, FeedEntry[]> = { tuning: [], established: [], intel: [], device: [], member: [] }
   for (const b of [...worldItems, ...intelItems, ...deviceItems, ...memberItems].sort((a, b2) => b2.ts - a.ts)) {
     grouped[b.bucket]?.push({ kind: 'content', item: b.item })
   }
@@ -333,7 +341,6 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   const PLAN: { key: string; n: number }[] = [
     { key: 'vote', n: 1 },
     { key: 'intel', n: 2 },
-    { key: 'vision', n: 1 },
     { key: 'tuning', n: 1 },
     { key: 'device', n: 1 },
     { key: 'member', n: 2 },
@@ -359,7 +366,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
 // `canSeeGated` argument is part of the cache key, so there are two buckets:
 // one for voyager/architect (full content) and one for everyone else (gated
 // bodies stripped). Key bumped to -v3 for the gating payload shape.
-const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v5'], { revalidate: 30 })
+const getSignalFeedCached = unstable_cache(buildSignalFeed, ['signal-feed-v7'], { revalidate: 30 })
 
 // Derived per request (uncached) from the session — never trust a client-passed
 // role. Only voyager/architect may receive gated content.

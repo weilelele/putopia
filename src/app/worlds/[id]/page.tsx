@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { getWorldById } from '@/lib/actions/worlds'
+import { getWorldById, rescanWorld } from '@/lib/actions/worlds'
 import { getWorldInvestigation, setWorldVoteScope } from '@/lib/actions/signal-tasks'
 import type { WorldInvestigationData } from '@/lib/actions/signal-tasks'
 import type { World, WorldVoteScope } from '@/types/database'
@@ -11,6 +11,11 @@ import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
 import { InvestigationCard } from '@/app/signal/SignalFeed'
+import { LazyImage } from '@/components/lazy-image'
+import { WorldScanHero } from '@/components/world-scan-hero'
+import { ArchiveReelView } from '@/components/archive-reel'
+import { worldScanState, scanComplete } from '@/lib/signal/scan'
+import { resolveWorldScan } from '@/lib/signal/scan-resolve'
 
 const DESC_CLAMP = 320 // chars before the "expand all" fold
 
@@ -27,6 +32,10 @@ export default function WorldDetailPage() {
   const [descExpanded, setDescExpanded] = useState(false)
   const [scope, setScope] = useState<WorldVoteScope>('all')
   const [scopeSaving, setScopeSaving] = useState(false)
+  // Failed-scan retry: revise field notes and re-roll the scan window.
+  const [retryOpen, setRetryOpen] = useState(false)
+  const [retryDesc, setRetryDesc] = useState('')
+  const [retrySaving, setRetrySaving] = useState(false)
 
   useEffect(() => {
     getWorldById(id).then((w) => {
@@ -34,6 +43,9 @@ export default function WorldDetailPage() {
       if (w) {
         setScope(w.vote_scope ?? 'all')
         posthog.capture('world_viewed', { world_id: id, world_name: w.name_en || w.name })
+        if (w.scan_until && scanComplete(w.scan_until) && !w.scan_resolved_at) {
+          resolveWorldScan(id).catch(() => {})
+        }
       }
     })
     getWorldInvestigation(id).then(setInv)
@@ -52,6 +64,18 @@ export default function WorldDetailPage() {
   }
 
   const refreshInvestigation = () => getWorldInvestigation(id).then(setInv)
+  const refreshAll = () => {
+    getWorldById(id).then((w) => setWorld(w ?? null))
+    refreshInvestigation()
+  }
+
+  const openRetry = () => { setRetryDesc(world?.description ?? ''); setRetryOpen(true) }
+  const doRescan = async () => {
+    setRetrySaving(true)
+    const res = await rescanWorld(id, { description: retryDesc })
+    setRetrySaving(false)
+    if (res.ok) { setRetryOpen(false); refreshAll() }
+  }
 
   if (world === undefined) {
     return (
@@ -73,6 +97,15 @@ export default function WorldDetailPage() {
 
   const displayName = world.name_en || world.name
   const hasImage = !!world.image_path
+  // Signal Scanning gate: while the scan window is open the proposer sees a
+  // countdown; when it closes the world is READY (a signal was tuned) or FAILED.
+  const scanState = worldScanState(world.scan_until, !!inv?.investigation)
+  const scanning = scanState === 'scanning'
+  const scanFailed = scanState === 'failed'
+  // A world in tuning leads with its Signal Tuning (top slot), not a hero image.
+  const investigation = inv?.investigation ?? null
+  // Established worlds lead with their Archive reel (final form → days → vision).
+  const isEstablished = world.lifecycle_state === 'stable'
 
   return (
     <div className="main">
@@ -89,19 +122,61 @@ export default function WorldDetailPage() {
       </div>
 
       <div style={{ maxWidth: '720px', width: '100%' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <Link href={backHref} className="btn-ghost" style={{ display: 'inline-flex' }}>{backLabel}</Link>
+        <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 3 }}>
+          {/* Native anchor (not next/link) — a hard navigation that can't be
+              swallowed by a failed client/RSC transition (e.g. on SSO-gated previews). */}
+          <a href={backHref} className="btn-ghost" style={{ display: 'inline-flex' }}>{backLabel}</a>
         </div>
 
-        {/* Hero — image or gradient */}
+        {/* Hero — Signal Scanning countdown / no-signal, else image or gradient */}
+        {scanning || scanFailed ? (
+          <WorldScanHero
+            displayName={displayName}
+            gradientFrom={world.gradient_from}
+            gradientTo={world.gradient_to}
+            scanUntil={world.scan_until}
+            variant={scanFailed ? 'failed' : 'scanning'}
+            onComplete={refreshAll}
+            onRetry={isOwner ? openRetry : undefined}
+          />
+        ) : isEstablished ? (
+          <ArchiveReelView world={world} />
+        ) : investigation ? (
+          <div style={{ marginBottom: '1.75rem' }}>
+            {/* World title — relocated here from the (dropped) hero */}
+            <div style={{ marginBottom: '1.1rem' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, letterSpacing: '0.02em' }}>{displayName}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-star-deep)', marginTop: 5 }}>{world.id}</div>
+            </div>
+            {/* Signal Tuning is the lead content — the '// SIGNAL TUNING' label is dropped.
+                The vote-lock hint lives in the question footer, not a floating header. */}
+            {isOwner && (
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '0.85rem', padding: '0.65rem 0.85rem', border: '1px solid rgba(255,107,53,0.18)', background: 'rgba(255,107,53,0.04)' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>WHO CAN VOTE</span>
+                <select value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', background: 'var(--bg-card)', color: 'var(--color-star)', border: '1px solid rgba(255,107,53,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
+                  <option value="all">Open to everyone</option>
+                  <option value="voters">Voyagers only</option>
+                  <option value="self">Just me (private)</option>
+                </select>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', color: 'var(--color-star-deep)' }}>
+                  {scopeSaving ? 'Saving…' : 'You can change this anytime.'}
+                </span>
+              </div>
+            )}
+            <InvestigationCard investigation={investigation} onFiled={refreshInvestigation} showTitle={false} />
+          </div>
+        ) : (
         <div style={{ width: '100%', height: '280px', position: 'relative', overflow: 'hidden', marginBottom: '1.5rem', border: '1px solid var(--bd-faint)' }}>
           {hasImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={world.image_path!}
-              alt={displayName}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
+            <>
+              {/* gradient placeholder shows until the hero image fades in */}
+              <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
+              <LazyImage
+                src={world.image_path!}
+                alt={displayName}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            </>
           ) : (
             <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
           )}
@@ -130,6 +205,39 @@ export default function WorldDetailPage() {
             </div>
           </div>
         </div>
+        )}
+
+        {/* Revise & re-scan — owner only, from the failed state */}
+        {scanFailed && isOwner && retryOpen && (
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid rgba(255,107,53,0.25)', background: 'rgba(255,107,53,0.04)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'var(--color-star-dim)', marginBottom: '0.5rem' }}>
+              REVISE FIELD NOTES &mdash; THEN RE-SCAN
+            </div>
+            <textarea
+              value={retryDesc}
+              onChange={(e) => setRetryDesc(e.target.value)}
+              rows={6}
+              disabled={retrySaving}
+              style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-panel)', border: '1px solid var(--bd-cyan-2)', color: 'var(--tx-primary)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box', minHeight: '120px' }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem' }}>
+              <button
+                onClick={doRescan}
+                disabled={retrySaving || retryDesc.trim().length < 20}
+                style={{ padding: '0.6rem 1.1rem', background: retryDesc.trim().length >= 20 && !retrySaving ? 'linear-gradient(135deg, #E85D04, #C04000)' : 'rgba(255,107,53,0.08)', border: '1px solid rgba(232,93,4,0.5)', color: retryDesc.trim().length >= 20 && !retrySaving ? '#F5F5F5' : 'rgba(245,245,245,0.3)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.16em', cursor: retryDesc.trim().length >= 20 && !retrySaving ? 'pointer' : 'not-allowed' }}
+              >
+                {retrySaving ? 'RE-SCANNING…' : 'RE-SCAN →'}
+              </button>
+              <button
+                onClick={() => setRetryOpen(false)}
+                disabled={retrySaving}
+                style={{ padding: '0.6rem 1.1rem', background: 'none', border: '1px solid var(--bd-faint)', color: 'var(--color-star-dim)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', cursor: 'pointer' }}
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Meta bar */}
         <div className="hud-frame" style={{ marginBottom: '1.5rem' }}>
@@ -154,55 +262,6 @@ export default function WorldDetailPage() {
             </div>
           </div>
         </div>
-
-        {/* Active Voting Node — the world's Signal Tuning, votable inline */}
-        {inv?.investigation && (
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-nebula)' }}>
-                {'// SIGNAL TUNING'}
-              </div>
-              {inv.investigation.lockReason && (
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: '#E8A020' }}>
-                  ● {inv.investigation.lockReason}
-                </div>
-              )}
-            </div>
-            {isOwner && (
-              <div style={{
-                display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem',
-                marginBottom: '0.85rem', padding: '0.65rem 0.85rem',
-                border: '1px solid rgba(255,107,53,0.18)', background: 'rgba(255,107,53,0.04)',
-              }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>
-                  WHO CAN VOTE
-                </span>
-                <select
-                  value={scope}
-                  disabled={scopeSaving}
-                  onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)}
-                  style={{
-                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em',
-                    background: 'var(--bg-card)', color: 'var(--color-star)',
-                    border: '1px solid rgba(255,107,53,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer',
-                  }}
-                >
-                  <option value="all">Open to everyone</option>
-                  <option value="voters">Voyagers only</option>
-                  <option value="self">Just me (private)</option>
-                </select>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.04em', color: 'var(--color-star-deep)' }}>
-                  {scopeSaving ? 'Saving…' : 'You can change this anytime.'}
-                </span>
-              </div>
-            )}
-            <InvestigationCard
-              investigation={inv.investigation}
-              onFiled={refreshInvestigation}
-              showTitle={false}
-            />
-          </div>
-        )}
 
         {/* Detail Text — creator's initial vision (collapsible) */}
         <div className="hud-frame" style={{ marginBottom: '2rem' }}>

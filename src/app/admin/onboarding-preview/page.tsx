@@ -6,22 +6,38 @@ import {
   updateOnboardingVariant,
   createOnboardingVariant,
   deleteOnboardingVariant,
-  uploadOnboardingVideo,
+  createOnboardingVideoUploadUrl,
 } from '@/lib/actions/onboarding-variants'
 import { FALLBACK_COPY } from '@/lib/onboarding-variants'
+import { createClient } from '@/lib/supabase/client'
 import type { OnboardingVariantRow } from '@/types/database'
 
+/* Max video size — mirrors the `onboarding` bucket's file_size_limit (schema_v45). */
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024
+
+/* The three per-step video slots. `col` is the DB column; a step left null
+   inherits the previous step (see resolver's chainVideos). */
+const VIDEO_STEPS: { col: 'video_url' | 'video_url_q2' | 'video_url_cta'; label: string; inherit: string }[] = [
+  { col: 'video_url',     label: 'Q1 视频',  inherit: '继承 DEFAULT' },
+  { col: 'video_url_q2',  label: 'Q2 视频',  inherit: '继承 Q1' },
+  { col: 'video_url_cta', label: 'CTA 视频', inherit: '继承 Q2' },
+]
+
 const STEPS = [
-  { id: 'q1',  label: 'Q1 · 信念滑块' },
+  { id: 'q1',  label: 'Q1 · 观测仪好奇' },
   { id: 'q2',  label: 'Q2 · 选择世界' },
+  { id: 'q3',  label: 'Q3 · 迫切度滑块' },
   { id: 'cta', label: 'CTA · 邮箱表单' },
 ] as const
 type StepId = typeof STEPS[number]['id']
 
-/* Editable text fields: db column → label, multiline, fallback (for placeholder) */
+/* Editable text fields: db column → label, multiline, fallback (for placeholder).
+   Ordered to match the live flow. NOTE: q1_headline is the legacy column that
+   now drives the Q3 urgency slider; q2_headline drives Q2 (world choice). */
 const FIELDS: { col: keyof OnboardingVariantRow; label: string; multiline: boolean; fallback: string }[] = [
-  { col: 'q1_headline',    label: 'Q1 问题',       multiline: true,  fallback: FALLBACK_COPY.q1Headline },
-  { col: 'q2_headline',    label: 'Q2 问题',       multiline: true,  fallback: FALLBACK_COPY.q2Headline },
+  { col: 'console_headline', label: 'Q1 问题 · 观测仪', multiline: true,  fallback: FALLBACK_COPY.consoleHeadline },
+  { col: 'q2_headline',    label: 'Q2 问题 · 选择世界', multiline: true,  fallback: FALLBACK_COPY.q2Headline },
+  { col: 'q1_headline',    label: 'Q3 问题 · 迫切度',  multiline: true,  fallback: FALLBACK_COPY.q1Headline },
   { col: 'affirm_line1',   label: 'CTA 肯定句 1',  multiline: true,  fallback: FALLBACK_COPY.affirmLine1 },
   { col: 'affirm_line2',   label: 'CTA 肯定句 2',  multiline: true,  fallback: FALLBACK_COPY.affirmLine2 },
   { col: 'cta_invitation', label: 'CTA 邀请语',    multiline: true,  fallback: FALLBACK_COPY.ctaInvitation },
@@ -85,17 +101,50 @@ export default function OnboardingEditorPage() {
     reloadFrame(row.id)
   }
 
-  const handleUpload = async (row: OnboardingVariantRow, file: File) => {
-    setSaving(row.id)
+  type VideoCol = (typeof VIDEO_STEPS)[number]['col']
+
+  const handleUpload = async (row: OnboardingVariantRow, col: VideoCol, file: File) => {
     setError(null)
-    const fd = new FormData()
-    fd.append('video', file)
-    const up = await uploadOnboardingVideo(fd)
-    if (up.error || !up.url) { setError(up.error ?? '上传失败'); setSaving(null); return }
-    await updateOnboardingVariant(row.id, { video_url: up.url })
-    setField(row.id, 'video_url', up.url)
+    if (file.size > MAX_VIDEO_BYTES) {
+      setError(`视频 ${(file.size / 1024 / 1024).toFixed(1)}MB 超过 50MB 上限`)
+      return
+    }
+    setSaving(row.id)
+    // Upload straight to Supabase Storage via a signed URL (no server-action body cap).
+    const ext = file.name.split('.').pop() ?? 'mp4'
+    const signed = await createOnboardingVideoUploadUrl(ext)
+    if (signed.error || !signed.path || !signed.token || !signed.publicUrl) {
+      setError(signed.error ?? '获取上传地址失败'); setSaving(null); return
+    }
+    const { error: upErr } = await createClient().storage
+      .from('onboarding')
+      .uploadToSignedUrl(signed.path, signed.token, file, { contentType: file.type || undefined })
+    if (upErr) { setError(upErr.message); setSaving(null); return }
+
+    const res = await updateOnboardingVariant(row.id, { [col]: signed.publicUrl })
+    if (res.error) { setError(res.error); setSaving(null); return }
+    setField(row.id, col, signed.publicUrl)
     setSaving(null)
     reloadFrame(row.id)
+  }
+
+  /* Clear one step's own video → it falls back to inheriting the previous step. */
+  const clearVideo = async (row: OnboardingVariantRow, col: VideoCol) => {
+    setSaving(row.id)
+    setField(row.id, col, null as never)
+    const res = await updateOnboardingVariant(row.id, { [col]: null })
+    setSaving(null)
+    if (res.error) { setError(res.error); return }
+    reloadFrame(row.id)
+  }
+
+  /* Effective per-step video for display: own value → DEFAULT's value → previous
+     step → fallback reel. Mirrors the resolver's two inheritance axes. */
+  const videoChainFor = (row: OnboardingVariantRow) => {
+    const q1  = row.video_url     ?? defaultRow?.video_url     ?? FALLBACK_COPY.videoQ1
+    const q2  = row.video_url_q2  ?? defaultRow?.video_url_q2  ?? q1
+    const cta = row.video_url_cta ?? defaultRow?.video_url_cta ?? q2
+    return { video_url: q1, video_url_q2: q2, video_url_cta: cta }
   }
 
   const handleAdd = async () => {
@@ -154,7 +203,7 @@ export default function OnboardingEditorPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
         {variants.map(row => {
           const isDefault = row.match_key === ''
-          const videoSrc = row.video_url || defaultRow?.video_url || FALLBACK_COPY.video
+          const videoChain = videoChainFor(row)
           return (
             <div key={row.id} style={{ border: `1px solid ${BORDER}`, background: PANEL }}>
 
@@ -214,21 +263,34 @@ export default function OnboardingEditorPage() {
                     )
                   })}
 
-                  {/* Video */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 10, letterSpacing: '0.16em', color: FAINT }}>
-                      视频 {row.video_url ? '（自定义）' : isDefault ? '' : '（继承 DEFAULT）'}
-                    </label>
-                    <code style={{ fontSize: 10, color: MUTED, wordBreak: 'break-all' }}>{videoSrc}</code>
-                    <VideoUpload onPick={file => handleUpload(row, file)} />
-                    {row.video_url && !isDefault && (
-                      <button
-                        onClick={async () => { setField(row.id, 'video_url', null as never); await updateOnboardingVariant(row.id, { video_url: null }); reloadFrame(row.id) }}
-                        style={{ ...btnStyle, alignSelf: 'flex-start', padding: '4px 10px' }}
-                      >
-                        恢复继承 DEFAULT 视频
-                      </button>
-                    )}
+                  {/* Per-step videos — each step uploads independently or inherits the previous */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {VIDEO_STEPS.map(s => {
+                      const own = row[s.col] as string | null
+                      // Q1 on DEFAULT can only inherit the bundled reel; label it plainly.
+                      const inheritLabel = s.col === 'video_url' && isDefault ? '默认内置' : s.inherit
+                      return (
+                        <div key={s.col} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <label style={{ fontSize: 10, letterSpacing: '0.16em', color: FAINT }}>
+                            {s.label} {own ? '（自定义）' : `（${inheritLabel}）`}
+                          </label>
+                          <code style={{ fontSize: 10, color: own ? MUTED : FAINT, wordBreak: 'break-all' }}>
+                            {videoChain[s.col]}
+                          </code>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <VideoUpload onPick={file => handleUpload(row, s.col, file)} />
+                            {own && (
+                              <button
+                                onClick={() => clearVideo(row, s.col)}
+                                style={{ ...btnStyle, padding: '4px 10px' }}
+                              >
+                                恢复{inheritLabel}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
 

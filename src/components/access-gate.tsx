@@ -1,20 +1,22 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-import Link from 'next/link'
 import posthog from 'posthog-js'
-import { getAccessStartedAt, getPendingEmail, isWindowActive, startAccessWindow } from '@/lib/access-window'
-import { getEmailProvider } from '@/lib/email-providers'
+import { isWindowActive, startAccessWindow } from '@/lib/access-window'
 import { AccessCountdown } from '@/components/access-countdown'
+import { useActivateAccess } from '@/components/activate-action'
+
+/** Reveal animation length when a glimpse is granted, in ms. */
+const REVEAL_MS = 1400
 
 /**
  * "More Internal Information" gate with a granted glimpse.
  *
- * Frozen by default with a single entry — a timed look inside. Tapping it
- * unfreezes only the TOP of the feed for a 5-minute glimpse (quiet right-edge
- * countdown, re-freezes on expiry). Once a glimpse has been spent, the re-frozen
- * panel also offers "Activate now" — the way back in for good. Members never see
- * any of this.
+ * Frozen by default with a single entry — a timed look inside. Tapping it plays
+ * a "signal lock" reveal (static clears + a SIGNAL LOCKED readout + scan line,
+ * with a CRT-style flicker) as the top of the feed resolves into view; the lower
+ * content stays frosted. A quiet right-edge countdown re-freezes on expiry. Once
+ * a glimpse is spent, the re-frozen panel also offers "Activate now".
  */
 export function AccessGate({
   children,
@@ -26,51 +28,51 @@ export function AccessGate({
   loginHref?: string
 }) {
   const [peeking, setPeeking] = useState(false)
-  const [everUsed, setEverUsed] = useState(false)
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
-  const [activateOpen, setActivateOpen] = useState(false)
+  const [revealing, setRevealing] = useState(false)
+  const { trigger: getFullAccess, modal: activateModal } = useActivateAccess(permanentHref, loginHref)
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrates from localStorage on mount (unavailable during SSR)
-    setPendingEmail(getPendingEmail())
-    const used = getAccessStartedAt() !== null
-     
-    setEverUsed(used)
-     
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrates window state from localStorage on mount (unavailable during SSR)
     setPeeking(isWindowActive())
   }, [])
-
-  const provider = pendingEmail ? getEmailProvider(pendingEmail) : null
 
   const startPeek = () => {
     posthog.capture('glimpse_start_clicked')
     startAccessWindow()
-    setEverUsed(true)
     setPeeking(true)
-  }
-
-  const activate = () => {
-    posthog.capture('glimpse_activate_now_clicked')
-    if (pendingEmail) setActivateOpen(true)
-    else window.location.href = permanentHref
+    setRevealing(true)
+    setTimeout(() => setRevealing(false), REVEAL_MS)
   }
 
   return (
     <>
+      <style>{`
+        @keyframes gateReveal{0%{filter:blur(7px);opacity:.25}7%{opacity:1}12%{opacity:.3}20%{opacity:1;filter:blur(4px)}28%{opacity:.5}38%{opacity:1;filter:blur(2.5px)}50%{opacity:.72}60%{opacity:1;filter:blur(1.2px)}72%{opacity:.9}82%{opacity:1}100%{opacity:1;filter:blur(0)}}
+        @keyframes gateNoise{0%{opacity:.55}10%{opacity:.2}18%{opacity:.6}30%{opacity:.15}45%{opacity:.45}60%{opacity:.1}80%{opacity:.22}100%{opacity:0}}
+        @keyframes gateScan{0%{opacity:0;top:0}8%{opacity:.85}92%{opacity:.85;top:100%}100%{opacity:0;top:100%}}
+      `}</style>
+
       <div style={{ position: 'relative' }}>
         <div
           aria-hidden={!peeking}
           style={{
+            // Blurred empty headroom so the frost (and the reveal flicker over
+            // it) sit ABOVE the first post — the soft edge lands in this gap, not
+            // grazing the post boundary.
+            paddingTop: 44,
             filter: peeking ? 'blur(0px)' : 'blur(7px)',
-            transition: 'filter 0.6s ease-out',
-            pointerEvents: peeking ? 'auto' : 'none',
+            transition: revealing ? 'none' : 'filter 0.6s ease-out',
+            animation: revealing ? `gateReveal ${REVEAL_MS}ms linear forwards` : 'none',
+            pointerEvents: peeking && !revealing ? 'auto' : 'none',
             userSelect: peeking ? 'auto' : 'none',
           }}
         >
           {children}
         </div>
 
-        {peeking ? (
+        {revealing && <RevealOverlay durationMs={REVEAL_MS} />}
+
+        {peeking && !revealing && (
           /* Only the top is unfrozen — the rest stays inside. */
           <div
             aria-hidden
@@ -95,13 +97,15 @@ export function AccessGate({
               The rest stays inside — activate to see it all
             </span>
           </div>
-        ) : (
+        )}
+
+        {!peeking && (
           /* Frozen — single entry, plus "Activate now" once a glimpse is spent. */
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(10,14,39,0.45)',
+              background: 'linear-gradient(to bottom, rgba(10,14,39,0) 0, rgba(10,14,39,0.45) 64px, rgba(10,14,39,0.45) calc(100% - 56px), rgba(10,14,39,0) 100%)',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'flex-start',
@@ -121,13 +125,8 @@ export function AccessGate({
                 fontFamily: 'var(--font-mono)',
               }}
             >
-              <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-nucleus)' }}>
-                MULTIVERSE COLLECTIVE · INTERNAL
-              </div>
-              <p style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star)', opacity: 0.9, lineHeight: 1.65, margin: '0.8rem 0 0' }}>
-                {everUsed
-                  ? 'Your look has ended. Step inside for good, or take another minute.'
-                  : 'For Collective members only. You’ve been granted a 5-minute viewing privilege. Will you enter?'}
+              <p style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star)', opacity: 0.9, lineHeight: 1.8, letterSpacing: '0.08em', margin: 0 }}>
+                MEMBERS ONLY.<br />5 MINUTES OF UNRESOLVED ACCESS ALLOWED.<br />ENTER THE COLLECTIVE?
               </p>
 
               <button
@@ -136,30 +135,17 @@ export function AccessGate({
                 style={{ width: '100%', justifyContent: 'center', marginTop: '1.4rem' }}
                 onClick={startPeek}
               >
-                {everUsed ? 'Look again' : 'Yes, I will'}
+                CONFIRM
               </button>
 
-              {everUsed && (
-                pendingEmail ? (
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    style={{ width: '100%', justifyContent: 'center', marginTop: '0.7rem' }}
-                    onClick={activate}
-                  >
-                    Activate now
-                  </button>
-                ) : (
-                  <Link
-                    href={permanentHref}
-                    className="btn-secondary"
-                    style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '0.7rem' }}
-                    onClick={() => posthog.capture('glimpse_activate_now_clicked')}
-                  >
-                    Activate now
-                  </Link>
-                )
-              )}
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ width: '100%', justifyContent: 'center', marginTop: '0.7rem' }}
+                onClick={() => getFullAccess('gate')}
+              >
+                GET FULL ACCESS
+              </button>
             </div>
           </div>
         )}
@@ -167,109 +153,61 @@ export function AccessGate({
 
       {peeking && <AccessCountdown onExpire={() => setPeeking(false)} />}
 
-      {activateOpen && (
-        <ActivateModal
-          email={pendingEmail}
-          providerName={provider?.name}
-          providerUrl={provider?.url}
-          changeHref={permanentHref}
-          loginHref={loginHref}
-          onClose={() => setActivateOpen(false)}
-        />
-      )}
+      {activateModal}
     </>
   )
 }
 
-function ActivateModal({
-  email,
-  providerName,
-  providerUrl,
-  changeHref,
-  loginHref,
-  onClose,
-}: {
-  email: string | null
-  providerName?: string
-  providerUrl?: string
-  changeHref: string
-  loginHref: string
-  onClose: () => void
-}) {
+/** Signal-lock reveal overlay: static flicker + scan line + acquiring readout. */
+function RevealOverlay({ durationMs }: { durationMs: number }) {
+  const [pct, setPct] = useState(0)
+  const [locked, setLocked] = useState(false)
+
+  useEffect(() => {
+    let p = 0
+    const id = setInterval(() => {
+      p += Math.ceil(Math.random() * 9) + 4
+      if (p >= 100) {
+        clearInterval(id)
+        setPct(100)
+        setLocked(true)
+      } else {
+        setPct(p)
+      }
+    }, Math.max(45, Math.floor(durationMs / 22)))
+    return () => clearInterval(id)
+  }, [durationMs])
+
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Activate your account"
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        background: 'rgba(8,11,26,0.72)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem',
-      }}
-    >
+    <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+      <svg width="100%" height="100%" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, mixBlendMode: 'screen', animation: `gateNoise ${durationMs}ms steps(1) forwards` }}>
+        <filter id="gate-rev-noise">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#gate-rev-noise)" />
+      </svg>
+
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 2, background: 'var(--color-nucleus)', boxShadow: '0 0 14px 2px rgba(255,107,53,0.65)', animation: `gateScan ${durationMs}ms ease-in-out forwards` }} />
+
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: 320,
-          width: '100%',
-          background: 'var(--bg-panel)',
-          border: '1px solid var(--bd-orange)',
-          borderRadius: 'var(--radius)',
-          padding: '1.5rem 1.25rem',
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: '42%',
           textAlign: 'center',
           fontFamily: 'var(--font-mono)',
+          fontSize: 'var(--fs-label)',
+          letterSpacing: '0.22em',
+          color: 'var(--color-nucleus)',
+          textShadow: '0 0 10px rgba(255,107,53,0.5)',
         }}
       >
-        <MailGlyph />
-        <p style={{ fontSize: 'var(--fs-title)', color: 'var(--color-star)', margin: '0.6rem 0 0' }}>
-          Activate your account
-        </p>
-        <p style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', margin: '0.5rem 0 0' }}>
-          We sent a link to
-        </p>
-        {email && (
-          <p style={{ fontSize: 'var(--fs-label)', color: 'var(--color-nucleus)', margin: '0.2rem 0 0', wordBreak: 'break-all' }}>
-            {email}
-          </p>
-        )}
-
-        <a
-          href={providerUrl ?? '#'}
-          target={providerUrl ? '_blank' : undefined}
-          rel={providerUrl ? 'noopener noreferrer' : undefined}
-          className="btn-primary"
-          style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '1.1rem' }}
-          onClick={() => posthog.capture('activate_open_inbox_clicked', { provider: providerName ?? 'unknown' })}
-        >
-          {providerName ? `Open ${providerName} →` : 'Open your email →'}
-        </a>
-
-        <div style={{ borderTop: '1px solid var(--bd-faint)', margin: '1rem 0 0.85rem' }} />
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', fontSize: 'var(--fs-caption)' }}>
-          <Link href={changeHref} style={{ color: 'var(--color-star-dim)' }} onClick={() => posthog.capture('activate_change_email_clicked')}>
-            Use a different email
-          </Link>
-          <span style={{ color: 'var(--color-star-deep)' }}>·</span>
-          <Link href={loginHref} style={{ color: 'var(--color-star-dim)' }} onClick={() => posthog.capture('activate_login_clicked')}>
-            Log in
-          </Link>
-        </div>
+        {locked ? '● SIGNAL LOCKED' : `ACQUIRING SIGNAL ${pct}%`}
       </div>
     </div>
   )
 }
 
-function MailGlyph() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden style={{ display: 'inline-block' }}>
-      <rect x="3" y="5" width="18" height="14" rx="1.5" stroke="var(--color-nucleus)" strokeWidth="1.4" />
-      <path d="m4 7 8 6 8-6" stroke="var(--color-nucleus)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
+

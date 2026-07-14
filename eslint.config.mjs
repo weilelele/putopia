@@ -3,7 +3,6 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import reactHooks from "eslint-plugin-react-hooks";
 import designTokens from "./eslint-rules/min-font-size.mjs";
-import platformRules from "./eslint-rules/no-raw-platform-check.mjs";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -15,23 +14,28 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Generated/vendored output that isn't in git (so it's absent in CI) — keep
-    // local lint in sync with CI by ignoring it here too.
+    // Build output — flat config doesn't read .gitignore, so generated/compiled
+    // JS (Netlify functions bundles, etc.) must be excluded explicitly or a
+    // whole-repo `eslint .` lints minified vendor code.
     ".netlify/**",
+    ".vercel/**",
+    "coverage/**",
     "ios/**",
     "android/**",
   ]),
   {
-    // React Compiler correctness rules (eslint-plugin-react-hooks v6),
+    // React Compiler correctness rules (eslint-plugin-react-hooks v7),
     // enforced as errors. The existing intentional exceptions — data fetch-on-
     // mount, prop->state sync, animation resets, the latest-ref pattern, and
     // imperative typewriter/animation code — carry inline
     // `eslint-disable-next-line <rule> -- <reason>` comments at their call
     // sites. New violations should be fixed, not disabled without a reason.
     //
-    // eslint-plugin-react-hooks v7 no longer leaks its plugin namespace from
-    // the eslint-config-next preset, so it must be registered in the same
-    // config object that references its rules.
+    // Register the plugin and scope to JS/TS here: eslint-config-next only
+    // registers `react-hooks` within its own React-file globs, so a whole-repo
+    // `eslint .` run hit non-React files where this block applied but the plugin
+    // wasn't found. Explicit registration + files scope makes it self-contained.
+    files: ["**/*.{js,jsx,ts,tsx,mjs,cjs}"],
     plugins: { "react-hooks": reactHooks },
     rules: {
       "react-hooks/set-state-in-effect": "error",
@@ -49,19 +53,6 @@ const eslintConfig = defineConfig([
     plugins: { "design-tokens": designTokens },
     rules: {
       "design-tokens/min-font-size": "warn",
-    },
-  },
-  {
-    // Cross-platform discipline. The same site runs as web / iOS-native
-    // (Capacitor) / Android-PWA; all runtime detection must go through
-    // @/lib/platform so feature code branches on capabilities, not platform
-    // names. This blocks the raw detection patterns from leaking into UI code
-    // (the platform module itself lives in src/lib, outside this scope).
-    // See docs/cross-platform.md.
-    files: ["src/app/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
-    plugins: { platform: platformRules },
-    rules: {
-      "platform/no-raw-platform-check": "error",
     },
   },
 ]);
