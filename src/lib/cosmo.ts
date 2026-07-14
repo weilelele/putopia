@@ -271,6 +271,47 @@ export async function getWorldBootstrap(worldId: string): Promise<CosmoBootstrap
   return { status: b?.status ?? 'pending', rejectReason: b?.rejectReason ?? null }
 }
 
+/** Bootstrap status for many worlds in one pass — two queries, not one-per-world.
+ *  A world appears in the map only if Cosmo has a channel for it (i.e. it's
+ *  onboarded); the value is its cubicle's bootstrap status ('pending' if the
+ *  cubicle is somehow missing). Absent from the map = not onboarded in Cosmo. */
+export async function getWorldBootstraps(
+  worldIds: string[],
+): Promise<Map<string, CosmoBootstrapStatus>> {
+  const out = new Map<string, CosmoBootstrapStatus>()
+  if (!worldIds.length) return out
+  const d = await db()
+
+  const channels = await d
+    .collection(COLL_CHANNEL)
+    .find({ 'mco.worldId': { $in: worldIds } }, { projection: { _id: 1, 'mco.worldId': 1 } })
+    .toArray()
+  if (!channels.length) return out
+
+  const worldByChannel = new Map<string, string>()
+  for (const ch of channels) {
+    const wid = (ch.mco as { worldId?: string } | undefined)?.worldId
+    if (!wid) continue
+    worldByChannel.set(String(ch._id), wid)
+    out.set(wid, 'pending') // has a channel = onboarded; refined by its cubicle below
+  }
+
+  const cubicles = await d
+    .collection(COLL_CUBICLE)
+    .find(
+      { channelId: { $in: channels.map((ch) => ch._id) } },
+      { projection: { channelId: 1, 'bootstrap.status': 1 } },
+    )
+    .toArray()
+  for (const cub of cubicles) {
+    const wid = worldByChannel.get(String(cub.channelId))
+    if (!wid) continue
+    const status = (cub.bootstrap as { status?: CosmoBootstrapStatus } | undefined)?.status
+    if (status) out.set(wid, status)
+  }
+  return out
+}
+
 /** A world's expansion candidates (clips + posters), newest first, grouped-able
  *  by `sessionId`. Empty if the world isn't linked or has no batch yet. Only
  *  clips that are completed + not deleted are returned; an expansion whose clip

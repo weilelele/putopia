@@ -15,7 +15,7 @@
  * project convention (see signal-tasks.ts).
  */
 import { createAdminClient } from '@/lib/supabase/server'
-import { getWorldExpansions, getWorldBootstrap } from '@/lib/cosmo'
+import { getWorldExpansions, getWorldBootstraps } from '@/lib/cosmo'
 import { buildSchedule, DEFAULT_GAP_HOURS } from '@/lib/signal/reveal'
 import { setTaskPublished } from '@/lib/actions/signal-tasks'
 import type { SignalTaskType } from '@/lib/actions/signal-tasks'
@@ -189,7 +189,7 @@ export async function emitClosedResults(
 
   const { data: taskRows } = await admin
     .from('signal_tasks')
-    .select('id, type, day_index, published_at, cosmo_result_emitted_at')
+    .select('id, type, day_index, published_at, cosmo_result_emitted_at, cosmo_session_id')
     .eq('thread_id', threadId)
     .eq('is_published', true)
     .order('day_index', { ascending: true })
@@ -199,6 +199,7 @@ export async function emitClosedResults(
     day_index: number | null
     published_at: string | null
     cosmo_result_emitted_at: string | null
+    cosmo_session_id: string | null
   }[]
   if (!tasks.length) return { emitted: 0 }
 
@@ -221,6 +222,11 @@ export async function emitClosedResults(
 
   let emitted = 0
   for (const task of tasks) {
+    // Settle only Cosmo-BUILT days. Manual days (cosmo_session_id null) still count
+    // toward the reveal schedule above (buildSchedule needs a contiguous day_index
+    // from 0), but must never be emitted as Cosmo results — their tiles are band
+    // assets, not cubicle expansions, so a settle would fire a spurious cold expand.
+    if (!task.cosmo_session_id) continue
     if (task.cosmo_result_emitted_at) continue // already emitted
     const closeAt = closeByDay.get(task.day_index ?? 0)
     if (!closeAt || now <= closeAt) continue // window not closed yet
@@ -260,10 +266,10 @@ export async function emitClosedResults(
 export async function maybeEmitColdRequest(
   worldId: string,
 ): Promise<{ emitted: boolean; error?: string }> {
+  // The caller (runCosmoSync) already gated on this world being bootstrapped in
+  // Cosmo, so we don't re-read Cosmo per world here — just dedup on an existing
+  // request. (The row's existence is the once-only guard.)
   const admin = createAdminClient() as DB
-
-  const boot = await getWorldBootstrap(worldId)
-  if (boot?.status !== 'bootstrapped') return { emitted: false }
 
   const { data: existing } = await admin
     .from('cosmo_requests')
@@ -396,8 +402,20 @@ export async function runCosmoSync(): Promise<{ threads: number; results: unknow
     threads.push({ id: t.id, world_id: t.world_id })
   }
 
+  // Aggregated Cosmo gate — one round-trip for all worlds, not one-per-world.
+  // Onboarding+bootstrap is the true on-switch: a syncing world Cosmo doesn't know
+  // (or hasn't bootstrapped) is skipped entirely, so we never emit settle/cold/build
+  // for it. Without this, emitClosedResults would replay a legacy world's old
+  // published puzzles as junk requests the moment the cron runs.
+  const bootstraps = await getWorldBootstraps(threads.map((t) => t.world_id))
+
   const results: unknown[] = []
   for (const th of threads) {
+    const status = bootstraps.get(th.world_id)
+    if (status !== 'bootstrapped') {
+      results.push({ worldId: th.world_id, skipped: status ? `not-bootstrapped (${status})` : 'not-onboarded' })
+      continue
+    }
     try {
       const settled = await emitClosedResults(th.id)
       const cold = await maybeEmitColdRequest(th.world_id)
