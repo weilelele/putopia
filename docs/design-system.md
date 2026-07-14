@@ -9,6 +9,11 @@
 > New code MUST use these. Several parallel/legacy token sets also exist in
 > `:root` and resolve to the same values — they are **DEPRECATED** (see bottom).
 > Do not introduce new usages of them.
+>
+> The Style 01 visual refresh is isolated in `src/app/visual-refresh.css` and is
+> imported after `globals.css`. It may refine canonical token values and shared
+> presentation, but it must not change route structure, business logic, component
+> content, or data contracts.
 
 ---
 
@@ -19,14 +24,25 @@ white at reduced opacity, never a grey-blue.
 
 | Role | Hex | Canonical token |
 |------|-----|-----------------|
-| Retro Orange — primary / logo / active / CTA | `#FF6B35` | `--color-nucleus` |
-| Burnt Orange — hover / border / divider / accent | `#E85D04` | `--color-burnt` (alias `--color-nebula`) |
-| Deep Orange — pressed / gradient-bottom / emphasis | `#DC2F02` | `--color-nucleus-3` |
+| Pantone 1665 C screen orange — primary / logo / active / CTA | `#E35205` | `--color-nucleus` |
+| Burnt Orange — hover / border / divider / accent | `#C84406` | `--color-burnt` (alias `--color-nebula`) |
+| Deep Orange — pressed / gradient-bottom / emphasis | `#A92F06` | `--color-nucleus-3` |
 | Deep Space Blue — **page background** | `#0A0E27` | `--color-deep` |
 | Off White — **body text** | `#F5F5F5` | `--color-star` |
 
-Rule of thumb: orange for logo/key/CTA · deep-space-blue background · white text
+Rule of thumb: Pantone 1665 C orange for logo/key/CTA · deep-space-blue background · white text
 with orange accents · keep high contrast.
+
+### Protected brand and product assets
+
+- `public/assets/vi-icon.png` is the canonical graphic logo.
+- `public/assets/vi-wordmark.png` is the canonical wordmark.
+- `public/assets/device-console.jpg` is the canonical device photograph.
+- `src/components/flip-wordmark.tsx` owns the wordmark presentation animation.
+
+Do not redraw, recolor, crop, filter, regenerate, or replace these assets. New
+visual treatments belong on their surrounding frame, caption, or layout—not on
+the image pixels or animation sequence.
 
 ---
 
@@ -34,11 +50,11 @@ with orange accents · keep high contrast.
 
 ### Color — brand & text
 ```
---color-nucleus    #FF6B35   primary / CTA / active / logo
+--color-nucleus    #E35205   primary / CTA / active / logo
 --color-nucleus-2  #FF8A5C   lighter highlight
---color-nucleus-3  #DC2F02   deep orange (pressed / gradient bottom)
---color-burnt      #E85D04   burnt orange (hover / border / accent)
---color-nebula     #E85D04   = --color-burnt (kept as alias; prefer --color-burnt)
+--color-nucleus-3  #A92F06   deep orange (pressed / gradient bottom)
+--color-burnt      #C84406   burnt orange (hover / border / accent)
+--color-nebula     #C84406   = --color-burnt (kept as alias; prefer --color-burnt)
 --color-star       #F5F5F5   primary text (off-white)
 --color-star-dim   rgba(245,245,245,0.55)   secondary text  (NOT grey)
 --color-star-deep  rgba(245,245,245,0.35)   faint text / faint border
@@ -64,9 +80,9 @@ because `--color-*` has no equivalent. Prefer them over hardcoding the hex.
 
 ### Borders
 ```
---bd-orange  rgba(255,107,53,0.5)   strong orange border
---bd-cyan    rgba(255,107,53,0.4)   medium orange border  ⚠ name says "cyan" but it is ORANGE (legacy)
---bd-cyan-2  rgba(255,107,53,0.2)   subtle orange border  ⚠ also ORANGE
+--bd-orange  rgba(227,82,5,0.5)   strong orange border
+--bd-cyan    rgba(227,82,5,0.4)   medium orange border  ⚠ name says "cyan" but it is ORANGE (legacy)
+--bd-cyan-2  rgba(227,82,5,0.2)   subtle orange border  ⚠ also ORANGE
 --bd-faint   rgba(245,245,245,0.08) faint white hairline
 ```
 
@@ -86,8 +102,8 @@ Type scale: `--fs-display` `--fs-h1`(48) `--fs-h2`(32) `--fs-h3`(24) `--fs-title
 ```
 --s-1..--s-8   0.25rem → 4rem  (4/8/12/16/24/32/48/64px)
 --radius       2px             (global corner radius)
---glow-orange  0 0 28px rgba(255,107,53,.45), 0 0 60px rgba(255,107,53,.15)
---glow-cyan    0 0 24px rgba(232,93,4,.35),  0 0 48px rgba(232,93,4,.10)   (orange, legacy name)
+--glow-orange  0 0 28px rgba(227,82,5,.45), 0 0 60px rgba(227,82,5,.15)
+--glow-cyan    0 0 24px rgba(200,68,6,.35),  0 0 48px rgba(200,68,6,.10)   (orange, legacy name)
 ```
 
 ---
@@ -148,9 +164,9 @@ not add new usages.** Map to the canonical token instead:
 
 | Deprecated | = Canonical | Value |
 |------------|-------------|-------|
-| `--or-retro` | `--color-nucleus` | #FF6B35 |
-| `--or-burnt` | `--color-burnt` | #E85D04 |
-| `--or-deep` | `--color-nucleus-3` | #DC2F02 |
+| `--or-retro` | `--color-nucleus` | #E35205 |
+| `--or-burnt` | `--color-burnt` | #C84406 |
+| `--or-deep` | `--color-nucleus-3` | #A92F06 |
 | `--tx-primary` | `--color-star` | #F5F5F5 |
 | `--tx-muted` | `--color-star-dim` | rgba(245,245,245,.55) |
 | `--tx-faint` | `--color-star-deep` | rgba(245,245,245,.35) |
@@ -158,8 +174,8 @@ not add new usages.** Map to the canonical token instead:
 | `--sig-ok` | `--color-ok` | #20D890 |
 | `--sig-warn` | `--color-warn` (note value #E8A020 vs #FFB020 — see debts) | ~ |
 | `--sig-fault` | `--color-fault` | #E83030 |
-| `--nucleus-orange` | `--color-nucleus` | #FF6B35 |
-| `--nebula-cyan` | `--color-burnt` | #E85D04 |
+| `--nucleus-orange` | `--color-nucleus` | #E35205 |
+| `--nebula-cyan` | `--color-burnt` | #C84406 |
 | `--star-white` | `--color-star` | #F5F5F5 |
 | `--void-grey` | `--color-void` | #13182E |
 | `--deep-space` | `--color-deep` | #0A0E27 |

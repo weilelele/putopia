@@ -117,10 +117,10 @@ export function Nav() {
   return (
     <nav
       className="hidden md:flex flex-col w-60 shrink-0 h-screen sticky top-0"
-      style={{ background: '#0F1430', borderRight: '1px solid rgba(255,107,53,0.16)' }}
+      style={{ background: '#0F1430', borderRight: '1px solid rgba(227,82,5,0.16)' }}
     >
       {/* Logo */}
-      <div className="p-4 border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
+      <div className="p-4 border-b" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
         <Link href="/console" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -129,7 +129,7 @@ export function Nav() {
             style={{ width: '100%', maxWidth: '176px', height: 'auto', display: 'block' }}
           />
         </Link>
-        <div className="mt-3 h-px w-full" style={{ background: 'linear-gradient(to right, rgba(232,93,4,0.5), transparent)' }} />
+        <div className="mt-3 h-px w-full" style={{ background: 'linear-gradient(to right, rgba(200,68,6,0.5), transparent)' }} />
       </div>
 
       {/* Nav label */}
@@ -152,14 +152,14 @@ export function Nav() {
               className="flex items-center gap-3 mx-2 px-3 py-2.5 text-sm transition-all duration-150"
               style={
                 isActive
-                  ? { background: 'rgba(232,93,4,0.15)', borderLeft: '3px solid #E85D04', paddingLeft: '9px', color: '#E85D04' }
+                  ? { background: 'rgba(200,68,6,0.15)', borderLeft: '3px solid #C84406', paddingLeft: '9px', color: '#C84406' }
                   : { color: isGuest ? 'rgba(245,245,245,0.2)' : 'rgba(245,245,245,0.35)', borderLeft: '3px solid transparent', paddingLeft: '9px' }
               }
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(232,93,4,0.4)'
+                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(200,68,6,0.4)'
                   ;(e.currentTarget as HTMLElement).style.color = isGuest ? 'rgba(245,245,245,0.4)' : 'rgba(245,245,245,0.55)'
-                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(232,93,4,0.05)'
+                  ;(e.currentTarget as HTMLElement).style.background = 'rgba(200,68,6,0.05)'
                 }
               }}
               onMouseLeave={(e) => {
@@ -178,7 +178,7 @@ export function Nav() {
       </div>
 
       {/* ── Current Identity ── */}
-      <div className="mx-2 mt-3 mb-1 border p-3" style={{ borderColor: 'rgba(255,107,53,0.16)', background: '#151B3A' }}>
+      <div className="mx-2 mt-3 mb-1 border p-3" style={{ borderColor: 'rgba(227,82,5,0.16)', background: '#151B3A' }}>
         {/* Row 1: avatar + name */}
         <div className="flex items-center gap-2.5 mb-2.5">
           <Avatar user={user} />
@@ -193,7 +193,7 @@ export function Nav() {
             <Link
               href="/login"
               className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono border transition-colors shrink-0"
-              style={{ borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)' }}
+              style={{ borderColor: 'rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)' }}
             >
               <LogInIcon />
               LOGIN
@@ -202,7 +202,7 @@ export function Nav() {
             <button
               onClick={() => logout()}
               className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono border transition-colors shrink-0"
-              style={{ borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)' }}
+              style={{ borderColor: 'rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)' }}
             >
               <LogOutIcon />
               LOGOUT
@@ -223,10 +223,10 @@ export function Nav() {
               display: 'block', textAlign: 'center',
               fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
               color: '#F5F5F5',
-              background: 'linear-gradient(135deg, #E85D04, #C04000)',
+              background: 'linear-gradient(135deg, #C84406, #C04000)',
               padding: '8px 0', fontWeight: 700,
               textDecoration: 'none', fontFamily: 'inherit',
-              border: '1px solid rgba(232,93,4,0.5)',
+              border: '1px solid rgba(200,68,6,0.5)',
             }}
           >
             BECOME A VOYAGER

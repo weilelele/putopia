@@ -34,7 +34,7 @@ export function FilterBar({ options, active, onChange, className }: Props) {
                 textTransform: 'uppercase',
                 padding: '0.42rem 1.05rem',
                 borderRight: i < options.length - 1 ? '1px solid var(--bd-faint)' : 'none',
-                background: isActive ? 'rgba(255,107,53,0.10)' : 'transparent',
+                background: isActive ? 'rgba(227,82,5,0.10)' : 'transparent',
                 color: isActive ? 'var(--color-nucleus)' : 'var(--color-star-deep)',
                 cursor: 'pointer',
                 position: 'relative',
@@ -53,7 +53,7 @@ export function FilterBar({ options, active, onChange, className }: Props) {
                 <span style={{
                   position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px',
                   background: 'var(--color-nucleus)',
-                  boxShadow: '0 0 8px rgba(255,107,53,0.55)',
+                  boxShadow: '0 0 8px rgba(227,82,5,0.55)',
                   pointerEvents: 'none',
                 }} />
               )}

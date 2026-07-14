@@ -99,7 +99,7 @@ export default function ApplyPage() {
           </div>
         </div>
 
-        <div className="mb-6 p-4 border text-xs font-mono leading-relaxed" style={{ background: 'rgba(232,93,4,0.04)', borderColor: 'rgba(232,93,4,0.25)', color: '#E85D04' }}>
+        <div className="mb-6 p-4 border text-xs font-mono leading-relaxed" style={{ background: 'rgba(200,68,6,0.04)', borderColor: 'rgba(200,68,6,0.25)', color: '#C84406' }}>
           <div className="font-semibold mb-1">⚠ NOTICE TO APPLICANTS</div>
           <div style={{ color: 'rgba(245,245,245,0.55)' }}>
             All application information will be reviewed by the Architect Council. Upon successful admission,
@@ -152,11 +152,11 @@ export default function ApplyPage() {
                     onClick={() => setSelectedReason(r.id)}
                     className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all"
                     style={{
-                      border: isSelected ? '1px solid #E85D04' : '1px solid rgba(255,107,53,0.16)',
-                      background: isSelected ? 'rgba(232,93,4,0.06)' : '#0F1430',
+                      border: isSelected ? '1px solid #C84406' : '1px solid rgba(227,82,5,0.16)',
+                      background: isSelected ? 'rgba(200,68,6,0.06)' : '#0F1430',
                     }}
                   >
-                    <span className="shrink-0 font-mono font-bold" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: isSelected ? '#E85D04' : 'rgba(245,245,245,0.35)', minWidth: '110px' }}>
+                    <span className="shrink-0 font-mono font-bold" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: isSelected ? '#C84406' : 'rgba(245,245,245,0.35)', minWidth: '110px' }}>
                       [{r.tag}]
                     </span>
                     <span className="text-xs font-mono" style={{ color: isSelected ? '#F5F5F5' : 'rgba(245,245,245,0.55)' }}>

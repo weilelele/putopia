@@ -131,7 +131,7 @@ export default function SubmitWorldPage() {
           {/* Page head */}
           <div style={{ marginBottom: '2rem' }}>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', fontWeight: 700, color: '#F5F5F5', marginBottom: '0.75rem', letterSpacing: '0.04em' }}>
-              REPORT A <span style={{ color: '#FF6B35' }}>SIGHTING</span>
+              REPORT A <span style={{ color: '#E35205' }}>SIGHTING</span>
             </h1>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.7, maxWidth: '520px' }}>
               Describe a parallel world you believe exists. Your account will be reviewed by Architects and added to the community pipeline. Evidence, observations, and field notes all welcome.
@@ -142,16 +142,16 @@ export default function SubmitWorldPage() {
           {isGuest && (
             <div style={{
               padding: '1rem',
-              border: '1px solid rgba(255,107,53,0.3)',
-              background: 'rgba(255,107,53,0.06)',
+              border: '1px solid rgba(227,82,5,0.3)',
+              background: 'rgba(227,82,5,0.06)',
               marginBottom: '1.5rem',
               fontFamily: 'var(--font-mono)',
               fontSize: 'var(--fs-caption)',
               color: 'rgba(245,245,245,0.7)',
             }}>
-              <span style={{ color: '#FF6B35', letterSpacing: '0.12em' }}>ACCESS RESTRICTED</span>
+              <span style={{ color: '#E35205', letterSpacing: '0.12em' }}>ACCESS RESTRICTED</span>
               {' — '}You must be logged in to report a sighting.{' '}
-              <Link href="/login" style={{ color: '#FF6B35', textDecoration: 'underline' }}>Login</Link>
+              <Link href="/login" style={{ color: '#E35205', textDecoration: 'underline' }}>Login</Link>
             </div>
           )}
 
@@ -161,7 +161,7 @@ export default function SubmitWorldPage() {
             {/* World name */}
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(245,245,245,0.45)', marginBottom: '0.5rem' }}>
-                WORLD DESIGNATION <span style={{ color: '#FF6B35' }}>*</span>
+                WORLD DESIGNATION <span style={{ color: '#E35205' }}>*</span>
               </label>
               <input
                 type="text"
@@ -190,7 +190,7 @@ export default function SubmitWorldPage() {
             {/* Description */}
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(245,245,245,0.45)', marginBottom: '0.5rem' }}>
-                FIELD NOTES <span style={{ color: '#FF6B35' }}>*</span>
+                FIELD NOTES <span style={{ color: '#E35205' }}>*</span>
                 <span style={{ marginLeft: '1rem', color: 'rgba(245,245,245,0.25)', letterSpacing: '0.1em' }}>min. 20 chars</span>
               </label>
               <textarea
@@ -214,7 +214,7 @@ export default function SubmitWorldPage() {
                   minHeight: '160px',
                 }}
               />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: form.description.length < 20 ? 'rgba(255,107,53,0.5)' : 'rgba(245,245,245,0.25)', marginTop: '0.25rem', textAlign: 'right' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: form.description.length < 20 ? 'rgba(227,82,5,0.5)' : 'rgba(245,245,245,0.25)', marginTop: '0.25rem', textAlign: 'right' }}>
                 {form.description.length} chars
               </div>
             </div>
@@ -240,11 +240,11 @@ export default function SubmitWorldPage() {
                         alignItems: 'center',
                         gap: '0.35rem',
                         background: 'none',
-                        border: `1px solid ${active ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.15)'}`,
+                        border: `1px solid ${active ? 'rgba(227,82,5,0.6)' : 'rgba(227,82,5,0.15)'}`,
                         padding: '0.35rem',
                         cursor: 'pointer',
                         outline: 'none',
-                        boxShadow: active ? '0 0 0 1px rgba(255,107,53,0.3)' : 'none',
+                        boxShadow: active ? '0 0 0 1px rgba(227,82,5,0.3)' : 'none',
                       }}
                     >
                       <div style={{
@@ -256,7 +256,7 @@ export default function SubmitWorldPage() {
                         fontFamily: 'var(--font-mono)',
                         fontSize: 'var(--fs-caption)',
                         letterSpacing: '0.12em',
-                        color: active ? '#FF6B35' : 'rgba(245,245,245,0.35)',
+                        color: active ? '#E35205' : 'rgba(245,245,245,0.35)',
                       }}>
                         {preset.label}
                       </span>
@@ -278,7 +278,7 @@ export default function SubmitWorldPage() {
                 style={{
                   width: '100%',
                   height: '180px',
-                  border: '1px dashed rgba(255,107,53,0.28)',
+                  border: '1px dashed rgba(227,82,5,0.28)',
                   background: 'var(--bg-panel)',
                   position: 'relative',
                   overflow: 'hidden',
@@ -371,9 +371,9 @@ export default function SubmitWorldPage() {
                 width: '100%',
                 padding: '1rem',
                 background: canSubmit && !isGuest
-                  ? 'linear-gradient(135deg, #E85D04, #C04000)'
-                  : 'rgba(255,107,53,0.08)',
-                border: `1px solid ${canSubmit && !isGuest ? 'rgba(232,93,4,0.5)' : 'rgba(255,107,53,0.15)'}`,
+                  ? 'linear-gradient(135deg, #C84406, #C04000)'
+                  : 'rgba(227,82,5,0.08)',
+                border: `1px solid ${canSubmit && !isGuest ? 'rgba(200,68,6,0.5)' : 'rgba(227,82,5,0.15)'}`,
                 color: canSubmit && !isGuest ? '#F5F5F5' : 'rgba(245,245,245,0.25)',
                 fontFamily: 'var(--font-mono)',
                 fontSize: 'var(--fs-label)',
@@ -415,7 +415,7 @@ export default function SubmitWorldPage() {
           </form>
 
           {/* Footer note */}
-          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,107,53,0.1)' }}>
+          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(227,82,5,0.1)' }}>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.2)', lineHeight: 1.7, letterSpacing: '0.05em' }}>
               All sightings are reviewed by Architects before advancing through the pipeline (Proposed → Picked → Syncing → Stable). Submitted records are visible to authenticated members of the Collective.
             </p>
@@ -432,8 +432,8 @@ export default function SubmitWorldPage() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         input:focus, textarea:focus {
-          border-color: rgba(255,107,53,0.4) !important;
-          box-shadow: 0 0 0 1px rgba(255,107,53,0.15);
+          border-color: rgba(227,82,5,0.4) !important;
+          box-shadow: 0 0 0 1px rgba(227,82,5,0.15);
         }
       `}</style>
     </div>

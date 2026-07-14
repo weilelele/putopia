@@ -5,8 +5,8 @@ import { getAllVotes, deleteVote } from '@/lib/actions/votes'
 import type { Vote, UserRole } from '@/types/database'
 
 const S = {
-  card:  { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
-  th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
+  card:  { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '20px', marginBottom: '16px' },
+  th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(227,82,5,0.16)', whiteSpace: 'nowrap' as const },
   td:    { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'top' as const, fontSize: '13px' },
 }
 
@@ -43,7 +43,7 @@ export default function VotesAdmin() {
   return (
     <div>
       <div style={{ marginBottom: '20px' }}>
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.3em' }}>ADMIN // VOTES</div>
+        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em' }}>ADMIN // VOTES</div>
         <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>投票管理</div>
       </div>
 
@@ -78,21 +78,21 @@ export default function VotesAdmin() {
                 <tr key={v.id}>
                   <td style={{ ...S.td, color: '#F5F5F5', maxWidth: '260px' }}>{v.title}</td>
                   <td style={S.td}>
-                    <span style={{ fontSize: '11px', color: v.type === 'multi' ? '#E8A020' : 'rgba(245,245,245,0.55)' }}>
+                    <span style={{ fontSize: 'var(--fs-caption)', color: v.type === 'multi' ? '#E8A020' : 'rgba(245,245,245,0.55)' }}>
                       {v.type === 'multi' ? '多选' : '单选'}
                     </span>
                   </td>
-                  <td style={{ ...S.td, fontSize: '11px' }}>{scopeLabel(v.scope)}</td>
+                  <td style={{ ...S.td, fontSize: 'var(--fs-caption)' }}>{scopeLabel(v.scope)}</td>
                   <td style={S.td}>
                     {v.is_active
-                      ? <span style={{ fontSize: '11px', color: '#20D890' }}>进行中</span>
-                      : <span style={{ fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>已关闭</span>}
+                      ? <span style={{ fontSize: 'var(--fs-caption)', color: '#20D890' }}>进行中</span>
+                      : <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>已关闭</span>}
                   </td>
-                  <td style={{ ...S.td, fontSize: '11px' }}>{v.options.length}</td>
-                  <td style={{ ...S.td, fontSize: '11px', whiteSpace: 'nowrap' }}>
+                  <td style={{ ...S.td, fontSize: 'var(--fs-caption)' }}>{v.options.length}</td>
+                  <td style={{ ...S.td, fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap' }}>
                     {v.ends_at ? formatTs(v.ends_at) : <span style={{ color: 'rgba(245,245,245,0.35)' }}>—</span>}
                   </td>
-                  <td style={{ ...S.td, fontSize: '11px', whiteSpace: 'nowrap' }}>{formatTs(v.created_at)}</td>
+                  <td style={{ ...S.td, fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap' }}>{formatTs(v.created_at)}</td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
                     <button
                       onClick={() => handleDelete(v)}

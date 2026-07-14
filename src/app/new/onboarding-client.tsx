@@ -383,15 +383,15 @@ function VideoSection({ src }: { src: string }) {
       {/* ── Layer 3: Cyan inset glow — screen edge bleed ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
-        boxShadow: 'inset 0 0 35px rgba(232,93,4,0.07), inset 0 0 70px rgba(232,93,4,0.03)',
+        boxShadow: 'inset 0 0 35px rgba(200,68,6,0.07), inset 0 0 70px rgba(200,68,6,0.03)',
       }} />
 
       {/* ── Layer 4: Sweeping scan line ── */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 4 }}>
         <div style={{
           position: 'absolute', left: 0, right: 0, height: 2,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(232,93,4,0.35) 30%, rgba(232,93,4,0.65) 50%, rgba(232,93,4,0.35) 70%, transparent 100%)',
-          boxShadow: '0 0 8px rgba(232,93,4,0.4), 0 0 20px rgba(232,93,4,0.15)',
+          background: 'linear-gradient(90deg, transparent 0%, rgba(200,68,6,0.35) 30%, rgba(200,68,6,0.65) 50%, rgba(200,68,6,0.35) 70%, transparent 100%)',
+          boxShadow: '0 0 8px rgba(200,68,6,0.4), 0 0 20px rgba(200,68,6,0.15)',
           animation: 'videoSweep 5s linear infinite',
         }} />
       </div>
@@ -741,11 +741,11 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
         <div style={{
           display: 'flex', alignItems: 'center', gap: '0.5rem',
           fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.18em', color: 'rgba(232,93,4,0.6)',
+          letterSpacing: '0.18em', color: 'rgba(200,68,6,0.6)',
           marginTop: '0.5rem',
           ...lineStyle(confirmLines[3]),
         }}>
-          <span style={{ width: 18, height: 1, background: 'rgba(232,93,4,0.4)', display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ width: 18, height: 1, background: 'rgba(200,68,6,0.4)', display: 'inline-block', flexShrink: 0 }} />
           Tap to enter the inner sanctum.
           <span style={{
             display: 'inline-block', width: 7, height: '1em',
@@ -892,7 +892,7 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
           gap: '1.1rem', textAlign: 'center',
         }}
       >
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.4em', color: 'rgba(232,93,4,0.75)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.4em', color: 'rgba(200,68,6,0.75)' }}>
           WELCOME,
         </div>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display)', letterSpacing: '0.14em', color: 'var(--color-nucleus)', lineHeight: 1 }}>
@@ -910,8 +910,8 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
           ref={beamRef}
           style={{
             position: 'absolute', left: 0, right: 0, top: '-4px', height: 4,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(232,93,4,0.25) 10%, rgba(232,93,4,1) 50%, rgba(232,93,4,0.25) 90%, transparent 100%)',
-            boxShadow: '0 0 24px rgba(232,93,4,1), 0 0 80px rgba(232,93,4,0.65), 0 0 160px rgba(232,93,4,0.25), 0 12px 60px rgba(232,93,4,0.18)',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(200,68,6,0.25) 10%, rgba(200,68,6,1) 50%, rgba(200,68,6,0.25) 90%, transparent 100%)',
+            boxShadow: '0 0 24px rgba(200,68,6,1), 0 0 80px rgba(200,68,6,0.65), 0 0 160px rgba(200,68,6,0.25), 0 12px 60px rgba(200,68,6,0.18)',
           }}
         />
       </div>
@@ -1032,8 +1032,8 @@ function PendingInboxScreen({
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
             color: 'var(--color-star)',
-            border: '1px solid rgba(232,93,4,0.25)',
-            background: 'rgba(232,93,4,0.05)',
+            border: '1px solid rgba(200,68,6,0.25)',
+            background: 'rgba(200,68,6,0.05)',
             padding: '0.4rem 0.8rem',
             letterSpacing: '0.04em',
           }}>

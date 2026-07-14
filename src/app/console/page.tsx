@@ -29,8 +29,8 @@ const SALES_OPEN = true
 const STATUS_STYLES = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
   needs_repair: { color: '#E83030', border: 'rgba(232,48,48,0.3)' },
-  in_use:       { color: '#E85D04', border: 'rgba(232,93,4,0.3)' },
-  unknown:      { color: 'rgba(245,245,245,0.35)', border: 'rgba(255,107,53,0.16)' },
+  in_use:       { color: '#C84406', border: 'rgba(200,68,6,0.3)' },
+  unknown:      { color: 'rgba(245,245,245,0.35)', border: 'rgba(227,82,5,0.16)' },
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -61,21 +61,21 @@ function DevicePlaceholder({ id }: { id: string }) {
     <svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
       <rect width="160" height="120" fill="#0F1430" />
       {[20, 40, 60, 80, 100, 120, 140].map((x) => (
-        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
+        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="rgba(227,82,5,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       {[20, 40, 60, 80, 100].map((y) => (
-        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
+        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="rgba(227,82,5,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       <circle cx={cx} cy={cy} r={r1} fill="none" stroke={`hsl(${hue1},60%,45%)`} strokeWidth="1" opacity="0.6" />
       <circle cx={cx} cy={cy} r={r2} fill="none" stroke={`hsl(${hue1},60%,55%)`} strokeWidth="0.8" opacity="0.5" />
       <circle cx={cx} cy={cy} r="4" fill={`hsl(${hue1},70%,50%)`} opacity="0.8" />
       <line x1={lineX} y1="10" x2={lineX + 20} y2="110" stroke={`hsl(${hue2},50%,40%)`} strokeWidth="1" opacity="0.4" />
-      <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#E85D04" strokeWidth="0.8" opacity="0.5" />
-      <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#E85D04" strokeWidth="0.8" opacity="0.5" />
-      <path d="M5,5 L5,15 M5,5 L15,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
-      <path d="M155,5 L155,15 M155,5 L145,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
-      <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
-      <path d="M155,115 L155,105 M155,115 L145,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
+      <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#C84406" strokeWidth="0.8" opacity="0.5" />
+      <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#C84406" strokeWidth="0.8" opacity="0.5" />
+      <path d="M5,5 L5,15 M5,5 L15,5" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,5 L155,15 M155,5 L145,5" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,115 L155,105 M155,115 L145,115" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
     </svg>
   )
 }
@@ -96,7 +96,7 @@ function DevicePreviewCard({ device }: { device: Device }) {
         textDecoration: 'none',
         transition: 'border-color 0.15s',
       }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.35)' }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(227,82,5,0.35)' }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--bd-faint)' }}
     >
       <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18' }}>
@@ -134,7 +134,7 @@ function DevicePreviewCard({ device }: { device: Device }) {
           {device.description}
         </p>
         {device.status === 'in_use' && device.current_user_name && (
-          <div style={{ marginTop: '0.25rem', padding: '0.2rem 0.5rem', border: '1px solid rgba(232,93,4,0.2)', background: 'rgba(232,93,4,0.04)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)' }}>
+          <div style={{ marginTop: '0.25rem', padding: '0.2rem 0.5rem', border: '1px solid rgba(200,68,6,0.2)', background: 'rgba(200,68,6,0.04)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)' }}>
             <span style={{ color: 'rgba(245,245,245,0.35)' }}>IN USE: </span>{device.current_user_name}
           </div>
         )}
@@ -152,8 +152,8 @@ function DevicePreviewCard({ device }: { device: Device }) {
  *  Hero photo fades top + bottom into the card; faint breathing glow. */
 function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
   const direct = group === 'direct'
-  const accent = direct ? '#FF6B35' : '#E8A020'
-  const soft   = direct ? 'rgba(255,107,53,' : 'rgba(232,160,32,'   // append "<a>)"
+  const accent = direct ? '#E35205' : '#E8A020'
+  const soft   = direct ? 'rgba(227,82,5,' : 'rgba(232,160,32,'   // append "<a>)"
   const eyebrow = direct ? 'VOYAGER INITIATION' : 'VOYAGER RECRUITMENT'
   const title   = direct ? 'INITIAL VOYAGER PACK' : 'EARN YOUR STATUS'
   const cta     = 'ACTIVATE'
@@ -171,7 +171,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${soft}0.55)` }}
     >
       <style>{`
-        @keyframes vp-breathe-o { 0%,100% { box-shadow: 0 0 16px rgba(255,107,53,0.22), 0 0 0 1px rgba(255,107,53,0.18); } 50% { box-shadow: 0 0 38px rgba(255,107,53,0.55), 0 0 70px rgba(255,107,53,0.18), 0 0 0 1px rgba(255,107,53,0.45); } }
+        @keyframes vp-breathe-o { 0%,100% { box-shadow: 0 0 16px rgba(227,82,5,0.22), 0 0 0 1px rgba(227,82,5,0.18); } 50% { box-shadow: 0 0 38px rgba(227,82,5,0.55), 0 0 70px rgba(227,82,5,0.18), 0 0 0 1px rgba(227,82,5,0.45); } }
         @keyframes vp-breathe-a { 0%,100% { box-shadow: 0 0 16px rgba(232,160,32,0.22), 0 0 0 1px rgba(232,160,32,0.18); } 50% { box-shadow: 0 0 38px rgba(232,160,32,0.52), 0 0 70px rgba(232,160,32,0.16), 0 0 0 1px rgba(232,160,32,0.42); } }
         .vp-ad--direct { animation: vp-breathe-o 3.6s ease-in-out infinite; }
         .vp-ad--gated  { animation: vp-breathe-a 3.6s ease-in-out infinite; }
@@ -240,7 +240,7 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
         textDecoration: 'none',
         transition: 'opacity 0.15s, border-color 0.15s',
       }}
-      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.9'; el.style.borderColor = 'rgba(255,107,53,0.2)' }}
+      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.9'; el.style.borderColor = 'rgba(227,82,5,0.2)' }}
       onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.7'; el.style.borderColor = 'var(--bd-faint)' }}
     >
       <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18' }}>
@@ -256,7 +256,7 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
       <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,107,53,0.28)', letterSpacing: '0.15em' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(227,82,5,0.28)', letterSpacing: '0.15em' }}>
               {device.id}
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: 'rgba(245,245,245,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -270,12 +270,12 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
             ?
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,107,53,0.28)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(227,82,5,0.28)' }}>
           <span>◎</span>
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{device.location}</span>
         </div>
         <div style={{ marginTop: 'auto', paddingTop: '0.4rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,107,53,0.28)', marginBottom: '0.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(227,82,5,0.28)', marginBottom: '0.25rem' }}>
             <span>PROGRESS</span>
             <span>{device.exploration_progress}%</span>
           </div>
@@ -302,14 +302,14 @@ function IntelPreviewCard({ entry, commentCount }: { entry: IntelWithAvatar; com
       href={`/intel/${entry.id}`}
       className="block transition-all duration-150"
       style={{
-        background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)',
+        background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)',
         overflow: 'hidden', textDecoration: 'none',
       }}
       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = color }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)' }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(227,82,5,0.16)' }}
     >
       {/* Publisher bar — mirrors Intel Feed style */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px', background: '#0F1430', borderBottom: '1px solid rgba(255,107,53,0.12)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px', background: '#0F1430', borderBottom: '1px solid rgba(227,82,5,0.12)' }}>
         {entry.publisher_avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={entry.publisher_avatar_url} alt={publisherName} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(138,154,181,0.25)' }} />
@@ -390,14 +390,14 @@ function WorldPreviewCard({ world }: { world: World }) {
       </div>
 
       {/* Info */}
-      <div style={{ padding: '0.65rem 0.75rem', background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', borderTop: 'none' }}>
+      <div style={{ padding: '0.65rem 0.75rem', background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', borderTop: 'none' }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: '#F5F5F5', marginBottom: 6 }}>
           {displayName}
         </div>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {world.description}
         </p>
-        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid rgba(255,107,53,0.16)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid rgba(227,82,5,0.16)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)' }}>{world.discoverer_name}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>{world.discovery_date}</span>
         </div>
@@ -447,13 +447,13 @@ function HeroStats({ worlds, voyagers }: { worlds: number | null; voyagers: numb
       <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}>
         {items.map(({ key, value, label }, i) => (
           <div key={key} style={{ display: 'contents' }}>
-            {i > 0 && <div style={{ width: 1, background: 'rgba(255,107,53,0.16)', margin: '6px 0' }} />}
+            {i > 0 && <div style={{ width: 1, background: 'rgba(227,82,5,0.16)', margin: '6px 0' }} />}
             <button
               type="button"
               onClick={() => setActive((prev) => (prev === key ? null : key))}
               aria-expanded={active === key}
               style={{
-                flex: 1, padding: '8px 10px', background: active === key ? 'rgba(232,93,4,0.08)' : 'none',
+                flex: 1, padding: '8px 10px', background: active === key ? 'rgba(200,68,6,0.08)' : 'none',
                 border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'center', font: 'inherit',
                 transition: 'background 0.2s ease',
               }}
@@ -481,8 +481,8 @@ function HeroStats({ worlds, voyagers }: { worlds: number | null; voyagers: numb
       {active && (
         <div style={{
           maxWidth: '470px', margin: '1rem auto 0',
-          border: '1px solid rgba(255,107,53,0.22)', borderRadius: 8,
-          background: 'rgba(232,93,4,0.05)', padding: '12px 16px',
+          border: '1px solid rgba(227,82,5,0.22)', borderRadius: 8,
+          background: 'rgba(200,68,6,0.05)', padding: '12px 16px',
           animation: 'fadeInUp 0.3s ease-out',
         }}>
           <p style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', lineHeight: 1.75, color: 'var(--color-star-dim)' }}>
@@ -522,7 +522,7 @@ function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: Gu
           width: '100%',
           textAlign: 'center',
           margin: 'clamp(1.25rem, 5vh, 3rem) 0 1.75rem',
-          filter: 'drop-shadow(0 0 32px rgba(255,107,53,0.45)) drop-shadow(0 0 64px rgba(255,107,53,0.18))',
+          filter: 'drop-shadow(0 0 32px rgba(227,82,5,0.45)) drop-shadow(0 0 64px rgba(227,82,5,0.18))',
           ...line(0),
         }}
       >
@@ -537,7 +537,7 @@ function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: Gu
           alt="Multiverse Collective"
           style={{
             width: '140px', height: 'auto', display: 'block',
-            filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',
+            filter: 'drop-shadow(0 0 16px rgba(227,82,5,0.4)) drop-shadow(0 0 32px rgba(227,82,5,0.15))',
           }}
         />
       </div>
@@ -691,7 +691,7 @@ function AuthHero({ user }: {
           <div style={{
             width: '100%', textAlign: 'center',
             margin: 'clamp(1rem, 4vh, 2.25rem) 0 1.25rem',
-            filter: 'drop-shadow(0 0 32px rgba(255,107,53,0.45)) drop-shadow(0 0 64px rgba(255,107,53,0.18))',
+            filter: 'drop-shadow(0 0 32px rgba(227,82,5,0.45)) drop-shadow(0 0 64px rgba(227,82,5,0.18))',
           }}>
             <FlipWordmark maxWidth={616} fill={0.858} />
           </div>
@@ -702,7 +702,7 @@ function AuthHero({ user }: {
               alt="Multiverse Collective"
               style={{
                 width: '120px', height: 'auto', display: 'block',
-                filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',
+                filter: 'drop-shadow(0 0 16px rgba(227,82,5,0.4)) drop-shadow(0 0 32px rgba(227,82,5,0.15))',
               }}
             />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', letterSpacing: '0.34em', color: 'var(--color-star-dim)' }}>

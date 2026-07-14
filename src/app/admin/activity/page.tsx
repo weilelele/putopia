@@ -7,7 +7,7 @@ import type { ActivityEvent } from '@/lib/actions/activity-events'
 const TYPE_COLOR: Record<string, string> = {
   intel_published: 'rgba(245,245,245,0.55)',
   intel_updated:   'rgba(245,245,245,0.35)',
-  device_updated:  '#FF6B35',
+  device_updated:  '#E35205',
   world_added:     '#9B7FE8',
   vote_opened:     '#20D890',
   vote_cast:       '#20D890',

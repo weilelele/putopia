@@ -75,7 +75,7 @@ export function ArchiveReelView({ world }: { world: World }) {
 
       {/* Media viewer — day signals fill a square; the final form keeps its own
           aspect (letterboxed) so a landscape video reads cleanly. */}
-      <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', position: 'relative', overflow: 'hidden', border: '1px solid rgba(255,107,53,0.25)', background: '#070912', ...(s.kind === 'day' ? { aspectRatio: '1' } : {}) }}>
+      <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', position: 'relative', overflow: 'hidden', border: '1px solid rgba(227,82,5,0.25)', background: '#070912', ...(s.kind === 'day' ? { aspectRatio: '1' } : {}) }}>
         {s.kind === 'day' && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={s.src} alt={`Day ${s.dayIndex + 1} signal`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -105,7 +105,7 @@ export function ArchiveReelView({ world }: { world: World }) {
       {/* Dots */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 11 }}>
         {slides.map((_, k) => (
-          <span key={k} onClick={() => setI(k)} style={{ width: 7, height: 7, borderRadius: '50%', cursor: 'pointer', background: k === i ? '#FF6B35' : 'rgba(245,245,245,0.22)' }} />
+          <span key={k} onClick={() => setI(k)} style={{ width: 7, height: 7, borderRadius: '50%', cursor: 'pointer', background: k === i ? '#E35205' : 'rgba(245,245,245,0.22)' }} />
         ))}
       </div>
     </div>
@@ -114,8 +114,8 @@ export function ArchiveReelView({ world }: { world: World }) {
 
 function navBtn(disabled: boolean): React.CSSProperties {
   return {
-    width: 38, height: 38, flex: 'none', background: 'rgba(255,107,53,0.08)',
-    border: '1px solid rgba(255,107,53,0.4)', color: '#FF6B35', fontFamily: 'var(--font-mono)',
+    width: 38, height: 38, flex: 'none', background: 'rgba(227,82,5,0.08)',
+    border: '1px solid rgba(227,82,5,0.4)', color: '#E35205', fontFamily: 'var(--font-mono)',
     fontSize: 'var(--fs-label)', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.25 : 1,
   }
 }

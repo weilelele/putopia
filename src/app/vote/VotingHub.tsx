@@ -27,14 +27,14 @@ const isClassified = (v: Vote) => !v.scope.includes('applicant')
 function ClassifiedWall() {
   return (
     <div style={{
-      border: '1px solid rgba(255,107,53,0.25)',
-      background: 'rgba(232,93,4,0.03)',
+      border: '1px solid rgba(227,82,5,0.25)',
+      background: 'rgba(200,68,6,0.03)',
       padding: '3.5rem 2rem',
       textAlign: 'center',
       marginTop: '1rem',
     }}>
       <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
         letterSpacing: '0.25em', color: 'rgba(245,245,245,0.2)',
         marginBottom: '1rem',
       }}>{"// ACCESS RESTRICTED"}</div>
@@ -49,11 +49,11 @@ function ClassifiedWall() {
         style={{
           display: 'inline-block',
           fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.18em', color: '#FF6B35',
-          border: '1px solid rgba(255,107,53,0.45)',
+          letterSpacing: '0.18em', color: '#E35205',
+          border: '1px solid rgba(227,82,5,0.45)',
           padding: '0.5rem 1.75rem', textDecoration: 'none',
         }}
-        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,107,53,0.08)')}
+        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(227,82,5,0.08)')}
         onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
       >
         BECOME A VOYAGER →
@@ -147,7 +147,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
                 <div className="text-xs font-mono tracking-widest" style={{ color: '#20D890' }}>
                   ● ACTIVE VOTES
                 </div>
-                <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+                <div className="flex-1 h-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {activeVotes.map((v) => (
@@ -170,7 +170,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
                 <div className="text-xs font-mono tracking-widest" style={{ color: 'rgba(245,245,245,0.35)' }}>
                   ○ CLOSED VOTES
                 </div>
-                <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+                <div className="flex-1 h-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {closedVotes.map((v) => (

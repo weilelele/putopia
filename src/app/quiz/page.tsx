@@ -100,7 +100,7 @@ function IntroScreen({ onStart, questionCount }: { onStart: () => void; question
         style={{
           display: 'flex', alignItems: 'center', gap: 8,
           padding: '12px 28px',
-          background: 'linear-gradient(135deg, #FF6B35, #DC2F02)',
+          background: 'linear-gradient(135deg, #E35205, #A92F06)',
           border: 'none', cursor: 'pointer',
           color: '#F5F5F5', fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
           fontFamily: 'var(--font-mono)',
@@ -139,10 +139,10 @@ function QuestionScreen({
         <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.15em' }}>
           QUESTION {index + 1} / {total}
         </span>
-        <div style={{ flex: 1, height: 2, background: 'rgba(255,107,53,0.1)' }}>
+        <div style={{ flex: 1, height: 2, background: 'rgba(227,82,5,0.1)' }}>
           <div style={{
             height: '100%', width: `${((index + 1) / total) * 100}%`,
-            background: 'linear-gradient(to right, #FF6B35, #E85D04)',
+            background: 'linear-gradient(to right, #E35205, #C84406)',
             transition: 'width 0.4s ease',
           }} />
         </div>
@@ -151,7 +151,7 @@ function QuestionScreen({
       {/* Question */}
       <div style={{
         marginBottom: 28, padding: '20px 22px',
-        background: '#0F1430', border: '1px solid rgba(255,107,53,0.14)',
+        background: '#0F1430', border: '1px solid rgba(227,82,5,0.14)',
       }}>
         <p style={{ margin: 0, fontSize: 'var(--fs-title)', color: '#F5F5F5', lineHeight: 1.55, letterSpacing: '0.01em' }}>
           {question.prompt}
@@ -169,9 +169,9 @@ function QuestionScreen({
               style={{
                 display: 'flex', alignItems: 'center', gap: 14,
                 padding: '14px 18px', textAlign: 'left', cursor: 'pointer',
-                background: isSelected ? 'rgba(255,107,53,0.1)' : '#0F1430',
-                border: `1px solid ${isSelected ? 'rgba(255,107,53,0.55)' : 'rgba(255,107,53,0.12)'}`,
-                color: isSelected ? '#FF6B35' : 'rgba(245,245,245,0.6)',
+                background: isSelected ? 'rgba(227,82,5,0.1)' : '#0F1430',
+                border: `1px solid ${isSelected ? 'rgba(227,82,5,0.55)' : 'rgba(227,82,5,0.12)'}`,
+                color: isSelected ? '#E35205' : 'rgba(245,245,245,0.6)',
                 fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
                 letterSpacing: '0.03em', lineHeight: 1.5,
                 transition: 'all 0.15s',
@@ -181,11 +181,11 @@ function QuestionScreen({
               <span style={{
                 flexShrink: 0,
                 width: 26, height: 26,
-                border: `1px solid ${isSelected ? '#FF6B35' : 'rgba(255,107,53,0.25)'}`,
+                border: `1px solid ${isSelected ? '#E35205' : 'rgba(227,82,5,0.25)'}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 'var(--fs-caption)', letterSpacing: '0.05em',
-                color: isSelected ? '#FF6B35' : 'rgba(245,245,245,0.35)',
-                background: isSelected ? 'rgba(255,107,53,0.12)' : 'transparent',
+                color: isSelected ? '#E35205' : 'rgba(245,245,245,0.35)',
+                background: isSelected ? 'rgba(227,82,5,0.12)' : 'transparent',
                 transition: 'all 0.15s',
               }}>
                 {opt.key.toUpperCase()}
@@ -204,8 +204,8 @@ function QuestionScreen({
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '11px 24px',
-            background: selected && !submitting ? 'linear-gradient(135deg, #FF6B35, #DC2F02)' : 'rgba(255,107,53,0.06)',
-            border: `1px solid ${selected && !submitting ? 'transparent' : 'rgba(255,107,53,0.14)'}`,
+            background: selected && !submitting ? 'linear-gradient(135deg, #E35205, #A92F06)' : 'rgba(227,82,5,0.06)',
+            border: `1px solid ${selected && !submitting ? 'transparent' : 'rgba(227,82,5,0.14)'}`,
             color: selected && !submitting ? '#F5F5F5' : 'rgba(245,245,245,0.2)',
             fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
             fontFamily: 'var(--font-mono)', cursor: selected && !submitting ? 'pointer' : 'default',
@@ -299,9 +299,9 @@ function ResultScreen({
               onClick={onRetry}
               style={{
                 padding: '11px 24px',
-                background: 'rgba(255,107,53,0.08)',
-                border: '1px solid rgba(255,107,53,0.25)',
-                color: '#FF6B35', fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
+                background: 'rgba(227,82,5,0.08)',
+                border: '1px solid rgba(227,82,5,0.25)',
+                color: '#E35205', fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
                 fontFamily: 'var(--font-mono)', cursor: 'pointer',
               }}
             >
@@ -313,7 +313,7 @@ function ResultScreen({
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '11px 24px',
                 background: 'transparent',
-                border: '1px solid rgba(255,107,53,0.14)',
+                border: '1px solid rgba(227,82,5,0.14)',
                 color: 'rgba(245,245,245,0.4)', fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
                 fontFamily: 'var(--font-mono)', textDecoration: 'none',
               }}
@@ -414,7 +414,7 @@ export default function QuizPage() {
 
       {/* ── Top bar ── */}
       <div style={{
-        borderBottom: '1px solid rgba(255,107,53,0.12)',
+        borderBottom: '1px solid rgba(227,82,5,0.12)',
         background: '#0F1430',
         padding: '12px 28px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -423,7 +423,7 @@ export default function QuizPage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/assets/vi-wordmark.png" alt="Multiverse Collective"
             style={{ height: 20, width: 'auto', display: 'block' }} />
-          <div style={{ width: 1, height: 13, background: 'rgba(255,107,53,0.22)' }} />
+          <div style={{ width: 1, height: 13, background: 'rgba(227,82,5,0.22)' }} />
           <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.2em' }}>
             FIELD ASSESSMENT
           </span>

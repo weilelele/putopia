@@ -19,7 +19,7 @@ const wrap: React.CSSProperties = {
 const card: React.CSSProperties = {
   width: '100%',
   maxWidth: 440,
-  border: '1px solid rgba(255,107,53,0.3)',
+  border: '1px solid rgba(227,82,5,0.3)',
   borderRadius: 4,
   background: '#111634',
   padding: '28px 24px',
@@ -34,7 +34,7 @@ const row: React.CSSProperties = {
 const cta: React.CSSProperties = {
   display: 'inline-block',
   marginTop: 22,
-  background: '#FF6B35',
+  background: '#E35205',
   color: '#0A0E27',
   fontWeight: 700,
   letterSpacing: '0.06em',
@@ -53,7 +53,7 @@ export default async function JoinSuccessPage() {
     return (
       <main style={wrap}>
         <div style={card}>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: '#FF6B35' }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: '#E35205' }}>
             SIGNAL RECEIVED
           </div>
           <h1 style={{ fontSize: 22, margin: '14px 0 10px' }}>Welcome, Voyager.</h1>
@@ -73,7 +73,7 @@ export default async function JoinSuccessPage() {
   return (
     <main style={wrap}>
       <div style={card}>
-        <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: '#FF6B35' }}>
+        <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: '#E35205' }}>
           STATUS · ACTIVE
         </div>
         <h1 style={{ fontSize: 22, margin: '14px 0 6px' }}>
@@ -100,7 +100,7 @@ export default async function JoinSuccessPage() {
           {order && (
             <div style={row}>
               <span style={{ color: 'rgba(245,245,245,0.5)' }}>Pack</span>
-              <span style={{ textTransform: 'uppercase', color: '#FF6B35' }}>
+              <span style={{ textTransform: 'uppercase', color: '#E35205' }}>
                 {order.status}
               </span>
             </div>

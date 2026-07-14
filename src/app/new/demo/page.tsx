@@ -82,8 +82,8 @@ export default function OnboardingDemoPage() {
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10001,
         textAlign: 'center', padding: '0.4rem',
         fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em',
-        color: 'var(--color-nebula)', background: 'rgba(232,93,4,0.08)',
-        borderBottom: '1px solid rgba(232,93,4,0.25)',
+        color: 'var(--color-nebula)', background: 'rgba(200,68,6,0.08)',
+        borderBottom: '1px solid rgba(200,68,6,0.25)',
       }}>
         DEMO — NO DATA IS SAVED
       </div>
@@ -177,8 +177,8 @@ function ChoiceCards({ options, selected, onSelect }: {
             key={opt.id}
             onClick={() => onSelect(opt.id)}
             style={{
-              background:  isSelected ? 'rgba(232,93,4,0.07)' : 'transparent',
-              border:      `1px solid ${isSelected ? 'rgba(232,93,4,0.4)' : 'rgba(242,240,230,0.08)'}`,
+              background:  isSelected ? 'rgba(200,68,6,0.07)' : 'transparent',
+              border:      `1px solid ${isSelected ? 'rgba(200,68,6,0.4)' : 'rgba(242,240,230,0.08)'}`,
               borderLeft:  `3px solid ${isSelected ? 'var(--color-nebula)' : 'transparent'}`,
               color:       isSelected ? 'var(--color-star)' : 'var(--color-star-dim)',
               fontFamily:  'var(--font-body)', fontSize: 'var(--fs-body)', fontWeight: 500,
@@ -250,7 +250,7 @@ function UrgencySlider({ value, onChange }: { value: number; onChange: (v: numbe
         <div ref={trackRef} style={{ position: 'relative', height: 10, background: 'rgba(26,31,43,0.9)' }}>
           <div style={{
             position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`,
-            background: 'linear-gradient(90deg, #6B1200, #C8401A, #FF6B35, #FF8C20, #FFB830)',
+            background: 'linear-gradient(90deg, #6B1200, #C8401A, #E35205, #FF8C20, #FFB830)',
             boxShadow: `0 0 ${glowPx}px rgba(255,90,31,${glowAlph}), 0 0 ${glowPx * 2}px rgba(255,90,31,${glowAlph * 0.4})`,
             transition: 'width 0.08s ease, box-shadow 0.15s ease',
             pointerEvents: 'none',
@@ -260,7 +260,7 @@ function UrgencySlider({ value, onChange }: { value: number; onChange: (v: numbe
             transform: 'translate(-50%, -50%)',
             width: 22, height: 22, borderRadius: '50%',
             background: value > 0
-              ? 'radial-gradient(circle at 38% 38%, #FFE0A0, #FF8C20, #FF6B35)'
+              ? 'radial-gradient(circle at 38% 38%, #FFE0A0, #FF8C20, #E35205)'
               : 'rgba(36,41,56,0.95)',
             border: `1.5px solid ${value > 0 ? 'rgba(255,180,60,0.75)' : 'rgba(242,240,230,0.18)'}`,
             boxShadow: value > 0
@@ -465,7 +465,7 @@ function VideoSection({ src }: { src: string }) {
       {/* Edge glow */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
-        boxShadow: 'inset 0 0 35px rgba(232,93,4,0.07), inset 0 0 70px rgba(232,93,4,0.03)',
+        boxShadow: 'inset 0 0 35px rgba(200,68,6,0.07), inset 0 0 70px rgba(200,68,6,0.03)',
       }} />
     </div>
   )

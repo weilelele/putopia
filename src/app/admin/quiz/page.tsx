@@ -12,15 +12,15 @@ import type { QuizQuestionAdmin, QuizOption } from '@/lib/actions/quiz'
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 const S = {
-  card:   { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '12px' },
-  label:  { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:   { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 72 },
-  btn:    { padding: '6px 14px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
-  btnOk:  { background: '#FF6B35', color: '#070912' },
-  btnGhost: { background: 'transparent', border: '1px solid rgba(255,107,53,0.3)', color: 'rgba(245,245,245,0.55)' },
+  card:   { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '20px', marginBottom: '12px' },
+  label:  { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
+  input:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 72 },
+  btn:    { padding: '6px 14px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
+  btnOk:  { background: '#E35205', color: '#070912' },
+  btnGhost: { background: 'transparent', border: '1px solid rgba(227,82,5,0.3)', color: 'rgba(245,245,245,0.55)' },
   btnDanger: { background: 'transparent', border: '1px solid rgba(232,48,48,0.4)', color: '#E83030' },
-  sel:    { background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
+  sel:    { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
 }
 
 const QUIZ_ID   = 'applicant-baseline-v1'
@@ -86,14 +86,14 @@ function QuestionEditor({
                   name={`answer-${Math.random()}`}
                   checked={draft.answer_key === opt.key}
                   onChange={() => setAnswer(opt.key)}
-                  style={{ accentColor: '#FF6B35', width: 14, height: 14 }}
+                  style={{ accentColor: '#E35205', width: 14, height: 14 }}
                 />
-                <span style={{ fontFamily: 'monospace', fontSize: '12px', color: draft.answer_key === opt.key ? '#FF6B35' : 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', fontWeight: draft.answer_key === opt.key ? 700 : 400 }}>
+                <span style={{ fontFamily: 'monospace', fontSize: '12px', color: draft.answer_key === opt.key ? '#E35205' : 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', fontWeight: draft.answer_key === opt.key ? 700 : 400 }}>
                   {opt.key.toUpperCase()}
                 </span>
               </label>
               <input
-                style={{ ...S.input, flex: 1, border: draft.answer_key === opt.key ? '1px solid rgba(255,107,53,0.45)' : '1px solid rgba(255,107,53,0.16)' }}
+                style={{ ...S.input, flex: 1, border: draft.answer_key === opt.key ? '1px solid rgba(227,82,5,0.45)' : '1px solid rgba(227,82,5,0.16)' }}
                 value={opt.label}
                 onChange={e => setOption(opt.key, e.target.value)}
                 placeholder={`Option ${opt.key.toUpperCase()}`}
@@ -101,7 +101,7 @@ function QuestionEditor({
             </div>
           ))}
         </div>
-        <div style={{ marginTop: '6px', fontSize: '11px', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.08em' }}>
+        <div style={{ marginTop: '6px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.08em' }}>
           ● = correct answer
         </div>
       </div>
@@ -204,7 +204,7 @@ export default function QuizAdminPage() {
           <h1 style={{ color: '#F5F5F5', fontSize: '16px', letterSpacing: '0.2em', margin: 0 }}>
             FIELD ASSESSMENT — QUESTION EDITOR
           </h1>
-          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.12em', marginTop: '4px' }}>
+          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', marginTop: '4px' }}>
             quiz_id: {QUIZ_ID} · pass mark: 4 / {questions.length || '?'}
           </div>
         </div>
@@ -239,8 +239,8 @@ export default function QuizAdminPage() {
 
       {/* New question form */}
       {editingId === 'new' && (
-        <div style={{ ...S.card, border: '1px solid rgba(255,107,53,0.4)' }}>
-          <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.2em', marginBottom: '16px' }}>
+        <div style={{ ...S.card, border: '1px solid rgba(227,82,5,0.4)' }}>
+          <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', marginBottom: '16px' }}>
             NEW QUESTION
           </div>
           <QuestionEditor
@@ -260,7 +260,7 @@ export default function QuizAdminPage() {
           <div key={q.id} style={S.card}>
             {isEditing ? (
               <>
-                <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.2em', marginBottom: '16px' }}>
+                <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', marginBottom: '16px' }}>
                   EDITING Q{q.sort_order}
                 </div>
                 <QuestionEditor
@@ -278,8 +278,8 @@ export default function QuizAdminPage() {
                   <div style={{
                     flexShrink: 0, width: 28, height: 28,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(255,107,53,0.1)', border: '1px solid rgba(255,107,53,0.25)',
-                    color: '#FF6B35', fontSize: '12px', letterSpacing: '0.08em', fontFamily: 'monospace',
+                    background: 'rgba(227,82,5,0.1)', border: '1px solid rgba(227,82,5,0.25)',
+                    color: '#E35205', fontSize: '12px', letterSpacing: '0.08em', fontFamily: 'monospace',
                   }}>
                     {q.sort_order}
                   </div>
@@ -347,7 +347,7 @@ export default function QuizAdminPage() {
                           display: 'flex', alignItems: 'center', gap: '8px',
                           padding: '5px 10px',
                           background: isCorrect ? 'rgba(32,216,144,0.06)' : 'transparent',
-                          border: `1px solid ${isCorrect ? 'rgba(32,216,144,0.25)' : 'rgba(255,107,53,0.1)'}`,
+                          border: `1px solid ${isCorrect ? 'rgba(32,216,144,0.25)' : 'rgba(227,82,5,0.1)'}`,
                         }}
                       >
                         <span style={{

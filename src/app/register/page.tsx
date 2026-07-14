@@ -119,7 +119,7 @@ export default function RegisterPage() {
       <div style={{ width: '100%', maxWidth: '440px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>{"// INVITATION VERIFIED"}</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 900, color: 'var(--color-nebula)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(232,93,4,0.4)' }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 900, color: 'var(--color-nebula)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(200,68,6,0.4)' }}>
             ESTABLISH IDENTITY
           </div>
         </div>

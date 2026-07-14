@@ -68,7 +68,7 @@ export default function LogsPage() {
               {/* Author bar */}
               <div
                 className="flex items-center gap-3 px-4 py-3 border-b"
-                style={{ background: '#0F1430', borderColor: 'rgba(255,107,53,0.16)' }}
+                style={{ background: '#0F1430', borderColor: 'rgba(227,82,5,0.16)' }}
               >
                 {story.author_avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -76,15 +76,15 @@ export default function LogsPage() {
                     src={story.author_avatar_url}
                     alt={story.author_name}
                     className="w-9 h-9 rounded-full shrink-0"
-                    style={{ objectFit: 'cover', border: '1px solid rgba(232,93,4,0.3)' }}
+                    style={{ objectFit: 'cover', border: '1px solid rgba(200,68,6,0.3)' }}
                   />
                 ) : (
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
                     style={{
-                      background: 'rgba(232,93,4,0.12)',
-                      color: '#E85D04',
-                      border: '1px solid rgba(232,93,4,0.3)',
+                      background: 'rgba(200,68,6,0.12)',
+                      color: '#C84406',
+                      border: '1px solid rgba(200,68,6,0.3)',
                     }}
                   >
                     {initials}
@@ -107,7 +107,7 @@ export default function LogsPage() {
                 {story.youtube_id && (
                   <div
                     className="md:shrink-0 border-b md:border-b-0 md:border-l"
-                    style={{ borderColor: 'rgba(255,107,53,0.16)', width: undefined }}
+                    style={{ borderColor: 'rgba(227,82,5,0.16)', width: undefined }}
                   >
                     <div className="md:w-52" style={{ position: 'relative' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -122,8 +122,8 @@ export default function LogsPage() {
                       <div style={{
                         position: 'absolute', bottom: '8px', right: '8px',
                         background: 'rgba(11,15,23,0.82)',
-                        border: '1px solid rgba(232,93,4,0.5)',
-                        color: '#E85D04',
+                        border: '1px solid rgba(200,68,6,0.5)',
+                        color: '#C84406',
                         fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
                         padding: '3px 7px',
                         display: 'flex', alignItems: 'center', gap: '4px',
@@ -143,7 +143,7 @@ export default function LogsPage() {
                     {story.excerpt}
                   </p>
 
-                  <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#E85D04' }}>
+                  <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: 'rgba(227,82,5,0.16)', color: '#C84406' }}>
                     READ FULL STORY
                     <ArrowRight size={12} />
                   </div>

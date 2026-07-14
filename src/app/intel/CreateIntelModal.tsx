@@ -15,9 +15,9 @@ type Props = {
 
 const S = {
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', boxSizing: 'border-box' } as const,
-  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as const,
-  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none' } as const,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', boxSizing: 'border-box' } as const,
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as const,
+  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none' } as const,
 }
 
 type F = {
@@ -119,11 +119,11 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
     >
       <div
         className="relative w-full mx-4 overflow-y-auto"
-        style={{ background: '#151B3A', border: '1px solid #E85D04', maxHeight: '90vh', maxWidth: '640px', padding: '24px' }}
+        style={{ background: '#151B3A', border: '1px solid #C84406', maxHeight: '90vh', maxWidth: '640px', padding: '24px' }}
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <div style={{ color: '#E85D04', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em' }}>
+          <div style={{ color: '#C84406', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em' }}>
             NEW INTEL (AUTO ID: {autoId})
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer' }}>
@@ -186,12 +186,12 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
               {previews.map((url, idx) => (
                 <div key={idx} style={{ position: 'relative' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #E85D04', opacity: 0.8 }} />
+                  <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #C84406', opacity: 0.8 }} />
                   <button
                     onClick={() => removePending(idx)}
                     style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >×</button>
-                  <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(232,93,4,0.85)', color: '#fff', fontSize: 'var(--fs-caption)', padding: '1px 3px', fontFamily: 'monospace' }}>PENDING</div>
+                  <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(200,68,6,0.85)', color: '#fff', fontSize: 'var(--fs-caption)', padding: '1px 3px', fontFamily: 'monospace' }}>PENDING</div>
                 </div>
               ))}
             </div>
@@ -201,7 +201,7 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            style={{ padding: '6px 14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.55)', background: '#0F1430' }}
+            style={{ padding: '6px 14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.55)', background: '#0F1430' }}
           >
             + SELECT IMAGES
           </button>
@@ -211,14 +211,14 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', paddingTop: '16px', borderTop: '1px solid rgba(255,107,53,0.16)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', paddingTop: '16px', borderTop: '1px solid rgba(227,82,5,0.16)' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#E83030', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
             <input type="checkbox" checked={form.classified} onChange={e => set('classified', e.target.checked)} />
             CLASSIFIED (Voyager+ only)
           </label>
           <div style={{ flex: 1 }} />
           {error && (
-            <div style={{ color: '#E85D04', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)' }}>✗ {error}</div>
+            <div style={{ color: '#C84406', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)' }}>✗ {error}</div>
           )}
           <button
             type="button"

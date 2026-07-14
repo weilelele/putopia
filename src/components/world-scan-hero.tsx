@@ -80,7 +80,7 @@ export function WorldScanHero({
             {onRetry && (
               <button
                 onClick={onRetry}
-                style={{ marginTop: 12, padding: '0.5rem 1rem', background: 'rgba(232,93,4,0.12)', border: '1px solid var(--color-nucleus)', color: 'var(--color-nucleus)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                style={{ marginTop: 12, padding: '0.5rem 1rem', background: 'rgba(200,68,6,0.12)', border: '1px solid var(--color-nucleus)', color: 'var(--color-nucleus)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
                 ✎ DESCRIBE MORE · RE-SCAN
               </button>

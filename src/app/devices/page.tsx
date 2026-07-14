@@ -12,8 +12,8 @@ import { McConsolePanel } from '@/components/mc-console-panel'
 const STATUS_STYLES = {
   available:    { color: '#20D890', bg: 'rgba(32,216,144,0.08)', border: 'rgba(32,216,144,0.3)' },
   needs_repair: { color: '#E83030', bg: 'rgba(232,48,48,0.08)', border: 'rgba(232,48,48,0.3)' },
-  in_use:       { color: '#E85D04', bg: 'rgba(232,93,4,0.08)', border: 'rgba(232,93,4,0.3)' },
-  unknown:      { color: 'rgba(245,245,245,0.35)', bg: 'transparent', border: 'rgba(255,107,53,0.16)' },
+  in_use:       { color: '#C84406', bg: 'rgba(200,68,6,0.08)', border: 'rgba(200,68,6,0.3)' },
+  unknown:      { color: 'rgba(245,245,245,0.35)', bg: 'transparent', border: 'rgba(227,82,5,0.16)' },
 }
 
 const STATUS_LABELS = {
@@ -41,22 +41,22 @@ function DevicePlaceholder({ id }: { id: string }) {
     >
       <rect width="160" height="120" fill="#0F1430" />
       {[20, 40, 60, 80, 100, 120, 140].map((x) => (
-        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
+        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="rgba(227,82,5,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       {[20, 40, 60, 80, 100].map((y) => (
-        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
+        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="rgba(227,82,5,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       <circle cx={cx} cy={cy} r={r1} fill="none" stroke={`hsl(${hue1},60%,45%)`} strokeWidth="1" opacity="0.6" />
       <circle cx={cx} cy={cy} r={r2} fill="none" stroke={`hsl(${hue1},60%,55%)`} strokeWidth="0.8" opacity="0.5" />
       <circle cx={cx} cy={cy} r="4" fill={`hsl(${hue1},70%,50%)`} opacity="0.8" />
       <line x1={lineX} y1="10" x2={lineX + 20} y2="110" stroke={`hsl(${hue2},50%,40%)`} strokeWidth="1" opacity="0.4" />
       <line x1={lineX + 10} y1="10" x2={lineX + 30} y2="110" stroke={`hsl(${hue2},50%,40%)`} strokeWidth="0.5" opacity="0.3" />
-      <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#E85D04" strokeWidth="0.8" opacity="0.5" />
-      <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#E85D04" strokeWidth="0.8" opacity="0.5" />
-      <path d="M5,5 L5,15 M5,5 L15,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
-      <path d="M155,5 L155,15 M155,5 L145,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
-      <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
-      <path d="M155,115 L155,105 M155,115 L145,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
+      <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#C84406" strokeWidth="0.8" opacity="0.5" />
+      <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#C84406" strokeWidth="0.8" opacity="0.5" />
+      <path d="M5,5 L5,15 M5,5 L15,5" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,5 L155,15 M155,5 L145,5" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,115 L155,105 M155,115 L145,115" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
     </svg>
   )
 }
@@ -85,7 +85,7 @@ function CairoClaimVisual() {
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       // Grid lines
-      ctx.strokeStyle = 'rgba(232,93,4,0.12)'
+      ctx.strokeStyle = 'rgba(200,68,6,0.12)'
       ctx.lineWidth = 0.5
       for (let x = 0; x < canvas.width; x += 20) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke()
@@ -102,7 +102,7 @@ function CairoClaimVisual() {
         const alpha = Math.max(0, 0.45 - phase * 0.22)
         ctx.beginPath()
         ctx.arc(160, 90, r, 0, Math.PI * 2)
-        ctx.strokeStyle = `rgba(232,93,4,${alpha})`
+        ctx.strokeStyle = `rgba(200,68,6,${alpha})`
         ctx.lineWidth = 1
         ctx.stroke()
       }
@@ -111,11 +111,11 @@ function CairoClaimVisual() {
       const pulse = 0.7 + 0.3 * Math.sin(t * 3)
       ctx.beginPath()
       ctx.arc(160, 90, 4 * pulse, 0, Math.PI * 2)
-      ctx.fillStyle = '#E85D04'
+      ctx.fillStyle = '#C84406'
       ctx.fill()
 
       // Cross hair
-      ctx.strokeStyle = 'rgba(232,93,4,0.55)'
+      ctx.strokeStyle = 'rgba(200,68,6,0.55)'
       ctx.lineWidth = 0.8
       ctx.beginPath(); ctx.moveTo(140, 90); ctx.lineTo(180, 90); ctx.stroke()
       ctx.beginPath(); ctx.moveTo(160, 70); ctx.lineTo(160, 110); ctx.stroke()
@@ -123,15 +123,15 @@ function CairoClaimVisual() {
       // Scanning line
       const scanY = ((frame * 1.2) % (canvas.height + 20)) - 10
       const grad = ctx.createLinearGradient(0, scanY - 8, 0, scanY + 8)
-      grad.addColorStop(0,   'rgba(232,93,4,0)')
-      grad.addColorStop(0.5, 'rgba(232,93,4,0.18)')
-      grad.addColorStop(1,   'rgba(232,93,4,0)')
+      grad.addColorStop(0,   'rgba(200,68,6,0)')
+      grad.addColorStop(0.5, 'rgba(200,68,6,0.18)')
+      grad.addColorStop(1,   'rgba(200,68,6,0)')
       ctx.fillStyle = grad
       ctx.fillRect(0, scanY - 8, canvas.width, 16)
 
       // Corner brackets
       const bLen = 12, bOff = 6
-      ctx.strokeStyle = 'rgba(232,93,4,0.45)'
+      ctx.strokeStyle = 'rgba(200,68,6,0.45)'
       ctx.lineWidth = 1.5
       ;[[bOff, bOff], [canvas.width - bOff, bOff], [bOff, canvas.height - bOff], [canvas.width - bOff, canvas.height - bOff]].forEach(([cx, cy], i) => {
         const sx = i % 2 === 0 ? 1 : -1
@@ -222,8 +222,8 @@ export default function DevicesPage() {
       {/* FIRST BATCH CLAIM — Cairo Discovery — architect-only until Stripe is live */}
       {isAtLeast('architect') && <section className="mb-10">
         <div className="flex items-center gap-3 mb-4">
-          <span className="label-tag" style={{ color: '#FF6B35', borderColor: '#FF6B35' }}>FIRST BATCH</span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+          <span className="label-tag" style={{ color: '#E35205', borderColor: '#E35205' }}>FIRST BATCH</span>
+          <div className="flex-1 h-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
           <span className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>Cairo Discovery · Batch 01</span>
         </div>
 
@@ -233,20 +233,20 @@ export default function DevicesPage() {
             className="border overflow-hidden block col-span-2 md:col-span-1 transition-all"
             style={{
               background: '#0F1430',
-              borderColor: '#FF6B35',
+              borderColor: '#E35205',
               textDecoration: 'none',
-              boxShadow: '0 0 18px rgba(255,107,53,0.28)',
+              boxShadow: '0 0 18px rgba(227,82,5,0.28)',
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 28px rgba(255,107,53,0.5)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(255,107,53,0.28)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 28px rgba(227,82,5,0.5)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(227,82,5,0.28)' }}
           >
             {/* Visual */}
-            <div className="border-b w-full overflow-hidden relative" style={{ borderColor: 'rgba(255,107,53,0.35)', aspectRatio: '16/9' }}>
+            <div className="border-b w-full overflow-hidden relative" style={{ borderColor: 'rgba(227,82,5,0.35)', aspectRatio: '16/9' }}>
               <CairoClaimVisual />
               <div className="absolute top-2 right-2">
                 <span
                   className="text-xs font-mono px-1.5 py-0.5 border"
-                  style={{ color: '#070912', borderColor: '#FF6B35', background: '#FF6B35', fontWeight: 700 }}
+                  style={{ color: '#070912', borderColor: '#E35205', background: '#E35205', fontWeight: 700 }}
                 >
                   CLAIM
                 </span>
@@ -256,18 +256,18 @@ export default function DevicesPage() {
             <div className="p-3">
               <div className="flex items-start justify-between mb-1.5">
                 <div>
-                  <div className="text-xs font-mono" style={{ color: '#FF6B35' }}>CAIRO-BATCH-01</div>
+                  <div className="text-xs font-mono" style={{ color: '#E35205' }}>CAIRO-BATCH-01</div>
                   <div className="text-sm font-mono font-bold" style={{ color: '#F5F5F5' }}>FIRST PARTS PACK</div>
                 </div>
                 <span
                   className="text-xs font-mono px-1.5 py-0.5 border shrink-0 ml-1"
-                  style={{ color: '#FF6B35', borderColor: '#FF6B35', background: 'rgba(255,107,53,0.08)' }}
+                  style={{ color: '#E35205', borderColor: '#E35205', background: 'rgba(227,82,5,0.08)' }}
                 >
                   $12
                 </span>
               </div>
 
-              <div className="text-xs font-mono font-bold mb-2 tracking-wider" style={{ color: '#FF6B35' }}>
+              <div className="text-xs font-mono font-bold mb-2 tracking-wider" style={{ color: '#E35205' }}>
                 AWAITING CLAIM
               </div>
 
@@ -277,7 +277,7 @@ export default function DevicesPage() {
               </div>
 
               <div className="mb-3">
-                <div className="flex justify-between text-xs font-mono mb-1" style={{ color: '#FF6B35' }}>
+                <div className="flex justify-between text-xs font-mono mb-1" style={{ color: '#E35205' }}>
                   <span>RESTORATION</span>
                   <span>IN PROGRESS</span>
                 </div>
@@ -288,7 +288,7 @@ export default function DevicesPage() {
 
               <div
                 className="w-full py-2 text-xs font-mono tracking-widest border text-center font-bold"
-                style={{ borderColor: '#FF6B35', color: '#070912', background: '#FF6B35' }}
+                style={{ borderColor: '#E35205', color: '#070912', background: '#E35205' }}
               >
                 [ SECURE PARTS PACK ]
               </div>
@@ -301,7 +301,7 @@ export default function DevicesPage() {
       <section className="mb-10">
         <div className="flex items-center gap-3 mb-4">
           <span className="label-tag" style={{ color: 'rgba(245,245,245,0.35)', borderColor: 'rgba(245,245,245,0.35)' }}>UNKNOWN</span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+          <div className="flex-1 h-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
           <span className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>Uncontacted Signals</span>
         </div>
 
@@ -313,38 +313,38 @@ export default function DevicesPage() {
               className="border overflow-hidden block transition-colors"
               style={{
                 background: '#0F1430',
-                borderColor: 'rgba(255,107,53,0.16)',
+                borderColor: 'rgba(227,82,5,0.16)',
                 opacity: 0.7,
                 textDecoration: 'none',
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,245,245,0.35)'; (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)'; (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(227,82,5,0.16)'; (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
             >
-              <div className="border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
+              <div className="border-b" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
                 <DeviceImage device={device} isUnknown={true} />
               </div>
 
               <div className="p-3">
                 <div className="flex items-start justify-between mb-1.5">
                   <div>
-                    <div className="text-xs font-mono" style={{ color: 'rgba(255,107,53,0.28)' }}>{device.id}</div>
+                    <div className="text-xs font-mono" style={{ color: 'rgba(227,82,5,0.28)' }}>{device.id}</div>
                     <div className="text-xs font-mono font-semibold" style={{ color: 'rgba(245,245,245,0.35)' }}>{device.name}</div>
                   </div>
                   <div
                     className="text-xs font-mono px-1.5 py-0.5 border"
-                    style={{ color: 'rgba(245,245,245,0.35)', borderColor: 'rgba(255,107,53,0.16)', background: 'transparent' }}
+                    style={{ color: 'rgba(245,245,245,0.35)', borderColor: 'rgba(227,82,5,0.16)', background: 'transparent' }}
                   >
                     ?
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-xs font-mono" style={{ color: 'rgba(255,107,53,0.28)' }}>
+                <div className="flex items-center gap-1 text-xs font-mono" style={{ color: 'rgba(227,82,5,0.28)' }}>
                   <span>◎</span>
                   <span>{device.location}</span>
                 </div>
 
                 <div className="mt-2.5">
-                  <div className="flex justify-between text-xs font-mono mb-1" style={{ color: 'rgba(255,107,53,0.28)' }}>
+                  <div className="flex justify-between text-xs font-mono mb-1" style={{ color: 'rgba(227,82,5,0.28)' }}>
                     <span>PROGRESS</span>
                     <span>{device.exploration_progress}%</span>
                   </div>
@@ -362,7 +362,7 @@ export default function DevicesPage() {
       <section>
         <div className="flex items-center gap-3 mb-4">
           <span className="label-tag" style={{ color: '#20D890' }}>KNOWN</span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+          <div className="flex-1 h-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
           <span className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>Confirmed Consoles</span>
         </div>
 
@@ -376,15 +376,15 @@ export default function DevicesPage() {
                 className="border overflow-hidden relative transition-colors"
                 style={{
                   background: '#151B3A',
-                  borderColor: 'rgba(255,107,53,0.16)',
+                  borderColor: 'rgba(227,82,5,0.16)',
                   boxShadow: 'inset 0 1px 0 rgba(32,216,144,0.06)',
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(32,216,144,0.45)' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(227,82,5,0.16)' }}
               >
                 {/* stretched link — whole card navigates, except the button which sits above */}
                 <Link href={`/devices/${device.id}`} aria-label={device.name} className="absolute inset-0" style={{ zIndex: 1 }} />
-                <div className="border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
+                <div className="border-b" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
                   <DeviceImage device={device} isUnknown={false} />
                 </div>
 
@@ -414,7 +414,7 @@ export default function DevicesPage() {
                   {device.status === 'in_use' && device.current_user_name && (
                     <div
                       className="mb-2 px-2 py-1 border text-xs font-mono"
-                      style={{ background: 'rgba(232,93,4,0.04)', borderColor: 'rgba(232,93,4,0.2)', color: 'rgba(245,245,245,0.55)' }}
+                      style={{ background: 'rgba(200,68,6,0.04)', borderColor: 'rgba(200,68,6,0.2)', color: 'rgba(245,245,245,0.55)' }}
                     >
                       <span style={{ color: 'rgba(245,245,245,0.35)' }}>IN USE: </span>
                       <span>{device.current_user_name}</span>

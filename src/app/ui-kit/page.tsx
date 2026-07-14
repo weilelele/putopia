@@ -80,7 +80,7 @@ export default function UiKitPreview() {
 
 const CSS = `
 .uk-root{
-  --bg:#0A0E27; --retro:#FF6B35; --burnt:#E85D04; --deepor:#DC2F02;
+  --bg:#0A0E27; --retro:#E35205; --burnt:#C84406; --deepor:#A92F06;
   --white:#F5F5F5; --muted:rgba(245,245,245,.55); --faint:rgba(245,245,245,.30);
   --notch:16px; --bw:1.5px;
   min-height:100vh; background:var(--bg); padding:48px 40px 80px;
@@ -90,7 +90,7 @@ const CSS = `
 .uk-grid{ display:grid; grid-template-columns:1fr 1fr 1.15fr; gap:0; max-width:1200px; }
 .uk-grid > section{ padding:0 40px; }
 .uk-grid > section:first-child{ padding-left:0; }
-.uk-col-divider{ border-left:1px solid rgba(232,93,4,.22); }
+.uk-col-divider{ border-left:1px solid rgba(200,68,6,.22); }
 .uk-coltitle{ color:var(--white); font-size:15px; font-weight:700; letter-spacing:.22em; margin:0 0 26px; }
 
 /* ── BUTTONS — notched outline via two clipped layers ── */
@@ -113,7 +113,7 @@ const CSS = `
   clip-path:polygon(calc(var(--notch) - var(--bw)) 0, 100% 0, 100% calc(100% - var(--notch) + var(--bw)), calc(100% - var(--notch) + var(--bw)) 100%, 0 100%, 0 calc(var(--notch) - var(--bw)));
 }
 .uk-btn:hover{ transform:translateY(-1px); }
-.uk-btn:hover::before{ background:var(--retro); box-shadow:0 0 22px rgba(255,107,53,.35); }
+.uk-btn:hover::before{ background:var(--retro); box-shadow:0 0 22px rgba(227,82,5,.35); }
 
 /* filled (hover-state demo / active) */
 .uk-btn.is-filled{ color:#1a0f06; }
@@ -122,7 +122,7 @@ const CSS = `
 
 /* ghost / secondary — fainter border */
 .uk-btn.is-ghost{ color:var(--burnt); }
-.uk-btn.is-ghost::before{ background:rgba(232,93,4,.45); }
+.uk-btn.is-ghost::before{ background:rgba(200,68,6,.45); }
 .uk-btn.is-ghost:hover{ color:var(--retro); }
 .uk-btn.is-ghost:hover::before{ background:var(--retro); }
 
@@ -148,7 +148,7 @@ const CSS = `
   transition:color .15s;
 }
 .uk-navlink > span{ white-space:nowrap; }
-.uk-navlink .trace{ flex:1; color:rgba(232,93,4,.6); transition:color .15s; }
+.uk-navlink .trace{ flex:1; color:rgba(200,68,6,.6); transition:color .15s; }
 .uk-navlink:hover{ color:var(--retro); }
 .uk-navlink:hover .trace{ color:var(--retro); }
 
@@ -175,5 +175,5 @@ const CSS = `
   color:var(--white); font-family:inherit; font-size:15px; padding:14px 16px; resize:none; display:block;
 }
 .uk-inputbox textarea::placeholder, .uk-inputbox input::placeholder{ color:var(--faint); }
-.uk-inputbox:focus-within::before{ background:var(--retro); box-shadow:0 0 18px rgba(255,107,53,.25); }
+.uk-inputbox:focus-within::before{ background:var(--retro); box-shadow:0 0 18px rgba(227,82,5,.25); }
 `

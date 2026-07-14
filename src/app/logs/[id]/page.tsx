@@ -127,13 +127,13 @@ export default function StoryPage() {
       </div>
 
       {/* Story header */}
-      <div className="mb-8 border-b pb-6" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
+      <div className="mb-8 border-b pb-6" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
         <div className="flex flex-wrap gap-2 mb-4">
           {story.tags.map((tag) => (
             <span
               key={tag}
               className="text-xs font-mono px-2 py-0.5 border tracking-widest uppercase"
-              style={{ color: '#E85D04', borderColor: 'rgba(255,107,53,0.16)', background: 'rgba(232,93,4,0.06)' }}
+              style={{ color: '#C84406', borderColor: 'rgba(227,82,5,0.16)', background: 'rgba(200,68,6,0.06)' }}
             >
               {tag}
             </span>
@@ -151,12 +151,12 @@ export default function StoryPage() {
               src={story.author_avatar_url}
               alt={story.author_name}
               className="w-8 h-8 rounded-full shrink-0"
-              style={{ objectFit: 'cover', border: '1px solid rgba(232,93,4,0.3)' }}
+              style={{ objectFit: 'cover', border: '1px solid rgba(200,68,6,0.3)' }}
             />
           ) : (
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
-              style={{ background: 'rgba(232,93,4,0.12)', color: '#E85D04', border: '1px solid rgba(232,93,4,0.3)' }}
+              style={{ background: 'rgba(200,68,6,0.12)', color: '#C84406', border: '1px solid rgba(200,68,6,0.3)' }}
             >
               {getInitials(story.author_name)}
             </div>
@@ -186,9 +186,9 @@ export default function StoryPage() {
 
       {/* Divider */}
       <div className="flex items-center gap-4 mb-8">
-        <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+        <div className="flex-1 h-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
         <div className="text-xs tracking-widest font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>TRANSMISSIONS</div>
-        <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+        <div className="flex-1 h-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
       </div>
 
       {/* Comments — newest first */}
@@ -199,8 +199,8 @@ export default function StoryPage() {
             className="border p-4"
             style={{
               background: '#151B3A',
-              borderColor: 'rgba(255,107,53,0.16)',
-              boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
+              borderColor: 'rgba(227,82,5,0.16)',
+              boxShadow: 'inset 0 1px 0 rgba(200,68,6,0.04)',
             }}
           >
             <div className="flex items-center gap-2 mb-2">
@@ -226,7 +226,7 @@ export default function StoryPage() {
       <form onSubmit={handleTransmit}>
         <div
           className="border p-4"
-          style={{ background: '#151B3A', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.05)' }}
+          style={{ background: '#151B3A', borderColor: 'rgba(227,82,5,0.16)', boxShadow: 'inset 0 1px 0 rgba(200,68,6,0.05)' }}
         >
           <div className="text-xs font-mono tracking-widest mb-3" style={{ color: 'rgba(245,245,245,0.35)' }}>
             TRANSMIT A MESSAGE
@@ -237,9 +237,9 @@ export default function StoryPage() {
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Leave a transmission for this Voyager..."
             className="w-full px-3 py-2 text-sm font-mono border bg-transparent outline-none transition-colors resize-none"
-            style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#F5F5F5' }}
-            onFocus={(e) => (e.target.style.borderColor = 'rgba(232,93,4,0.5)')}
-            onBlur={(e) => (e.target.style.borderColor = 'rgba(255,107,53,0.16)')}
+            style={{ borderColor: 'rgba(227,82,5,0.16)', color: '#F5F5F5' }}
+            onFocus={(e) => (e.target.style.borderColor = 'rgba(200,68,6,0.5)')}
+            onBlur={(e) => (e.target.style.borderColor = 'rgba(227,82,5,0.16)')}
           />
           <div className="flex items-center justify-between mt-3">
             {transmitted && (
@@ -252,7 +252,7 @@ export default function StoryPage() {
               type="submit"
               disabled={!commentText.trim()}
               className="flex items-center gap-2 px-4 py-1.5 text-xs font-mono tracking-widest border transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ borderColor: '#E85D04', color: '#F5F5F5', background: 'linear-gradient(135deg, #E85D04, #C04000)' }}
+              style={{ borderColor: '#C84406', color: '#F5F5F5', background: 'linear-gradient(135deg, #C84406, #C04000)' }}
             >
               <Send size={10} />
               TRANSMIT
