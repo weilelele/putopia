@@ -17,6 +17,7 @@ import { MongoClient, ObjectId, type Db, type WithId, type Document } from 'mong
 const COLL_CHANNEL = 'channel'
 const COLL_IMAGE = 'ai-image'
 const COLL_VIDEO = 'ai-video'
+const COLL_CUBICLE = 'cubicle'
 
 export type CosmoMedia = 'image' | 'video'
 
@@ -222,4 +223,106 @@ function shuffle<T>(arr: T[]): T[] {
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
+}
+
+// ── Cubicle (Signal Tuning v2) ───────────────────────────────────────────────
+// A world's cubicle is the agent workspace Cosmo builds. MCo reads two things
+// from it: whether the world has been bootstrapped (ready to request expansions)
+// and the expansion candidates (clips) to turn into a puzzle day. Read-only.
+
+export type CosmoBootstrapStatus = 'pending' | 'bootstrapped' | 'rejected'
+
+export interface CosmoBootstrap {
+  status: CosmoBootstrapStatus
+  rejectReason?: string | null
+}
+
+/** One expansion candidate from a world's cubicle: a clip (+ still poster) the
+ *  crowd can be shown. `sessionId` groups a batch (one expansion run = up to 4).
+ *  Build a puzzle tile from a `videos` entry and set its `source_asset_id` to that
+ *  video's `assetId` — that is how Cosmo resolves a crowd pick back to this
+ *  expansion on settle. (`expansionId` is Cosmo's internal id, exposed for
+ *  audit/logging; picks travel by video `assetId`, not this.) */
+export interface CosmoExpansion {
+  expansionId: string
+  sessionId: string
+  direction: string
+  pickedOn: string | null
+  createdAt: string | null
+  videos: CosmoAsset[]
+}
+
+/** Resolve a world → its Cosmo channel → its cubicle, via `channel.mco.worldId`.
+ *  Null if the world isn't linked in Cosmo yet (not onboarded / no cubicle). */
+async function getCubicleByWorldId(worldId: string): Promise<WithId<Document> | null> {
+  const d = await db()
+  const channel = await d.collection(COLL_CHANNEL).findOne({ 'mco.worldId': worldId })
+  if (!channel) return null
+  return d.collection(COLL_CUBICLE).findOne({ channelId: channel._id })
+}
+
+/** A world's bootstrap outcome, or null if not linked in Cosmo yet.
+ *  'bootstrapped' = ready to request expansions; 'rejected' = Cosmo declined the
+ *  seed (see rejectReason); 'pending' = still working. */
+export async function getWorldBootstrap(worldId: string): Promise<CosmoBootstrap | null> {
+  const cubicle = await getCubicleByWorldId(worldId)
+  if (!cubicle) return null
+  const b = cubicle.bootstrap as { status?: CosmoBootstrapStatus; rejectReason?: string } | undefined
+  return { status: b?.status ?? 'pending', rejectReason: b?.rejectReason ?? null }
+}
+
+/** A world's expansion candidates (clips + posters), newest first, grouped-able
+ *  by `sessionId`. Empty if the world isn't linked or has no batch yet. Only
+ *  clips that are completed + not deleted are returned; an expansion whose clip
+ *  didn't resolve comes back with `videos: []` (skip it when building tiles). */
+export async function getWorldExpansions(worldId: string): Promise<CosmoExpansion[]> {
+  const cubicle = await getCubicleByWorldId(worldId)
+  const rows = Array.isArray(cubicle?.expansions) ? (cubicle.expansions as Document[]) : []
+  if (rows.length === 0) return []
+
+  // Resolve every clip across all expansions in one pass (+ start-frame posters).
+  const d = await db()
+  const videoOids = toObjectIds(rows.flatMap((e) => (Array.isArray(e.videoIds) ? e.videoIds : [])))
+  const byId = new Map<string, CosmoAsset>()
+  if (videoOids.length) {
+    const docs = await d
+      .collection(COLL_VIDEO)
+      .find({ _id: { $in: videoOids }, status: 'completed', deletedAt: null, url: { $ne: null } })
+      .toArray()
+    const frameOids = toObjectIds(docs.map((doc) => doc.startFrameId).filter(Boolean))
+    const frameUrl = new Map<string, string>()
+    if (frameOids.length) {
+      const frames = await d
+        .collection(COLL_IMAGE)
+        .find({ _id: { $in: frameOids }, url: { $ne: null } })
+        .project({ url: 1 })
+        .toArray()
+      for (const f of frames) frameUrl.set(String(f._id), f.url as string)
+    }
+    for (const doc of docs) {
+      const fid = doc.startFrameId ? String(doc.startFrameId) : null
+      byId.set(String(doc._id), {
+        assetId: String(doc._id),
+        media: 'video',
+        url: doc.url as string,
+        posterUrl: fid && frameUrl.has(fid) ? frameUrl.get(fid)! : null,
+        duration: typeof doc.duration === 'number' ? doc.duration : null,
+        prompt: doc.prompt ?? null,
+        tags: Array.isArray(doc.tags) ? doc.tags : [],
+      })
+    }
+  }
+
+  return rows
+    .map((e) => ({
+      expansionId: String(e._id),
+      sessionId: String(e.sessionId),
+      direction: typeof e.direction === 'string' ? e.direction : '',
+      pickedOn: e.pickedOn ? new Date(e.pickedOn).toISOString() : null,
+      createdAt: e.createdAt ? new Date(e.createdAt).toISOString() : null,
+      videos: toObjectIds(e.videoIds)
+        .map((oid) => byId.get(String(oid)))
+        .filter((v): v is CosmoAsset => !!v),
+    }))
+    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
 }
