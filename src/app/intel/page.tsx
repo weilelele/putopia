@@ -35,13 +35,13 @@ function ClassifiedWall() {
   return (
     <div style={{
       maxWidth: '720px',
-      border: '1px solid rgba(255,107,53,0.25)',
-      background: 'rgba(232,93,4,0.03)',
+      border: '1px solid rgba(227,82,5,0.25)',
+      background: 'rgba(200,68,6,0.03)',
       padding: '3.5rem 2rem',
       textAlign: 'center',
     }}>
       <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
         letterSpacing: '0.25em', color: 'rgba(245,245,245,0.2)',
         marginBottom: '1rem',
       }}>{"// ACCESS RESTRICTED"}</div>
@@ -56,11 +56,11 @@ function ClassifiedWall() {
         style={{
           display: 'inline-block',
           fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.18em', color: '#FF6B35',
-          border: '1px solid rgba(255,107,53,0.45)',
+          letterSpacing: '0.18em', color: '#E35205',
+          border: '1px solid rgba(227,82,5,0.45)',
           padding: '0.5rem 1.75rem', textDecoration: 'none',
         }}
-        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,107,53,0.08)')}
+        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(227,82,5,0.08)')}
         onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
       >
         BECOME A VOYAGER →
@@ -83,12 +83,12 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
       style={{ textDecoration: 'none', marginBottom: '12px' }}
     >
       <div
-        style={{ background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', overflow: 'hidden', transition: 'border-color 0.15s' }}
+        style={{ background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', overflow: 'hidden', transition: 'border-color 0.15s' }}
         onMouseEnter={e => (e.currentTarget.style.borderColor = color)}
-        onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,107,53,0.16)')}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(227,82,5,0.16)')}
       >
         {/* Publisher bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: '#0F1430', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: '#0F1430', borderBottom: '1px solid rgba(227,82,5,0.16)' }}>
 
           {/* Avatar */}
           {entry.publisher_avatar_url ? (
@@ -152,7 +152,7 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
 
           {/* Image (desktop: right column, mobile: hidden to keep feed tight) */}
           {hasImage && (
-            <div style={{ width: '140px', flexShrink: 0, borderLeft: '1px solid rgba(255,107,53,0.16)', position: 'relative' }} className="hidden sm:block">
+            <div style={{ width: '140px', flexShrink: 0, borderLeft: '1px solid rgba(227,82,5,0.16)', position: 'relative' }} className="hidden sm:block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={entry.images[0]}
@@ -162,7 +162,7 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
               {extraImgs > 0 && (
                 <div style={{
                   position: 'absolute', bottom: 6, right: 6,
-                  background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(255,107,53,0.16)',
+                  background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(227,82,5,0.16)',
                   color: 'rgba(245,245,245,0.55)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
                   padding: '2px 6px', letterSpacing: '0.08em',
                 }}>
@@ -176,7 +176,7 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
 
         {/* Mobile image strip */}
         {hasImage && (
-          <div className="block sm:hidden" style={{ borderTop: '1px solid rgba(255,107,53,0.16)', position: 'relative' }}>
+          <div className="block sm:hidden" style={{ borderTop: '1px solid rgba(227,82,5,0.16)', position: 'relative' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={entry.images[0]}
@@ -186,7 +186,7 @@ function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commen
             {extraImgs > 0 && (
               <div style={{
                 position: 'absolute', bottom: 6, right: 6,
-                background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(255,107,53,0.16)',
+                background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(227,82,5,0.16)',
                 color: 'rgba(245,245,245,0.55)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
                 padding: '2px 6px',
               }}>
@@ -283,7 +283,7 @@ function IntelPageContent() {
             gap: '0.5rem',
             border: '1px solid var(--color-nucleus)',
             color: 'var(--color-nucleus)',
-            background: 'rgba(232,93,4,0.08)',
+            background: 'rgba(200,68,6,0.08)',
             fontFamily: 'var(--font-mono)',
             fontSize: 'var(--fs-caption)',
             letterSpacing: '0.1em',

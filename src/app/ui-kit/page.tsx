@@ -1,179 +1,163 @@
-/* LOCAL PREVIEW ONLY — candidate HUD restyle for buttons / nav / inputs.
-   Not linked in nav, not committed/deployed. Delete or promote after review. */
+/* Internal Style 01 specimen. The controls intentionally consume the same
+   shared classes as the product so this page cannot drift into a second theme. */
 
-const NAV = ['ABOUT', 'PROJECTS', 'MEMBERS', 'CONTACT', 'ARCHIVE']
+const NAV = ['CONSOLE', 'ARCHIVE', 'SCAN', 'REPORTS', 'PROFILE'] as const
 
 export default function UiKitPreview() {
   return (
-    <div className="uk-root">
+    <main className="uk-root">
       <style>{CSS}</style>
 
-      <div className="uk-eyebrow">03 UI ELEMENTS</div>
+      <header className="uk-header">
+        <div>
+          <div className="uk-eyebrow">MC // COMPONENT SYSTEM / 01</div>
+          <h1>ORBITAL ARCHIVE</h1>
+        </div>
+        <div className="uk-index">03 / UI ELEMENTS</div>
+      </header>
 
       <div className="uk-grid">
-        {/* ── BUTTONS ── */}
-        <section>
-          <h3 className="uk-coltitle">BUTTONS</h3>
-
-          <button className="uk-btn" type="button">
-            <i className="node" /><i className="dash" />
-            <span>PRIMARY BUTTON</span>
-          </button>
-
-          <button className="uk-btn is-filled" type="button">
-            <i className="node" /><i className="dash" />
-            <span>HOVER STATE</span>
-          </button>
-
-          <button className="uk-btn is-ghost" type="button">
-            <i className="node" /><i className="dash" />
-            <span>SECONDARY BUTTON</span>
-          </button>
+        <section className="uk-section">
+          <h2>BUTTONS</h2>
+          <div className="uk-stack">
+            <button className="btn-primary" type="button">PRIMARY ACTION</button>
+            <button className="btn-secondary" type="button">SECONDARY ACTION</button>
+            <button className="btn-ghost" type="button">GHOST ACTION</button>
+            <button className="btn-primary" type="button" disabled>DISABLED ACTION</button>
+          </div>
         </section>
 
-        {/* ── NAVIGATION ── */}
-        <section className="uk-col-divider">
-          <h3 className="uk-coltitle">NAVIGATION</h3>
-          <nav className="uk-nav">
-            {NAV.map((label) => (
-              <a key={label} className="uk-navlink" href="#">
+        <section className="uk-section">
+          <h2>FORM ELEMENTS</h2>
+          <div className="uk-stack">
+            <label className="uk-field">
+              <span>NAME</span>
+              <input className="input-dark" defaultValue="John Doe" />
+            </label>
+            <label className="uk-field">
+              <span>EMAIL</span>
+              <input className="input-dark" defaultValue="john@multiverse.co" type="email" />
+            </label>
+            <label className="uk-field">
+              <span>MESSAGE</span>
+              <textarea className="input-dark" rows={3} placeholder="Enter your message..." />
+            </label>
+          </div>
+        </section>
+
+        <section className="uk-section">
+          <h2>STATUS &amp; PROGRESS</h2>
+          <div className="uk-pills" aria-label="Status examples">
+            <span className="status-pill status-ok"><span className="dot" />ACTIVE</span>
+            <span className="status-pill status-warn"><span className="dot" />SCANNING</span>
+            <span className="status-pill"><span className="dot" />ARCHIVED</span>
+          </div>
+          <div className="uk-progress-block">
+            <div className="uk-progress-meta"><span>ARCHIVE SYNC</span><span>72%</span></div>
+            <div className="progress-track" aria-label="Archive sync: 72 percent">
+              <div className="progress-fill" style={{ width: '72%' }} />
+            </div>
+          </div>
+          <div className="uk-steps" aria-label="Process steps">
+            <span className="is-done">01</span><i /><span className="is-current">02</span><i /><span>03</span>
+          </div>
+        </section>
+
+        <section className="uk-section">
+          <h2>ARCHIVE CARD</h2>
+          <article className="card-void uk-card">
+            <div className="uk-card-meta"><span>RECORD / 1665C</span><span>ACTIVE</span></div>
+            <h3>PARALLEL WORLD INDEX</h3>
+            <p>Structured records remain legible, calm, and operational across every surface.</p>
+            <a href="#component-navigation">OPEN RECORD <span aria-hidden>→</span></a>
+          </article>
+        </section>
+
+        <section className="uk-section uk-span" id="component-navigation">
+          <h2>NAVIGATION</h2>
+          <nav className="uk-nav" aria-label="Component navigation example">
+            {NAV.map((label, index) => (
+              <a key={label} className={index === 0 ? 'is-active' : ''} href="#component-navigation">
+                <span className="uk-nav-icon" aria-hidden>{String(index + 1).padStart(2, '0')}</span>
                 <span>{label}</span>
-                <svg className="trace" width="150" height="34" viewBox="0 0 150 34" fill="none" aria-hidden>
-                  <polyline points="0,12 92,12 118,26 142,26" stroke="currentColor" strokeWidth="1.2" />
-                  <circle cx="146" cy="26" r="3.2" fill="currentColor" />
-                </svg>
               </a>
             ))}
           </nav>
         </section>
-
-        {/* ── FORM ELEMENTS ── */}
-        <section className="uk-col-divider">
-          <h3 className="uk-coltitle">FORM ELEMENTS</h3>
-
-          <div className="uk-field">
-            <span className="legend">NAME</span>
-            <div className="uk-inputbox">
-              <input defaultValue="John Doe" />
-            </div>
-          </div>
-
-          <label className="uk-toplabel">EMAIL</label>
-          <div className="uk-inputbox" style={{ marginBottom: 18 }}>
-            <input defaultValue="john@multiverse.co" />
-          </div>
-
-          <label className="uk-toplabel">MESSAGE</label>
-          <div className="uk-inputbox" style={{ marginBottom: 22 }}>
-            <textarea rows={3} placeholder="Enter your message..." />
-          </div>
-
-          <button className="uk-btn is-ghost" type="button" style={{ width: '100%' }}>
-            <i className="node" /><i className="dash" />
-            <span>SUBMIT</span>
-          </button>
-        </section>
       </div>
-    </div>
+
+      <footer className="uk-footer">
+        <span>PANTONE 1665 C</span>
+        <span>8PX CLIPPED CORNER / FLAT COLOR / WARM HAIRLINE</span>
+      </footer>
+    </main>
   )
 }
 
 const CSS = `
 .uk-root{
-  --bg:#0A0E27; --retro:#FF6B35; --burnt:#E85D04; --deepor:#DC2F02;
-  --white:#F5F5F5; --muted:rgba(245,245,245,.55); --faint:rgba(245,245,245,.30);
-  --notch:16px; --bw:1.5px;
-  min-height:100vh; background:var(--bg); padding:48px 40px 80px;
-  font-family:var(--font-mono, 'Courier New', monospace);
+  min-height:100svh;
+  overflow:auto;
+  padding:max(24px,env(safe-area-inset-top)) 16px calc(108px + env(safe-area-inset-bottom));
+  background:var(--color-deep);
+  color:var(--color-star);
+  font-family:var(--font-mono);
 }
-.uk-eyebrow{ color:var(--deepor); font-size:34px; font-weight:700; letter-spacing:.06em; margin-bottom:40px; }
-.uk-grid{ display:grid; grid-template-columns:1fr 1fr 1.15fr; gap:0; max-width:1200px; }
-.uk-grid > section{ padding:0 40px; }
-.uk-grid > section:first-child{ padding-left:0; }
-.uk-col-divider{ border-left:1px solid rgba(232,93,4,.22); }
-.uk-coltitle{ color:var(--white); font-size:15px; font-weight:700; letter-spacing:.22em; margin:0 0 26px; }
-
-/* ── BUTTONS — notched outline via two clipped layers ── */
-.uk-btn{
-  position:relative; display:block; width:100%; margin-bottom:22px;
-  padding:18px 20px; border:none; background:none; cursor:pointer;
-  font-family:inherit; font-size:15px; font-weight:700; letter-spacing:.16em;
-  text-transform:uppercase; color:var(--retro);
-  transition:color .18s, filter .18s, transform .18s;
+body:has(.uk-root) .bottom-nav{display:none;}
+.uk-header{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  padding-bottom:24px;
+  border-bottom:1px solid var(--archive-line);
 }
-.uk-btn > span{ position:relative; z-index:2; }
-/* border layer */
-.uk-btn::before{
-  content:''; position:absolute; inset:0; z-index:0; background:var(--burnt);
-  clip-path:polygon(var(--notch) 0, 100% 0, 100% calc(100% - var(--notch)), calc(100% - var(--notch)) 100%, 0 100%, 0 var(--notch));
+.uk-eyebrow,.uk-index,.uk-section h2,.uk-field>span,.uk-progress-meta,.uk-footer{
+  font-size:var(--fs-caption);
+  letter-spacing:.16em;
 }
-/* fill layer (inset by border width) */
-.uk-btn::after{
-  content:''; position:absolute; inset:var(--bw); z-index:1; background:var(--bg);
-  clip-path:polygon(calc(var(--notch) - var(--bw)) 0, 100% 0, 100% calc(100% - var(--notch) + var(--bw)), calc(100% - var(--notch) + var(--bw)) 100%, 0 100%, 0 calc(var(--notch) - var(--bw)));
+.uk-eyebrow,.uk-index,.uk-section h2{color:var(--color-nucleus);}
+.uk-header h1{
+  max-width:10ch;
+  margin:8px 0 0;
+  color:var(--archive-paper);
+  font-size:clamp(2rem,13vw,4.75rem);
+  line-height:.9;
+  letter-spacing:.02em;
 }
-.uk-btn:hover{ transform:translateY(-1px); }
-.uk-btn:hover::before{ background:var(--retro); box-shadow:0 0 22px rgba(255,107,53,.35); }
-
-/* filled (hover-state demo / active) */
-.uk-btn.is-filled{ color:#1a0f06; }
-.uk-btn.is-filled::before{ background:var(--retro); }
-.uk-btn.is-filled::after{ background:linear-gradient(180deg,#FF8A4D, var(--deepor)); }
-
-/* ghost / secondary — fainter border */
-.uk-btn.is-ghost{ color:var(--burnt); }
-.uk-btn.is-ghost::before{ background:rgba(232,93,4,.45); }
-.uk-btn.is-ghost:hover{ color:var(--retro); }
-.uk-btn.is-ghost:hover::before{ background:var(--retro); }
-
-/* corner accents — match reference's asymmetric 4-corner treatment:
-   TL bevel + bracket · TR dashed edge · BR bevel + bracket · BL square node */
-.uk-btn .brk{ position:absolute; z-index:3; width:13px; height:13px; pointer-events:none; opacity:.95; }
-.uk-btn .brk.tl{ top:8px; left:9px; border-top:1.6px solid currentColor; border-left:1.6px solid currentColor; }
-.uk-btn .brk.br{ bottom:8px; right:9px; border-bottom:1.6px solid currentColor; border-right:1.6px solid currentColor; }
-/* small filled square node at the bottom-left (square) corner */
-.uk-btn .node{ position:absolute; z-index:3; left:0; bottom:0; width:6px; height:6px; background:currentColor; pointer-events:none; }
-/* dashed accent running down the right edge near the top */
-.uk-btn .dash{ position:absolute; z-index:3; right:2px; top:13px; width:1.6px; height:30px; pointer-events:none; opacity:.9;
-  background:repeating-linear-gradient(180deg, currentColor 0 3.5px, transparent 3.5px 7px); }
-
-.uk-btn.is-filled .brk, .uk-btn.is-filled .node, .uk-btn.is-filled .dash{ color:rgba(26,15,6,.55); }
-.uk-btn.is-filled .node{ background:rgba(26,15,6,.55); }
-
-/* ── NAVIGATION — circuit-trace links ── */
-.uk-nav{ display:flex; flex-direction:column; gap:22px; }
-.uk-navlink{
-  display:flex; align-items:center; gap:10px; text-decoration:none;
-  color:var(--burnt); font-size:17px; font-weight:700; letter-spacing:.06em;
-  transition:color .15s;
+.uk-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:0;margin-top:8px;}
+.uk-section{min-width:0;padding:24px 0;border-bottom:1px solid var(--archive-line-soft);}
+.uk-section h2{margin:0 0 18px;font-weight:700;}
+.uk-stack{display:grid;gap:12px;}
+.uk-stack>.btn-primary,.uk-stack>.btn-secondary,.uk-stack>.btn-ghost{width:100%;}
+.uk-field{display:grid;gap:8px;color:var(--archive-paper);}
+.uk-field textarea{min-height:96px;resize:vertical;}
+.uk-pills{display:flex;flex-wrap:wrap;gap:8px;}
+.uk-progress-block{margin-top:28px;}
+.uk-progress-meta{display:flex;justify-content:space-between;margin-bottom:10px;color:var(--color-star-dim);}
+.uk-steps{display:flex;align-items:center;margin-top:24px;color:var(--color-star-deep);font-size:var(--fs-caption);}
+.uk-steps span{display:grid;width:32px;height:32px;place-items:center;border:1px solid var(--archive-line-soft);border-radius:50%;}
+.uk-steps span.is-done{color:var(--color-deep);border-color:var(--color-nucleus);background:var(--color-nucleus);}
+.uk-steps span.is-current{color:var(--color-nucleus);border-color:var(--color-nucleus);}
+.uk-steps i{height:1px;flex:1;background:var(--archive-line-soft);}
+.uk-card{padding:0;}
+.uk-card-meta{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid var(--archive-line-soft);color:var(--color-star-deep);font-size:var(--fs-caption);letter-spacing:.12em;}
+.uk-card h3{margin:0;padding:20px 16px 8px;color:var(--archive-paper);font-size:var(--fs-title);}
+.uk-card p{margin:0;padding:0 16px 20px;color:var(--color-star-dim);font-size:var(--fs-label);line-height:1.65;}
+.uk-card>a{display:flex;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--archive-line-soft);color:var(--color-nucleus);font-size:var(--fs-caption);letter-spacing:.12em;text-decoration:none;}
+.uk-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--archive-line);clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%);}
+.uk-nav>a{display:flex;min-width:0;min-height:66px;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--color-star-deep);font-size:var(--fs-caption);text-decoration:none;}
+.uk-nav>a+a{border-left:1px solid var(--archive-line-soft);}
+.uk-nav>a.is-active{color:var(--color-nucleus);}
+.uk-nav-icon{font-size:var(--fs-label);}
+.uk-footer{display:flex;flex-direction:column;gap:8px;padding-top:20px;color:var(--color-star-deep);}
+@media(min-width:768px){
+  .uk-root{padding:48px clamp(32px,6vw,88px) 72px;}
+  .uk-header{flex-direction:row;align-items:flex-end;justify-content:space-between;}
+  .uk-header h1{max-width:none;}
+  .uk-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .uk-section{padding:32px;}
+  .uk-section:nth-child(odd){border-right:1px solid var(--archive-line-soft);}
+  .uk-span{grid-column:1/-1;border-right:0!important;}
+  .uk-footer{flex-direction:row;justify-content:space-between;}
 }
-.uk-navlink > span{ white-space:nowrap; }
-.uk-navlink .trace{ flex:1; color:rgba(232,93,4,.6); transition:color .15s; }
-.uk-navlink:hover{ color:var(--retro); }
-.uk-navlink:hover .trace{ color:var(--retro); }
-
-/* ── FORM — notched inputs + fieldset-legend label ── */
-.uk-field{ position:relative; margin-bottom:18px; }
-.uk-field .legend{
-  position:absolute; top:-7px; left:15px; z-index:3; padding:0 7px;
-  background:var(--bg); font-size:12px; letter-spacing:.14em; color:var(--muted);
-}
-.uk-toplabel{ display:block; color:var(--white); font-size:13px; font-weight:700; letter-spacing:.16em; margin-bottom:9px; }
-
-.uk-inputbox{ position:relative; }
-.uk-inputbox::before{
-  content:''; position:absolute; inset:0; z-index:0; background:rgba(245,245,245,.30);
-  clip-path:polygon(var(--notch) 0, 100% 0, 100% calc(100% - var(--notch)), calc(100% - var(--notch)) 100%, 0 100%, 0 var(--notch));
-  transition:background .15s, box-shadow .15s;
-}
-.uk-inputbox::after{
-  content:''; position:absolute; inset:var(--bw); z-index:1; background:var(--bg);
-  clip-path:polygon(calc(var(--notch) - var(--bw)) 0, 100% 0, 100% calc(100% - var(--notch) + var(--bw)), calc(100% - var(--notch) + var(--bw)) 100%, 0 100%, 0 calc(var(--notch) - var(--bw)));
-}
-.uk-inputbox input, .uk-inputbox textarea{
-  position:relative; z-index:2; width:100%; background:transparent; border:none; outline:none;
-  color:var(--white); font-family:inherit; font-size:15px; padding:14px 16px; resize:none; display:block;
-}
-.uk-inputbox textarea::placeholder, .uk-inputbox input::placeholder{ color:var(--faint); }
-.uk-inputbox:focus-within::before{ background:var(--retro); box-shadow:0 0 18px rgba(255,107,53,.25); }
 `

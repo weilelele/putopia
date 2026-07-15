@@ -153,17 +153,17 @@ const TASKS: {
   {
     key: 'report_sighting', num: '01', label: 'Report a Sighting',
     description: 'Document a signal, image, or encounter with a parallel world.',
-    href: '/worlds/submit', icon: <WorldIcon />, accentColor: '#FF6B35',
+    href: '/worlds/submit', icon: <WorldIcon />, accentColor: '#E35205',
   },
   {
     key: 'pass_quiz', num: '02', label: 'Qualify for Active Service',
     description: 'Complete the field assessment to demonstrate you are ready for active service.',
-    href: '/quiz', icon: <QuizIcon />, accentColor: '#FF6B35',
+    href: '/quiz', icon: <QuizIcon />, accentColor: '#E35205',
   },
   {
     key: 'get_pack', num: '03', label: 'Claim Your Voyager Pack',
     description: 'Claim Your Voyager Badge, Welcome Letter and digital cohort placement',
-    href: '/voyager-pack', icon: <WorldPackIcon size={18} />, accentColor: '#FF6B35', chip: '$12',
+    href: '/voyager-pack', icon: <WorldPackIcon size={18} />, accentColor: '#E35205', chip: '$12',
   },
 ]
 
@@ -174,8 +174,8 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
 
   const isDevice  = kind === 'device_seeker'
   const isSignal  = kind === 'signal_locked'
-  const accent    = isDevice ? '#E8A020' : isSignal ? '#E85D04' : '#60B0FF'
-  const borderClr = isDevice ? 'rgba(232,160,32,0.3)' : isSignal ? 'rgba(232,93,4,0.3)' : 'rgba(96,176,255,0.25)'
+  const accent    = isDevice ? '#E8A020' : isSignal ? '#C84406' : '#60B0FF'
+  const borderClr = isDevice ? 'rgba(232,160,32,0.3)' : isSignal ? 'rgba(200,68,6,0.3)' : 'rgba(96,176,255,0.25)'
 
   return (
     <div
@@ -309,12 +309,12 @@ function PathRail({
   // A→V connector: fully lit when voyager, half-lit when allDone, dim otherwise
   const avConnector = isVoyager
     ? 'linear-gradient(90deg,#20D890,rgba(32,216,144,0.6))'
-    : allDone ? 'linear-gradient(90deg,#E85D04,#FF6B35)' : 'rgba(255,107,53,0.12)'
-  const avChevron = isVoyager ? '#20D890' : allDone ? '#FF6B35' : 'rgba(255,107,53,0.22)'
+    : allDone ? 'linear-gradient(90deg,#C84406,#E35205)' : 'rgba(227,82,5,0.12)'
+  const avChevron = isVoyager ? '#20D890' : allDone ? '#E35205' : 'rgba(227,82,5,0.22)'
 
   return (
     <div className="dd-panel" style={{
-      ['--dd-bd' as string]: isVoyager ? 'rgba(196,169,106,0.4)' : 'rgba(255,107,53,0.25)',
+      ['--dd-bd' as string]: isVoyager ? 'rgba(196,169,106,0.4)' : 'rgba(227,82,5,0.25)',
     }}>
       <i className="dd-node" />
       <i className="dd-dash" />
@@ -356,7 +356,7 @@ function PathRail({
             <path d="M2 1l5 4-5 4" stroke={avChevron} strokeWidth="1.4"
               strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke 0.5s' } as React.CSSProperties} />
           </svg>
-          <div style={{ flex: 1, height: 2, background: isVoyager ? 'rgba(196,169,106,0.15)' : 'rgba(255,107,53,0.06)', transition: 'background 0.5s' }} />
+          <div style={{ flex: 1, height: 2, background: isVoyager ? 'rgba(196,169,106,0.15)' : 'rgba(227,82,5,0.06)', transition: 'background 0.5s' }} />
         </div>
 
         {/* ── VOYAGER ── */}
@@ -389,12 +389,12 @@ function PathRail({
 
         {/* ── V → C connector ── */}
         <div style={{ flex: 1, paddingTop: 21, display: 'flex', alignItems: 'center' }}>
-          <div style={{ flex: 1, height: 2, background: 'rgba(255,107,53,0.06)' }} />
+          <div style={{ flex: 1, height: 2, background: 'rgba(227,82,5,0.06)' }} />
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
-            <path d="M2 1l5 4-5 4" stroke="rgba(255,107,53,0.15)" strokeWidth="1.4"
+            <path d="M2 1l5 4-5 4" stroke="rgba(227,82,5,0.15)" strokeWidth="1.4"
               strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <div style={{ flex: 1, height: 2, background: 'rgba(255,107,53,0.04)' }} />
+          <div style={{ flex: 1, height: 2, background: 'rgba(227,82,5,0.04)' }} />
         </div>
 
         {/* ── CONSOLE HOLDER ── */}
@@ -404,16 +404,16 @@ function PathRail({
         >
           <div style={{
             width: 44, height: 44, borderRadius: '50%', margin: '0 auto 7px',
-            border: '2px solid rgba(255,107,53,0.22)',
+            border: '2px solid rgba(227,82,5,0.22)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'rgba(255,107,53,0.38)',
+            color: 'rgba(227,82,5,0.38)',
           }}>
             <LockIcon size={14} />
           </div>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: 'rgba(255,107,53,0.38)', fontFamily: 'var(--font-mono)' }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: 'rgba(227,82,5,0.38)', fontFamily: 'var(--font-mono)' }}>
             CONSOLE
           </div>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(255,107,53,0.28)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(227,82,5,0.28)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
             HOLDER
           </div>
         </div>
@@ -435,8 +435,8 @@ function PathRail({
           50%       { box-shadow: 0 0 24px rgba(196,169,106,0.55), 0 0 48px rgba(196,169,106,0.15); }
         }
         @keyframes pack-glow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
-          50%       { box-shadow: 0 0 18px rgba(255,107,53,0.18), inset 0 0 18px rgba(255,107,53,0.04); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(227,82,5,0); }
+          50%       { box-shadow: 0 0 18px rgba(227,82,5,0.18), inset 0 0 18px rgba(227,82,5,0.04); }
         }
       `}</style>
     </div>
@@ -453,15 +453,15 @@ function VoyagerUnlockTrack({
   completed: Record<TaskKey, boolean>
 }) {
   const green   = '#20D890'
-  const orange  = '#FF6B35'
+  const orange  = '#E35205'
 
   // Task node — identical treatment for all three (equal weight).
   const taskNode = (done: boolean, icon: React.ReactNode) => (
     <div style={{
       width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: done ? 'rgba(32,216,144,0.12)' : 'rgba(255,107,53,0.07)',
-      border: `1.5px solid ${done ? green : 'rgba(255,107,53,0.5)'}`,
+      background: done ? 'rgba(32,216,144,0.12)' : 'rgba(227,82,5,0.07)',
+      border: `1.5px solid ${done ? green : 'rgba(227,82,5,0.5)'}`,
       color: done ? green : orange,
       transition: 'all 0.25s ease',
     }}>
@@ -478,7 +478,7 @@ function VoyagerUnlockTrack({
         href={task.href}
         className="dd-panel"
         style={{
-          ['--dd-bd' as string]: done ? 'rgba(32,216,144,0.45)' : 'rgba(255,107,53,0.32)',
+          ['--dd-bd' as string]: done ? 'rgba(32,216,144,0.45)' : 'rgba(227,82,5,0.32)',
           ['--dd-fill' as string]: done ? 'rgba(32,216,144,0.05)' : '#0F1430',
           display: 'flex', alignItems: 'flex-start', gap: 12,
           width: '100%', textAlign: 'left', cursor: 'pointer', textDecoration: 'none',
@@ -492,7 +492,7 @@ function VoyagerUnlockTrack({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 'var(--fs-label)', color: done ? 'rgba(32,216,144,0.85)' : '#F5F5F5' }}>{task.label}</span>
             {task.chip && (
-              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: done ? green : orange, border: `1px solid ${done ? 'rgba(32,216,144,0.3)' : 'rgba(255,107,53,0.35)'}`, padding: '1px 6px', background: done ? 'rgba(32,216,144,0.08)' : 'rgba(255,107,53,0.08)' }}>{task.chip}</span>
+              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: done ? green : orange, border: `1px solid ${done ? 'rgba(32,216,144,0.3)' : 'rgba(227,82,5,0.35)'}`, padding: '1px 6px', background: done ? 'rgba(32,216,144,0.08)' : 'rgba(227,82,5,0.08)' }}>{task.chip}</span>
             )}
             {done && (
               <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: green, border: '1px solid rgba(32,216,144,0.25)', padding: '1px 6px', background: 'rgba(32,216,144,0.08)' }}>DONE</span>
@@ -854,7 +854,7 @@ export default function VoyagerPathPage() {
           position: relative;
           --dd-notch: 15px;
           --dd-bw: 1.5px;
-          --dd-bd: rgba(255,107,53,0.3);
+          --dd-bd: rgba(227,82,5,0.3);
           --dd-fill: var(--bg-panel);
         }
         .dd-panel::before {

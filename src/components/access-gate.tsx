@@ -188,7 +188,7 @@ function RevealOverlay({ durationMs }: { durationMs: number }) {
         <rect width="100%" height="100%" filter="url(#gate-rev-noise)" />
       </svg>
 
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 2, background: 'var(--color-nucleus)', boxShadow: '0 0 14px 2px rgba(255,107,53,0.65)', animation: `gateScan ${durationMs}ms ease-in-out forwards` }} />
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 2, background: 'var(--color-nucleus)', boxShadow: '0 0 14px 2px rgba(227,82,5,0.65)', animation: `gateScan ${durationMs}ms ease-in-out forwards` }} />
 
       <div
         style={{
@@ -201,7 +201,7 @@ function RevealOverlay({ durationMs }: { durationMs: number }) {
           fontSize: 'var(--fs-label)',
           letterSpacing: '0.22em',
           color: 'var(--color-nucleus)',
-          textShadow: '0 0 10px rgba(255,107,53,0.5)',
+          textShadow: '0 0 10px rgba(227,82,5,0.5)',
         }}
       >
         {locked ? '● SIGNAL LOCKED' : `ACQUIRING SIGNAL ${pct}%`}

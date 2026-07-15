@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context'
 import { mockClaimFirstPack } from '@/lib/actions/claim'
 import { BackLink } from '@/components/back-link'
 
-const ORANGE = '#FF6B35'
+const ORANGE = '#E35205'
 
 const INTEL_LINES = [
   'SOURCE   : Weile / Architect-on-site',
@@ -114,7 +114,7 @@ export default function ClaimPage() {
       {/* Hero image (placeholder) */}
       <div
         className="mb-8 border overflow-hidden relative"
-        style={{ borderColor: 'rgba(255,107,53,0.35)', aspectRatio: '16/7', maxWidth: '820px' }}
+        style={{ borderColor: 'rgba(227,82,5,0.35)', aspectRatio: '16/7', maxWidth: '820px' }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -132,8 +132,8 @@ export default function ClaimPage() {
       <div
         className="mb-8 border p-4 font-mono text-xs"
         style={{
-          borderColor: 'rgba(255,107,53,0.3)',
-          background: 'rgba(255,107,53,0.04)',
+          borderColor: 'rgba(227,82,5,0.3)',
+          background: 'rgba(227,82,5,0.04)',
           color: 'rgba(245,245,245,0.55)',
           lineHeight: '1.9',
           maxWidth: '820px',
@@ -167,7 +167,7 @@ export default function ClaimPage() {
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-5">
           <span className="label-tag" style={{ color: ORANGE, borderColor: ORANGE }}>WHAT YOU RECEIVE</span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
+          <div className="flex-1 h-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -175,9 +175,9 @@ export default function ClaimPage() {
             <div
               key={group.no}
               className="border p-4"
-              style={{ borderColor: 'rgba(255,107,53,0.2)', background: 'rgba(15,20,48,0.6)' }}
+              style={{ borderColor: 'rgba(227,82,5,0.2)', background: 'rgba(15,20,48,0.6)' }}
             >
-              <div className="flex items-baseline gap-2 mb-3 pb-2 border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
+              <div className="flex items-baseline gap-2 mb-3 pb-2 border-b" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
                 <span className="font-mono font-bold" style={{ color: ORANGE, fontSize: '0.9rem' }}>{group.no}</span>
                 <span className="font-mono text-xs font-bold tracking-wider" style={{ color: '#F5F5F5' }}>{group.title}</span>
               </div>
@@ -201,7 +201,7 @@ export default function ClaimPage() {
       {/* Pricing + CTA */}
       <div
         className="border p-5 mb-10"
-        style={{ borderColor: ORANGE, background: 'rgba(255,107,53,0.04)', maxWidth: '400px', boxShadow: '0 0 18px rgba(255,107,53,0.18)' }}
+        style={{ borderColor: ORANGE, background: 'rgba(227,82,5,0.04)', maxWidth: '400px', boxShadow: '0 0 18px rgba(227,82,5,0.18)' }}
       >
         <div className="flex items-baseline gap-3 mb-1">
           <span className="font-mono font-bold" style={{ fontSize: '2rem', color: '#F5F5F5', letterSpacing: '-0.02em' }}>$12</span>
@@ -267,7 +267,7 @@ export default function ClaimPage() {
       {/* Upgrade note */}
       <div
         className="mb-10 border-l-2 pl-4 font-mono text-xs"
-        style={{ borderColor: 'rgba(255,107,53,0.4)', color: 'rgba(245,245,245,0.35)', lineHeight: '1.8', maxWidth: '640px' }}
+        style={{ borderColor: 'rgba(227,82,5,0.4)', color: 'rgba(245,245,245,0.35)', lineHeight: '1.8', maxWidth: '640px' }}
       >
         <div style={{ color: 'rgba(245,245,245,0.5)', marginBottom: '0.25rem' }}>{"// UPGRADE PATH"}</div>
         The $12 first parts pack is the entry point. If you later choose to secure the full

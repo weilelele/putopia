@@ -54,8 +54,8 @@ function parseLineSegments(line: FeedLine): Segment[] {
 
 function InlineAvatar({ entity, show }: { entity: FeedEntity; show: boolean }) {
   const isVoyager = entity.type === 'voyager'
-  const color = isVoyager ? '#FF8A5C' : '#E85D04'
-  const borderColor = isVoyager ? 'rgba(255,138,92,0.45)' : 'rgba(232,93,4,0.45)'
+  const color = isVoyager ? '#FF8A5C' : '#C84406'
+  const borderColor = isVoyager ? 'rgba(255,138,92,0.45)' : 'rgba(200,68,6,0.45)'
   const initials = entity.name.split(/[\s—–]/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
   return (

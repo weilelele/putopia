@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 
-const ACCENT = '#E85D04'
+const ACCENT = '#C84406'
 const MUTED  = 'rgba(245,245,245,0.35)'
 const STAR   = '#F5F5F5'
 const BORDER = '#151B3A'
@@ -31,7 +31,7 @@ export function DaySelector({ days, selected }: { days: string[]; selected: stri
     color: enabled ? STAR : '#2A3A5A',
     cursor: enabled ? 'pointer' : 'default',
     fontFamily: 'monospace',
-    fontSize: 11,
+    fontSize: 'var(--fs-caption)',
     padding: '4px 10px',
     borderRadius: 2,
   })
@@ -64,7 +64,7 @@ export function DaySelector({ days, selected }: { days: string[]; selected: stri
       <button type="button" style={btn(!!newer)} disabled={!newer} onClick={() => newer && go(newer)}>
         ▶
       </button>
-      <span style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginLeft: '0.25rem' }}>
+      <span style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginLeft: '0.25rem' }}>
         单日 · {fmt(selected)}
       </span>
     </div>

@@ -16,7 +16,7 @@ export default async function TaskGatedNewsletterPage() {
       <div style={{
         padding: '10px 0 8px', textAlign: 'center', flexShrink: 0,
         fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em',
-        color: 'rgba(255,107,53,0.45)',
+        color: 'rgba(227,82,5,0.45)',
       }}>
         ◈ NEWSLETTER PREVIEW — GROUP B (TASK GATED) — {content.weekLabel} ◈
       </div>

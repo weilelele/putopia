@@ -38,7 +38,7 @@ export function Sidebar() {
     href === '/console' ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" aria-label="Workspace navigation">
       <Link href="/console" className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
         <img
           src="/assets/vi-icon.png"
@@ -78,6 +78,7 @@ export function Sidebar() {
                 key={href}
                 href={href}
                 className={`nav-item ${isActive(href) ? 'active' : ''}`}
+                aria-current={isActive(href) ? 'page' : undefined}
               >
                 {icon}
                 {label}

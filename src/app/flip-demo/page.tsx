@@ -147,9 +147,9 @@ export default function FlipDemo() {
     <main className="flip-demo">
       <style>{`
         .flip-demo { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2.6rem;
-          background: radial-gradient(120% 80% at 50% 34%, rgba(255,107,53,.10), transparent 60%), #0A0E27;
+          background: radial-gradient(120% 80% at 50% 34%, rgba(227,82,5,.10), transparent 60%), #0A0E27;
           color:#F5F5F5; font-family:var(--font-mono),monospace; padding:4rem 1rem; }
-        .flip-stage { position:relative; filter:drop-shadow(0 0 34px rgba(255,107,53,.32)); }
+        .flip-stage { position:relative; filter:drop-shadow(0 0 34px rgba(227,82,5,.32)); }
         .flip-cell { position:absolute; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; perspective:820px;
           transition: left var(--spread,680ms) cubic-bezier(.16,.84,.34,1), top var(--spread,680ms) cubic-bezier(.16,.84,.34,1); }
         .flip-glyph { height:100%; width:auto; display:block; transform-origin:center center; backface-visibility:hidden;
@@ -160,15 +160,15 @@ export default function FlipDemo() {
         .flip-meta { font-size:.6rem; letter-spacing:.28em; text-transform:uppercase; color:#6E6B5E }
         .flip-controls { display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; }
         .flip-preset { font-family:inherit; font-size:.6rem; letter-spacing:.14em; text-transform:uppercase; text-align:left;
-          color:#B9B7AE; background:rgba(255,255,255,.02); border:1px solid rgba(255,107,53,.25);
+          color:#B9B7AE; background:rgba(255,255,255,.02); border:1px solid rgba(227,82,5,.25);
           padding:.55rem .8rem; border-radius:2px; cursor:pointer; min-width:140px; line-height:1.5; }
-        .flip-preset:hover { border-color:rgba(255,107,53,.6); color:#F5F5F5 }
-        .flip-preset[data-active="1"] { border-color:#FF6B35; color:#FF6B35; background:rgba(255,107,53,.08) }
+        .flip-preset:hover { border-color:rgba(227,82,5,.6); color:#F5F5F5 }
+        .flip-preset[data-active="1"] { border-color:#E35205; color:#E35205; background:rgba(227,82,5,.08) }
         .flip-preset small { display:block; color:#6E6B5E; letter-spacing:.06em; text-transform:none; font-size:.92em }
         .flip-row2 { display:flex; gap:.6rem; }
         .flip-btn { font-family:inherit; font-size:.62rem; letter-spacing:.22em; text-transform:uppercase;
-          color:#FF6B35; background:transparent; border:1px solid rgba(255,107,53,.5); padding:.7rem 1.4rem; border-radius:2px; cursor:pointer }
-        .flip-btn:hover { background:rgba(255,107,53,.12) }
+          color:#E35205; background:transparent; border:1px solid rgba(227,82,5,.5); padding:.7rem 1.4rem; border-radius:2px; cursor:pointer }
+        .flip-btn:hover { background:rgba(227,82,5,.12) }
       `}</style>
 
       <div className="flip-meta">{"// split-flap → spread — 试不同节奏"}</div>

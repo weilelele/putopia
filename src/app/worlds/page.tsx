@@ -75,13 +75,13 @@ function StatsBarSkeleton() {
     <div style={{
       display: 'flex', gap: '0.75rem', marginBottom: '2rem', padding: '0.875rem 1rem',
       justifyContent: 'space-between', background: 'var(--bg-card)',
-      border: '1px solid rgba(255,107,53,0.12)',
-      boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
+      border: '1px solid rgba(227,82,5,0.12)',
+      boxShadow: 'inset 0 1px 0 rgba(200,68,6,0.04)',
     }}>
       {[0, 1, 2].map((i) => (
         <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-          <div className="wr-skeleton" style={{ width: 28, height: 18, borderRadius: 4, background: 'rgba(255,107,53,0.12)' }} />
-          <div className="wr-skeleton" style={{ width: 64, height: 10, borderRadius: 4, background: 'rgba(255,107,53,0.10)' }} />
+          <div className="wr-skeleton" style={{ width: 28, height: 18, borderRadius: 4, background: 'rgba(227,82,5,0.12)' }} />
+          <div className="wr-skeleton" style={{ width: 64, height: 10, borderRadius: 4, background: 'rgba(227,82,5,0.10)' }} />
         </div>
       ))}
     </div>
@@ -96,7 +96,7 @@ function SectionSkeleton({
       <SectionHeader title={title} accentColor={accentColor} />
       <div className={gridClass}>
         {Array.from({ length: count }).map((_, i) => (
-          <div key={i} className="wr-skeleton" style={{ aspectRatio: '3 / 4', borderRadius: 8, background: 'rgba(255,107,53,0.07)' }} />
+          <div key={i} className="wr-skeleton" style={{ aspectRatio: '3 / 4', borderRadius: 8, background: 'rgba(227,82,5,0.07)' }} />
         ))}
       </div>
     </section>
@@ -125,8 +125,8 @@ async function StatsBar() {
     <div style={{
       display: 'flex', gap: '0.75rem', marginBottom: '2rem', padding: '0.875rem 1rem',
       justifyContent: 'space-between', background: 'var(--bg-card)',
-      border: '1px solid rgba(255,107,53,0.12)',
-      boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
+      border: '1px solid rgba(227,82,5,0.12)',
+      boxShadow: 'inset 0 1px 0 rgba(200,68,6,0.04)',
     }}>
       {[
         { val: initial,       label: 'INITIAL',     color: 'var(--color-warn)',    anchor: '#section-initial-vision' },
@@ -199,7 +199,7 @@ async function EstablishedSection() {
             eyebrow={world.id}
             date={world.discovery_date}
             minHeight={232}
-            hoverBorder="rgba(255,107,53,0.45)"
+            hoverBorder="rgba(227,82,5,0.45)"
             orangeMask
           />
         ))}
@@ -266,8 +266,8 @@ export default async function WorldsPage({
               display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
               padding: '0.5rem 0.75rem', textDecoration: 'none',
               background: 'transparent',
-              border: '1px solid rgba(255,107,53,0.4)',
-              color: 'rgba(255,107,53,0.85)',
+              border: '1px solid rgba(227,82,5,0.4)',
+              color: 'rgba(227,82,5,0.85)',
               fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
               letterSpacing: '0.1em', borderRadius: 8, whiteSpace: 'nowrap',
             }}
@@ -284,7 +284,7 @@ export default async function WorldsPage({
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
               padding: '0.5rem 0.75rem', textDecoration: 'none',
-              background: 'rgba(232,93,4,0.08)',
+              background: 'rgba(200,68,6,0.08)',
               border: '1px solid var(--color-nucleus)',
               color: 'var(--color-nucleus)',
               fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',

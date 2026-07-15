@@ -149,8 +149,8 @@ const MOCK_EVENTS: FeedEvent[] = [
 function Avatar({ actor, size = 36 }: { actor: Actor; size?: number }) {
   const initials = actor.name.slice(0, 2)
   const isArch = actor.role === 'architect'
-  const color  = isArch ? '#FF6B35' : '#FF8A5C'
-  const border = isArch ? 'rgba(255,107,53,0.55)' : 'rgba(255,138,92,0.4)'
+  const color  = isArch ? '#E35205' : '#FF8A5C'
+  const border = isArch ? 'rgba(227,82,5,0.55)' : 'rgba(255,138,92,0.4)'
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -240,7 +240,7 @@ function FeedRow({ event }: { event: FeedEvent }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.1rem' }}>
             {event.actor.socials?.map(s => (
               <span key={s.platform} onClick={e => e.preventDefault()} style={{
-                fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.15em',
+                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
                 color: 'var(--color-star-deep)', border: '1px solid var(--bd-faint)',
                 padding: '0.1rem 0.45rem', cursor: 'pointer',
                 transition: 'color 0.1s, border-color 0.1s',

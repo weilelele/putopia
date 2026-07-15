@@ -151,9 +151,9 @@ export default function WorldDetailPage() {
             {/* Signal Tuning is the lead content — the '// SIGNAL TUNING' label is dropped.
                 The vote-lock hint lives in the question footer, not a floating header. */}
             {isOwner && (
-              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '0.85rem', padding: '0.65rem 0.85rem', border: '1px solid rgba(255,107,53,0.18)', background: 'rgba(255,107,53,0.04)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '0.85rem', padding: '0.65rem 0.85rem', border: '1px solid rgba(227,82,5,0.18)', background: 'rgba(227,82,5,0.04)' }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>WHO CAN VOTE</span>
-                <select value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', background: 'var(--bg-card)', color: 'var(--color-star)', border: '1px solid rgba(255,107,53,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
+                <select value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', background: 'var(--bg-card)', color: 'var(--color-star)', border: '1px solid rgba(227,82,5,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
                   <option value="all">Open to everyone</option>
                   <option value="voters">Voyagers only</option>
                   <option value="self">Just me (private)</option>
@@ -193,7 +193,7 @@ export default function WorldDetailPage() {
           {/* Verified badge */}
           {world.is_verified && (
             <div style={{ position: 'absolute', top: 12, right: 12 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', background: 'rgba(232,93,4,0.15)', color: 'var(--color-nebula)', padding: '3px 8px', border: '1px solid rgba(232,93,4,0.3)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', background: 'rgba(200,68,6,0.15)', color: 'var(--color-nebula)', padding: '3px 8px', border: '1px solid rgba(200,68,6,0.3)' }}>
                 ✓ VERIFIED
               </span>
             </div>
@@ -209,7 +209,7 @@ export default function WorldDetailPage() {
 
         {/* Revise & re-scan — owner only, from the failed state */}
         {scanFailed && isOwner && retryOpen && (
-          <div style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid rgba(255,107,53,0.25)', background: 'rgba(255,107,53,0.04)' }}>
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid rgba(227,82,5,0.25)', background: 'rgba(227,82,5,0.04)' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'var(--color-star-dim)', marginBottom: '0.5rem' }}>
               REVISE FIELD NOTES &mdash; THEN RE-SCAN
             </div>
@@ -224,7 +224,7 @@ export default function WorldDetailPage() {
               <button
                 onClick={doRescan}
                 disabled={retrySaving || retryDesc.trim().length < 20}
-                style={{ padding: '0.6rem 1.1rem', background: retryDesc.trim().length >= 20 && !retrySaving ? 'linear-gradient(135deg, #E85D04, #C04000)' : 'rgba(255,107,53,0.08)', border: '1px solid rgba(232,93,4,0.5)', color: retryDesc.trim().length >= 20 && !retrySaving ? '#F5F5F5' : 'rgba(245,245,245,0.3)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.16em', cursor: retryDesc.trim().length >= 20 && !retrySaving ? 'pointer' : 'not-allowed' }}
+                style={{ padding: '0.6rem 1.1rem', background: retryDesc.trim().length >= 20 && !retrySaving ? 'linear-gradient(135deg, #C84406, #C04000)' : 'rgba(227,82,5,0.08)', border: '1px solid rgba(200,68,6,0.5)', color: retryDesc.trim().length >= 20 && !retrySaving ? '#F5F5F5' : 'rgba(245,245,245,0.3)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.16em', cursor: retryDesc.trim().length >= 20 && !retrySaving ? 'pointer' : 'not-allowed' }}
               >
                 {retrySaving ? 'RE-SCANNING…' : 'RE-SCAN →'}
               </button>

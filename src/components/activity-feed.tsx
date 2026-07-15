@@ -27,8 +27,8 @@ function formatDate(iso: string) {
 function Avatar({ name, role, avatarUrl, size = 36 }: { name: string; role: string; avatarUrl?: string | null; size?: number }) {
   const initials = name.slice(0, 2).toUpperCase()
   const isArch   = role === 'architect'
-  const color    = isArch ? '#FF6B35' : '#FF8A5C'
-  const border   = isArch ? 'rgba(255,107,53,0.55)' : 'rgba(255,138,92,0.4)'
+  const color    = isArch ? '#E35205' : '#FF8A5C'
+  const border   = isArch ? 'rgba(227,82,5,0.55)' : 'rgba(255,138,92,0.4)'
 
   if (avatarUrl) {
     return (
@@ -97,7 +97,7 @@ function FeedRow({ event, onProfileOpen }: { event: ActivityEvent; onProfileOpen
     event.event_type === 'device_matched'    ? 'matched a device'    :
     ''
 
-  const verbColor  = (isActivation || isMatch) ? '#FF6B35' : 'var(--color-star-deep)'
+  const verbColor  = (isActivation || isMatch) ? '#E35205' : 'var(--color-star-deep)'
   const verbWeight = (isActivation || isMatch) ? 700 : 400
 
   const useModal = !!(isActivation && onProfileOpen)
@@ -143,7 +143,7 @@ function FeedRow({ event, onProfileOpen }: { event: ActivityEvent; onProfileOpen
                 key={s.platform}
                 onClick={e => { e.preventDefault(); window.open(s.url, '_blank') }}
                 style={{
-                  fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.15em',
+                  fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
                   color: 'var(--color-star-deep)', border: '1px solid var(--bd-faint)',
                   padding: '0.1rem 0.45rem', cursor: 'pointer',
                 }}
@@ -160,7 +160,7 @@ function FeedRow({ event, onProfileOpen }: { event: ActivityEvent; onProfileOpen
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
                 fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
-                color: isActivation ? '#FF6B35' : 'var(--color-star)',
+                color: isActivation ? '#E35205' : 'var(--color-star)',
                 lineHeight: 1.55, fontWeight: isActivation ? 600 : 500,
                 display: '-webkit-box', WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical', overflow: 'hidden',
@@ -185,7 +185,7 @@ function FeedRow({ event, onProfileOpen }: { event: ActivityEvent; onProfileOpen
       <div
         style={rowStyle}
         onClick={onProfileOpen}
-        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,107,53,0.04)')}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(227,82,5,0.04)')}
         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
       >
         {inner}
@@ -269,12 +269,12 @@ function CollapseGroup({ events, accent, summary }: { events: ActivityEvent[]; a
         onClick={() => setExpanded(v => !v)}
         style={{
           width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-          padding: '0.75rem 1rem', background: expanded ? 'rgba(255,107,53,0.03)' : 'transparent',
+          padding: '0.75rem 1rem', background: expanded ? 'rgba(227,82,5,0.03)' : 'transparent',
           border: 'none', borderBottom: '1px solid var(--bd-faint)', borderTop: 'none',
           cursor: 'pointer', textAlign: 'left', outline: 'none',
         }}
-        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,107,53,0.04)')}
-        onMouseLeave={e => (e.currentTarget.style.background = expanded ? 'rgba(255,107,53,0.03)' : 'transparent')}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(227,82,5,0.04)')}
+        onMouseLeave={e => (e.currentTarget.style.background = expanded ? 'rgba(227,82,5,0.03)' : 'transparent')}
       >
         <AvatarStack events={events} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -307,7 +307,7 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
 
   const initials = profile.display_name.slice(0, 2).toUpperCase()
   const isArch   = profile.role === 'architect'
-  const accent   = isArch ? '#FF6B35' : '#FF8A5C'
+  const accent   = isArch ? '#E35205' : '#FF8A5C'
 
   const socials = [
     profile.social_x         && { label: 'X',        href: profile.social_x },
@@ -322,10 +322,10 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ background: '#0F1430', border: '1px solid rgba(255,107,53,0.35)', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', fontFamily: 'var(--font-mono)' }}
+        style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.35)', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', fontFamily: 'var(--font-mono)' }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid rgba(255,107,53,0.14)', background: '#090D1A' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid rgba(227,82,5,0.14)', background: '#090D1A' }}>
           <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>{"// VOYAGER PROFILE"}</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '2px 6px' }}>✕</button>
         </div>
@@ -349,7 +349,7 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
               <span style={{ fontSize: 'var(--fs-label)', fontWeight: 700, color: '#F5F5F5', letterSpacing: '0.04em' }}>
                 {profile.display_name}
               </span>
-              <span style={{ fontSize: '0.6rem', padding: '2px 7px', border: `1px solid ${accent}55`, color: accent, letterSpacing: '0.15em', background: `${accent}0D` }}>
+              <span style={{ fontSize: 'var(--fs-caption)', padding: '2px 7px', border: `1px solid ${accent}55`, color: accent, letterSpacing: '0.15em', background: `${accent}0D` }}>
                 {isArch ? 'ARCHITECT' : 'VOYAGER'}
               </span>
             </div>
@@ -370,14 +370,14 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'flex', borderTop: '1px solid rgba(255,107,53,0.1)', borderBottom: '1px solid rgba(255,107,53,0.1)', margin: '0 18px' }}>
+        <div style={{ display: 'flex', borderTop: '1px solid rgba(227,82,5,0.1)', borderBottom: '1px solid rgba(227,82,5,0.1)', margin: '0 18px' }}>
           <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#E85D04', textShadow: '0 0 10px rgba(232,93,4,0.35)' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#C84406', textShadow: '0 0 10px rgba(200,68,6,0.35)' }}>
               {profile.observation_days}
             </div>
             <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>OBS DAYS</div>
           </div>
-          <div style={{ width: 1, background: 'rgba(255,107,53,0.1)' }} />
+          <div style={{ width: 1, background: 'rgba(227,82,5,0.1)' }} />
           <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
             <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#20D890', textShadow: '0 0 10px rgba(32,216,144,0.25)' }}>
               {profile.worlds_discovered}
@@ -394,7 +394,7 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
         )}
 
         {/* Footer: socials + See All */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderTop: '1px solid rgba(255,107,53,0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderTop: '1px solid rgba(227,82,5,0.1)' }}>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {socials.map(s => (
               <a
@@ -403,8 +403,8 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  fontSize: '0.6rem', letterSpacing: '0.15em', color: 'rgba(245,245,245,0.35)',
-                  border: '1px solid rgba(255,107,53,0.2)', padding: '3px 8px', textDecoration: 'none',
+                  fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'rgba(245,245,245,0.35)',
+                  border: '1px solid rgba(227,82,5,0.2)', padding: '3px 8px', textDecoration: 'none',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'rgba(245,245,245,0.65)')}
                 onMouseLeave={e => (e.currentTarget.style.color = 'rgba(245,245,245,0.35)')}
@@ -417,11 +417,11 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
             href="/voyagers"
             onClick={onClose}
             style={{
-              fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: '#FF6B35',
-              border: '1px solid rgba(255,107,53,0.45)', padding: '6px 14px',
+              fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: '#E35205',
+              border: '1px solid rgba(227,82,5,0.45)', padding: '6px 14px',
               textDecoration: 'none', flexShrink: 0,
             }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,107,53,0.08)')}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(227,82,5,0.08)')}
             onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
           >
             SEE ALL →
@@ -440,7 +440,7 @@ function ProfileLoadingModal({ onClose }: { onClose: () => void }) {
       style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(5,8,18,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
       onClick={onClose}
     >
-      <div style={{ background: '#0F1430', border: '1px solid rgba(255,107,53,0.35)', width: '100%', maxWidth: '480px', padding: '48px 18px', textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'rgba(245,245,245,0.25)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em' }}>
+      <div style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.35)', width: '100%', maxWidth: '480px', padding: '48px 18px', textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'rgba(245,245,245,0.25)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em' }}>
         LOADING...
       </div>
     </div>
@@ -548,7 +548,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
               <CollapseGroup
                 key={`group-${i}`}
                 events={item.events}
-                accent="#FF6B35"
+                accent="#E35205"
                 summary={`${item.events.length} new Voyagers activated · Cairo Batch 01`}
               />
             )
@@ -558,7 +558,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
               <CollapseGroup
                 key={`group-${i}`}
                 events={item.events}
-                accent="#FF6B35"
+                accent="#E35205"
                 summary={`${item.events.length} devices matched & locked`}
               />
             )

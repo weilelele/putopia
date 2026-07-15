@@ -5,18 +5,18 @@ import { getAllOrders, updateOrderFulfillment, createOrderManually, type AdminOr
 
 const STATUSES = ['paid', 'preparing', 'shipped', 'delivered', 'refunded', 'canceled'] as const
 const STATUS_COLOR: Record<string, string> = {
-  paid: '#FF6B35', preparing: '#E8A020', shipped: '#20D890', delivered: '#20D890',
+  paid: '#E35205', preparing: '#E8A020', shipped: '#20D890', delivered: '#20D890',
   refunded: '#E83030', canceled: '#E83030', pending: 'rgba(245,245,245,0.4)',
 }
 
 const S = {
-  card: { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '18px', marginBottom: '14px' } as React.CSSProperties,
-  input: { background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 9px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box' } as React.CSSProperties,
-  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '10px', letterSpacing: '0.15em', marginBottom: '4px' } as React.CSSProperties,
-  btn: { background: '#E85D04', border: 'none', color: '#0A0E27', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', padding: '8px 16px', cursor: 'pointer', borderRadius: '2px' } as React.CSSProperties,
+  card: { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '18px', marginBottom: '14px' } as React.CSSProperties,
+  input: { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 9px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box' } as React.CSSProperties,
+  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', marginBottom: '4px' } as React.CSSProperties,
+  btn: { background: '#C84406', border: 'none', color: '#0A0E27', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', padding: '8px 16px', cursor: 'pointer', borderRadius: '2px' } as React.CSSProperties,
   filterBtn: (on: boolean): React.CSSProperties => ({
-    background: on ? '#FF6B35' : 'transparent', color: on ? '#0A0E27' : 'rgba(245,245,245,0.55)',
-    border: '1px solid rgba(255,107,53,0.3)', fontFamily: 'var(--font-mono)', fontSize: '11px',
+    background: on ? '#E35205' : 'transparent', color: on ? '#0A0E27' : 'rgba(245,245,245,0.55)',
+    border: '1px solid rgba(227,82,5,0.3)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
     letterSpacing: '0.1em', padding: '7px 12px', cursor: 'pointer', borderRadius: '2px',
   }),
 }
@@ -110,14 +110,14 @@ export default function OrdersAdmin() {
     <div style={{ padding: '24px', fontFamily: 'var(--font-mono)', color: '#F5F5F5' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
         <div>
-          <div style={{ color: '#E85D04', fontSize: '11px', letterSpacing: '0.25em' }}>{"// FULFILLMENT"}</div>
+          <div style={{ color: '#C84406', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>{"// FULFILLMENT"}</div>
           <h1 style={{ fontSize: '20px', margin: '6px 0 0' }}>ORDERS</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button style={S.filterBtn(filter === 'toship')} onClick={() => setFilter('toship')}>TO SHIP ({counts.toship})</button>
           <button style={S.filterBtn(filter === 'shipped')} onClick={() => setFilter('shipped')}>SHIPPED ({counts.shipped})</button>
           <button style={S.filterBtn(filter === 'all')} onClick={() => setFilter('all')}>ALL ({counts.all})</button>
-          <button style={{ ...S.btn, background: showNew ? 'rgba(255,107,53,0.2)' : '#FF6B35', color: showNew ? '#FF6B35' : '#0A0E27', border: '1px solid #FF6B35', marginLeft: '8px' }}
+          <button style={{ ...S.btn, background: showNew ? 'rgba(227,82,5,0.2)' : '#E35205', color: showNew ? '#E35205' : '#0A0E27', border: '1px solid #E35205', marginLeft: '8px' }}
             onClick={() => { setShowNew((v) => !v); setCreateMsg(null) }}>
             {showNew ? '✕ CANCEL' : '+ NEW ORDER'}
           </button>
@@ -126,8 +126,8 @@ export default function OrdersAdmin() {
 
       {/* Manual order creation panel */}
       {showNew && (
-        <div style={{ background: '#151B3A', border: '1px solid #FF6B35', padding: '20px', marginBottom: '20px' }}>
-          <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.22em', marginBottom: '14px' }}>{"// MANUAL ORDER — confirm offline payment and provision Voyager membership"}</div>
+        <div style={{ background: '#151B3A', border: '1px solid #E35205', padding: '20px', marginBottom: '20px' }}>
+          <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', marginBottom: '14px' }}>{"// MANUAL ORDER — confirm offline payment and provision Voyager membership"}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={S.label}>BUYER EMAIL *</label>
@@ -149,7 +149,7 @@ export default function OrdersAdmin() {
               <span style={{ fontSize: '12px', color: createMsg.ok ? '#20D890' : '#E83030' }}>{createMsg.text}</span>
             )}
           </div>
-          <div style={{ marginTop: '10px', fontSize: '11px', color: 'rgba(245,245,245,0.35)', lineHeight: 1.6 }}>
+          <div style={{ marginTop: '10px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', lineHeight: 1.6 }}>
             Creates a paid order → auto-upgrades the account to Voyager + joins current batch.<br />
             If no account exists for this email, an invitation will be sent automatically.
           </div>
@@ -174,8 +174,8 @@ export default function OrdersAdmin() {
                   {o.batch_label && <span style={{ color: 'rgba(245,245,245,0.45)' }}> · {o.batch_label}</span>}
                 </div>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: STATUS_COLOR[o.status] ?? '#F5F5F5' }}>● {o.status}</span>
-                  <span style={{ fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>{o.created_at.slice(0, 10)}</span>
+                  <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: STATUS_COLOR[o.status] ?? '#F5F5F5' }}>● {o.status}</span>
+                  <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>{o.created_at.slice(0, 10)}</span>
                 </div>
               </div>
 

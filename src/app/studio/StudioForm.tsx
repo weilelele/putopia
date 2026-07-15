@@ -108,7 +108,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                     onClick={() => togglePlatform(p)}
                     style={{
                       flex: 1, padding: '8px 0',
-                      fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em',
+                      fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
                       background: active ? 'rgba(255,90,31,0.1)' : 'transparent',
                       border: `1px solid ${active ? 'rgba(255,90,31,0.45)' : 'var(--bd-faint)'}`,
                       color: active ? 'var(--color-star)' : 'var(--color-star-deep)',
@@ -128,7 +128,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                   onClick={() => togglePlatform('xiaohongshu')}
                   style={{
                     width: '100%', padding: '8px 0',
-                    fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em',
+                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
                     background: active ? 'rgba(255,30,60,0.1)' : 'transparent',
                     border: `1px solid ${active ? 'rgba(255,30,60,0.5)' : 'var(--bd-faint)'}`,
                     color: active ? 'var(--color-star)' : 'var(--color-star-deep)',
@@ -137,7 +137,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                   }}
                 >
                   <span>小红书 / RED</span>
-                  <span style={{ fontSize: 8, opacity: 0.55, letterSpacing: '0.05em' }}>中文</span>
+                  <span style={{ fontSize: 'var(--fs-caption)', opacity: 0.55, letterSpacing: '0.05em' }}>中文</span>
                 </button>
               )
             })()}
@@ -155,7 +155,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                   onClick={() => setContentType(ct.value)}
                   style={{
                     padding: '8px 10px', textAlign: 'left',
-                    fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.18em',
+                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
                     background: active ? 'rgba(255,90,31,0.08)' : 'transparent',
                     border: `1px solid ${active ? 'rgba(255,90,31,0.3)' : 'transparent'}`,
                     color: active ? 'var(--color-star)' : 'var(--color-star-deep)',
@@ -165,7 +165,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                 >
                   <span>{ct.label}</span>
                   {active && (
-                    <span style={{ fontSize: 8, color: 'var(--color-nucleus)', opacity: 0.7 }}>
+                    <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-nucleus)', opacity: 0.7 }}>
                       {ct.desc}
                     </span>
                   )}
@@ -176,7 +176,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
         </Section>
 
         {/* Reference — grouped select */}
-        <Section label={<>REFERENCE <span style={{ fontSize: 8, opacity: 0.5, letterSpacing: '0.1em' }}>OPTIONAL</span></>}>
+        <Section label={<>REFERENCE <span style={{ fontSize: 'var(--fs-caption)', opacity: 0.5, letterSpacing: '0.1em' }}>OPTIONAL</span></>}>
           <select
             value={referenceId}
             onChange={e => setReferenceId(e.target.value)}
@@ -184,7 +184,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
               width: '100%', padding: '8px 10px',
               background: 'var(--color-void)', border: '1px solid var(--bd-faint)',
               color: referenceId ? 'var(--color-star)' : 'var(--color-star-deep)',
-              fontFamily: 'var(--font-mono)', fontSize: 10,
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
               cursor: 'pointer',
             }}
           >
@@ -226,7 +226,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
               padding: 12,
               background: 'var(--color-void)', border: '1px solid var(--bd-faint)',
               color: 'var(--color-star)',
-              fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.75,
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', lineHeight: 1.75,
               resize: 'vertical',
             }}
           />
@@ -239,7 +239,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
             disabled={!canGenerate}
             style={{
               width: '100%', padding: '13px',
-              fontFamily: 'var(--font-display)', fontSize: 10, letterSpacing: '0.28em',
+              fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', letterSpacing: '0.28em',
               background: canGenerate ? 'rgba(255,90,31,0.1)' : 'transparent',
               border: `1px solid ${canGenerate ? 'rgba(255,90,31,0.5)' : 'var(--bd-faint)'}`,
               color: canGenerate ? 'var(--color-star)' : 'var(--color-star-deep)',
@@ -265,7 +265,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
 
           {error && (
             <div style={{
-              marginTop: 10, fontSize: 9, letterSpacing: '0.12em',
+              marginTop: 10, fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
               color: 'var(--color-fault)', lineHeight: 1.6,
             }}>
               ⚠ {error}
@@ -293,10 +293,10 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
               ◎
             </div>
             <div style={{ textAlign: 'center', lineHeight: 2 }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 9, letterSpacing: '0.3em', color: 'var(--color-star)' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-star)' }}>
                 AWAITING TRANSMISSION
               </div>
-              <div style={{ fontSize: 9, letterSpacing: '0.15em', color: 'var(--color-star-deep)', marginTop: 6 }}>
+              <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-star-deep)', marginTop: 6 }}>
                 configure inputs → generate
               </div>
             </div>
@@ -310,10 +310,10 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
             alignItems: 'center', justifyContent: 'center', gap: 14,
           }}>
             <ScanLine />
-            <div style={{ fontSize: 9, letterSpacing: '0.3em', color: 'var(--color-nebula)' }}>
+            <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: 'var(--color-nebula)' }}>
               SIGNAL PROCESSING...
             </div>
-            <div style={{ fontSize: 8, letterSpacing: '0.15em', color: 'var(--color-star-deep)', opacity: 0.6 }}>
+            <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-star-deep)', opacity: 0.6 }}>
               claude sonnet · prompt cache active
             </div>
           </div>
@@ -358,7 +358,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                   padding: '10px 14px', borderBottom: '1px solid var(--bd-faint)',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
-                  <span style={{ fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,30,60,0.85)' }}>
+                  <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'rgba(255,30,60,0.85)' }}>
                     小红书 / RED
                   </span>
                   <CopyBtn
@@ -386,7 +386,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                 </div>
                 <div style={{
                   padding: '0 14px 10px',
-                  fontSize: 8, letterSpacing: '0.1em', color: 'var(--color-star-deep)',
+                  fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: 'var(--color-star-deep)',
                 }}>
                   标题 {result.xiaohongshu_title.length} 字 · 正文 {result.xiaohongshu_body.length} 字
                 </div>
@@ -400,7 +400,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                 padding: '10px 14px', borderBottom: '1px solid var(--bd-faint)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
-                <span style={{ fontSize: 9, letterSpacing: '0.25em', color: 'var(--color-ok)' }}>
+                <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-ok)' }}>
                   IMAGE DIRECTION — LOVART
                 </span>
                 <CopyBtn
@@ -410,14 +410,14 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
               </div>
 
               {/* Full prompt */}
-              <div style={{ padding: '14px 14px 0', fontSize: 11, color: 'var(--color-star-dim)', lineHeight: 1.8 }}>
+              <div style={{ padding: '14px 14px 0', fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', lineHeight: 1.8 }}>
                 {result.image_prompt}
               </div>
 
               {/* Pollinations preview */}
               <div style={{ padding: 14 }}>
                 <div style={{
-                  fontSize: 8, letterSpacing: '0.22em', color: 'var(--color-star-deep)',
+                  fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: 'var(--color-star-deep)',
                   marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8,
                 }}>
                   <span>DRAFT PREVIEW</span>
@@ -437,10 +437,10 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                       alignItems: 'center', justifyContent: 'center', gap: 10,
                     }}>
                       <ScanLine small />
-                      <div style={{ fontSize: 8, letterSpacing: '0.2em', color: 'var(--color-star-deep)' }}>
+                      <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)' }}>
                         RENDERING IMAGE...
                       </div>
-                      <div style={{ fontSize: 7, letterSpacing: '0.12em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
+                      <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)', opacity: 0.5 }}>
                         usually takes 15–30 seconds
                       </div>
                     </div>
@@ -455,13 +455,13 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                       display: 'flex', flexDirection: 'column',
                       alignItems: 'center', justifyContent: 'center', gap: 10,
                     }}>
-                      <div style={{ fontSize: 8, letterSpacing: '0.15em', color: 'var(--color-fault)' }}>
+                      <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-fault)' }}>
                         PREVIEW UNAVAILABLE
                       </div>
                       <button
                         onClick={() => { setImgError(false); setImgLoaded(false); setImgKey(k => k + 1) }}
                         style={{
-                          fontSize: 8, letterSpacing: '0.15em', padding: '4px 12px',
+                          fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', padding: '4px 12px',
                           fontFamily: 'var(--font-mono)',
                           background: 'transparent',
                           border: '1px solid var(--bd-faint)',
@@ -493,14 +493,14 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                   marginTop: 10, display: 'flex', alignItems: 'center',
                   justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
                 }}>
-                  <div style={{ fontSize: 8, letterSpacing: '0.13em', color: 'var(--color-star-deep)', lineHeight: 1.7 }}>
+                  <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: 'var(--color-star-deep)', lineHeight: 1.7 }}>
                     → Paste the <strong style={{ color: 'var(--color-ok)' }}>full prompt above</strong> into LovArt for production quality
                   </div>
                   {imgLoaded && (
                     <button
                       onClick={() => { setImgLoaded(false); setImgError(false); setImgKey(k => k + 1) }}
                       style={{
-                        fontSize: 8, letterSpacing: '0.15em', padding: '3px 10px',
+                        fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', padding: '3px 10px',
                         fontFamily: 'var(--font-mono)', flexShrink: 0,
                         background: 'transparent', border: '1px solid var(--bd-faint)',
                         color: 'var(--color-star-deep)', cursor: 'pointer',
@@ -536,7 +536,7 @@ function Section({
       display: 'flex', flexDirection: 'column', gap: 10,
       ...style,
     }}>
-      <div style={{ fontSize: 8, letterSpacing: '0.28em', color: 'var(--color-star-deep)' }}>
+      <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: 'var(--color-star-deep)' }}>
         {label}
       </div>
       {children}
@@ -550,7 +550,7 @@ function CopyBtn({ onCopy, isCopied }: { onCopy: () => void; isCopied: boolean }
       onClick={onCopy}
       style={{
         padding: '3px 10px',
-        fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.15em',
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
         background: isCopied ? 'rgba(32,216,144,0.08)' : 'transparent',
         border: `1px solid ${isCopied ? 'rgba(32,216,144,0.3)' : 'var(--bd-faint)'}`,
         color: isCopied ? 'var(--color-ok)' : 'var(--color-star-deep)',
@@ -586,10 +586,10 @@ function OutputCard({
         padding: '10px 14px', borderBottom: '1px solid var(--bd-faint)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <span style={{ fontSize: 9, letterSpacing: '0.25em', color: accentColor }}>{label}</span>
+        <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: accentColor }}>{label}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{
-            fontSize: 9, letterSpacing: '0.1em',
+            fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
             color: over ? 'var(--color-fault)' : 'var(--color-star-deep)',
           }}>
             {charCount}{charLimit ? ` / ${charLimit}` : ''}
@@ -615,12 +615,12 @@ function ScanLine({ small }: { small?: boolean }) {
   return (
     <div style={{
       width: size, height: size,
-      border: '1px solid rgba(232,93,4,0.2)',
+      border: '1px solid rgba(200,68,6,0.2)',
       position: 'relative', overflow: 'hidden',
     }}>
       <div style={{
         position: 'absolute', left: 0, right: 0, height: 1,
-        background: 'linear-gradient(90deg, transparent, rgba(232,93,4,0.8), transparent)',
+        background: 'linear-gradient(90deg, transparent, rgba(200,68,6,0.8), transparent)',
         animation: 'studioScan 1.4s linear infinite',
       }} />
       <style>{`

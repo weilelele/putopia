@@ -18,8 +18,8 @@ const SCOPE_OPTIONS: { value: UserRole; label: string; desc: string }[] = [
 
 const S = {
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', boxSizing: 'border-box' } as const,
-  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as const,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', boxSizing: 'border-box' } as const,
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as const,
 }
 
 export function CreateVoteModal({ onClose, onCreated }: Props) {
@@ -86,7 +86,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
     >
       <div
         className="relative w-full max-w-lg mx-4 border p-6 overflow-y-auto"
-        style={{ background: '#151B3A', borderColor: 'rgba(255,107,53,0.16)', maxHeight: '90vh' }}
+        style={{ background: '#151B3A', borderColor: 'rgba(227,82,5,0.16)', maxHeight: '90vh' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -137,8 +137,8 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                     className="flex-1 text-xs font-mono py-1.5 border tracking-widest transition-all"
                     style={
                       type === t
-                        ? { borderColor: '#E85D04', color: '#F5F5F5', background: 'rgba(232,93,4,0.15)' }
-                        : { borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', background: 'transparent' }
+                        ? { borderColor: '#C84406', color: '#F5F5F5', background: 'rgba(200,68,6,0.15)' }
+                        : { borderColor: 'rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', background: 'transparent' }
                     }
                   >
                     {t === 'single' ? 'SINGLE' : 'MULTI'}
@@ -172,8 +172,8 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                     className="flex-1 text-xs font-mono py-1.5 px-2 border tracking-widest transition-all"
                     style={
                       active
-                        ? { borderColor: '#E85D04', color: '#F5F5F5', background: 'rgba(232,93,4,0.15)' }
-                        : { borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', background: 'transparent' }
+                        ? { borderColor: '#C84406', color: '#F5F5F5', background: 'rgba(200,68,6,0.15)' }
+                        : { borderColor: 'rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', background: 'transparent' }
                     }
                   >
                     {label}
@@ -212,7 +212,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                       onClick={() => removeOption(i)}
                       className="shrink-0 transition-colors"
                       style={{ color: 'rgba(245,245,245,0.35)' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = '#E85D04')}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = '#C84406')}
                       onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,245,245,0.35)')}
                     >
                       <Trash2 size={14} />
@@ -236,11 +236,11 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
           </div>
 
           {error && (
-            <div className="text-xs font-mono" style={{ color: '#E85D04' }}>✗ {error}</div>
+            <div className="text-xs font-mono" style={{ color: '#C84406' }}>✗ {error}</div>
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
+          <div className="flex items-center justify-end gap-3 pt-2 border-t" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
             <button
               type="button"
               onClick={onClose}
