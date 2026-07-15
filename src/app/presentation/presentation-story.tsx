@@ -8,6 +8,7 @@ import { FlipWordmark } from '@/components/flip-wordmark'
 import styles from './presentation.module.css'
 
 const chapters = [
+  '标识',
   '你相信吗',
   '征召',
   '证据',
@@ -27,26 +28,49 @@ const chapters = [
   '加入组织',
 ]
 
-function PresentationLogo({ compact = false }: { compact?: boolean }) {
+const signalPatchImages = Array.from(
+  { length: 16 },
+  (_, index) => `/presentation/signal-patches/patch-${String(index + 1).padStart(2, '0')}.webp`,
+)
+
+function SignalPatchCarousel({
+  active,
+  alt,
+  offset = 0,
+  intervalMs = 2200,
+  sizes,
+}: {
+  active: boolean
+  alt: string
+  offset?: number
+  intervalMs?: number
+  sizes: string
+}) {
+  const [index, setIndex] = useState(offset % signalPatchImages.length)
+
+  useEffect(() => {
+    if (!active || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const timer = window.setInterval(() => {
+      setIndex((current) => (current + 1) % signalPatchImages.length)
+    }, intervalMs)
+
+    return () => window.clearInterval(timer)
+  }, [active, intervalMs])
+
   return (
-    <span className={`${styles.imageLogo} ${compact ? styles.imageLogoCompact : ''}`}>
+    <div className={styles.signalPatchCarousel}>
       <Image
-        src="/assets/vi-icon.png"
-        alt=""
-        width={881}
-        height={492}
-        sizes={compact ? '38px' : '58px'}
-        preload={compact}
+        key={signalPatchImages[index]}
+        className={styles.signalPatchImage}
+        src={signalPatchImages[index]}
+        alt={`${alt} ${String(index + 1).padStart(2, '0')}`}
+        fill
+        sizes={sizes}
+        unoptimized
       />
-      <Image
-        src="/assets/vi-wordmark.png"
-        alt="Multiverse Collective"
-        width={3699}
-        height={1020}
-        sizes={compact ? '110px' : '190px'}
-        preload={compact}
-      />
-    </span>
+      <span key={`flash-${index}`} className={styles.signalPatchFlash} aria-hidden />
+    </div>
   )
 }
 
@@ -147,7 +171,7 @@ export function PresentationStory() {
         if (visible) {
           const chapter = Number((visible.target as HTMLElement).dataset.chapter)
           setActive(chapter)
-          if (chapter === 1) setRecruitedAnimationStarted(true)
+          if (chapter === 2) setRecruitedAnimationStarted(true)
         }
       },
       { root: scroller, threshold: [0.45, 0.65, 0.85] },
@@ -183,9 +207,7 @@ export function PresentationStory() {
   return (
     <div className={styles.shell}>
       <header className={styles.topBar}>
-        <PresentationLogo compact />
         <div className={styles.sessionMeta}>
-          <span>PUBLIC BRIEFING</span>
           <span className={styles.liveDot}>LIVE</span>
         </div>
       </header>
@@ -208,20 +230,32 @@ export function PresentationStory() {
       </nav>
 
       <main ref={scrollerRef} className={styles.scroller}>
-        <section className={`${styles.block} ${styles.opening}`} data-chapter="0">
+        <section className={`${styles.block} ${styles.logoCover}`} data-chapter="0">
+          <Image
+            className={styles.coverLogo}
+            src="/assets/vi-icon.png"
+            alt="Multiverse Collective"
+            width={881}
+            height={492}
+            sizes="(max-width: 767px) 54vw, 360px"
+            preload
+          />
+        </section>
+
+        <section className={`${styles.block} ${styles.opening}`} data-chapter="1">
           <div className={styles.gridField} />
           <div className={styles.openingCopy}>
             <p className={styles.kicker}>PARALLEL WORLD EXPLORATION ORGANIZATION</p>
             <h1>你们相信<br /><em>平行世界</em>吗？</h1>
             <p className={styles.lede}>一开始，我是不信的。</p>
           </div>
-          <button className={styles.scrollCue} type="button" onClick={() => goTo(1)}>
+          <button className={styles.scrollCue} type="button" onClick={() => goTo(2)}>
             <span>开始观测</span>
             <span aria-hidden>↓</span>
           </button>
         </section>
 
-        <section className={`${styles.block} ${styles.recruited}`} data-chapter="1">
+        <section className={`${styles.block} ${styles.recruited}`} data-chapter="2">
           <div className={styles.centerStatement}>
             <span className={styles.dateStamp}>两年前 / 某一天</span>
             <h2>我被<em>征召</em>进了一个<br />平行世界观测组织</h2>
@@ -239,7 +273,7 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.evidence}`} data-chapter="2">
+        <section className={`${styles.block} ${styles.evidence}`} data-chapter="3">
           <div className={styles.evidenceCopy}>
             <p className={styles.kicker}>EVIDENCE / 001</p>
             <h2>然后，<br />他们拿出了<em>证据</em>。</h2>
@@ -254,7 +288,7 @@ export function PresentationStory() {
           />
         </section>
 
-        <section className={`${styles.block} ${styles.realObject}`} data-chapter="3">
+        <section className={`${styles.block} ${styles.realObject}`} data-chapter="4">
           <div className={styles.realCopy}>
             <span>NOT AI GENERATED</span>
             <span>NOT A 3D RENDER</span>
@@ -269,9 +303,13 @@ export function PresentationStory() {
           />
         </section>
 
-        <section className={`${styles.block} ${styles.firstSight}`} data-chapter="4">
+        <section className={`${styles.block} ${styles.firstSight}`} data-chapter="5">
           <div className={styles.lens}>
-            <Image src="/assets/nebula.png" alt="被观测到的平行世界信号" fill sizes="70vw" />
+            <SignalPatchCarousel
+              active={active === 5}
+              alt="被观测到的平行世界信号"
+              sizes="70vw"
+            />
             <div className={styles.scanLine} />
           </div>
           <div className={styles.sightCopy}>
@@ -280,7 +318,7 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.archive}`} data-chapter="5">
+        <section className={`${styles.block} ${styles.archive}`} data-chapter="6">
           <div className={styles.archiveIntro}>
             <p className={styles.kicker}>FOUNDING DATE / UNKNOWN</p>
             <h2>没有人能明确说明，<br />这一切从何时开始。</h2>
@@ -309,7 +347,7 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.crisis}`} data-chapter="6">
+        <section className={`${styles.block} ${styles.crisis}`} data-chapter="7">
           <div className={styles.noiseCloud} aria-hidden>
             {['AI', '010011', 'FEED', '∞', 'SWIPE', 'DATA', 'NEXT', 'NOISE', '0010110', 'ALERT', 'MORE', 'SCROLL'].map((item, index) => (
               <span key={item} style={{ '--i': index } as React.CSSProperties}>{item}</span>
@@ -323,7 +361,7 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.connection}`} data-chapter="7">
+        <section className={`${styles.block} ${styles.connection}`} data-chapter="8">
           <div className={styles.worldModel} aria-hidden>
             <span className={styles.worldCore}>THIS<br />WORLD</span>
             <span className={`${styles.otherWorld} ${styles.worldA}`} />
@@ -340,7 +378,7 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.anatomy}`} data-chapter="8">
+        <section className={`${styles.block} ${styles.anatomy}`} data-chapter="9">
           <div className={styles.anatomyCopy}>
             <p>它像收音机，<br />却不接收任何广播。</p>
             <h2>它调谐的是<br /><em>另一个世界。</em></h2>
@@ -354,7 +392,7 @@ export function PresentationStory() {
           />
         </section>
 
-        <section className={`${styles.block} ${styles.worldSearch}`} data-chapter="9">
+        <section className={`${styles.block} ${styles.worldSearch}`} data-chapter="10">
           <div className={styles.channelDial} aria-hidden>
             <div className={styles.dialNumbers}>07.83</div>
             <div className={styles.dialRings} />
@@ -370,9 +408,15 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.liveFeed}`} data-chapter="10">
+        <section className={`${styles.block} ${styles.liveFeed}`} data-chapter="11">
           <div className={styles.feedScreen}>
-            <Image src="/assets/nebula.png" alt="来自平行世界固定机位的观测画面" fill sizes="(max-width: 767px) 92vw, 65vw" />
+            <SignalPatchCarousel
+              active={active === 11}
+              alt="来自平行世界固定机位的观测画面"
+              offset={8}
+              intervalMs={2470}
+              sizes="(max-width: 767px) 92vw, 65vw"
+            />
             <div className={styles.feedOverlay}>
               <span>LIVE / WORLD-MC-083</span>
               <span>REC ●</span>
@@ -386,7 +430,7 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.quantum}`} data-chapter="11">
+        <section className={`${styles.block} ${styles.quantum}`} data-chapter="12">
           <div className={styles.quantumCopy}>
             <p className={styles.kicker}>ONE-WAY TRANSMISSION</p>
             <h2>但观测，<br />并不只是<em>观看</em>。</h2>
@@ -406,7 +450,7 @@ export function PresentationStory() {
           </p>
         </section>
 
-        <section className={`${styles.block} ${styles.unknown}`} data-chapter="12">
+        <section className={`${styles.block} ${styles.unknown}`} data-chapter="13">
           <div className={styles.unknownCopy}>
             <p>里面到底有哪些世界？</p>
             <p>是不是预先设置好的？</p>
@@ -420,7 +464,7 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.mission}`} data-chapter="13">
+        <section className={`${styles.block} ${styles.mission}`} data-chapter="14">
           <div className={styles.missionImage}>
             <Image src="/voyager-pack/voyager-hero.png" alt="Multiverse Collective Voyager 物资" fill sizes="(max-width: 767px) 80vw, 38vw" />
           </div>
@@ -431,7 +475,7 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.searchMap}`} data-chapter="14">
+        <section className={`${styles.block} ${styles.searchMap}`} data-chapter="15">
           <div className={styles.mapGrid} aria-hidden />
           <div className={styles.locationList}>
             <article><span>01</span><strong>非洲</strong><p>某个地方的旧货市场</p></article>
@@ -445,7 +489,7 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.proposeWorld}`} data-chapter="15">
+        <section className={`${styles.block} ${styles.proposeWorld}`} data-chapter="16">
           <div className={styles.proposeCopy}>
             <p className={styles.kicker}>THERE IS ANOTHER WAY TO PARTICIPATE</p>
             <h2>你也可以告诉我们，<br />那个你<em>相信存在</em>的世界。</h2>
@@ -453,9 +497,9 @@ export function PresentationStory() {
           </div>
         </section>
 
-        <section className={`${styles.block} ${styles.join}`} data-chapter="16">
+        <section className={`${styles.block} ${styles.join}`} data-chapter="17">
           <div className={styles.joinCopy}>
-            <h2>成为Voyager<br />申请Multiverse Console<br /><em>加入我们</em></h2>
+            <h2>加入我们<br />成为Voygaer<br /><em>申请观测设备</em></h2>
           </div>
           <div className={styles.qrFrame}>
             <Image
