@@ -183,7 +183,7 @@ export default function VoyagersPage() {
   }
 
   return (
-    <div className="main">
+    <div className="main pilot-archive-page pilot-voyagers-page">
       <SectionTracker section="voyagers" />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGERS</div>
@@ -233,7 +233,7 @@ export default function VoyagersPage() {
       </div>
 
       {/* ── Stat board — Architect Council / new Voyagers / total Voyagers ── */}
-      <div style={{
+      <div className="voyagers-stat-board" style={{
         display: 'flex', gap: '0.75rem', marginBottom: '2rem', padding: '0.875rem 1rem',
         justifyContent: 'space-between', background: 'var(--bg-card)',
         border: '1px solid rgba(227,82,5,0.12)',
@@ -244,7 +244,7 @@ export default function VoyagersPage() {
           { val: latestBatch?.members.length ?? 0, label: 'NEW BATCH',  color: 'var(--color-ok)',     onClick: () => jumpTo('section-voyagers', latestBatch?.label) },
           { val: voyagers.length,              label: 'ALL VOYAGERS', color: 'var(--color-warn)',    onClick: () => jumpTo('section-voyagers') },
         ].map(({ val, label, color, onClick }) => (
-          <button key={label} onClick={onClick} style={{ minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
+          <button key={label} onClick={onClick} className="voyagers-stat-item" style={{ minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color, lineHeight: 1 }}>{loading ? '—' : val}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em', marginTop: 3, whiteSpace: 'nowrap' }}>{label}</div>
           </button>
@@ -259,7 +259,7 @@ export default function VoyagersPage() {
         <>
           {architects.length > 0 && (
             <section id="section-architects" style={{ marginBottom: '2.5rem', scrollMarginTop: '1rem' }}>
-              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(227,82,5,0.16)' }}>{"// ARCHITECT COUNCIL"}</div>
+              <div className="voyagers-section-label" style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(227,82,5,0.16)' }}>{"// ARCHITECT COUNCIL"}</div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {architects.map(v => (
                   <VoyagerCard key={v.id} voyager={v} user={user} isAtLeast={isAtLeast}
@@ -274,7 +274,7 @@ export default function VoyagersPage() {
               <style>{`.batch-rail::-webkit-scrollbar{display:none}.batch-rail{scrollbar-width:none}`}</style>
 
               {/* Batch selector — horizontal scroll rail */}
-              <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '0.75rem', paddingBottom: '8px', borderBottom: '1px solid rgba(227,82,5,0.16)' }}>{"// BATCHES"}</div>
+              <div className="voyagers-section-label" style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '0.75rem', paddingBottom: '8px', borderBottom: '1px solid rgba(227,82,5,0.16)' }}>{"// BATCHES"}</div>
 
               <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
                 {batches.length > 1 && (
@@ -292,6 +292,7 @@ export default function VoyagersPage() {
                       <button
                         key={b.label}
                         onClick={() => selectBatch(b.label)}
+                        className={`voyagers-batch-chip${isActive ? ' is-active' : ''}`}
                         style={{
                           flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.5rem',
                           padding: '0.55rem 0.9rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
@@ -517,7 +518,7 @@ function VoyagerCard({
   return (
     <div
       onClick={isOwn ? () => onEditClick(voyager) : undefined}
-      className="border p-4 transition-all duration-200"
+      className="voyager-card border p-4 transition-all duration-200"
       style={{
         background: '#151B3A',
         borderColor: isOwn ? `${color}55` : isArchitect ? 'rgba(200,68,6,0.18)' : 'rgba(227,82,5,0.16)',

@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
 import { HudField } from '@/components/hud-field'
@@ -20,7 +20,6 @@ function LoginPageContent() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/console'
 
@@ -49,30 +48,31 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div className="top-bar" style={{ position: 'absolute', top: 0, left: '2.5rem', right: '2.5rem' }}>
+    <div className="main pilot-archive-page pilot-login-page">
+      <div className="top-bar pilot-archive-topbar">
         <div className="crumbs">PC://CONSOLE <span>/</span> AUTHENTICATION</div>
       </div>
 
-      <div style={{ width: '100%', maxWidth: '440px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+      <div className="pilot-login-shell">
+        <header className="pilot-login-heading">
           <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>{"// IDENTITY VERIFICATION"}</div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 900, color: 'var(--color-nucleus)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(255,90,31,0.5)' }}>
             AUTHENTICATE
           </div>
-        </div>
+        </header>
 
-        <div className="hud-frame">
+        <div className="hud-frame pilot-login-frame">
           <div className="hud-tick-rail hud-tick-left" />
           <div className="hud-tick-rail hud-tick-right" />
-          <div style={{ padding: '0 1rem' }}>
+          <div className="pilot-login-form-inner">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
+              <label htmlFor="login-email" className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                 EMAIL ADDRESS
               </label>
               <HudField>
                 <input
+                  id="login-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -83,11 +83,12 @@ function LoginPageContent() {
             </div>
 
             <div>
-              <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
+              <label htmlFor="login-password" className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
                 ACCESS CODE
               </label>
               <HudField>
                 <input
+                  id="login-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -118,7 +119,7 @@ function LoginPageContent() {
           </div>
         </div>
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center', padding: '1rem', border: '1px solid var(--bd-faint)' }}>
+        <div className="pilot-login-access">
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', marginBottom: '0.5rem' }}>
             NO ACTIVE CREDENTIALS?
           </div>
@@ -127,10 +128,10 @@ function LoginPageContent() {
           </Link>
         </div>
 
-        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>{"// ALL ACCESS ATTEMPTS ARE LOGGED //"}</div>
+        <div className="pilot-login-notice">{"// ALL ACCESS ATTEMPTS ARE LOGGED //"}</div>
       </div>
 
-      <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
+      <div className="footer-bar pilot-archive-footer">
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
         <div>PUTOPIA.COLLECTIVE</div>
       </div>
