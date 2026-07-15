@@ -140,6 +140,7 @@ function VideoWindow({
 }
 
 export function PresentationStory() {
+  const shellRef = useRef<HTMLDivElement>(null)
   const scrollerRef = useRef<HTMLElement>(null)
   const [active, setActive] = useState(0)
   const [recruitedAnimationStarted, setRecruitedAnimationStarted] = useState(false)
@@ -204,8 +205,21 @@ export function PresentationStory() {
     window.setTimeout(() => setTransmission(false), 2800)
   }
 
+  const enterFullscreen = async () => {
+    if (document.fullscreenElement) return
+
+    const fullscreenTarget = shellRef.current ?? document.documentElement
+    if (!fullscreenTarget.requestFullscreen) return
+
+    try {
+      await fullscreenTarget.requestFullscreen({ navigationUI: 'hide' })
+    } catch {
+      // Browsers can reject fullscreen when it is disabled by their own UI or policy.
+    }
+  }
+
   return (
-    <div className={styles.shell}>
+    <div ref={shellRef} className={styles.shell}>
       <header className={styles.topBar}>
         <div className={styles.sessionMeta}>
           <span className={styles.liveDot}>LIVE</span>
@@ -231,15 +245,23 @@ export function PresentationStory() {
 
       <main ref={scrollerRef} className={styles.scroller}>
         <section className={`${styles.block} ${styles.logoCover}`} data-chapter="0">
-          <Image
-            className={styles.coverLogo}
-            src="/assets/vi-icon.png"
-            alt="Multiverse Collective"
-            width={881}
-            height={492}
-            sizes="(max-width: 767px) 54vw, 360px"
-            preload
-          />
+          <button
+            type="button"
+            className={styles.fullscreenLaunch}
+            onClick={enterFullscreen}
+            aria-label="进入全屏演讲模式"
+            title="进入全屏演讲模式"
+          >
+            <Image
+              className={styles.coverLogo}
+              src="/assets/vi-icon.png"
+              alt="Multiverse Collective"
+              width={881}
+              height={492}
+              sizes="(max-width: 767px) 54vw, 360px"
+              preload
+            />
+          </button>
         </section>
 
         <section className={`${styles.block} ${styles.opening}`} data-chapter="1">

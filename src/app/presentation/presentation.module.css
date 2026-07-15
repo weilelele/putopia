@@ -8,6 +8,11 @@
   font-family: var(--font-mono);
 }
 
+.shell:fullscreen {
+  width: 100vw;
+  height: 100vh;
+}
+
 .shell h1,
 .shell h2,
 .shell h3,
@@ -101,8 +106,25 @@
     var(--color-deep);
 }
 
-.coverLogo {
+.fullscreenLaunch {
+  display: grid;
   width: min(54vw, 360px);
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.fullscreenLaunch:focus-visible {
+  outline: 1px solid var(--color-nucleus);
+  outline-offset: var(--s-3);
+}
+
+.coverLogo {
+  width: 100%;
   height: auto;
   filter: drop-shadow(0 0 30px rgba(255, 107, 53, 0.32));
   animation: coverLogoIn 900ms cubic-bezier(0.16, 0.84, 0.34, 1) both;
