@@ -183,7 +183,7 @@ export default function VoyagersPage() {
   }
 
   return (
-    <div className="main pilot-archive-page pilot-voyagers-page">
+    <main className="main pilot-archive-page pilot-voyagers-page">
       <SectionTracker section="voyagers" />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGERS</div>
@@ -240,11 +240,11 @@ export default function VoyagersPage() {
         boxShadow: 'inset 0 1px 0 rgba(200,68,6,0.04)',
       }}>
         {[
-          { val: architects.length,            label: 'ARCHITECTS',   color: 'var(--color-nucleus)', onClick: () => jumpTo('section-architects') },
-          { val: latestBatch?.members.length ?? 0, label: 'NEW BATCH',  color: 'var(--color-ok)',     onClick: () => jumpTo('section-voyagers', latestBatch?.label) },
-          { val: voyagers.length,              label: 'ALL VOYAGERS', color: 'var(--color-warn)',    onClick: () => jumpTo('section-voyagers') },
-        ].map(({ val, label, color, onClick }) => (
-          <button key={label} onClick={onClick} className="voyagers-stat-item" style={{ minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
+          { index: '01', val: architects.length,            label: 'ARCHITECTS',   color: 'var(--color-nucleus)', onClick: () => jumpTo('section-architects') },
+          { index: '02', val: latestBatch?.members.length ?? 0, label: 'NEW BATCH',  color: 'var(--color-ok)',     onClick: () => jumpTo('section-voyagers', latestBatch?.label) },
+          { index: '03', val: voyagers.length,              label: 'ALL VOYAGERS', color: 'var(--color-warn)',    onClick: () => jumpTo('section-voyagers') },
+        ].map(({ index, val, label, color, onClick }) => (
+          <button key={label} onClick={onClick} className="voyagers-stat-item" data-index={index} style={{ minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color, lineHeight: 1 }}>{loading ? '—' : val}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em', marginTop: 3, whiteSpace: 'nowrap' }}>{label}</div>
           </button>
@@ -304,7 +304,7 @@ export default function VoyagersPage() {
                         }}
                       >
                         {b.label}
-                        <span style={{ fontSize: 'var(--fs-caption)', padding: '1px 6px', borderRadius: '999px', background: isActive ? 'rgba(200,68,6,0.2)' : 'rgba(245,245,245,0.08)', color: isActive ? '#FF8A5C' : 'rgba(245,245,245,0.45)' }}>
+                        <span className="voyagers-batch-chip__count" style={{ fontSize: 'var(--fs-caption)', padding: '1px 6px', borderRadius: '999px', background: isActive ? 'rgba(200,68,6,0.2)' : 'rgba(245,245,245,0.08)', color: isActive ? '#FF8A5C' : 'rgba(245,245,245,0.45)' }}>
                           {b.members.length}
                         </span>
                       </button>
@@ -323,7 +323,7 @@ export default function VoyagersPage() {
 
               {hasMoreBatchMembers && (
                 <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                  <button onClick={() => setBatchExpanded(e => !e)} className="btn-ghost" style={{ fontSize: 'var(--fs-caption)' }}>
+                  <button onClick={() => setBatchExpanded(e => !e)} className="btn-ghost voyagers-expand-control" style={{ fontSize: 'var(--fs-caption)' }}>
                     {batchExpanded ? '▲ COLLAPSE' : `▼ SHOW ALL (${currentMembers.length})`}
                   </button>
                 </div>
@@ -341,17 +341,22 @@ export default function VoyagersPage() {
       {/* ── Edit Modal ── */}
       {editing && form && (
         <div
+          className="voyagers-modal-backdrop"
           style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(5,8,18,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
           onClick={closeEdit}
         >
           <div
+            className="voyagers-modal-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="voyagers-edit-title"
             onClick={e => e.stopPropagation()}
             style={{ background: '#0F1430', border: '1px solid #C84406', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', fontFamily: 'var(--font-mono)' }}
           >
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div style={{ color: '#C84406', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>{"// EDIT PROFILE"}</div>
-              <button onClick={closeEdit} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
+            <div className="voyagers-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div id="voyagers-edit-title" style={{ color: '#C84406', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>{"// EDIT PROFILE"}</div>
+              <button onClick={closeEdit} className="voyagers-modal-close" aria-label="Close edit profile" style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
                 <XClose size={16} />
               </button>
             </div>
@@ -436,14 +441,14 @@ export default function VoyagersPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
-              <button onClick={closeEdit} className="btn-ghost" style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}>
+            <div className="voyagers-modal-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
+              <button onClick={closeEdit} className="btn-ghost voyagers-modal-cancel" style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}>
                 CANCEL
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="btn-secondary"
+                className="btn-secondary voyagers-modal-save"
                 style={{ padding: '0.5rem 1.4rem', fontSize: 'var(--fs-caption)', opacity: saving ? 0.5 : 1 }}
               >
                 {saving ? 'SAVING...' : 'SAVE'}
@@ -452,7 +457,7 @@ export default function VoyagersPage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   )
 }
 
@@ -518,7 +523,8 @@ function VoyagerCard({
   return (
     <div
       onClick={isOwn ? () => onEditClick(voyager) : undefined}
-      className="voyager-card border p-4 transition-all duration-200"
+      className={`voyager-card border p-4 transition-all duration-200${isOwn ? ' is-actionable' : ''}`}
+      data-record={isArchitect ? 'ARCH' : 'VOY'}
       style={{
         background: '#151B3A',
         borderColor: isOwn ? `${color}55` : isArchitect ? 'rgba(200,68,6,0.18)' : 'rgba(227,82,5,0.16)',
@@ -554,12 +560,12 @@ function VoyagerCard({
               {voyager.display_name}
             </span>
             {isOwn && (
-              <span className="text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#C84406', borderColor: 'rgba(200,68,6,0.4)', background: 'rgba(200,68,6,0.08)' }}>
+              <span className="voyager-card__tag text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#C84406', borderColor: 'rgba(200,68,6,0.4)', background: 'rgba(200,68,6,0.08)' }}>
                 YOU
               </span>
             )}
             {isArchitect && (
-              <span className="text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#E8A020', borderColor: 'rgba(232,160,32,0.35)', background: 'rgba(232,160,32,0.06)' }}>
+              <span className="voyager-card__tag text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#E8A020', borderColor: 'rgba(232,160,32,0.35)', background: 'rgba(232,160,32,0.06)' }}>
                 ARCHITECT
               </span>
             )}
@@ -603,7 +609,7 @@ function VoyagerCard({
           {links.map(({ key, icon, href }) => (
             <a key={key} href={href} target="_blank" rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              className="flex items-center justify-center w-7 h-7 border transition-colors"
+              className="voyager-card__social flex items-center justify-center w-7 h-7 border transition-colors"
               style={{ borderColor: 'rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', borderRadius: '2px' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(242,240,230,0.2)'; (e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.55)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(227,82,5,0.16)'; (e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.35)' }}

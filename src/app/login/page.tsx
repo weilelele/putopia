@@ -48,32 +48,46 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="main pilot-archive-page pilot-login-page">
+    <main className="main pilot-archive-page pilot-login-page">
       <div className="top-bar pilot-archive-topbar">
         <div className="crumbs">PC://CONSOLE <span>/</span> AUTHENTICATION</div>
       </div>
 
       <div className="pilot-login-shell">
         <header className="pilot-login-heading">
-          <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>{"// IDENTITY VERIFICATION"}</div>
+          <div className="pilot-login-heading__meta">
+            <div className="h-eyebrow">{"// IDENTITY VERIFICATION"}</div>
+            <span>AUTH / 01</span>
+          </div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 900, color: 'var(--color-nucleus)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(255,90,31,0.5)' }}>
             AUTHENTICATE
+          </div>
+          <div className="pilot-login-heading__rule" aria-hidden="true">
+            <span />
+            <span>SECURE CHANNEL</span>
           </div>
         </header>
 
         <div className="hud-frame pilot-login-frame">
           <div className="hud-tick-rail hud-tick-left" />
           <div className="hud-tick-rail hud-tick-right" />
+          <div className="pilot-login-frame__header">
+            <span>CREDENTIAL INTAKE</span>
+            <span>FORM / MC-AUTH</span>
+          </div>
           <div className="pilot-login-form-inner">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="login-email" className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
-                EMAIL ADDRESS
+            <div className="pilot-control-field">
+              <label htmlFor="login-email" className="pilot-control-label">
+                <span className="pilot-control-label__index">01</span>
+                <span>EMAIL ADDRESS</span>
+                <span className="pilot-control-label__state">REQUIRED</span>
               </label>
-              <HudField>
+              <HudField className="pilot-control-input" style={{ '--field-code': '"ID"' } as React.CSSProperties}>
                 <input
                   id="login-email"
                   type="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="operative@domain.void"
@@ -82,14 +96,17 @@ function LoginPageContent() {
               </HudField>
             </div>
 
-            <div>
-              <label htmlFor="login-password" className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
-                ACCESS CODE
+            <div className="pilot-control-field">
+              <label htmlFor="login-password" className="pilot-control-label">
+                <span className="pilot-control-label__index">02</span>
+                <span>ACCESS CODE</span>
+                <span className="pilot-control-label__state">ENCRYPTED</span>
               </label>
-              <HudField>
+              <HudField className="pilot-control-input" style={{ '--field-code': '"KY"' } as React.CSSProperties}>
                 <input
                   id="login-password"
                   type="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
@@ -100,20 +117,22 @@ function LoginPageContent() {
 
             {error && (
               <div
-                className="text-xs font-mono py-2 px-3 border"
-                style={{ color: '#E83030', borderColor: 'rgba(232,48,48,0.3)', background: 'rgba(232,48,48,0.08)' }}
+                className="pilot-control-message is-error"
+                role="alert"
               >
-                {error}
+                <span aria-hidden="true">!</span>
+                <span>{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-orange w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ justifyContent: 'center', fontSize: 'var(--fs-label)' }}
+              className="btn-orange pilot-action-button w-full disabled:cursor-not-allowed"
             >
-              {loading ? '> AUTHENTICATING...' : '[ AUTHENTICATE ]'}
+              <span className="pilot-action-button__code" aria-hidden="true">EXEC 01</span>
+              <span>{loading ? 'AUTHENTICATING...' : 'AUTHENTICATE'}</span>
+              <span className="pilot-action-button__arrow" aria-hidden="true">→</span>
             </button>
           </form>
           </div>
@@ -123,8 +142,10 @@ function LoginPageContent() {
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', marginBottom: '0.5rem' }}>
             NO ACTIVE CREDENTIALS?
           </div>
-          <Link href="/new" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-nucleus)' }}>
-            REQUEST ACCESS PERMISSION. →
+          <Link href="/new" className="pilot-access-button">
+            <span aria-hidden="true">REQ 02</span>
+            <span>REQUEST ACCESS PERMISSION</span>
+            <span aria-hidden="true">→</span>
           </Link>
         </div>
 
@@ -135,6 +156,6 @@ function LoginPageContent() {
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
         <div>PUTOPIA.COLLECTIVE</div>
       </div>
-    </div>
+    </main>
   )
 }
