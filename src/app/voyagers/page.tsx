@@ -192,35 +192,20 @@ export default function VoyagersPage() {
         </div>
       </div>
 
-      <div className="page-head" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: '1rem' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ whiteSpace: 'nowrap' }}>ACTIVE <span className="accent">VOYAGERS</span></h1>
+      <div className="page-head voyagers-page-head">
+        <div className="voyagers-page-head__intro">
+          <h1 className="voyagers-page-title">ACTIVE <span className="accent">VOYAGERS</span></h1>
           {/* Voyager Logs — sits below the title */}
           <Link
             href="/logs"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginTop: '0.75rem',
-              border: '1px solid rgba(227,82,5,0.4)',
-              color: 'rgba(227,82,5,0.85)',
-              background: 'transparent',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-caption)',
-              letterSpacing: '0.1em',
-              padding: '0.5rem 0.75rem',
-              borderRadius: 8,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-            }}
+            className="btn-ghost voyagers-logs-link"
           >
             <FileText size={15} />
             VOYAGER LOGS
             <ArrowRight size={14} />
           </Link>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem', flexShrink: 0 }}>
+        <div className="voyagers-page-head__identity">
           {/* Avatar + identity — borderless, on the title row, links to profile */}
           {user.role !== 'guest' && (() => {
             const idColor = user.role === 'applicant' ? '#E8A020' : user.role === 'architect' ? '#E35205' : '#FFB07A'
@@ -228,8 +213,8 @@ export default function VoyagersPage() {
             const profileName = user.name || user.email?.split('@')[0] || 'Voyager'
             const profileInitials = profileName.slice(0, 2).toUpperCase()
             return (
-              <Link href="/profile" title="My profile" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
+              <Link href="/profile" title="My profile" className="voyagers-profile-link">
+                <span className="voyagers-profile-copy">
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.1em', color: idColor }}>{idLabel}</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(245,245,245,0.45)' }}>MY PROFILE</span>
                 </span>

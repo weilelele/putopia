@@ -192,6 +192,68 @@ select {
   line-height: 1.65;
 }
 
+/* Voyager registry heading: stack by default so title and identity never collide. */
+.page-head.voyagers-page-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+
+.voyagers-page-head__intro {
+  min-width: 0;
+}
+
+.page-head .voyagers-page-title {
+  max-width: 100%;
+  font-size: clamp(2rem, 10vw, 3rem);
+  white-space: normal;
+}
+
+.voyagers-page-title .accent {
+  display: block;
+}
+
+.voyagers-logs-link {
+  width: max-content;
+  max-width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.65rem 0.85rem;
+  gap: 0.55rem;
+  color: var(--color-nucleus-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.voyagers-page-head__identity {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.voyagers-profile-link {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--archive-line-soft);
+  color: inherit;
+  text-decoration: none;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+
+.voyagers-profile-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
 .h-eyebrow,
 .t-eyebrow,
 .t-tech,
@@ -698,6 +760,27 @@ input[type='radio'] {
   .mc-console-panel__functions {
     min-height: 260px;
     padding: 1.4rem 1.5rem;
+  }
+}
+
+@media (min-width: 1180px) {
+  .page-head.voyagers-page-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 2rem;
+  }
+
+  .voyagers-page-title .accent {
+    display: inline;
+  }
+
+  .voyagers-page-head__identity {
+    justify-content: flex-end;
+  }
+
+  .voyagers-profile-copy {
+    align-items: flex-end;
   }
 }
 
