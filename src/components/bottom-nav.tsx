@@ -7,7 +7,10 @@ import { useAuth } from '@/lib/auth-context'
 
 const HomeIcon = () => (
   <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-    <path d="M2 8L9 2L16 8V16H11V12H7V16H2V8Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+    <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1"/>
+    <circle cx="9" cy="9" r="3.5" stroke="currentColor" strokeWidth="1"/>
+    <path d="M9 1V4M9 14V17M1 9H4M14 9H17" stroke="currentColor" strokeWidth="1"/>
+    <circle cx="9" cy="9" r="1" fill="currentColor"/>
   </svg>
 )
 

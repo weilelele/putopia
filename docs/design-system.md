@@ -136,20 +136,24 @@ Type scale: `--fs-display` `--fs-h1`(48) `--fs-h2`(32) `--fs-h3`(24) `--fs-title
 
 ---
 
-## 4. HUD component conventions
+## 4. Style 01 component conventions
 
+- **Flat color only.** Components do not use color gradients, glass blur, bloom,
+  bevel highlights, or decorative HUD tick rails. Depth comes from spacing,
+  separators, and restrained surface contrast.
 - **Buttons** (`.btn-primary` filled, `.btn-secondary` outline, `.btn-orange`/`.btn-amber`
-  aliases of primary, `.btn-ghost` small/link): bevelled corners via `clip-path`
-  (top-left + bottom-right cut). Prominent buttons also carry a bottom-left square
-  **node** + right-edge dashed **tick** (`::before`/`::after`). Filled = dark accents,
-  outline = orange accents. `.btn-ghost` stays plain.
-- **Inputs** use the notched **`<HudField>`** wrapper (`src/components/hud-field.tsx`)
-  → `.hud-field`. Wrap a normal `<input className="input-dark">`; the wrapper draws
-  the notched border + fill and flattens the input to transparent. Optional `legend`
-  prop = label sitting on the top border. Focus → orange border + glow.
-- **`.hud-frame`** = larger panel frame with notched corners + `+` corner marks +
-  optional tick-rails (`.hud-tick-rail`).
-- Corner bevels everywhere are `clip-path: polygon(...)` based, ~12–16px notch.
+  aliases of primary, `.btn-ghost` small/link): primary is solid Pantone 1665 C;
+  secondary/ghost use a warm off-white hairline. Prominent controls use one 8px
+  top-right clipped corner. Pressed state moves down 1px; disabled state is flat steel.
+- **Inputs** use a plain 1px warm off-white outline, 4px radius, dark fill, and an
+  orange focus outline. `<HudField>` remains the reusable labelled wrapper, but its
+  presentation is deliberately quiet rather than heavily notched or glowing.
+- **Cards, dialogs, and `.hud-frame`** use a thin warm outline, dark flat surface,
+  clean section separators, and at most one 8px top-right clipped corner.
+- **Status and progress** use neutral outlined containers; orange/green/red is
+  reserved for the status dot or active fill instead of coloring the whole frame.
+- **Bottom navigation** is one outlined dock with thin vertical separators. Active
+  icon and label turn orange; inactive items remain warm off-white at reduced opacity.
 - Reusable classes live in `globals.css`: `.hud-frame`, `.label-tag`, `.card-void`,
   `.input-dark`, `.hud-field`, `.btn-*`, `.progress-track`/`.progress-fill`,
   `.status-pill`, `.hr-cyan` (orange), etc.

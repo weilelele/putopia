@@ -522,7 +522,6 @@ function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: Gu
           width: '100%',
           textAlign: 'center',
           margin: 'clamp(1.25rem, 5vh, 3rem) 0 1.75rem',
-          filter: 'drop-shadow(0 0 32px rgba(227,82,5,0.45)) drop-shadow(0 0 64px rgba(227,82,5,0.18))',
           ...line(0),
         }}
       >
@@ -537,7 +536,6 @@ function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: Gu
           alt="Multiverse Collective"
           style={{
             width: '140px', height: 'auto', display: 'block',
-            filter: 'drop-shadow(0 0 16px rgba(227,82,5,0.4)) drop-shadow(0 0 32px rgba(227,82,5,0.15))',
           }}
         />
       </div>
