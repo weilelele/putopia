@@ -72,13 +72,14 @@ Each world's Architect sets who may file on its puzzles (`worlds.vote_scope`, vi
 > voyager+ (`signal_responses_insert_voyager`); the server action then layers the per-world
 > `vote_scope` check on top — both layers decide final eligibility.
 
-## 6. Recall (re-engagement)
+## 6. Email outreach
 
-- 24 hours after a day's puzzle is published, remind players who participated in this world before but
-  haven't filed for the new day that "a new signal has appeared."
-- Timing references `signal_tasks.published_at`; `recall_sent_at` guards the cron from re-scanning;
-  `signal_recall_log` (task_id+user_id) dedups per person.
-- Driven by the cron endpoint `/api/cron/signal-recall` (`src/lib/signal/recall.ts`).
+Signal Dispatch keeps only two email mechanisms, both driven by the daily cron endpoint `/api/cron/signal-recall`:
+
+1. **Re-engagement** — targets participants who have been **away for a sustained stretch**. Two rules: `owner_absent` (world owner missed the 2 most recent revealed days) and `voter_churn` (a prior voter missed the 3 most recent revealed days); at most one email per user per run (`src/lib/signal/engagement.ts`).
+2. **Publisher notice (signal / no-signal)** — filing a sighting starts a `scan_until` countdown on the world (random 6–8h, `src/lib/signal/scan.ts`). When it elapses, `resolveCompletedScans` decides the outcome once (`src/lib/signal/scan-resolve.ts`, idempotent via `scan_resolved_at`): if an Architect tuned a signal during the window → "signal" email (`world-confirmed-email.ts`); otherwise → "no-signal" email (`scan-failed-email.ts`).
+
+> **Removed:** the old **Recall** mechanism (`recall.ts`) that pinged every prior participant on each newly-revealed day. It fired on a single missed day with no frequency cap — near-daily spam for lapsed users — and overlapped re-engagement's job. Legacy columns/tables (`signal_tasks.published_at / recall_sent_at`, `signal_recall_log`) remain but are no longer written.
 
 ## 7. Authoring workflow (Architect admin `/admin/signal-tasks`)
 
