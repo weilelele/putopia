@@ -1168,6 +1168,77 @@
   .qrFrame { justify-self: end; }
 }
 
+@media (min-width: 1600px) and (min-height: 900px) {
+  .shell {
+    --stage-unit: clamp(1rem, min(1.111vw, 1.778vh), 2.5rem);
+    --fs-caption: calc(var(--stage-unit) * 0.75);
+    --fs-label: calc(var(--stage-unit) * 0.8125);
+    --fs-body: var(--stage-unit);
+    --fs-title: calc(var(--stage-unit) * 1.25);
+    --fs-h3: calc(var(--stage-unit) * 1.5);
+    --s-1: calc(var(--stage-unit) * 0.25);
+    --s-2: calc(var(--stage-unit) * 0.5);
+    --s-3: calc(var(--stage-unit) * 0.75);
+    --s-4: var(--stage-unit);
+    --s-5: calc(var(--stage-unit) * 1.5);
+    --s-6: calc(var(--stage-unit) * 2);
+    --s-7: calc(var(--stage-unit) * 3);
+    --s-8: calc(var(--stage-unit) * 4);
+  }
+
+  .topBar { height: calc(var(--stage-unit) * 4.375); }
+  .block { padding: calc(var(--stage-unit) * 6.875) var(--s-7) var(--s-7); }
+  .fullscreenLaunch { width: calc(var(--stage-unit) * 22.5); }
+
+  .opening h1 {
+    max-width: calc(var(--stage-unit) * 58.125);
+    font-size: calc(var(--stage-unit) * 8.5);
+  }
+
+  .centerStatement h2,
+  .archiveIntro h2,
+  .crisisCopy h2,
+  .connectionCopy h2,
+  .anatomyCopy h2,
+  .searchCopy h2,
+  .feedCopy h2,
+  .quantumCopy h2,
+  .unknownCopy h2,
+  .missionCopy h2,
+  .finalCopy h2,
+  .proposeCopy h2,
+  .joinCopy h2 {
+    font-size: calc(var(--stage-unit) * 5.5);
+  }
+
+  .evidenceCopy h2,
+  .realCopy h2,
+  .sightCopy h2 { font-size: calc(var(--stage-unit) * 7); }
+  .namePlate { max-width: calc(var(--stage-unit) * 42.5); font-size: calc(var(--stage-unit) * 4.2); }
+  .centerStatement { max-width: calc(var(--stage-unit) * 57.5); }
+  .deviceWindow { max-width: calc(var(--stage-unit) * 42.5); }
+  .evidenceCopy,
+  .anatomyCopy { max-width: calc(var(--stage-unit) * 35); }
+  .realCopy { max-width: calc(var(--stage-unit) * 38.75); }
+  .lens { max-width: calc(var(--stage-unit) * 48.75); }
+  .sightCopy,
+  .connectionCopy { max-width: calc(var(--stage-unit) * 45); }
+  .archiveIntro,
+  .timeline { max-width: calc(var(--stage-unit) * 70); }
+  .crisisCopy,
+  .feedScreen,
+  .quantumCopy { max-width: calc(var(--stage-unit) * 56.25); }
+  .worldModel { max-width: calc(var(--stage-unit) * 53.75); }
+  .channelDial { max-width: calc(var(--stage-unit) * 58.75); }
+  .searchCopy { max-width: calc(var(--stage-unit) * 52.5); }
+  .feedCopy { max-width: calc(var(--stage-unit) * 51.25); }
+  .unknownCopy,
+  .proposeCopy { max-width: calc(var(--stage-unit) * 65); }
+  .missionImage { max-width: calc(var(--stage-unit) * 32.5); }
+  .missionCopy { max-width: calc(var(--stage-unit) * 55); }
+  .qrFrame { width: min(62vw, calc(var(--stage-unit) * 22.5)); }
+}
+
 @media (max-width: 767px) {
   .topBar :global(span[style*='font-size']) { font-size: var(--fs-caption) !important; }
   .rail { left: 50%; right: auto; transform: translateX(-50%); }
