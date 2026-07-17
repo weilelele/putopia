@@ -21,6 +21,7 @@ import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
 import { AccessGate } from '@/components/access-gate'
 import { useActivateAccess } from '@/components/activate-action'
+import { PwaInstallCard } from '@/components/pwa-install-card'
 import type { Device, World, McFunction, IntelWithAvatar } from '@/types/database'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
@@ -1065,6 +1066,8 @@ function ConsoleInner() {
           <div className="item">UPLINK <span className="val">ACTIVE</span></div>
         </div>
       </div>
+
+      <PwaInstallCard />
 
       {/* ── Hero: conditional on auth state ── */}
       {loading ? (
