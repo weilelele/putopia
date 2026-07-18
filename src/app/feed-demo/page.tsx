@@ -240,7 +240,7 @@ function FeedRow({ event }: { event: FeedEvent }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.1rem' }}>
             {event.actor.socials?.map(s => (
               <span key={s.platform} onClick={e => e.preventDefault()} style={{
-                fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.15em',
+                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
                 color: 'var(--color-star-deep)', border: '1px solid var(--bd-faint)',
                 padding: '0.1rem 0.45rem', cursor: 'pointer',
                 transition: 'color 0.1s, border-color 0.1s',

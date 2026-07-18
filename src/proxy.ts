@@ -28,8 +28,11 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Refresh session — do not remove this call
-  const { data: { user } } = await supabase.auth.getUser()
+  // Verify the access token and refresh it when needed. With asymmetric signing
+  // keys this uses the cached JWKS locally, avoiding a Supabase Auth round-trip
+  // on every client navigation while preserving a trusted user identity.
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims.sub
 
   const { pathname } = request.nextUrl
 
@@ -39,14 +42,14 @@ export async function proxy(request: NextRequest) {
   // ever completing /register — they have no password and no chosen identity
   // (registered_at stays NULL). Force any such logged-in user through /register
   // before they can browse or post anything.
-  if (user) {
+  if (userId) {
     const REGISTER_EXEMPT = ['/register', '/auth', '/api']
     const exempt = REGISTER_EXEMPT.some((p) => pathname === p || pathname.startsWith(p + '/'))
     if (!exempt) {
       const { data: regProfile } = await supabase
         .from('voyager_profiles')
         .select('registered_at')
-        .eq('id', user.id)
+        .eq('id', userId)
         .maybeSingle()
       if (!regProfile?.registered_at) {
         return NextResponse.redirect(new URL('/register', request.url))
@@ -58,7 +61,7 @@ export async function proxy(request: NextRequest) {
   // Ad links (with UTM params) are transparently forwarded to /new so the
   // existing campaign URLs never need to change.
   if (pathname === '/') {
-    if (user) {
+    if (userId) {
       return NextResponse.redirect(new URL('/console', request.url))
     }
     const qs = request.nextUrl.searchParams.toString()
@@ -77,7 +80,7 @@ export async function proxy(request: NextRequest) {
   // Guests can access individual content pages (e.g. /intel/[id]) but not the root listings.
   // Redirect to /login with a ?redirect= param so the user lands on the right page after signing in.
   const GUEST_BLOCKED = ['/intel', '/devices', '/worlds', '/voyagers', '/vote', '/logs']
-  if (!user && GUEST_BLOCKED.some(p => pathname === p || pathname === p + '/')) {
+  if (!userId && GUEST_BLOCKED.some(p => pathname === p || pathname === p + '/')) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     loginUrl.searchParams.set('redirect', pathname)
@@ -85,7 +88,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // /profile requires a logged-in user
-  if (pathname.startsWith('/profile') && !user) {
+  if (pathname.startsWith('/profile') && !userId) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     loginUrl.searchParams.set('redirect', pathname)
@@ -95,32 +98,17 @@ export async function proxy(request: NextRequest) {
   // /voyager-pack is a public product page — accessible to all users including guests.
   // Auth + purchase gating is handled inside /api/checkout.
 
-  // /devices/claim is architect-only until Stripe is wired in.
-  if (pathname.startsWith('/devices/claim')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login?redirect=/devices/claim', request.url))
-    }
-    const { data: profile } = await supabase
-      .from('voyager_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    if (profile?.role !== 'architect') {
-      return NextResponse.redirect(new URL('/console', request.url))
-    }
-  }
-
   // /admin and /studio both require architect role.
   // Exception: /admin/onboarding-preview is also open to users explicitly
   // granted can_edit_onboarding (page-level grant for non-architects).
   if (pathname.startsWith('/admin') || pathname.startsWith('/studio')) {
-    if (!user) {
+    if (!userId) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     const { data: profile } = await supabase
       .from('voyager_profiles')
       .select('role, can_edit_onboarding')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single()
 
     const isArchitect = profile?.role === 'architect'
@@ -137,6 +125,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 
@@ -38,16 +39,22 @@ export function Sidebar() {
     href === '/console' ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" aria-label="Workspace navigation">
       <Link href="/console" className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-        <img
+        <Image
           src="/assets/vi-icon.png"
           alt=""
+          width={881}
+          height={492}
+          sizes="64px"
           style={{ height: 36, width: 'auto', display: 'block', flexShrink: 0 }}
         />
-        <img
+        <Image
           src="/assets/vi-wordmark.png"
           alt="Multiverse Collective"
+          width={3699}
+          height={1020}
+          sizes="180px"
           style={{ height: 30, width: 'auto', display: 'block' }}
         />
       </Link>
@@ -78,6 +85,7 @@ export function Sidebar() {
                 key={href}
                 href={href}
                 className={`nav-item ${isActive(href) ? 'active' : ''}`}
+                aria-current={isActive(href) ? 'page' : undefined}
               >
                 {icon}
                 {label}
@@ -105,7 +113,7 @@ export function Sidebar() {
       </div>
 
       {user.role === 'guest' && (
-        <Link href="/" className="sidebar-apply">REQUEST ACCESS</Link>
+        <Link href="/new" className="sidebar-apply">REQUEST ACCESS</Link>
       )}
 
       <div className="sidebar-status">

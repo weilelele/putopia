@@ -133,7 +133,7 @@ export default function BatchDemoPage() {
                 >
                   {b.label}
                   <span style={{
-                    fontSize: '0.65rem', padding: '1px 6px', borderRadius: '999px',
+                    fontSize: 'var(--fs-caption)', padding: '1px 6px', borderRadius: '999px',
                     background: isActive ? 'rgba(232,93,4,0.2)' : 'rgba(245,245,245,0.08)',
                     color: isActive ? '#FF8A5C' : 'rgba(245,245,245,0.45)',
                   }}>
@@ -205,7 +205,7 @@ function MemberCard({ m, architect = false }: { m: Member; architect?: boolean }
       <div style={{ minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#F5F5F5', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</span>
-          {architect && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', padding: '1px 5px', color: '#E8A020', border: '1px solid rgba(232,160,32,0.35)', background: 'rgba(232,160,32,0.06)' }}>ARCH</span>}
+          {architect && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', padding: '1px 5px', color: '#E8A020', border: '1px solid rgba(232,160,32,0.35)', background: 'rgba(232,160,32,0.06)' }}>ARCH</span>}
         </div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginTop: '2px' }}>{m.location}</div>
       </div>

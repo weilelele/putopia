@@ -6,3 +6,4 @@
 -- opportunistic page-view never double-send. rescanWorld clears it so a retry
 -- re-resolves on the next completion.
 ALTER TABLE public.worlds ADD COLUMN IF NOT EXISTS scan_resolved_at TIMESTAMPTZ;
+

@@ -209,4 +209,3 @@ function RevealOverlay({ durationMs }: { durationMs: number }) {
     </div>
   )
 }
-

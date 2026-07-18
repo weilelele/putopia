@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
-import { flushSync } from 'react-dom'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import Link from 'next/link'
@@ -552,12 +551,12 @@ function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: Gu
       </p>
 
       {/* Device showcase — leads the hero so the product hits first */}
-      <div style={{ width: '100%', maxWidth: 820, margin: '1.75rem auto 0', ...line(2) }}>
+      <div className="guest-device-showcase" style={{ width: '100%', maxWidth: 820, ...line(2) }}>
         <McConsolePanel mcFunctions={mcFunctions} />
       </div>
 
       {/* CTA row — always horizontal, equal-width buttons */}
-      <div style={{
+      <div className="guest-cta-row" style={{
         display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.75rem',
         width: '100%', maxWidth: '620px',
       }}>
@@ -582,7 +581,7 @@ function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: Gu
       </div>
 
       {/* Three headline numbers — supporting proof, below the action buttons */}
-      <div style={{ width: '100%', marginTop: '1.75rem', ...line(2) }}>
+      <div className="guest-stats" style={{ width: '100%', ...line(2) }}>
         <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
       </div>
 
@@ -968,10 +967,11 @@ function ConsoleInner() {
     // On a full reload the module cache is gone and we mount as a skeleton. Seed
     // the feed synchronously from the persistent cache BEFORE we pin, so the page
     // is already full-height and the pin lands exactly — no flash, no land-near-
-    // top. flushSync forces the commit before the next line reads scrollHeight.
+    // top. The interval below keeps correcting the pin as the cached feed commits.
     if (feedEntries.length === 0) {
       const cached = readFeedCache()
-      if (cached.length) flushSync(() => setFeedEntries(cached))
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restore a browser-only cache before scroll-position correction begins
+      if (cached.length) setFeedEntries(cached)
     }
 
     const saved = Number(sessionStorage.getItem('console:scrollTop') ?? '')

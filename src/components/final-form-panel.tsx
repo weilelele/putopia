@@ -86,24 +86,24 @@ export function FinalFormPanel({ worldId }: { worldId: string }) {
   return (
     <div style={{ background: '#0F1430', border: '1px solid rgba(255,107,53,0.18)', padding: 12, marginBottom: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={{ fontSize: 11, letterSpacing: '0.14em', color: '#20D890' }}>FINAL FORM</span>
-        <label style={{ fontSize: 11, letterSpacing: '0.08em', color: '#FF6B35', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1, border: '1px solid rgba(255,107,53,0.4)', padding: '4px 10px' }}>
+        <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: '#20D890' }}>FINAL FORM</span>
+        <label style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: '#FF6B35', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1, border: '1px solid rgba(255,107,53,0.4)', padding: '4px 10px' }}>
           {busy ? 'Working…' : '+ Upload image / video'}
           <input ref={fileRef} type="file" accept="image/*,video/*" disabled={busy} onChange={onPick} style={{ display: 'none' }} />
         </label>
       </div>
 
-      {err && <div style={{ fontSize: 11, color: '#E83030', marginBottom: 8 }}>{err}</div>}
+      {err && <div style={{ fontSize: 'var(--fs-caption)', color: '#E83030', marginBottom: 8 }}>{err}</div>}
 
       {assets.length === 0 ? (
-        <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.35)', marginBottom: 10 }}>The world&apos;s final observed form — upload one or more images, or a video.</div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginBottom: 10 }}>The world&apos;s final observed form — upload one or more images, or a video.</div>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
           {assets.map((a) => (
             <div key={a.id} style={{ position: 'relative', width: 72, height: 72, border: '1px solid rgba(255,107,53,0.25)', background: '#070912' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={a.poster_url || a.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              {a.media === 'video' && <span style={{ position: 'absolute', bottom: 2, left: 3, fontSize: 11, color: '#20D890' }}>▶</span>}
+              {a.media === 'video' && <span style={{ position: 'absolute', bottom: 2, left: 3, fontSize: 'var(--fs-caption)', color: '#20D890' }}>▶</span>}
               <button onClick={() => onRemove(a.id)} disabled={busy} aria-label="Remove" style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, lineHeight: '16px', textAlign: 'center', background: 'rgba(7,9,18,0.8)', border: '1px solid rgba(232,48,48,0.5)', color: '#E83030', fontSize: 12, cursor: 'pointer', padding: 0 }}>×</button>
             </div>
           ))}
@@ -113,7 +113,7 @@ export function FinalFormPanel({ worldId }: { worldId: string }) {
       <button
         onClick={onGraduate}
         disabled={busy || assets.length === 0}
-        style={{ width: '100%', padding: '7px 0', fontSize: 11, letterSpacing: '0.12em', fontWeight: 700, border: 'none', cursor: busy || assets.length === 0 ? 'default' : 'pointer', background: assets.length === 0 ? 'rgba(32,216,144,0.18)' : '#20D890', color: assets.length === 0 ? 'rgba(245,245,245,0.4)' : '#06140D' }}
+        style={{ width: '100%', padding: '7px 0', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', fontWeight: 700, border: 'none', cursor: busy || assets.length === 0 ? 'default' : 'pointer', background: assets.length === 0 ? 'rgba(32,216,144,0.18)' : '#20D890', color: assets.length === 0 ? 'rgba(245,245,245,0.4)' : '#06140D' }}
       >GRADUATE → ESTABLISHED</button>
     </div>
   )

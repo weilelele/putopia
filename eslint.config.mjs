@@ -20,6 +20,8 @@ const eslintConfig = defineConfig([
     ".netlify/**",
     ".vercel/**",
     "coverage/**",
+    "ios/**",
+    "android/**",
   ]),
   {
     // React Compiler correctness rules (eslint-plugin-react-hooks v7),

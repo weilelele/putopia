@@ -9,9 +9,9 @@ import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 const S = {
   card:  { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
-  th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
+  th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
   td:    { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'middle' as const, fontSize: '13px' },
-  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
+  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
   input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
   area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
   sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
@@ -90,7 +90,7 @@ function ImageZone({ value, onChange, active }: { value: string; onChange: (url:
         ) : (
           <>
             <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '12px' }}>点击选择图片</div>
-            <div style={{ color: '#151B3A', fontSize: '11px' }}>或直接 Ctrl+V 粘贴</div>
+            <div style={{ color: '#151B3A', fontSize: 'var(--fs-caption)' }}>或直接 Ctrl+V 粘贴</div>
           </>
         )}
         {uploading && (
@@ -101,8 +101,8 @@ function ImageZone({ value, onChange, active }: { value: string; onChange: (url:
       </div>
       {value && (
         <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-          <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontFamily: 'monospace', fontSize: '11px', padding: '3px 10px' }}>更换图片</button>
-          <button onClick={() => onChange('')} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '11px' }}>移除</button>
+          <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', padding: '3px 10px' }}>更换图片</button>
+          <button onClick={() => onChange('')} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: 'var(--fs-caption)' }}>移除</button>
         </div>
       )}
       {err && <div style={{ color: '#E83030', fontSize: '12px', marginTop: '4px' }}>{err}</div>}
@@ -169,7 +169,7 @@ export default function DevicesAdmin() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.3em' }}>ADMIN // DEVICES</div>
+          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em' }}>ADMIN // DEVICES</div>
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>设备管理</div>
         </div>
         <button onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #E85D04', color: '#E85D04', background: 'rgba(232,93,4,0.08)' }}>
@@ -209,22 +209,22 @@ export default function DevicesAdmin() {
                       : <div style={{ width: '60px', height: '40px', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)' }} />
                     }
                   </td>
-                  <td style={{ ...S.td, color: 'rgba(245,245,245,0.35)', fontSize: '11px' }}>{d.id}</td>
+                  <td style={{ ...S.td, color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)' }}>{d.id}</td>
                   <td style={{ ...S.td, color: '#F5F5F5' }}>{d.name}</td>
                   <td style={S.td}>
-                    <span style={{ fontSize: '11px', color: d.knowledge === 'known' ? '#20D890' : '#E85D04' }}>
+                    <span style={{ fontSize: 'var(--fs-caption)', color: d.knowledge === 'known' ? '#20D890' : '#E85D04' }}>
                       {d.knowledge.toUpperCase()}
                     </span>
                   </td>
                   <td style={S.td}>{d.location}</td>
                   <td style={S.td}>
                     {d.knowledge === 'known' && d.status && (
-                      <span style={{ fontSize: '11px', color: STATUS_COLOR[d.status] }}>
+                      <span style={{ fontSize: 'var(--fs-caption)', color: STATUS_COLOR[d.status] }}>
                         {STATUS_LABEL[d.status]}
                       </span>
                     )}
                     {d.knowledge === 'unknown' && (
-                      <span style={{ fontSize: '11px', color: '#E85D04' }}>{d.exploration_progress}%</span>
+                      <span style={{ fontSize: 'var(--fs-caption)', color: '#E85D04' }}>{d.exploration_progress}%</span>
                     )}
                   </td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>

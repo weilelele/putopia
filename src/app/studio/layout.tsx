@@ -33,7 +33,7 @@ export default async function StudioLayout({ children }: { children: React.React
         <div style={{
           padding: '13px 0',
           fontFamily: 'var(--font-display)',
-          fontSize: 11, letterSpacing: '0.35em',
+          fontSize: 'var(--fs-caption)', letterSpacing: '0.35em',
           color: 'var(--color-nucleus)',
         }}>
           MC // STUDIO
@@ -41,18 +41,18 @@ export default async function StudioLayout({ children }: { children: React.React
 
         <div style={{ width: 1, height: 18, background: 'var(--bd-faint)' }} />
 
-        <div style={{ fontSize: 9, letterSpacing: '0.22em', color: 'var(--color-star-deep)' }}>
+        <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: 'var(--color-star-deep)' }}>
           SOCIAL CONTENT GENERATOR
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div style={{ fontSize: 9, letterSpacing: '0.15em', color: 'var(--color-star-deep)', opacity: 0.6 }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-star-deep)', opacity: 0.6 }}>
             KNOWLEDGE BASE: SUPABASE
           </div>
           <Link
             href="/console"
             style={{
-              fontSize: 9, letterSpacing: '0.18em',
+              fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
               color: 'var(--color-star-deep)',
               textDecoration: 'none', padding: '4px 10px',
               border: '1px solid var(--bd-faint)',

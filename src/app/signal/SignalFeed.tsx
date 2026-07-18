@@ -165,7 +165,7 @@ export function InvestigationCard({
 
       {/* Architect preview: this day hasn't revealed to members yet. */}
       {current && !current.revealed && (
-        <div style={{ fontSize: 11, color: '#E8A020', letterSpacing: '0.05em', marginBottom: 10 }}>
+        <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', letterSpacing: '0.05em', marginBottom: 10 }}>
           ◷ Not yet revealed to members{current.revealAt ? ` — reveals ${new Date(current.revealAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}
         </div>
       )}

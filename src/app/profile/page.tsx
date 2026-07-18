@@ -7,6 +7,7 @@ import { getMyProfile, updateProfile, uploadAvatar } from '@/lib/actions/profile
 import { getMyOrders, type VoyagerOrder } from '@/lib/actions/orders'
 import { useAuth } from '@/lib/auth-context'
 import { BackLink } from '@/components/back-link'
+import { EnableNotifications } from '@/components/enable-notifications'
 
 // ── helpers (mirrors /voyagers) ─────────────────────────────────────────────
 const ACCENT_COLORS = [
@@ -303,6 +304,10 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Web Push opt-in — renders only where Web Push is supported (Android/
+          desktop web + installed PWA) and the user is signed in. */}
+      <EnableNotifications />
 
       {/* Pack tracking — only for Voyagers+ who have actually paid in */}
       {canEdit && orders.length > 0 && (

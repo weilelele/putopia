@@ -23,7 +23,7 @@ export function RefreshButton() {
       disabled={loading}
       style={{
         fontFamily: 'monospace',
-        fontSize: 10,
+        fontSize: 'var(--fs-caption)',
         letterSpacing: '0.2em',
         color: loading ? 'rgba(245,245,245,0.35)' : '#E85D04',
         background: 'transparent',

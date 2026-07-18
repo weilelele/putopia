@@ -22,8 +22,8 @@ function FunnelColumn({ title, accent, base, stages }: {
   return (
     <div style={{ flex: 1, minWidth: 280, background: CARD_BG, border: `1px solid ${BORDER}`, borderTop: `2px solid ${accent}`, padding: '1.1rem 1.25rem', borderRadius: 2 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1rem' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.18em', color: accent, fontWeight: 700 }}>{title}</div>
-        <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>clicked {base.toLocaleString()}</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: accent, fontWeight: 700 }}>{title}</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED }}>clicked {base.toLocaleString()}</div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
         {stages.map((s, i) => {
@@ -33,18 +33,18 @@ function FunnelColumn({ title, accent, base, stages }: {
           return (
             <div key={s.label}>
               {i > 0 && (
-                <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, paddingLeft: '0.25rem', marginBottom: '0.2rem' }}>↓ {stepRate}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, paddingLeft: '0.25rem', marginBottom: '0.2rem' }}>↓ {stepRate}</div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: '0.08em', color: DIM, width: 96, flexShrink: 0 }}>{s.label}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: DIM, width: 96, flexShrink: 0 }}>{s.label}</div>
                 <div style={{ flex: 1, background: '#151B3A', height: 6, borderRadius: 1 }}>
                   <div style={{ width: `${barW}%`, height: '100%', background: s.color, transition: 'width 0.4s ease' }} />
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: 11, color: STAR, width: 40, textAlign: 'right', flexShrink: 0 }}>{s.value.toLocaleString()}</div>
-                <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, width: 32, textAlign: 'right', flexShrink: 0 }}>{base > 0 ? pct(s.value, base) : '—'}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: STAR, width: 40, textAlign: 'right', flexShrink: 0 }}>{s.value.toLocaleString()}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, width: 32, textAlign: 'right', flexShrink: 0 }}>{base > 0 ? pct(s.value, base) : '—'}</div>
               </div>
               {s.note && (
-                <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, paddingLeft: '102px', marginTop: '0.15rem' }}>{s.note}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, paddingLeft: '102px', marginTop: '0.15rem' }}>{s.note}</div>
               )}
             </div>
           )
@@ -79,22 +79,22 @@ export function NewsletterPanel({ data }: { data: NewsletterFunnel }) {
 
   return (
     <div style={{ marginTop: '2rem' }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
         {'// NEWSLETTER 归因 — 邮件带来的点击 → 转化（与自然访问分开）'}
       </div>
 
       <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', background: CARD_BG, border: `1px solid ${BORDER}`, padding: '1.1rem 1.25rem', borderRadius: 2, marginBottom: '1rem' }}>
         {kpis.map(k => (
           <div key={k.label} style={{ minWidth: 96 }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.3rem' }}>{k.label}</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginBottom: '0.3rem' }}>{k.label}</div>
             <div style={{ fontFamily: 'monospace', fontSize: 22, color: k.color, fontWeight: 700, lineHeight: 1 }}>{k.val}</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, marginTop: '0.3rem' }}>{k.sub}</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginTop: '0.3rem' }}>{k.sub}</div>
           </div>
         ))}
       </div>
 
       {!data.tracked && (
-        <div style={{ fontFamily: 'monospace', fontSize: 9, color: AMBER, background: 'rgba(232,160,32,0.06)', border: '1px solid rgba(232,160,32,0.2)', padding: '0.6rem 0.9rem', borderRadius: 2, marginBottom: '1rem' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: AMBER, background: 'rgba(232,160,32,0.06)', border: '1px solid rgba(232,160,32,0.2)', padding: '0.6rem 0.9rem', borderRadius: 2, marginBottom: '1rem' }}>
           ⚠ 暂无邮件点击数据 — 收件人点开链接后(带 <code style={{ color: DIM }}>utm_source=newsletter</code>)开始积累；PostHog 有延迟。
         </div>
       )}
@@ -104,7 +104,7 @@ export function NewsletterPanel({ data }: { data: NewsletterFunnel }) {
         {direct    && <FunnelColumn title="A · DIRECT · 直接购买"     accent={ACCENT} base={direct.clicked}    stages={stages(direct)} />}
       </div>
 
-      <div style={{ marginTop: '1.25rem', fontFamily: 'monospace', fontSize: 9, color: MUTED, lineHeight: 1.9 }}>
+      <div style={{ marginTop: '1.25rem', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, lineHeight: 1.9 }}>
         {'// CLICKED = 有 utm_source=newsletter 的 $pageview 的去重用户（PostHog，按 utm_content 分 A/B）'}<br />
         {'// PACK VIEW / CHECKOUT = 点击者中触发对应事件的去重用户 · PAID = 点击者中的 voyager_orders.status=paid'}<br />
         {'// 与「付费转化」主漏斗的区别：这里只统计从邮件点进来的人，自然访问不计入。打开率请看 Resend 后台 broadcast 页。'}

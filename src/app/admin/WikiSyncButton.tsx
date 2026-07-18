@@ -42,7 +42,7 @@ export default function WikiSyncButton() {
           background:    'transparent',
           border:        `1px solid ${color}`,
           color,
-          fontSize:      '10px',
+          fontSize: 'var(--fs-caption)',
           letterSpacing: '0.2em',
           padding:       '5px 12px',
           cursor:        state === 'syncing' ? 'default' : 'pointer',
@@ -54,7 +54,7 @@ export default function WikiSyncButton() {
         {label}
       </button>
       {info && (
-        <span style={{ fontSize: '10px', color: state === 'error' ? '#E83030' : 'rgba(245,245,245,0.35)', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: 'var(--fs-caption)', color: state === 'error' ? '#E83030' : 'rgba(245,245,245,0.35)', letterSpacing: '0.05em' }}>
           {info}
         </span>
       )}

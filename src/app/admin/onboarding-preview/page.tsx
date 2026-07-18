@@ -195,8 +195,8 @@ export default function OnboardingEditorPage() {
         <Toggle label="尺寸" value={device} options={[{ v: 'mobile', t: 'MOBILE' }, { v: 'desktop', t: 'DESKTOP' }]} onChange={v => setDevice(v as 'mobile' | 'desktop')} />
         <button onClick={reloadAll} style={btnStyle}>↻ 全部重载</button>
         <button onClick={handleAdd} style={{ ...btnStyle, color: ORANGE, borderColor: 'rgba(255,107,53,0.4)' }}>+ 新增变体</button>
-        {saving && <span style={{ fontSize: 11, color: ORANGE }}>保存中…</span>}
-        {error && <span style={{ fontSize: 11, color: '#E83030' }}>{error}</span>}
+        {saving && <span style={{ fontSize: 'var(--fs-caption)', color: ORANGE }}>保存中…</span>}
+        {error && <span style={{ fontSize: 'var(--fs-caption)', color: '#E83030' }}>{error}</span>}
       </div>
 
       {/* Variant editors */}
@@ -212,16 +212,16 @@ export default function OnboardingEditorPage() {
                 <span style={{ fontSize: 14, letterSpacing: '0.16em', color: ORANGE }}>
                   {isDefault ? 'DEFAULT' : row.label}
                 </span>
-                <code style={{ fontSize: 11, color: FAINT }}>
+                <code style={{ fontSize: 'var(--fs-caption)', color: FAINT }}>
                   {isDefault ? '基准 / 不命中时' : `utm_content = ${row.match_key}`}
                 </code>
                 {!isDefault && (
-                  <label style={{ fontSize: 11, color: MUTED, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                  <label style={{ fontSize: 'var(--fs-caption)', color: MUTED, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
                     <input type="checkbox" checked={row.enabled} onChange={e => saveToggle(row, e.target.checked)} />
                     启用
                   </label>
                 )}
-                <a href={srcFor(row.match_key, row.id)} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontSize: 11, color: MUTED, textDecoration: 'none' }}>
+                <a href={srcFor(row.match_key, row.id)} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 'auto', fontSize: 'var(--fs-caption)', color: MUTED, textDecoration: 'none' }}>
                   新标签打开 ↗
                 </a>
                 {!isDefault && (
@@ -239,7 +239,7 @@ export default function OnboardingEditorPage() {
                     const placeholder = isDefault ? f.fallback : `（继承 DEFAULT）${(defaultRow?.[f.col] as string | null) || f.fallback}`
                     return (
                       <div key={String(f.col)} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <label style={{ fontSize: 10, letterSpacing: '0.16em', color: FAINT }}>{f.label}</label>
+                        <label style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: FAINT }}>{f.label}</label>
                         {f.multiline ? (
                           <textarea
                             rows={2}
@@ -271,10 +271,10 @@ export default function OnboardingEditorPage() {
                       const inheritLabel = s.col === 'video_url' && isDefault ? '默认内置' : s.inherit
                       return (
                         <div key={s.col} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <label style={{ fontSize: 10, letterSpacing: '0.16em', color: FAINT }}>
+                          <label style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: FAINT }}>
                             {s.label} {own ? '（自定义）' : `（${inheritLabel}）`}
                           </label>
-                          <code style={{ fontSize: 10, color: own ? MUTED : FAINT, wordBreak: 'break-all' }}>
+                          <code style={{ fontSize: 'var(--fs-caption)', color: own ? MUTED : FAINT, wordBreak: 'break-all' }}>
                             {videoChain[s.col]}
                           </code>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -296,7 +296,7 @@ export default function OnboardingEditorPage() {
 
                 {/* Live preview */}
                 <div style={{ flex: '0 0 auto' }}>
-                  <div style={{ fontSize: 10, color: FAINT, marginBottom: 6 }}>实时预览 · {step.toUpperCase()}</div>
+                  <div style={{ fontSize: 'var(--fs-caption)', color: FAINT, marginBottom: 6 }}>实时预览 · {step.toUpperCase()}</div>
                   <div style={{ width: frameW, height: frameH, border: `1px solid ${BORDER}`, background: '#0A0E27', overflow: 'hidden' }}>
                     <iframe
                       key={`${row.id}-${step}-${nonces[row.id] ?? 0}`}
@@ -318,7 +318,7 @@ export default function OnboardingEditorPage() {
 
 /* ── Small UI helpers ── */
 const btnStyle: React.CSSProperties = {
-  padding: '8px 14px', fontSize: 11, letterSpacing: '0.1em',
+  padding: '8px 14px', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
   fontFamily: 'monospace', cursor: 'pointer',
   background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`,
 }
@@ -328,14 +328,14 @@ function Toggle({ label, value, options, onChange }: {
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 10, letterSpacing: '0.2em', color: FAINT }}>{label}</span>
+      <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: FAINT }}>{label}</span>
       <div style={{ display: 'flex', border: `1px solid ${BORDER}` }}>
         {options.map((o, i) => (
           <button
             key={o.v}
             onClick={() => onChange(o.v)}
             style={{
-              padding: '8px 14px', fontSize: 11, letterSpacing: '0.1em', fontFamily: 'monospace', cursor: 'pointer',
+              padding: '8px 14px', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', fontFamily: 'monospace', cursor: 'pointer',
               background: value === o.v ? 'rgba(255,107,53,0.14)' : 'transparent',
               color: value === o.v ? '#F5F5F5' : MUTED,
               border: 'none', borderRight: i < options.length - 1 ? `1px solid ${BORDER}` : 'none',

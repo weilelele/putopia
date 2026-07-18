@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 
-// The old "await manual activation" model is retired. Becoming a Voyager now
-// means claiming the first parts pack. Keep this path alive for old links.
+// The old "await manual activation" and "/devices/claim" models are both retired.
+// Becoming a Voyager now goes through the Initial Voyager Pack. Keep this path
+// alive so any old links still resolve.
 export default function ActivatePage() {
-  redirect('/devices/claim')
+  redirect('/voyager-pack')
 }

@@ -10,36 +10,10 @@ import type { OnboardingVariantRow } from '@/types/database'
 import { FlameSlider, WorldChoiceCards, ConsoleChoiceCards, WORLD_OPTIONS, URGENCY_READINGS, URGENCY_END_LABELS, urgencyToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
 import { HudField } from '@/components/hud-field'
+import { getEmailProvider } from '@/lib/email-providers'
 
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v3'
-
-/* ─── Email Providers ────────────────────────────── */
-const EMAIL_PROVIDERS: Record<string, { name: string; url: string }> = {
-  'gmail.com':      { name: 'Gmail',        url: 'https://mail.google.com/mail/' },
-  'googlemail.com': { name: 'Gmail',        url: 'https://mail.google.com/mail/' },
-  'outlook.com':    { name: 'Outlook',      url: 'https://outlook.live.com/' },
-  'hotmail.com':    { name: 'Outlook',      url: 'https://outlook.live.com/' },
-  'live.com':       { name: 'Outlook',      url: 'https://outlook.live.com/' },
-  'msn.com':        { name: 'Outlook',      url: 'https://outlook.live.com/' },
-  'yahoo.com':      { name: 'Yahoo Mail',   url: 'https://mail.yahoo.com/' },
-  'ymail.com':      { name: 'Yahoo Mail',   url: 'https://mail.yahoo.com/' },
-  'icloud.com':     { name: 'iCloud Mail',  url: 'https://www.icloud.com/mail' },
-  'me.com':         { name: 'iCloud Mail',  url: 'https://www.icloud.com/mail' },
-  'mac.com':        { name: 'iCloud Mail',  url: 'https://www.icloud.com/mail' },
-  'qq.com':         { name: 'QQ 邮箱',      url: 'https://mail.qq.com/' },
-  'foxmail.com':    { name: 'Foxmail',      url: 'https://mail.qq.com/' },
-  '163.com':        { name: '网易邮箱',     url: 'https://mail.163.com/' },
-  '126.com':        { name: '网易邮箱',     url: 'https://mail.126.com/' },
-  'yeah.net':       { name: '网易邮箱',     url: 'https://mail.yeah.net/' },
-  'proton.me':      { name: 'Proton Mail',  url: 'https://mail.proton.me/' },
-  'protonmail.com': { name: 'Proton Mail',  url: 'https://mail.proton.me/' },
-}
-
-function getEmailProvider(email: string) {
-  const domain = email.split('@')[1]?.toLowerCase()
-  return domain ? (EMAIL_PROVIDERS[domain] ?? null) : null
-}
 
 /* ─── Types ──────────────────────────────────────── */
 /* Flow order: q1 Console curiosity → q2 world choice → q3 join-urgency → cta */
@@ -762,6 +736,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
               href={provider.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => posthog.capture('onboarding_open_inbox_clicked', { provider: provider.name, screen: 'confirm' })}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
                 fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
@@ -1045,6 +1020,7 @@ function PendingInboxScreen({
               href={provider.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => posthog.capture('onboarding_open_inbox_clicked', { provider: provider.name, screen: 'pending' })}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
                 fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
