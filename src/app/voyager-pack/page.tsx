@@ -22,13 +22,13 @@ const DLG_COPY: Record<'closed' | 'voyager', {
   eyebrow: string; title: string; body: string; accent: string
 }> = {
   closed: {
-    eyebrow: '◈ LAUNCH PENDING ◈',
+    eyebrow: 'LAUNCH PENDING',
     title:   'The Voyager Pack is not yet available.',
     body:    "We're preparing the first batch. Registered Applicants will be notified when the pack goes live.",
     accent:  '255,107,53',
   },
   voyager: {
-    eyebrow: '◈ MEMBERSHIP ACTIVE ◈',
+    eyebrow: 'MEMBERSHIP ACTIVE',
     title:   "You're already a Voyager.",
     body:    'Your Initial Voyager Pack is on its way — no need to purchase again.',
     accent:  '32,216,144',
@@ -55,13 +55,13 @@ function buildPackHtml(state: CtaState): string {
   .ctabtn--locked{ background:rgba(245,245,245,0.13)!important; color:rgba(245,245,245,0.5)!important; box-shadow:none!important; cursor:pointer!important; }
   .ctabtn--ok{ color:rgba(32,216,144,0.85)!important; }
   .ctabtn--locked .p{ display:none!important; }
-  .pkdlg-scrim{ position:fixed; inset:0; background:rgba(6,10,26,0.8); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; padding:24px; z-index:9999; }
+  .pkdlg-scrim{ position:fixed; inset:0; background:rgba(5,8,23,0.94); display:none; align-items:center; justify-content:center; padding:24px; z-index:9999; }
   .pkdlg-scrim.show{ display:flex; }
-  .pkdlg{ max-width:360px; width:100%; background:#0F1430; border:1px solid rgba(${copy.accent},0.32); padding:24px 26px 20px; text-align:center; box-shadow:0 0 50px rgba(6,10,26,0.7); }
-  .pkdlg .eb{ font-size:8px; letter-spacing:0.30em; color:rgba(${copy.accent},0.65); margin-bottom:12px; }
+  .pkdlg{ max-width:360px; width:100%; background:#0B1028; border:1px solid rgba(${copy.accent},0.42); padding:24px 26px 20px; text-align:center; }
+  .pkdlg .eb{ font-size:12px; letter-spacing:0.24em; color:rgba(${copy.accent},0.75); margin-bottom:12px; }
   .pkdlg h4{ margin:0 0 10px; font-size:15px; font-weight:700; color:#F5F5F5; letter-spacing:0.04em; line-height:1.35; }
-  .pkdlg p{ margin:0 0 18px; font-size:11px; color:rgba(245,245,245,0.45); line-height:1.7; }
-  .pkdlg button{ background:rgba(${copy.accent},0.1); color:rgb(${copy.accent}); border:1px solid rgba(${copy.accent},0.4); padding:10px 30px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:0.16em; cursor:pointer; }`
+  .pkdlg p{ margin:0 0 18px; font-size:12px; color:rgba(245,245,245,0.5); line-height:1.7; }
+  .pkdlg button{ background:rgb(${copy.accent}); color:#080C20; border:1px solid rgb(${copy.accent}); padding:10px 30px; font-family:var(--mono); font-weight:700; font-size:12px; letter-spacing:0.16em; cursor:pointer; }`
 
   const modal = `
   <div class="pkdlg-scrim" id="__pkdlg" onclick="if(event.target===this)this.classList.remove('show')">
@@ -138,7 +138,7 @@ export default async function VoyagerPackPage() {
           height: 100vh;
           height: -webkit-fill-available;
           height: 100dvh;
-          background: #0A0E27;
+          background: #080C20;
           overflow: hidden;
         }
         .pack-host iframe { display: block; width: 100%; height: 100%; border: 0; }
@@ -149,7 +149,7 @@ export default async function VoyagerPackPage() {
           title="Initial Voyager Pack"
           srcDoc={buildPackHtml(state)}
           scrolling="yes"
-          style={{ background: '#0A0E27' }}
+          style={{ background: '#080C20' }}
         />
       </div>
     </>

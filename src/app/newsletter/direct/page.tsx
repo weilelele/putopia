@@ -12,13 +12,9 @@ export default async function DirectNewsletterPage() {
   const previewHtml = html.replace(/https:\/\/www\.multiverseco\.org/g, '')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#060A1A' }}>
-      <div style={{
-        padding: '10px 0 8px', textAlign: 'center', flexShrink: 0,
-        fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em',
-        color: 'rgba(255,107,53,0.45)',
-      }}>
-        ◈ NEWSLETTER PREVIEW — GROUP A (DIRECT) — {content.weekLabel} ◈
+    <div className="newsletter-preview-page">
+      <div className="newsletter-preview-bar">
+        NEWSLETTER PREVIEW — GROUP A (DIRECT) — {content.weekLabel}
       </div>
       <iframe
         srcDoc={previewHtml}

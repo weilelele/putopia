@@ -4,9 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { mockClaimFirstPack } from '@/lib/actions/claim'
-import { BackLink } from '@/components/back-link'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchivePageHeader } from '@/components/archive-page-header'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
 
-const ORANGE = '#FF6B35'
+const ORANGE = '#E35205'
 
 const INTEL_LINES = [
   'SOURCE   : Weile / Architect-on-site',
@@ -56,7 +61,6 @@ const BENEFITS: BenefitGroup[] = [
 
 export default function ClaimPage() {
   const { user, isAtLeast } = useAuth()
-  const [hovered, setHovered] = useState(false)
   const [status, setStatus] = useState<'idle' | 'claiming' | 'done' | 'error'>('idle')
   const [errMsg, setErrMsg] = useState('')
 
@@ -86,64 +90,35 @@ export default function ClaimPage() {
   }
 
   return (
-    <div className="main">
-
-      {/* Top bar */}
-      <div className="top-bar">
-        <div className="crumbs">
-          <Link href="/devices" style={{ color: 'inherit', textDecoration: 'none' }}>
-            PC://CONSOLE / DEVICE ARCHIVE
-          </Link>
-          <span> /</span> CAIRO-BATCH-01
+    <div className="main archive-flow-main device-claim-page">
+      <ArchiveBrandHeader />
+      <div className="archive-flow-content archive-flow-content--wide">
+        <div className="archive-flow-back">
+          <ArchiveLinkButton href="/devices" variant="ghost">← DEVICE ARCHIVE</ArchiveLinkButton>
         </div>
-        <div className="right">
-          <div className="item">BATCH <span className="val">01</span></div>
-          <div className="item">STATUS <span className="val" style={{ color: ORANGE }}>OPEN</span></div>
-        </div>
-      </div>
-
-      {/* Page head */}
-      <div className="page-head">
-        <div>
-          <BackLink href="/devices" label="DEVICE ARCHIVE" />
-          <h1>CAIRO <span className="accent">BATCH 01</span></h1>
-          <p className="sub">First parts pack · Antique markets, Cairo · Multiverse Console components</p>
-        </div>
-      </div>
+        <ArchivePageHeader title="CAIRO" accent="BATCH 01" />
+        <p className="archive-flow-summary">First parts pack · Antique markets, Cairo · Multiverse Console components</p>
 
       {/* Hero image (placeholder) */}
-      <div
-        className="mb-8 border overflow-hidden relative"
-        style={{ borderColor: 'rgba(255,107,53,0.35)', aspectRatio: '16/7', maxWidth: '820px' }}
-      >
+      <div className="device-claim-hero">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={HERO_IMG}
           alt="Cairo Batch 01 — first parts pack"
           style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'saturate(0.7) brightness(0.7)' }}
         />
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(7,9,18,0.1), rgba(7,9,18,0.65))' }} />
         <div className="absolute bottom-3 left-3 font-mono text-xs px-2 py-1" style={{ color: ORANGE, background: 'rgba(7,9,18,0.7)', border: `1px solid ${ORANGE}` }}>
           [ PLACEHOLDER · ASSET PENDING ]
         </div>
       </div>
 
       {/* Intel block */}
-      <div
-        className="mb-8 border p-4 font-mono text-xs"
-        style={{
-          borderColor: 'rgba(255,107,53,0.3)',
-          background: 'rgba(255,107,53,0.04)',
-          color: 'rgba(245,245,245,0.55)',
-          lineHeight: '1.9',
-          maxWidth: '820px',
-        }}
-      >
-        <div className="mb-2" style={{ color: ORANGE }}>{"// FIELD REPORT"}</div>
+      <ArchiveCard className="device-claim-report">
+        <ArchiveSectionLabel>FIELD REPORT</ArchiveSectionLabel>
         {INTEL_LINES.map((line) => (
           <div key={line}>{line}</div>
         ))}
-      </div>
+      </ArchiveCard>
 
       {/* Narrative */}
       <div className="mb-10" style={{ maxWidth: '640px' }}>
@@ -164,20 +139,13 @@ export default function ClaimPage() {
       </div>
 
       {/* What you receive — 3 benefit groups */}
-      <div className="mb-10">
-        <div className="flex items-center gap-3 mb-5">
-          <span className="label-tag" style={{ color: ORANGE, borderColor: ORANGE }}>WHAT YOU RECEIVE</span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-        </div>
+      <section className="device-claim-benefits">
+        <ArchiveSectionLabel>WHAT YOU RECEIVE</ArchiveSectionLabel>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="device-claim-benefit-grid">
           {BENEFITS.map((group) => (
-            <div
-              key={group.no}
-              className="border p-4"
-              style={{ borderColor: 'rgba(255,107,53,0.2)', background: 'rgba(15,20,48,0.6)' }}
-            >
-              <div className="flex items-baseline gap-2 mb-3 pb-2 border-b" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
+            <ArchiveCard key={group.no} className="device-claim-benefit">
+              <div className="flex items-baseline gap-2 mb-3 pb-2 border-b" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
                 <span className="font-mono font-bold" style={{ color: ORANGE, fontSize: '0.9rem' }}>{group.no}</span>
                 <span className="font-mono text-xs font-bold tracking-wider" style={{ color: '#F5F5F5' }}>{group.title}</span>
               </div>
@@ -193,16 +161,13 @@ export default function ClaimPage() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </ArchiveCard>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Pricing + CTA */}
-      <div
-        className="border p-5 mb-10"
-        style={{ borderColor: ORANGE, background: 'rgba(255,107,53,0.04)', maxWidth: '400px', boxShadow: '0 0 18px rgba(255,107,53,0.18)' }}
-      >
+      <ArchiveCard className="device-claim-price">
         <div className="flex items-baseline gap-3 mb-1">
           <span className="font-mono font-bold" style={{ fontSize: '2rem', color: '#F5F5F5', letterSpacing: '-0.02em' }}>$12</span>
           <span className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>USD · one-time · free shipping</span>
@@ -219,18 +184,9 @@ export default function ClaimPage() {
             ✦ VOYAGER STATUS ACTIVE
           </div>
         ) : (
-          <button
+          <ArchiveButton
             disabled={status === 'claiming'}
-            className="w-full py-2.5 text-xs font-mono tracking-widest border transition-all"
-            style={{
-              borderColor: ORANGE,
-              color: hovered && status !== 'claiming' ? '#070912' : (status === 'claiming' ? 'rgba(245,245,245,0.4)' : ORANGE),
-              background: status === 'claiming' ? 'transparent' : (hovered ? '#F5F5F5' : ORANGE),
-              fontWeight: 700,
-              cursor: status === 'claiming' ? 'wait' : 'pointer',
-            }}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
+            fullWidth
             onClick={handleClaim}
           >
             {status === 'claiming'
@@ -240,7 +196,7 @@ export default function ClaimPage() {
               : !isApplicant
               ? '[ APPLY FIRST ]'
               : '[ LOCK IN MY DEVICE ]'}
-          </button>
+          </ArchiveButton>
         )}
 
         {status === 'done' && (
@@ -262,27 +218,20 @@ export default function ClaimPage() {
             </Link>
           </p>
         )}
-      </div>
+      </ArchiveCard>
 
       {/* Upgrade note */}
       <div
         className="mb-10 border-l-2 pl-4 font-mono text-xs"
-        style={{ borderColor: 'rgba(255,107,53,0.4)', color: 'rgba(245,245,245,0.35)', lineHeight: '1.8', maxWidth: '640px' }}
+        style={{ borderColor: 'rgba(227,82,5,0.4)', color: 'rgba(245,245,245,0.35)', lineHeight: '1.8', maxWidth: '640px' }}
       >
-        <div style={{ color: 'rgba(245,245,245,0.5)', marginBottom: '0.25rem' }}>{"// UPGRADE PATH"}</div>
+        <div style={{ color: 'rgba(245,245,245,0.5)', marginBottom: '0.25rem' }}>UPGRADE PATH</div>
         The $12 first parts pack is the entry point. If you later choose to secure the full
         Console (four consecutive batches, $360), your initial payment is credited toward the
         total. The first batch is identical across both tracks.
       </div>
 
-      {/* Footer */}
-      <div className="footer-bar" style={{ marginTop: '2rem' }}>
-        <Link href="/devices" className="font-mono text-xs" style={{ color: 'rgba(245,245,245,0.35)', textDecoration: 'none' }}>
-          ← BACK TO DEVICE ARCHIVE
-        </Link>
-        <div>CAIRO-BATCH-01 · CLAIM v1.0</div>
       </div>
-
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-const ACCENT = '#E85D04'
+const ACCENT = '#C84406'
 const MUTED  = 'rgba(245,245,245,0.35)'
 const STAR   = '#F5F5F5'
 const BORDER = '#151B3A'
@@ -43,7 +43,7 @@ export function FunnelTabs({
                 padding: '0.6rem 1rem',
                 marginBottom: '-1px',
                 fontFamily: 'monospace',
-                fontSize: 11,
+                fontSize: 'var(--fs-caption)',
                 letterSpacing: '0.15em',
                 color: active ? STAR : MUTED,
                 borderBottom: `2px solid ${active ? ACCENT : 'transparent'}`,

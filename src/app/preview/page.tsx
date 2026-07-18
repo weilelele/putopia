@@ -21,7 +21,7 @@ export default function PreviewPage() {
     }}>
       <div style={{
         fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-        letterSpacing: '0.4em', color: 'rgba(232,93,4,0.5)',
+        letterSpacing: '0.4em', color: 'rgba(200,68,6,0.5)',
       }}>
         RESETTING SIGNAL...
       </div>

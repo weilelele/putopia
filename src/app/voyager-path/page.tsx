@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { getVoyagerPathStatus } from '@/lib/actions/tasks'
 import type { VoyagerPathStatus } from '@/lib/actions/tasks'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -153,17 +155,17 @@ const TASKS: {
   {
     key: 'report_sighting', num: '01', label: 'Report a Sighting',
     description: 'Document a signal, image, or encounter with a parallel world.',
-    href: '/worlds/submit', icon: <WorldIcon />, accentColor: '#FF6B35',
+    href: '/worlds/submit', icon: <WorldIcon />, accentColor: '#E35205',
   },
   {
     key: 'pass_quiz', num: '02', label: 'Qualify for Active Service',
     description: 'Complete the field assessment to demonstrate you are ready for active service.',
-    href: '/quiz', icon: <QuizIcon />, accentColor: '#FF6B35',
+    href: '/quiz', icon: <QuizIcon />, accentColor: '#E35205',
   },
   {
     key: 'get_pack', num: '03', label: 'Claim Your Voyager Pack',
     description: 'Claim Your Voyager Badge, Welcome Letter and digital cohort placement',
-    href: '/voyager-pack', icon: <WorldPackIcon size={18} />, accentColor: '#FF6B35', chip: '$12',
+    href: '/voyager-pack', icon: <WorldPackIcon size={18} />, accentColor: '#E35205', chip: '$12',
   },
 ]
 
@@ -174,8 +176,8 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
 
   const isDevice  = kind === 'device_seeker'
   const isSignal  = kind === 'signal_locked'
-  const accent    = isDevice ? '#E8A020' : isSignal ? '#E85D04' : '#60B0FF'
-  const borderClr = isDevice ? 'rgba(232,160,32,0.3)' : isSignal ? 'rgba(232,93,4,0.3)' : 'rgba(96,176,255,0.25)'
+  const accent    = isDevice ? 'var(--color-warn)' : isSignal ? 'var(--color-burnt)' : 'var(--color-nucleus)'
+  const borderClr = isDevice ? 'rgba(255,176,32,0.3)' : isSignal ? 'rgba(200,68,6,0.3)' : 'rgba(227,82,5,0.3)'
 
   return (
     <div
@@ -183,7 +185,6 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(10,14,39,0.82)',
-        backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 60, padding: '24px',
         animation: 'modal-backdrop-in 0.15s ease-out',
@@ -195,10 +196,7 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
         ['--dd-fill' as string]: '#0F1430',
         padding: '24px 28px 20px',
         animation: 'modal-in 0.18s cubic-bezier(0.34,1.56,0.64,1)',
-        filter: 'drop-shadow(0 0 40px rgba(10,14,39,0.6))',
       }}>
-        <i className="dd-node" />
-        <i className="dd-dash" />
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
           marginBottom: 12,
@@ -237,14 +235,13 @@ function Modal({ kind, onClose }: { kind: ModalKind | null; onClose: () => void 
 type BenefitDetail = { title: string; sublabel: string; body: string }
 
 function BenefitDetailModal({ item, onClose }: { item: BenefitDetail; onClose: () => void }) {
-  const gold = (a: number) => `rgba(196,169,106,${a})`
+  const gold = (a: number) => `rgba(227,82,5,${a})`
   return (
     <div
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(10,14,39,0.82)',
-        backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 60, padding: '24px',
         animation: 'modal-backdrop-in 0.15s ease-out',
@@ -256,10 +253,7 @@ function BenefitDetailModal({ item, onClose }: { item: BenefitDetail; onClose: (
         ['--dd-fill' as string]: '#0F1430',
         padding: '22px 26px 18px',
         animation: 'modal-in 0.18s cubic-bezier(0.34,1.56,0.64,1)',
-        filter: 'drop-shadow(0 0 40px rgba(10,14,39,0.6))',
       }}>
-        <i className="dd-node" />
-        <i className="dd-dash" />
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 'var(--fs-label)', color: gold(0.85), letterSpacing: '0.12em', marginBottom: 4 }}>
             {item.title}
@@ -301,28 +295,29 @@ function PathRail({
   // VOYAGER node: gold current if isVoyager, dim-preview if applicant clicked, inactive otherwise
   const voyagerCurrent  = isVoyager
   const voyagerPreview  = !isVoyager && viewedStage === 'voyager'
-  const voyagerHex      = 'rgba(196,169,106,'
+  const voyagerHex      = 'rgba(227,82,5,'
   const vBorder = voyagerCurrent ? `${voyagerHex}0.75)` : voyagerPreview ? `${voyagerHex}0.45)` : `${voyagerHex}0.22)`
   const vBg     = voyagerCurrent ? `${voyagerHex}0.12)` : voyagerPreview ? `${voyagerHex}0.06)` : 'transparent'
   const vColor  = voyagerCurrent ? `${voyagerHex}0.95)` : voyagerPreview ? `${voyagerHex}0.6)` : `${voyagerHex}0.38)`
 
   // A→V connector: fully lit when voyager, half-lit when allDone, dim otherwise
   const avConnector = isVoyager
-    ? 'linear-gradient(90deg,#20D890,rgba(32,216,144,0.6))'
-    : allDone ? 'linear-gradient(90deg,#E85D04,#FF6B35)' : 'rgba(255,107,53,0.12)'
-  const avChevron = isVoyager ? '#20D890' : allDone ? '#FF6B35' : 'rgba(255,107,53,0.22)'
+    ? 'var(--color-ok)'
+    : allDone ? 'var(--color-nucleus)' : 'rgba(227,82,5,0.12)'
+  const avChevron = isVoyager ? '#20D890' : allDone ? '#E35205' : 'rgba(227,82,5,0.22)'
 
   return (
     <div className="dd-panel" style={{
-      ['--dd-bd' as string]: isVoyager ? 'rgba(196,169,106,0.4)' : 'rgba(255,107,53,0.25)',
+      ['--dd-bd' as string]: isVoyager ? 'rgba(227,82,5,0.4)' : 'rgba(227,82,5,0.25)',
     }}>
-      <i className="dd-node" />
-      <i className="dd-dash" />
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px 28px' }}>
 
         {/* ── APPLICANT ── */}
-        <div
+        <button
+          type="button"
+          disabled={isVoyager}
           onClick={() => !isVoyager && onStageClick('applicant')}
+          className="archive-path-node-button"
           style={{ flexShrink: 0, textAlign: 'center', width: 72, cursor: isVoyager ? 'default' : 'pointer' }}
         >
           <div style={{
@@ -347,7 +342,7 @@ function PathRail({
           <div style={{ fontSize: 'var(--fs-caption)', color: `${applicantHex}80`, letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
             {applicantDone ? 'COMPLETE' : 'CURRENT'}
           </div>
-        </div>
+        </button>
 
         {/* ── A → V connector ── */}
         <div style={{ flex: 1, paddingTop: 21, display: 'flex', alignItems: 'center' }}>
@@ -356,12 +351,15 @@ function PathRail({
             <path d="M2 1l5 4-5 4" stroke={avChevron} strokeWidth="1.4"
               strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke 0.5s' } as React.CSSProperties} />
           </svg>
-          <div style={{ flex: 1, height: 2, background: isVoyager ? 'rgba(196,169,106,0.15)' : 'rgba(255,107,53,0.06)', transition: 'background 0.5s' }} />
+          <div style={{ flex: 1, height: 2, background: isVoyager ? 'rgba(227,82,5,0.15)' : 'rgba(227,82,5,0.06)', transition: 'background 0.5s' }} />
         </div>
 
         {/* ── VOYAGER ── */}
-        <div
+        <button
+          type="button"
+          disabled={isVoyager}
           onClick={() => !isVoyager && onStageClick('voyager')}
+          className="archive-path-node-button"
           style={{ flexShrink: 0, textAlign: 'center', width: 72, cursor: isVoyager ? 'default' : 'pointer' }}
         >
           <div style={{
@@ -371,7 +369,7 @@ function PathRail({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: vColor,
             animation: voyagerCurrent ? 'voyager-pulse 2.4s ease-in-out infinite' : 'none',
-            outline: voyagerCurrent ? `2px solid rgba(196,169,106,0.2)` : 'none',
+            outline: voyagerCurrent ? `2px solid rgba(227,82,5,0.2)` : 'none',
             outlineOffset: 3,
             transition: 'all 0.35s ease',
           }}>
@@ -381,64 +379,47 @@ function PathRail({
             VOYAGER
           </div>
           {voyagerCurrent && (
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(196,169,106,0.55)', letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(227,82,5,0.55)', letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
               CURRENT
             </div>
           )}
-        </div>
+        </button>
 
         {/* ── V → C connector ── */}
         <div style={{ flex: 1, paddingTop: 21, display: 'flex', alignItems: 'center' }}>
-          <div style={{ flex: 1, height: 2, background: 'rgba(255,107,53,0.06)' }} />
+          <div style={{ flex: 1, height: 2, background: 'rgba(227,82,5,0.06)' }} />
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
-            <path d="M2 1l5 4-5 4" stroke="rgba(255,107,53,0.15)" strokeWidth="1.4"
+            <path d="M2 1l5 4-5 4" stroke="rgba(227,82,5,0.15)" strokeWidth="1.4"
               strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <div style={{ flex: 1, height: 2, background: 'rgba(255,107,53,0.04)' }} />
+          <div style={{ flex: 1, height: 2, background: 'rgba(227,82,5,0.04)' }} />
         </div>
 
         {/* ── CONSOLE HOLDER ── */}
-        <div
+        <button
+          type="button"
           onClick={onConsoleClick}
+          className="archive-path-node-button"
           style={{ flexShrink: 0, textAlign: 'center', width: 72, cursor: 'pointer' }}
         >
           <div style={{
             width: 44, height: 44, borderRadius: '50%', margin: '0 auto 7px',
-            border: '2px solid rgba(255,107,53,0.22)',
+            border: '2px solid rgba(227,82,5,0.22)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'rgba(255,107,53,0.38)',
+            color: 'rgba(227,82,5,0.38)',
           }}>
             <LockIcon size={14} />
           </div>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: 'rgba(255,107,53,0.38)', fontFamily: 'var(--font-mono)' }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: 'rgba(227,82,5,0.38)', fontFamily: 'var(--font-mono)' }}>
             CONSOLE
           </div>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(255,107,53,0.28)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(227,82,5,0.28)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
             HOLDER
           </div>
-        </div>
+        </button>
 
       </div>
 
-      <style>{`
-        @keyframes node-pulse {
-          0%, 100% { box-shadow: 0 0 10px rgba(232,160,32,0.22); }
-          50%       { box-shadow: 0 0 22px rgba(232,160,32,0.5), 0 0 44px rgba(232,160,32,0.12); }
-        }
-        @keyframes node-done {
-          0%  { transform: scale(0.9); opacity: 0.6; }
-          60% { transform: scale(1.06); }
-          100%{ transform: scale(1); opacity: 1; }
-        }
-        @keyframes voyager-pulse {
-          0%, 100% { box-shadow: 0 0 10px rgba(196,169,106,0.2); }
-          50%       { box-shadow: 0 0 24px rgba(196,169,106,0.55), 0 0 48px rgba(196,169,106,0.15); }
-        }
-        @keyframes pack-glow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
-          50%       { box-shadow: 0 0 18px rgba(255,107,53,0.18), inset 0 0 18px rgba(255,107,53,0.04); }
-        }
-      `}</style>
     </div>
   )
 }
@@ -453,15 +434,15 @@ function VoyagerUnlockTrack({
   completed: Record<TaskKey, boolean>
 }) {
   const green   = '#20D890'
-  const orange  = '#FF6B35'
+  const orange  = '#E35205'
 
   // Task node — identical treatment for all three (equal weight).
   const taskNode = (done: boolean, icon: React.ReactNode) => (
     <div style={{
       width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: done ? 'rgba(32,216,144,0.12)' : 'rgba(255,107,53,0.07)',
-      border: `1.5px solid ${done ? green : 'rgba(255,107,53,0.5)'}`,
+      background: done ? 'rgba(32,216,144,0.12)' : 'rgba(227,82,5,0.07)',
+      border: `1.5px solid ${done ? green : 'rgba(227,82,5,0.5)'}`,
       color: done ? green : orange,
       transition: 'all 0.25s ease',
     }}>
@@ -478,7 +459,7 @@ function VoyagerUnlockTrack({
         href={task.href}
         className="dd-panel"
         style={{
-          ['--dd-bd' as string]: done ? 'rgba(32,216,144,0.45)' : 'rgba(255,107,53,0.32)',
+          ['--dd-bd' as string]: done ? 'rgba(32,216,144,0.45)' : 'rgba(227,82,5,0.32)',
           ['--dd-fill' as string]: done ? 'rgba(32,216,144,0.05)' : '#0F1430',
           display: 'flex', alignItems: 'flex-start', gap: 12,
           width: '100%', textAlign: 'left', cursor: 'pointer', textDecoration: 'none',
@@ -486,13 +467,12 @@ function VoyagerUnlockTrack({
           transition: 'all 0.2s ease',
         }}
       >
-        <i className="dd-node" /><i className="dd-dash" />
         {taskNode(done, task.icon)}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 'var(--fs-label)', color: done ? 'rgba(32,216,144,0.85)' : '#F5F5F5' }}>{task.label}</span>
             {task.chip && (
-              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: done ? green : orange, border: `1px solid ${done ? 'rgba(32,216,144,0.3)' : 'rgba(255,107,53,0.35)'}`, padding: '1px 6px', background: done ? 'rgba(32,216,144,0.08)' : 'rgba(255,107,53,0.08)' }}>{task.chip}</span>
+              <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: done ? green : orange, border: `1px solid ${done ? 'rgba(32,216,144,0.3)' : 'rgba(227,82,5,0.35)'}`, padding: '1px 6px', background: done ? 'rgba(32,216,144,0.08)' : 'rgba(227,82,5,0.08)' }}>{task.chip}</span>
             )}
             {done && (
               <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: green, border: '1px solid rgba(32,216,144,0.25)', padding: '1px 6px', background: 'rgba(32,216,144,0.08)' }}>DONE</span>
@@ -520,7 +500,7 @@ function VoyagerUnlockTrack({
 // ─── VOYAGER stage content ────────────────────────────────────────────────────
 
 function VoyagerStageContent({ onItemClick }: { onItemClick: (item: BenefitDetail) => void }) {
-  const gold = (a: number) => `rgba(196,169,106,${a})`
+  const gold = (a: number) => `rgba(227,82,5,${a})`
 
   const preview: (BenefitDetail & { icon: React.ReactNode })[] = [
     {
@@ -551,8 +531,6 @@ function VoyagerStageContent({ onItemClick }: { onItemClick: (item: BenefitDetai
 
   return (
     <div className="dd-panel" style={{ ['--dd-bd' as string]: gold(0.3) }}>
-      <i className="dd-node" />
-      <i className="dd-dash" />
 
       {/* Header */}
       <div style={{
@@ -616,7 +594,7 @@ function VoyagerStageContent({ onItemClick }: { onItemClick: (item: BenefitDetai
 // ─── VOYAGER welcome block (post-purchase) ────────────────────────────────────
 
 function VoyagerWelcomeBlock({ onConsoleClick, onSignalClick }: { onConsoleClick: () => void; onSignalClick: () => void }) {
-  const gold = (a: number) => `rgba(196,169,106,${a})`
+  const gold = (a: number) => `rgba(227,82,5,${a})`
 
   const capabilities: {
     icon: React.ReactNode
@@ -664,8 +642,6 @@ function VoyagerWelcomeBlock({ onConsoleClick, onSignalClick }: { onConsoleClick
       ['--dd-fill' as string]: '#13152C',
       animation: 'voyager-welcome-in 0.35s ease-out',
     }}>
-      <i className="dd-node" />
-      <i className="dd-dash" />
 
       {/* ── Header ── */}
       <div style={{
@@ -798,19 +774,18 @@ export default function VoyagerPathPage() {
   }
 
   return (
-    <div style={{ height: '100vh', overflowY: 'auto', background: 'var(--color-deep)', fontFamily: 'var(--font-mono)' }}>
+    <div className="main pilot-archive-page archive-path-page">
 
       {/* ── Modals ── */}
       <Modal kind={modal} onClose={() => setModal(null)} />
       {detailItem && <BenefitDetailModal item={detailItem} onClose={() => setDetailItem(null)} />}
 
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 20px 80px' }}>
+      <ArchiveBrandHeader />
+      <div className="archive-path-shell">
 
         {/* ── YOUR PATH ── */}
         <section style={{ marginBottom: 16 }}>
-          <div style={{ marginBottom: 8 }}>
-            <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.22em' }}>— YOUR PATH —</span>
-          </div>
+          <ArchiveSectionLabel>YOUR PATH</ArchiveSectionLabel>
           <PathRail
             allDone={allDone}
             isVoyager={isVoyager}
@@ -826,8 +801,8 @@ export default function VoyagerPathPage() {
             <VoyagerWelcomeBlock onConsoleClick={() => setModal('console_locked')} onSignalClick={() => setModal('signal_locked')} />
           ) : viewedStage === 'applicant' ? (
             <>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.22em' }}>— BECOME A VOYAGER —</span>
+              <div className="archive-path-progress-heading">
+                <ArchiveSectionLabel>BECOME A VOYAGER</ArchiveSectionLabel>
                 <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: allDone ? '#20D890' : 'rgba(245,245,245,0.3)' }}>
                   {allDone ? 'VOYAGER UNLOCKED ✦' : `${completedCount} / ${totalTasks} COMPLETE`}
                 </span>
@@ -841,52 +816,6 @@ export default function VoyagerPathPage() {
 
       </div>
 
-      <style>{`
-        @keyframes badge-in {
-          from { opacity: 0; transform: scale(0.9); }
-          to   { opacity: 1; transform: scale(1); }
-        }
-
-        /* ── ui-kit candidate HUD restyle — notched panel ──
-           Two clipped layers: ::before = border, ::after = fill (inset by border
-           width). Signature decorations: BL square node + right-edge dashed tick. */
-        .dd-panel {
-          position: relative;
-          --dd-notch: 15px;
-          --dd-bw: 1.5px;
-          --dd-bd: rgba(255,107,53,0.3);
-          --dd-fill: var(--bg-panel);
-        }
-        .dd-panel::before {
-          content: ''; position: absolute; inset: 0; z-index: 0;
-          background: var(--dd-bd);
-          clip-path: polygon(var(--dd-notch) 0, 100% 0, 100% calc(100% - var(--dd-notch)), calc(100% - var(--dd-notch)) 100%, 0 100%, 0 var(--dd-notch));
-          transition: background 0.4s;
-        }
-        .dd-panel::after {
-          content: ''; position: absolute; inset: var(--dd-bw); z-index: 0;
-          background: var(--dd-fill);
-          clip-path: polygon(calc(var(--dd-notch) - var(--dd-bw)) 0, 100% 0, 100% calc(100% - var(--dd-notch) + var(--dd-bw)), calc(100% - var(--dd-notch) + var(--dd-bw)) 100%, 0 100%, 0 calc(var(--dd-notch) - var(--dd-bw)));
-          transition: background 0.3s;
-        }
-        /* lift real content above the two clip layers */
-        .dd-panel > *:not(.dd-node):not(.dd-dash):not(style) {
-          position: relative; z-index: 1;
-        }
-        /* BL square node */
-        .dd-node {
-          position: absolute; z-index: 2; left: 0; bottom: 0;
-          width: 6px; height: 6px; background: var(--dd-bd); pointer-events: none;
-          transition: background 0.4s;
-        }
-        /* right-edge dashed tick, near the top */
-        .dd-dash {
-          position: absolute; z-index: 2; right: 2px; top: 14px;
-          width: 1.6px; height: 30px; pointer-events: none; opacity: 0.9;
-          background: repeating-linear-gradient(180deg, var(--dd-bd) 0 3.5px, transparent 3.5px 7px);
-          transition: background 0.4s;
-        }
-      `}</style>
     </div>
   )
 }

@@ -4,6 +4,10 @@ import { useState } from 'react'
 import { X, Plus, Trash2 } from 'lucide-react'
 import { createVote } from '@/lib/actions/votes'
 import type { VoteType, UserRole } from '@/types/database'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveField } from '@/components/archive-field'
+import { ArchiveTabs } from '@/components/archive-tabs'
 
 type Props = {
   onClose: () => void
@@ -15,12 +19,6 @@ const SCOPE_OPTIONS: { value: UserRole; label: string; desc: string }[] = [
   { value: 'voyager',   label: 'VOYAGER',   desc: 'Voyagers' },
   { value: 'architect', label: 'ARCHITECT', desc: 'Architects' },
 ]
-
-const S = {
-  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', boxSizing: 'border-box' } as const,
-  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono, monospace)', fontSize: 'var(--fs-label)', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as const,
-}
 
 export function CreateVoteModal({ onClose, onCreated }: Props) {
   const [title, setTitle]     = useState('')
@@ -80,88 +78,75 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(7,10,18,0.85)', backdropFilter: 'blur(4px)' }}
+      className="archive-modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div
-        className="relative w-full max-w-lg mx-4 border p-6 overflow-y-auto"
-        style={{ background: '#151B3A', borderColor: 'rgba(255,107,53,0.16)', maxHeight: '90vh' }}
+      <ArchiveCard
+        aria-labelledby="create-vote-title"
+        aria-modal="true"
+        className="archive-modal archive-vote-modal"
+        role="dialog"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="text-xs font-mono tracking-widest mb-1" style={{ color: 'rgba(245,245,245,0.35)' }}>{"// NEW VOTE"}</div>
-            <h2 className="text-xl font-mono font-semibold" style={{ color: '#F5F5F5' }}>CREATE VOTE</h2>
+            <div className="archive-modal__eyebrow">NEW VOTE</div>
+            <h2 id="create-vote-title">CREATE VOTE</h2>
           </div>
-          <button onClick={onClose} style={{ color: 'rgba(245,245,245,0.35)' }} className="hover:text-[#F5F5F5] transition-colors">
+          <ArchiveButton aria-label="Close dialog" onClick={onClose} variant="ghost">
             <X size={18} />
-          </button>
+          </ArchiveButton>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Title */}
-          <div>
-            <label style={S.label}>TITLE *</label>
+          <ArchiveField htmlFor="vote-title" label="TITLE *">
             <input
-              style={S.input}
+              id="vote-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Vote title..."
               maxLength={200}
             />
-          </div>
+          </ArchiveField>
 
           {/* Description */}
-          <div>
-            <label style={S.label}>DESCRIPTION</label>
+          <ArchiveField htmlFor="vote-description" label="DESCRIPTION">
             <textarea
-              style={{ ...S.area, minHeight: '72px' } as React.CSSProperties}
+              id="vote-description"
               value={description}
               onChange={(e) => setDesc(e.target.value)}
               placeholder="Provide context for this vote (optional)..."
               rows={3}
             />
-          </div>
+          </ArchiveField>
 
           {/* Type + Ends At */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label style={S.label}>VOTE TYPE</label>
-              <div className="flex gap-2">
-                {(['single', 'multi'] as VoteType[]).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setType(t)}
-                    className="flex-1 text-xs font-mono py-1.5 border tracking-widest transition-all"
-                    style={
-                      type === t
-                        ? { borderColor: '#E85D04', color: '#F5F5F5', background: 'rgba(232,93,4,0.15)' }
-                        : { borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', background: 'transparent' }
-                    }
-                  >
-                    {t === 'single' ? 'SINGLE' : 'MULTI'}
-                  </button>
-                ))}
-              </div>
+          <div className="archive-modal-grid archive-modal-grid--two">
+            <div className="archive-choice-group">
+              <div className="archive-field__label">VOTE TYPE</div>
+              <ArchiveTabs
+                activeId={type}
+                ariaLabel="Vote type"
+                items={[{ id: 'single', label: 'SINGLE' }, { id: 'multi', label: 'MULTI' }]}
+                onChange={(value) => setType(value as VoteType)}
+              />
             </div>
 
-            <div>
-              <label style={S.label}>ENDS AT</label>
+            <ArchiveField htmlFor="vote-ends-at" label="ENDS AT">
               <input
+                id="vote-ends-at"
                 type="date"
-                style={{ ...S.input, colorScheme: 'dark' }}
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
               />
-            </div>
+            </ArchiveField>
           </div>
 
           {/* Scope — multi-select */}
           <div>
-            <label style={S.label}>PARTICIPATION SCOPE (MULTI-SELECT)</label>
-            <div className="flex gap-2">
+            <div className="archive-field__label">PARTICIPATION SCOPE</div>
+            <div className="archive-scope-options">
               {SCOPE_OPTIONS.map(({ value, label }) => {
                 const active = scope.includes(value)
                 return (
@@ -169,12 +154,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                     key={value}
                     type="button"
                     onClick={() => toggleScope(value)}
-                    className="flex-1 text-xs font-mono py-1.5 px-2 border tracking-widest transition-all"
-                    style={
-                      active
-                        ? { borderColor: '#E85D04', color: '#F5F5F5', background: 'rgba(232,93,4,0.15)' }
-                        : { borderColor: 'rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', background: 'transparent' }
-                    }
+                    className={`archive-scope-option${active ? ' is-active' : ''}`}
                   >
                     {label}
                   </button>
@@ -192,7 +172,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
 
           {/* Options */}
           <div>
-            <label style={S.label}>OPTIONS (MIN. 2)</label>
+            <div className="archive-field__label">OPTIONS · MINIMUM 2</div>
             <div className="space-y-2">
               {options.map((opt, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -200,66 +180,59 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                     {String.fromCharCode(65 + i)}.
                   </span>
                   <input
-                    style={{ ...S.input, flex: 1 } as React.CSSProperties}
+                    className="archive-inline-input"
                     value={opt}
                     onChange={(e) => setOption(i, e.target.value)}
                     placeholder={`Option ${String.fromCharCode(65 + i)}`}
                     maxLength={200}
                   />
                   {options.length > 2 && (
-                    <button
+                    <ArchiveButton
+                      aria-label={`Remove option ${i + 1}`}
                       type="button"
                       onClick={() => removeOption(i)}
-                      className="shrink-0 transition-colors"
-                      style={{ color: 'rgba(245,245,245,0.35)' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = '#E85D04')}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,245,245,0.35)')}
+                      variant="ghost"
                     >
                       <Trash2 size={14} />
-                    </button>
+                    </ArchiveButton>
                   )}
                 </div>
               ))}
             </div>
             {options.length < 10 && (
-              <button
+              <ArchiveButton
                 type="button"
                 onClick={addOption}
-                className="mt-2 flex items-center gap-1.5 text-xs font-mono tracking-widest transition-colors"
-                style={{ color: 'rgba(245,245,245,0.35)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(245,245,245,0.55)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(245,245,245,0.35)')}
+                variant="ghost"
               >
                 <Plus size={12} /> ADD OPTION
-              </button>
+              </ArchiveButton>
             )}
           </div>
 
           {error && (
-            <div className="text-xs font-mono" style={{ color: '#E85D04' }}>✗ {error}</div>
+            <div className="text-xs font-mono" style={{ color: '#C84406' }}>✗ {error}</div>
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
-            <button
+          <div className="flex items-center justify-end gap-3 pt-2 border-t" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
+            <ArchiveButton
               type="button"
               onClick={onClose}
-              className="btn-ghost"
-              style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}
+              variant="ghost"
             >
-              [ CANCEL ]
-            </button>
-            <button
+              CANCEL
+            </ArchiveButton>
+            <ArchiveButton
               type="submit"
               disabled={saving}
-              className="btn-primary"
-              style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}
+              variant="primary"
             >
-              {saving ? '[ CREATING... ]' : '[ CREATE VOTE ]'}
-            </button>
+              {saving ? 'CREATING...' : 'CREATE VOTE'}
+            </ArchiveButton>
           </div>
         </form>
-      </div>
+      </ArchiveCard>
     </div>
   )
 }

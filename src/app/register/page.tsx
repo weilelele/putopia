@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
 import { getFirstTouch } from '@/lib/utm'
-import { HudField } from '@/components/hud-field'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveField } from '@/components/archive-field'
 import { syncLoopsRegistration } from '@/lib/actions/profile'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 
@@ -111,98 +113,53 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div className="top-bar" style={{ position: 'absolute', top: 0, left: '2.5rem', right: '2.5rem' }}>
-        <div className="crumbs">PC://CONSOLE <span>/</span> IDENTITY REGISTRATION</div>
+    <main className="main pilot-archive-page archive-auth-page">
+      <ArchiveBrandHeader />
+      <div className="archive-auth-shell">
+        <header className="archive-auth-heading">
+          <p>INVITATION VERIFIED</p>
+          <h1>ESTABLISH <span>IDENTITY</span></h1>
+        </header>
+
+        <form onSubmit={handleSubmit} className="archive-auth-form">
+          <ArchiveField htmlFor="register-display-name" label="DISPLAY NAME">
+            <input
+              id="register-display-name"
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Your name or alias"
+              maxLength={40}
+            />
+          </ArchiveField>
+
+          <ArchiveField htmlFor="register-password" label="ACCESS CODE">
+            <input
+              id="register-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Minimum 8 characters"
+            />
+          </ArchiveField>
+
+          <ArchiveField htmlFor="register-password-confirm" label="CONFIRM ACCESS CODE">
+            <input
+              id="register-password-confirm"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat access code"
+            />
+          </ArchiveField>
+
+          {error && <div className="archive-form-message is-error" role="alert">{error}</div>}
+
+          <ArchiveButton disabled={loading} fullWidth type="submit">
+            {loading ? 'REGISTERING...' : 'ESTABLISH IDENTITY'}
+          </ArchiveButton>
+        </form>
       </div>
-
-      <div style={{ width: '100%', maxWidth: '440px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>{"// INVITATION VERIFIED"}</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 900, color: 'var(--color-nebula)', letterSpacing: '0.05em', textShadow: '0 0 20px rgba(232,93,4,0.4)' }}>
-            ESTABLISH IDENTITY
-          </div>
-        </div>
-
-        <div className="hud-frame">
-          <div className="hud-tick-rail hud-tick-left" />
-          <div className="hud-tick-rail hud-tick-right" />
-          <div style={{ padding: '0 1rem' }}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
-                  DISPLAY NAME
-                </label>
-                <HudField>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="ALIAS_IDENTIFIER"
-                    className="input-dark"
-                    maxLength={40}
-                  />
-                </HudField>
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
-                  ACCESS CODE
-                </label>
-                <HudField>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="min. 8 characters"
-                    className="input-dark"
-                  />
-                </HudField>
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>
-                  CONFIRM ACCESS CODE
-                </label>
-                <HudField>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="repeat code"
-                    className="input-dark"
-                  />
-                </HudField>
-              </div>
-
-              {error && (
-                <div
-                  className="text-xs font-mono py-2 px-3 border"
-                  style={{ color: '#E83030', borderColor: 'rgba(232,48,48,0.3)', background: 'rgba(232,48,48,0.08)' }}
-                >
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-secondary w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ justifyContent: 'center', fontSize: 'var(--fs-label)' }}
-              >
-                {loading ? '> REGISTERING...' : '[ ESTABLISH IDENTITY ]'}
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>{"// YOUR IDENTITY WILL BE RECORDED IN THE COLLECTIVE //"}</div>
-      </div>
-
-      <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>PUTOPIA.COLLECTIVE</div>
-      </div>
-    </div>
+    </main>
   )
 }

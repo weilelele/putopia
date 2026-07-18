@@ -8,7 +8,7 @@ import { HudField } from '@/components/hud-field'
 
 const STATUS_OPTIONS: { value: McFunctionStatus; label: string; color: string }[] = [
   { value: 'active',         label: '生效',   color: '#20D890' },
-  { value: 'in_development', label: '开发中', color: '#FF6B35' },
+  { value: 'in_development', label: '开发中', color: '#E35205' },
   { value: 'unknown',        label: '未知',   color: 'rgba(245,245,245,0.35)' },
 ]
 
@@ -64,14 +64,9 @@ export default function McConfigPage() {
 
   return (
     <div className="main">
-      <div className="top-bar">
-        <div className="crumbs">PC://ADMIN <span>/</span> MC UNIT CONFIG</div>
-      </div>
-
       <div style={{ maxWidth: 640, width: '100%' }}>
         <div className="page-head">
           <div>
-            <div className="h-eyebrow">{"// ADMIN"}</div>
             <h1>MC UNIT <span className="accent">CONFIG</span></h1>
             <p className="sub">Configure confirmed functions displayed on the public dashboard</p>
           </div>
@@ -82,14 +77,14 @@ export default function McConfigPage() {
           <div className="hud-tick-rail hud-tick-left" />
           <div className="hud-tick-rail hud-tick-right" />
           <div style={{ padding: '0 0.5rem' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
               CONFIRMED FUNCTIONS
             </div>
 
             {loading ? (
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-deep)', padding: '1rem 0' }}>LOADING...</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', padding: '1rem 0' }}>LOADING...</div>
             ) : fns.length === 0 ? (
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-star-deep)', padding: '1rem 0' }}>No functions configured yet.</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', padding: '1rem 0' }}>No functions configured yet.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {fns.map(fn => {
@@ -99,7 +94,7 @@ export default function McConfigPage() {
                       display: 'grid', gridTemplateColumns: '20px 1fr 160px 32px',
                       gap: '0.75rem', alignItems: 'center',
                       padding: '0.55rem 0.75rem',
-                      background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)',
+                      background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)',
                       opacity: saving === fn.id ? 0.6 : 1, transition: 'opacity 0.2s',
                     }}>
                       <GripVertical size={14} style={{ color: 'rgba(245,245,245,0.35)', cursor: 'grab' }} />
@@ -122,9 +117,9 @@ export default function McConfigPage() {
                             key={opt.value}
                             onClick={() => handleStatusChange(fn.id, opt.value)}
                             style={{
-                              fontFamily: 'var(--font-mono)', fontSize: '0.52rem',
+                              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
                               letterSpacing: '0.08em', padding: '3px 8px',
-                              border: `1px solid ${fn.status === opt.value ? opt.color : 'rgba(255,107,53,0.16)'}`,
+                              border: `1px solid ${fn.status === opt.value ? opt.color : 'rgba(227,82,5,0.16)'}`,
                               background: fn.status === opt.value ? `${opt.color}18` : 'transparent',
                               color: fn.status === opt.value ? opt.color : 'rgba(245,245,245,0.35)',
                               cursor: 'pointer', transition: 'all 0.15s',
@@ -155,12 +150,12 @@ export default function McConfigPage() {
           <div className="hud-tick-rail hud-tick-left" />
           <div className="hud-tick-rail hud-tick-right" />
           <div style={{ padding: '0 0.5rem' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
               ADD FUNCTION
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <div style={{ flex: 1, minWidth: 180 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>NAME</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>NAME</div>
                 <HudField style={{ width: '100%' }}>
                   <input
                     value={newName}
@@ -173,16 +168,16 @@ export default function McConfigPage() {
                 </HudField>
               </div>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>STATUS</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>STATUS</div>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
                   {STATUS_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
                       onClick={() => setNewStatus(opt.value)}
                       style={{
-                        fontFamily: 'var(--font-mono)', fontSize: '0.55rem',
+                        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
                         letterSpacing: '0.08em', padding: '5px 10px',
-                        border: `1px solid ${newStatus === opt.value ? opt.color : 'rgba(255,107,53,0.16)'}`,
+                        border: `1px solid ${newStatus === opt.value ? opt.color : 'rgba(227,82,5,0.16)'}`,
                         background: newStatus === opt.value ? `${opt.color}18` : 'transparent',
                         color: newStatus === opt.value ? opt.color : 'rgba(245,245,245,0.35)',
                         cursor: 'pointer', transition: 'all 0.15s',
@@ -197,13 +192,13 @@ export default function McConfigPage() {
                 onClick={handleAdd}
                 disabled={!newName.trim() || adding}
                 className="btn-primary"
-                style={{ padding: '0.5rem 1.1rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
               >
                 <Plus size={12} /> ADD
               </button>
             </div>
             {error && (
-              <div style={{ marginTop: '0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--color-fault)' }}>{error}</div>
+              <div style={{ marginTop: '0.5rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-fault)' }}>{error}</div>
             )}
           </div>
         </div>

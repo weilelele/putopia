@@ -6,6 +6,12 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { submitWorld } from '@/lib/actions/worlds'
 import { ScanInitiation } from '@/components/scan-initiation'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveField } from '@/components/archive-field'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchivePageHeader } from '@/components/archive-page-header'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
 
 // Atmosphere tones — the chosen color becomes the whole world card's mood.
 // Kept deep enough for white text to read, but with real hue so cards don't
@@ -107,33 +113,26 @@ export default function SubmitWorldPage() {
   }
 
   return (
-    <div style={{ height: '100vh', overflowY: 'auto' }}>
+    <div className="archive-flow-page world-submit-page">
       {launched && (
         <ScanInitiation
           worldName={launched.name}
           onComplete={() => router.push(`/worlds/${encodeURIComponent(launched.id)}`)}
         />
       )}
-      <div className="main">
-        {/* Top bar */}
-        <div className="top-bar">
-          <div className="crumbs">PC://CONSOLE <span>/</span> WORLD RECORDS <span>/</span> REPORT</div>
-        </div>
+      <div className="main archive-flow-main">
+        <ArchiveBrandHeader />
 
-        <div style={{ maxWidth: '640px', width: '100%' }}>
+        <div className="archive-flow-content">
           {/* Back link */}
           <div style={{ marginBottom: '1.5rem' }}>
-            <Link href="/worlds" className="btn-ghost" style={{ display: 'inline-flex' }}>
-              ← WORLD RECORDS
-            </Link>
+            <ArchiveLinkButton href="/worlds" variant="ghost">← WORLD RECORDS</ArchiveLinkButton>
           </div>
 
           {/* Page head */}
-          <div style={{ marginBottom: '2rem' }}>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', fontWeight: 700, color: '#F5F5F5', marginBottom: '0.75rem', letterSpacing: '0.04em' }}>
-              REPORT A <span style={{ color: '#FF6B35' }}>SIGHTING</span>
-            </h1>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.7, maxWidth: '520px' }}>
+          <div className="archive-flow-intro">
+            <ArchivePageHeader title="REPORT A" accent="SIGHTING" />
+            <p className="archive-flow-summary">
               Describe a parallel world you believe exists. Your account will be reviewed by Architects and added to the community pipeline. Evidence, observations, and field notes all welcome.
             </p>
           </div>
@@ -142,16 +141,16 @@ export default function SubmitWorldPage() {
           {isGuest && (
             <div style={{
               padding: '1rem',
-              border: '1px solid rgba(255,107,53,0.3)',
-              background: 'rgba(255,107,53,0.06)',
+              border: '1px solid rgba(227,82,5,0.3)',
+              background: 'rgba(227,82,5,0.06)',
               marginBottom: '1.5rem',
               fontFamily: 'var(--font-mono)',
               fontSize: 'var(--fs-caption)',
               color: 'rgba(245,245,245,0.7)',
             }}>
-              <span style={{ color: '#FF6B35', letterSpacing: '0.12em' }}>ACCESS RESTRICTED</span>
+              <span style={{ color: '#E35205', letterSpacing: '0.12em' }}>ACCESS RESTRICTED</span>
               {' — '}You must be logged in to report a sighting.{' '}
-              <Link href="/login" style={{ color: '#FF6B35', textDecoration: 'underline' }}>Login</Link>
+              <Link href="/login" style={{ color: '#E35205', textDecoration: 'underline' }}>Login</Link>
             </div>
           )}
 
@@ -159,73 +158,40 @@ export default function SubmitWorldPage() {
           <form onSubmit={handleSubmit}>
 
             {/* World name */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(245,245,245,0.45)', marginBottom: '0.5rem' }}>
-                WORLD DESIGNATION <span style={{ color: '#FF6B35' }}>*</span>
-              </label>
+            <ArchiveField htmlFor="world-designation" label="WORLD DESIGNATION *">
               <input
+                id="world-designation"
                 type="text"
                 placeholder="e.g. The Mirror Shore, World-7 Echo..."
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 disabled={isGuest || loading}
                 maxLength={80}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  background: 'var(--bg-panel)',
-                  border: '1px solid var(--bd-cyan-2)',
-                  color: 'var(--tx-primary)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--fs-label)',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
               />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.25)', marginTop: '0.25rem', textAlign: 'right' }}>
+              <div className="archive-flow-counter">
                 {form.name.length}/80
               </div>
-            </div>
+            </ArchiveField>
 
             {/* Description */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(245,245,245,0.45)', marginBottom: '0.5rem' }}>
-                FIELD NOTES <span style={{ color: '#FF6B35' }}>*</span>
-                <span style={{ marginLeft: '1rem', color: 'rgba(245,245,245,0.25)', letterSpacing: '0.1em' }}>min. 20 chars</span>
-              </label>
+            <ArchiveField htmlFor="world-notes" label="FIELD NOTES * · MIN. 20 CHARS">
               <textarea
+                id="world-notes"
                 placeholder="Describe the world: what signals or evidence have you observed? What makes you believe this parallel world exists? Include any anomalies, patterns, or firsthand accounts..."
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 disabled={isGuest || loading}
                 rows={7}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  background: 'var(--bg-panel)',
-                  border: '1px solid var(--bd-cyan-2)',
-                  color: 'var(--tx-primary)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--fs-label)',
-                  lineHeight: 1.75,
-                  resize: 'vertical',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  minHeight: '160px',
-                }}
               />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: form.description.length < 20 ? 'rgba(255,107,53,0.5)' : 'rgba(245,245,245,0.25)', marginTop: '0.25rem', textAlign: 'right' }}>
+              <div className={`archive-flow-counter${form.description.length < 20 ? ' is-pending' : ''}`}>
                 {form.description.length} chars
               </div>
-            </div>
+            </ArchiveField>
 
             {/* Gradient selector */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(245,245,245,0.45)', marginBottom: '0.75rem' }}>
-                ATMOSPHERE
-                <span style={{ marginLeft: '1rem', color: 'rgba(245,245,245,0.25)', letterSpacing: '0.1em' }}>mood tone</span>
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <section className="archive-flow-section">
+              <ArchiveSectionLabel>ATMOSPHERE · MOOD TONE</ArchiveSectionLabel>
+              <div className="world-tone-grid">
                 {GRADIENT_PRESETS.map((preset) => {
                   const active = preset.label === form.gradient.label
                   return (
@@ -234,18 +200,7 @@ export default function SubmitWorldPage() {
                       type="button"
                       onClick={() => setForm({ ...form, gradient: preset })}
                       disabled={isGuest || loading}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        background: 'none',
-                        border: `1px solid ${active ? 'rgba(255,107,53,0.6)' : 'rgba(255,107,53,0.15)'}`,
-                        padding: '0.35rem',
-                        cursor: 'pointer',
-                        outline: 'none',
-                        boxShadow: active ? '0 0 0 1px rgba(255,107,53,0.3)' : 'none',
-                      }}
+                      className={`world-tone-option${active ? ' is-active' : ''}`}
                     >
                       <div style={{
                         width: 48, height: 28,
@@ -256,7 +211,7 @@ export default function SubmitWorldPage() {
                         fontFamily: 'var(--font-mono)',
                         fontSize: 'var(--fs-caption)',
                         letterSpacing: '0.12em',
-                        color: active ? '#FF6B35' : 'rgba(245,245,245,0.35)',
+                        color: active ? '#E35205' : 'rgba(245,245,245,0.35)',
                       }}>
                         {preset.label}
                       </span>
@@ -264,26 +219,19 @@ export default function SubmitWorldPage() {
                   )
                 })}
               </div>
-            </div>
+            </section>
 
             {/* Image upload */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'rgba(245,245,245,0.45)', marginBottom: '0.75rem' }}>
-                EVIDENCE IMAGE
-                <span style={{ marginLeft: '1rem', color: 'rgba(245,245,245,0.25)', letterSpacing: '0.1em' }}>optional</span>
-              </label>
+            <section className="archive-flow-section">
+              <ArchiveSectionLabel>EVIDENCE IMAGE · OPTIONAL</ArchiveSectionLabel>
 
               {/* Preview area */}
-              <div
-                style={{
-                  width: '100%',
-                  height: '180px',
-                  border: '1px dashed rgba(255,107,53,0.28)',
-                  background: 'var(--bg-panel)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  cursor: isGuest ? 'not-allowed' : 'pointer',
-                }}
+              <button
+                type="button"
+                className="world-upload-frame"
+                disabled={isGuest || loading}
+                aria-label={imagePreview ? 'Change evidence image' : 'Upload evidence image'}
+                style={{ cursor: isGuest ? 'not-allowed' : 'pointer' }}
                 onClick={() => !isGuest && !loading && fileRef.current?.click()}
               >
                 {imagePreview ? (
@@ -321,7 +269,7 @@ export default function SubmitWorldPage() {
                     <span style={{ color: 'rgba(245,245,245,0.25)', fontSize: 'var(--fs-caption)' }}>PNG · JPG · WEBP · MAX 5MB</span>
                   </div>
                 </div>
-              </div>
+              </button>
 
               <input
                 ref={fileRef}
@@ -345,7 +293,7 @@ export default function SubmitWorldPage() {
                   </button>
                 </div>
               )}
-            </div>
+            </section>
 
             {/* Error */}
             {error && (
@@ -364,28 +312,10 @@ export default function SubmitWorldPage() {
             )}
 
             {/* Submit */}
-            <button
+            <ArchiveButton
               type="submit"
               disabled={!canSubmit || isGuest}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                background: canSubmit && !isGuest
-                  ? 'linear-gradient(135deg, #E85D04, #C04000)'
-                  : 'rgba(255,107,53,0.08)',
-                border: `1px solid ${canSubmit && !isGuest ? 'rgba(232,93,4,0.5)' : 'rgba(255,107,53,0.15)'}`,
-                color: canSubmit && !isGuest ? '#F5F5F5' : 'rgba(245,245,245,0.25)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 'var(--fs-label)',
-                fontWeight: 700,
-                letterSpacing: '0.2em',
-                cursor: canSubmit && !isGuest ? 'pointer' : 'not-allowed',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                transition: 'opacity 0.15s',
-              }}
+              fullWidth
             >
               {loading ? (
                 <>
@@ -403,7 +333,7 @@ export default function SubmitWorldPage() {
               ) : (
                 'FILE SIGHTING REPORT →'
               )}
-            </button>
+            </ArchiveButton>
 
             {!isGuest && !canSubmit && !loading && (
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.25)', marginTop: '0.5rem', textAlign: 'center', letterSpacing: '0.1em' }}>
@@ -415,7 +345,7 @@ export default function SubmitWorldPage() {
           </form>
 
           {/* Footer note */}
-          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,107,53,0.1)' }}>
+          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(227,82,5,0.1)' }}>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.2)', lineHeight: 1.7, letterSpacing: '0.05em' }}>
               All sightings are reviewed by Architects before advancing through the pipeline (Proposed → Picked → Syncing → Stable). Submitted records are visible to authenticated members of the Collective.
             </p>
@@ -423,18 +353,10 @@ export default function SubmitWorldPage() {
 
         </div>
 
-        <div className="footer-bar" style={{ marginTop: '2rem' }}>
-          <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-          <div>WORLD ARCHIVE v2.9</div>
-        </div>
       </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        input:focus, textarea:focus {
-          border-color: rgba(255,107,53,0.4) !important;
-          box-shadow: 0 0 0 1px rgba(255,107,53,0.15);
-        }
       `}</style>
     </div>
   )

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getIntelById } from '@/lib/actions/intel'
 import type { Intel } from '@/types/database'
@@ -9,6 +8,10 @@ import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
 import { markIntelRead } from '@/lib/actions/tasks'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -54,7 +57,7 @@ export default function IntelDetailPage() {
 
   if (entry === undefined) {
     return (
-      <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <div className="main pilot-archive-page archive-state-page">
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
       </div>
     )
@@ -62,10 +65,10 @@ export default function IntelDetailPage() {
 
   if (!entry) {
     return (
-      <div className="main" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
+      <div className="main pilot-archive-page archive-state-page">
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', color: 'var(--color-fault)', marginBottom: '1rem' }}>404</div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>INTEL ENTRY NOT FOUND</div>
-        <Link href={backHref} className="btn-ghost">← RETURN</Link>
+        <ArchiveLinkButton href={backHref} variant="secondary">RETURN</ArchiveLinkButton>
       </div>
     )
   }
@@ -75,7 +78,8 @@ export default function IntelDetailPage() {
   const isSingle  = entry.images?.length === 1
 
   return (
-    <div className="main" ref={scrollRef} onScroll={handleScroll} style={{ overflowY: 'auto' }}>
+    <div className="main pilot-archive-page archive-detail-page archive-intel-detail-page" ref={scrollRef} onScroll={handleScroll} style={{ overflowY: 'auto' }}>
+      <ArchiveBrandHeader />
       <div className="top-bar">
         <div className="crumbs">
           {isGuest
@@ -88,16 +92,13 @@ export default function IntelDetailPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '720px', width: '100%' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <Link href={backHref} className="btn-ghost" style={{ display: 'inline-flex' }}>{backLabel}</Link>
+      <div className="archive-detail-shell">
+        <div className="archive-detail-back">
+          <ArchiveLinkButton href={backHref} variant="ghost">{backLabel}</ArchiveLinkButton>
         </div>
 
-        {/* HUD frame for the intel entry */}
-        <div className="hud-frame" style={{ marginBottom: '2rem' }}>
-          <div className="hud-tick-rail hud-tick-left" />
-          <div className="hud-tick-rail hud-tick-right" />
-          <div style={{ padding: '0 1rem' }}>
+        <ArchiveCard className="archive-detail-card archive-intel-dispatch">
+          <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
               <span className="label-tag" style={{ color }}>{entry.tag}</span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>{formatDate(entry.timestamp)}</span>
@@ -114,23 +115,17 @@ export default function IntelDetailPage() {
               </div>
             )}
 
-            <div className="hr-cyan" />
+            <div className="archive-divider" />
             <article style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginTop: '1rem' }}>
               {entry.content}
             </article>
           </div>
-        </div>
+        </ArchiveCard>
 
         {/* Full-color images — revealed at detail level */}
         {hasImages && (
           <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>
-                VISUAL ATTACHMENTS [{entry.images.length}]
-              </div>
-              <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            </div>
+            <ArchiveSectionLabel>VISUAL ATTACHMENTS · {entry.images.length}</ArchiveSectionLabel>
 
             {isSingle ? (
               <div style={{ width: '100%', overflow: 'hidden', border: '1px solid var(--bd-faint)' }}>
@@ -162,9 +157,9 @@ export default function IntelDetailPage() {
         <CommentThread subjectType="intel" subjectId={entry.id} subjectTitle={entry.title} posthogEvent="intel_comment_sent" />
       </div>
 
-      <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>PUTOPIA.COLLECTIVE</div>
+      <div className="footer-bar archive-footer-bar">
+        <div className="tag">MULTIVERSE COLLECTIVE</div>
+        <div>INTEL</div>
       </div>
     </div>
   )
