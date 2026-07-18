@@ -1,8 +1,9 @@
 'use client'
 
-import Link from 'next/link'
+import Link, { useLinkStatus } from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { useAuth } from '@/lib/auth-context'
 
 const HomeIcon = () => (
@@ -58,14 +59,30 @@ const PRIMARY_NAV = [
   { href: '/voyagers', label: 'VOYAGERS',  icon: <VoyagersIcon /> },
 ]
 
+const IMMERSIVE_ROUTES = ['/voyager-pack', '/login', '/register', '/new', '/apply', '/auth/', '/join/']
+
+function NavItemContent({ icon, label }: { icon: ReactNode; label: string }) {
+  const { pending } = useLinkStatus()
+
+  return (
+    <>
+      {icon}
+      <span>{label}</span>
+      {pending && <i className="bottom-nav__pending" aria-hidden="true" />}
+    </>
+  )
+}
+
 export function BottomNav() {
   const pathname = usePathname()
   const [sheetOpen, setSheetOpen] = useState(false)
   const { user } = useAuth()
 
-  // /voyager-pack is a standalone long-scroll page — no nav needed there.
-  // Return null AFTER all hooks so hook call order is consistent.
-  const isVoyagerPack = pathname === '/voyager-pack'
+  // Authentication, onboarding, and checkout flows need an unobstructed canvas.
+  // Return null only after all hooks so hook call order remains stable.
+  const isImmersiveRoute = IMMERSIVE_ROUTES.some((route) =>
+    route.endsWith('/') ? pathname.startsWith(route) : pathname === route || pathname.startsWith(route + '/')
+  )
 
   useEffect(() => {
     function handleMsg(e: MessageEvent) {
@@ -77,23 +94,14 @@ export function BottomNav() {
   }, [])
   const isGuest = user.role === 'guest'
 
-  if (isVoyagerPack) return null
+  if (isImmersiveRoute) return null
 
   return (
     /* Primary nav bar — hidden when an iframe sheet is open (via postMessage) */
     <nav
-      className="flex md:hidden fixed left-3 right-3 z-50"
-      style={{
-        display: sheetOpen ? 'none' : undefined,
-        bottom: 'calc(14px + env(safe-area-inset-bottom))',
-        background: 'rgba(15,20,48,0.82)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,107,53,0.16)',
-        borderRadius: '18px',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.45), 0 0 16px rgba(232,93,4,0.10)',
-        padding: '6px',
-      }}
+      aria-label="Primary navigation"
+      className="bottom-nav"
+      hidden={sheetOpen}
     >
       {PRIMARY_NAV.map(({ href, label, icon }) => {
         const isHome = href === '/console'
@@ -105,11 +113,10 @@ export function BottomNav() {
             <Link
               key={href}
               href={`/login?redirect=${href}`}
-              className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
-              style={{ color: 'rgba(245,245,245,0.18)', borderRadius: '12px', textDecoration: 'none' }}
+              className="bottom-nav__item bottom-nav__item--locked"
+              aria-label={`${label} — login required`}
             >
-              {icon}
-              <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
+              <NavItemContent icon={icon} label={label} />
             </Link>
           )
         }
@@ -118,15 +125,10 @@ export function BottomNav() {
           <Link
             key={href}
             href={href}
-            className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
-            style={{
-              color: isActive ? '#E85D04' : 'rgba(245,245,245,0.35)',
-              background: isActive ? 'rgba(232,93,4,0.14)' : 'transparent',
-              borderRadius: '12px',
-            }}
+            className={`bottom-nav__item${isActive ? ' bottom-nav__item--active' : ''}`}
+            aria-current={isActive ? 'page' : undefined}
           >
-            {icon}
-            <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
+            <NavItemContent icon={icon} label={label} />
           </Link>
         )
       })}

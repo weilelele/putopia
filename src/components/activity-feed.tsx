@@ -143,7 +143,7 @@ function FeedRow({ event, onProfileOpen }: { event: ActivityEvent; onProfileOpen
                 key={s.platform}
                 onClick={e => { e.preventDefault(); window.open(s.url, '_blank') }}
                 style={{
-                  fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.15em',
+                  fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
                   color: 'var(--color-star-deep)', border: '1px solid var(--bd-faint)',
                   padding: '0.1rem 0.45rem', cursor: 'pointer',
                 }}
@@ -349,7 +349,7 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
               <span style={{ fontSize: 'var(--fs-label)', fontWeight: 700, color: '#F5F5F5', letterSpacing: '0.04em' }}>
                 {profile.display_name}
               </span>
-              <span style={{ fontSize: '0.6rem', padding: '2px 7px', border: `1px solid ${accent}55`, color: accent, letterSpacing: '0.15em', background: `${accent}0D` }}>
+              <span style={{ fontSize: 'var(--fs-caption)', padding: '2px 7px', border: `1px solid ${accent}55`, color: accent, letterSpacing: '0.15em', background: `${accent}0D` }}>
                 {isArch ? 'ARCHITECT' : 'VOYAGER'}
               </span>
             </div>
@@ -403,7 +403,7 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  fontSize: '0.6rem', letterSpacing: '0.15em', color: 'rgba(245,245,245,0.35)',
+                  fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'rgba(245,245,245,0.35)',
                   border: '1px solid rgba(255,107,53,0.2)', padding: '3px 8px', textDecoration: 'none',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'rgba(245,245,245,0.65)')}

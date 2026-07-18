@@ -13,10 +13,10 @@ import type { QuizQuestionAdmin, QuizOption } from '@/lib/actions/quiz'
 // ─── Shared styles ────────────────────────────────────────────────────────────
 const S = {
   card:   { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '12px' },
-  label:  { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
+  label:  { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
   input:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
   area:   { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 72 },
-  btn:    { padding: '6px 14px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
+  btn:    { padding: '6px 14px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
   btnOk:  { background: '#FF6B35', color: '#070912' },
   btnGhost: { background: 'transparent', border: '1px solid rgba(255,107,53,0.3)', color: 'rgba(245,245,245,0.55)' },
   btnDanger: { background: 'transparent', border: '1px solid rgba(232,48,48,0.4)', color: '#E83030' },
@@ -101,7 +101,7 @@ function QuestionEditor({
             </div>
           ))}
         </div>
-        <div style={{ marginTop: '6px', fontSize: '11px', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.08em' }}>
+        <div style={{ marginTop: '6px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.08em' }}>
           ● = correct answer
         </div>
       </div>
@@ -204,7 +204,7 @@ export default function QuizAdminPage() {
           <h1 style={{ color: '#F5F5F5', fontSize: '16px', letterSpacing: '0.2em', margin: 0 }}>
             FIELD ASSESSMENT — QUESTION EDITOR
           </h1>
-          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.12em', marginTop: '4px' }}>
+          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', marginTop: '4px' }}>
             quiz_id: {QUIZ_ID} · pass mark: 4 / {questions.length || '?'}
           </div>
         </div>
@@ -240,7 +240,7 @@ export default function QuizAdminPage() {
       {/* New question form */}
       {editingId === 'new' && (
         <div style={{ ...S.card, border: '1px solid rgba(255,107,53,0.4)' }}>
-          <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.2em', marginBottom: '16px' }}>
+          <div style={{ color: '#FF6B35', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', marginBottom: '16px' }}>
             NEW QUESTION
           </div>
           <QuestionEditor
@@ -260,7 +260,7 @@ export default function QuizAdminPage() {
           <div key={q.id} style={S.card}>
             {isEditing ? (
               <>
-                <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.2em', marginBottom: '16px' }}>
+                <div style={{ color: '#FF6B35', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', marginBottom: '16px' }}>
                   EDITING Q{q.sort_order}
                 </div>
                 <QuestionEditor

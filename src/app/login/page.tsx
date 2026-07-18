@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
 import { HudField } from '@/components/hud-field'
@@ -20,7 +20,6 @@ function LoginPageContent() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/console'
 
@@ -49,8 +48,8 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div className="top-bar" style={{ position: 'absolute', top: 0, left: '2.5rem', right: '2.5rem' }}>
+    <div className="main auth-main" style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <div className="top-bar auth-top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> AUTHENTICATION</div>
       </div>
 
@@ -130,7 +129,7 @@ function LoginPageContent() {
         <div style={{ marginTop: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', opacity: 0.5 }}>{"// ALL ACCESS ATTEMPTS ARE LOGGED //"}</div>
       </div>
 
-      <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
+      <div className="footer-bar auth-footer-bar">
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
         <div>PUTOPIA.COLLECTIVE</div>
       </div>

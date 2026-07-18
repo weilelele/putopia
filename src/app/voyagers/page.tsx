@@ -231,7 +231,7 @@ export default function VoyagersPage() {
               <Link href="/profile" title="My profile" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
                 <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.1em', color: idColor }}>{idLabel}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.08em', color: 'rgba(245,245,245,0.45)' }}>MY PROFILE</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(245,245,245,0.45)' }}>MY PROFILE</span>
                 </span>
                 {user.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -318,7 +318,7 @@ export default function VoyagersPage() {
                         }}
                       >
                         {b.label}
-                        <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: '999px', background: isActive ? 'rgba(232,93,4,0.2)' : 'rgba(245,245,245,0.08)', color: isActive ? '#FF8A5C' : 'rgba(245,245,245,0.45)' }}>
+                        <span style={{ fontSize: 'var(--fs-caption)', padding: '1px 6px', borderRadius: '999px', background: isActive ? 'rgba(232,93,4,0.2)' : 'rgba(245,245,245,0.08)', color: isActive ? '#FF8A5C' : 'rgba(245,245,245,0.45)' }}>
                           {b.members.length}
                         </span>
                       </button>

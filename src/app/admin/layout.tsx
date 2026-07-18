@@ -63,7 +63,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
           <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '12px', lineHeight: 1.8 }}>
             在 Supabase SQL Editor 执行：<br />
-            <code style={{ color: '#E85D04', fontSize: '11px' }}>
+            <code style={{ color: '#E85D04', fontSize: 'var(--fs-caption)' }}>
               UPDATE voyager_profiles SET role = &apos;architect&apos; WHERE id = &apos;{user.id}&apos;;
             </code>
           </div>
@@ -113,7 +113,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               style={{
                 display: 'block',
                 padding: '14px 20px',
-                fontSize: '11px',
+                fontSize: 'var(--fs-caption)',
                 letterSpacing: '0.2em',
                 color: 'rgba(245,245,245,0.55)',
                 textDecoration: 'none',
@@ -128,7 +128,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '20px' }}>
           <WikiSyncButton />
-          <span style={{ fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>{profile.display_name}</span>
+          <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>{profile.display_name}</span>
         </div>
       </div>
 

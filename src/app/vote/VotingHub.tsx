@@ -34,7 +34,7 @@ function ClassifiedWall() {
       marginTop: '1rem',
     }}>
       <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
+        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
         letterSpacing: '0.25em', color: 'rgba(245,245,245,0.2)',
         marginBottom: '1rem',
       }}>{"// ACCESS RESTRICTED"}</div>

@@ -43,7 +43,7 @@ export function FunnelTabs({
                 padding: '0.6rem 1rem',
                 marginBottom: '-1px',
                 fontFamily: 'monospace',
-                fontSize: 11,
+                fontSize: 'var(--fs-caption)',
                 letterSpacing: '0.15em',
                 color: active ? STAR : MUTED,
                 borderBottom: `2px solid ${active ? ACCENT : 'transparent'}`,

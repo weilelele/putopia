@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import type { McFunction, McFunctionStatus } from '@/types/database'
 
 const STATUS_META: Record<McFunctionStatus, { label: string; color: string }> = {
@@ -35,21 +36,11 @@ function useFnAnimation(count: number, start: boolean) {
  * Shared by the guest console hero / device archive.
  */
 export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  )
   const [started, setStarted] = useState(false)
   const { readyIdx } = useFnAnimation(mcFunctions.length, started)
 
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
   return (
-    <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto', border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', overflow: 'hidden' }}>
+    <div className={`mc-console-panel${started ? ' mc-console-panel--started' : ''}`}>
       <style>{`@keyframes mcScanHint{0%,100%{opacity:0.55}50%{opacity:1}}@keyframes mcModuleIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {/* Section divider title — matches the "INTERNAL UPDATES" feed divider */}
@@ -60,12 +51,14 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
       </div>
 
       {/* Content: image only until tapped; the functions module appears after. */}
-      <div style={{ display: 'grid', gridTemplateColumns: !started ? '1fr' : isMobile ? '1fr' : '1fr 1fr' }}>
+      <div className="mc-console-panel__grid">
         {/* Device image — tap to scan */}
         <button
           type="button"
           onClick={() => setStarted(true)}
           aria-label={started ? 'Multiverse Console' : 'Tap to scan the device functions'}
+          aria-pressed={started}
+          className="mc-console-panel__media"
           style={{
             position: 'relative',
             display: 'block',
@@ -74,17 +67,21 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
             border: 'none',
             background: 'none',
             cursor: started ? 'default' : 'pointer',
-            borderRight: started && !isMobile ? '1px solid rgba(255,107,53,0.16)' : 'none',
-            borderBottom: started && isMobile ? '1px solid rgba(255,107,53,0.16)' : 'none',
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/device-console.jpg" alt="Multiverse Console" style={{ width: '100%', height: 'auto', display: 'block' }} />
+          <Image
+            className="mc-console-panel__image"
+            src="/assets/device-console.jpg"
+            alt="Multiverse Console"
+            width={1280}
+            height={1023}
+            sizes="(min-width: 768px) 450px, calc(100vw - 2rem)"
+          />
         </button>
 
         {/* Confirmed functions — the whole module appears only after the tap */}
         {started && (
-          <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'auto' : '260px', position: 'relative', animation: 'mcModuleIn 0.4s ease-out' }}>
+          <div className="mc-console-panel__functions" style={{ animation: 'mcModuleIn 0.4s ease-out' }}>
             {/* Section label */}
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: 'rgba(245,245,245,0.35)', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
               CONFIRMED FUNCTIONS
@@ -139,4 +136,3 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
     </div>
   )
 }
-

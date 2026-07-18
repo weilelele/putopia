@@ -7,9 +7,9 @@ import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 const S = {
   card:  { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
-  th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
+  th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
   td:    { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'middle' as const, fontSize: '13px' },
-  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
+  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
   input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
   area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
 }
@@ -41,7 +41,7 @@ function nextWorldId(items: World[]) {
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <label style={{ display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' }}>{label}</label>
+      <label style={{ display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' }}>{label}</label>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         <input
           type="color"
@@ -110,7 +110,7 @@ export default function WorldsAdmin() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.3em' }}>ADMIN // WORLDS</div>
+          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em' }}>ADMIN // WORLDS</div>
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>平行世界管理</div>
         </div>
         <button onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #E85D04', color: '#E85D04', background: 'rgba(232,93,4,0.08)' }}>
@@ -145,12 +145,12 @@ export default function WorldsAdmin() {
                   <td style={S.td}>
                     <div style={{ width: '50px', height: '28px', background: `linear-gradient(135deg, ${w.gradient_from}, ${w.gradient_to})`, borderRadius: '2px' }} />
                   </td>
-                  <td style={{ ...S.td, color: 'rgba(245,245,245,0.35)', fontSize: '11px' }}>{w.id}</td>
+                  <td style={{ ...S.td, color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)' }}>{w.id}</td>
                   <td style={{ ...S.td, color: '#F5F5F5' }}>{w.name}</td>
                   <td style={S.td}>{w.discoverer_name}</td>
-                  <td style={{ ...S.td, fontSize: '11px', whiteSpace: 'nowrap' }}>{w.discovery_date}</td>
+                  <td style={{ ...S.td, fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap' }}>{w.discovery_date}</td>
                   <td style={S.td}>
-                    <span style={{ fontSize: '11px', color: w.is_verified ? '#20D890' : 'rgba(245,245,245,0.35)' }}>
+                    <span style={{ fontSize: 'var(--fs-caption)', color: w.is_verified ? '#20D890' : 'rgba(245,245,245,0.35)' }}>
                       {w.is_verified ? '✓' : '—'}
                     </span>
                   </td>
