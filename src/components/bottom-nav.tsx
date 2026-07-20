@@ -86,9 +86,10 @@ export function BottomNav() {
       style={{
         display: sheetOpen ? 'none' : undefined,
         bottom: 'calc(14px + env(safe-area-inset-bottom))',
-        background: 'rgba(15,20,48,0.82)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        // Near-opaque solid instead of backdrop-filter: a fixed blur over a
+        // scrolling page forces the compositor to re-sample every frame and
+        // tanks scroll fps on mid-range phones.
+        background: 'rgba(15,20,48,0.96)',
         border: '1px solid rgba(255,107,53,0.16)',
         borderRadius: '18px',
         boxShadow: '0 8px 24px rgba(0,0,0,0.45), 0 0 16px rgba(232,93,4,0.10)',

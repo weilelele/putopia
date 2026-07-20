@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { McFunction, McFunctionStatus } from '@/types/database'
+import SmartImage from './smart-image'
 
 const STATUS_META: Record<McFunctionStatus, { label: string; color: string }> = {
   active:         { label: 'ACTIVE', color: '#20D890' },
@@ -78,8 +79,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
             borderBottom: started && isMobile ? '1px solid rgba(255,107,53,0.16)' : 'none',
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/device-console.jpg" alt="Multiverse Console" style={{ width: '100%', height: 'auto', display: 'block' }} />
+          <SmartImage src="/assets/device-console.jpg" alt="Multiverse Console" sizes="(min-width: 768px) 600px, 100vw" width={1280} height={1023} style={{ width: '100%', height: 'auto', display: 'block' }} />
         </button>
 
         {/* Confirmed functions — the whole module appears only after the tap */}

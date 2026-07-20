@@ -16,6 +16,7 @@ import { FeedProtoClient, type FeedEntry } from '@/app/feed-proto/feed-client'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import type { ExperimentGroup } from '@/lib/actions/experiment'
 import { SectionTracker } from '@/components/section-tracker'
+import SmartImage from '@/components/smart-image'
 import { FlipWordmark, WORDMARK_READY_EVENT } from '@/components/flip-wordmark'
 import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
@@ -99,10 +100,9 @@ function DevicePreviewCard({ device }: { device: Device }) {
       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.35)' }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--bd-faint)' }}
     >
-      <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18' }}>
+      <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18', position: 'relative' }}>
         {device.image_path ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={device.image_path} alt={device.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <SmartImage src={device.image_path} alt={device.name} sizes="(min-width: 768px) 300px, 50vw" style={{ objectFit: 'cover' }} />
         ) : (
           <DevicePlaceholder id={device.id} />
         )}
@@ -176,12 +176,13 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
 
       {/* Hero photo — bleeds with a top + bottom fade into the card */}
       <div style={{ position: 'relative', height: 150, overflow: 'hidden', background: '#070A1A' }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <SmartImage
           src="/voyager-pack/voyager-hero.png"
           alt={title}
+          sizes="(min-width: 768px) 420px, 100vw"
+          quality={60}
           style={{
-            width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 66%',
+            objectFit: 'cover', objectPosition: '50% 66%',
             filter: direct
               ? 'saturate(0.9) brightness(0.74)'
               : 'saturate(0.6) brightness(0.72) sepia(0.35) hue-rotate(-18deg)',
@@ -240,10 +241,9 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
       onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.9'; el.style.borderColor = 'rgba(255,107,53,0.2)' }}
       onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.7'; el.style.borderColor = 'var(--bd-faint)' }}
     >
-      <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18' }}>
+      <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18', position: 'relative' }}>
         {device.image_path ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={device.image_path} alt={device.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'grayscale(60%) brightness(0.75)' }} />
+          <SmartImage src={device.image_path} alt={device.name} sizes="(min-width: 768px) 300px, 50vw" style={{ objectFit: 'cover', filter: 'grayscale(60%) brightness(0.75)' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', filter: 'grayscale(60%) brightness(0.75)' }}>
             <DevicePlaceholder id={device.id} />
@@ -308,8 +308,7 @@ function IntelPreviewCard({ entry, commentCount }: { entry: IntelWithAvatar; com
       {/* Publisher bar — mirrors Intel Feed style */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px', background: '#0F1430', borderBottom: '1px solid rgba(255,107,53,0.12)' }}>
         {entry.publisher_avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={entry.publisher_avatar_url} alt={publisherName} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(138,154,181,0.25)' }} />
+          <SmartImage src={entry.publisher_avatar_url} alt={publisherName} sizes="28px" width={28} height={28} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(138,154,181,0.25)' }} />
         ) : (
           <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: `${color}18`, border: `1px solid ${color}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, color }}>
             {getInitials(publisherName)}
@@ -330,9 +329,8 @@ function IntelPreviewCard({ entry, commentCount }: { entry: IntelWithAvatar; com
 
       {/* Optional image */}
       {hasImage && (
-        <div style={{ width: '100%', aspectRatio: '16/7', overflow: 'hidden' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={entry.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: BRAND_FILTER, display: 'block' }} />
+        <div style={{ width: '100%', aspectRatio: '16/7', overflow: 'hidden', position: 'relative' }}>
+          <SmartImage src={entry.images[0]} alt="" sizes="(min-width: 768px) 600px, 100vw" style={{ objectFit: 'cover', filter: BRAND_FILTER }} />
         </div>
       )}
 
@@ -371,8 +369,7 @@ function WorldPreviewCard({ world }: { world: World }) {
       {/* Gradient / image header */}
       <div style={{ height: 110, position: 'relative', overflow: 'hidden' }}>
         {hasImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={world.image_path!} alt={world.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.4s ease' }} />
+          <SmartImage src={world.image_path!} alt={world.name} sizes="(min-width: 768px) 300px, 100vw" style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
         )}
@@ -528,12 +525,15 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
 
       {/* Emblem */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.75rem', ...line(0) }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <SmartImage
           src="/assets/vi-icon.png"
           alt="Multiverse Collective"
+          sizes="140px"
+          width={140}
+          height={78}
+          preload
           style={{
-            width: '140px', height: 'auto', display: 'block',
+            width: 140, height: 'auto', display: 'block',
             filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',
           }}
         />
@@ -688,10 +688,13 @@ function AuthHero({ user }: {
             <FlipWordmark maxWidth={616} fill={0.858} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.9rem', marginBottom: '1.5rem' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <SmartImage
               src="/assets/vi-icon.png"
               alt="Multiverse Collective"
+              sizes="120px"
+              width={120}
+              height={67}
+              preload
               style={{
                 width: '120px', height: 'auto', display: 'block',
                 filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',

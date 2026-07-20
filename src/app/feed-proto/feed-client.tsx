@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { MessageSquare, Radio } from 'lucide-react'
 import Link from 'next/link'
 import { WorldPoster } from '@/components/world-poster'
+import SmartImage from '@/components/smart-image'
 import { getVoyagerById } from '@/lib/actions/profile'
 import { submitVoteResponse, getMyVoteResponses } from '@/lib/actions/votes'
 import type { VoyagerProfile } from '@/types/database'
@@ -125,8 +126,7 @@ function Portal({ children }: { children: ReactNode }) {
 function Avatar({ p, size = 20 }: { p: Person; size?: number }) {
   if (p.avatar) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={p.avatar} alt="" loading="lazy" decoding="async" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, display: 'block' }} />
+      <SmartImage src={p.avatar} alt="" sizes={`${size}px`} width={size} height={size} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, display: 'block' }} />
     )
   }
   return (
@@ -144,15 +144,13 @@ function Cover({ src }: { src: string }) {
   // lazy-load so off-screen covers never block the initial paint.
   const [loaded, setLoaded] = useState(false)
   return (
-    <div className={loaded ? undefined : 'feed-skel'} style={{ width: '100%', aspectRatio: '3 / 2', overflow: 'hidden', background: 'var(--color-void)' }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+    <div className={loaded ? undefined : 'feed-skel'} style={{ width: '100%', aspectRatio: '3 / 2', overflow: 'hidden', background: 'var(--color-void)', position: 'relative' }}>
+      <SmartImage
         src={src}
         alt=""
-        loading="lazy"
-        decoding="async"
+        sizes="(min-width: 768px) 600px, 100vw"
         onLoad={() => setLoaded(true)}
-        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'brightness(0.85) saturate(0.85)', opacity: loaded ? 1 : 0, transition: 'opacity 0.35s ease' }}
+        style={{ objectFit: 'cover', filter: 'brightness(0.85) saturate(0.85)', opacity: loaded ? 1 : 0, transition: 'opacity 0.35s ease' }}
       />
     </div>
   )
@@ -558,8 +556,7 @@ function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () =>
             display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, fontSize: '1.4rem', fontWeight: 700,
           }}>
             {avatar
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={avatar} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ? <SmartImage src={avatar} alt={name} sizes="72px" width={72} height={72} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>

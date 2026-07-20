@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import SmartImage from '@/components/smart-image'
 import { getApplicantTaskStatus } from '@/lib/actions/tasks'
 import { getQuizQuestions, submitQuizAnswers } from '@/lib/actions/quiz'
 import type { QuizQuestion } from '@/lib/actions/quiz'
@@ -420,8 +421,8 @@ export default function QuizPage() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/vi-wordmark.png" alt="Multiverse Collective"
+          <SmartImage src="/assets/vi-wordmark.png" alt="Multiverse Collective"
+            sizes="73px" width={73} height={20} preload
             style={{ height: 20, width: 'auto', display: 'block' }} />
           <div style={{ width: 1, height: 13, background: 'rgba(255,107,53,0.22)' }} />
           <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.2em' }}>

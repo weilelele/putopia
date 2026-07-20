@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import SmartImage from './smart-image'
 
 type Cell = { i: number; ch: string; file: string; x: number; y: number; w: number; h: number }
 type Row = { word: string; y0: number; y1: number; rowHeight: number; cells: Cell[]; pool: string[] }
@@ -225,7 +226,7 @@ export function FlipWordmark({
         </div>
       ) : (
         // graceful fallback before glyphs load: the original wordmark image
-        <img src="/assets/vi-wordmark.png" alt={ariaLabel} style={{ width: Math.min(maxWidth, containerW * fill), height: 'auto' }} />
+        <SmartImage src="/assets/vi-wordmark.png" alt={ariaLabel} sizes="(max-width: 700px) 90vw, 616px" width={616} height={170} preload style={{ width: Math.min(maxWidth, containerW * fill), height: 'auto' }} />
       )}
     </div>
   )
