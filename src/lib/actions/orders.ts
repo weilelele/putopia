@@ -134,7 +134,7 @@ export async function createOrderManually(params: {
   if (!authUser) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
     const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${siteUrl}/auth/callback?next=/register`,
+      redirectTo: `${siteUrl}/auth/callback`,
     })
     if (inviteErr) return { error: `Could not invite ${email}: ${inviteErr.message}` }
     authUser = invited?.user ?? null
