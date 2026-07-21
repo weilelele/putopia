@@ -48,7 +48,7 @@ export async function submitApplication(application: ApplicationInsert) {
   try {
     const admin = createAdminClient()
     const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(normalizedEmail, {
-      redirectTo: `${siteUrl}/auth/callback?next=/register`,
+      redirectTo: `${siteUrl}/auth/callback`,
     })
     if (inviteError) {
       if (/already been registered|already registered|already exists/i.test(inviteError.message)) {

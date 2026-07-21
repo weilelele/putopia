@@ -1,10 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { getApplicantTaskStatus } from '@/lib/actions/tasks'
 import { getQuizQuestions, submitQuizAnswers } from '@/lib/actions/quiz'
 import type { QuizQuestion } from '@/lib/actions/quiz'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchivePageHeader } from '@/components/archive-page-header'
 
 const QUIZ_ID = 'applicant-baseline-v1'
 
@@ -48,7 +52,7 @@ function FailIcon() {
 
 function AlreadyPassedScreen() {
   return (
-    <div style={{ maxWidth: 560, margin: '0 auto', padding: '64px 24px', textAlign: 'center' }}>
+    <ArchiveCard className="archive-quiz-state">
       <div style={{ marginBottom: 20, color: '#20D890', display: 'flex', justifyContent: 'center' }}>
         <CheckBigIcon />
       </div>
@@ -61,31 +65,21 @@ function AlreadyPassedScreen() {
       <p style={{ margin: '0 0 40px', fontSize: 'var(--fs-body)', color: 'rgba(245,245,245,0.4)', lineHeight: 1.65 }}>
         You have already passed the field assessment. Your results have been recorded.
       </p>
-      <Link
+      <ArchiveLinkButton
         href="/console"
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          padding: '11px 24px',
-          background: 'linear-gradient(135deg, #20D890, #14A060)',
-          color: '#0A0E27', fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
-          fontFamily: 'var(--font-mono)', textDecoration: 'none',
-        }}
+        variant="primary"
       >
         BACK TO DASHBOARD <ArrowIcon />
-      </Link>
-    </div>
+      </ArchiveLinkButton>
+    </ArchiveCard>
   )
 }
 
 function IntroScreen({ onStart, questionCount }: { onStart: () => void; questionCount: number }) {
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: '48px 24px' }}>
-
-      <div style={{ marginBottom: 8, fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.2em' }}>{"// APPLICANT TASK 04 / 04"}</div>
-      <h1 style={{ margin: '0 0 12px', fontSize: 'var(--fs-h2)', color: '#F5F5F5', letterSpacing: '0.04em' }}>
-        FIELD ASSESSMENT
-      </h1>
-      <p style={{ margin: '0 0 28px', fontSize: 'var(--fs-body)', color: 'rgba(245,245,245,0.5)', lineHeight: 1.7 }}>
+    <div className="archive-quiz-intro">
+      <ArchivePageHeader title="FIELD" accent="ASSESSMENT" />
+      <p className="archive-page-intro">
         Before you can be considered for Voyager status, you must demonstrate a baseline
         understanding of the Collective&apos;s mission and methods.
       </p>
@@ -95,19 +89,12 @@ function IntroScreen({ onStart, questionCount }: { onStart: () => void; question
         {questionCount > 0 ? `${questionCount} questions` : '…'}
       </div>
 
-      <button
+      <ArchiveButton
         onClick={onStart}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '12px 28px',
-          background: 'linear-gradient(135deg, #FF6B35, #DC2F02)',
-          border: 'none', cursor: 'pointer',
-          color: '#F5F5F5', fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
-          fontFamily: 'var(--font-mono)',
-        }}
+        variant="primary"
       >
         BEGIN ASSESSMENT <ArrowIcon />
-      </button>
+      </ArchiveButton>
     </div>
   )
 }
@@ -132,31 +119,28 @@ function QuestionScreen({
   const isLast = index === total - 1
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: '40px 24px' }}>
+    <div className="archive-quiz-question">
 
       {/* Progress */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
         <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.15em' }}>
           QUESTION {index + 1} / {total}
         </span>
-        <div style={{ flex: 1, height: 2, background: 'rgba(255,107,53,0.1)' }}>
+        <div className="progress-track" style={{ flex: 1 }}>
           <div style={{
             height: '100%', width: `${((index + 1) / total) * 100}%`,
-            background: 'linear-gradient(to right, #FF6B35, #E85D04)',
+            background: 'var(--color-nucleus)',
             transition: 'width 0.4s ease',
           }} />
         </div>
       </div>
 
       {/* Question */}
-      <div style={{
-        marginBottom: 28, padding: '20px 22px',
-        background: '#0F1430', border: '1px solid rgba(255,107,53,0.14)',
-      }}>
+      <ArchiveCard className="archive-quiz-prompt">
         <p style={{ margin: 0, fontSize: 'var(--fs-title)', color: '#F5F5F5', lineHeight: 1.55, letterSpacing: '0.01em' }}>
           {question.prompt}
         </p>
-      </div>
+      </ArchiveCard>
 
       {/* Options */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
@@ -166,28 +150,11 @@ function QuestionScreen({
             <button
               key={opt.key}
               onClick={() => onSelect(opt.key)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 18px', textAlign: 'left', cursor: 'pointer',
-                background: isSelected ? 'rgba(255,107,53,0.1)' : '#0F1430',
-                border: `1px solid ${isSelected ? 'rgba(255,107,53,0.55)' : 'rgba(255,107,53,0.12)'}`,
-                color: isSelected ? '#FF6B35' : 'rgba(245,245,245,0.6)',
-                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
-                letterSpacing: '0.03em', lineHeight: 1.5,
-                transition: 'all 0.15s',
-              }}
+              aria-pressed={isSelected}
+              className={`archive-quiz-option${isSelected ? ' is-selected' : ''}`}
             >
               {/* Letter label */}
-              <span style={{
-                flexShrink: 0,
-                width: 26, height: 26,
-                border: `1px solid ${isSelected ? '#FF6B35' : 'rgba(255,107,53,0.25)'}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 'var(--fs-caption)', letterSpacing: '0.05em',
-                color: isSelected ? '#FF6B35' : 'rgba(245,245,245,0.35)',
-                background: isSelected ? 'rgba(255,107,53,0.12)' : 'transparent',
-                transition: 'all 0.15s',
-              }}>
+              <span className="archive-quiz-option__key">
                 {opt.key.toUpperCase()}
               </span>
               {opt.label}
@@ -198,21 +165,13 @@ function QuestionScreen({
 
       {/* Confirm */}
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <button
+        <ArchiveButton
           onClick={onNext}
           disabled={!selected || submitting}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '11px 24px',
-            background: selected && !submitting ? 'linear-gradient(135deg, #FF6B35, #DC2F02)' : 'rgba(255,107,53,0.06)',
-            border: `1px solid ${selected && !submitting ? 'transparent' : 'rgba(255,107,53,0.14)'}`,
-            color: selected && !submitting ? '#F5F5F5' : 'rgba(245,245,245,0.2)',
-            fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
-            fontFamily: 'var(--font-mono)', cursor: selected && !submitting ? 'pointer' : 'default',
-          }}
+          variant="primary"
         >
           {submitting ? 'SCORING…' : isLast ? 'SUBMIT' : 'NEXT'} {!submitting && <ArrowIcon />}
-        </button>
+        </ArchiveButton>
       </div>
     </div>
   )
@@ -232,7 +191,7 @@ function ResultScreen({
   onRetry: () => void
 }) {
   return (
-    <div style={{ maxWidth: 560, margin: '0 auto', padding: '56px 24px', textAlign: 'center' }}>
+    <ArchiveCard className="archive-quiz-state">
 
       {/* Status icon */}
       <div style={{ marginBottom: 20, color: passed ? '#20D890' : '#E83030', display: 'flex', justifyContent: 'center' }}>
@@ -258,11 +217,7 @@ function ResultScreen({
       </p>
 
       {/* Score breakdown bar */}
-      <div style={{
-        margin: '0 auto 40px', maxWidth: 320,
-        padding: '16px 20px', background: '#0F1430',
-        border: `1px solid ${passed ? 'rgba(32,216,144,0.2)' : 'rgba(232,48,48,0.2)'}`,
-      }}>
+      <div className="archive-quiz-score">
         <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 10 }}>
           {Array.from({ length: total }).map((_, i) => (
             <div key={i} style={{
@@ -281,49 +236,30 @@ function ResultScreen({
       {/* Actions */}
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
         {passed ? (
-          <Link
+          <ArchiveLinkButton
             href="/console"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '11px 24px',
-              background: 'linear-gradient(135deg, #20D890, #14A060)',
-              color: '#0A0E27', fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
-              fontFamily: 'var(--font-mono)', textDecoration: 'none',
-            }}
+            variant="primary"
           >
             BACK TO DASHBOARD <ArrowIcon />
-          </Link>
+          </ArchiveLinkButton>
         ) : (
           <>
-            <button
+            <ArchiveButton
               onClick={onRetry}
-              style={{
-                padding: '11px 24px',
-                background: 'rgba(255,107,53,0.08)',
-                border: '1px solid rgba(255,107,53,0.25)',
-                color: '#FF6B35', fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
-                fontFamily: 'var(--font-mono)', cursor: 'pointer',
-              }}
+              variant="primary"
             >
               RETRY
-            </button>
-            <Link
+            </ArchiveButton>
+            <ArchiveLinkButton
               href="/intel"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '11px 24px',
-                background: 'transparent',
-                border: '1px solid rgba(255,107,53,0.14)',
-                color: 'rgba(245,245,245,0.4)', fontSize: 'var(--fs-label)', letterSpacing: '0.12em',
-                fontFamily: 'var(--font-mono)', textDecoration: 'none',
-              }}
+              variant="secondary"
             >
               READ BRIEFINGS
-            </Link>
+            </ArchiveLinkButton>
           </>
         )}
       </div>
-    </div>
+    </ArchiveCard>
   )
 }
 
@@ -401,7 +337,7 @@ export default function QuizPage() {
 
   if (checking) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-deep)' }}>
+      <div className="main pilot-archive-page archive-state-page">
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.2em' }}>
           LOADING...
         </span>
@@ -410,57 +346,33 @@ export default function QuizPage() {
   }
 
   return (
-    <div style={{ height: '100vh', overflowY: 'auto', background: 'var(--color-deep)', fontFamily: 'var(--font-mono)' }}>
-
-      {/* ── Top bar ── */}
-      <div style={{
-        borderBottom: '1px solid rgba(255,107,53,0.12)',
-        background: '#0F1430',
-        padding: '12px 28px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/vi-wordmark.png" alt="Multiverse Collective"
-            style={{ height: 20, width: 'auto', display: 'block' }} />
-          <div style={{ width: 1, height: 13, background: 'rgba(255,107,53,0.22)' }} />
-          <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.2em' }}>
-            FIELD ASSESSMENT
-          </span>
-        </div>
-        <Link
-          href="/console"
-          style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.12em', textDecoration: 'none' }}
-        >
-          ← BACK
-        </Link>
+    <div className="main pilot-archive-page archive-quiz-page">
+      <ArchiveBrandHeader />
+      <div className="archive-quiz-nav">
+        <span>FIELD ASSESSMENT</span>
+        <ArchiveLinkButton href="/console" variant="ghost">← BACK</ArchiveLinkButton>
       </div>
 
       {/* ── Content ── */}
-      {alreadyPassed && <AlreadyPassedScreen />}
-      {!alreadyPassed && step === 'intro' && (
-        <IntroScreen onStart={handleStart} questionCount={questions.length} />
-      )}
-      {!alreadyPassed && step === 'question' && currentQuestion && (
-        <QuestionScreen
-          question={currentQuestion}
-          index={currentIdx}
-          total={questions.length}
-          selected={selected}
-          onSelect={handleSelect}
-          onNext={handleNext}
-          submitting={submitting}
-        />
-      )}
-      {!alreadyPassed && step === 'result' && result && (
-        <ResultScreen score={score} total={total} passed={passed} passMark={passMark} onRetry={handleRetry} />
-      )}
-
-      {/* ── Quiz ID watermark ── */}
-      <div style={{ textAlign: 'center', paddingBottom: 24 }}>
-        <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.1)', letterSpacing: '0.15em' }}>
-          {QUIZ_ID}
-        </span>
+      <div className="archive-quiz-shell">
+        {alreadyPassed && <AlreadyPassedScreen />}
+        {!alreadyPassed && step === 'intro' && (
+          <IntroScreen onStart={handleStart} questionCount={questions.length} />
+        )}
+        {!alreadyPassed && step === 'question' && currentQuestion && (
+          <QuestionScreen
+            question={currentQuestion}
+            index={currentIdx}
+            total={questions.length}
+            selected={selected}
+            onSelect={handleSelect}
+            onNext={handleNext}
+            submitting={submitting}
+          />
+        )}
+        {!alreadyPassed && step === 'result' && result && (
+          <ResultScreen score={score} total={total} passed={passed} passMark={passMark} onRetry={handleRetry} />
+        )}
       </div>
     </div>
   )

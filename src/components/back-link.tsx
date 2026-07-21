@@ -16,7 +16,7 @@ export function BackLink({ href, label }: { href: string; label: string }) {
         display: 'inline-flex',
         alignItems: 'center',
         gap: '0.4rem',
-        color: 'rgba(255,107,53,0.8)',
+        color: 'rgba(227,82,5,0.8)',
         fontFamily: 'var(--font-mono)',
         fontSize: 'var(--fs-caption)',
         letterSpacing: '0.14em',

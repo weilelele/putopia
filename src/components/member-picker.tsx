@@ -14,7 +14,7 @@ interface MemberPickerProps {
 
 const ROLE_COLOR: Record<string, string> = {
   architect: '#E8A020',
-  voyager: '#E85D04',
+  voyager: '#C84406',
 }
 
 export function MemberPicker({ label, value, onChange, inputStyle }: MemberPickerProps) {
@@ -28,7 +28,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
   const baseInput: React.CSSProperties = {
     width: '100%',
     background: '#0F1430',
-    border: '1px solid rgba(255,107,53,0.16)',
+    border: '1px solid rgba(227,82,5,0.16)',
     color: '#F5F5F5',
     padding: '7px 10px',
     fontFamily: 'var(--font-mono)',
@@ -97,11 +97,11 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           alignItems: 'center',
           gap: '8px',
           background: '#0F1430',
-          border: '1px solid rgba(232,93,4,0.4)',
+          border: '1px solid rgba(200,68,6,0.4)',
           padding: '6px 10px',
           ...inputStyle,
         }}>
-          <span style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)' }}>✓</span>
+          <span style={{ color: '#C84406', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)' }}>✓</span>
           <span style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', flex: 1 }}>
             {value.name}
           </span>
@@ -118,8 +118,8 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search members by name..."
-          onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(232,93,4,0.5)' }}
-          onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,107,53,0.16)' }}
+          onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(200,68,6,0.5)' }}
+          onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(227,82,5,0.16)' }}
           autoComplete="off"
         />
       )}
@@ -132,7 +132,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           left: 0,
           right: 0,
           background: '#151B3A',
-          border: '1px solid rgba(255,107,53,0.16)',
+          border: '1px solid rgba(227,82,5,0.16)',
           zIndex: 100,
           maxHeight: '200px',
           overflowY: 'auto',
@@ -159,7 +159,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
                 cursor: 'pointer',
                 borderBottom: '1px solid #0F1430',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,107,53,0.16)')}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(227,82,5,0.16)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#F5F5F5', flex: 1 }}>

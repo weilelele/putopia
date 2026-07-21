@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react'
 
 /**
+ * @deprecated Code-drawn approximation retained for legacy screens. New Style
+ * A surfaces must use ArchiveBrandHeader and the protected PNG brand assets.
  * MULTIVERSE COLLECTIVE brand mark.
  * Uses currentColor for fill/stroke, so set `color` (or text color) to recolor it.
  * - mark:     icon only (concentric lens + flanking pills)

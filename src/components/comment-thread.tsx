@@ -45,12 +45,12 @@ function CommentImages({ paths }: { paths: string[] }) {
               maxWidth: 200,
               objectFit: 'cover',
               display: 'block',
-              border: '1px solid rgba(255,107,53,0.18)',
+              border: '1px solid rgba(227,82,5,0.18)',
               cursor: 'zoom-in',
               transition: 'border-color 0.15s',
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.borderColor = 'rgba(255,107,53,0.5)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.borderColor = 'rgba(255,107,53,0.18)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.borderColor = 'rgba(227,82,5,0.5)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.borderColor = 'rgba(227,82,5,0.18)' }}
           />
         </a>
       ))}
@@ -142,7 +142,7 @@ export function CommentThread({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={c.author_avatar_url} alt={c.author_name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid var(--bd-cyan-2)' }} />
             ) : (
-              <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, background: 'rgba(232,93,4,0.08)', color: 'var(--color-nebula)', border: '1px solid var(--bd-cyan-2)', flexShrink: 0 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, background: 'rgba(200,68,6,0.08)', color: 'var(--color-nebula)', border: '1px solid var(--bd-cyan-2)', flexShrink: 0 }}>
                 {getInitials(c.author_name)}
               </div>
             )}
@@ -376,7 +376,7 @@ function Composer({
                 style={{
                   height: 72, width: 'auto', maxWidth: 140,
                   objectFit: 'cover', display: 'block',
-                  border: '1px solid rgba(255,107,53,0.3)',
+                  border: '1px solid rgba(227,82,5,0.3)',
                 }}
               />
               <button
@@ -385,7 +385,7 @@ function Composer({
                 style={{
                   position: 'absolute', top: 2, right: 2,
                   background: 'rgba(10,14,39,0.85)',
-                  border: '1px solid rgba(255,107,53,0.3)',
+                  border: '1px solid rgba(227,82,5,0.3)',
                   borderRadius: 0, cursor: 'pointer', color: '#F5F5F5',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 18, height: 18, padding: 0,
@@ -424,7 +424,7 @@ function Composer({
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
                   background: 'none',
-                  border: '1px solid rgba(255,107,53,0.2)',
+                  border: '1px solid rgba(227,82,5,0.2)',
                   color: canAddMore ? 'rgba(245,245,245,0.4)' : 'rgba(245,245,245,0.15)',
                   fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
                   padding: '4px 8px', cursor: canAddMore ? 'pointer' : 'not-allowed',

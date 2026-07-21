@@ -33,24 +33,52 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // At most ONE voyager_profiles roundtrip per request, shared by every gate
+  // below (registration, /devices/claim, /admin, /studio).
+  let profilePromise: Promise<{
+    registered_at: string | null
+    role: string | null
+    can_edit_onboarding: boolean | null
+  } | null> | null = null
+  const getProfile = () => {
+    profilePromise ??= Promise.resolve(
+      supabase
+        .from('voyager_profiles')
+        .select('registered_at, role, can_edit_onboarding')
+        .eq('id', user!.id)
+        .maybeSingle()
+        .then(({ data }) => data)
+    )
+    return profilePromise
+  }
+
   // Registration gate.
   // The handle_new_user trigger auto-creates a shell voyager_profile on every
   // auth signup, so a user who clicks an invite link gets a live session BEFORE
   // ever completing /register — they have no password and no chosen identity
   // (registered_at stays NULL). Force any such logged-in user through /register
   // before they can browse or post anything.
+  //
+  // Registration is one-way, so once confirmed we cache it in a cookie and the
+  // hot path skips the DB entirely. This is a funnel gate, not a security
+  // boundary — a forged cookie only lets an unregistered user browse with a
+  // shell profile; every privileged check still queries the DB.
+  const REG_COOKIE = 'pv-registered'
   if (user) {
     const REGISTER_EXEMPT = ['/register', '/auth', '/api']
     const exempt = REGISTER_EXEMPT.some((p) => pathname === p || pathname.startsWith(p + '/'))
-    if (!exempt) {
-      const { data: regProfile } = await supabase
-        .from('voyager_profiles')
-        .select('registered_at')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (!regProfile?.registered_at) {
+    if (!exempt && request.cookies.get(REG_COOKIE)?.value !== user.id) {
+      const profile = await getProfile()
+      if (!profile?.registered_at) {
         return NextResponse.redirect(new URL('/register', request.url))
       }
+      supabaseResponse.cookies.set(REG_COOKIE, user.id, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 30,
+        path: '/',
+      })
     }
   }
 
@@ -100,11 +128,7 @@ export async function proxy(request: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL('/login?redirect=/devices/claim', request.url))
     }
-    const { data: profile } = await supabase
-      .from('voyager_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+    const profile = await getProfile()
     if (profile?.role !== 'architect') {
       return NextResponse.redirect(new URL('/console', request.url))
     }
@@ -117,11 +141,7 @@ export async function proxy(request: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    const { data: profile } = await supabase
-      .from('voyager_profiles')
-      .select('role, can_edit_onboarding')
-      .eq('id', user.id)
-      .single()
+    const profile = await getProfile()
 
     const isArchitect = profile?.role === 'architect'
     const onboardingGrant =
@@ -137,6 +157,9 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Skip static assets and endpoints that carry their own auth
+    // (Stripe webhook verifies signatures, cron routes check CRON_SECRET) —
+    // every match below pays a Supabase auth roundtrip.
+    '/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|mp4|webm|mp3|woff2?|ttf|txt|xml|map)$).*)',
   ],
 }

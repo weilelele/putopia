@@ -2,8 +2,12 @@
 
 import { useState } from 'react'
 import { submitApplication } from '@/lib/actions/applications'
-import { HudField } from '@/components/hud-field'
 import posthog from 'posthog-js'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveField } from '@/components/archive-field'
+import { ArchivePageHeader } from '@/components/archive-page-header'
 
 const reasons = [
   { id: 'anomaly', tag: 'ANOMALY DETECTED', text: 'I intercepted a signal I cannot explain.' },
@@ -53,128 +57,115 @@ export default function ApplyPage() {
 
   if (submitted) {
     return (
-      <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div className="top-bar" style={{ position: 'absolute', top: 0, left: '2.5rem', right: '2.5rem' }}>
+      <div className="main pilot-archive-page archive-collection-page archive-apply-page archive-apply-success">
+        <ArchiveBrandHeader />
+        <div className="top-bar">
           <div className="crumbs">PC://CONSOLE <span>/</span> APPLICATION <span>/</span> TRANSMITTED</div>
         </div>
-        <div style={{ maxWidth: '440px', width: '100%', textAlign: 'center' }}>
-          <div className="hud-frame" style={{ marginBottom: '1.5rem', borderColor: 'rgba(32,216,144,0.4)', boxShadow: '0 0 20px rgba(32,216,144,0.10)' }}>
-            <div className="hud-tick-rail hud-tick-left" />
-            <div className="hud-tick-rail hud-tick-right" />
-            <div style={{ padding: '0 1rem', textAlign: 'center' }}>
-              <div className="text-3xl font-mono mb-4" style={{ color: '#20D890' }}>[ ✓ ]</div>
+        <div className="archive-apply-shell">
+          <ArchiveCard className="archive-apply-confirmation">
+            <div>
+              <div className="archive-confirmation-mark">✓</div>
               <div className="text-lg font-mono font-semibold mb-2" style={{ color: 'var(--color-star)' }}>
                 Application Transmitted.
               </div>
               <div className="text-sm font-mono leading-relaxed" style={{ color: 'var(--color-star-deep)' }}>
                 We will review your application and be in contact.
               </div>
-              <div className="mt-4 text-xs font-mono" style={{ color: 'var(--color-muted)' }}>
+              <div className="mt-4 text-xs font-mono" style={{ color: 'var(--color-star-deep)' }}>
                 APPLICATION ID: {appId}
               </div>
             </div>
-          </div>
-          <div className="text-xs font-mono" style={{ color: 'var(--color-muted)', letterSpacing: '0.2em' }}>{"// YOUR APPLICATION IS PENDING ARCHITECT REVIEW //"}</div>
+          </ArchiveCard>
+          <div className="archive-status-note">PENDING ARCHITECT REVIEW</div>
         </div>
-        <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
-          <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-          <div>PUTOPIA.COLLECTIVE</div>
+        <div className="footer-bar archive-footer-bar">
+          <div className="tag">MULTIVERSE COLLECTIVE</div>
+          <div>APPLICATION</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="main">
+    <div className="main pilot-archive-page archive-collection-page archive-apply-page">
+      <ArchiveBrandHeader />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> APPLICATION</div>
       </div>
 
-      <div style={{ maxWidth: '560px', width: '100%' }}>
-        <div className="page-head" style={{ marginBottom: '1.5rem' }}>
-          <div>
-            <div className="h-eyebrow">{"// PORTAL ACCESS REQUEST"}</div>
-            <h1>JOIN THE <span className="accent">COLLECTIVE</span></h1>
-            <p className="sub">Become a Voyager. Apply for access to a Multiverse Console.</p>
-          </div>
-        </div>
+      <div className="archive-apply-shell">
+        <ArchivePageHeader title="JOIN THE" accent="COLLECTIVE" />
+        <p className="archive-page-intro">Become a Voyager. Apply for access to a Multiverse Console.</p>
 
-        <div className="mb-6 p-4 border text-xs font-mono leading-relaxed" style={{ background: 'rgba(232,93,4,0.04)', borderColor: 'rgba(232,93,4,0.25)', color: '#E85D04' }}>
-          <div className="font-semibold mb-1">⚠ NOTICE TO APPLICANTS</div>
-          <div style={{ color: 'rgba(245,245,245,0.55)' }}>
+        <ArchiveCard className="archive-application-notice">
+          <h2>NOTICE TO APPLICANTS</h2>
+          <p>
             All application information will be reviewed by the Architect Council. Upon successful admission,
             you will become a Multiverse Collective Voyager with device access and log publishing rights.
-          </div>
-        </div>
+          </p>
+        </ArchiveCard>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>NAME</label>
-            <HudField>
+        <form onSubmit={handleSubmit} className="archive-apply-form">
+          <ArchiveField htmlFor="application-name" label="NAME">
               <input
+                id="application-name"
                 type="text" required value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Your name or alias" className="input-dark"
+                placeholder="Your name or alias"
               />
-            </HudField>
-          </div>
+          </ArchiveField>
 
-          <div>
-            <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>EMAIL</label>
-            <HudField>
+          <ArchiveField htmlFor="application-email" label="EMAIL">
               <input
+                id="application-email"
                 type="email" required value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="contact@domain.void" className="input-dark"
+                placeholder="contact@domain.void"
               />
-            </HudField>
-          </div>
+          </ArchiveField>
 
-          <div>
-            <label className="block text-xs font-mono tracking-widest mb-1.5" style={{ color: 'rgba(245,245,245,0.35)' }}>LOCATION / REGION</label>
-            <HudField>
+          <ArchiveField htmlFor="application-location" label="LOCATION / REGION">
               <input
+                id="application-location"
                 type="text" value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
-                placeholder="City, Country" className="input-dark"
+                placeholder="City, Country"
               />
-            </HudField>
-          </div>
+          </ArchiveField>
 
           <div>
-            <label className="block text-xs font-mono tracking-widest mb-2" style={{ color: 'rgba(245,245,245,0.35)' }}>REASON FOR APPLYING</label>
-            <div className="space-y-2">
+            <div className="archive-field__label">REASON FOR APPLYING</div>
+            <div className="archive-reason-list">
               {reasons.map((r) => {
                 const isSelected = selectedReason === r.id
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={r.id}
                     onClick={() => setSelectedReason(r.id)}
-                    className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all"
-                    style={{
-                      border: isSelected ? '1px solid #E85D04' : '1px solid rgba(255,107,53,0.16)',
-                      background: isSelected ? 'rgba(232,93,4,0.06)' : '#0F1430',
-                    }}
+                    aria-pressed={isSelected}
+                    className={`archive-reason-option${isSelected ? ' is-selected' : ''}`}
                   >
-                    <span className="shrink-0 font-mono font-bold" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: isSelected ? '#E85D04' : 'rgba(245,245,245,0.35)', minWidth: '110px' }}>
-                      [{r.tag}]
+                    <span className="archive-reason-option__tag">
+                      {r.tag}
                     </span>
-                    <span className="text-xs font-mono" style={{ color: isSelected ? '#F5F5F5' : 'rgba(245,245,245,0.55)' }}>
+                    <span className="archive-reason-option__copy">
                       {r.text}
                     </span>
-                  </div>
+                  </button>
                 )
               })}
             </div>
             {selectedReason === 'other' && (
-              <HudField className="mt-2">
+              <ArchiveField htmlFor="application-other-reason" label="YOUR REASON">
                 <textarea
+                  id="application-other-reason"
                   required rows={3} maxLength={300} value={otherText}
                   onChange={(e) => setOtherText(e.target.value)}
                   placeholder="Describe your reason in your own words..."
-                  className="input-dark resize-none"
                 />
-              </HudField>
+              </ArchiveField>
             )}
           </div>
 
@@ -184,20 +175,20 @@ export default function ApplyPage() {
             </div>
           )}
 
-          <button
+          <ArchiveButton
             type="submit"
             disabled={loading || !selectedReason || (selectedReason === 'other' && !otherText.trim())}
-            className="btn-primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ justifyContent: 'center' }}
+            fullWidth
+            variant="primary"
           >
-            {loading ? '> TRANSMITTING APPLICATION...' : 'SUBMIT APPLICATION'}
-          </button>
+            {loading ? 'TRANSMITTING APPLICATION...' : 'SUBMIT APPLICATION'}
+          </ArchiveButton>
         </form>
       </div>
 
-      <div className="footer-bar" style={{ marginTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>PUTOPIA.COLLECTIVE</div>
+      <div className="footer-bar archive-footer-bar">
+        <div className="tag">MULTIVERSE COLLECTIVE</div>
+        <div>APPLICATION</div>
       </div>
     </div>
   )

@@ -5,7 +5,7 @@ import { useRef, useState } from 'react'
 // ── Mock data ────────────────────────────────────────────────────────────────
 const ACCENT_COLORS = [
   '#E8A020', '#D4601A', '#FF8A5C', '#FFB020',
-  '#C43020', '#C4A96A', '#B5430A', '#FF6B35', '#E85D04',
+  '#C43020', '#C4A96A', '#B5430A', '#E35205', '#C84406',
 ]
 function accentColor(name: string): string {
   let hash = 0
@@ -89,7 +89,7 @@ export default function BatchDemoPage() {
 
       {/* Architect council — pinned, batch-agnostic */}
       <section style={{ marginBottom: '2rem' }}>
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>{"// ARCHITECT COUNCIL"}</div>
+        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', letterSpacing: '0.25em', marginBottom: '1rem', paddingBottom: '8px', borderBottom: '1px solid rgba(227,82,5,0.16)' }}>{"// ARCHITECT COUNCIL"}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
           {ARCHITECTS.map(m => <MemberCard key={m.id} m={m} architect />)}
         </div>
@@ -124,17 +124,17 @@ export default function BatchDemoPage() {
                     display: 'flex', alignItems: 'center', gap: '0.5rem',
                     padding: '0.55rem 0.9rem',
                     fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
-                    background: isActive ? 'rgba(232,93,4,0.12)' : '#151B3A',
-                    color: isActive ? '#E85D04' : 'rgba(245,245,245,0.55)',
-                    border: `1px solid ${isActive ? '#E85D04' : 'rgba(255,107,53,0.16)'}`,
-                    boxShadow: isActive ? '0 0 12px rgba(232,93,4,0.18)' : 'none',
+                    background: isActive ? 'rgba(200,68,6,0.12)' : '#151B3A',
+                    color: isActive ? '#C84406' : 'rgba(245,245,245,0.55)',
+                    border: `1px solid ${isActive ? '#C84406' : 'rgba(227,82,5,0.16)'}`,
+                    boxShadow: isActive ? '0 0 12px rgba(200,68,6,0.18)' : 'none',
                     cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s',
                   }}
                 >
                   {b.label}
                   <span style={{
-                    fontSize: '0.65rem', padding: '1px 6px', borderRadius: '999px',
-                    background: isActive ? 'rgba(232,93,4,0.2)' : 'rgba(245,245,245,0.08)',
+                    fontSize: 'var(--fs-caption)', padding: '1px 6px', borderRadius: '999px',
+                    background: isActive ? 'rgba(200,68,6,0.2)' : 'rgba(245,245,245,0.08)',
                     color: isActive ? '#FF8A5C' : 'rgba(245,245,245,0.45)',
                   }}>
                     {b.members.length}
@@ -149,7 +149,7 @@ export default function BatchDemoPage() {
       {/* Selected batch members */}
       <section>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', marginBottom: '1rem' }}>
-          <span style={{ color: '#E85D04', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', letterSpacing: '0.18em' }}>{activeBatch.label}</span>
+          <span style={{ color: '#C84406', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', letterSpacing: '0.18em' }}>{activeBatch.label}</span>
           <span style={{ color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)' }}>
             {activeBatch.members.length} members
           </span>
@@ -182,8 +182,8 @@ function arrowStyle(side: 'left' | 'right'): React.CSSProperties {
     position: 'absolute', top: '50%', transform: 'translateY(-50%)',
     [side]: '-4px', zIndex: 3,
     width: 28, height: 28, borderRadius: '50%',
-    background: 'rgba(15,20,48,0.92)', border: '1px solid rgba(255,107,53,0.3)',
-    color: '#E85D04', fontFamily: 'var(--font-mono)', fontSize: '1rem', lineHeight: 1,
+    background: 'rgba(15,20,48,0.92)', border: '1px solid rgba(227,82,5,0.3)',
+    color: '#C84406', fontFamily: 'var(--font-mono)', fontSize: '1rem', lineHeight: 1,
     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
   }
 }
@@ -198,14 +198,14 @@ function fadeStyle(side: 'left' | 'right'): React.CSSProperties {
 function MemberCard({ m, architect = false }: { m: Member; architect?: boolean }) {
   const color = accentColor(m.name)
   return (
-    <div className="border p-3" style={{ background: '#151B3A', borderColor: architect ? 'rgba(232,160,32,0.3)' : 'rgba(255,107,53,0.16)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+    <div className="border p-3" style={{ background: '#151B3A', borderColor: architect ? 'rgba(232,160,32,0.3)' : 'rgba(227,82,5,0.16)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
       <div style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.85rem', background: `${color}18`, color, border: `2px solid ${color}40` }}>
         {getInitials(m.name)}
       </div>
       <div style={{ minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#F5F5F5', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</span>
-          {architect && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', padding: '1px 5px', color: '#E8A020', border: '1px solid rgba(232,160,32,0.35)', background: 'rgba(232,160,32,0.06)' }}>ARCH</span>}
+          {architect && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', padding: '1px 5px', color: '#E8A020', border: '1px solid rgba(232,160,32,0.35)', background: 'rgba(232,160,32,0.06)' }}>ARCH</span>}
         </div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginTop: '2px' }}>{m.location}</div>
       </div>

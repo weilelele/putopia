@@ -1,14 +1,15 @@
 import type { CSSProperties, ReactNode } from 'react'
 
 /**
- * Notched HUD frame for form inputs (方案1). Wrap a normal
+ * @deprecated Use ArchiveField for new work. This bridge remains for pages
+ * that have not yet migrated to the Style A component library.
+ * Wrap a normal
  * `<input className="input-dark">` / `<textarea className="input-dark">`:
  *
  *   <HudField legend="NAME"><input className="input-dark" /></HudField>
  *
- * The wrapper draws the notched border + fill; the input inside is flattened to
- * transparent by globals.css so only the frame shows. `legend` renders an
- * optional label that sits on the top border line.
+ * The wrapper now inherits the flat Style A field treatment from
+ * visual-refresh.css. `legend` remains for backwards compatibility.
  */
 export function HudField({
   legend,

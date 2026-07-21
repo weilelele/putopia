@@ -3,23 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import SmartImage from './smart-image'
 
 const navItems = [
-  {
-    group: 'Console',
-    items: [
-      { href: '/console',   label: 'Dashboard',      icon: <IconStar /> },
-      { href: '/intel',    label: 'Intel Feed',      icon: <IconMail /> },
-      { href: '/devices',  label: 'Device Archive',  icon: <IconDevice /> },
-    ],
-  },
-  {
-    group: 'Network',
-    items: [
-      { href: '/voyagers', label: 'Voyagers',        icon: <IconUsers /> },
-      { href: '/worlds',   label: 'World Records',   icon: <IconGlobe /> },
-    ],
-  },
+  { href: '/console',   label: 'Dashboard',      icon: <IconStar /> },
+  { href: '/intel',     label: 'Intel Feed',     icon: <IconMail /> },
+  { href: '/devices',   label: 'Device Archive', icon: <IconDevice /> },
+  { href: '/voyagers',  label: 'Voyagers',       icon: <IconUsers /> },
+  { href: '/worlds',    label: 'World Records',  icon: <IconGlobe /> },
 ]
 
 const LockIcon = () => (
@@ -37,25 +28,33 @@ export function Sidebar() {
   const isActive = (href: string) =>
     href === '/console' ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
 
+  if (pathname.startsWith('/admin') || pathname.startsWith('/newsletter')) return null
+
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" aria-label="Workspace navigation">
       <Link href="/console" className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-        <img
+        <SmartImage
           src="/assets/vi-icon.png"
           alt=""
+          sizes="64px"
+          width={64}
+          height={36}
+          preload
           style={{ height: 36, width: 'auto', display: 'block', flexShrink: 0 }}
         />
-        <img
+        <SmartImage
           src="/assets/vi-wordmark.png"
           alt="Multiverse Collective"
+          sizes="109px"
+          width={109}
+          height={30}
+          preload
           style={{ height: 30, width: 'auto', display: 'block' }}
         />
       </Link>
 
-      {navItems.map(({ group, items }) => (
-        <div key={group}>
-          <div className="nav-label">{"//"}{group}</div>
-          {items.map(({ href, label, icon }) => {
+      <nav className="sidebar-nav" aria-label="Primary">
+        {navItems.map(({ href, label, icon }) => {
             const isDashboard = href === '/console'
             const locked = isGuest && !isDashboard
 
@@ -78,14 +77,14 @@ export function Sidebar() {
                 key={href}
                 href={href}
                 className={`nav-item ${isActive(href) ? 'active' : ''}`}
+                aria-current={isActive(href) ? 'page' : undefined}
               >
                 {icon}
                 {label}
               </Link>
             )
-          })}
-        </div>
-      ))}
+        })}
+      </nav>
 
       {/* Auth block */}
       <div className="sidebar-auth">
@@ -108,13 +107,6 @@ export function Sidebar() {
         <Link href="/" className="sidebar-apply">REQUEST ACCESS</Link>
       )}
 
-      <div className="sidebar-status">
-        <div>
-          <div className="lbl-1">SYSTEM STATUS</div>
-          <div className="lbl-2">ALL NOMINAL</div>
-        </div>
-        <div className="led" />
-      </div>
     </aside>
   )
 }

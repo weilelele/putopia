@@ -1,7 +1,8 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Courier_Prime } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
+import './visual-refresh.css'
 import { AuthProvider } from '@/lib/auth-context'
 import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
@@ -23,6 +24,12 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Multiverse',
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#080C20',
+  colorScheme: 'dark',
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({

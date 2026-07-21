@@ -4,14 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { submitVoteResponse } from '@/lib/actions/votes'
 import type { Vote, UserRole } from '@/types/database'
-import clsx from 'clsx'
-
-const ROLE_STYLE: Record<UserRole, { color: string; border: string; bg: string }> = {
-  guest:     { color: 'rgba(245,245,245,0.35)', border: 'rgba(255,107,53,0.16)',               bg: 'transparent' },
-  applicant: { color: 'rgba(245,245,245,0.55)', border: 'rgba(138,154,181,0.3)', bg: 'rgba(138,154,181,0.06)' },
-  voyager:   { color: '#E85D04', border: 'rgba(232,93,4,0.3)',    bg: 'rgba(232,93,4,0.08)' },
-  architect: { color: '#E8A020', border: 'rgba(232,160,32,0.3)',  bg: 'rgba(232,160,32,0.08)' },
-}
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
 
 const ALL_ROLES: UserRole[] = ['applicant', 'voyager', 'architect']
 
@@ -19,10 +13,7 @@ function ScopeBadges({ scope }: { scope: UserRole[] }) {
   const isAll = ALL_ROLES.every((r) => scope.includes(r))
   if (isAll) {
     return (
-      <span
-        className="text-xs font-mono px-2 py-0.5 border tracking-widest"
-        style={{ color: 'rgba(245,245,245,0.55)', borderColor: 'rgba(138,154,181,0.3)', background: 'rgba(138,154,181,0.06)' }}
-      >
+      <span className="archive-vote-scope">
         ALL MEMBERS
       </span>
     )
@@ -31,13 +22,8 @@ function ScopeBadges({ scope }: { scope: UserRole[] }) {
   return (
     <>
       {display.map((role) => {
-        const s = ROLE_STYLE[role]
         return (
-          <span
-            key={role}
-            className="text-xs font-mono px-2 py-0.5 border tracking-widest"
-            style={{ color: s.color, borderColor: s.border, background: s.bg }}
-          >
+          <span key={role} className="archive-vote-scope">
             {role.toUpperCase()}
           </span>
         )
@@ -59,7 +45,7 @@ function formatDate(iso: string | null) {
 }
 
 export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initialSelections, tally: initialTally }: Props) {
-  const { user, isAtLeast } = useAuth()
+  const { user } = useAuth()
   const [selected, setSelected] = useState<string[]>(initialSelections)
   const [voted, setVoted] = useState(initialHasVoted)
   const [tally, setTally] = useState(initialTally)
@@ -112,28 +98,13 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
   }
 
   return (
-    <div
-      className="border p-5"
-      style={{
-        background: '#151B3A',
-        borderColor: isActive ? 'rgba(255,107,53,0.16)' : 'rgba(255,107,53,0.16)',
-        opacity: isActive ? 1 : 0.75,
-        boxShadow: isActive ? 'inset 0 1px 0 rgba(232,93,4,0.05)' : 'none',
-      }}
-    >
+    <ArchiveCard className={`archive-vote-card${isActive ? '' : ' is-closed'}`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-3 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
           <ScopeBadges scope={vote.scope} />
-          <span
-            className={clsx('text-xs font-mono px-2 py-0.5 border')}
-            style={
-              isActive
-                ? { color: '#20D890', borderColor: 'rgba(32,216,144,0.3)', background: 'rgba(32,216,144,0.08)' }
-                : { color: 'rgba(245,245,245,0.35)', borderColor: 'rgba(255,107,53,0.16)', background: 'transparent' }
-            }
-          >
-            {isActive ? '● ACTIVE' : '○ CLOSED'}
+          <span className={`archive-vote-status${isActive ? ' is-active' : ''}`}>
+            {isActive ? 'ACTIVE' : 'CLOSED'}
           </span>
         </div>
         {vote.ends_at && (
@@ -153,7 +124,7 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
       )}
 
       <div className="text-xs font-mono mb-3" style={{ color: 'rgba(245,245,245,0.35)' }}>
-        {vote.type === 'single' ? '// SINGLE CHOICE' : '// MULTI CHOICE'} — {totalVotes} votes cast
+        {vote.type === 'single' ? 'SINGLE CHOICE' : 'MULTI CHOICE'} — {totalVotes} votes cast
       </div>
 
       {/* Options */}
@@ -167,15 +138,11 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
               <button
                 onClick={() => toggle(option.id)}
                 disabled={!canVote}
-                className="w-full text-left"
+                className={`archive-vote-option${isSelected ? ' is-selected' : ''}`}
               >
                 <div className="flex items-center gap-2 mb-1">
                   <div
-                    className="w-3 h-3 border shrink-0"
-                    style={{
-                      borderColor: isSelected ? '#E85D04' : 'rgba(255,107,53,0.16)',
-                      background: isSelected ? '#E85D04' : 'transparent',
-                    }}
+                    className="archive-vote-option__marker"
                   />
                   <span className="text-xs font-mono" style={{ color: isSelected ? '#F5F5F5' : 'rgba(245,245,245,0.55)' }}>
                     {option.label}
@@ -184,10 +151,10 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
                     {pct}%
                   </span>
                 </div>
-                <div className="h-1 ml-5 overflow-hidden" style={{ background: 'rgba(255,107,53,0.16)' }}>
+                <div className="progress-track archive-vote-progress">
                   <div
-                    className="h-full transition-all"
-                    style={{ width: `${pct}%`, background: isSelected ? '#E85D04' : 'rgba(255,107,53,0.28)' }}
+                    className="progress-fill"
+                    style={{ width: `${pct}%` }}
                   />
                 </div>
               </button>
@@ -198,28 +165,27 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
 
       {/* Footer */}
       {canVote && (
-        <button
+        <ArchiveButton
           onClick={handleVote}
           disabled={selected.length === 0 || submitting}
-          className="btn-primary"
-          style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}
+          variant="primary"
         >
-          {submitting ? '[ SENDING... ]' : '[ CAST VOTE ]'}
-        </button>
+          {submitting ? 'SENDING...' : 'CAST VOTE'}
+        </ArchiveButton>
       )}
       {voted && (
         <div className="text-xs font-mono" style={{ color: '#20D890' }}>✓ VOTE RECORDED</div>
       )}
       {error && (
-        <div className="text-xs font-mono mt-1" style={{ color: '#E85D04' }}>✗ {error}</div>
+        <div className="text-xs font-mono mt-1" style={{ color: '#C84406' }}>✗ {error}</div>
       )}
       {!hasPermission && isActive && (
         <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
           {user.role === 'guest'
-            ? '// LOGIN REQUIRED TO PARTICIPATE'
-            : '// YOUR ROLE IS NOT ELIGIBLE FOR THIS VOTE'}
+            ? 'LOGIN REQUIRED TO PARTICIPATE'
+            : 'YOUR ROLE IS NOT ELIGIBLE FOR THIS VOTE'}
         </div>
       )}
-    </div>
+    </ArchiveCard>
   )
 }

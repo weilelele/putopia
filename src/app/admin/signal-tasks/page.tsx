@@ -82,14 +82,14 @@ function fmtReveal(d: Date): string {
 
 // ─── styles ───────────────────────────────────────────────────────────────────
 const S = {
-  card: { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '18px', marginBottom: '12px' } as const,
-  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const } as const,
-  area: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 60 } as const,
-  sel: { background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' } as const,
-  btn: { padding: '6px 14px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' } as const,
-  btnOk: { background: '#FF6B35', color: '#070912' } as const,
-  btnGhost: { background: 'transparent', border: '1px solid rgba(255,107,53,0.3)', color: 'rgba(245,245,245,0.55)' } as const,
+  card: { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '18px', marginBottom: '12px' } as const,
+  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const } as const,
+  area: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 60 } as const,
+  sel: { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' } as const,
+  btn: { padding: '6px 14px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' } as const,
+  btnOk: { background: '#E35205', color: '#070912' } as const,
+  btnGhost: { background: 'transparent', border: '1px solid rgba(227,82,5,0.3)', color: 'rgba(245,245,245,0.55)' } as const,
   btnDanger: { background: 'transparent', border: '1px solid rgba(232,48,48,0.4)', color: '#E83030' } as const,
 }
 
@@ -142,7 +142,7 @@ export default function SignalTasksAdmin() {
       {/* Left: investigation list */}
       <div style={{ width: 240, flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <span style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.2em' }}>INVESTIGATIONS</span>
+          <span style={{ color: '#C84406', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em' }}>INVESTIGATIONS</span>
           <button style={{ ...S.btn, ...S.btnOk, padding: '4px 10px' }} onClick={() => setNewInvOpen((o) => !o)}>
             {newInvOpen ? '✕' : '+ NEW'}
           </button>
@@ -169,13 +169,13 @@ export default function SignalTasksAdmin() {
             onClick={() => { setActiveInvId(inv.id); setActiveTaskId(null) }}
             style={{
               ...S.card, width: '100%', textAlign: 'left', cursor: 'pointer', padding: '10px 12px',
-              borderColor: activeInvId === inv.id ? 'rgba(255,107,53,0.5)' : 'rgba(255,107,53,0.16)',
+              borderColor: activeInvId === inv.id ? 'rgba(227,82,5,0.5)' : 'rgba(227,82,5,0.16)',
             }}
           >
             <div style={{ fontSize: 12, color: '#F5F5F5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {inv.title || '(untitled)'}
             </div>
-            <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.35)', marginTop: 3, letterSpacing: '0.06em' }}>
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginTop: 3, letterSpacing: '0.06em' }}>
               SIGNAL TUNING · {inv.dayCount} day{inv.dayCount !== 1 ? 's' : ''}
             </div>
           </button>
@@ -274,7 +274,7 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
 
       {mode === 'promote' ? (
         worlds.length === 0 ? (
-          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.4)', marginBottom: 10 }}>
+          <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.4)', marginBottom: 10 }}>
             No proposed worlds to promote. Use “New World” to seed one.
           </div>
         ) : (
@@ -285,8 +285,8 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
             </select>
             {selectedWorld?.description && (
               <div style={{
-                fontSize: 11, lineHeight: 1.55, color: 'rgba(245,245,245,0.5)',
-                background: '#0F1430', border: '1px solid rgba(255,107,53,0.1)', padding: '7px 9px',
+                fontSize: 'var(--fs-caption)', lineHeight: 1.55, color: 'rgba(245,245,245,0.5)',
+                background: '#0F1430', border: '1px solid rgba(227,82,5,0.1)', padding: '7px 9px',
                 marginBottom: 10, maxHeight: 96, overflowY: 'auto', whiteSpace: 'pre-wrap',
               }}>
                 {selectedWorld.description}
@@ -338,7 +338,7 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 13, color: '#F5F5F5', fontWeight: 600 }}>{cfg.title}</div>
-          <div style={{ fontSize: 10, color: 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', marginTop: 2 }}>
+          <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', marginTop: 2 }}>
             SIGNAL TUNING
           </div>
         </div>
@@ -351,10 +351,10 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
       </div>
       {/* Tuning cadence — the first question opens at the world's scan end; each
           question runs a fixed 24h, then this gap before the next. */}
-      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,107,53,0.12)', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(227,82,5,0.12)', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
         <div>
           <label style={S.label}>VOTING WINDOW</label>
-          <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.55)', padding: '5px 0' }}>{cfg.voteWindowHours}h (fixed)</div>
+          <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', padding: '5px 0' }}>{cfg.voteWindowHours}h (fixed)</div>
         </div>
         <div>
           <label style={S.label}>GAP BETWEEN QUESTIONS (HOURS)</label>
@@ -369,10 +369,10 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
         <div style={{ marginTop: 10 }}>
           <button
             onClick={() => setVisionOpen((v) => !v)}
-            style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', fontSize: 10 }}
+            style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', fontSize: 'var(--fs-caption)' }}
           >{visionOpen ? '▲ Hide initial vision' : '▼ Initial vision'}</button>
           {visionOpen && (
-            <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.6, color: 'rgba(245,245,245,0.55)', whiteSpace: 'pre-wrap', maxHeight: 160, overflowY: 'auto' }}>
+            <div style={{ marginTop: 8, fontSize: 'var(--fs-caption)', lineHeight: 1.6, color: 'rgba(245,245,245,0.55)', whiteSpace: 'pre-wrap', maxHeight: 160, overflowY: 'auto' }}>
               {cfg.visionText}
             </div>
           )}
@@ -428,7 +428,7 @@ function DayList({
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <span style={{ color: '#E85D04', fontSize: 11, letterSpacing: '0.15em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
+        <span style={{ color: '#C84406', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>
           {investigationTitle || 'DAYS'}
         </span>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -447,7 +447,7 @@ function DayList({
       {finalOpen && cfg?.worldId && <FinalFormPanel worldId={cfg.worldId} />}
 
       {tasks.length === 0 && (
-        <div style={{ fontSize: 11, color: 'rgba(245,245,245,0.3)' }}>No days yet — click + Day.</div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)' }}>No days yet — click + Day.</div>
       )}
 
       {tasks.map((t) => {
@@ -469,15 +469,15 @@ function DayList({
             onClick={() => onSelectTask(t.id)}
             style={{
               width: '100%', textAlign: 'left', cursor: 'pointer', padding: '8px 10px',
-              background: isActive ? 'rgba(255,107,53,0.1)' : '#0F1430',
-              border: `1px solid ${isActive ? 'rgba(255,107,53,0.4)' : 'rgba(255,107,53,0.1)'}`,
+              background: isActive ? 'rgba(227,82,5,0.1)' : '#0F1430',
+              border: `1px solid ${isActive ? 'rgba(227,82,5,0.4)' : 'rgba(227,82,5,0.1)'}`,
               marginBottom: 4, display: 'block',
             }}
           >
-            <div style={{ fontSize: 12, color: isActive ? '#FF6B35' : '#F5F5F5', letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: 12, color: isActive ? '#E35205' : '#F5F5F5', letterSpacing: '0.08em' }}>
               Day {dayNum}
             </div>
-            <div style={{ fontSize: 10, color: status.color, marginTop: 2 }}>
+            <div style={{ fontSize: 'var(--fs-caption)', color: status.color, marginTop: 2 }}>
               {status.label}
             </div>
           </button>
@@ -520,7 +520,7 @@ function TaskEditor({
     <div>
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>
+          <span style={{ color: '#C84406', fontSize: 12, letterSpacing: '0.2em' }}>
             DAY {dayNum} · {task.task_date}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -564,7 +564,7 @@ function TaskEditor({
           onClick={async () => { await updateTask(taskId, { prompt }); await reload(); onChanged() }}
         >Save prompt</button>
         {task.is_published && selectedCount === 0 && (
-          <div style={{ marginTop: 8, fontSize: 11, color: '#E8A020' }}>⚠ Published but no assets selected — members will see nothing.</div>
+          <div style={{ marginTop: 8, fontSize: 'var(--fs-caption)', color: '#E8A020' }}>⚠ Published but no assets selected — members will see nothing.</div>
         )}
       </div>
 
@@ -572,8 +572,8 @@ function TaskEditor({
 
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{ color: '#E85D04', fontSize: 12, letterSpacing: '0.2em' }}>CANDIDATE POOL</span>
-          <span style={{ fontSize: 11, color: 'rgba(245,245,245,0.4)' }}>
+          <span style={{ color: '#C84406', fontSize: 12, letterSpacing: '0.2em' }}>CANDIDATE POOL</span>
+          <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.4)' }}>
             {assets.length} total · <span style={{ color: '#20D890' }}>{selectedCount}</span> live
           </span>
         </div>
@@ -724,7 +724,7 @@ function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; f
         />
       )}
 
-      {result && <div style={{ marginTop: 8, fontSize: 11, color: 'rgba(245,245,245,0.6)' }}>{result}</div>}
+      {result && <div style={{ marginTop: 8, fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.6)' }}>{result}</div>}
     </div>
   )
 }
@@ -759,18 +759,18 @@ function CropSettings({
           </div>
           <div>
             <label style={S.label}>CROP {(areaRatio * 100).toFixed(0)}%</label>
-            <input type="range" min={5} max={40} value={Math.round(areaRatio * 100)} onChange={(e) => setAreaRatio(Number(e.target.value) / 100)} style={{ accentColor: '#FF6B35', width: 120 }} />
+            <input type="range" min={5} max={40} value={Math.round(areaRatio * 100)} onChange={(e) => setAreaRatio(Number(e.target.value) / 100)} style={{ accentColor: '#E35205', width: 120 }} />
           </div>
           <div>
             <label style={S.label}>GLITCH {glitch}</label>
-            <input type="range" min={0} max={100} value={glitch} onChange={(e) => setGlitch(Number(e.target.value))} style={{ accentColor: '#FF6B35', width: 120 }} />
+            <input type="range" min={0} max={100} value={glitch} onChange={(e) => setGlitch(Number(e.target.value))} style={{ accentColor: '#E35205', width: 120 }} />
           </div>
         </div>
       )}
       {showClip && (
         <div style={{ marginBottom: 10 }}>
           <label style={S.label}>CLIP LENGTH {durationSec}s</label>
-          <input type="range" min={2} max={10} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} style={{ accentColor: '#FF6B35', width: 140 }} />
+          <input type="range" min={2} max={10} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} style={{ accentColor: '#E35205', width: 140 }} />
         </div>
       )}
     </>
@@ -896,7 +896,7 @@ function ForgePicker({
             return (
               <div
                 key={a.assetId} onClick={() => toggle(a.assetId)} title={a.prompt ?? ''}
-                style={{ position: 'relative', cursor: 'pointer', border: on ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)', background: '#070912', aspectRatio: '1' }}
+                style={{ position: 'relative', cursor: 'pointer', border: on ? '2px solid #20D890' : '1px solid rgba(227,82,5,0.16)', background: '#070912', aspectRatio: '1' }}
               >
                 {effMedia === 'video' && !a.posterUrl
                   // no start frame resolved — fall back to a metadata-preloaded <video> (shows a frame, not black)
@@ -928,7 +928,7 @@ function AssetCard({ asset, showRole, onChanged }: { asset: SignalTaskAsset; sho
   const wrap = async (fn: () => Promise<unknown>) => { setBusy(true); await fn(); await onChanged(); setBusy(false) }
 
   return (
-    <div style={{ border: asset.is_selected ? '2px solid #20D890' : '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: 6, opacity: busy ? 0.5 : 1 }}>
+    <div style={{ border: asset.is_selected ? '2px solid #20D890' : '1px solid rgba(227,82,5,0.16)', background: '#0F1430', padding: 6, opacity: busy ? 0.5 : 1 }}>
       {asset.media === 'video' ? (
         // Video candidates display as an animated WebP/GIF (auto-loops as <img>).
         // Only fall back to a <video> player for legacy mp4-only rows.
@@ -947,21 +947,21 @@ function AssetCard({ asset, showRole, onChanged }: { asset: SignalTaskAsset; sho
         // eslint-disable-next-line @next/next/no-img-element
         <img src={asset.processed_url || ''} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#070912', display: 'block' }} />
       )}
-      <div style={{ fontSize: 9, color: 'rgba(245,245,245,0.35)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {asset.source_freq ?? '–'} {asset.source_band_name}
       </div>
       <div style={{ display: 'flex', gap: 4, marginTop: 5, flexWrap: 'wrap' }}>
-        <button style={{ ...S.btn, padding: '3px 6px', fontSize: '10px', ...(asset.is_selected ? S.btnOk : S.btnGhost) }}
+        <button style={{ ...S.btn, padding: '3px 6px', fontSize: 'var(--fs-caption)', ...(asset.is_selected ? S.btnOk : S.btnGhost) }}
           onClick={() => wrap(() => setAssetSelected(asset.id, !asset.is_selected))}>
           {asset.is_selected ? '✓ Live' : 'Live'}
         </button>
         {showRole && asset.is_selected && (
-          <button style={{ ...S.btn, padding: '3px 6px', fontSize: '10px', ...(asset.asset_role === 'main' ? S.btnOk : S.btnGhost) }}
+          <button style={{ ...S.btn, padding: '3px 6px', fontSize: 'var(--fs-caption)', ...(asset.asset_role === 'main' ? S.btnOk : S.btnGhost) }}
             onClick={() => wrap(() => setAssetRole(asset.id, asset.asset_role === 'main' ? 'option' : 'main'))}>
             {asset.asset_role === 'main' ? '★ Main' : 'Main'}
           </button>
         )}
-        <button style={{ ...S.btn, padding: '3px 6px', fontSize: '10px', ...S.btnDanger }}
+        <button style={{ ...S.btn, padding: '3px 6px', fontSize: 'var(--fs-caption)', ...S.btnDanger }}
           onClick={() => wrap(() => deleteAsset(asset.id))}>Del</button>
       </div>
     </div>

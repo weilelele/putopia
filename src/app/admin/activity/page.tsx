@@ -7,7 +7,7 @@ import type { ActivityEvent } from '@/lib/actions/activity-events'
 const TYPE_COLOR: Record<string, string> = {
   intel_published: 'rgba(245,245,245,0.55)',
   intel_updated:   'rgba(245,245,245,0.35)',
-  device_updated:  '#FF6B35',
+  device_updated:  '#E35205',
   world_added:     '#9B7FE8',
   vote_opened:     '#20D890',
   vote_cast:       '#20D890',
@@ -57,9 +57,6 @@ export default function AdminActivityPage() {
     <div style={{ padding: '2rem', maxWidth: 900, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.4rem' }}>
-          ADMIN / ACTIVITY FEED
-        </div>
         <h1 style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--color-star)', letterSpacing: '0.18em', margin: 0 }}>
           ACTIVITY EVENTS
         </h1>

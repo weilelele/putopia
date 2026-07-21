@@ -20,6 +20,10 @@ const eslintConfig = defineConfig([
     ".netlify/**",
     ".vercel/**",
     "coverage/**",
+    // Local agent worktrees and native app shells — not part of the web lint surface.
+    ".codex-worktrees/**",
+    "android/**",
+    "ios/**",
   ]),
   {
     // React Compiler correctness rules (eslint-plugin-react-hooks v7),

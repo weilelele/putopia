@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { BackLink } from '@/components/back-link'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchivePageHeader } from '@/components/archive-page-header'
 import { LazyImage } from '@/components/lazy-image'
 import { getInvestigationFeed, submitSignalResponse } from '@/lib/actions/signal-tasks'
 import type {
@@ -17,19 +21,16 @@ function AboutModal({ onClose }: { onClose: () => void }) {
   return (
     <div
       onClick={onClose}
+      className="signal-modal-backdrop"
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(7,9,18,0.75)', backdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '24px',
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: '#0F1430', border: '1px solid rgba(255,107,53,0.25)',
-          maxWidth: 480, width: '100%', padding: '32px 28px', position: 'relative',
-        }}
+        className="signal-modal-panel"
       >
         <button
           onClick={onClose}
@@ -39,7 +40,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
             color: 'rgba(245,245,245,0.4)', fontSize: 18, lineHeight: 1, padding: 4,
           }}
         >✕</button>
-        <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: 12 }}>{'// SIGNAL DISPATCH'}</div>
+        <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', marginBottom: 12 }}>SIGNAL DISPATCH</div>
         <p style={{ fontSize: 14, color: 'rgba(245,245,245,0.85)', lineHeight: 1.9, margin: 0 }}>
           We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
           Your intuition is the only instrument that can make sense of them —
@@ -56,30 +57,24 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
   const refresh = async () => setFeed(await getInvestigationFeed())
 
   return (
-    <main style={{ flex: 1, minWidth: 0, height: '100vh', overflowY: 'auto', padding: '32px 28px', fontFamily: 'var(--font-mono, monospace)', color: '#F5F5F5' }}>
+    <main className="main signal-feed-page">
       {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
       <div style={{ maxWidth: 880, margin: '0 auto' }}>
         {/* header */}
-        <div style={{ borderBottom: '1px solid rgba(255,107,53,0.2)', paddingBottom: 16, marginBottom: 28 }}>
-          <BackLink href="/worlds" label="WORLD RECORDS" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>SIGNAL DISPATCH</h1>
+        <ArchiveBrandHeader />
+        <div className="signal-feed-header">
+          <ArchiveLinkButton href="/worlds" variant="ghost">← WORLD RECORDS</ArchiveLinkButton>
+          <div className="signal-feed-title-row">
+            <ArchivePageHeader title="SIGNAL" accent="DISPATCH" />
             <button
               onClick={() => setAboutOpen(true)}
               title="What is this?"
-              style={{
-                width: 22, height: 22, borderRadius: '50%',
-                border: '1px solid rgba(255,107,53,0.35)',
-                background: 'transparent', cursor: 'pointer',
-                color: 'rgba(245,245,245,0.45)', fontSize: 12,
-                fontFamily: 'monospace', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}
+              className="signal-about-button"
             >?</button>
           </div>
           {!feed.loggedIn && (
             <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', marginTop: 8, letterSpacing: '0.1em' }}>
-              ● Browse only — <a href="/login" style={{ color: '#E85D04' }}>log in</a> to respond
+              ● Browse only — <a href="/login" style={{ color: '#C84406' }}>log in</a> to respond
             </div>
           )}
         </div>
@@ -122,7 +117,7 @@ export function InvestigationCard({
   const canGoForward = selectedSlot < slots - 1
 
   return (
-    <div style={{ marginBottom: 32 }}>
+    <section className="signal-investigation">
       {/* investigation header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: showTitle ? 'space-between' : 'flex-end', marginBottom: 16 }}>
         {showTitle && (
@@ -131,7 +126,7 @@ export function InvestigationCard({
               href={`/worlds/${encodeURIComponent(investigation.worldId)}`}
               style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '0.15em', color: '#F5F5F5', textTransform: 'uppercase', textDecoration: 'none' }}
             >
-              {investigation.title} <span style={{ color: '#E85D04', fontSize: 12 }}>→</span>
+              {investigation.title} <span style={{ color: '#C84406', fontSize: 12 }}>→</span>
             </a>
           ) : (
             <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '0.15em', color: '#F5F5F5', textTransform: 'uppercase' }}>
@@ -145,7 +140,7 @@ export function InvestigationCard({
             onClick={() => canGoBack && setSelectedSlot((d) => d - 1)}
             disabled={!canGoBack}
             style={{
-              background: 'none', border: '1px solid rgba(255,107,53,0.3)', color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
+              background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
               width: 28, height: 28, cursor: canGoBack ? 'pointer' : 'default', fontFamily: 'monospace', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >◀</button>
@@ -156,7 +151,7 @@ export function InvestigationCard({
             onClick={() => canGoForward && setSelectedSlot((d) => d + 1)}
             disabled={!canGoForward}
             style={{
-              background: 'none', border: '1px solid rgba(255,107,53,0.3)', color: canGoForward ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
+              background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoForward ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
               width: 28, height: 28, cursor: canGoForward ? 'pointer' : 'default', fontFamily: 'monospace', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >▶</button>
@@ -165,7 +160,7 @@ export function InvestigationCard({
 
       {/* Architect preview: this day hasn't revealed to members yet. */}
       {current && !current.revealed && (
-        <div style={{ fontSize: 11, color: '#E8A020', letterSpacing: '0.05em', marginBottom: 10 }}>
+        <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', letterSpacing: '0.05em', marginBottom: 10 }}>
           ◷ Not yet revealed to members{current.revealAt ? ` — reveals ${new Date(current.revealAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}
         </div>
       )}
@@ -182,7 +177,7 @@ export function InvestigationCard({
           onFiled={onFiled}
         />
       ) : null}
-    </div>
+    </section>
   )
 }
 
@@ -205,7 +200,7 @@ function SearchingPanel({ searching }: { searching: SearchingState }) {
   const failed = searching.failed
   const accent = failed ? '#E83030' : '#FFB020'
   return (
-    <div style={{ background: '#0F1430', border: `1px solid ${failed ? 'rgba(232,48,48,0.32)' : 'rgba(255,176,32,0.3)'}`, padding: 18 }}>
+    <ArchiveCard className="signal-searching-panel" style={{ borderColor: failed ? 'rgba(232,48,48,0.32)' : 'rgba(255,176,32,0.3)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: accent }} />
         <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: accent }}>
@@ -215,7 +210,7 @@ function SearchingPanel({ searching }: { searching: SearchingState }) {
 
       {/* The signal everyone locked onto, enlarged to one option-tile size. */}
       {searching.prevAsset && (
-        <div style={{ width: 'calc(50% - 5px)', margin: '0 auto 16px', border: '1px solid rgba(255,107,53,0.25)' }}>
+        <div style={{ width: 'calc(50% - 5px)', margin: '0 auto 16px', border: '1px solid rgba(227,82,5,0.25)' }}>
           <AssetView asset={searching.prevAsset} />
         </div>
       )}
@@ -233,14 +228,14 @@ function SearchingPanel({ searching }: { searching: SearchingState }) {
           <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '0.04em', color: '#F5F5F5', fontVariantNumeric: 'tabular-nums' }}>{fmtCountdown(left)}</div>
         </div>
       )}
-    </div>
+    </ArchiveCard>
   )
 }
 
 // Square dark slot that holds layout while the image lazy-loads + fades in over it.
 function AssetImage({ src }: { src: string }) {
   return (
-    <div style={{ width: '100%', aspectRatio: '1', background: '#070912', display: 'block' }}>
+    <div style={{ width: '100%', aspectRatio: '1', background: '#070912', display: 'block', position: 'relative' }}>
       <LazyImage src={src} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
     </div>
   )
@@ -307,7 +302,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
   }
 
   return (
-    <div style={{ background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', padding: 16 }}>
+    <ArchiveCard className="signal-task-card">
       {/* Prompt spans the full width — the response count moved to the footer. */}
       <p style={{ fontSize: 14.5, margin: '0 0 14px', lineHeight: 1.6, color: 'rgba(245,245,245,0.88)' }}>
         {task.prompt || TYPE_HINT[task.type] || 'Make your judgment.'}
@@ -316,7 +311,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
       {main && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.15em', whiteSpace: 'nowrap' }}>REFERENCE</span>
-          <div style={{ width: 64, flexShrink: 0, border: '1px solid rgba(255,107,53,0.25)' }}><AssetView asset={main} /></div>
+          <div style={{ width: 64, flexShrink: 0, border: '1px solid rgba(227,82,5,0.25)' }}><AssetView asset={main} /></div>
         </div>
       )}
 
@@ -330,11 +325,14 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
           const pct = total > 0 ? Math.round((count / total) * 100) : 0
           const selectable = canParticipate && !responded && !closed
           return (
-            <div
+            <button
+              type="button"
               key={a.id}
               onClick={() => selectable && setPick(a.id)}
+              disabled={!selectable}
+              className="signal-option"
               style={{
-                border: isMine ? '2px solid #20D890' : isPicked ? '2px solid #FF6B35' : isLeader ? '1px solid rgba(232,93,4,0.5)' : '1px solid rgba(255,107,53,0.16)',
+                border: isMine ? '2px solid #20D890' : isPicked ? '2px solid #E35205' : isLeader ? '1px solid rgba(200,68,6,0.5)' : '1px solid rgba(227,82,5,0.16)',
                 background: '#070912', cursor: selectable ? 'pointer' : 'default', position: 'relative',
               }}
             >
@@ -346,7 +344,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
                   <span style={{ fontSize: 'var(--fs-caption)', fontWeight: isLeader ? 600 : 400, color: isLeader ? '#FF8A3D' : 'rgba(245,245,245,0.82)' }}>{pct}%</span>
                 </span>
               )}
-            </div>
+            </button>
           )
         })}
       </div>
@@ -362,17 +360,16 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
           ) : null}
           {!responded && !closed && (canParticipate ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <button
-                onClick={submit} disabled={!pick || busy}
-                style={{ padding: '7px 18px', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', border: 'none', cursor: !pick || busy ? 'default' : 'pointer', background: !pick || busy ? 'rgba(255,107,53,0.25)' : '#FF6B35', color: '#070912' }}
-              >{busy ? 'Submitting…' : 'SUBMIT'}</button>
+              <ArchiveButton onClick={submit} disabled={!pick || busy}>
+                {busy ? 'Submitting…' : 'SUBMIT'}
+              </ArchiveButton>
               {err && <span style={{ fontSize: 'var(--fs-caption)', color: '#E83030' }}>{err}</span>}
             </div>
           ) : (
             <div style={{ fontSize: 12, color: 'rgba(245,245,245,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ color: 'rgba(245,245,245,0.5)' }}>🔒</span>
               {lockReason === 'Log in to respond'
-                ? <span><a href="/login" style={{ color: '#E85D04' }}>Log in</a> to respond.</span>
+                ? <span><a href="/login" style={{ color: '#C84406' }}>Log in</a> to respond.</span>
                 : <span>{lockReason || 'Voting is restricted for this world.'}</span>}
             </div>
           ))}
@@ -381,6 +378,6 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
           {task.participantCount} response{task.participantCount !== 1 ? 's' : ''}
         </span>
       </div>
-    </div>
+    </ArchiveCard>
   )
 }

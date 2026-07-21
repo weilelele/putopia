@@ -24,7 +24,7 @@ export async function resendAccessLink(email: string): Promise<ResendResult> {
 
   // `email` exists in the DB but isn't in the generated TS types — cast to bypass.
   const { data: profile } = await (admin.from('voyager_profiles' as never) as ReturnType<typeof admin.from>)
-    .select('id, registered_at')
+    .select('id')
     .eq('id', authUser.id)
     .maybeSingle()
 
@@ -32,14 +32,14 @@ export async function resendAccessLink(email: string): Promise<ResendResult> {
 
   // Generate a magic link and send it ourselves. Supabase Admin generateLink()
   // returns an action_link; it does not deliver an email.
-  // If the user has already registered, send them to the console; otherwise to /register.
+  // No query string on redirect_to — GoTrue silently falls back to Site URL
+  // when it carries one (#102). /auth/callback routes by registration state.
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://multiverseco.org'
-  const next = (profile as { registered_at?: string | null }).registered_at ? '/intel' : '/register'
   const { data, error } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email: normalised,
     options: {
-      redirectTo: `${siteUrl}/auth/callback?next=${next}`,
+      redirectTo: `${siteUrl}/auth/callback`,
     },
   })
 

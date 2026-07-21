@@ -8,7 +8,7 @@ import { FunnelTabs } from './tabs'
 import { MembershipPanel } from './membership-panel'
 import { DaySelector } from './day-selector'
 
-const ACCENT   = '#E85D04'
+const ACCENT   = '#C84406'
 const MUTED    = 'rgba(245,245,245,0.35)'
 const DIM      = 'rgba(245,245,245,0.55)'
 const STAR     = '#F5F5F5'
@@ -73,18 +73,18 @@ function pct(a: number, b: number) {
 function TrafficRef({ count, count30d, hide30d = false }: { count: number; count30d: number; hide30d?: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '0.75rem 1rem', background: '#070c1a', border: `1px solid ${BORDER}`, marginBottom: '0.5rem' }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: MUTED }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: MUTED }}>
         HOMEPAGE TRAFFIC (去重浏览器)
       </div>
       <div style={{ fontFamily: 'monospace', fontSize: 13, color: DIM }}>
-        {count.toLocaleString()} <span style={{ fontSize: 9, color: MUTED }}>{hide30d ? '当日' : 'all-time'}</span>
+        {count.toLocaleString()} <span style={{ fontSize: 'var(--fs-caption)', color: MUTED }}>{hide30d ? '当日' : 'all-time'}</span>
       </div>
       {!hide30d && (
-        <div style={{ fontFamily: 'monospace', fontSize: 11, color: MUTED }}>
-          {count30d.toLocaleString()} <span style={{ fontSize: 9 }}>30d</span>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED }}>
+          {count30d.toLocaleString()} <span style={{ fontSize: 'var(--fs-caption)' }}>30d</span>
         </div>
       )}
-      <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginLeft: 'auto' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginLeft: 'auto' }}>
         ↓ 不计入漏斗转化率
       </div>
     </div>
@@ -120,20 +120,20 @@ function StepRow({ step, prev, maxCount, color = ACCENT, hide30d = false }: {
   return (
     <div>
       {prev && (
-        <div style={{ paddingLeft: '0.5rem', marginBottom: '0.25rem', fontFamily: 'monospace', fontSize: 9, color: stepRate ? MUTED : '#151B3A' }}>
+        <div style={{ paddingLeft: '0.5rem', marginBottom: '0.25rem', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: stepRate ? MUTED : '#151B3A' }}>
           {stepRate ? `↓ ${stepRate}` : '↓'}
         </div>
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.12em', color: DIM, width: 180, flexShrink: 0 }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: DIM, width: 180, flexShrink: 0 }}>
           {step.step_label.toUpperCase()}
         </div>
         <FunnelBar count={step.count_all_time} max={maxCount} color={color} />
-        <div style={{ fontFamily: 'monospace', fontSize: 11, color: STAR, width: 48, textAlign: 'right', flexShrink: 0 }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: STAR, width: 48, textAlign: 'right', flexShrink: 0 }}>
           {step.count_all_time.toLocaleString()}
         </div>
         {!hide30d && (
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, width: 52, textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, width: 52, textAlign: 'right', flexShrink: 0 }}>
             30d: {step.count_30d}
           </div>
         )}
@@ -150,13 +150,13 @@ function CoreRatesCard({ started, email, registered, daily = false }: {
   const emailRate = started > 0 ? Math.round((email / started) * 100) : 0
   const regRate   = email   > 0 ? Math.round((registered / email) * 100) : 0
 
-  const labelStyle = { fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' } as const
+  const labelStyle = { fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginBottom: '0.25rem' } as const
   const numStyle   = { fontFamily: 'monospace', fontSize: 22, color: ACCENT, fontWeight: 700, lineHeight: 1 } as const
-  const denStyle   = { fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.25rem' } as const
+  const denStyle   = { fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginTop: '0.25rem' } as const
 
   return (
-    <div style={{ marginTop: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(232,93,4,0.03)', border: '1px solid rgba(232,93,4,0.15)', borderRadius: 2 }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: '#6E6B5E', marginBottom: '0.75rem' }}>
+    <div style={{ marginTop: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(200,68,6,0.03)', border: '1px solid rgba(200,68,6,0.15)', borderRadius: 2 }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: '#6E6B5E', marginBottom: '0.75rem' }}>
         CORE CONVERSION · 核心转化
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
@@ -165,14 +165,14 @@ function CoreRatesCard({ started, email, registered, daily = false }: {
           <div style={numStyle}>{emailRate}%</div>
           <div style={denStyle}>{email.toLocaleString()} / {started.toLocaleString()} started</div>
         </div>
-        <div style={{ borderLeft: '1px solid rgba(232,93,4,0.15)', paddingLeft: '1.5rem' }}>
+        <div style={{ borderLeft: '1px solid rgba(200,68,6,0.15)', paddingLeft: '1.5rem' }}>
           <div style={labelStyle}>注册完成率（注册 / 留邮箱）</div>
           <div style={numStyle}>{regRate}%</div>
           <div style={denStyle}>{registered.toLocaleString()} / {email.toLocaleString()} email</div>
         </div>
       </div>
       {daily && (
-        <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, marginTop: '0.75rem', lineHeight: 1.7 }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginTop: '0.75rem', lineHeight: 1.7 }}>
           {'* 单日注册完成率为同日比值——留邮箱与完成注册往往不是同一批人（注册常晚邮箱数天），仅作方向参考；准确口径看 LATEST 累计卡。'}
         </div>
       )}
@@ -209,16 +209,16 @@ function BeforeAfterComparison({ steps }: { steps: SnapshotRow[] }) {
 
   return (
     <div style={{ marginTop: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(255,90,31,0.03)', border: `1px solid rgba(255,90,31,0.18)`, borderRadius: 2 }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: MUTED, marginBottom: '1rem' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: MUTED, marginBottom: '1rem' }}>
         BEFORE / AFTER SLIDER TRACKING · 2026-05-26 切分
       </div>
 
       {/* Column headers */}
       <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 52px 1fr 52px', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
         <div />
-        <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, letterSpacing: '0.15em' }}>BEFORE</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, letterSpacing: '0.15em' }}>BEFORE</div>
         <div />
-        <div style={{ fontFamily: 'monospace', fontSize: 8, color: ACCENT, letterSpacing: '0.15em' }}>AFTER</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: ACCENT, letterSpacing: '0.15em' }}>AFTER</div>
         <div />
       </div>
 
@@ -236,28 +236,28 @@ function BeforeAfterComparison({ steps }: { steps: SnapshotRow[] }) {
               {i > 0 && (preRate || postRate) && (
                 <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 52px 1fr 52px', gap: '0.5rem', marginBottom: '0.2rem' }}>
                   <div />
-                  <div style={{ fontFamily: 'monospace', fontSize: 8, color: MUTED, paddingLeft: '0.25rem' }}>{preRate ?? ''}</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, paddingLeft: '0.25rem' }}>{preRate ?? ''}</div>
                   <div />
-                  <div style={{ fontFamily: 'monospace', fontSize: 8, color: ACCENT, opacity: 0.7, paddingLeft: '0.25rem' }}>{postRate ?? ''}</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: ACCENT, opacity: 0.7, paddingLeft: '0.25rem' }}>{postRate ?? ''}</div>
                   <div />
                 </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 52px 1fr 52px', gap: '0.5rem', alignItems: 'center' }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: '0.08em', color: row.postOnly ? MUTED : DIM }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: row.postOnly ? MUTED : DIM }}>
                   {row.label.toUpperCase()}{row.postOnly ? ' *' : ''}
                 </div>
                 {/* Before bar */}
                 <div style={{ background: '#151B3A', height: 6, borderRadius: 1, opacity: row.postOnly ? 0.2 : 1 }}>
                   <div style={{ width: `${preBarW}%`, height: '100%', background: DIM }} />
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, color: row.postOnly ? MUTED : STAR, textAlign: 'right' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: row.postOnly ? MUTED : STAR, textAlign: 'right' }}>
                   {row.postOnly ? '—' : row.pre.toLocaleString()}
                 </div>
                 {/* After bar */}
                 <div style={{ background: '#151B3A', height: 6, borderRadius: 1 }}>
                   <div style={{ width: `${postBarW}%`, height: '100%', background: row.postOnly ? OK_COLOR : ACCENT }} />
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, color: STAR, textAlign: 'right' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: STAR, textAlign: 'right' }}>
                   {row.post.toLocaleString()}
                 </div>
               </div>
@@ -266,7 +266,7 @@ function BeforeAfterComparison({ steps }: { steps: SnapshotRow[] }) {
         })}
       </div>
 
-      <div style={{ marginTop: '0.75rem', fontFamily: 'monospace', fontSize: 8, color: MUTED }}>
+      <div style={{ marginTop: '0.75rem', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED }}>
         * Slider Touched 为新增埋点，仅 after 有数据为正常现象。
       </div>
     </div>
@@ -289,16 +289,16 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
     <div style={{ background: CARD_BG, border: `1px solid ${isLatest ? ACCENT : BORDER}`, padding: '1.25rem 1.5rem', borderRadius: 2 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.25em', color: isLatest ? ACCENT : MUTED }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: isLatest ? ACCENT : MUTED }}>
           {new Date(run.captured_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
         </div>
         {run.version_tag && (
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: OK_COLOR, background: 'rgba(32,216,144,0.1)', border: '1px solid rgba(32,216,144,0.25)', padding: '2px 8px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: OK_COLOR, background: 'rgba(32,216,144,0.1)', border: '1px solid rgba(32,216,144,0.25)', padding: '2px 8px' }}>
             {run.version_tag}
           </div>
         )}
         {isLatest && (
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: ACCENT, background: 'rgba(232,93,4,0.08)', border: '1px solid rgba(232,93,4,0.25)', padding: '2px 8px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: ACCENT, background: 'rgba(200,68,6,0.08)', border: '1px solid rgba(200,68,6,0.25)', padding: '2px 8px' }}>
             LATEST
           </div>
         )}
@@ -310,17 +310,17 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
       {/* Ad traffic reference */}
       {adRef && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '0.75rem 1rem', background: '#070c1a', border: `1px solid ${BORDER}`, marginBottom: '0.5rem' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: MUTED }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: MUTED }}>
             AD TRAFFIC (utm_source 存在)
           </div>
           <div style={{ fontFamily: 'monospace', fontSize: 13, color: DIM }}>
-            {adRef.count_all_time.toLocaleString()} <span style={{ fontSize: 9, color: MUTED }}>all-time</span>
+            {adRef.count_all_time.toLocaleString()} <span style={{ fontSize: 'var(--fs-caption)', color: MUTED }}>all-time</span>
           </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 11, color: MUTED }}>
-            {adRef.count_30d.toLocaleString()} <span style={{ fontSize: 9 }}>30d</span>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED }}>
+            {adRef.count_30d.toLocaleString()} <span style={{ fontSize: 'var(--fs-caption)' }}>30d</span>
           </div>
           {phSteps[0]?.count_all_time > 0 && (
-            <div style={{ fontFamily: 'monospace', fontSize: 11, color: ACCENT, marginLeft: 'auto' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: ACCENT, marginLeft: 'auto' }}>
               占 Started {Math.round((adRef.count_all_time / phSteps[0].count_all_time) * 100)}%
             </div>
           )}
@@ -329,7 +329,7 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
 
       {/* Section A: PostHog events (accumulating from today) */}
       <div style={{ marginTop: '0.75rem' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: '#2A3A5A', marginBottom: '0.5rem' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: '#2A3A5A', marginBottom: '0.5rem' }}>
           ONBOARDING INTERACTION · POSTHOG · 从今日起积累
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -342,7 +342,7 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
       {/* Divider */}
       <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
-        <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#2A3A5A', letterSpacing: '0.2em' }}>SUPABASE · 完整历史数据</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: '#2A3A5A', letterSpacing: '0.2em' }}>SUPABASE · 完整历史数据</div>
         <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
       </div>
 
@@ -363,7 +363,7 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
       <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
         {phSteps.length >= 2 && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Started→末题完成</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED }}>Started→末题完成</div>
             <div style={{ fontFamily: 'monospace', fontSize: 12, color: ACCENT, fontWeight: 700 }}>
               {pct(phSteps[phSteps.length - 1]?.count_all_time ?? 0, phSteps[0].count_all_time)}
             </div>
@@ -377,7 +377,7 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
             <>
               {emailStep && clickedStep && (
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Email→链接点击</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED }}>Email→链接点击</div>
                   <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#E8A020', fontWeight: 700 }}>
                     {pct(clickedStep.count_all_time, emailStep.count_all_time)}
                   </div>
@@ -385,7 +385,7 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
               )}
               {clickedStep && regStep && (
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>点击→注册完成</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED }}>点击→注册完成</div>
                   <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#E8A020', fontWeight: 700 }}>
                     {pct(regStep.count_all_time, clickedStep.count_all_time)}
                   </div>
@@ -393,7 +393,7 @@ function RunFunnel({ run, isLatest }: { run: Run; isLatest: boolean }) {
               )}
               {emailStep && regStep && (
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED }}>Email→注册总转化</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED }}>Email→注册总转化</div>
                   <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#E8A020', fontWeight: 700 }}>
                     {pct(regStep.count_all_time, emailStep.count_all_time)}
                   </div>
@@ -560,7 +560,7 @@ function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: st
   return (
     <div style={{ background: CARD_BG, border: `1px solid ${ACCENT}`, padding: '1.25rem 1.5rem', borderRadius: 2, marginBottom: '2rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: ACCENT }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: ACCENT }}>
           单日漏斗 · DAILY FUNNEL
         </div>
         <DaySelector days={days} selected={day.day} />
@@ -570,14 +570,14 @@ function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: st
 
       {adRef && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '0.75rem 1rem', background: '#070c1a', border: `1px solid ${BORDER}`, marginBottom: '0.5rem' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.2em', color: MUTED }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: MUTED }}>
             AD TRAFFIC (utm_source 存在)
           </div>
           <div style={{ fontFamily: 'monospace', fontSize: 13, color: DIM }}>
-            {adRef.count_all_time.toLocaleString()} <span style={{ fontSize: 9, color: MUTED }}>当日</span>
+            {adRef.count_all_time.toLocaleString()} <span style={{ fontSize: 'var(--fs-caption)', color: MUTED }}>当日</span>
           </div>
           {phSteps[0]?.count_all_time > 0 && (
-            <div style={{ fontFamily: 'monospace', fontSize: 11, color: ACCENT, marginLeft: 'auto' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: ACCENT, marginLeft: 'auto' }}>
               占 Started {Math.round((adRef.count_all_time / phSteps[0].count_all_time) * 100)}%
             </div>
           )}
@@ -585,7 +585,7 @@ function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: st
       )}
 
       <div style={{ marginTop: '0.75rem' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: '#2A3A5A', marginBottom: '0.5rem' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: '#2A3A5A', marginBottom: '0.5rem' }}>
           ONBOARDING INTERACTION · POSTHOG · 当日
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -597,7 +597,7 @@ function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: st
 
       <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
-        <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#2A3A5A', letterSpacing: '0.2em' }}>SUPABASE · 当日</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: '#2A3A5A', letterSpacing: '0.2em' }}>SUPABASE · 当日</div>
         <div style={{ flex: 1, height: 1, background: '#1A2438' }} />
       </div>
 
@@ -609,9 +609,9 @@ function DailyFunnelCard({ rows, selected }: { rows: DailyFunnel[]; selected: st
 
       <CoreRatesCard started={startedCount} email={emailCount} registered={registeredCount} daily />
 
-      <div style={{ marginTop: '1rem', fontFamily: 'monospace', fontSize: 9, color: MUTED, lineHeight: 1.8 }}>
-        {'// 仅显示选中那一天发生的事件（UTC 日历日），与上方 LATEST 累计卡不同。'}<br />
-        {'// PostHog 步骤按埋点上线起有数据 · Supabase 步骤为完整历史。'}
+      <div style={{ marginTop: '1rem', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, lineHeight: 1.8 }}>
+        仅显示选中那一天发生的事件（UTC 日历日），与上方 LATEST 累计卡不同。<br />
+        PostHog 步骤按埋点上线起有数据 · Supabase 步骤为完整历史。
       </div>
     </div>
   )
@@ -663,11 +663,11 @@ function EmailCaptureComparison({ rows }: { rows: VersionCapture[] }) {
     const rate = rateOf(cap)
     return (
       <div style={{ flex: 1, minWidth: 150 }}>
-        <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: '0.15em', color: tagColor, marginBottom: '0.4rem' }}>{tag}</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: tagColor, marginBottom: '0.4rem' }}>{tag}</div>
         <div style={{ fontFamily: 'monospace', fontSize: 30, color: rate != null ? STAR : MUTED, fontWeight: 700, lineHeight: 1 }}>
           {rate != null ? `${rate.toFixed(1)}%` : '—'}
         </div>
-        <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.4rem' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginTop: '0.4rem' }}>
           {(cap?.email ?? 0).toLocaleString()} 留邮箱 / {(cap?.started ?? 0).toLocaleString()} 进入
         </div>
       </div>
@@ -676,10 +676,10 @@ function EmailCaptureComparison({ rows }: { rows: VersionCapture[] }) {
 
   return (
     <div style={{ background: CARD_BG, border: `1px solid ${ACCENT}`, padding: '1.25rem 1.5rem', borderRadius: 2, marginBottom: '2rem' }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: ACCENT, marginBottom: '0.35rem' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: ACCENT, marginBottom: '0.35rem' }}>
         ONBOARDING 改版前后 · 邮箱留资率 (v2 → v3)
       </div>
-      <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '1.1rem', lineHeight: 1.7 }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginBottom: '1.1rem', lineHeight: 1.7 }}>
         进入流程 → 留邮箱 = waitlist_submitted / onboarding_started，按 onboarding_version 拆分。切换点 {V3_CUTOVER_LABEL}。
       </div>
 
@@ -688,18 +688,18 @@ function EmailCaptureComparison({ rows }: { rows: VersionCapture[] }) {
         <div style={{ fontFamily: 'monospace', fontSize: 20, color: MUTED, alignSelf: 'center' }}>→</div>
         {col('AFTER · v3', ACCENT, v3)}
         <div style={{ borderLeft: `1px solid ${BORDER}`, paddingLeft: '1.5rem', alignSelf: 'center' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.4rem' }}>变化 (pp)</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginBottom: '0.4rem' }}>变化 (pp)</div>
           <div style={{ fontFamily: 'monospace', fontSize: 30, fontWeight: 700, lineHeight: 1, color: delta == null ? MUTED : delta >= 0 ? OK_COLOR : '#D8203A' }}>
             {delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`}
           </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginTop: '0.4rem' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginTop: '0.4rem' }}>
             {delta == null ? '待 v3 数据' : delta >= 0 ? '↑ 提升' : '↓ 下降'}
           </div>
         </div>
       </div>
 
       {thin && (
-        <div style={{ fontFamily: 'monospace', fontSize: 8, color: '#E8A020', marginTop: '0.9rem', lineHeight: 1.7 }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: '#E8A020', marginTop: '0.9rem', lineHeight: 1.7 }}>
           {`* v3 样本仍小（${(v3?.started ?? 0).toLocaleString()} 进入），比例尚未稳定——切换点 06-26 当天后满一整天（06-27 起）再看更可靠。`}
         </div>
       )}
@@ -715,11 +715,11 @@ function HistoryTable({ runs }: { runs: Run[] }) {
 
   return (
     <div style={{ marginTop: '2rem' }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
-        {'// HISTORY — overall CVR (Onboarding Started → Email)'}
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
+        HISTORY — overall CVR (Onboarding Started → Email)
       </div>
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 10 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 'var(--fs-caption)' }}>
           <thead>
             <tr>
               <th style={{ textAlign: 'left',  padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>DATE</th>
@@ -736,7 +736,7 @@ function HistoryTable({ runs }: { runs: Run[] }) {
               const top   = byKey['onboarding_started'] ?? 0
               const email = byKey['onboarding_email_submitted'] ?? 0
               return (
-                <tr key={run.run_id} style={{ background: ri === 0 ? 'rgba(232,93,4,0.03)' : 'transparent' }}>
+                <tr key={run.run_id} style={{ background: ri === 0 ? 'rgba(200,68,6,0.03)' : 'transparent' }}>
                   <td style={{ padding: '6px 12px', color: ri === 0 ? STAR : DIM, borderBottom: `1px solid ${BORDER}` }}>
                     {new Date(run.captured_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })}
                   </td>
@@ -800,10 +800,10 @@ function RecoveryCohortPanel({ rows }: { rows: RecoveryRow[] }) {
 
   return (
     <div style={{ marginTop: '2rem', background: CARD_BG, border: `1px solid ${ACCENT}`, padding: '1.25rem 1.5rem', borderRadius: 2 }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: ACCENT, marginBottom: '0.4rem' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: ACCENT, marginBottom: '0.4rem' }}>
         INVITE RECOVERY · 失败补发追溯
       </div>
-      <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, marginBottom: '1rem' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginBottom: '1rem' }}>
         因发送上限失败的邀请，按用户<strong style={{ color: DIM }}>原始提交日期</strong>归集。后续注册仍计回提交日 cohort。
       </div>
 
@@ -817,7 +817,7 @@ function RecoveryCohortPanel({ rows }: { rows: RecoveryRow[] }) {
           { label: '已注册',   val: registered, color: OK_COLOR },
         ].map(s => (
           <div key={s.label}>
-            <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' }}>{s.label}</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginBottom: '0.25rem' }}>{s.label}</div>
             <div style={{ fontFamily: 'monospace', fontSize: 22, color: s.color, fontWeight: 700, lineHeight: 1 }}>
               {s.val.toLocaleString()}
             </div>
@@ -827,7 +827,7 @@ function RecoveryCohortPanel({ rows }: { rows: RecoveryRow[] }) {
 
       {/* Per-date breakdown */}
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 10 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'monospace', fontSize: 'var(--fs-caption)' }}>
           <thead>
             <tr>
               <th style={{ textAlign: 'left', padding: '6px 12px', color: MUTED, letterSpacing: '0.15em', borderBottom: `1px solid ${BORDER}` }}>提交日期</th>
@@ -944,16 +944,16 @@ function DailyLoginsPanel({ rows }: { rows: DailyRow[] }) {
 
   return (
     <div style={{ marginTop: '2rem', background: CARD_BG, border: `1px solid ${ACCENT}`, padding: '1.25rem 1.5rem', borderRadius: 2 }}>
-      <div style={{ fontFamily: 'monospace', fontSize: 8, letterSpacing: '0.25em', color: ACCENT, marginBottom: '0.4rem' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: ACCENT, marginBottom: '0.4rem' }}>
         DAILY LOGINS · 新增 vs 回流
       </div>
-      <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, marginBottom: '1rem' }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginBottom: '1rem' }}>
         每天<strong style={{ color: DIM }}>新增</strong>(当天首次注册/登录) vs <strong style={{ color: DIM }}>回流</strong>(老用户当天有活动，含免登录 session 访问)。
         仅统计注册/登录过的用户，活动含 <code style={{ color: DIM }}>$pageview</code>。来源 PostHog，按埋点上线起累积。
       </div>
 
       {!hasData ? (
-        <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, padding: '0.5rem 0' }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, padding: '0.5rem 0' }}>
           暂无登录数据。确认 PostHog 已配置且站点有登录/注册事件。
         </div>
       ) : (
@@ -962,7 +962,7 @@ function DailyLoginsPanel({ rows }: { rows: DailyRow[] }) {
           <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
             {kpis.map(s => (
               <div key={s.label}>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, color: MUTED, marginBottom: '0.25rem' }}>{s.label}</div>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginBottom: '0.25rem' }}>{s.label}</div>
                 <div style={{ fontFamily: 'monospace', fontSize: 22, color: s.color, fontWeight: 700, lineHeight: 1 }}>
                   {s.val.toLocaleString()}
                 </div>
@@ -974,13 +974,13 @@ function DailyLoginsPanel({ rows }: { rows: DailyRow[] }) {
           <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <span style={{ width: 10, height: 10, background: NEW_COLOR, display: 'inline-block', borderRadius: 1 }} />
-              <span style={{ fontFamily: 'monospace', fontSize: 9, color: DIM }}>新增</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: DIM }}>新增</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <span style={{ width: 10, height: 10, background: RET_COLOR, display: 'inline-block', borderRadius: 1 }} />
-              <span style={{ fontFamily: 'monospace', fontSize: 9, color: DIM }}>回流</span>
+              <span style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: DIM }}>回流</span>
             </div>
-            <div style={{ marginLeft: 'auto', fontFamily: 'monospace', fontSize: 9, color: MUTED }}>
+            <div style={{ marginLeft: 'auto', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED }}>
               共 {chartRows.length} 天 · 当日活跃 = 新增 + 回流
             </div>
           </div>
@@ -989,20 +989,20 @@ function DailyLoginsPanel({ rows }: { rows: DailyRow[] }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             {chartRows.map((r, i) => (
               <div key={r.day} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, color: i === 0 ? STAR : DIM, width: 44, flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: i === 0 ? STAR : DIM, width: 44, flexShrink: 0 }}>
                   {fmtDay(r.day)}
                 </div>
                 <div style={{ flex: 1, display: 'flex', height: 9, background: '#151B3A', borderRadius: 1, overflow: 'hidden' }}>
                   <div style={{ width: `${(r.newUsers / maxActive) * 100}%`, background: NEW_COLOR, transition: 'width 0.4s ease' }} />
                   <div style={{ width: `${(r.returningUsers / maxActive) * 100}%`, background: RET_COLOR, transition: 'width 0.4s ease' }} />
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, color: NEW_COLOR, width: 32, textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: NEW_COLOR, width: 32, textAlign: 'right', flexShrink: 0 }}>
                   {r.newUsers}
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, color: RET_COLOR, width: 32, textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: RET_COLOR, width: 32, textAlign: 'right', flexShrink: 0 }}>
                   {r.returningUsers}
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: 10, color: STAR, width: 36, textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: STAR, width: 36, textAlign: 'right', flexShrink: 0 }}>
                   {r.activeUsers}
                 </div>
               </div>
@@ -1011,9 +1011,9 @@ function DailyLoginsPanel({ rows }: { rows: DailyRow[] }) {
 
           {/* Column key */}
           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.6rem', justifyContent: 'flex-end' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: 8, color: NEW_COLOR, width: 32, textAlign: 'right' }}>新</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 8, color: RET_COLOR, width: 32, textAlign: 'right' }}>回流</div>
-            <div style={{ fontFamily: 'monospace', fontSize: 8, color: STAR, width: 36, textAlign: 'right' }}>活跃</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: NEW_COLOR, width: 32, textAlign: 'right' }}>新</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: RET_COLOR, width: 32, textAlign: 'right' }}>回流</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: STAR, width: 36, textAlign: 'right' }}>活跃</div>
           </div>
         </>
       )}
@@ -1036,7 +1036,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       {dailyFunnel.length > 0 && <DailyFunnelCard rows={dailyFunnel} selected={selected} />}
       {runs.length === 0 ? (
         <div style={{ background: CARD_BG, border: `1px solid ${BORDER}`, padding: '2rem', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: 11, color: DIM, lineHeight: 2 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: DIM, lineHeight: 2 }}>
             No snapshots yet. Click <span style={{ color: ACCENT }}>CAPTURE NOW</span> to generate the first one.
           </div>
         </div>
@@ -1047,8 +1047,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <HistoryTable runs={runs} />
           {runs.length > 1 && (
             <div style={{ marginTop: '2rem' }}>
-              <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
-                {'// PREVIOUS RUNS'}
+              <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: MUTED, marginBottom: '0.75rem' }}>
+                PREVIOUS RUNS
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {runs.slice(1).map(run => (
@@ -1060,9 +1060,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         </>
       )}
 
-      <div style={{ marginTop: '2rem', fontFamily: 'monospace', fontSize: 9, color: MUTED, lineHeight: 2 }}>
-        {'// Tag a version: '}<code style={{ color: ACCENT }}>GET /api/analytics/snapshot?version_tag=v1.2</code><br />
-        {'// Cron: daily 09:00 UTC · PostHog (steps 1–4, cookie去重) + Supabase (step 5)'}
+      <div style={{ marginTop: '2rem', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, lineHeight: 2 }}>
+        Tag a version: <code style={{ color: ACCENT }}>GET /api/analytics/snapshot?version_tag=v1.2</code><br />
+        Cron: daily 09:00 UTC · PostHog (steps 1–4, cookie去重) + Supabase (step 5)
       </div>
     </>
   )
@@ -1071,13 +1071,13 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     <div style={{ maxWidth: 900 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <div>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: '0.3em', color: MUTED, marginBottom: '0.5rem' }}>
-            {'// FUNNEL & RETENTION'}
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.3em', color: MUTED, marginBottom: '0.5rem' }}>
+            FUNNEL & RETENTION
           </div>
           <h1 style={{ fontFamily: 'monospace', fontSize: 18, letterSpacing: '0.15em', color: STAR, margin: 0 }}>
             ANALYTICS
           </h1>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, color: MUTED, marginTop: '0.4rem' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginTop: '0.4rem' }}>
             CONVERSION = 转化漏斗 · RETENTION = 每日新增 / 回流
           </div>
         </div>

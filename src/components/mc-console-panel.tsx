@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import type { McFunction, McFunctionStatus } from '@/types/database'
+import SmartImage from './smart-image'
 
 const STATUS_META: Record<McFunctionStatus, { label: string; color: string }> = {
   active:         { label: 'ACTIVE', color: '#20D890' },
-  in_development: { label: 'DEV',    color: '#FF6B35' },
+  in_development: { label: 'DEV',    color: '#E35205' },
   unknown:        { label: '???',    color: 'rgba(245,245,245,0.35)' },
 }
 
@@ -35,58 +36,37 @@ function useFnAnimation(count: number, start: boolean) {
  * Shared by the guest console hero / device archive.
  */
 export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  )
   const [started, setStarted] = useState(false)
   const { readyIdx } = useFnAnimation(mcFunctions.length, started)
 
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
   return (
-    <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto', border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', overflow: 'hidden' }}>
+    <div className={`mc-console-panel${started ? ' mc-console-panel--started' : ''}`}>
       <style>{`@keyframes mcScanHint{0%,100%{opacity:0.55}50%{opacity:1}}@keyframes mcModuleIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {/* Section divider title — matches the "INTERNAL UPDATES" feed divider */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '14px 16px' }}>
-        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>MULTIVERSE CONSOLE</span>
-        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+      <div className="mc-console-panel__title">
+        <div className="mc-console-panel__title-line" />
+        <span className="mc-console-panel__title-label">MULTIVERSE CONSOLE</span>
       </div>
 
       {/* Content: image only until tapped; the functions module appears after. */}
-      <div style={{ display: 'grid', gridTemplateColumns: !started ? '1fr' : isMobile ? '1fr' : '1fr 1fr' }}>
+      <div className={`mc-console-panel__grid${started ? ' mc-console-panel__grid--split' : ''}`}>
         {/* Device image — tap to scan */}
         <button
           type="button"
           onClick={() => setStarted(true)}
           aria-label={started ? 'Multiverse Console' : 'Tap to scan the device functions'}
-          style={{
-            position: 'relative',
-            display: 'block',
-            width: '100%',
-            padding: 0,
-            border: 'none',
-            background: 'none',
-            cursor: started ? 'default' : 'pointer',
-            borderRight: started && !isMobile ? '1px solid rgba(255,107,53,0.16)' : 'none',
-            borderBottom: started && isMobile ? '1px solid rgba(255,107,53,0.16)' : 'none',
-          }}
+          aria-pressed={started}
+          className="mc-console-panel__media"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/device-console.jpg" alt="Multiverse Console" style={{ width: '100%', height: 'auto', display: 'block' }} />
+          <SmartImage src="/assets/device-console.jpg" alt="Multiverse Console" sizes="(min-width: 768px) 600px, 100vw" width={1280} height={1023} className="mc-console-panel__image" />
         </button>
 
         {/* Confirmed functions — the whole module appears only after the tap */}
         {started && (
-          <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', minHeight: isMobile ? 'auto' : '260px', position: 'relative', animation: 'mcModuleIn 0.4s ease-out' }}>
+          <div className="mc-console-panel__functions">
             {/* Section label */}
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: 'rgba(245,245,245,0.35)', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid rgba(255,107,53,0.16)' }}>
+            <div className="mc-console-panel__function-head">
               CONFIRMED FUNCTIONS
             </div>
 
@@ -105,7 +85,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{
                         width: 6, height: 6, borderRadius: '50%',
-                        background: visible ? meta.color : 'rgba(255,107,53,0.28)',
+                        background: visible ? meta.color : 'rgba(227,82,5,0.28)',
                         boxShadow: visible ? `0 0 7px ${meta.color}` : 'none',
                         flexShrink: 0, display: 'inline-block',
                         transition: 'background 0.3s, box-shadow 0.3s',

@@ -1,13 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { getPublishedStories } from '@/lib/actions/stories'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
 import { BackLink } from '@/components/back-link'
 import { Plus, ArrowRight } from 'lucide-react'
 import type { StoryWithAvatar } from '@/types/database'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkCard } from '@/components/archive-link-card'
+import { ArchivePageHeader } from '@/components/archive-page-header'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -31,8 +35,9 @@ export default function LogsPage() {
   useEffect(() => { getPublishedStories().then(setStories) }, [])
 
   return (
-    <div className="main">
+    <main className="main pilot-archive-page archive-collection-page archive-logs-page">
       <SectionTracker section="logs" />
+      <ArchiveBrandHeader />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGER LOGS</div>
         <div className="right">
@@ -40,35 +45,38 @@ export default function LogsPage() {
         </div>
       </div>
 
-      <div className="page-head">
-        <div>
-          <BackLink href="/voyagers" label="VOYAGERS" />
-          <h1>VOYAGER <span className="accent">LOGS</span></h1>
-          <p className="sub">{stories.length} entries on record</p>
-        </div>
-        {isAtLeast('architect') && (
-          <button className="btn-secondary" style={{ padding: '0.55rem 1.25rem', fontSize: 'var(--fs-caption)' }}>
+      <BackLink href="/voyagers" label="VOYAGERS" />
+      <ArchivePageHeader
+        accent="LOGS"
+        action={isAtLeast('architect') ? (
+          <ArchiveButton variant="secondary">
             <Plus size={12} />
             SUBMIT LOG ENTRY
-          </button>
-        )}
-      </div>
+          </ArchiveButton>
+        ) : undefined}
+        title="VOYAGER"
+      />
 
       {/* Stories Feed */}
       <div className="space-y-6 max-w-3xl">
+        {stories.length === 0 && (
+          <ArchiveCard className="archive-empty-state">
+            <h2>NO LOG ENTRIES YET</h2>
+            <p>Published Voyager stories will appear here.</p>
+          </ArchiveCard>
+        )}
         {stories.map((story) => {
           const initials = getInitials(story.author_name)
           return (
-            <Link
+            <ArchiveLinkCard
               key={story.id}
               href={`/logs/${story.id}`}
-              className="story-card overflow-hidden block"
-              style={{ textDecoration: 'none' }}
+              className="archive-story-card overflow-hidden"
             >
               {/* Author bar */}
               <div
                 className="flex items-center gap-3 px-4 py-3 border-b"
-                style={{ background: '#0F1430', borderColor: 'rgba(255,107,53,0.16)' }}
+                style={{ background: '#0F1430', borderColor: 'rgba(227,82,5,0.16)' }}
               >
                 {story.author_avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -76,15 +84,15 @@ export default function LogsPage() {
                     src={story.author_avatar_url}
                     alt={story.author_name}
                     className="w-9 h-9 rounded-full shrink-0"
-                    style={{ objectFit: 'cover', border: '1px solid rgba(232,93,4,0.3)' }}
+                    style={{ objectFit: 'cover', border: '1px solid rgba(200,68,6,0.3)' }}
                   />
                 ) : (
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
                     style={{
-                      background: 'rgba(232,93,4,0.12)',
-                      color: '#E85D04',
-                      border: '1px solid rgba(232,93,4,0.3)',
+                      background: 'rgba(200,68,6,0.12)',
+                      color: '#C84406',
+                      border: '1px solid rgba(200,68,6,0.3)',
                     }}
                   >
                     {initials}
@@ -107,7 +115,7 @@ export default function LogsPage() {
                 {story.youtube_id && (
                   <div
                     className="md:shrink-0 border-b md:border-b-0 md:border-l"
-                    style={{ borderColor: 'rgba(255,107,53,0.16)', width: undefined }}
+                    style={{ borderColor: 'rgba(227,82,5,0.16)', width: undefined }}
                   >
                     <div className="md:w-52" style={{ position: 'relative' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -122,8 +130,8 @@ export default function LogsPage() {
                       <div style={{
                         position: 'absolute', bottom: '8px', right: '8px',
                         background: 'rgba(11,15,23,0.82)',
-                        border: '1px solid rgba(232,93,4,0.5)',
-                        color: '#E85D04',
+                        border: '1px solid rgba(200,68,6,0.5)',
+                        color: '#C84406',
                         fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em',
                         padding: '3px 7px',
                         display: 'flex', alignItems: 'center', gap: '4px',
@@ -143,22 +151,22 @@ export default function LogsPage() {
                     {story.excerpt}
                   </p>
 
-                  <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#E85D04' }}>
+                  <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs font-mono tracking-widest" style={{ borderColor: 'rgba(227,82,5,0.16)', color: '#C84406' }}>
                     READ FULL STORY
                     <ArrowRight size={12} />
                   </div>
                 </div>
 
               </div>
-            </Link>
+            </ArchiveLinkCard>
           )
         })}
       </div>
 
       <div className="footer-bar" style={{ marginTop: '2rem' }}>
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>FIELD ARCHIVE</div>
+        <div>MULTIVERSE COLLECTIVE</div>
       </div>
-    </div>
+    </main>
   )
 }

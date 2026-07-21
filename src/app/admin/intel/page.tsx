@@ -10,16 +10,16 @@ import type { Intel, IntelTag } from '@/types/database'
 import { MemberPicker, type MemberValue } from '@/components/member-picker'
 
 const S = {
-  card:  { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
-  th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
+  card:  { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '20px', marginBottom: '16px' },
+  th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(227,82,5,0.16)', whiteSpace: 'nowrap' as const },
   td:    { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'top' as const, fontSize: '13px' },
-  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
-  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
+  label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
 }
 
-const TAG_COLOR: Record<IntelTag, string> = { NOTICE: 'rgba(245,245,245,0.55)', DEVICE: '#E85D04', ORG: '#E8A020' }
+const TAG_COLOR: Record<IntelTag, string> = { NOTICE: 'rgba(245,245,245,0.55)', DEVICE: '#C84406', ORG: '#E8A020' }
 
 type F = {
   id: string
@@ -191,10 +191,9 @@ export default function IntelAdmin() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.3em' }}>ADMIN // INTEL</div>
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>情报管理</div>
         </div>
-        <button onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #E85D04', color: '#E85D04', background: 'rgba(232,93,4,0.08)' }}>
+        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
           + 新增情报
         </button>
       </div>
@@ -224,25 +223,25 @@ export default function IntelAdmin() {
               {items.length === 0 && <tr><td colSpan={8} style={{ ...S.td, textAlign: 'center', color: 'rgba(245,245,245,0.35)' }}>暂无数据</td></tr>}
               {items.map(i => (
                 <tr key={i.id}>
-                  <td style={{ ...S.td, color: 'rgba(245,245,245,0.35)', fontSize: '11px' }}>{i.id}</td>
+                  <td style={{ ...S.td, color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)' }}>{i.id}</td>
                   <td style={{ ...S.td, color: '#F5F5F5', maxWidth: '240px' }}>{i.title}</td>
-                  <td style={S.td}><span style={{ fontSize: '11px', color: TAG_COLOR[i.tag] }}>{i.tag}</span></td>
+                  <td style={S.td}><span style={{ fontSize: 'var(--fs-caption)', color: TAG_COLOR[i.tag] }}>{i.tag}</span></td>
                   <td style={S.td}>
                     {i.classified
-                      ? <span style={{ fontSize: '11px', color: '#E83030' }}>⊘ 机密</span>
-                      : <span style={{ fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>公开</span>}
+                      ? <span style={{ fontSize: 'var(--fs-caption)', color: '#E83030' }}>⊘ 机密</span>
+                      : <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>公开</span>}
                   </td>
                   <td style={S.td}>
-                    <span style={{ fontSize: '11px', color: (i.images?.length ?? 0) > 0 ? '#20D890' : 'rgba(245,245,245,0.35)' }}>
+                    <span style={{ fontSize: 'var(--fs-caption)', color: (i.images?.length ?? 0) > 0 ? '#20D890' : 'rgba(245,245,245,0.35)' }}>
                       {(i.images?.length ?? 0) > 0 ? `${i.images.length} 张` : '—'}
                     </span>
                   </td>
-                  <td style={{ ...S.td, fontSize: '11px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <td style={{ ...S.td, fontSize: 'var(--fs-caption)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {i.publisher_name ?? <span style={{ color: 'rgba(245,245,245,0.35)' }}>—</span>}
                   </td>
-                  <td style={{ ...S.td, fontSize: '11px', whiteSpace: 'nowrap' }}>{formatTs(i.timestamp)}</td>
+                  <td style={{ ...S.td, fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap' }}>{formatTs(i.timestamp)}</td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
-                    <button onClick={() => openEdit(i)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#E85D04', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>编辑</button>
+                    <button onClick={() => openEdit(i)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>编辑</button>
                     <button onClick={() => handleDelete(i.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>删除</button>
                   </td>
                 </tr>
@@ -253,9 +252,9 @@ export default function IntelAdmin() {
       </div>
 
       {showForm && (
-        <div ref={formRef} style={{ ...S.card, border: '1px solid #E85D04' }}>
+        <div ref={formRef} style={{ ...S.card, border: '1px solid #C84406' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ color: '#E85D04', fontSize: '12px', letterSpacing: '0.2em' }}>{editId ? `编辑: ${editId}` : `新增情报 (自动 ID: ${nextIntelId(items)})`}</div>
+            <div style={{ color: '#C84406', fontSize: '12px', letterSpacing: '0.2em' }}>{editId ? `编辑: ${editId}` : `新增情报 (自动 ID: ${nextIntelId(items)})`}</div>
             <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '18px' }}>×</button>
           </div>
 
@@ -310,10 +309,10 @@ export default function IntelAdmin() {
                 {currentImages.map((url, idx) => (
                   <div key={url} style={{ position: 'relative' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid rgba(255,107,53,0.16)' }} />
+                    <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid rgba(227,82,5,0.16)' }} />
                     <button
                       onClick={() => removeExisting(url)}
-                      style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                      style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
                     >×</button>
                   </div>
                 ))}
@@ -326,12 +325,12 @@ export default function IntelAdmin() {
                 {previews.map((url, idx) => (
                   <div key={idx} style={{ position: 'relative' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #E85D04', opacity: 0.8 }} />
+                    <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #C84406', opacity: 0.8 }} />
                     <button
                       onClick={() => removePending(idx)}
-                      style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                      style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
                     >×</button>
-                    <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(232,93,4,0.85)', color: '#fff', fontSize: '9px', padding: '1px 3px' }}>待上传</div>
+                    <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(200,68,6,0.85)', color: '#fff', fontSize: 'var(--fs-caption)', padding: '1px 3px' }}>待上传</div>
                   </div>
                 ))}
               </div>
@@ -341,11 +340,11 @@ export default function IntelAdmin() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              style={{ padding: '6px 14px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.55)', background: '#0F1430' }}
+              style={{ padding: '6px 14px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.55)', background: '#0F1430' }}
             >
               + 选择图片
             </button>
-            <span style={{ marginLeft: '10px', fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>
+            <span style={{ marginLeft: '10px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
               已保存 {currentImages.length} 张 · 待上传 {pendingFiles.length} 张
             </span>
           </div>
@@ -359,11 +358,11 @@ export default function IntelAdmin() {
             <button
               onClick={handleSave}
               disabled={saving}
-              style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #E85D04', color: '#E85D04', background: saving ? 'transparent' : 'rgba(232,93,4,0.08)', opacity: saving ? 0.6 : 1 }}
+              style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}
             >
               {uploading ? '上传图片中...' : saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(255,107,53,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
           </div>
         </div>
       )}
@@ -372,7 +371,7 @@ export default function IntelAdmin() {
       <div style={{ ...S.card, marginTop: '24px', borderColor: '#1A3040' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ color: '#FF6B35', fontSize: '11px', letterSpacing: '0.25em', marginBottom: '4px' }}>UPLINK // DASHBOARD FEED</div>
+            <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: '4px' }}>DASHBOARD FEED</div>
             <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: '12px', fontFamily: 'monospace' }}>
               {feedLastGenerated
                 ? `Last generated: ${new Date(feedLastGenerated).toLocaleString()}`
@@ -393,7 +392,7 @@ export default function IntelAdmin() {
               }
             }}
             disabled={feedGenerating}
-            style={{ padding: '8px 20px', fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.2em', cursor: feedGenerating ? 'not-allowed' : 'pointer', border: '1px solid #FF6B35', color: '#FF6B35', background: 'rgba(232,93,4,0.06)', opacity: feedGenerating ? 0.5 : 1 }}
+            style={{ padding: '8px 20px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', cursor: feedGenerating ? 'not-allowed' : 'pointer', border: '1px solid #E35205', color: '#E35205', background: 'rgba(200,68,6,0.06)', opacity: feedGenerating ? 0.5 : 1 }}
           >
             {feedGenerating ? 'GENERATING...' : 'REGENERATE FEED'}
           </button>

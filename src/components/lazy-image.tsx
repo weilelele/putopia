@@ -2,16 +2,18 @@
 
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
+import SmartImage from './smart-image'
 
 /**
  * Image that lazy-loads off-screen and fades in once decoded, letting the page
  * open immediately with whatever placeholder sits behind it (a dark tile or a
  * gradient) and filling in progressively.
  *
- * - `loading="lazy"` defers off-screen requests; `decoding="async"` keeps decode
- *   off the main thread so it never blocks interaction.
- * - Starts at opacity 0 and transitions in on load. A ref guard catches images
- *   served from cache (whose `onLoad` can fire before React attaches).
+ * Renders through SmartImage (next/image resize + AVIF/WebP for local and
+ * Supabase-storage sources) in fill mode — the parent element must be
+ * positioned and sized.
+ *
+ * - Starts at opacity 0 and transitions in on load.
  * - The fade transition keeps `transform` animating too, so callers that scale
  *   on hover (e.g. `.world-poster-img`) still work.
  */
@@ -21,23 +23,22 @@ export function LazyImage({
   className,
   style,
   fadeMs = 400,
+  sizes = '(min-width: 768px) 600px, 100vw',
 }: {
   src: string
   alt?: string
   className?: string
   style?: CSSProperties
   fadeMs?: number
+  sizes?: string
 }) {
   const [loaded, setLoaded] = useState(false)
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <SmartImage
       src={src}
       alt={alt}
+      sizes={sizes}
       className={className}
-      loading="lazy"
-      decoding="async"
-      ref={(el) => { if (el?.complete && el.naturalWidth > 0) setLoaded(true) }}
       onLoad={() => setLoaded(true)}
       style={{
         ...style,

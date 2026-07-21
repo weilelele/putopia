@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import SmartImage from './smart-image'
 
 type Cell = { i: number; ch: string; file: string; x: number; y: number; w: number; h: number }
 type Row = { word: string; y0: number; y1: number; rowHeight: number; cells: Cell[]; pool: string[] }
@@ -107,34 +108,16 @@ function FlipCell({ cell, pool, spread, runId, scale }: { cell: Placed; pool: st
   )
 }
 
-// Play the split-flap animation at most once per calendar day per browser. Repeat
-// visits to the dashboard the same day render the static wordmark instead — the
-// animated version mounts dozens of rapidly-src-swapping <img> cells, which is the
-// main cost of re-entering the page.
-const PLAY_KEY = 'mc-wordmark-played-on'
-
-// Fired once the wordmark is done demanding resources — animation settled, or
-// immediately in static mode. The dashboard listens for this to defer loading
-// its heavy below-the-fold feed until the animation has the main thread to itself.
-export const WORDMARK_READY_EVENT = 'mc:wordmark-ready'
-function emitWordmarkReady() {
-  try { window.dispatchEvent(new Event(WORDMARK_READY_EVENT)) } catch { /* SSR / no window */ }
-}
-
-
 export function FlipWordmark({
   maxWidth = 600,
   fill = 0.92,
   className,
   ariaLabel = 'Multiverse Collective',
-  forceAnimate = false,
 }: {
   maxWidth?: number
   fill?: number
   className?: string
   ariaLabel?: string
-  /** Always replay the animation, ignoring the once-per-day gate (e.g. demos). */
-  forceAnimate?: boolean
 }) {
   const [m, setM] = useState<Manifest | null>(null)
   const [runId, setRunId] = useState(0)
@@ -142,35 +125,14 @@ export function FlipWordmark({
   const [containerW, setContainerW] = useState(maxWidth)
   const wrapRef = useRef<HTMLDivElement>(null)
 
-  // Decide once-per-day (in an effect so render stays pure / SSR-safe), and only
-  // fetch the glyph manifest when we're actually going to animate.
+  // The split-flap plays on every visit by design (the brand moment of the
+  // page); the glyph manifest is fetched on mount, with the static wordmark
+  // as the pre-load fallback below.
   useEffect(() => {
-    let shouldAnimate = true
-    try {
-      const today = new Date().toISOString().slice(0, 10)
-      shouldAnimate = forceAnimate || window.localStorage.getItem(PLAY_KEY) !== today
-      if (shouldAnimate && !forceAnimate) window.localStorage.setItem(PLAY_KEY, today)
-    } catch {
-      shouldAnimate = true
-    }
-    if (!shouldAnimate) {
-      // Static path: nothing heavy to load — let the page load its deferred
-      // content right away. rAF so parent listeners are attached first.
-      const raf = requestAnimationFrame(() => emitWordmarkReady())
-      return () => cancelAnimationFrame(raf)
-    }
     fetch('/assets/letters/manifest.json').then((r) => r.json()).then(setM).catch(() => {})
-  }, [forceAnimate])
+  }, [])
 
   const geom = useMemo(() => (m ? buildGeom(m) : null), [m])
-
-  // Animating: signal "ready" once the cells have finished their flicker-settle,
-  // so the page can load the heavy below-the-fold feed without competing with it.
-  useEffect(() => {
-    if (!geom) return
-    const t = setTimeout(() => emitWordmarkReady(), geom.lastSettle)
-    return () => clearTimeout(t)
-  }, [geom])
 
   // responsive scale: fit container, capped at maxWidth
   useEffect(() => {
@@ -225,7 +187,7 @@ export function FlipWordmark({
         </div>
       ) : (
         // graceful fallback before glyphs load: the original wordmark image
-        <img src="/assets/vi-wordmark.png" alt={ariaLabel} style={{ width: Math.min(maxWidth, containerW * fill), height: 'auto' }} />
+        <SmartImage src="/assets/vi-wordmark.png" alt={ariaLabel} sizes="(max-width: 700px) 90vw, 616px" width={616} height={170} preload style={{ width: Math.min(maxWidth, containerW * fill), height: 'auto' }} />
       )}
     </div>
   )
