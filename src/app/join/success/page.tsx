@@ -1,47 +1,11 @@
-import Link from 'next/link'
 import { getMyProfile } from '@/lib/actions/profile'
 import { getMyOrders } from '@/lib/actions/orders'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchivePageHeader } from '@/components/archive-page-header'
 
 export const dynamic = 'force-dynamic'
-
-const wrap: React.CSSProperties = {
-  minHeight: '100vh',
-  background: 'var(--bg-base, #0A0E27)',
-  color: 'var(--tx-primary, #F5F5F5)',
-  fontFamily: 'var(--font-mono, monospace)',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '32px 20px',
-  textAlign: 'center',
-}
-const card: React.CSSProperties = {
-  width: '100%',
-  maxWidth: 440,
-  border: '1px solid rgba(255,107,53,0.3)',
-  borderRadius: 4,
-  background: '#111634',
-  padding: '28px 24px',
-}
-const row: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  fontSize: 13,
-  padding: '9px 0',
-  borderTop: '1px solid rgba(245,245,245,0.08)',
-}
-const cta: React.CSSProperties = {
-  display: 'inline-block',
-  marginTop: 22,
-  background: '#FF6B35',
-  color: '#0A0E27',
-  fontWeight: 700,
-  letterSpacing: '0.06em',
-  padding: '13px 24px',
-  borderRadius: 3,
-  textDecoration: 'none',
-}
 
 export default async function JoinSuccessPage() {
   const [profile, orders] = await Promise.all([getMyProfile(), getMyOrders()])
@@ -51,16 +15,16 @@ export default async function JoinSuccessPage() {
   // is their way in.
   if (!profile) {
     return (
-      <main style={wrap}>
-        <div style={card}>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: '#FF6B35' }}>
-            SIGNAL RECEIVED
-          </div>
-          <h1 style={{ fontSize: 22, margin: '14px 0 10px' }}>Welcome, Voyager.</h1>
-          <p style={{ fontSize: 13, color: 'rgba(245,245,245,0.6)', lineHeight: 1.7 }}>
+      <main className="main join-success-page">
+        <div className="join-success-shell">
+          <ArchiveBrandHeader />
+          <ArchiveCard className="join-success-card">
+            <ArchivePageHeader title="WELCOME," accent="VOYAGER." />
+            <p className="join-success-copy">
             Your payment is confirmed and your Initial Voyager Pack is being prepared.
             Check your email to set your password and enter the Collective.
-          </p>
+            </p>
+          </ArchiveCard>
         </div>
       </main>
     )
@@ -71,45 +35,43 @@ export default async function JoinSuccessPage() {
   const p = profile as any
 
   return (
-    <main style={wrap}>
-      <div style={card}>
-        <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.28em', color: '#FF6B35' }}>
-          STATUS · ACTIVE
-        </div>
-        <h1 style={{ fontSize: 22, margin: '14px 0 6px' }}>
-          Welcome, {p.display_name}.
-        </h1>
-        <p style={{ fontSize: 13, color: 'rgba(245,245,245,0.6)', lineHeight: 1.7, margin: 0 }}>
+    <main className="main join-success-page">
+      <div className="join-success-shell">
+        <ArchiveBrandHeader />
+        <ArchiveCard className="join-success-card">
+          <ArchivePageHeader title="WELCOME," accent={`${p.display_name}.`} />
+          <p className="join-success-copy">
           You are now a Voyager. Your Initial Voyager Pack is being prepared and
           will be mailed to you.
-        </p>
+          </p>
 
-        <div style={{ marginTop: 22, textAlign: 'left' }}>
+          <dl className="join-success-records">
           {p.member_no != null && (
-            <div style={row}>
-              <span style={{ color: 'rgba(245,245,245,0.5)' }}>Voyager No.</span>
-              <span>
+            <div>
+              <dt>Voyager No.</dt>
+              <dd>
                 #{String(p.member_no).padStart(3, '0')}
-              </span>
+              </dd>
             </div>
           )}
-          <div style={row}>
-            <span style={{ color: 'rgba(245,245,245,0.5)' }}>Batch</span>
-            <span>{p.batch_label}</span>
+          <div>
+            <dt>Batch</dt>
+            <dd>{p.batch_label}</dd>
           </div>
           {order && (
-            <div style={row}>
-              <span style={{ color: 'rgba(245,245,245,0.5)' }}>Pack</span>
-              <span style={{ textTransform: 'uppercase', color: '#FF6B35' }}>
+            <div>
+              <dt>Pack</dt>
+              <dd className="join-success-status">
                 {order.status}
-              </span>
+              </dd>
             </div>
           )}
-        </div>
+          </dl>
 
-        <Link href="/profile" style={cta}>
-          Update your Voyager profile →
-        </Link>
+          <ArchiveLinkButton href="/profile" fullWidth variant="primary">
+            UPDATE VOYAGER PROFILE →
+          </ArchiveLinkButton>
+        </ArchiveCard>
       </div>
     </main>
   )

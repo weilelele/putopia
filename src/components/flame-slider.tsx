@@ -94,40 +94,46 @@ export function FlameSlider({
     }
   }, [onChange, valueFromX])
 
-  const glowPx   = value > 0 ? 8 + value * 5 : 0
-  const glowAlph = value > 0 ? 0.28 + value * 0.08 : 0
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div className="archive-range" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
       {/* Track — outer wrapper has generous vertical padding for easy clicking */}
       <div
+        className="archive-range__control"
+        role="slider"
+        tabIndex={0}
+        aria-label="Join urgency"
+        aria-valuemin={0}
+        aria-valuemax={5}
+        aria-valuenow={value}
         onMouseDown={e => { dragging.current = true; onChange(valueFromX(e.clientX)) }}
         onTouchStart={e => { e.preventDefault(); onChange(valueFromX(e.touches[0].clientX)) }}
         onTouchMove={e  => { e.preventDefault(); onChange(valueFromX(e.touches[0].clientX)) }}
+        onKeyDown={e => {
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') onChange(Math.max(0, value - 1))
+          if (e.key === 'ArrowRight' || e.key === 'ArrowUp') onChange(Math.min(5, value + 1))
+          if (e.key === 'Home') onChange(0)
+          if (e.key === 'End') onChange(5)
+        }}
         style={{ padding: '10px 0', cursor: 'pointer', userSelect: 'none', touchAction: 'none' }}
       >
-        <div ref={trackRef} style={{ position: 'relative', height: 10, background: 'rgba(26,31,43,0.9)' }}>
+        <div ref={trackRef} className="archive-range__track" style={{ position: 'relative', height: 10, background: 'rgba(26,31,43,0.9)' }}>
           {/* Flame fill */}
-          <div style={{
+          <div className="archive-range__fill" style={{
             position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`,
-            background: 'linear-gradient(90deg, #6B1200, #C8401A, #FF6B35, #FF8C20, #FFB830)',
-            boxShadow: `0 0 ${glowPx}px rgba(255,90,31,${glowAlph}), 0 0 ${glowPx * 2}px rgba(255,90,31,${glowAlph * 0.4})`,
-            transition: 'width 0.08s ease, box-shadow 0.15s ease',
+            background: 'linear-gradient(90deg, #6B1200, #C8401A, #E35205, #FF8C20, #FFB830)',
+            transition: 'width 0.08s ease',
             pointerEvents: 'none',
           }} />
           {/* Thumb */}
-          <div style={{
+          <div className="archive-range__thumb" style={{
             position: 'absolute', top: '50%', left: `${pct}%`,
             transform: 'translate(-50%, -50%)',
             width: 22, height: 22, borderRadius: '50%',
             background: value > 0
-              ? 'radial-gradient(circle at 38% 38%, #FFE0A0, #FF8C20, #FF6B35)'
+              ? 'radial-gradient(circle at 38% 38%, #FFE0A0, #FF8C20, #E35205)'
               : 'rgba(36,41,56,0.95)',
             border: `1.5px solid ${value > 0 ? 'rgba(255,180,60,0.75)' : 'rgba(242,240,230,0.18)'}`,
-            boxShadow: value > 0
-              ? `0 0 ${6 + value * 3}px rgba(255,140,32,${0.4 + value * 0.08}), 0 0 ${12 + value * 5}px rgba(255,90,31,${0.2 + value * 0.05})`
-              : 'none',
             transition: 'all 0.1s ease',
             pointerEvents: 'none', zIndex: 2,
           }} />
@@ -191,16 +197,18 @@ export function ChoiceCards({ options, selected, onSelect }: {
   onSelect: (id: string) => void
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+    <div className="archive-choice-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       {options.map(opt => {
         const isSelected = selected === opt.id
         return (
           <button
+            type="button"
             key={opt.id}
             onClick={() => onSelect(opt.id)}
+            className={`archive-choice${isSelected ? ' is-selected' : ''}`}
             style={{
-              background:  isSelected ? 'rgba(232,93,4,0.07)' : 'transparent',
-              border:      `1px solid ${isSelected ? 'rgba(232,93,4,0.4)' : 'rgba(242,240,230,0.08)'}`,
+              background:  isSelected ? 'rgba(200,68,6,0.07)' : 'transparent',
+              border:      `1px solid ${isSelected ? 'rgba(200,68,6,0.4)' : 'rgba(242,240,230,0.08)'}`,
               borderLeft:  `3px solid ${isSelected ? 'var(--color-nebula)' : 'transparent'}`,
               color:       isSelected ? 'var(--color-star)' : 'var(--color-star-dim)',
               fontFamily:  'var(--font-body)', fontSize: 'var(--fs-body)', fontWeight: 500,

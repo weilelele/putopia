@@ -5,7 +5,7 @@
 const Bar = ({ w, h = 14 }: { w: number | string; h?: number }) => (
   <div
     className="wr-skeleton"
-    style={{ width: w, height: h, borderRadius: 4, background: 'rgba(255,107,53,0.10)' }}
+    style={{ width: w, height: h, borderRadius: 4, background: 'rgba(227,82,5,0.10)' }}
   />
 )
 
@@ -26,7 +26,7 @@ export default function Loading() {
         style={{
           display: 'flex', gap: '0.75rem', marginBottom: '2rem', padding: '0.875rem 1rem',
           justifyContent: 'space-between', background: 'var(--bg-card)',
-          border: '1px solid rgba(255,107,53,0.12)',
+          border: '1px solid rgba(227,82,5,0.12)',
         }}
       >
         {[0, 1, 2].map((i) => (
@@ -42,7 +42,7 @@ export default function Loading() {
           <div
             key={i}
             className="wr-skeleton"
-            style={{ aspectRatio: '3 / 4', borderRadius: 8, background: 'rgba(255,107,53,0.08)' }}
+            style={{ aspectRatio: '3 / 4', borderRadius: 8, background: 'rgba(227,82,5,0.08)' }}
           />
         ))}
       </div>

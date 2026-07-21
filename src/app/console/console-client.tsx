@@ -15,23 +15,31 @@ import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
 import { AccessGate } from '@/components/access-gate'
 import { useActivateAccess } from '@/components/activate-action'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
+import { ArchiveStatStrip } from '@/components/archive-stat-strip'
 import type { McFunction } from '@/types/database'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
 const SALES_OPEN = true
 
 /* ─── Voyager Ad Slot — homepage promo block between Status Feed & Device Registry ───
- *  A (direct)     → orange, "Initial Voyager Pack" → /voyager-pack (buy)
- *  B (task_gated) → amber,  "Earn Your Status"     → /voyager-path (watch track)
+ *  Both groups now land on the product page (/voyager-pack) on click; the
+ *  task-completion gate for group B is enforced at the pack's buy button, not
+ *  the ad slot. Group styling/copy still differs (A orange, B amber).
+ *  A (direct)     → orange, "Initial Voyager Pack" → /voyager-pack (buy now)
+ *  B (task_gated) → amber,  "Earn Your Status"     → /voyager-pack (gated at checkout)
  *  Hero photo fades top + bottom into the card; faint breathing glow. */
 function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
   const direct = group === 'direct'
-  const accent = direct ? '#FF6B35' : '#E8A020'
-  const soft   = direct ? 'rgba(255,107,53,' : 'rgba(232,160,32,'   // append "<a>)"
+  const accent = direct ? '#E35205' : '#E8A020'
+  const soft   = direct ? 'rgba(227,82,5,' : 'rgba(232,160,32,'   // append "<a>)"
   const eyebrow = direct ? 'VOYAGER INITIATION' : 'VOYAGER RECRUITMENT'
   const title   = direct ? 'INITIAL VOYAGER PACK' : 'EARN YOUR STATUS'
   const cta     = 'ACTIVATE'
-  const href    = direct ? '/voyager-pack' : '/voyager-path'
+  const href    = '/voyager-pack'
 
   return (
     <Link
@@ -45,7 +53,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${soft}0.55)` }}
     >
       <style>{`
-        @keyframes vp-breathe-o { 0%,100% { box-shadow: 0 0 16px rgba(255,107,53,0.22), 0 0 0 1px rgba(255,107,53,0.18); } 50% { box-shadow: 0 0 38px rgba(255,107,53,0.55), 0 0 70px rgba(255,107,53,0.18), 0 0 0 1px rgba(255,107,53,0.45); } }
+        @keyframes vp-breathe-o { 0%,100% { box-shadow: 0 0 16px rgba(227,82,5,0.22), 0 0 0 1px rgba(227,82,5,0.18); } 50% { box-shadow: 0 0 38px rgba(227,82,5,0.55), 0 0 70px rgba(227,82,5,0.18), 0 0 0 1px rgba(227,82,5,0.45); } }
         @keyframes vp-breathe-a { 0%,100% { box-shadow: 0 0 16px rgba(232,160,32,0.22), 0 0 0 1px rgba(232,160,32,0.18); } 50% { box-shadow: 0 0 38px rgba(232,160,32,0.52), 0 0 70px rgba(232,160,32,0.16), 0 0 0 1px rgba(232,160,32,0.42); } }
         .vp-ad--direct { animation: vp-breathe-o 3.6s ease-in-out infinite; }
         .vp-ad--gated  { animation: vp-breathe-a 3.6s ease-in-out infinite; }
@@ -138,57 +146,25 @@ function HeroStats({ worlds, voyagers }: { worlds: number | null; voyagers: numb
 
   return (
     <div style={{ width: '100%', maxWidth: '540px', margin: '1.75rem auto 0' }}>
-      <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}>
-        {items.map(({ key, value, label }, i) => (
-          <div key={key} style={{ display: 'contents' }}>
-            {i > 0 && <div style={{ width: 1, background: 'rgba(255,107,53,0.16)', margin: '6px 0' }} />}
-            <button
-              type="button"
-              onClick={() => setActive((prev) => (prev === key ? null : key))}
-              aria-expanded={active === key}
-              style={{
-                flex: 1, padding: '8px 10px', background: active === key ? 'rgba(232,93,4,0.08)' : 'none',
-                border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'center', font: 'inherit',
-                transition: 'background 0.2s ease',
-              }}
-            >
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontWeight: 500,
-                fontSize: 'clamp(2rem, 9vw, 3.25rem)', height: 'clamp(2rem, 9vw, 3.25rem)', lineHeight: 1,
-                display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                color: 'var(--color-nucleus)',
-              }}>
-                {value}
-              </div>
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
-                color: 'var(--color-star-dim)', marginTop: 9,
-                minHeight: '2.6em', display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-              }}>
-                {label}
-              </div>
-            </button>
-          </div>
-        ))}
-      </div>
+      <ArchiveStatStrip items={items.map(({ key, label, value }) => ({
+        expanded: active === key,
+        label,
+        value,
+        onSelect: () => setActive((prev) => (prev === key ? null : key)),
+      }))} />
 
       {active && (
-        <div style={{
-          maxWidth: '470px', margin: '1rem auto 0',
-          border: '1px solid rgba(255,107,53,0.22)', borderRadius: 8,
-          background: 'rgba(232,93,4,0.05)', padding: '12px 16px',
-          animation: 'fadeInUp 0.3s ease-out',
-        }}>
+        <ArchiveCard className="archive-stat-description">
           <p style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', lineHeight: 1.75, color: 'var(--color-star-dim)' }}>
             {HERO_STAT_INFO[active]}
           </p>
-        </div>
+        </ArchiveCard>
       )}
     </div>
   )
 }
 
-function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats | null }) {
+function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: GuestHeroStats | null; mcFunctions: McFunction[] }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
 
   useEffect(() => {
@@ -216,7 +192,6 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
           width: '100%',
           textAlign: 'center',
           margin: 'clamp(1.25rem, 5vh, 3rem) 0 1.75rem',
-          filter: 'drop-shadow(0 0 32px rgba(255,107,53,0.45)) drop-shadow(0 0 64px rgba(255,107,53,0.18))',
           ...line(0),
         }}
       >
@@ -233,8 +208,7 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
           height={78}
           preload
           style={{
-            width: 140, height: 'auto', display: 'block',
-            filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',
+            width: '140px', height: 'auto', display: 'block',
           }}
         />
       </div>
@@ -248,25 +222,25 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
         We own devices looking into parallel worlds.
       </p>
 
-      {/* Three headline numbers — tap to reveal an explanation */}
-      <div style={{ width: '100%', ...line(2) }}>
-        <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
+      {/* Device showcase — leads the hero so the product hits first */}
+      <div style={{ width: '100%', maxWidth: 820, margin: '1.75rem auto 0', ...line(2) }}>
+        <McConsolePanel mcFunctions={mcFunctions} />
       </div>
 
       {/* CTA row — always horizontal, equal-width buttons */}
       <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.25rem',
+        display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.75rem',
         width: '100%', maxWidth: '620px',
       }}>
-        <button type="button" className="btn-primary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
+        <ArchiveButton type="button" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap' }}
           onClick={() => { posthog.capture('workspace_request_access_clicked'); requestAccess('hero') }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
             <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,255,255,0.25)" strokeLinejoin="round" />
           </svg>
           REQUEST ACCESS
-        </button>
-        <Link href="/login" className="btn-secondary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
+        </ArchiveButton>
+        <ArchiveLinkButton href="/login" variant="secondary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap' }}
           onClick={() => posthog.capture('workspace_login_clicked')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
@@ -275,7 +249,12 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
             <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
           LOGIN
-        </Link>
+        </ArchiveLinkButton>
+      </div>
+
+      {/* Three headline numbers — supporting proof, below the action buttons */}
+      <div style={{ width: '100%', marginTop: '1.75rem', ...line(2) }}>
+        <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
       </div>
 
       {requestAccessModal}
@@ -297,15 +276,11 @@ function DeviceComingSoonModal({ days, onClose }: { days: number; onClose: () =>
         animation: 'pathbar-fade 0.15s ease-out',
       }}
     >
-      <div
+      <ArchiveCard
+        aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: 380, width: '100%',
-          border: '1px solid rgba(232,160,32,0.3)',
-          background: '#0F1430', padding: '22px 26px 18px',
-          fontFamily: 'var(--font-mono)',
-          boxShadow: '0 0 40px rgba(10,14,39,0.6)',
-        }}
+        className="archive-console-modal"
+        role="dialog"
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <DeviceBarIcon size={14} color="#E8A020" />
@@ -332,21 +307,11 @@ function DeviceComingSoonModal({ days, onClose }: { days: number; onClose: () =>
 
         {/* Reservation entry — disabled until devices open */}
         {!hasDevice && (
-          <div
-            aria-disabled="true"
-            style={{
-              textAlign: 'center',
-              fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.16em',
-              color: 'rgba(245,245,245,0.4)',
-              background: 'rgba(245,245,245,0.06)',
-              border: '1px solid rgba(245,245,245,0.12)',
-              padding: '0.6rem', marginBottom: 14, cursor: 'not-allowed',
-            }}
-          >
+          <ArchiveButton disabled fullWidth>
             RESERVE A CONSOLE — COMING SOON
-          </div>
+          </ArchiveButton>
         )}
-      </div>
+      </ArchiveCard>
       <style>{`@keyframes pathbar-fade { from { opacity: 0 } to { opacity: 1 } }`}</style>
     </div>
   )
@@ -383,7 +348,6 @@ function AuthHero({ user }: {
           <div style={{
             width: '100%', textAlign: 'center',
             margin: 'clamp(1rem, 4vh, 2.25rem) 0 1.25rem',
-            filter: 'drop-shadow(0 0 32px rgba(255,107,53,0.45)) drop-shadow(0 0 64px rgba(255,107,53,0.18))',
           }}>
             <FlipWordmark maxWidth={616} fill={0.858} />
           </div>
@@ -397,7 +361,6 @@ function AuthHero({ user }: {
               preload
               style={{
                 width: '120px', height: 'auto', display: 'block',
-                filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',
               }}
             />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', letterSpacing: '0.34em', color: 'var(--color-star-dim)' }}>
@@ -643,16 +606,24 @@ export default function ConsoleClient({
 
   // Shared feed node — rendered inside the guest access gate, or standalone for
   // members. The Voyager ad slot rides as the lead block (door + ad coexist).
-  const packHref = (experimentGroup ?? 'direct') === 'direct' ? '/voyager-pack' : '/voyager-path'
-  const leadSlot = SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
-    ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
+  // Both A/B groups go to the product page; group B's task gate is enforced at checkout.
+  const packHref = '/voyager-pack'
+  // Preview override: ?ad=direct or ?ad=task_gated forces the ad slot to render
+  // with that variant (so you can try both without an applicant account).
+  const adParam = searchParams.get('ad')
+  const adOverride: ExperimentGroup | null =
+    adParam === 'direct' || adParam === 'task_gated' ? adParam : null
+  const showAd = SALES_OPEN &&
+    (adOverride !== null || (user.role !== 'voyager' && user.role !== 'architect'))
+  const leadSlot = showAd
+    ? <VoyagerAdSlot group={adOverride ?? experimentGroup ?? 'direct'} />
     : undefined
   const feedNode = feedEntries.length > 0
-    ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} canVote={!isGuest} />
+    ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} />
     : <FeedSkeleton />
 
   return (
-    <div className="landing-main" ref={scrollRef}>
+    <main className="landing-main archive-console-page" ref={scrollRef}>
       <SectionTracker section="dashboard" />
       <div className="nebula-bg" />
 
@@ -671,7 +642,7 @@ export default function ConsoleClient({
 
       {/* ── Hero: conditional on auth state (server-resolved, no loading flash) ── */}
       {isGuest ? (
-        <GuestHero newHref={newHref} stats={heroStats} />
+        <GuestHero newHref={newHref} stats={heroStats} mcFunctions={mcFunctions} />
       ) : (
         <AuthHero user={user} />
       )}
@@ -684,21 +655,16 @@ export default function ConsoleClient({
            mobile horizontal padding so the two-column stream spans portrait. */}
       {isGuest ? (
         <>
-          {/* Device — public showcase, full feed width */}
-          <section style={{ width: '100%', maxWidth: 820, margin: '1.5rem auto 0', padding: '0 0.75rem' }}>
-            <McConsolePanel mcFunctions={mcFunctions} />
-          </section>
+          {/* Device now leads the hero (see GuestHero); here just the gated feed. */}
           {/* INTERNAL UPDATES label — exposed above the frosted feed */}
-          <div style={{ maxWidth: 820, margin: '1.75rem auto 0.25rem', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 1.25rem' }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>INTERNAL UPDATES</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+          <div className="archive-console-section-label">
+            <ArchiveSectionLabel>INTERNAL UPDATES</ArchiveSectionLabel>
           </div>
           {/* Only the feed is frosted now */}
           <section style={{ margin: '0.75rem -1.25rem 0', padding: '0 0.5rem' }}>
             <AccessGate permanentHref={newHref}>
               {feedEntries.length > 0
-                ? <FeedProtoClient entries={feedEntries} embedded hideHeader packHref={packHref} leadSlot={leadSlot} canVote={!isGuest} />
+                ? <FeedProtoClient entries={feedEntries} embedded hideHeader packHref={packHref} leadSlot={leadSlot} />
                 : <FeedSkeleton hideHeader />}
             </AccessGate>
           </section>
@@ -712,6 +678,6 @@ export default function ConsoleClient({
       <div className="footer-bar" style={{ marginTop: '2rem', justifyContent: 'center' }}>
         <div className="tag">EXPLORE PARALLEL WORLDS</div>
       </div>
-    </div>
+    </main>
   )
 }

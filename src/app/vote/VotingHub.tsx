@@ -1,16 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FilterBar } from '@/components/filter-bar'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
 import { Plus } from 'lucide-react'
 import { VoteCard } from '@/components/VoteCard'
-import { BackLink } from '@/components/back-link'
 import { CreateVoteModal } from './CreateVoteModal'
 import type { Vote } from '@/types/database'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchivePageHeader } from '@/components/archive-page-header'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
+import { ArchiveStatStrip } from '@/components/archive-stat-strip'
 
 type Props = {
   votes: Vote[]
@@ -26,39 +31,18 @@ const isClassified = (v: Vote) => !v.scope.includes('applicant')
 // ─── Classified wall ──────────────────────────────────────────────────────────
 function ClassifiedWall() {
   return (
-    <div style={{
-      border: '1px solid rgba(255,107,53,0.25)',
-      background: 'rgba(232,93,4,0.03)',
-      padding: '3.5rem 2rem',
-      textAlign: 'center',
-      marginTop: '1rem',
-    }}>
-      <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: '0.6rem',
-        letterSpacing: '0.25em', color: 'rgba(245,245,245,0.2)',
-        marginBottom: '1rem',
-      }}>{"// ACCESS RESTRICTED"}</div>
-      <p style={{
-        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
-        color: 'rgba(245,245,245,0.5)', lineHeight: 1.8, marginBottom: '1.75rem',
-      }}>
+    <ArchiveCard className="archive-access-card">
+      <h2>ACCESS RESTRICTED</h2>
+      <p>
         This content is classified. Access restricted to Voyager and above.
       </p>
-      <Link
+      <ArchiveLinkButton
         href="/voyager-pack"
-        style={{
-          display: 'inline-block',
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.18em', color: '#FF6B35',
-          border: '1px solid rgba(255,107,53,0.45)',
-          padding: '0.5rem 1.75rem', textDecoration: 'none',
-        }}
-        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,107,53,0.08)')}
-        onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+        variant="primary"
       >
-        BECOME A VOYAGER →
-      </Link>
-    </div>
+        BECOME A VOYAGER
+      </ArchiveLinkButton>
+    </ArchiveCard>
   )
 }
 
@@ -100,8 +84,9 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
   }
 
   return (
-    <div className="main">
+    <div className="main pilot-archive-page archive-collection-page archive-vote-page">
       <SectionTracker section="vote" />
+      <ArchiveBrandHeader />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> VOTING HUB</div>
         <div className="right">
@@ -110,23 +95,26 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
         </div>
       </div>
 
-      <div className="page-head">
-        <div>
-          <BackLink href="/intel" label="INTEL FEED" />
-          <h1>VOTING <span className="accent">HUB</span></h1>
-          <p className="sub">{votes.filter(v => v.is_active).length} active / {votes.filter(v => !v.is_active).length} closed</p>
-        </div>
-        {isAtLeast('architect') && (
-          <button
-            className="btn-secondary"
-            style={{ padding: '0.55rem 1.25rem', fontSize: 'var(--fs-caption)' }}
+      <ArchivePageHeader
+        title="VOTING"
+        accent="HUB"
+        identity={<ArchiveLinkButton href="/intel" variant="ghost">← INTEL FEED</ArchiveLinkButton>}
+        action={isAtLeast('architect') ? (
+          <ArchiveButton
+            variant="primary"
             onClick={() => setShowCreate(true)}
           >
             <Plus size={12} />
             CREATE VOTE
-          </button>
-        )}
-      </div>
+          </ArchiveButton>
+        ) : undefined}
+      />
+
+      <ArchiveStatStrip items={[
+        { label: 'ACTIVE', value: votes.filter(v => v.is_active).length, color: 'var(--color-ok)' },
+        { label: 'CLOSED', value: votes.filter(v => !v.is_active).length },
+        { label: 'TOTAL', value: votes.length },
+      ]} />
 
       <FilterBar
         options={VOTE_FILTERS}
@@ -142,13 +130,8 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
         <>
           {/* Active Votes */}
           {activeVotes.length > 0 && (
-            <section className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-xs font-mono tracking-widest" style={{ color: '#20D890' }}>
-                  ● ACTIVE VOTES
-                </div>
-                <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-              </div>
+            <section className="archive-vote-section">
+              <ArchiveSectionLabel>ACTIVE VOTES</ArchiveSectionLabel>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {activeVotes.map((v) => (
                   <VoteCard
@@ -165,13 +148,8 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
 
           {/* Closed Votes */}
           {closedVotes.length > 0 && (
-            <section>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-xs font-mono tracking-widest" style={{ color: 'rgba(245,245,245,0.35)' }}>
-                  ○ CLOSED VOTES
-                </div>
-                <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-              </div>
+            <section className="archive-vote-section">
+              <ArchiveSectionLabel>CLOSED VOTES</ArchiveSectionLabel>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {closedVotes.map((v) => (
                   <VoteCard
@@ -187,18 +165,18 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
           )}
 
           {filteredVotes.length === 0 && (
-            <div className="text-center py-16">
-              <div className="text-xs font-mono tracking-widest mb-2" style={{ color: 'rgba(245,245,245,0.35)' }}>{"// NO VOTES FOUND"}</div>
-              <p className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
+            <ArchiveCard className="archive-empty-state">
+              <h2>NO VOTES FOUND</h2>
+              <p>
                 No votes match this filter.
               </p>
-            </div>
+            </ArchiveCard>
           )}
         </>
       )}
 
-      <div className="footer-bar" style={{ marginTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+      <div className="footer-bar archive-footer-bar">
+        <div className="tag">MULTIVERSE COLLECTIVE</div>
         <div>VOTING HUB</div>
       </div>
 

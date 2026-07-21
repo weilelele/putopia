@@ -100,11 +100,11 @@ export type FeedEntry =
   | { kind: 'content'; item: FeedItem }
   | { kind: 'vote'; vote: VoteCard }
 
-const ORANGE = '#FF6B35'
+const ORANGE = '#E35205'
 const LORANGE = '#FF8A5C'
 const AMBER = '#FFB020'
 const GREEN = '#20D890'
-const BURNT = '#E85D04'
+const BURNT = '#C84406'
 // Font tokens — never below --fs-caption (12px floor).
 const FS_LABEL = 'var(--fs-label)'      // 13
 const FS_CAPTION = 'var(--fs-caption)'  // 12
@@ -195,8 +195,8 @@ function VoyagerOnlyCover({ minHeight = 54 }: { minHeight?: number }) {
     <div style={{
       marginTop: 8, minHeight, borderRadius: 3,
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-      background: 'repeating-linear-gradient(45deg, rgba(255,107,53,0.12) 0 9px, rgba(255,107,53,0.03) 9px 18px)',
-      border: '1px solid rgba(255,107,53,0.22)',
+      background: 'repeating-linear-gradient(45deg, rgba(227,82,5,0.12) 0 9px, rgba(227,82,5,0.03) 9px 18px)',
+      border: '1px solid rgba(227,82,5,0.22)',
     }}>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.2em', color: ORANGE }}>VOYAGER ONLY</span>
     </div>
@@ -475,7 +475,7 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
             return (
               <div key={c.id} onClick={() => toggle(c.id)} aria-disabled={!canVote} style={{
                 border: `1px solid ${on ? ORANGE : 'rgba(245,245,245,0.12)'}`,
-                background: on ? 'rgba(255,107,53,0.12)' : 'transparent',
+                background: on ? 'rgba(227,82,5,0.12)' : 'transparent',
                 borderRadius: 3, padding: '9px 10px',
                 color: on ? LORANGE : 'rgba(245,245,245,0.6)',
                 fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, lineHeight: 1.4,
@@ -543,8 +543,8 @@ function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () =>
     >
       <div style={{ background: '#0F1430', border: `1px solid ${accent}59`, borderRadius: 6, width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', fontFamily: 'var(--font-mono)' }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid rgba(255,107,53,0.14)', background: '#090D1A' }}>
-          <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: FS_CAPTION, letterSpacing: '0.25em' }}>{'// VOYAGER PROFILE'}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid rgba(227,82,5,0.14)', background: '#090D1A' }}>
+          <span style={{ color: 'rgba(245,245,245,0.55)', fontSize: FS_CAPTION, letterSpacing: '0.16em' }}>VOYAGER PROFILE</span>
           <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '2px 6px' }}>✕</button>
         </div>
 
@@ -573,12 +573,12 @@ function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () =>
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'flex', borderTop: '1px solid rgba(255,107,53,0.1)', borderBottom: '1px solid rgba(255,107,53,0.1)', margin: '0 18px' }}>
+        <div style={{ display: 'flex', borderTop: '1px solid rgba(227,82,5,0.1)', borderBottom: '1px solid rgba(227,82,5,0.1)', margin: '0 18px' }}>
           <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#E85D04', textShadow: '0 0 10px rgba(232,93,4,0.35)' }}>{profile?.observation_days ?? '—'}</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#C84406', textShadow: '0 0 10px rgba(200,68,6,0.35)' }}>{profile?.observation_days ?? '—'}</div>
             <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: 2 }}>OBS DAYS</div>
           </div>
-          <div style={{ width: 1, background: 'rgba(255,107,53,0.1)' }} />
+          <div style={{ width: 1, background: 'rgba(227,82,5,0.1)' }} />
           <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
             <div style={{ fontSize: '1.4rem', fontWeight: 700, color: GREEN, textShadow: '0 0 10px rgba(32,216,144,0.25)' }}>{profile?.worlds_discovered ?? '—'}</div>
             <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: 2 }}>WORLDS</div>
@@ -591,17 +591,17 @@ function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () =>
           : profile?.bio && <div style={{ padding: '14px 18px', fontSize: FS_LABEL, color: 'rgba(245,245,245,0.55)', lineHeight: 1.65 }}>{profile.bio}</div>}
 
         {/* Footer: socials + proceed */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 18px', borderTop: '1px solid rgba(255,107,53,0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 18px', borderTop: '1px solid rgba(227,82,5,0.1)' }}>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {socials.map(s => (
               <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: FS_CAPTION, letterSpacing: '0.15em', color: 'rgba(245,245,245,0.35)', border: '1px solid rgba(255,107,53,0.2)', padding: '3px 8px', textDecoration: 'none' }}>
+                style={{ fontSize: FS_CAPTION, letterSpacing: '0.15em', color: 'rgba(245,245,245,0.35)', border: '1px solid rgba(227,82,5,0.2)', padding: '3px 8px', textDecoration: 'none' }}>
                 {s.label} ↗
               </a>
             ))}
           </div>
           <Link href="/voyagers" onClick={onClose}
-            style={{ fontSize: FS_CAPTION, letterSpacing: '0.12em', color: ORANGE, border: '1px solid rgba(255,107,53,0.45)', padding: '6px 14px', textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            style={{ fontSize: FS_CAPTION, letterSpacing: '0.12em', color: ORANGE, border: '1px solid rgba(227,82,5,0.45)', padding: '6px 14px', textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}>
             SEE ALL →
           </Link>
         </div>

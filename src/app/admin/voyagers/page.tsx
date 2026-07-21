@@ -7,10 +7,10 @@ import type { VoyagerProfile } from '@/types/database'
 const DEFAULT_BATCH = 'Original Batch'
 
 const S = {
-  card: { background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', padding: '20px', marginBottom: '16px' },
-  th:   { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.12em', borderBottom: '1px solid rgba(255,107,53,0.16)', whiteSpace: 'nowrap' as const },
+  card: { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '20px', marginBottom: '16px' },
+  th:   { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(227,82,5,0.16)', whiteSpace: 'nowrap' as const },
   td:   { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'middle' as const, fontSize: '13px' },
-  input: { background: '#0F1430', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5', padding: '6px 9px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box' as const },
+  input: { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '6px 9px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box' as const },
 }
 
 export default function VoyagersAdmin() {
@@ -62,7 +62,6 @@ export default function VoyagersAdmin() {
   return (
     <div>
       <div style={{ marginBottom: '20px' }}>
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px', letterSpacing: '0.3em' }}>ADMIN // VOYAGERS</div>
         <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>批次分配</div>
         <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '12px', marginTop: '4px' }}>
           给 Voyager 指定批次名（可复用已有名称或直接输入新名称）。Architect 不参与批次。
@@ -73,9 +72,9 @@ export default function VoyagersAdmin() {
       {!loading && summary.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
           {summary.map(([label, count]) => (
-            <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', fontSize: '12px', color: 'rgba(245,245,245,0.55)', fontFamily: 'var(--font-mono)' }}>
+            <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', fontSize: '12px', color: 'rgba(245,245,245,0.55)', fontFamily: 'var(--font-mono)' }}>
               {label}
-              <span style={{ padding: '0 6px', borderRadius: '999px', background: 'rgba(232,93,4,0.14)', color: '#FF8A5C', fontSize: '11px' }}>{count}</span>
+              <span style={{ padding: '0 6px', borderRadius: '999px', background: 'rgba(200,68,6,0.14)', color: '#FF8A5C', fontSize: 'var(--fs-caption)' }}>{count}</span>
             </span>
           ))}
         </div>
@@ -114,7 +113,7 @@ export default function VoyagersAdmin() {
                   <tr key={v.id}>
                     <td style={S.td}>
                       <div style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)' }}>{v.display_name}</div>
-                      {v.location && <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '11px' }}>{v.location}</div>}
+                      {v.location && <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)' }}>{v.location}</div>}
                     </td>
                     <td style={S.td}>
                       <input
@@ -131,7 +130,7 @@ export default function VoyagersAdmin() {
                         onClick={() => handleSave(v)}
                         disabled={!dirty || savingId === v.id}
                         className="btn-secondary"
-                        style={{ padding: '0.4rem 0.9rem', fontSize: '11px', opacity: !dirty || savingId === v.id ? 0.4 : 1, cursor: !dirty ? 'default' : 'pointer' }}
+                        style={{ padding: '0.4rem 0.9rem', fontSize: 'var(--fs-caption)', opacity: !dirty || savingId === v.id ? 0.4 : 1, cursor: !dirty ? 'default' : 'pointer' }}
                       >
                         {savingId === v.id ? '...' : 'SAVE'}
                       </button>
