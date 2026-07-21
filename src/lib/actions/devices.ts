@@ -15,6 +15,7 @@ const getAllDevicesCached = unstable_cache(
       .select('*')
       .order('knowledge', { ascending: false })
       .order('id')
+      .limit(200)
     return data ?? []
   },
   ['all-devices'],

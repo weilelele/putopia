@@ -198,6 +198,17 @@ interface Candidate {
   missedTaskIds: string[]    // trailing missed revealed tasks (for participant count)
 }
 
+// .in() id lists can grow with the user/thread base — fetch in bounded chunks
+// so a URL/parameter limit never truncates a run silently.
+const IN_CHUNK = 500
+async function fetchInChunks<T>(ids: string[], fetchChunk: (chunk: string[]) => Promise<T[]>): Promise<T[]> {
+  const out: T[] = []
+  for (let i = 0; i < ids.length; i += IN_CHUNK) {
+    out.push(...(await fetchChunk(ids.slice(i, i + IN_CHUNK))))
+  }
+  return out
+}
+
 /** Detect churn streaks and send at most one re-engagement email per user.
  *  Returns the set of users emailed so the caller can skip them for recall. */
 export async function runEngagementEmails(): Promise<EngagementResult> {
@@ -205,38 +216,48 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
   const result: EngagementResult = { ownerAbsentSent: 0, voterChurnSent: 0, errors: [], emailedUserIds: [] }
   const now = new Date()
 
-  // 1. All threads + their world info (incl scan_until, the anchor fallback).
-  const { data: threadRows } = await admin
-    .from('signal_threads')
-    .select('id, world_id, reveal_anchor_at, gap_hours')
-  const threads = (threadRows ?? []) as { id: string; world_id: string | null; reveal_anchor_at: string | null; gap_hours: number | null }[]
+  // 1. Worlds still in Signal Tuning — the only threads that can still reveal
+  //    new days, i.e. produce new engagement episodes. Threads whose worlds
+  //    have gone stable can't generate anything new (their past episodes are
+  //    already deduped in signal_engagement_log), so loading every thread ever
+  //    created would just grow this cron's work forever.
+  const { data: worldRows } = await admin
+    .from('worlds')
+    .select('id, name, description, submitted_by, discoverer_id, vote_scope, scan_until')
+    .in('lifecycle_state', ['picked', 'syncing'])
+  const worldInfo = new Map<string, WorldInfo>()
+  for (const w of (worldRows ?? []) as { id: string; name: string; description: string | null; submitted_by: string | null; discoverer_id: string | null; vote_scope: string | null; scan_until: string | null }[]) {
+    worldInfo.set(w.id, {
+      worldId: w.id,
+      name: w.name ?? 'your world',
+      description: w.description ?? '',
+      ownerId: w.submitted_by || w.discoverer_id,
+      voteScope: (w.vote_scope as VoteScope) ?? 'all',
+      scanUntil: w.scan_until ?? null,
+    })
+  }
+  const worldIds = [...worldInfo.keys()]
+  if (!worldIds.length) return result
+
+  const threadRows = await fetchInChunks(worldIds, async (chunk) => {
+    const { data } = await admin
+      .from('signal_threads')
+      .select('id, world_id, reveal_anchor_at, gap_hours')
+      .in('world_id', chunk)
+    return (data ?? []) as { id: string; world_id: string | null; reveal_anchor_at: string | null; gap_hours: number | null }[]
+  })
+  const threads = threadRows
   if (!threads.length) return result
 
-  const worldIds = [...new Set(threads.map((t) => t.world_id).filter((w): w is string => !!w))]
-  const worldInfo = new Map<string, WorldInfo>()
-  if (worldIds.length) {
-    const { data: worlds } = await admin
-      .from('worlds')
-      .select('id, name, description, submitted_by, discoverer_id, vote_scope, scan_until')
-      .in('id', worldIds)
-    for (const w of (worlds ?? []) as { id: string; name: string; description: string | null; submitted_by: string | null; discoverer_id: string | null; vote_scope: string | null; scan_until: string | null }[]) {
-      worldInfo.set(w.id, {
-        worldId: w.id,
-        name: w.name ?? 'your world',
-        description: w.description ?? '',
-        ownerId: w.submitted_by || w.discoverer_id,
-        voteScope: (w.vote_scope as VoteScope) ?? 'all',
-        scanUntil: w.scan_until ?? null,
-      })
-    }
-  }
-
   // 2. Published tasks per thread → the gap-chain open schedule (day_index → openAt ms).
-  const { data: taskRows } = await admin
-    .from('signal_tasks')
-    .select('id, thread_id, day_index, published_at')
-    .eq('is_published', true)
-    .in('thread_id', threads.map((t) => t.id))
+  const taskRows = await fetchInChunks(threads.map((t) => t.id), async (chunk) => {
+    const { data } = await admin
+      .from('signal_tasks')
+      .select('id, thread_id, day_index, published_at')
+      .eq('is_published', true)
+      .in('thread_id', chunk)
+    return (data ?? []) as { id: string; thread_id: string; day_index: number | null; published_at: string | null }[]
+  })
   const pubByThread = new Map<string, { id: string; dayIndex: number; publishedAtISO: string }[]>()
   for (const t of (taskRows ?? []) as { id: string; thread_id: string; day_index: number | null; published_at: string | null }[]) {
     if (!t.published_at) continue
@@ -267,10 +288,16 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
   }
   for (const arr of threadReveals.values()) arr.sort((a, b) => a.dayIndex - b.dayIndex)
 
-  // 3. All responses → per-task participants + per-(thread,user) responded tasks.
-  const { data: respRows } = await admin.from('signal_responses').select('task_id, user_id')
+  // 3. Responses on the REVEALED tasks only → per-task participants +
+  //    per-(thread,user) responded tasks. (Previously this pulled the entire
+  //    signal_responses table every run; only revealed tasks ever matter for
+  //    streaks, participants, or eligibility.)
   const taskToThread = new Map<string, string>()
   for (const [tid, arr] of threadReveals) for (const r of arr) taskToThread.set(r.taskId, tid)
+  const respRows = await fetchInChunks([...taskToThread.keys()], async (chunk) => {
+    const { data } = await admin.from('signal_responses').select('task_id, user_id').in('task_id', chunk)
+    return (data ?? []) as { task_id: string; user_id: string }[]
+  })
   const participantsByTask = new Map<string, Set<string>>()
   const respondedByUserThread = new Map<string, Set<string>>() // key `${userId}|${threadId}` → taskIds
   const pastVoters = new Set<string>()
@@ -288,15 +315,19 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
     }
   }
 
-  // role lookup (cached) for eligibility
+  // Role lookup for eligibility — every id we might need (world owners + past
+  // voters) prefetched in one chunked batch instead of a query per user.
   const roleCache = new Map<string, string | null>()
-  const roleOf = async (userId: string): Promise<string | null> => {
-    if (roleCache.has(userId)) return roleCache.get(userId)!
-    const { data } = await admin.from('voyager_profiles').select('role').eq('id', userId).maybeSingle()
-    const role = (data as { role: string | null } | null)?.role ?? null
-    roleCache.set(userId, role)
-    return role
+  {
+    const roleIds = new Set<string>(pastVoters)
+    for (const w of worldInfo.values()) if (w.ownerId) roleIds.add(w.ownerId)
+    const profileRows = await fetchInChunks([...roleIds], async (chunk) => {
+      const { data } = await admin.from('voyager_profiles').select('id, role').in('id', chunk)
+      return (data ?? []) as { id: string; role: string | null }[]
+    })
+    for (const p of profileRows) roleCache.set(p.id, p.role)
   }
+  const roleOf = (userId: string): string | null => roleCache.get(userId) ?? null
 
   // trailing miss streak + last-participated index for a user in a thread
   const streakFor = (userId: string, threadId: string, reveals: RevealedTask[]) => {
@@ -324,7 +355,7 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
 
     // Rule 1 — owner absent
     if (w.ownerId) {
-      const role = await roleOf(w.ownerId)
+      const role = roleOf(w.ownerId)
       if (eligibleToVote(role, w.ownerId, w.voteScope, w.ownerId)) {
         const s = streakFor(w.ownerId, t.id, reveals)
         if (s.miss >= OWNER_MISS_THRESHOLD) {
@@ -342,7 +373,7 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
       if (userId === w.ownerId) continue // owner handled by rule 1
       const s = streakFor(userId, t.id, reveals)
       if (!s.participatedEver || s.miss < VOTER_MISS_THRESHOLD) continue
-      const role = await roleOf(userId)
+      const role = roleOf(userId)
       if (!eligibleToVote(role, userId, w.voteScope, w.ownerId)) continue
       candidates.push({
         userId, rule: 'voter_churn', threadId: t.id, world: w,
@@ -372,7 +403,7 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
       try {
         const to = await resolveUserEmail(admin, userId)
         if (!to) break
-        if (c.rule === 'owner_absent') await sendOwnerEmail(admin, to, c)
+        if (c.rule === 'owner_absent') await sendOwnerEmail(admin, to, c, participantsByTask)
         else await sendVoterEmail(admin, to, c)
         result.emailedUserIds.push(userId)
         if (c.rule === 'owner_absent') result.ownerAbsentSent++
@@ -387,12 +418,12 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
   return result
 }
 
-async function sendOwnerEmail(admin: DB, to: string, c: Candidate): Promise<void> {
-  // distinct members (excluding owner) across the trailing missed days
+async function sendOwnerEmail(admin: DB, to: string, c: Candidate, participantsByTask: Map<string, Set<string>>): Promise<void> {
+  // distinct members (excluding owner) across the trailing missed days —
+  // read from the response map the run already built; no extra queries.
   const participants = new Set<string>()
   for (const tid of c.missedTaskIds) {
-    const set = (await participantsForTask(admin, tid))
-    for (const u of set) if (u !== c.userId) participants.add(u)
+    for (const u of participantsByTask.get(tid) ?? []) if (u !== c.userId) participants.add(u)
   }
   const count = participants.size
 
@@ -434,9 +465,4 @@ async function sendVoterEmail(admin: DB, to: string, c: Candidate): Promise<void
     ctaHref: `${SITE}/worlds/${c.world.worldId}`,
   })
   await sendEmail({ to, subject: `We've lost your signal — ${c.world.name}`, html })
-}
-
-async function participantsForTask(admin: DB, taskId: string): Promise<Set<string>> {
-  const { data } = await admin.from('signal_responses').select('user_id').eq('task_id', taskId)
-  return new Set(((data ?? []) as { user_id: string }[]).map((r) => r.user_id))
 }

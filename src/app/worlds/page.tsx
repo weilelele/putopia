@@ -130,11 +130,15 @@ async function InitialVisionSection() {
 }
 
 async function SignalTuningSection() {
-  // Covers come from a heavy per-thread query loop; bound it so this section
-  // degrades to posters-without-covers rather than hanging if it gets slow.
-  const [pipeline, covers, tuningActivity] = await Promise.all([
-    loadPipeline(),
-    withTimeout(loadCovers(), 8000, {} as Record<string, string>),
+  const pipeline = await loadPipeline()
+  const tuningIds = pipeline
+    .filter((w) => w.lifecycle_state === 'picked' || w.lifecycle_state === 'syncing')
+    .map((w) => w.id)
+  // Covers are bounded to the tuning worlds this section renders; still
+  // timeboxed so the section degrades to posters-without-covers rather than
+  // hanging if the query gets slow.
+  const [covers, tuningActivity] = await Promise.all([
+    withTimeout(loadCovers(tuningIds), 8000, {} as Record<string, string>),
     withTimeout(loadActivity(), 5000, {} as Record<string, string>),
   ])
   const worldBuilding = pipeline
