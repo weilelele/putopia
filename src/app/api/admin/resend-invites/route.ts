@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
   for (const row of rows) {
     const attempts = (row.invite_resend_attempts ?? 0) + 1
     const { error } = await admin.auth.admin.inviteUserByEmail(row.email, {
-      redirectTo: `${siteUrl}/auth/callback?next=/register`,
+      redirectTo: `${siteUrl}/auth/callback`,
     })
 
     let patch: Record<string, unknown>

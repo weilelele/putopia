@@ -1,6 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { UserRole } from '@/types/database'
 
@@ -40,12 +41,13 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser>(GUEST)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   const loadProfile = useCallback(async (userId: string, email?: string) => {
     const supabase = createClient()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('voyager_profiles')
-      .select('role, display_name, avatar_url')
+      .select('role, display_name, avatar_url, registered_at')
       .eq('id', userId)
       .single()
 
@@ -56,7 +58,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       name: data?.display_name ?? undefined,
       avatarUrl: data?.avatar_url ?? null,
     })
-  }, [])
+
+    // Client-side mirror of the proxy's registration gate. The proxy only sees
+    // navigations, so a session that materialises purely client-side — GoTrue
+    // redirecting a magic link to the site root with implicit-flow tokens in
+    // the URL hash — parks an unregistered user on whatever page picked the
+    // session up (the guest console) without ever hitting the gate.
+    if (!error && !data?.registered_at) {
+      const path = window.location.pathname
+      const exempt = ['/register', '/auth'].some((p) => path === p || path.startsWith(p + '/'))
+      if (!exempt) router.replace('/register')
+    }
+  }, [router])
 
   useEffect(() => {
     const supabase = createClient()

@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         const siteUrl =
           process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
         const { data: invited } = await admin.auth.admin.inviteUserByEmail(email, {
-          redirectTo: `${siteUrl}/auth/callback?next=/register`,
+          redirectTo: `${siteUrl}/auth/callback`,
         })
         userId = invited?.user?.id ?? null
       }
