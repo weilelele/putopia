@@ -7,11 +7,16 @@ import { getMyProfile, updateProfile, uploadAvatar } from '@/lib/actions/profile
 import { getMyOrders, type VoyagerOrder } from '@/lib/actions/orders'
 import { useAuth } from '@/lib/auth-context'
 import { BackLink } from '@/components/back-link'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveField } from '@/components/archive-field'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
 
 // ── helpers (mirrors /voyagers) ─────────────────────────────────────────────
 const ACCENT_COLORS = [
   '#E8A020', '#D4601A', '#FF8A5C', '#FFB020',
-  '#C43020', '#C4A96A', '#B5430A', '#FF6B35', '#E85D04',
+  '#C43020', '#C4A96A', '#B5430A', '#E35205', '#C84406',
 ]
 function accentColor(name: string): string {
   let hash = 0
@@ -23,19 +28,6 @@ function getInitials(name: string): string {
 }
 
 const BIO_LIMIT = 240
-const FIELD_INPUT: React.CSSProperties = {
-  width: '100%', background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', color: '#F5F5F5',
-  padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', outline: 'none',
-  boxSizing: 'border-box',
-}
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label style={{ display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', marginBottom: '4px' }}>{label}</label>
-      {children}
-    </div>
-  )
-}
 function FieldGroup({ children, cols = 1 }: { children: React.ReactNode; cols?: number }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '12px', marginBottom: '12px' }}>
@@ -65,9 +57,9 @@ function PackTracker({ order, index, total }: { order: VoyagerOrder; index: numb
   const date = new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 
   return (
-    <div style={{ border: '1px solid rgba(255,107,53,0.2)', background: '#0F1430', padding: '18px 20px', marginBottom: '16px' }}>
+    <ArchiveCard style={{ marginBottom: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em' }}>{"// ORDER"}{total > 1 ? `#${total - index}` : 'MY VOYAGER PACK'}
+        <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em' }}>{total > 1 ? `ORDER #${total - index}` : 'MY VOYAGER PACK'}
         </div>
         <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em' }}>
           {date}
@@ -84,10 +76,10 @@ function PackTracker({ order, index, total }: { order: VoyagerOrder; index: numb
             const done = i <= activeIdx
             return (
               <div key={step} style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ height: '3px', borderRadius: '2px', background: done ? '#FF6B35' : 'rgba(245,245,245,0.12)' }} />
+                <div style={{ height: '3px', borderRadius: '2px', background: done ? '#E35205' : 'rgba(245,245,245,0.12)' }} />
                 <div style={{
                   marginTop: '7px', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em',
-                  color: i === activeIdx ? '#FF6B35' : done ? 'rgba(245,245,245,0.6)' : 'rgba(245,245,245,0.3)',
+                  color: i === activeIdx ? '#E35205' : done ? 'rgba(245,245,245,0.6)' : 'rgba(245,245,245,0.3)',
                 }}>
                   {STEP_LABEL[step]}
                 </div>
@@ -104,13 +96,13 @@ function PackTracker({ order, index, total }: { order: VoyagerOrder; index: numb
           </div>
           {order.tracking_url && (
             <a href={order.tracking_url} target="_blank" rel="noopener noreferrer"
-               style={{ color: '#FF6B35', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', textDecoration: 'none' }}>
+               style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', textDecoration: 'none' }}>
               TRACK ↗
             </a>
           )}
         </div>
       )}
-    </div>
+    </ArchiveCard>
   )
 }
 
@@ -201,7 +193,7 @@ export default function ProfilePage() {
     return (
       <div className="main">
         <div style={{ color: 'rgba(245,245,245,0.5)', fontFamily: 'var(--font-mono)', padding: '60px 0', textAlign: 'center' }}>
-          No profile found. <Link href="/login" style={{ color: '#FF6B35' }}>Sign in</Link>
+          No profile found. <Link href="/login" style={{ color: '#E35205' }}>Sign in</Link>
         </div>
       </div>
     )
@@ -225,18 +217,17 @@ export default function ProfilePage() {
           <BackLink href="/voyagers" label="VOYAGERS" />
           <h1><span className="accent">PROFILE</span></h1>
         </div>
-        <button
+        <ArchiveButton
           onClick={() => logout()}
-          className="btn-ghost"
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)' }}
+          variant="ghost"
         >
           <LogOut size={12} />
           LOGOUT
-        </button>
+        </ArchiveButton>
       </div>
 
       {/* Identity header */}
-      <div style={{ display: 'flex', gap: '18px', alignItems: 'center', border: '1px solid rgba(255,107,53,0.2)', background: '#0F1430', padding: '20px', marginBottom: '24px', flexWrap: 'wrap' }}>
+      <ArchiveCard style={{ display: 'flex', gap: '18px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative' }}>
           <div
             onClick={canEdit ? () => fileRef.current?.click() : undefined}
@@ -255,7 +246,7 @@ export default function ProfilePage() {
           {canEdit && (
             <>
               <div onClick={() => fileRef.current?.click()}
-                   style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '24px', height: '24px', borderRadius: '50%', background: '#151B3A', border: '1px solid #E85D04', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#E85D04' }}>
+                   style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '24px', height: '24px', borderRadius: '50%', background: '#151B3A', border: '1px solid #C84406', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C84406' }}>
                 <Camera size={11} />
               </div>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
@@ -274,19 +265,7 @@ export default function ProfilePage() {
 
             {/* Applicant: inline upgrade CTA */}
             {isApplicant && (
-              <Link
-                href="/voyager-path"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '5px',
-                  fontSize: 'var(--fs-caption)', letterSpacing: '0.14em',
-                  color: '#FF6B35', border: '1px solid rgba(255,107,53,0.45)',
-                  background: 'rgba(255,107,53,0.08)',
-                  padding: '2px 10px', textDecoration: 'none',
-                  fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap',
-                }}
-              >
-                ↑ UPGRADE
-              </Link>
+              <ArchiveLinkButton href="/voyager-path" variant="ghost">UPGRADE</ArchiveLinkButton>
             )}
 
             {/* Only Voyagers carry a member number + batch; Architects do not. */}
@@ -302,7 +281,7 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
-      </div>
+      </ArchiveCard>
 
       {/* Pack tracking — only for Voyagers+ who have actually paid in */}
       {canEdit && orders.length > 0 && (
@@ -315,60 +294,49 @@ export default function ProfilePage() {
 
       {/* Edit form — Voyagers+ only; Applicants see a locked notice */}
       {!canEdit ? (
-        <div style={{ border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: '22px 20px', fontFamily: 'var(--font-mono)', maxWidth: '640px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <ArchiveCard style={{ maxWidth: '640px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: 8 }}>{"// PROFILE LOCKED"}</div>
+            <ArchiveSectionLabel>PROFILE LOCKED</ArchiveSectionLabel>
             <p style={{ margin: 0, fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.65 }}>
               Set up your avatar, bio and links once you become a Voyager.
             </p>
           </div>
-          <Link
-            href="/voyager-path"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0,
-              background: 'linear-gradient(135deg, #E85D04, #C04000)',
-              border: '1px solid rgba(232,93,4,0.5)', color: '#F5F5F5', fontWeight: 700,
-              letterSpacing: '0.12em', padding: '9px 20px', textDecoration: 'none',
-              fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap',
-            }}
-          >
-            VIEW YOUR PATH →
-          </Link>
-        </div>
+          <ArchiveLinkButton href="/voyager-path" variant="primary">VIEW YOUR PATH</ArchiveLinkButton>
+        </ArchiveCard>
       ) : (
-      <div style={{ border: '1px solid rgba(255,107,53,0.16)', background: '#0F1430', padding: '20px', fontFamily: 'var(--font-mono)', maxWidth: '640px' }}>
-        <div style={{ color: '#E85D04', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: '18px' }}>{"// ADD YOUR INFO"}</div>
+      <ArchiveCard style={{ maxWidth: '640px' }}>
+        <ArchiveSectionLabel>PROFILE DETAILS</ArchiveSectionLabel>
 
         <FieldGroup cols={2}>
-          <Field label="DISPLAY NAME">
-            <input style={FIELD_INPUT} value={form.display_name} onChange={(e) => setF('display_name', e.target.value)} />
-          </Field>
-          <Field label="LOCATION">
-            <input style={FIELD_INPUT} value={form.location} onChange={(e) => setF('location', e.target.value)} placeholder="City, Country" />
-          </Field>
+          <ArchiveField htmlFor="profile-display-name" label="DISPLAY NAME">
+            <input id="profile-display-name" value={form.display_name} onChange={(e) => setF('display_name', e.target.value)} />
+          </ArchiveField>
+          <ArchiveField htmlFor="profile-location" label="LOCATION">
+            <input id="profile-location" value={form.location} onChange={(e) => setF('location', e.target.value)} placeholder="City, Country" />
+          </ArchiveField>
         </FieldGroup>
 
-        <Field label={`BIO (${form.bio.length} / ${BIO_LIMIT})`}>
+        <ArchiveField htmlFor="profile-bio" label={`BIO (${form.bio.length} / ${BIO_LIMIT})`}>
           <textarea
-            style={{ ...FIELD_INPUT, minHeight: '80px', resize: 'vertical' }}
+            id="profile-bio"
             value={form.bio}
             maxLength={BIO_LIMIT}
             onChange={(e) => setF('bio', e.target.value)}
             placeholder="A short description of your role in the Collective..."
           />
-        </Field>
+        </ArchiveField>
 
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', margin: '16px 0 8px' }}>{"// SOCIAL LINKS"}</div>
+        <ArchiveSectionLabel className="profile-social-label">SOCIAL LINKS</ArchiveSectionLabel>
         <FieldGroup>
-          <Field label="X / TWITTER (full URL)">
-            <input style={FIELD_INPUT} value={form.social_x} onChange={(e) => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
-          </Field>
-          <Field label="INSTAGRAM (full URL)">
-            <input style={FIELD_INPUT} value={form.social_instagram} onChange={(e) => setF('social_instagram', e.target.value)} placeholder="https://instagram.com/yourhandle" />
-          </Field>
-          <Field label="LINKEDIN (full URL)">
-            <input style={FIELD_INPUT} value={form.social_linkedin} onChange={(e) => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
-          </Field>
+          <ArchiveField htmlFor="profile-x" label="X / TWITTER (FULL URL)">
+            <input id="profile-x" value={form.social_x} onChange={(e) => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
+          </ArchiveField>
+          <ArchiveField htmlFor="profile-instagram" label="INSTAGRAM (FULL URL)">
+            <input id="profile-instagram" value={form.social_instagram} onChange={(e) => setF('social_instagram', e.target.value)} placeholder="https://instagram.com/yourhandle" />
+          </ArchiveField>
+          <ArchiveField htmlFor="profile-linkedin" label="LINKEDIN (FULL URL)">
+            <input id="profile-linkedin" value={form.social_linkedin} onChange={(e) => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
+          </ArchiveField>
         </FieldGroup>
 
         {saveMsg && (
@@ -378,11 +346,11 @@ export default function ProfilePage() {
         )}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-          <button onClick={handleSave} disabled={saving} className="btn-secondary" style={{ padding: '0.5rem 1.4rem', fontSize: 'var(--fs-caption)', opacity: saving ? 0.5 : 1 }}>
+          <ArchiveButton onClick={handleSave} disabled={saving}>
             {saving ? 'SAVING...' : 'SAVE'}
-          </button>
+          </ArchiveButton>
         </div>
-      </div>
+      </ArchiveCard>
       )}
     </div>
   )

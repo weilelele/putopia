@@ -22,7 +22,7 @@ export function PathStatusBar({
   const isApplicant = user.role === 'applicant'
   const isArchitect = user.role === 'architect'
 
-  const idColor = isApplicant ? '#E8A020' : isArchitect ? '#FF6B35' : '#FFB07A'
+  const idColor = isApplicant ? '#E8A020' : isArchitect ? '#E35205' : '#FFB07A'
   const idLabel = isApplicant ? 'APPLICANT' : isArchitect ? 'ARCHITECT' : 'VOYAGER'
   const showNudge = user.role === 'voyager' && !user.avatarUrl
 
@@ -41,17 +41,17 @@ export function PathStatusBar({
     transition: 'background 0.15s',
   }
   const hov = {
-    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = 'rgba(255,107,53,0.05)' },
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = 'rgba(227,82,5,0.05)' },
     onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = 'transparent' },
   }
   const diagTop = (
     <div style={{ width: 16, alignSelf: 'stretch', position: 'relative', flex: '0 0 auto' }}>
-      <div style={{ position: 'absolute', top: '10%', bottom: '10%', left: 'calc(50% + 4px)', width: 1, background: 'rgba(255,107,53,0.22)', transform: 'skewX(-22deg)' }} />
+      <div style={{ position: 'absolute', top: '10%', bottom: '10%', left: 'calc(50% + 4px)', width: 1, background: 'rgba(227,82,5,0.22)', transform: 'skewX(-22deg)' }} />
     </div>
   )
   const diagBottom = (
     <div style={{ width: 16, alignSelf: 'stretch', position: 'relative', flex: '0 0 auto' }}>
-      <div style={{ position: 'absolute', top: '10%', bottom: '10%', left: '50%', width: 1, background: 'rgba(255,107,53,0.22)', transform: 'skewX(-22deg)' }} />
+      <div style={{ position: 'absolute', top: '10%', bottom: '10%', left: '50%', width: 1, background: 'rgba(227,82,5,0.22)', transform: 'skewX(-22deg)' }} />
     </div>
   )
 
@@ -102,9 +102,9 @@ export function PathStatusBar({
         <Link href="/signal" style={{ ...cell, flex: '1.7 1 0', minWidth: 0, flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 4 }} {...hov}
           onClick={() => posthog.capture('pathbar_signal_clicked', { role: user.role, awaiting_you: board?.awaitingYou ?? null })}
         >
-          <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: '#E85D04', whiteSpace: 'nowrap' }}>{'// SIGNAL DISPATCH'}</span>
+          <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: '#C84406', whiteSpace: 'nowrap' }}>SIGNAL DISPATCH</span>
           <span style={{ display: 'flex', alignItems: 'baseline', gap: 9 }}>
-            <span style={{ fontSize: 42, color: '#FF6B35', lineHeight: 0.85 }}>{board ? board.awaitingYou : '—'}</span>
+            <span style={{ fontSize: 42, color: '#E35205', lineHeight: 0.85 }}>{board ? board.awaitingYou : '—'}</span>
             <span style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star)', whiteSpace: 'nowrap' }}>awaiting you</span>
           </span>
         </Link>
@@ -135,4 +135,3 @@ export function PathStatusBar({
     </div>
   )
 }
-

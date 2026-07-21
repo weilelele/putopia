@@ -22,6 +22,11 @@ import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
 import { AccessGate } from '@/components/access-gate'
 import { useActivateAccess } from '@/components/activate-action'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
+import { ArchiveStatStrip } from '@/components/archive-stat-strip'
 import type { Device, World, McFunction, IntelWithAvatar } from '@/types/database'
 
 // ─── Global sales gate — keep in sync with voyager-pack/page.tsx & api/checkout/route.ts ───
@@ -30,8 +35,8 @@ const SALES_OPEN = true
 const STATUS_STYLES = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
   needs_repair: { color: '#E83030', border: 'rgba(232,48,48,0.3)' },
-  in_use:       { color: '#E85D04', border: 'rgba(232,93,4,0.3)' },
-  unknown:      { color: 'rgba(245,245,245,0.35)', border: 'rgba(255,107,53,0.16)' },
+  in_use:       { color: '#C84406', border: 'rgba(200,68,6,0.3)' },
+  unknown:      { color: 'rgba(245,245,245,0.35)', border: 'rgba(227,82,5,0.16)' },
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -62,21 +67,21 @@ function DevicePlaceholder({ id }: { id: string }) {
     <svg viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
       <rect width="160" height="120" fill="#0F1430" />
       {[20, 40, 60, 80, 100, 120, 140].map((x) => (
-        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
+        <line key={`v${x}`} x1={x} y1="0" x2={x} y2="120" stroke="rgba(227,82,5,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       {[20, 40, 60, 80, 100].map((y) => (
-        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="rgba(255,107,53,0.16)" strokeWidth="0.5" opacity="0.5" />
+        <line key={`h${y}`} x1="0" y1={y} x2="160" y2={y} stroke="rgba(227,82,5,0.16)" strokeWidth="0.5" opacity="0.5" />
       ))}
       <circle cx={cx} cy={cy} r={r1} fill="none" stroke={`hsl(${hue1},60%,45%)`} strokeWidth="1" opacity="0.6" />
       <circle cx={cx} cy={cy} r={r2} fill="none" stroke={`hsl(${hue1},60%,55%)`} strokeWidth="0.8" opacity="0.5" />
       <circle cx={cx} cy={cy} r="4" fill={`hsl(${hue1},70%,50%)`} opacity="0.8" />
       <line x1={lineX} y1="10" x2={lineX + 20} y2="110" stroke={`hsl(${hue2},50%,40%)`} strokeWidth="1" opacity="0.4" />
-      <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#E85D04" strokeWidth="0.8" opacity="0.5" />
-      <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#E85D04" strokeWidth="0.8" opacity="0.5" />
-      <path d="M5,5 L5,15 M5,5 L15,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
-      <path d="M155,5 L155,15 M155,5 L145,5" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
-      <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
-      <path d="M155,115 L155,105 M155,115 L145,115" stroke="rgba(255,107,53,0.28)" strokeWidth="1.5" fill="none" />
+      <line x1={cx - 15} y1={cy} x2={cx + 15} y2={cy} stroke="#C84406" strokeWidth="0.8" opacity="0.5" />
+      <line x1={cx} y1={cy - 15} x2={cx} y2={cy + 15} stroke="#C84406" strokeWidth="0.8" opacity="0.5" />
+      <path d="M5,5 L5,15 M5,5 L15,5" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,5 L155,15 M155,5 L145,5" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M5,115 L5,105 M5,115 L15,115" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
+      <path d="M155,115 L155,105 M155,115 L145,115" stroke="rgba(227,82,5,0.28)" strokeWidth="1.5" fill="none" />
     </svg>
   )
 }
@@ -97,7 +102,7 @@ function DevicePreviewCard({ device }: { device: Device }) {
         textDecoration: 'none',
         transition: 'border-color 0.15s',
       }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.35)' }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(227,82,5,0.35)' }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--bd-faint)' }}
     >
       <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18', position: 'relative' }}>
@@ -134,7 +139,7 @@ function DevicePreviewCard({ device }: { device: Device }) {
           {device.description}
         </p>
         {device.status === 'in_use' && device.current_user_name && (
-          <div style={{ marginTop: '0.25rem', padding: '0.2rem 0.5rem', border: '1px solid rgba(232,93,4,0.2)', background: 'rgba(232,93,4,0.04)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)' }}>
+          <div style={{ marginTop: '0.25rem', padding: '0.2rem 0.5rem', border: '1px solid rgba(200,68,6,0.2)', background: 'rgba(200,68,6,0.04)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)' }}>
             <span style={{ color: 'rgba(245,245,245,0.35)' }}>IN USE: </span>{device.current_user_name}
           </div>
         )}
@@ -144,17 +149,20 @@ function DevicePreviewCard({ device }: { device: Device }) {
 }
 
 /* ─── Voyager Ad Slot — homepage promo block between Status Feed & Device Registry ───
- *  A (direct)     → orange, "Initial Voyager Pack" → /voyager-pack (buy)
- *  B (task_gated) → amber,  "Earn Your Status"     → /voyager-path (watch track)
+ *  Both groups now land on the product page (/voyager-pack) on click; the
+ *  task-completion gate for group B is enforced at the pack's buy button, not
+ *  the ad slot. Group styling/copy still differs (A orange, B amber).
+ *  A (direct)     → orange, "Initial Voyager Pack" → /voyager-pack (buy now)
+ *  B (task_gated) → amber,  "Earn Your Status"     → /voyager-pack (gated at checkout)
  *  Hero photo fades top + bottom into the card; faint breathing glow. */
 function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
   const direct = group === 'direct'
-  const accent = direct ? '#FF6B35' : '#E8A020'
-  const soft   = direct ? 'rgba(255,107,53,' : 'rgba(232,160,32,'   // append "<a>)"
+  const accent = direct ? '#E35205' : '#E8A020'
+  const soft   = direct ? 'rgba(227,82,5,' : 'rgba(232,160,32,'   // append "<a>)"
   const eyebrow = direct ? 'VOYAGER INITIATION' : 'VOYAGER RECRUITMENT'
   const title   = direct ? 'INITIAL VOYAGER PACK' : 'EARN YOUR STATUS'
   const cta     = 'ACTIVATE'
-  const href    = direct ? '/voyager-pack' : '/voyager-path'
+  const href    = '/voyager-pack'
 
   return (
     <Link
@@ -168,7 +176,7 @@ function VoyagerAdSlot({ group }: { group: ExperimentGroup }) {
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${soft}0.55)` }}
     >
       <style>{`
-        @keyframes vp-breathe-o { 0%,100% { box-shadow: 0 0 16px rgba(255,107,53,0.22), 0 0 0 1px rgba(255,107,53,0.18); } 50% { box-shadow: 0 0 38px rgba(255,107,53,0.55), 0 0 70px rgba(255,107,53,0.18), 0 0 0 1px rgba(255,107,53,0.45); } }
+        @keyframes vp-breathe-o { 0%,100% { box-shadow: 0 0 16px rgba(227,82,5,0.22), 0 0 0 1px rgba(227,82,5,0.18); } 50% { box-shadow: 0 0 38px rgba(227,82,5,0.55), 0 0 70px rgba(227,82,5,0.18), 0 0 0 1px rgba(227,82,5,0.45); } }
         @keyframes vp-breathe-a { 0%,100% { box-shadow: 0 0 16px rgba(232,160,32,0.22), 0 0 0 1px rgba(232,160,32,0.18); } 50% { box-shadow: 0 0 38px rgba(232,160,32,0.52), 0 0 70px rgba(232,160,32,0.16), 0 0 0 1px rgba(232,160,32,0.42); } }
         .vp-ad--direct { animation: vp-breathe-o 3.6s ease-in-out infinite; }
         .vp-ad--gated  { animation: vp-breathe-a 3.6s ease-in-out infinite; }
@@ -238,7 +246,7 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
         textDecoration: 'none',
         transition: 'opacity 0.15s, border-color 0.15s',
       }}
-      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.9'; el.style.borderColor = 'rgba(255,107,53,0.2)' }}
+      onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.9'; el.style.borderColor = 'rgba(227,82,5,0.2)' }}
       onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.opacity = '0.7'; el.style.borderColor = 'var(--bd-faint)' }}
     >
       <div style={{ aspectRatio: '4/3', overflow: 'hidden', borderBottom: '1px solid var(--bd-faint)', background: '#0A0D18', position: 'relative' }}>
@@ -253,7 +261,7 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
       <div style={{ padding: '0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,107,53,0.28)', letterSpacing: '0.15em' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(227,82,5,0.28)', letterSpacing: '0.15em' }}>
               {device.id}
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: 'rgba(245,245,245,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -267,12 +275,12 @@ function UnknownDevicePreviewCard({ device }: { device: Device }) {
             ?
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,107,53,0.28)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(227,82,5,0.28)' }}>
           <span>◎</span>
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{device.location}</span>
         </div>
         <div style={{ marginTop: 'auto', paddingTop: '0.4rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(255,107,53,0.28)', marginBottom: '0.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(227,82,5,0.28)', marginBottom: '0.25rem' }}>
             <span>PROGRESS</span>
             <span>{device.exploration_progress}%</span>
           </div>
@@ -299,14 +307,14 @@ function IntelPreviewCard({ entry, commentCount }: { entry: IntelWithAvatar; com
       href={`/intel/${entry.id}`}
       className="block transition-all duration-150"
       style={{
-        background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)',
+        background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)',
         overflow: 'hidden', textDecoration: 'none',
       }}
       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = color }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,107,53,0.16)' }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(227,82,5,0.16)' }}
     >
       {/* Publisher bar — mirrors Intel Feed style */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px', background: '#0F1430', borderBottom: '1px solid rgba(255,107,53,0.12)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px', background: '#0F1430', borderBottom: '1px solid rgba(227,82,5,0.12)' }}>
         {entry.publisher_avatar_url ? (
           <SmartImage src={entry.publisher_avatar_url} alt={publisherName} sizes="28px" width={28} height={28} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(138,154,181,0.25)' }} />
         ) : (
@@ -384,14 +392,14 @@ function WorldPreviewCard({ world }: { world: World }) {
       </div>
 
       {/* Info */}
-      <div style={{ padding: '0.65rem 0.75rem', background: '#151B3A', border: '1px solid rgba(255,107,53,0.16)', borderTop: 'none' }}>
+      <div style={{ padding: '0.65rem 0.75rem', background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', borderTop: 'none' }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, color: '#F5F5F5', marginBottom: 6 }}>
           {displayName}
         </div>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {world.description}
         </p>
-        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid rgba(255,107,53,0.16)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid rgba(227,82,5,0.16)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)' }}>{world.discoverer_name}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>{world.discovery_date}</span>
         </div>
@@ -438,57 +446,25 @@ function HeroStats({ worlds, voyagers }: { worlds: number | null; voyagers: numb
 
   return (
     <div style={{ width: '100%', maxWidth: '540px', margin: '1.75rem auto 0' }}>
-      <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}>
-        {items.map(({ key, value, label }, i) => (
-          <div key={key} style={{ display: 'contents' }}>
-            {i > 0 && <div style={{ width: 1, background: 'rgba(255,107,53,0.16)', margin: '6px 0' }} />}
-            <button
-              type="button"
-              onClick={() => setActive((prev) => (prev === key ? null : key))}
-              aria-expanded={active === key}
-              style={{
-                flex: 1, padding: '8px 10px', background: active === key ? 'rgba(232,93,4,0.08)' : 'none',
-                border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'center', font: 'inherit',
-                transition: 'background 0.2s ease',
-              }}
-            >
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontWeight: 500,
-                fontSize: 'clamp(2rem, 9vw, 3.25rem)', height: 'clamp(2rem, 9vw, 3.25rem)', lineHeight: 1,
-                display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                color: 'var(--color-nucleus)',
-              }}>
-                {value}
-              </div>
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
-                color: 'var(--color-star-dim)', marginTop: 9,
-                minHeight: '2.6em', display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-              }}>
-                {label}
-              </div>
-            </button>
-          </div>
-        ))}
-      </div>
+      <ArchiveStatStrip items={items.map(({ key, label, value }) => ({
+        expanded: active === key,
+        label,
+        value,
+        onSelect: () => setActive((prev) => (prev === key ? null : key)),
+      }))} />
 
       {active && (
-        <div style={{
-          maxWidth: '470px', margin: '1rem auto 0',
-          border: '1px solid rgba(255,107,53,0.22)', borderRadius: 8,
-          background: 'rgba(232,93,4,0.05)', padding: '12px 16px',
-          animation: 'fadeInUp 0.3s ease-out',
-        }}>
+        <ArchiveCard className="archive-stat-description">
           <p style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', lineHeight: 1.75, color: 'var(--color-star-dim)' }}>
             {HERO_STAT_INFO[active]}
           </p>
-        </div>
+        </ArchiveCard>
       )}
     </div>
   )
 }
 
-function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats | null }) {
+function GuestHero({ newHref, stats, mcFunctions }: { newHref: string; stats: GuestHeroStats | null; mcFunctions: McFunction[] }) {
   const [shown, setShown] = useState(HERO_LINES.map(() => false))
 
   useEffect(() => {
@@ -516,7 +492,6 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
           width: '100%',
           textAlign: 'center',
           margin: 'clamp(1.25rem, 5vh, 3rem) 0 1.75rem',
-          filter: 'drop-shadow(0 0 32px rgba(255,107,53,0.45)) drop-shadow(0 0 64px rgba(255,107,53,0.18))',
           ...line(0),
         }}
       >
@@ -533,8 +508,7 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
           height={78}
           preload
           style={{
-            width: 140, height: 'auto', display: 'block',
-            filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',
+            width: '140px', height: 'auto', display: 'block',
           }}
         />
       </div>
@@ -548,25 +522,25 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
         We own devices looking into parallel worlds.
       </p>
 
-      {/* Three headline numbers — tap to reveal an explanation */}
-      <div style={{ width: '100%', ...line(2) }}>
-        <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
+      {/* Device showcase — leads the hero so the product hits first */}
+      <div style={{ width: '100%', maxWidth: 820, margin: '1.75rem auto 0', ...line(2) }}>
+        <McConsolePanel mcFunctions={mcFunctions} />
       </div>
 
       {/* CTA row — always horizontal, equal-width buttons */}
       <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.25rem',
+        display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1.75rem',
         width: '100%', maxWidth: '620px',
       }}>
-        <button type="button" className="btn-primary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
+        <ArchiveButton type="button" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap' }}
           onClick={() => { posthog.capture('workspace_request_access_clicked'); requestAccess('hero') }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
             <path d="M12 3 L13.2 10.8 L21 12 L13.2 13.2 L12 21 L10.8 13.2 L3 12 L10.8 10.8 Z" stroke="currentColor" strokeWidth="1.4" fill="rgba(255,255,255,0.25)" strokeLinejoin="round" />
           </svg>
           REQUEST ACCESS
-        </button>
-        <Link href="/login" className="btn-secondary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap', justifyContent: 'center', padding: '1rem 1.5rem' }}
+        </ArchiveButton>
+        <ArchiveLinkButton href="/login" variant="secondary" style={{ flex: '1 1 180px', minWidth: 0, whiteSpace: 'nowrap' }}
           onClick={() => posthog.capture('workspace_login_clicked')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0 }}>
@@ -575,7 +549,12 @@ function GuestHero({ newHref, stats }: { newHref: string; stats: GuestHeroStats 
             <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
           LOGIN
-        </Link>
+        </ArchiveLinkButton>
+      </div>
+
+      {/* Three headline numbers — supporting proof, below the action buttons */}
+      <div style={{ width: '100%', marginTop: '1.75rem', ...line(2) }}>
+        <HeroStats worlds={stats?.worlds ?? null} voyagers={stats?.voyagers ?? null} />
       </div>
 
       {requestAccessModal}
@@ -597,15 +576,11 @@ function DeviceComingSoonModal({ days, onClose }: { days: number; onClose: () =>
         animation: 'pathbar-fade 0.15s ease-out',
       }}
     >
-      <div
+      <ArchiveCard
+        aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: 380, width: '100%',
-          border: '1px solid rgba(232,160,32,0.3)',
-          background: '#0F1430', padding: '22px 26px 18px',
-          fontFamily: 'var(--font-mono)',
-          boxShadow: '0 0 40px rgba(10,14,39,0.6)',
-        }}
+        className="archive-console-modal"
+        role="dialog"
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <DeviceBarIcon size={14} color="#E8A020" />
@@ -632,21 +607,11 @@ function DeviceComingSoonModal({ days, onClose }: { days: number; onClose: () =>
 
         {/* Reservation entry — disabled until devices open */}
         {!hasDevice && (
-          <div
-            aria-disabled="true"
-            style={{
-              textAlign: 'center',
-              fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.16em',
-              color: 'rgba(245,245,245,0.4)',
-              background: 'rgba(245,245,245,0.06)',
-              border: '1px solid rgba(245,245,245,0.12)',
-              padding: '0.6rem', marginBottom: 14, cursor: 'not-allowed',
-            }}
-          >
+          <ArchiveButton disabled fullWidth>
             RESERVE A CONSOLE — COMING SOON
-          </div>
+          </ArchiveButton>
         )}
-      </div>
+      </ArchiveCard>
       <style>{`@keyframes pathbar-fade { from { opacity: 0 } to { opacity: 1 } }`}</style>
     </div>
   )
@@ -683,7 +648,6 @@ function AuthHero({ user }: {
           <div style={{
             width: '100%', textAlign: 'center',
             margin: 'clamp(1rem, 4vh, 2.25rem) 0 1.25rem',
-            filter: 'drop-shadow(0 0 32px rgba(255,107,53,0.45)) drop-shadow(0 0 64px rgba(255,107,53,0.18))',
           }}>
             <FlipWordmark maxWidth={616} fill={0.858} />
           </div>
@@ -697,7 +661,6 @@ function AuthHero({ user }: {
               preload
               style={{
                 width: '120px', height: 'auto', display: 'block',
-                filter: 'drop-shadow(0 0 16px rgba(255,107,53,0.4)) drop-shadow(0 0 32px rgba(255,107,53,0.15))',
               }}
             />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', letterSpacing: '0.34em', color: 'var(--color-star-dim)' }}>
@@ -1027,16 +990,24 @@ function ConsoleInner() {
 
   // Shared feed node — rendered inside the guest access gate, or standalone for
   // members. The Voyager ad slot rides as the lead block (door + ad coexist).
-  const packHref = (experimentGroup ?? 'direct') === 'direct' ? '/voyager-pack' : '/voyager-path'
-  const leadSlot = !loading && SALES_OPEN && user.role !== 'voyager' && user.role !== 'architect'
-    ? <VoyagerAdSlot group={experimentGroup ?? 'direct'} />
+  // Both A/B groups go to the product page; group B's task gate is enforced at checkout.
+  const packHref = '/voyager-pack'
+  // Preview override: ?ad=direct or ?ad=task_gated forces the ad slot to render
+  // with that variant (so you can try both without an applicant account).
+  const adParam = searchParams.get('ad')
+  const adOverride: ExperimentGroup | null =
+    adParam === 'direct' || adParam === 'task_gated' ? adParam : null
+  const showAd = !loading && SALES_OPEN &&
+    (adOverride !== null || (user.role !== 'voyager' && user.role !== 'architect'))
+  const leadSlot = showAd
+    ? <VoyagerAdSlot group={adOverride ?? experimentGroup ?? 'direct'} />
     : undefined
   const feedNode = feedEntries.length > 0
-    ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} canVote={!isGuest} />
+    ? <FeedProtoClient entries={feedEntries} embedded packHref={packHref} leadSlot={leadSlot} />
     : <FeedSkeleton />
 
   return (
-    <div className="landing-main" ref={scrollRef}>
+    <main className="landing-main archive-console-page" ref={scrollRef}>
       <SectionTracker section="dashboard" />
       <div className="nebula-bg" />
 
@@ -1057,7 +1028,7 @@ function ConsoleInner() {
       {loading ? (
         <section className="hero" style={{ flex: 1 }} />
       ) : isGuest ? (
-        <GuestHero newHref={newHref} stats={heroStats} />
+        <GuestHero newHref={newHref} stats={heroStats} mcFunctions={mcFunctions} />
       ) : (
         <AuthHero user={user} />
       )}
@@ -1074,21 +1045,16 @@ function ConsoleInner() {
         </section>
       ) : isGuest ? (
         <>
-          {/* Device — public showcase, full feed width */}
-          <section style={{ width: '100%', maxWidth: 820, margin: '1.5rem auto 0', padding: '0 0.75rem' }}>
-            <McConsolePanel mcFunctions={mcFunctions} />
-          </section>
+          {/* Device now leads the hero (see GuestHero); here just the gated feed. */}
           {/* INTERNAL UPDATES label — exposed above the frosted feed */}
-          <div style={{ maxWidth: 820, margin: '1.75rem auto 0.25rem', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0 1.25rem' }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.3em', color: 'var(--color-nucleus)' }}>INTERNAL UPDATES</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+          <div className="archive-console-section-label">
+            <ArchiveSectionLabel>INTERNAL UPDATES</ArchiveSectionLabel>
           </div>
           {/* Only the feed is frosted now */}
           <section style={{ margin: '0.75rem -1.25rem 0', padding: '0 0.5rem' }}>
             <AccessGate permanentHref={newHref}>
               {feedEntries.length > 0
-                ? <FeedProtoClient entries={feedEntries} embedded hideHeader packHref={packHref} leadSlot={leadSlot} canVote={!isGuest} />
+                ? <FeedProtoClient entries={feedEntries} embedded hideHeader packHref={packHref} leadSlot={leadSlot} />
                 : <FeedSkeleton hideHeader />}
             </AccessGate>
           </section>
@@ -1102,6 +1068,6 @@ function ConsoleInner() {
       <div className="footer-bar" style={{ marginTop: '2rem', justifyContent: 'center' }}>
         <div className="tag">EXPLORE PARALLEL WORLDS</div>
       </div>
-    </div>
+    </main>
   )
 }

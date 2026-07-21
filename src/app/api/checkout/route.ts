@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL('/login?redirect=/api/checkout', req.nextUrl.origin))
   }
 
-  // ── 2. Experiment-group gate ──────────────────────────────────────────────
+  // ── 2. Load profile (for analytics tagging; no purchase gate) ─────────────
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (admin as any)
@@ -51,25 +51,8 @@ export async function GET(req: NextRequest) {
     properties: { experiment_group: profile?.experiment_group ?? 'none' },
   })
 
-  if (profile?.experiment_group === 'task_gated') {
-    const quiz = !!profile?.task_quiz_at
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { count: sightingCount } = await (admin as any)
-      .from('worlds')
-      .select('id', { count: 'exact', head: true })
-      .eq('submitted_by', user.id)
-    const sighting = (sightingCount ?? 0) > 0
-
-    // Promotion gate: a sighting + the assessment quiz only.
-    if (!(quiz && sighting)) {
-      // Tasks not yet complete — send them to the Path page to finish
-      await ph.shutdown()
-      return NextResponse.redirect(
-        new URL('/voyager-path', req.nextUrl.origin)
-      )
-    }
-  }
+  // No task gate: the pack is a peer step (any-order). Both A/B groups proceed
+  // directly to checkout; sighting/quiz are independent steps on /voyager-path.
   await ph.shutdown()
 
   // ── 3a. MOCK MODE — simulate completed purchase end-to-end ────────────────

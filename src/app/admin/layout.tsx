@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
-import Link from 'next/link'
 import type { Database } from '@/types/database'
 import WikiSyncButton from './WikiSyncButton'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveCard } from '@/components/archive-card'
+import { AdminNav } from '@/components/admin-nav'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -55,19 +57,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // No architect role and no page grant → denied
   if (!isArchitect && !onboardingOnly) {
     return (
-      <div style={{ background: '#070912', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace' }}>
-        <div style={{ background: '#151B3A', border: '1px solid #E83030', padding: '32px', maxWidth: '480px', textAlign: 'center' }}>
+      <div className="admin-access-page">
+        <ArchiveCard className="admin-access-card">
           <div style={{ color: '#E83030', fontSize: '12px', letterSpacing: '0.2em', marginBottom: '12px' }}>⊘ ACCESS DENIED</div>
           <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: '13px', marginBottom: '8px' }}>
             账号 <span style={{ color: '#F5F5F5' }}>{user.email}</span> 当前角色：<span style={{ color: '#F5F5F5' }}>{profile.role}</span>
           </div>
           <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: '12px', lineHeight: 1.8 }}>
             在 Supabase SQL Editor 执行：<br />
-            <code style={{ color: '#E85D04', fontSize: '11px' }}>
+            <code style={{ color: '#C84406', fontSize: 'var(--fs-caption)' }}>
               UPDATE voyager_profiles SET role = &apos;architect&apos; WHERE id = &apos;{user.id}&apos;;
             </code>
           </div>
-        </div>
+        </ArchiveCard>
       </div>
     )
   }
@@ -92,51 +94,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       ]
 
   return (
-    <div style={{ background: '#070912', height: '100vh', overflowY: 'auto', fontFamily: 'monospace' }}>
-      <div style={{
-        borderBottom: '1px solid rgba(255,107,53,0.16)',
-        background: '#0F1430',
-        padding: '0 24px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '32px',
-      }}>
-        <div style={{ padding: '14px 0', color: '#E85D04', fontSize: '12px', letterSpacing: '0.3em', whiteSpace: 'nowrap' }}>
-          PUTOPIA ◆ ADMIN
-        </div>
-
-        <nav style={{ display: 'flex' }}>
-          {navItems.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              style={{
-                display: 'block',
-                padding: '14px 20px',
-                fontSize: '11px',
-                letterSpacing: '0.2em',
-                color: 'rgba(245,245,245,0.55)',
-                textDecoration: 'none',
-                borderBottom: '2px solid transparent',
-              }}
-              className="admin-tab"
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '20px' }}>
+    <div className="admin-archive">
+      <header className="admin-archive-header">
+        <ArchiveBrandHeader className="admin-archive-brand" />
+        <div className="admin-archive-meta">
+          <span className="admin-archive-badge">ADMIN</span>
+          <span className="admin-archive-user">{profile.display_name}</span>
           <WikiSyncButton />
-          <span style={{ fontSize: '11px', color: 'rgba(245,245,245,0.35)' }}>{profile.display_name}</span>
         </div>
-      </div>
+      </header>
 
-      <main style={{ padding: '28px 24px' }}>
+      <AdminNav items={navItems} />
+
+      <main className="admin-archive-main">
         {children}
       </main>
-
-      <style>{`.admin-tab:hover { color: #F5F5F5 !important; }`}</style>
     </div>
   )
 }

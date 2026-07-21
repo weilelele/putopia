@@ -10,6 +10,7 @@ import type { OnboardingVariantRow } from '@/types/database'
 import { FlameSlider, WorldChoiceCards, ConsoleChoiceCards, WORLD_OPTIONS, URGENCY_READINGS, URGENCY_END_LABELS, urgencyToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
 import { HudField } from '@/components/hud-field'
+import { ArchiveButton } from '@/components/archive-button'
 
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v3'
@@ -200,19 +201,25 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     setShowConfirm(true)
     // Enable click-anywhere to trigger scan after all lines have appeared
     setTimeout(() => setAwaitClick(true), 2400)
+    // Auto-advance into the console after a beat so the user doesn't have to tap
+    // (the click-anywhere overlay still lets the impatient skip ahead).
+    setTimeout(() => {
+      localStorage.setItem('putopia_voyager_registered', '1')
+      window.location.href = '/console'
+    }, 3500)
   }
 
   /* ── Returning user: already submitted email, hasn't completed /register ── */
   if (pendingEmail) {
     return (
-      <div style={{
+      <div className="onboarding-archive" style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         background: 'var(--color-deep-2)',
         overflowY: 'auto',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
       }}>
-        <div style={{ width: '100%', maxWidth: 480, padding: '0 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        <div className="onboarding-shell" style={{ width: '100%', maxWidth: 480, padding: '0 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           <VideoSection key={v.videoCta} src={v.videoCta} />
           <PendingInboxScreen
             email={pendingEmail}
@@ -233,6 +240,7 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
   return (
     /* Full-screen overlay — covers sidebar + bottom-nav */
     <div
+      className="onboarding-archive"
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         background: 'var(--color-deep-2)',
@@ -255,7 +263,7 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
 
       {step !== 'success' ? (
         /* Main content — centered, constrained width, fits in one screen */
-        <div style={{
+        <div className="onboarding-shell" style={{
           width: '100%', maxWidth: 480,
           padding: '0 1.5rem',
           display: 'flex', flexDirection: 'column', gap: '1.75rem',
@@ -377,15 +385,15 @@ function VideoSection({ src }: { src: string }) {
       {/* ── Layer 3: Cyan inset glow — screen edge bleed ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
-        boxShadow: 'inset 0 0 35px rgba(232,93,4,0.07), inset 0 0 70px rgba(232,93,4,0.03)',
+        boxShadow: 'inset 0 0 35px rgba(200,68,6,0.07), inset 0 0 70px rgba(200,68,6,0.03)',
       }} />
 
       {/* ── Layer 4: Sweeping scan line ── */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 4 }}>
         <div style={{
           position: 'absolute', left: 0, right: 0, height: 2,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(232,93,4,0.35) 30%, rgba(232,93,4,0.65) 50%, rgba(232,93,4,0.35) 70%, transparent 100%)',
-          boxShadow: '0 0 8px rgba(232,93,4,0.4), 0 0 20px rgba(232,93,4,0.15)',
+          background: 'linear-gradient(90deg, transparent 0%, rgba(200,68,6,0.35) 30%, rgba(200,68,6,0.65) 50%, rgba(200,68,6,0.35) 70%, transparent 100%)',
+          boxShadow: '0 0 8px rgba(200,68,6,0.4), 0 0 20px rgba(200,68,6,0.15)',
           animation: 'videoSweep 5s linear infinite',
         }} />
       </div>
@@ -480,31 +488,13 @@ function UrgencyCard({ headline, value, onChange, touched, onContinue }: {
         transition: 'opacity 0.35s ease',
         pointerEvents: touched ? 'auto' : 'none',
       }}>
-        <button
+        <ArchiveButton
           onClick={onContinue}
-          style={{
-            background: touched ? 'rgba(255,90,31,0.08)' : 'transparent',
-            border: `1px solid ${touched ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
-            color: touched ? 'var(--color-star)' : 'var(--color-star-dim)',
-            fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em',
-            padding: '0.75rem 1.5rem', cursor: touched ? 'pointer' : 'default',
-            transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-          }}
-          onMouseEnter={e => {
-            if (!touched) return
-            const el = e.currentTarget as HTMLElement
-            el.style.background = 'rgba(255,90,31,0.13)'
-            el.style.boxShadow  = '0 0 20px rgba(255,90,31,0.12)'
-          }}
-          onMouseLeave={e => {
-            const el = e.currentTarget as HTMLElement
-            el.style.background = 'rgba(255,90,31,0.08)'
-            el.style.boxShadow  = 'none'
-          }}
+          disabled={!touched}
+          fullWidth
         >
           CONTINUE <span style={{ opacity: 0.6 }}>→</span>
-        </button>
+        </ArchiveButton>
       </div>
 
     </div>
@@ -621,7 +611,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
         </p>
 
         {/* Form */}
-        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+        <form className="onboarding-email-form" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
             <label style={{
@@ -659,36 +649,13 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
           )}
 
           {/* CTA button */}
-          <button
+          <ArchiveButton
             type="submit"
             disabled={!email || submitting}
-            style={{
-              width: '100%',
-              padding: '1rem 1.5rem',
-              background:  email && !submitting ? 'rgba(255,90,31,0.1)' : 'transparent',
-              border:      `1px solid ${email && !submitting ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
-              color:       email && !submitting ? 'var(--color-star)' : 'rgba(242,240,230,0.35)',
-              fontFamily:  'var(--font-display)', fontSize: 'var(--fs-label)', letterSpacing: '0.15em',
-              cursor:      email && !submitting ? 'pointer' : 'default',
-              transition:  'all 0.2s ease',
-              boxShadow:   email && !submitting ? '0 0 20px rgba(255,90,31,0.08)' : 'none',
-              opacity:     submitting ? 0.55 : 1,
-            }}
-            onMouseEnter={e => {
-              if (!email || submitting) return
-              const el = e.currentTarget as HTMLElement
-              el.style.background = 'rgba(255,90,31,0.16)'
-              el.style.boxShadow  = '0 0 28px rgba(255,90,31,0.16)'
-            }}
-            onMouseLeave={e => {
-              if (!email) return
-              const el = e.currentTarget as HTMLElement
-              el.style.background = 'rgba(255,90,31,0.1)'
-              el.style.boxShadow  = '0 0 20px rgba(255,90,31,0.08)'
-            }}
+            fullWidth
           >
             {submitting ? '> TRANSMITTING...' : ctaLabel}
-          </button>
+          </ArchiveButton>
 
         </form>
       </div>
@@ -735,11 +702,11 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
         <div style={{
           display: 'flex', alignItems: 'center', gap: '0.5rem',
           fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.18em', color: 'rgba(232,93,4,0.6)',
+          letterSpacing: '0.18em', color: 'rgba(200,68,6,0.6)',
           marginTop: '0.5rem',
           ...lineStyle(confirmLines[3]),
         }}>
-          <span style={{ width: 18, height: 1, background: 'rgba(232,93,4,0.4)', display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ width: 18, height: 1, background: 'rgba(200,68,6,0.4)', display: 'inline-block', flexShrink: 0 }} />
           Tap to enter the inner sanctum.
           <span style={{
             display: 'inline-block', width: 7, height: '1em',
@@ -886,7 +853,7 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
           gap: '1.1rem', textAlign: 'center',
         }}
       >
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.4em', color: 'rgba(232,93,4,0.75)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.4em', color: 'rgba(200,68,6,0.75)' }}>
           WELCOME,
         </div>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display)', letterSpacing: '0.14em', color: 'var(--color-nucleus)', lineHeight: 1 }}>
@@ -904,8 +871,8 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
           ref={beamRef}
           style={{
             position: 'absolute', left: 0, right: 0, top: '-4px', height: 4,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(232,93,4,0.25) 10%, rgba(232,93,4,1) 50%, rgba(232,93,4,0.25) 90%, transparent 100%)',
-            boxShadow: '0 0 24px rgba(232,93,4,1), 0 0 80px rgba(232,93,4,0.65), 0 0 160px rgba(232,93,4,0.25), 0 12px 60px rgba(232,93,4,0.18)',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(200,68,6,0.25) 10%, rgba(200,68,6,1) 50%, rgba(200,68,6,0.25) 90%, transparent 100%)',
+            boxShadow: '0 0 24px rgba(200,68,6,1), 0 0 80px rgba(200,68,6,0.65), 0 0 160px rgba(200,68,6,0.25), 0 12px 60px rgba(200,68,6,0.18)',
           }}
         />
       </div>
@@ -1026,8 +993,8 @@ function PendingInboxScreen({
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
             color: 'var(--color-star)',
-            border: '1px solid rgba(232,93,4,0.25)',
-            background: 'rgba(232,93,4,0.05)',
+            border: '1px solid rgba(200,68,6,0.25)',
+            background: 'rgba(200,68,6,0.05)',
             padding: '0.4rem 0.8rem',
             letterSpacing: '0.04em',
           }}>
@@ -1085,50 +1052,23 @@ function PendingInboxScreen({
         )}
 
         {/* Enter collective — secondary */}
-        <button
+        <ArchiveButton
           onClick={onEnter}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '0.5rem',
-            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-            letterSpacing: '0.14em', color: 'rgba(242,240,230,0.55)',
-            padding: '0.75rem 1.5rem',
-            background: 'transparent',
-            border: '1px solid rgba(242,240,230,0.1)',
-            cursor: 'pointer',
-            transition: 'color 0.2s, border-color 0.2s',
-          }}
-          onMouseEnter={e => {
-            const el = e.currentTarget as HTMLElement
-            el.style.color = 'rgba(242,240,230,0.85)'
-            el.style.borderColor = 'rgba(242,240,230,0.22)'
-          }}
-          onMouseLeave={e => {
-            const el = e.currentTarget as HTMLElement
-            el.style.color = 'rgba(242,240,230,0.55)'
-            el.style.borderColor = 'rgba(242,240,230,0.1)'
-          }}
+          variant="secondary"
+          fullWidth
         >
           Enter the workspace directly <span style={{ opacity: 0.5 }}>→</span>
-        </button>
+        </ArchiveButton>
       </div>
 
       {/* Start over — tertiary text link */}
       <div style={{ textAlign: 'center' }}>
-        <button
+        <ArchiveButton
           onClick={onStartOver}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-            letterSpacing: '0.18em', color: 'rgba(242,240,230,0.25)',
-            textDecoration: 'underline', textUnderlineOffset: 3,
-            transition: 'color 0.2s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(242,240,230,0.5)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(242,240,230,0.25)' }}
+          variant="ghost"
         >
           Use a different email
-        </button>
+        </ArchiveButton>
       </div>
 
     </div>

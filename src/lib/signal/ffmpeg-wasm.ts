@@ -78,14 +78,23 @@ export async function processForgeVideo(srcUrl: string, cfg: Partial<CropConfig>
   const glitch = glitchChain(cfg.filter ?? 'signal_decay', clamp((cfg.glitchIntensity ?? 50) / 100, 0, 1))
   const dur = String(clamp(durSec ?? 4, 1, 15))
 
+  // Randomise the crop position — ffmpeg centres the box when x/y are omitted, so
+  // without this every clip keeps the exact middle. `(iw-ow)*r` (r in 0..1) lands
+  // the box anywhere in-bounds; an explicit cfg.position centres on that fraction.
+  // Matches the server pipeline (av.ts / process.ts), which already randomise.
+  const pos = cfg.position
+  const xExpr = pos && pos !== 'random' ? `max(0,min(iw-ow,${pos.x.toFixed(4)}*iw-ow/2))` : `(iw-ow)*${Math.random().toFixed(4)}`
+  const yExpr = pos && pos !== 'random' ? `max(0,min(ih-oh,${pos.y.toFixed(4)}*ih-oh/2))` : `(ih-oh)*${Math.random().toFixed(4)}`
+  const at = `:x='${xExpr}':y='${yExpr}'`
+
   let crop: string
   let scale: string
   if (cfg.shape === 'rect') {
     const ar = parseAspect(cfg.aspect)
-    crop = `crop=w='min(iw,sqrt(iw*ih*${ratio}*${ar}))':h='min(ih,sqrt(iw*ih*${ratio}/${ar}))'`
+    crop = `crop=w='min(iw,sqrt(iw*ih*${ratio}*${ar}))':h='min(ih,sqrt(iw*ih*${ratio}/${ar}))'${at}`
     scale = 'scale=320:-2'
   } else {
-    crop = `crop=w='min(min(iw,ih),sqrt(iw*ih*${ratio}))':h='min(min(iw,ih),sqrt(iw*ih*${ratio}))'`
+    crop = `crop=w='min(min(iw,ih),sqrt(iw*ih*${ratio}))':h='min(min(iw,ih),sqrt(iw*ih*${ratio}))'${at}`
     scale = 'scale=320:320' // square output → circle mask (320²) fits exactly
   }
   const baseVf = `${crop},${glitch},fps=12,${scale}`

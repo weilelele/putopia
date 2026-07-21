@@ -7,7 +7,10 @@ import { useAuth } from '@/lib/auth-context'
 
 const HomeIcon = () => (
   <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-    <path d="M2 8L9 2L16 8V16H11V12H7V16H2V8Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round"/>
+    <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1"/>
+    <circle cx="9" cy="9" r="3.5" stroke="currentColor" strokeWidth="1"/>
+    <path d="M9 1V4M9 14V17M1 9H4M14 9H17" stroke="currentColor" strokeWidth="1"/>
+    <circle cx="9" cy="9" r="1" fill="currentColor"/>
   </svg>
 )
 
@@ -65,7 +68,9 @@ export function BottomNav() {
 
   // /voyager-pack is a standalone long-scroll page — no nav needed there.
   // Return null AFTER all hooks so hook call order is consistent.
-  const isVoyagerPack = pathname === '/voyager-pack'
+  const hidesGlobalNav = pathname === '/voyager-pack'
+    || pathname.startsWith('/admin')
+    || pathname.startsWith('/newsletter')
 
   useEffect(() => {
     function handleMsg(e: MessageEvent) {
@@ -77,24 +82,14 @@ export function BottomNav() {
   }, [])
   const isGuest = user.role === 'guest'
 
-  if (isVoyagerPack) return null
+  if (hidesGlobalNav) return null
 
   return (
     /* Primary nav bar — hidden when an iframe sheet is open (via postMessage) */
     <nav
-      className="flex md:hidden fixed left-3 right-3 z-50"
-      style={{
-        display: sheetOpen ? 'none' : undefined,
-        bottom: 'calc(14px + env(safe-area-inset-bottom))',
-        // Near-opaque solid instead of backdrop-filter: a fixed blur over a
-        // scrolling page forces the compositor to re-sample every frame and
-        // tanks scroll fps on mid-range phones.
-        background: 'rgba(15,20,48,0.96)',
-        border: '1px solid rgba(255,107,53,0.16)',
-        borderRadius: '18px',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.45), 0 0 16px rgba(232,93,4,0.10)',
-        padding: '6px',
-      }}
+      aria-label="Primary navigation"
+      className="bottom-nav"
+      hidden={sheetOpen}
     >
       {PRIMARY_NAV.map(({ href, label, icon }) => {
         const isHome = href === '/console'
@@ -106,11 +101,11 @@ export function BottomNav() {
             <Link
               key={href}
               href={`/login?redirect=${href}`}
-              className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
-              style={{ color: 'rgba(245,245,245,0.18)', borderRadius: '12px', textDecoration: 'none' }}
+              className="bottom-nav__item bottom-nav__item--locked"
+              aria-label={`${label} — login required`}
             >
               {icon}
-              <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
+              <span>{label}</span>
             </Link>
           )
         }
@@ -119,15 +114,11 @@ export function BottomNav() {
           <Link
             key={href}
             href={href}
-            className="flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-all duration-150"
-            style={{
-              color: isActive ? '#E85D04' : 'rgba(245,245,245,0.35)',
-              background: isActive ? 'rgba(232,93,4,0.14)' : 'transparent',
-              borderRadius: '12px',
-            }}
+            className={`bottom-nav__item${isActive ? ' bottom-nav__item--active' : ''}`}
+            aria-current={isActive ? 'page' : undefined}
           >
             {icon}
-            <span className="font-mono" style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.06em' }}>{label}</span>
+            <span>{label}</span>
           </Link>
         )
       })}

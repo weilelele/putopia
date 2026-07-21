@@ -1,9 +1,12 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { HudField } from '@/components/hud-field'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveField } from '@/components/archive-field'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { resendAccessLink } from '@/lib/actions/auth-resend'
 
 function ExpiredInner() {
@@ -27,150 +30,44 @@ function ExpiredInner() {
   }
 
   return (
-    <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <div className="top-bar" style={{ position: 'absolute', top: 0, left: '2.5rem', right: '2.5rem' }}>
-        <div className="crumbs">PC://CONSOLE <span>/</span> AUTHENTICATION</div>
-      </div>
-
-      <div style={{ width: '100%', maxWidth: '440px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div className="h-eyebrow" style={{ marginBottom: '0.5rem' }}>{"// LINK EXPIRED"}</div>
-          <div style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 'var(--fs-h3)',
-            fontWeight: 900,
-            color: 'var(--color-nucleus)',
-            letterSpacing: '0.05em',
-            textShadow: '0 0 20px rgba(255,90,31,0.5)',
-          }}>
-            ACCESS EXPIRED
-          </div>
-          <p style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--fs-caption)',
-            color: 'var(--color-star-deep)',
-            marginTop: '0.75rem',
-            lineHeight: 1.7,
-          }}>
-            YOUR ACCESS LINK IS NO LONGER VALID.<br />
-            ENTER YOUR EMAIL TO RECEIVE A NEW ONE.
-          </p>
-        </div>
+    <main className="main pilot-archive-page archive-auth-page">
+      <ArchiveBrandHeader />
+      <div className="archive-auth-shell">
+        <header className="archive-auth-heading">
+          <p>LINK EXPIRED</p>
+          <h1>ACCESS <span>EXPIRED</span></h1>
+          <div>Your access link is no longer valid. Enter your email to receive a new one.</div>
+        </header>
 
         {status === 'sent' ? (
-          <div
-            className="hud-frame"
-            style={{ padding: '2rem 1.5rem', textAlign: 'center' }}
-          >
-            <div style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-label)',
-              color: 'var(--color-nucleus)',
-              letterSpacing: '0.15em',
-              marginBottom: '0.75rem',
-            }}>
-              ✦ LINK TRANSMITTED
-            </div>
-            <p style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-caption)',
-              color: 'var(--color-star-deep)',
-              lineHeight: 1.7,
-            }}>
-              CHECK YOUR INBOX AT<br />
-              <span style={{ color: 'var(--color-star)' }}>{email}</span>
-            </p>
-          </div>
+          <ArchiveCard className="archive-auth-confirmation">
+            <h2>LINK SENT</h2>
+            <p>Check your inbox at <span>{email}</span>.</p>
+          </ArchiveCard>
         ) : (
-          <div className="hud-frame">
-            <div className="hud-tick-rail hud-tick-left" />
-            <div className="hud-tick-rail hud-tick-right" />
-            <div style={{ padding: '0 1rem' }}>
-              <form onSubmit={handleResend} className="space-y-4">
-                <div>
-                  <label
-                    className="block text-xs font-mono tracking-widest mb-1.5"
-                    style={{ color: 'rgba(245,245,245,0.35)' }}
-                  >
-                    EMAIL ADDRESS
-                  </label>
-                  <HudField>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="operative@domain.void"
-                      className="input-dark"
-                      required
-                    />
-                  </HudField>
-                </div>
+          <form onSubmit={handleResend} className="archive-auth-form">
+            <ArchiveField htmlFor="expired-email" label="EMAIL ADDRESS">
+              <input
+                id="expired-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
+            </ArchiveField>
 
-                {status === 'error' && (
-                  <div
-                    className="text-xs font-mono py-2 px-3 border"
-                    style={{
-                      color: '#E83030',
-                      borderColor: 'rgba(232,48,48,0.3)',
-                      background: 'rgba(232,48,48,0.08)',
-                    }}
-                  >
-                    {errMsg}
-                  </div>
-                )}
+            {status === 'error' && <div className="archive-form-message is-error" role="alert">{errMsg}</div>}
 
-                <button
-                  type="submit"
-                  disabled={status === 'loading'}
-                  className="btn-orange w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ justifyContent: 'center', fontSize: 'var(--fs-label)' }}
-                >
-                  {status === 'loading' ? '> TRANSMITTING...' : '[ RESEND ACCESS LINK ]'}
-                </button>
-              </form>
-            </div>
-          </div>
+            <ArchiveButton disabled={status === 'loading'} fullWidth type="submit">
+              {status === 'loading' ? 'SENDING...' : 'RESEND ACCESS LINK'}
+            </ArchiveButton>
+          </form>
         )}
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center', padding: '1rem', border: '1px solid var(--bd-faint)' }}>
-          <div style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--fs-caption)',
-            letterSpacing: '0.2em',
-            color: 'var(--color-star-deep)',
-            marginBottom: '0.5rem',
-          }}>
-            ALREADY HAVE CREDENTIALS?
-          </div>
-          <Link
-            href="/login"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-caption)',
-              letterSpacing: '0.15em',
-              color: 'var(--color-nucleus)',
-            }}
-          >
-            LOG IN →
-          </Link>
-        </div>
-
-        <div style={{
-          marginTop: '1rem',
-          textAlign: 'center',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.2em',
-          color: 'var(--color-star-deep)',
-          opacity: 0.5,
-        }}>{"// ALL ACCESS ATTEMPTS ARE LOGGED //"}</div>
+        <ArchiveLinkButton fullWidth href="/login" variant="secondary">LOG IN</ArchiveLinkButton>
       </div>
-
-      <div className="footer-bar" style={{ position: 'absolute', bottom: '2rem', left: '2.5rem', right: '2.5rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>PUTOPIA.COLLECTIVE</div>
-      </div>
-    </div>
+    </main>
   )
 }
 

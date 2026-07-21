@@ -13,8 +13,15 @@ import { CommentThread } from '@/components/comment-thread'
 import { InvestigationCard } from '@/app/signal/SignalFeed'
 import { LazyImage } from '@/components/lazy-image'
 import { WorldScanHero } from '@/components/world-scan-hero'
+import { ArchiveReelView } from '@/components/archive-reel'
 import { worldScanState, scanComplete } from '@/lib/signal/scan'
 import { resolveWorldScan } from '@/lib/signal/scan-resolve'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveField } from '@/components/archive-field'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
 
 const DESC_CLAMP = 320 // chars before the "expand all" fold
 
@@ -89,7 +96,7 @@ export default function WorldDetailPage() {
       <div className="main" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>WORLD ENTRY NOT FOUND</div>
-        <Link href={backHref} className="btn-ghost">← RETURN</Link>
+        <ArchiveLinkButton href={backHref} variant="ghost">RETURN</ArchiveLinkButton>
       </div>
     )
   }
@@ -103,9 +110,12 @@ export default function WorldDetailPage() {
   const scanFailed = scanState === 'failed'
   // A world in tuning leads with its Signal Tuning (top slot), not a hero image.
   const investigation = inv?.investigation ?? null
+  // Established worlds lead with their Archive reel (final form → days → vision).
+  const isEstablished = world.lifecycle_state === 'stable'
 
   return (
-    <div className="main">
+    <main className="main pilot-archive-page archive-detail-page">
+      <ArchiveBrandHeader />
       <div className="top-bar">
         <div className="crumbs">
           {isGuest
@@ -122,7 +132,7 @@ export default function WorldDetailPage() {
         <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 3 }}>
           {/* Native anchor (not next/link) — a hard navigation that can't be
               swallowed by a failed client/RSC transition (e.g. on SSO-gated previews). */}
-          <a href={backHref} className="btn-ghost" style={{ display: 'inline-flex' }}>{backLabel}</a>
+          <a href={backHref} className="archive-button archive-button--ghost">{backLabel}</a>
         </div>
 
         {/* Hero — Signal Scanning countdown / no-signal, else image or gradient */}
@@ -136,6 +146,8 @@ export default function WorldDetailPage() {
             onComplete={refreshAll}
             onRetry={isOwner ? openRetry : undefined}
           />
+        ) : isEstablished ? (
+          <ArchiveReelView world={world} />
         ) : investigation ? (
           <div style={{ marginBottom: '1.75rem' }}>
             {/* World title — relocated here from the (dropped) hero */}
@@ -143,18 +155,12 @@ export default function WorldDetailPage() {
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, letterSpacing: '0.02em' }}>{displayName}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-star-deep)', marginTop: 5 }}>{world.id}</div>
             </div>
-            {/* Signal Tuning is the lead content — the '// SIGNAL TUNING' label is dropped */}
-            {investigation.lockReason && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.85rem' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: '#E8A020' }}>
-                  ● {investigation.lockReason}
-                </div>
-              </div>
-            )}
+            {/* Signal Tuning is the lead content — the '// SIGNAL TUNING' label is dropped.
+                The vote-lock hint lives in the question footer, not a floating header. */}
             {isOwner && (
-              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '0.85rem', padding: '0.65rem 0.85rem', border: '1px solid rgba(255,107,53,0.18)', background: 'rgba(255,107,53,0.04)' }}>
+              <ArchiveCard className="archive-inline-panel">
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>WHO CAN VOTE</span>
-                <select value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', background: 'var(--bg-card)', color: 'var(--color-star)', border: '1px solid rgba(255,107,53,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
+                <select value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', background: 'var(--bg-card)', color: 'var(--color-star)', border: '1px solid rgba(227,82,5,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
                   <option value="all">Open to everyone</option>
                   <option value="voters">Voyagers only</option>
                   <option value="self">Just me (private)</option>
@@ -162,7 +168,7 @@ export default function WorldDetailPage() {
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', color: 'var(--color-star-deep)' }}>
                   {scopeSaving ? 'Saving…' : 'You can change this anytime.'}
                 </span>
-              </div>
+              </ArchiveCard>
             )}
             <InvestigationCard investigation={investigation} onFiled={refreshInvestigation} showTitle={false} />
           </div>
@@ -194,7 +200,7 @@ export default function WorldDetailPage() {
           {/* Verified badge */}
           {world.is_verified && (
             <div style={{ position: 'absolute', top: 12, right: 12 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', background: 'rgba(232,93,4,0.15)', color: 'var(--color-nebula)', padding: '3px 8px', border: '1px solid rgba(232,93,4,0.3)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', background: 'rgba(200,68,6,0.15)', color: 'var(--color-nebula)', padding: '3px 8px', border: '1px solid rgba(200,68,6,0.3)' }}>
                 ✓ VERIFIED
               </span>
             </div>
@@ -210,41 +216,36 @@ export default function WorldDetailPage() {
 
         {/* Revise & re-scan — owner only, from the failed state */}
         {scanFailed && isOwner && retryOpen && (
-          <div style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid rgba(255,107,53,0.25)', background: 'rgba(255,107,53,0.04)' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'var(--color-star-dim)', marginBottom: '0.5rem' }}>
-              REVISE FIELD NOTES &mdash; THEN RE-SCAN
-            </div>
-            <textarea
-              value={retryDesc}
-              onChange={(e) => setRetryDesc(e.target.value)}
-              rows={6}
-              disabled={retrySaving}
-              style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-panel)', border: '1px solid var(--bd-cyan-2)', color: 'var(--tx-primary)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', lineHeight: 1.7, resize: 'vertical', outline: 'none', boxSizing: 'border-box', minHeight: '120px' }}
-            />
+          <ArchiveCard className="archive-rescan-card">
+            <ArchiveField htmlFor="world-rescan-notes" label="REVISE FIELD NOTES — THEN RE-SCAN">
+              <textarea
+                id="world-rescan-notes"
+                value={retryDesc}
+                onChange={(e) => setRetryDesc(e.target.value)}
+                rows={6}
+                disabled={retrySaving}
+              />
+            </ArchiveField>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem' }}>
-              <button
+              <ArchiveButton
                 onClick={doRescan}
                 disabled={retrySaving || retryDesc.trim().length < 20}
-                style={{ padding: '0.6rem 1.1rem', background: retryDesc.trim().length >= 20 && !retrySaving ? 'linear-gradient(135deg, #E85D04, #C04000)' : 'rgba(255,107,53,0.08)', border: '1px solid rgba(232,93,4,0.5)', color: retryDesc.trim().length >= 20 && !retrySaving ? '#F5F5F5' : 'rgba(245,245,245,0.3)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.16em', cursor: retryDesc.trim().length >= 20 && !retrySaving ? 'pointer' : 'not-allowed' }}
               >
-                {retrySaving ? 'RE-SCANNING…' : 'RE-SCAN →'}
-              </button>
-              <button
+                {retrySaving ? 'RE-SCANNING…' : 'RE-SCAN'}
+              </ArchiveButton>
+              <ArchiveButton
                 onClick={() => setRetryOpen(false)}
                 disabled={retrySaving}
-                style={{ padding: '0.6rem 1.1rem', background: 'none', border: '1px solid var(--bd-faint)', color: 'var(--color-star-dim)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', cursor: 'pointer' }}
+                variant="ghost"
               >
                 CANCEL
-              </button>
+              </ArchiveButton>
             </div>
-          </div>
+          </ArchiveCard>
         )}
 
         {/* Meta bar */}
-        <div className="hud-frame" style={{ marginBottom: '1.5rem' }}>
-          <div className="hud-tick-rail hud-tick-left" />
-          <div className="hud-tick-rail hud-tick-right" />
-          <div style={{ padding: '0 1rem' }}>
+        <ArchiveCard className="archive-world-meta">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>DISCOVERED BY</div>
@@ -261,16 +262,11 @@ export default function WorldDetailPage() {
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)' }}>{world.discovery_date}</div>
               </div>
             </div>
-          </div>
-        </div>
+        </ArchiveCard>
 
         {/* Detail Text — creator's initial vision (collapsible) */}
-        <div className="hud-frame" style={{ marginBottom: '2rem' }}>
-          <div className="hud-tick-rail hud-tick-left" />
-          <div className="hud-tick-rail hud-tick-right" />
-          <div style={{ padding: '0 1rem' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>FIELD NOTES</div>
-            <div className="hr-cyan" />
+        <ArchiveCard className="archive-world-notes">
+            <ArchiveSectionLabel>FIELD NOTES</ArchiveSectionLabel>
             <div style={{ position: 'relative', marginTop: '1rem' }}>
               <article style={{
                 fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)',
@@ -285,15 +281,14 @@ export default function WorldDetailPage() {
               )}
             </div>
             {world.description.length > DESC_CLAMP && (
-              <button
+              <ArchiveButton
                 onClick={() => setDescExpanded((v) => !v)}
-                style={{ marginTop: '0.75rem', background: 'none', border: '1px solid var(--bd-faint)', color: 'var(--color-nebula)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', padding: '5px 12px', cursor: 'pointer' }}
+                variant="ghost"
               >
                 {descExpanded ? '▲ COLLAPSE' : '▼ EXPAND ALL'}
-              </button>
+              </ArchiveButton>
             )}
-          </div>
-        </div>
+        </ArchiveCard>
 
         {/* Transmissions */}
         <CommentThread subjectType="world" subjectId={world.id} subjectTitle={displayName} posthogEvent="world_comment_sent" allowImages />
@@ -301,8 +296,8 @@ export default function WorldDetailPage() {
 
       <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>WORLD ARCHIVE v2.6</div>
+        <div>MULTIVERSE COLLECTIVE</div>
       </div>
-    </div>
+    </main>
   )
 }

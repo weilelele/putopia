@@ -1,13 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { YouTubeEmbed } from '@next/third-parties/google'
 import { getStoryById } from '@/lib/actions/stories'
-import { ArrowLeft, Send } from 'lucide-react'
+import { Send } from 'lucide-react'
 import type { StoryWithAvatar } from '@/types/database'
 import posthog from 'posthog-js'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveField } from '@/components/archive-field'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -92,7 +97,7 @@ export default function StoryPage() {
       <div className="main" style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h2)', color: 'var(--color-fault)', marginBottom: '1rem' }}>[ 404 ]</div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-deep)', marginBottom: '1.5rem' }}>STORY NOT FOUND IN ARCHIVE</div>
-        <Link href="/logs" className="btn-ghost">← RETURN TO LOGS</Link>
+        <ArchiveLinkButton href="/logs" variant="ghost">RETURN TO LOGS</ArchiveLinkButton>
       </div>
     )
   }
@@ -116,24 +121,25 @@ export default function StoryPage() {
   }
 
   return (
-    <div className="main">
+    <main className="main pilot-archive-page archive-detail-page archive-log-detail-page">
+      <ArchiveBrandHeader />
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGER LOGS <span>/</span> ENTRY</div>
       </div>
 
       <div style={{ maxWidth: '720px', width: '100%' }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <Link href="/logs" className="btn-ghost" style={{ display: 'inline-flex' }}>← VOYAGER LOGS</Link>
+        <ArchiveLinkButton href="/logs" variant="ghost">← VOYAGER LOGS</ArchiveLinkButton>
       </div>
 
       {/* Story header */}
-      <div className="mb-8 border-b pb-6" style={{ borderColor: 'rgba(255,107,53,0.16)' }}>
+      <div className="mb-8 border-b pb-6" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
         <div className="flex flex-wrap gap-2 mb-4">
           {story.tags.map((tag) => (
             <span
               key={tag}
               className="text-xs font-mono px-2 py-0.5 border tracking-widest uppercase"
-              style={{ color: '#E85D04', borderColor: 'rgba(255,107,53,0.16)', background: 'rgba(232,93,4,0.06)' }}
+              style={{ color: '#C84406', borderColor: 'rgba(227,82,5,0.16)', background: 'rgba(200,68,6,0.06)' }}
             >
               {tag}
             </span>
@@ -151,12 +157,12 @@ export default function StoryPage() {
               src={story.author_avatar_url}
               alt={story.author_name}
               className="w-8 h-8 rounded-full shrink-0"
-              style={{ objectFit: 'cover', border: '1px solid rgba(232,93,4,0.3)' }}
+              style={{ objectFit: 'cover', border: '1px solid rgba(200,68,6,0.3)' }}
             />
           ) : (
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0"
-              style={{ background: 'rgba(232,93,4,0.12)', color: '#E85D04', border: '1px solid rgba(232,93,4,0.3)' }}
+              style={{ background: 'rgba(200,68,6,0.12)', color: '#C84406', border: '1px solid rgba(200,68,6,0.3)' }}
             >
               {getInitials(story.author_name)}
             </div>
@@ -185,23 +191,13 @@ export default function StoryPage() {
       </article>
 
       {/* Divider */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-        <div className="text-xs tracking-widest font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>TRANSMISSIONS</div>
-        <div className="flex-1 h-px" style={{ background: 'rgba(255,107,53,0.16)' }} />
-      </div>
+      <ArchiveSectionLabel>TRANSMISSIONS</ArchiveSectionLabel>
 
       {/* Comments — newest first */}
       <div className="space-y-4 mb-8">
         {comments.slice().reverse().map((comment) => (
-          <div
+          <ArchiveCard
             key={comment.id}
-            className="border p-4"
-            style={{
-              background: '#151B3A',
-              borderColor: 'rgba(255,107,53,0.16)',
-              boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
-            }}
           >
             <div className="flex items-center gap-2 mb-2">
               <div
@@ -218,29 +214,22 @@ export default function StoryPage() {
             <p className="text-sm font-mono leading-relaxed" style={{ color: 'rgba(245,245,245,0.55)' }}>
               {comment.text}
             </p>
-          </div>
+          </ArchiveCard>
         ))}
       </div>
 
       {/* Comment form */}
       <form onSubmit={handleTransmit}>
-        <div
-          className="border p-4"
-          style={{ background: '#151B3A', borderColor: 'rgba(255,107,53,0.16)', boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.05)' }}
-        >
-          <div className="text-xs font-mono tracking-widest mb-3" style={{ color: 'rgba(245,245,245,0.35)' }}>
-            TRANSMIT A MESSAGE
-          </div>
-          <textarea
-            rows={3}
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Leave a transmission for this Voyager..."
-            className="w-full px-3 py-2 text-sm font-mono border bg-transparent outline-none transition-colors resize-none"
-            style={{ borderColor: 'rgba(255,107,53,0.16)', color: '#F5F5F5' }}
-            onFocus={(e) => (e.target.style.borderColor = 'rgba(232,93,4,0.5)')}
-            onBlur={(e) => (e.target.style.borderColor = 'rgba(255,107,53,0.16)')}
-          />
+        <ArchiveCard>
+          <ArchiveField htmlFor="log-message" label="TRANSMIT A MESSAGE">
+            <textarea
+              id="log-message"
+              rows={3}
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Leave a transmission for this Voyager..."
+            />
+          </ArchiveField>
           <div className="flex items-center justify-between mt-3">
             {transmitted && (
               <span className="text-xs font-mono" style={{ color: '#20D890' }}>
@@ -248,24 +237,22 @@ export default function StoryPage() {
               </span>
             )}
             {!transmitted && <span />}
-            <button
+            <ArchiveButton
               type="submit"
               disabled={!commentText.trim()}
-              className="flex items-center gap-2 px-4 py-1.5 text-xs font-mono tracking-widest border transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ borderColor: '#E85D04', color: '#F5F5F5', background: 'linear-gradient(135deg, #E85D04, #C04000)' }}
             >
               <Send size={10} />
               TRANSMIT
-            </button>
+            </ArchiveButton>
           </div>
-        </div>
+        </ArchiveCard>
       </form>
       </div>
 
       <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>PUTOPIA.COLLECTIVE</div>
+        <div>MULTIVERSE COLLECTIVE</div>
       </div>
-    </div>
+    </main>
   )
 }

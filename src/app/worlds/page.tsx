@@ -1,10 +1,15 @@
-import Link from 'next/link'
 import { Suspense, cache } from 'react'
 import { getAllWorlds, getPipelineWorlds } from '@/lib/actions/worlds'
 import { getTuningCovers, getTuningActivity } from '@/lib/actions/signal-tasks'
 import { SectionTracker } from '@/components/section-tracker'
 import { WorldPoster } from '@/components/world-poster'
 import { CollapsibleWorldGrid } from '@/components/collapsible-world-grid'
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchivePageHeader } from '@/components/archive-page-header'
+import { ArchiveSectionLabel } from '@/components/archive-section-label'
+import { ArchiveStatStrip } from '@/components/archive-stat-strip'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,22 +44,13 @@ function UploadIcon() {
 // ─── Section header ───────────────────────────────────────────────────────────
 
 function SectionHeader({
-  title, subtitle, accentColor,
+  title, subtitle,
 }: { title: string; subtitle?: string; accentColor: string }) {
   return (
-    <div style={{ marginBottom: '1rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ width: 3, height: 16, background: accentColor, flexShrink: 0 }} />
-        <span style={{
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.22em', color: accentColor, fontWeight: 600,
-        }}>
-          {title}
-        </span>
-        <div style={{ flex: 1, height: '1px', background: `${accentColor}20` }} />
-      </div>
+    <div className="archive-section-heading">
+      <ArchiveSectionLabel>{title}</ArchiveSectionLabel>
       {subtitle && (
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: 'var(--color-star-deep)', marginTop: 4, paddingLeft: 15 }}>
+        <div className="archive-section-heading__subtitle">
           {subtitle}
         </div>
       )}
@@ -72,19 +68,10 @@ function formatSubmitted(submitted_at: string | null) {
 
 function StatsBarSkeleton() {
   return (
-    <div style={{
-      display: 'flex', gap: '0.75rem', marginBottom: '2rem', padding: '0.875rem 1rem',
-      justifyContent: 'space-between', background: 'var(--bg-card)',
-      border: '1px solid rgba(255,107,53,0.12)',
-      boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
-    }}>
-      {[0, 1, 2].map((i) => (
-        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-          <div className="wr-skeleton" style={{ width: 28, height: 18, borderRadius: 4, background: 'rgba(255,107,53,0.12)' }} />
-          <div className="wr-skeleton" style={{ width: 64, height: 10, borderRadius: 4, background: 'rgba(255,107,53,0.10)' }} />
-        </div>
-      ))}
-    </div>
+    <ArchiveStatStrip items={['INITIAL', 'TUNING', 'ESTABLISHED'].map((label) => ({
+      label,
+      value: <span className="wr-skeleton archive-stat-skeleton" />,
+    }))} />
   )
 }
 
@@ -96,7 +83,7 @@ function SectionSkeleton({
       <SectionHeader title={title} accentColor={accentColor} />
       <div className={gridClass}>
         {Array.from({ length: count }).map((_, i) => (
-          <div key={i} className="wr-skeleton" style={{ aspectRatio: '3 / 4', borderRadius: 8, background: 'rgba(255,107,53,0.07)' }} />
+          <ArchiveCard key={i} className="wr-skeleton archive-poster-skeleton" />
         ))}
       </div>
     </section>
@@ -122,23 +109,11 @@ async function StatsBar() {
   const initial = pipeline.filter((w) => w.lifecycle_state === 'proposed').length
   const tuning = pipeline.filter((w) => w.lifecycle_state === 'picked' || w.lifecycle_state === 'syncing').length
   return (
-    <div style={{
-      display: 'flex', gap: '0.75rem', marginBottom: '2rem', padding: '0.875rem 1rem',
-      justifyContent: 'space-between', background: 'var(--bg-card)',
-      border: '1px solid rgba(255,107,53,0.12)',
-      boxShadow: 'inset 0 1px 0 rgba(232,93,4,0.04)',
-    }}>
-      {[
-        { val: initial,       label: 'INITIAL',     color: 'var(--color-warn)',    anchor: '#section-initial-vision' },
-        { val: tuning,        label: 'TUNING',      color: 'var(--color-ok)',      anchor: '#section-signal-tuning'  },
-        { val: worlds.length, label: 'ESTABLISHED', color: 'var(--color-nucleus)', anchor: '#section-established'    },
-      ].map(({ val, label, color, anchor }) => (
-        <a key={label} href={anchor} style={{ textDecoration: 'none', cursor: 'pointer', minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color, lineHeight: 1 }}>{val}</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em', marginTop: 3, whiteSpace: 'nowrap' }}>{label}</div>
-        </a>
-      ))}
-    </div>
+    <ArchiveStatStrip items={[
+      { value: initial, label: 'INITIAL', color: 'var(--color-warn)', href: '#section-initial-vision' },
+      { value: tuning, label: 'TUNING', color: 'var(--color-ok)', href: '#section-signal-tuning' },
+      { value: worlds.length, label: 'ESTABLISHED', color: 'var(--color-nucleus)', href: '#section-established' },
+    ]} />
   )
 }
 
@@ -199,7 +174,7 @@ async function EstablishedSection() {
             eyebrow={world.id}
             date={world.discovery_date}
             minHeight={232}
-            hoverBorder="rgba(255,107,53,0.45)"
+            hoverBorder="rgba(227,82,5,0.45)"
             orangeMask
           />
         ))}
@@ -222,8 +197,9 @@ export default async function WorldsPage({
   // top-down via its own <Suspense>, so the page fills progressively and stays
   // responsive as it grows heavier.
   return (
-    <div className="main">
+    <main className="main pilot-archive-page archive-collection-page">
       <SectionTracker section="worlds" />
+      <ArchiveBrandHeader />
       <style>{`@keyframes wrPulse{0%,100%{opacity:.45}50%{opacity:.85}}.wr-skeleton{animation:wrPulse 1.2s ease-in-out infinite}`}</style>
 
       {/* ── Top bar ── */}
@@ -236,12 +212,7 @@ export default async function WorldsPage({
 
       {/* ── Success banner ── */}
       {submittedName && (
-        <div style={{
-          padding: '0.875rem 1.25rem', marginBottom: '1.5rem',
-          border: '1px solid rgba(32,216,144,0.28)',
-          background: 'rgba(32,216,144,0.05)',
-          display: 'flex', alignItems: 'center', gap: '0.75rem',
-        }}>
+        <div className="archive-form-message is-success archive-success-banner">
           <span style={{ color: 'var(--color-ok)', fontSize: '1rem', flexShrink: 0 }}>✓</span>
           <div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-ok)', letterSpacing: '0.15em', marginBottom: '0.125rem' }}>
@@ -255,47 +226,27 @@ export default async function WorldsPage({
       )}
 
       {/* ── Page head ── */}
-      <div className="page-head">
-        <div>
-          <h1>WORLD <span className="accent">RECORDS</span></h1>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignSelf: 'flex-start', marginTop: '0.25rem', flexWrap: 'wrap' }}>
-          <Link
-            href="/signal"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.5rem 0.75rem', textDecoration: 'none',
-              background: 'transparent',
-              border: '1px solid rgba(255,107,53,0.4)',
-              color: 'rgba(255,107,53,0.85)',
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-              letterSpacing: '0.1em', borderRadius: 8, whiteSpace: 'nowrap',
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
-              <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.2" />
-              <circle cx="9" cy="9" r="3.5" stroke="currentColor" strokeWidth="1.2" />
-              <circle cx="9" cy="9" r="1" fill="currentColor" />
-            </svg>
-            SIGNAL DISPATCH
-          </Link>
-          <Link
-            href="/worlds/submit"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.5rem 0.75rem', textDecoration: 'none',
-              background: 'rgba(232,93,4,0.08)',
-              border: '1px solid var(--color-nucleus)',
-              color: 'var(--color-nucleus)',
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-              letterSpacing: '0.1em', borderRadius: 8, whiteSpace: 'nowrap',
-            }}
-          >
-            <UploadIcon />
-            REPORT A SIGHTING
-          </Link>
-        </div>
-      </div>
+      <ArchivePageHeader
+        accent="RECORDS"
+        action={(
+          <div className="worlds-action-stack">
+            <ArchiveLinkButton className="worlds-primary-action" href="/worlds/submit" variant="primary">
+              <UploadIcon />
+              REPORT A SIGHTING
+            </ArchiveLinkButton>
+            <ArchiveLinkButton className="worlds-secondary-action" href="/signal" variant="ghost">
+              <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
+                <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.2" />
+                <circle cx="9" cy="9" r="3.5" stroke="currentColor" strokeWidth="1.2" />
+                <circle cx="9" cy="9" r="1" fill="currentColor" />
+              </svg>
+              <span>SIGNAL DISPATCH</span>
+              <span aria-hidden="true">→</span>
+            </ArchiveLinkButton>
+          </div>
+        )}
+        title="WORLD"
+      />
 
       {/* ── Stats bar — streams in (fast Postgres counts) ── */}
       <Suspense fallback={<StatsBarSkeleton />}>
@@ -319,8 +270,8 @@ export default async function WorldsPage({
 
       <div className="footer-bar" style={{ marginTop: '2rem' }}>
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>WORLD ARCHIVE v3.0</div>
+        <div>MULTIVERSE COLLECTIVE</div>
       </div>
-    </div>
+    </main>
   )
 }
