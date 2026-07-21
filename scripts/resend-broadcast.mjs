@@ -145,7 +145,9 @@ async function cmdBroadcast(send, now) {
   for (const g of GROUPS) {
     const aud = process.env[g.env]
     const url = `${EXPORT_BASE}/api/newsletter-export?group=${g.key}&codename=${encodeURIComponent(FIRST_NAME_TAG)}`
-    const htmlRes = await fetch(url)
+    const htmlRes = await fetch(url, {
+      headers: process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : {},
+    })
     const html = await htmlRes.text()
     console.log(`  [${g.key}] audience=${aud || 'MISSING'}  html=${html.length}B  subject="${g.subject}"`)
     if (!htmlRes.ok || html.length < 2000) { console.error(`    ✗ export fetch looked wrong (${htmlRes.status}); check ${url}`); continue }

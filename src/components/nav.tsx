@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import type { AuthUser } from '@/lib/auth-context'
 import { RoleBadge } from './role-badge'
+import SmartImage from './smart-image'
 
 const RadarIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -122,10 +123,13 @@ export function Nav() {
       {/* Logo */}
       <div className="p-4 border-b" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
         <Link href="/console" className="flex items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <SmartImage
             src="/assets/vi-wordmark.png"
             alt="Multiverse Collective"
+            sizes="176px"
+            width={176}
+            height={49}
+            preload
             style={{ width: '100%', maxWidth: '176px', height: 'auto', display: 'block' }}
           />
         </Link>

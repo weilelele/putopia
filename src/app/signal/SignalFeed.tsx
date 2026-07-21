@@ -235,7 +235,7 @@ function SearchingPanel({ searching }: { searching: SearchingState }) {
 // Square dark slot that holds layout while the image lazy-loads + fades in over it.
 function AssetImage({ src }: { src: string }) {
   return (
-    <div style={{ width: '100%', aspectRatio: '1', background: '#070912', display: 'block' }}>
+    <div style={{ width: '100%', aspectRatio: '1', background: '#070912', display: 'block', position: 'relative' }}>
       <LazyImage src={src} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
     </div>
   )

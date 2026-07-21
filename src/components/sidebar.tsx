@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import SmartImage from './smart-image'
 
 const navItems = [
   { href: '/console',   label: 'Dashboard',      icon: <IconStar /> },
@@ -33,18 +33,21 @@ export function Sidebar() {
   return (
     <aside className="sidebar" aria-label="Workspace navigation">
       <Link href="/console" className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-        <Image
+        <SmartImage
           src="/assets/vi-icon.png"
           alt=""
-          width={881}
-          height={492}
+          sizes="64px"
+          width={64}
+          height={36}
+          preload
           style={{ height: 36, width: 'auto', display: 'block', flexShrink: 0 }}
         />
-        <Image
+        <SmartImage
           src="/assets/vi-wordmark.png"
           alt="Multiverse Collective"
-          width={3699}
-          height={1020}
+          sizes="109px"
+          width={109}
+          height={30}
           preload
           style={{ height: 30, width: 'auto', display: 'block' }}
         />
