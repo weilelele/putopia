@@ -14,6 +14,7 @@ import {
   type BeforeInstallPromptEvent,
   type InstallPromptOutcome,
 } from '@/types/pwa'
+import { markStoredPwaInstallNudgeInstalled } from '@/lib/pwa-install-nudge'
 
 interface PwaContextValue {
   canInstall: boolean
@@ -74,6 +75,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
 
     const handleInstalled = () => {
       setInstallPrompt(null)
+      markStoredPwaInstallNudgeInstalled()
       posthog.capture('pwa_installed')
     }
 

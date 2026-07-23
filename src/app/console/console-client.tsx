@@ -15,7 +15,7 @@ import { McConsolePanel } from '@/components/mc-console-panel'
 import { PathStatusBar } from '@/components/path-status-bar'
 import { AccessGate } from '@/components/access-gate'
 import { useActivateAccess } from '@/components/activate-action'
-import { PwaInstallCard } from '@/components/pwa-install-card'
+import { PwaInstallNudge } from '@/components/pwa-install-nudge'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -641,7 +641,7 @@ export default function ConsoleClient({
         </div>
       </div>
 
-      <PwaInstallCard />
+      <PwaInstallNudge eligibleUser={!isGuest} scrollContainer={scrollRef} />
 
       {/* ── Hero: conditional on auth state (server-resolved, no loading flash) ── */}
       {isGuest ? (
