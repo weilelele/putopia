@@ -15,6 +15,7 @@ import {
   type InstallPromptOutcome,
 } from '@/types/pwa'
 import { markStoredPwaInstallNudgeInstalled } from '@/lib/pwa-install-nudge'
+import { isIOSNativeApp } from '@/lib/app-platform'
 
 interface PwaContextValue {
   canInstall: boolean
@@ -38,6 +39,8 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
+    if (isIOSNativeApp(navigator.userAgent)) return
+
     if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', {
         scope: '/',
