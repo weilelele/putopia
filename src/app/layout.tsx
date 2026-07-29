@@ -7,6 +7,7 @@ import { AuthProvider } from '@/lib/auth-context'
 import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
 import { ScrollRestorer } from '@/components/scroll-restorer'
+import { PwaProvider } from '@/components/pwa-provider'
 
 const courierPrime = Courier_Prime({
   variable: '--font-mono',
@@ -17,6 +18,12 @@ const courierPrime = Courier_Prime({
 export const metadata: Metadata = {
   title: 'MULTIVERSE COLLECTIVE — Explore Parallel Worlds',
   description: 'Classified internal workspace. Authorized personnel only.',
+  applicationName: 'Multiverse Collective',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Multiverse',
+  },
 }
 
 export const viewport: Viewport = {
@@ -51,14 +58,16 @@ export default function RootLayout({
           a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
           twq('config','rd22u');
         `}</Script>
-        <AuthProvider>
-          <ScrollRestorer />
-          <div className="app-shell w-full">
-            <Sidebar />
-            {children}
-          </div>
-          <BottomNav />
-        </AuthProvider>
+        <PwaProvider>
+          <AuthProvider>
+            <ScrollRestorer />
+            <div className="app-shell w-full">
+              <Sidebar />
+              {children}
+            </div>
+            <BottomNav />
+          </AuthProvider>
+        </PwaProvider>
       </body>
     </html>
   )

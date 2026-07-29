@@ -12,8 +12,10 @@ export type ExperimentGroup = 'direct' | 'task_gated'
  */
 export async function getOrAssignExperimentGroup(): Promise<ExperimentGroup | null> {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  const uid = session?.user?.id
+  // This runs on the server, so validate the token with Supabase instead of
+  // trusting the session payload stored in cookies.
+  const { data: { user } } = await supabase.auth.getUser()
+  const uid = user?.id
   if (!uid) return null
 
   const { data: profile } = await supabase
