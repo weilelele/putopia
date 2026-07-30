@@ -3,10 +3,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { getAllOrders, updateOrderFulfillment, createOrderManually, type AdminOrder } from '@/lib/actions/orders'
 
-const STATUSES = ['paid', 'preparing', 'shipped', 'delivered', 'refunded', 'canceled'] as const
+const STATUSES = ['paid', 'preparing', 'shipped', 'delivered', 'payment_review', 'payment_failed', 'refunded', 'canceled'] as const
 const STATUS_COLOR: Record<string, string> = {
   paid: '#E35205', preparing: '#E8A020', shipped: '#20D890', delivered: '#20D890',
   refunded: '#E83030', canceled: '#E83030', pending: 'rgba(245,245,245,0.4)',
+  payment_review: '#FFB020', payment_failed: '#E83030',
 }
 
 const S = {
@@ -83,7 +84,7 @@ export default function OrdersAdmin() {
   const save = async (o: AdminOrder) => {
     const d = drafts[o.id]
     setSavingId(o.id); setMsg(null)
-    const { error } = await updateOrderFulfillment(o.id, {
+    const { error, emailWarning } = await updateOrderFulfillment(o.id, {
       status: d.status,
       carrier: d.carrier.trim() || null,
       tracking_number: d.tracking_number.trim() || null,
@@ -91,7 +92,14 @@ export default function OrdersAdmin() {
     })
     setSavingId(null)
     if (error) setMsg({ id: o.id, text: error, ok: false })
-    else { setMsg({ id: o.id, text: 'Saved ✓', ok: true }); await load() }
+    else {
+      setMsg({
+        id: o.id,
+        text: emailWarning ? `Saved · email pending (${emailWarning})` : 'Saved · email sent or already recorded ✓',
+        ok: !emailWarning,
+      })
+      await load()
+    }
   }
 
   const counts = useMemo(() => ({
@@ -170,8 +178,16 @@ export default function OrdersAdmin() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
                 <div style={{ fontSize: '14px' }}>
                   <span style={{ color: '#F5F5F5' }}>{o.email ?? '—'}</span>
-                  {o.amount != null && <span style={{ color: 'rgba(245,245,245,0.45)' }}> · ${(o.amount / 100).toFixed(2)}</span>}
-                  {o.batch_label && <span style={{ color: 'rgba(245,245,245,0.45)' }}> · {o.batch_label}</span>}
+                  {o.amount != null && <span style={{ color: 'rgba(245,245,245,0.45)' }}> · {(o.amount / 100).toFixed(2)} {o.currency.toUpperCase()}</span>}
+                  <span style={{ color: 'rgba(245,245,245,0.45)' }}>
+                    {' · '}
+                    {o.product_type === 'device_batch_claim'
+                      ? o.device_batch_code ?? o.batch_label ?? 'DEVICE BATCH'
+                      : 'VOYAGER PACK'}
+                  </span>
+                  {o.product_type === 'device_batch_claim' && (
+                    <span style={{ color: 'rgba(245,245,245,0.45)' }}> · {o.pack_count} PACKS</span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: STATUS_COLOR[o.status] ?? '#F5F5F5' }}>● {o.status}</span>

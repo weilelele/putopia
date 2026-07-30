@@ -19,11 +19,12 @@ type SendEmailInput = {
   html: string
   text?: string
   replyTo?: string
+  idempotencyKey?: string
 }
 
 export async function sendEmail(
   input: SendEmailInput,
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null; id?: string }> {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) {
     // Soft-fail: a missing key must never break the user action that triggered
@@ -38,6 +39,9 @@ export async function sendEmail(
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        ...(input.idempotencyKey
+          ? { 'Idempotency-Key': input.idempotencyKey.slice(0, 256) }
+          : {}),
       },
       body: JSON.stringify({
         from: process.env.RESEND_FROM ?? DEFAULT_FROM,
@@ -49,12 +53,15 @@ export async function sendEmail(
       }),
     })
 
+    const payload = await res.json().catch(() => null) as
+      | { id?: string; message?: string; name?: string }
+      | null
     if (!res.ok) {
-      const detail = await res.text().catch(() => '')
+      const detail = payload?.message ?? payload?.name ?? ''
       console.error('[email] Resend send failed', res.status, detail)
       return { error: `Resend ${res.status}` }
     }
-    return { error: null }
+    return { error: null, id: payload?.id }
   } catch (e) {
     console.error('[email] Resend send threw', e)
     return { error: e instanceof Error ? e.message : 'send failed' }

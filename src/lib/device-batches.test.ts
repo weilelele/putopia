@@ -1,0 +1,44 @@
+import { describe, expect, it } from 'vitest'
+import {
+  formatBatchPrice,
+  getBatchAvailability,
+  getBatchClaimHref,
+  getBatchRemainingQuantity,
+  getDeviceBatch,
+} from './device-batches'
+
+describe('device batch pricing', () => {
+  const cairoBatch = getDeviceBatch('cairo-batch-01')
+
+  it('stores one price on the selected batch', () => {
+    expect(cairoBatch).toBeDefined()
+    expect(cairoBatch!.claimPrice?.amount).toBe(360)
+  })
+
+  it('formats configured amounts and currencies', () => {
+    expect(formatBatchPrice(cairoBatch!.claimPrice!)).toBe('$360 USD')
+    expect(
+      formatBatchPrice({
+        amount: 420.5,
+        currency: 'usd',
+        description: '',
+      }),
+    ).toBe('$420.50 USD')
+    expect(
+      formatBatchPrice({
+        amount: 100,
+        currency: '',
+        description: '',
+      }),
+    ).toBe('100 ---')
+  })
+
+  it('builds a claim URL that identifies only the batch', () => {
+    expect(getBatchClaimHref(cairoBatch!)).toBe('/devices/claim?batch=cairo-batch-01')
+  })
+
+  it('derives customer-facing availability from structured inventory', () => {
+    expect(getBatchAvailability(cairoBatch!)).toBe('42 of 64 units secured')
+    expect(getBatchRemainingQuantity(cairoBatch!)).toBe(22)
+  })
+})

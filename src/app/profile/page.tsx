@@ -52,23 +52,30 @@ const STEP_LABEL: Record<string, string> = {
 }
 
 function PackTracker({ order, index, total }: { order: VoyagerOrder; index: number; total: number }) {
-  const refunded = order.status === 'refunded' || order.status === 'canceled'
-  const activeIdx = Math.max(0, PACK_STEPS.indexOf(order.status as (typeof PACK_STEPS)[number]))
+  const issue = ['refunded', 'canceled', 'payment_failed', 'payment_review'].includes(order.status)
+  const activeIdx = PACK_STEPS.indexOf(order.status as (typeof PACK_STEPS)[number])
   const date = new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  const orderLabel = order.product_type === 'device_batch_claim'
+    ? order.device_batch_code ?? order.batch_label ?? 'DEVICE BATCH'
+    : total > 1
+      ? `ORDER #${total - index}`
+      : 'MY VOYAGER PACK'
 
   return (
     <ArchiveCard style={{ marginBottom: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em' }}>{total > 1 ? `ORDER #${total - index}` : 'MY VOYAGER PACK'}
+        <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em' }}>{orderLabel}
         </div>
         <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em' }}>
           {date}
         </div>
       </div>
 
-      {refunded ? (
+      {issue ? (
         <div style={{ color: '#E83030', fontSize: 'var(--fs-label)', letterSpacing: '0.05em' }}>
-          This order was {order.status}.
+          {order.status === 'payment_review'
+            ? 'This payment requires review before fulfillment.'
+            : `This order was ${order.status.replaceAll('_', ' ')}.`}
         </div>
       ) : (
         <div style={{ display: 'flex', gap: '6px' }}>

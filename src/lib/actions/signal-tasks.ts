@@ -173,38 +173,22 @@ export async function setTaskPublished(
     } catch { /* anchor maintenance is best-effort */ }
   }
 
-  // When publishing a task that belongs to an investigation, post to the feed
+  // When publishing a task that belongs to an investigation, notify the
+  // original proposer when appropriate. Signal updates stay in Signal Dispatch
+  // and are not duplicated into the video-only Voyager Logs.
   if (published) {
     try {
       const { data: task } = await supabase
         .from('signal_tasks')
-        .select('thread_id, day_index, prompt, type')
+        .select('thread_id')
         .eq('id', taskId)
         .maybeSingle()
       if (task?.thread_id) {
         const { data: thread } = await supabase
           .from('signal_threads')
-          .select('title, world_id')
+          .select('world_id')
           .eq('id', task.thread_id)
           .maybeSingle()
-        let worldName: string | null = thread?.title ?? null
-        if (thread?.world_id) {
-          const { data: world } = await supabase
-            .from('worlds')
-            .select('name')
-            .eq('id', thread.world_id)
-            .maybeSingle()
-          worldName = world?.name ?? worldName
-        }
-        if (worldName) {
-          const dayNum = (task.day_index ?? 0) + 1
-          await postSignalStory(
-            `signal-day-${taskId.slice(0, 8)}`,
-            `Day ${dayNum} · ${worldName}`,
-            task.prompt || `New signals available for Day ${dayNum} of "${worldName}".`,
-            `**${worldName}** — Day ${dayNum} signals are now live.\n\nHead to Signal Dispatch and cast your vote.`,
-          )
-        }
         // First time a world's signals go live: email the original proposer
         // ("your world really exists"). Scan-flow worlds get this at scan
         // completion (scan-resolve), NOT at publish — so the email lands when the
@@ -222,7 +206,7 @@ export async function setTaskPublished(
           }
         }
       }
-    } catch { /* feed post + proposer email are best-effort */ }
+    } catch { /* proposer email is best-effort */ }
   }
 
   return { ok: true }
@@ -901,37 +885,6 @@ export interface TunableWorld {
   description: string | null
 }
 
-/** Post a system-authored story to the community feed (best-effort). */
-async function postSignalStory(id: string, title: string, excerpt: string, content: string) {
-  const admin = createAdminClient() as DB
-  try {
-    await admin.from('stories').insert({
-      id,
-      title,
-      author_id: null,
-      author_name: 'The Organization',
-      date: todayStr(),
-      tags: ['signal', 'investigation'],
-      excerpt,
-      content,
-      youtube_id: null,
-      is_published: true,
-    })
-  } catch (e) {
-    console.warn('[signal] postSignalStory non-fatal:', (e as Error).message)
-  }
-}
-
-/** Post the "now tuning" feed story for a world entering Signal Tuning. */
-async function postTuningStory(threadId: string, worldName: string) {
-  await postSignalStory(
-    `signal-inv-${threadId.slice(0, 8)}`,
-    `Now Tuning: ${worldName}`,
-    `The signal for "${worldName}" is being tuned. Help us bring it into focus.`,
-    `**${worldName}** has entered Signal Tuning.\n\nHead to Signal Dispatch to help decipher its signal.`,
-  )
-}
-
 /** Worlds eligible for promotion: in 'proposed' (Raw Imagination) stage and not
  *  already attached to a tuning thread. */
 export async function listTunableWorlds(): Promise<TunableWorld[]> {
@@ -956,7 +909,7 @@ export async function promoteWorldToTuning(input: {
   if (!me || me.role !== 'architect') return { ok: false, error: 'Architect role required' }
   const admin = createAdminClient() as DB
 
-  const { data: world } = await admin.from('worlds').select('id, name').eq('id', input.worldId).maybeSingle()
+  const { data: world } = await admin.from('worlds').select('id').eq('id', input.worldId).maybeSingle()
   if (!world) return { ok: false, error: 'World not found' }
 
   const { data: existing } = await admin.from('signal_threads').select('id').eq('world_id', input.worldId).maybeSingle()
@@ -974,8 +927,6 @@ export async function promoteWorldToTuning(input: {
     lifecycle_state: 'syncing',
     vote_scope: input.voteScope ?? 'all',
   }).eq('id', input.worldId)
-  await postTuningStory(data.id, world.name)
-
   return { ok: true, id: data.id }
 }
 
@@ -1021,8 +972,6 @@ export async function createWorldForTuning(input: {
     .select('id')
     .single()
   if (error || !data) return { ok: false, error: error?.message }
-
-  await postTuningStory(data.id, name)
 
   return { ok: true, id: data.id, worldId }
 }

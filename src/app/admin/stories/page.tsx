@@ -226,7 +226,7 @@ export default function StoriesAdmin() {
           </div>
 
           <div style={{ marginBottom: '12px' }}>
-            <label style={S.label}>YouTube 视频 ID（可选）</label>
+            <label style={S.label}>YouTube 视频 ID（发布前必填）</label>
             <input style={S.input} value={form.youtube_id} onChange={e => set('youtube_id', e.target.value)} placeholder="例：dQw4w9WgXcQ（URL 中 v= 后面的部分）" />
           </div>
 
