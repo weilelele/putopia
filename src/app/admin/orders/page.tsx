@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { getAllOrders, updateOrderFulfillment, createOrderManually, type AdminOrder } from '@/lib/actions/orders'
+import { getAllowedDeviceOrderStatuses } from '@/lib/device-order-status'
 
 const STATUSES = ['paid', 'preparing', 'shipped', 'delivered', 'payment_review', 'payment_failed', 'refunded', 'canceled'] as const
 const STATUS_COLOR: Record<string, string> = {
@@ -213,7 +214,10 @@ export default function OrdersAdmin() {
                     <div>
                       <label style={S.label}>STATUS</label>
                       <select style={S.input} value={d.status} onChange={(e) => setD(o.id, 'status', e.target.value)}>
-                        {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        {(o.product_type === 'device_batch_claim'
+                          ? getAllowedDeviceOrderStatuses(o.status)
+                          : STATUSES
+                        ).map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
                     <div>

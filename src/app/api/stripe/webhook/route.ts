@@ -23,6 +23,63 @@ type StoredOrder = {
   tracking_url: string | null
 }
 
+type WebhookClaim = 'claimed' | 'processed' | 'busy'
+
+async function claimWebhookEvent(
+  admin: ReturnType<typeof createAdminClient>,
+  event: Stripe.Event,
+): Promise<WebhookClaim> {
+  const eventCreatedAt = new Date(event.created * 1000).toISOString()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (admin as any).rpc(
+    'claim_stripe_webhook_event',
+    {
+      p_event_id: event.id,
+      p_event_type: event.type,
+      p_event_created_at: eventCreatedAt,
+    },
+  )
+  if (error) throw error
+  return data as WebhookClaim
+}
+
+async function completeWebhookEvent(
+  admin: ReturnType<typeof createAdminClient>,
+  eventId: string,
+) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin.from('stripe_webhook_events') as any)
+    .update({
+      status: 'processed',
+      last_error: null,
+      processed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('event_id', eventId)
+    .eq('status', 'processing')
+  if (error) throw error
+}
+
+async function failWebhookEvent(
+  admin: ReturnType<typeof createAdminClient>,
+  eventId: string,
+  error: unknown,
+) {
+  const message = error instanceof Error ? error.message : 'Unknown webhook failure'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: logError } = await (admin.from('stripe_webhook_events') as any)
+    .update({
+      status: 'failed',
+      last_error: message.slice(0, 2_000),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('event_id', eventId)
+    .eq('status', 'processing')
+  if (logError) {
+    console.error('[stripe/webhook] could not record event failure:', logError)
+  }
+}
+
 async function findOrder(
   admin: ReturnType<typeof createAdminClient>,
   session: Stripe.Checkout.Session,
@@ -227,6 +284,22 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient()
+  let webhookClaim: WebhookClaim
+  try {
+    webhookClaim = await claimWebhookEvent(admin, event)
+  } catch (error) {
+    console.error('[stripe/webhook] could not claim event:', error)
+    return NextResponse.json({ error: 'event ledger unavailable' }, { status: 500 })
+  }
+
+  if (webhookClaim === 'processed') {
+    return NextResponse.json({ received: true, duplicate: true })
+  }
+  if (webhookClaim === 'busy') {
+    // A non-2xx response makes Stripe retry instead of acknowledging an event
+    // whose first delivery has not yet reached a durable terminal state.
+    return NextResponse.json({ error: 'event already processing' }, { status: 409 })
+  }
 
   try {
     if (
@@ -262,6 +335,7 @@ export async function POST(req: NextRequest) {
         const { data: refundedOrders } = await (admin.from('voyager_orders') as any)
           .update({ status: 'refunded' })
           .eq('stripe_payment_intent', charge.payment_intent)
+          .in('status', ['paid', 'preparing', 'shipped', 'delivered'])
           .select('id, user_id, email, product_type, device_batch_slug, pack_count, tracking_number, tracking_url')
         for (const order of refundedOrders ?? []) {
           if (order.product_type === 'device_batch_claim') {
@@ -272,8 +346,10 @@ export async function POST(req: NextRequest) {
         // Membership downgrade and physical return remain a manual operation.
       }
     }
+    await completeWebhookEvent(admin, event.id)
   } catch (error) {
     console.error('[stripe/webhook] fulfillment failed:', error)
+    await failWebhookEvent(admin, event.id, error)
     // A non-2xx response asks Stripe to retry transient database failures.
     return NextResponse.json({ error: 'fulfillment failed' }, { status: 500 })
   }

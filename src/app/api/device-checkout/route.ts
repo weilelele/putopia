@@ -3,6 +3,7 @@ import type Stripe from 'stripe'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import {
   DEVICE_ORDER_PRODUCT_TYPE,
+  getDeviceCheckoutExpiration,
   getDeviceCheckoutDetailsForBatch,
 } from '@/lib/device-checkout'
 import { getPublicDeviceBatch } from '@/lib/device-batch-repository'
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient()
   const { batch, amount, currency } = checkout.details
+  const checkoutExpiresAt = getDeviceCheckoutExpiration()
 
   // Reuse an unfinished Stripe Session when possible. This avoids creating a
   // second hold if someone double taps the CTA or returns after closing Stripe.
@@ -154,6 +156,7 @@ export async function POST(req: NextRequest) {
       device_batch_slug: batch.slug,
       device_batch_code: batch.code,
       pack_count: batch.distributionStages.length,
+      checkout_expires_at: checkoutExpiresAt.toISOString(),
     })
     .select('id')
     .single()
@@ -211,6 +214,7 @@ export async function POST(req: NextRequest) {
       ],
       shipping_address_collection: { allowed_countries: shippingCountries() },
       phone_number_collection: { enabled: true },
+      expires_at: Math.floor(checkoutExpiresAt.getTime() / 1000),
       metadata,
       payment_intent_data: { metadata },
       success_url: `${origin}/devices/claim/success?session_id={CHECKOUT_SESSION_ID}`,

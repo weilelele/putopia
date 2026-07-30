@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   DEVICE_ORDER_PRODUCT_TYPE,
   formatStripeMinorUnits,
+  getDeviceCheckoutExpiration,
   getDeviceCheckoutDetails,
   isCheckoutAmountValid,
   toStripeMinorUnits,
@@ -56,5 +57,12 @@ describe('device checkout pricing', () => {
     expect(isCheckoutAmountValid(DEVICE_ORDER_PRODUCT_TYPE, 36_000, 35_999)).toBe(false)
     expect(isCheckoutAmountValid('voyager_pack', 1_200, 900)).toBe(true)
     expect(isCheckoutAmountValid('voyager_pack', 1_200, 1_201)).toBe(false)
+  })
+
+  it('creates a bounded inventory hold for Stripe Checkout', () => {
+    const now = new Date('2026-07-31T00:00:00.000Z')
+    expect(getDeviceCheckoutExpiration(now).toISOString()).toBe(
+      '2026-07-31T00:35:00.000Z',
+    )
   })
 })

@@ -6,6 +6,9 @@ import {
   sendDeviceOrderStatusNotification,
 } from '@/lib/device-batch-notifications'
 import type { DeviceOrderEmailStatus } from '@/lib/device-batch-emails'
+import {
+  validateDeviceOrderFulfillmentUpdate,
+} from '@/lib/device-order-status'
 
 export interface VoyagerOrder {
   id: string
@@ -127,12 +130,35 @@ export async function updateOrderFulfillment(
 
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: currentOrder, error: currentOrderError } = await (admin.from('voyager_orders') as any)
+    .select('status, product_type')
+    .eq('id', orderId)
+    .maybeSingle()
+  if (currentOrderError) return { error: currentOrderError.message }
+  if (!currentOrder) return { error: 'Order not found' }
+  if (
+    currentOrder.product_type === 'device_batch_claim'
+    && updates.status !== undefined
+  ) {
+    const transitionError = validateDeviceOrderFulfillmentUpdate(
+      currentOrder.status,
+      updates.status,
+      updates.tracking_number,
+    )
+    if (transitionError) return { error: transitionError }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: updatedOrder, error } = await (admin.from('voyager_orders') as any)
     .update(patch)
     .eq('id', orderId)
+    .eq('status', currentOrder.status)
     .select('id, user_id, email, amount, currency, status, product_type, device_batch_slug, pack_count, tracking_number, tracking_url')
-    .single()
+    .maybeSingle()
   if (error) return { error: error.message }
+  if (!updatedOrder) {
+    return { error: 'Order status changed in another session. Reload and try again.' }
+  }
 
   let emailWarning: string | undefined
   const customerEmailStatuses: DeviceOrderEmailStatus[] = [

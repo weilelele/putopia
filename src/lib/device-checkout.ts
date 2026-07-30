@@ -5,6 +5,7 @@ import {
 } from '@/lib/device-batches'
 
 export const DEVICE_ORDER_PRODUCT_TYPE = 'device_batch_claim'
+export const DEVICE_CHECKOUT_HOLD_SECONDS = 35 * 60
 
 // Stripe expects the amount in the currency's minor unit. ISK and UGX remain
 // two-decimal for charge API compatibility, so they are intentionally absent.
@@ -86,6 +87,10 @@ export function isCheckoutAmountValid(
   return productType === DEVICE_ORDER_PRODUCT_TYPE
     ? receivedAmount === expectedAmount
     : receivedAmount <= expectedAmount
+}
+
+export function getDeviceCheckoutExpiration(now = new Date()) {
+  return new Date(now.getTime() + DEVICE_CHECKOUT_HOLD_SECONDS * 1000)
 }
 
 export function getDeviceCheckoutDetails(batchSlug: string): DeviceCheckoutValidation {
