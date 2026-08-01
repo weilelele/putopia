@@ -1,0 +1,12 @@
+{
+  "Simulator Target Bundle": "org.multiverseco.collective",
+  "aps": {
+    "alert": {
+      "title": "MULTIVERSE SIGNAL ONLINE",
+      "body": "A new transmission is ready. Tap to open the Console."
+    },
+    "sound": "default"
+  },
+  "route": "/intel?source=simulated_push",
+  "eventType": "test"
+}

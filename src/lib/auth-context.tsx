@@ -97,6 +97,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     const supabase = createClient()
+    try {
+      const token = window.localStorage.getItem('mc_ios_push_token')
+      if (token) {
+        await fetch('/api/push/device', {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        })
+      }
+    } catch {
+      // Push cleanup must never prevent the user from signing out.
+    }
     await supabase.auth.signOut()
     window.location.href = '/'
   }, [])

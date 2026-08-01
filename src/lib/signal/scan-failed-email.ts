@@ -7,6 +7,7 @@
  */
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
+import { sendPushToUser } from '@/lib/push/apns'
 import { resolveUserEmail } from './world-confirmed-email'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,10 +57,19 @@ export async function sendScanFailedEmail(worldId: string): Promise<void> {
 
   const ownerId: string | null = world.submitted_by || world.discoverer_id
   if (!ownerId) return
-  const to = await resolveUserEmail(admin, ownerId)
-  if (!to) return
 
   const worldName: string = world.name ?? 'your world'
+  const push = await sendPushToUser(ownerId, {
+    eventType: 'world_scan_failed',
+    title: 'THE SCAN CAME BACK EMPTY',
+    body: `${worldName} needs more field notes before the next scan.`,
+    route: `/worlds/${worldId}`,
+    collapseId: `world-scan-${worldId}`,
+  })
+  if (push.delivered > 0) return
+
+  const to = await resolveUserEmail(admin, ownerId)
+  if (!to) return
   const html = buildHtml(worldId, worldName)
   await sendEmail({ to, subject: `${worldName}: the scan came back empty — tell us more`, html })
 }

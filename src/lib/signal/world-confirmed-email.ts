@@ -15,6 +15,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
+import { sendPushToUser } from '@/lib/push/apns'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -215,8 +216,6 @@ export async function maybeSendWorldConfirmedEmail(worldId: string): Promise<voi
 
   const ownerId: string | null = world.submitted_by || world.discoverer_id
   if (!ownerId) return
-  const to = await resolveUserEmail(admin, ownerId)
-  if (!to) return
 
   // Claim the slot first so concurrent publishes can't double-send.
   const { error: claimErr } = await admin
@@ -227,6 +226,17 @@ export async function maybeSendWorldConfirmedEmail(worldId: string): Promise<voi
   if (claimErr) return
 
   const worldName: string = world.name ?? 'your world'
+  const push = await sendPushToUser(ownerId, {
+    eventType: 'world_confirmed',
+    title: 'YOUR WORLD IS REAL',
+    body: `${worldName} has entered Signal Tuning. Its first signals are ready.`,
+    route: `/worlds/${worldId}`,
+    collapseId: `world-confirmed-${worldId}`,
+  })
+  if (push.delivered > 0) return
+
+  const to = await resolveUserEmail(admin, ownerId)
+  if (!to) return
   const { copy, reason } = await generateWorldCopy(worldName, world.description ?? '')
   const finalCopy = copy ?? STATIC_COPY(worldName)
 

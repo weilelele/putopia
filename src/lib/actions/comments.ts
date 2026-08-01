@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
+import { sendPushToUser } from '@/lib/push/apns'
 import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types/database'
 
 // Path to revalidate when a thread changes (only device threads have a route today)
@@ -231,9 +232,6 @@ async function notifyReply(args: {
       .eq('id', parentAuthorId)
       .single()
     const recipient = recipientRaw as { email: string | null; display_name: string | null } | null
-    const to = recipient?.email
-    if (!to) return
-
     const path = subjectPath(args.subjectType, args.subjectId) ?? '/'
     const link = `${SITE_URL}${path}`
     const where = args.subjectTitle
@@ -241,6 +239,20 @@ async function notifyReply(args: {
       : `a ${SUBJECT_LABEL[args.subjectType]}`
     const snippet = args.replyBody.length > 280 ? `${args.replyBody.slice(0, 280)}…` : args.replyBody
     const greetName = recipient?.display_name ?? 'Voyager'
+
+    const push = await sendPushToUser(parentAuthorId, {
+      eventType: 'comment_reply',
+      title: `${args.replierName} replied`,
+      body: `New reply on ${where}: ${snippet}`,
+      route: path,
+      collapseId: `reply-${args.subjectType}-${args.subjectId}`,
+    })
+    // Push is preferred for signed-in iOS members. Email remains a fallback
+    // when no registered device received the alert.
+    if (push.delivered > 0) return
+
+    const to = recipient?.email
+    if (!to) return
 
     const html = `
       <div style="font-family:'Courier New',monospace;background:#0A0E27;color:#F5F5F5;padding:32px;">
