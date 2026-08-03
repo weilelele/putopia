@@ -75,7 +75,6 @@ function coerceOptions(raw: unknown): string[] {
 async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = createAdminClient() as any
-  const tuningCoversP = getTuningCovers()
 
   const worldCols = 'id, name, name_en, description, image_path, lifecycle_state, gradient_from, gradient_to, discoverer_name, discoverer_id, submitted_at, created_at'
   const [intelR, wSyncingR, wStableR, deviceR, voyagerR, voteR] = await Promise.all([
@@ -102,6 +101,9 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   // (world → signal_threads → signal_tasks → signal_responses) are the tuning
   // engagement count shown on the card.
   const syncingIds = worldRows.filter(w => w.lifecycle_state === 'syncing').map(w => String(w.id))
+  // Covers only for the tuning worlds this feed actually renders — kicked off
+  // here (not awaited) so it overlaps the engagement queries below.
+  const tuningCoversP = getTuningCovers(syncingIds)
   const tuningAt: Record<string, string> = {}
   const dispatchCount: Record<string, number> = {}
   if (syncingIds.length) {

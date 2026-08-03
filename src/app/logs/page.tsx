@@ -6,7 +6,8 @@ import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
 import { BackLink } from '@/components/back-link'
 import { Plus, ArrowRight } from 'lucide-react'
-import type { StoryWithAvatar } from '@/types/database'
+// Row shape follows the narrowed card columns getPublishedStories selects.
+type StoryCard = Awaited<ReturnType<typeof getPublishedStories>>[number]
 import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
@@ -30,7 +31,7 @@ function getInitials(name: string) {
 
 export default function LogsPage() {
   const { isAtLeast } = useAuth()
-  const [stories, setStories] = useState<StoryWithAvatar[]>([])
+  const [stories, setStories] = useState<StoryCard[]>([])
 
   useEffect(() => { getPublishedStories().then(setStories) }, [])
 

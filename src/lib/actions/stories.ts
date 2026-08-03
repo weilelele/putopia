@@ -11,11 +11,14 @@ import { getPostHogClient } from '@/lib/posthog-server'
 // whole feed from applicants. Filtering to is_published keeps drafts private.
 export async function getPublishedStories() {
   const supabase = createAdminClient()
+  // Card columns only — the list never renders `content` (the full article
+  // body), so shipping it for every row just inflates the payload as logs grow.
   const { data: stories, error } = await supabase
     .from('stories')
-    .select('*')
+    .select('id, title, author_id, author_name, date, youtube_id, excerpt')
     .eq('is_published', true)
     .order('date', { ascending: false })
+    .limit(100)
 
   if (error) console.error('[getPublishedStories]', error.message)
   if (!stories?.length) return []

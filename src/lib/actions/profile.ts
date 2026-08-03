@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import type { VoyagerProfileUpdate } from '@/types/database'
+import type { VoyagerProfile, VoyagerProfileUpdate } from '@/types/database'
 import { upsertLoopsContact } from '@/lib/loops'
 
 export async function syncLoopsRegistration(
@@ -82,13 +82,17 @@ export async function uploadAvatar(formData: FormData) {
 
 export async function getAllVoyagers() {
   const supabase = await createClient()
+  // Card + admin-batch columns only; the grid never reads the onboarding/task
+  // bookkeeping fields. Cast keeps the consumers' VoyagerProfile[] annotation —
+  // the dropped columns are exactly the ones no consumer touches.
   const { data } = await supabase
     .from('voyager_profiles')
-    .select('*')
+    .select('id, role, display_name, location, bio, avatar_url, social_x, social_instagram, social_linkedin, observation_days, worlds_discovered, batch_label, joined_at')
     .in('role', ['voyager', 'architect'])
     .order('joined_at', { ascending: true })
+    .limit(500)
 
-  return data ?? []
+  return (data ?? []) as VoyagerProfile[]
 }
 
 export async function getVoyagerById(id: string) {

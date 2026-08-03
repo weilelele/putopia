@@ -1290,54 +1290,84 @@ export async function getTuningActivity(): Promise<Record<string, string>> {
 }
 
 /**
- * For every world in Signal Tuning, the latest live cover image — the first
+ * For each given tuning world, the latest live cover image — the first
  * selected visual asset from its most recent published day (doc 4.2.1: card
  * cover updates in real time). Audio-only days yield no cover. Returns
  * { [worldId]: imageUrl }.
+ *
+ * Bounded to the worlds the caller actually renders, and resolved in FOUR
+ * set-based queries total (threads → tasks → assets+responses) instead of
+ * 1 + N_threads × 5 sequential roundtrips — this runs on every Signal Feed
+ * cache rebuild, so it must not grow with the total number of threads.
  */
-export async function getTuningCovers(): Promise<Record<string, string>> {
+export async function getTuningCovers(worldIds: string[]): Promise<Record<string, string>> {
+  const covers: Record<string, string> = {}
+  if (!worldIds.length) return covers
   const admin = createAdminClient() as DB
+
   const { data: threads } = await admin
     .from('signal_threads')
     .select('id, world_id')
-    .not('world_id', 'is', null)
-  const covers: Record<string, string> = {}
+    .in('world_id', worldIds)
+  const threadList = (threads ?? []) as { id: string; world_id: string }[]
+  if (!threadList.length) return covers
 
-  type AssetRow = { id: string; media: string; processed_url: string | null; display_url: string | null }
+  // Latest two published days per thread (newest first) — fetched for all
+  // threads at once, then reduced per thread in memory.
+  const { data: tasks } = await admin
+    .from('signal_tasks')
+    .select('id, thread_id, day_index')
+    .in('thread_id', threadList.map((t) => t.id))
+    .eq('is_published', true)
+    .order('day_index', { ascending: false })
+  const tasksByThread = new Map<string, { id: string }[]>()
+  for (const t of (tasks ?? []) as { id: string; thread_id: string }[]) {
+    const list = tasksByThread.get(t.thread_id) ?? []
+    if (list.length < 2) { list.push(t); tasksByThread.set(t.thread_id, list) }
+  }
+  const taskIds = [...tasksByThread.values()].flat().map((t) => t.id)
+  if (!taskIds.length) return covers
 
-  for (const th of (threads ?? []) as { id: string; world_id: string }[]) {
-    // Latest two published days (newest first) — try the latest, fall back to the prior day.
-    const { data: tasks } = await admin
-      .from('signal_tasks')
-      .select('id')
-      .eq('thread_id', th.id)
-      .eq('is_published', true)
-      .order('day_index', { ascending: false })
-      .limit(2)
-    const taskList = (tasks ?? []) as { id: string }[]
+  type AssetRow = { id: string; task_id: string; media: string; processed_url: string | null; display_url: string | null; display_order: number }
+  const [{ data: assets }, { data: resp }] = await Promise.all([
+    admin
+      .from('signal_task_assets')
+      .select('id, task_id, media, processed_url, display_url, display_order')
+      .in('task_id', taskIds)
+      .eq('is_selected', true)
+      .order('display_order', { ascending: true }),
+    admin
+      .from('signal_responses')
+      .select('task_id, selected_asset_id')
+      .in('task_id', taskIds),
+  ])
+
+  const visualsByTask = new Map<string, AssetRow[]>()
+  for (const a of (assets ?? []) as AssetRow[]) {
+    if (a.media !== 'image' && a.media !== 'video') continue
+    const list = visualsByTask.get(a.task_id) ?? []
+    list.push(a)
+    visualsByTask.set(a.task_id, list)
+  }
+  // Votes per asset, keyed by task — same tally the per-task query produced.
+  const countsByTask = new Map<string, Record<string, number>>()
+  for (const r of (resp ?? []) as { task_id: string; selected_asset_id: string | null }[]) {
+    if (!r.selected_asset_id) continue
+    const counts = countsByTask.get(r.task_id) ?? {}
+    counts[r.selected_asset_id] = (counts[r.selected_asset_id] ?? 0) + 1
+    countsByTask.set(r.task_id, counts)
+  }
+
+  for (const th of threadList) {
+    const taskList = tasksByThread.get(th.id) ?? []
     if (!taskList.length) continue
 
     let fallbackUrl: string | null = null  // first-by-order option, used if no day had any votes
 
     for (const task of taskList) {
-      const { data: assets } = await admin
-        .from('signal_task_assets')
-        .select('id, media, processed_url, display_url, display_order')
-        .eq('task_id', task.id)
-        .eq('is_selected', true)
-        .order('display_order', { ascending: true })
-      const visuals = ((assets ?? []) as AssetRow[]).filter((a) => a.media === 'image' || a.media === 'video')
+      const visuals = visualsByTask.get(task.id) ?? []
       if (!visuals.length) continue
-
-      // Tally how many voyagers selected each asset on this day.
-      const { data: resp } = await admin
-        .from('signal_responses')
-        .select('selected_asset_id')
-        .eq('task_id', task.id)
-      const counts: Record<string, number> = {}
-      for (const r of (resp ?? []) as { selected_asset_id: string | null }[]) {
-        if (r.selected_asset_id) counts[r.selected_asset_id] = (counts[r.selected_asset_id] ?? 0) + 1
-      }
+      const counts = countsByTask.get(task.id) ?? {}
 
       // Most-selected visual; ties / no votes keep the first by display_order.
       let best = visuals[0]

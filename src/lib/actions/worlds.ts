@@ -16,6 +16,7 @@ const getAllWorldsCached = unstable_cache(
       .select('*')
       .eq('lifecycle_state', 'stable')
       .order('discovery_date', { ascending: true })
+      .limit(500)
     // Exclude test-console worlds (JS-side so a missing column never errors).
     return (data ?? []).filter((w) => !w.is_test)
   },
@@ -32,11 +33,14 @@ export async function getAllWorlds() {
  *  getAllWorlds. */
 export async function getPipelineWorlds() {
   const admin = createAdminClient()
+  // Poster/card columns only — the pipeline grid never reads the scan/vote
+  // bookkeeping columns.
   const { data } = await admin
     .from('worlds')
-    .select('*')
+    .select('id, name, name_en, description, gradient_from, gradient_to, image_path, discoverer_name, discoverer_id, submitted_by, submitted_at, lifecycle_state, is_test')
     .in('lifecycle_state', ['proposed', 'picked', 'syncing'])
     .order('submitted_at', { ascending: false })
+    .limit(200)
 
   // Exclude test-console worlds (JS-side so a missing column never errors).
   const worlds = (data ?? []).filter((w) => !w.is_test)

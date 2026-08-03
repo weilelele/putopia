@@ -52,6 +52,7 @@ export async function getAllIntel() {
     .from('intel')
     .select('*')
     .order('timestamp', { ascending: false })
+    .limit(200)
 
   if (!items?.length) return []
 
