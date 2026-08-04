@@ -2,12 +2,24 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import {
+  sendDeviceOrderStatusNotification,
+} from '@/lib/device-batch-notifications'
+import type { DeviceOrderEmailStatus } from '@/lib/device-batch-emails'
+import {
+  validateDeviceOrderFulfillmentUpdate,
+} from '@/lib/device-order-status'
 
 export interface VoyagerOrder {
   id: string
   status: string
   amount: number | null
+  currency: string
   batch_label: string | null
+  product_type: string
+  device_batch_slug: string | null
+  device_batch_code: string | null
+  pack_count: number
   recipient_name: string | null
   city: string | null
   state: string | null
@@ -18,6 +30,28 @@ export interface VoyagerOrder {
   delivered_at: string | null
   paid_at: string | null
   created_at: string
+}
+
+/** One signed-in user's device order, addressed by its unguessable Stripe Session. */
+export async function getMyDeviceOrderBySession(
+  sessionId: string,
+): Promise<VoyagerOrder | null> {
+  if (!sessionId.startsWith('cs_')) return null
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  // RLS and the explicit user filter both restrict this to the buyer.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase.from('voyager_orders') as any)
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('stripe_session_id', sessionId)
+    .eq('product_type', 'device_batch_claim')
+    .maybeSingle()
+
+  return (data as VoyagerOrder | null) ?? null
 }
 
 /** All orders for the signed-in user, newest first (RLS limits to their own rows). */
@@ -80,7 +114,7 @@ export async function updateOrderFulfillment(
     tracking_number?: string | null
     tracking_url?: string | null
   },
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null; emailWarning?: string }> {
   if (!(await requireArchitect())) return { error: 'Forbidden' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -96,12 +130,59 @@ export async function updateOrderFulfillment(
 
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (admin.from('voyager_orders') as any).update(patch).eq('id', orderId)
+  const { data: currentOrder, error: currentOrderError } = await (admin.from('voyager_orders') as any)
+    .select('status, product_type')
+    .eq('id', orderId)
+    .maybeSingle()
+  if (currentOrderError) return { error: currentOrderError.message }
+  if (!currentOrder) return { error: 'Order not found' }
+  if (
+    currentOrder.product_type === 'device_batch_claim'
+    && updates.status !== undefined
+  ) {
+    const transitionError = validateDeviceOrderFulfillmentUpdate(
+      currentOrder.status,
+      updates.status,
+      updates.tracking_number,
+    )
+    if (transitionError) return { error: transitionError }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: updatedOrder, error } = await (admin.from('voyager_orders') as any)
+    .update(patch)
+    .eq('id', orderId)
+    .eq('status', currentOrder.status)
+    .select('id, user_id, email, amount, currency, status, product_type, device_batch_slug, pack_count, tracking_number, tracking_url')
+    .maybeSingle()
   if (error) return { error: error.message }
+  if (!updatedOrder) {
+    return { error: 'Order status changed in another session. Reload and try again.' }
+  }
+
+  let emailWarning: string | undefined
+  const customerEmailStatuses: DeviceOrderEmailStatus[] = [
+    'paid',
+    'preparing',
+    'shipped',
+    'delivered',
+    'payment_failed',
+    'refunded',
+  ]
+  if (
+    updatedOrder?.product_type === 'device_batch_claim'
+    && customerEmailStatuses.includes(updatedOrder.status as DeviceOrderEmailStatus)
+  ) {
+    const email = await sendDeviceOrderStatusNotification(
+      updatedOrder,
+      updatedOrder.status as DeviceOrderEmailStatus,
+    )
+    if (email.error) emailWarning = email.error
+  }
 
   revalidatePath('/admin/orders')
   revalidatePath('/profile')
-  return { error: null }
+  return { error: null, emailWarning }
 }
 
 /**

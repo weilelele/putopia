@@ -34,7 +34,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // At most ONE voyager_profiles roundtrip per request, shared by every gate
-  // below (registration, /devices/claim, /admin, /studio).
+  // below (registration, /admin, /studio).
   let profilePromise: Promise<{
     registered_at: string | null
     role: string | null
@@ -123,14 +123,16 @@ export async function proxy(request: NextRequest) {
   // /voyager-pack is a public product page — accessible to all users including guests.
   // Auth + purchase gating is handled inside /api/checkout.
 
-  // /devices/claim is architect-only until Stripe is wired in.
+  // Device claims require a signed-in account. Applicant eligibility and
+  // payment authorization are enforced again by /api/device-checkout.
   if (pathname.startsWith('/devices/claim')) {
     if (!user) {
-      return NextResponse.redirect(new URL('/login?redirect=/devices/claim', request.url))
-    }
-    const profile = await getProfile()
-    if (profile?.role !== 'architect') {
-      return NextResponse.redirect(new URL('/console', request.url))
+      const loginUrl = request.nextUrl.clone()
+      const returnTo = `${pathname}${request.nextUrl.search}`
+      loginUrl.pathname = '/login'
+      loginUrl.search = ''
+      loginUrl.searchParams.set('redirect', returnTo)
+      return NextResponse.redirect(loginUrl)
     }
   }
 

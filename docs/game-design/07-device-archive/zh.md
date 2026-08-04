@@ -1,5 +1,9 @@
 # 07 · 设备档案（Device Archive）
 
+> 新版批次探索、申领、可配置阶段发放与持有者等待体验，见
+> [`../../product/device-batch-experience.zh.md`](../../product/device-batch-experience.zh.md)。
+> 本文以下内容仍用于记录当前产品现状。
+
 ## 1. 定位
 
 设备档案是 **Multiverse Console 实体设备的登记册**——把核心道具"设备"做成可追踪的世界观资产：
