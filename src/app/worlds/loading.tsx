@@ -1,6 +1,4 @@
-// Instant skeleton shown the moment the WORLDS nav tab is tapped, before the
-// server's first streamed chunk arrives. The page itself (page.tsx) then streams
-// each section in top-down via <Suspense>, so this is only the brief first paint.
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 
 const Bar = ({ w, h = 14 }: { w: number | string; h?: number }) => (
   <div
@@ -11,41 +9,27 @@ const Bar = ({ w, h = 14 }: { w: number | string; h?: number }) => (
 
 export default function Loading() {
   return (
-    <div className="main" aria-busy="true">
+    <main className="main pilot-archive-page archive-collection-page" aria-busy="true">
+      <ArchiveBrandHeader />
       <style>{`@keyframes wrPulse{0%,100%{opacity:.45}50%{opacity:.85}}.wr-skeleton{animation:wrPulse 1.2s ease-in-out infinite}`}</style>
 
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> WORLD RECORDS</div>
+      <header className="archive-page-header worlds-page-header">
+        <h1 className="archive-page-header__title"><span>WORLDS</span></h1>
+        <div className="archive-page-header__action">
+          <div className="worlds-report-loading wr-skeleton" />
+        </div>
+      </header>
+
+      <div className="worlds-view-tabs" aria-hidden="true">
+        <span className="worlds-view-tabs__link is-active">Signal Dispatch</span>
+        <span className="worlds-view-tabs__link">World Records</span>
       </div>
 
-      <div className="page-head">
-        <h1>WORLD <span className="accent">RECORDS</span></h1>
+      <div className="worlds-dispatch-loading-card wr-skeleton">
+        <Bar w="42%" h={13} />
+        <Bar w="72%" h={16} />
+        <div className="worlds-dispatch-loading-media" />
       </div>
-
-      <div
-        style={{
-          display: 'flex', gap: '0.75rem', marginBottom: '2rem', padding: '0.875rem 1rem',
-          justifyContent: 'space-between', background: 'var(--bg-card)',
-          border: '1px solid rgba(227,82,5,0.12)',
-        }}
-      >
-        {[0, 1, 2].map((i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-            <Bar w={28} h={18} />
-            <Bar w={64} h={10} />
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            className="wr-skeleton"
-            style={{ aspectRatio: '3 / 4', borderRadius: 8, background: 'rgba(227,82,5,0.08)' }}
-          />
-        ))}
-      </div>
-    </div>
+    </main>
   )
 }

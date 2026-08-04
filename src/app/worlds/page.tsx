@@ -1,6 +1,8 @@
 import { Suspense, cache } from 'react'
+import Link from 'next/link'
+import { ArrowUp } from 'lucide-react'
 import { getAllWorlds, getPipelineWorlds } from '@/lib/actions/worlds'
-import { getTuningCovers, getTuningActivity } from '@/lib/actions/signal-tasks'
+import { getInvestigationFeed, getTuningCovers, getTuningActivity } from '@/lib/actions/signal-tasks'
 import { SectionTracker } from '@/components/section-tracker'
 import { WorldPoster } from '@/components/world-poster'
 import { CollapsibleWorldGrid } from '@/components/collapsible-world-grid'
@@ -10,6 +12,7 @@ import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { ArchiveStatStrip } from '@/components/archive-stat-strip'
+import { EmbeddedInvestigationFeed } from '@/app/signal/SignalFeed'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,17 +31,6 @@ async function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T
     p.catch(() => fallback),
     new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
   ])
-}
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
-function UploadIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-      <line x1="7" y1="12" x2="7" y2="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <polyline points="3,6 7,2 11,6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
 }
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -183,15 +175,78 @@ async function EstablishedSection() {
   )
 }
 
+async function SignalDispatchSection() {
+  const feed = await getInvestigationFeed()
+  return <EmbeddedInvestigationFeed initial={feed} />
+}
+
+function SignalDispatchSkeleton() {
+  return (
+    <div className="worlds-dispatch-loading" aria-busy="true">
+      Receiving active signals…
+    </div>
+  )
+}
+
+function WorldsViewTabs({ activeView }: { activeView: 'dispatch' | 'records' }) {
+  return (
+    <nav aria-label="Worlds views" className="worlds-view-tabs">
+      <Link
+        aria-current={activeView === 'dispatch' ? 'page' : undefined}
+        className={`worlds-view-tabs__link${activeView === 'dispatch' ? ' is-active' : ''}`}
+        href="/worlds"
+        scroll={false}
+      >
+        Signal Dispatch
+      </Link>
+      <Link
+        aria-current={activeView === 'records' ? 'page' : undefined}
+        className={`worlds-view-tabs__link${activeView === 'records' ? ' is-active' : ''}`}
+        href="/worlds?view=records"
+        scroll={false}
+      >
+        World Records
+      </Link>
+    </nav>
+  )
+}
+
+function WorldRecordsContent() {
+  return (
+    <>
+      <Suspense fallback={<StatsBarSkeleton />}>
+        <StatsBar />
+      </Suspense>
+
+      <Suspense fallback={<SectionSkeleton title="INITIAL VISION" accentColor="var(--color-warn)" gridClass="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" count={4} />}>
+        <InitialVisionSection />
+      </Suspense>
+
+      <Suspense fallback={<SectionSkeleton title="SIGNAL TUNING" accentColor="var(--color-ok)" gridClass="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" count={4} />}>
+        <SignalTuningSection />
+      </Suspense>
+
+      <Suspense fallback={<SectionSkeleton title="ESTABLISHED WORLD" accentColor="var(--color-nucleus)" gridClass="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" count={8} />}>
+        <EstablishedSection />
+      </Suspense>
+    </>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function WorldsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ submitted?: string }>
+  searchParams: Promise<{
+    submitted?: string | string[]
+    view?: string | string[]
+  }>
 }) {
   const params = await searchParams
-  const submittedName = params.submitted
+  const submittedName = Array.isArray(params.submitted) ? params.submitted[0] : params.submitted
+  const requestedView = Array.isArray(params.view) ? params.view[0] : params.view
+  const activeView = requestedView === 'records' ? 'records' : 'dispatch'
 
   // The shell renders immediately; every data-backed block below streams in
   // top-down via its own <Suspense>, so the page fills progressively and stays
@@ -204,10 +259,14 @@ export default async function WorldsPage({
 
       {/* ── Top bar ── */}
       <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> WORLD RECORDS</div>
-        <Suspense fallback={<div className="right" />}>
-          <TopBarCounts />
-        </Suspense>
+        <div className="crumbs">
+          PC://CONSOLE <span>/</span> {activeView === 'records' ? 'WORLD RECORDS' : 'SIGNAL DISPATCH'}
+        </div>
+        {activeView === 'records' && (
+          <Suspense fallback={<div className="right" />}>
+            <TopBarCounts />
+          </Suspense>
+        )}
       </div>
 
       {/* ── Success banner ── */}
@@ -227,46 +286,25 @@ export default async function WorldsPage({
 
       {/* ── Page head ── */}
       <ArchivePageHeader
-        accent="RECORDS"
+        className="worlds-page-header"
         action={(
-          <div className="worlds-action-stack">
-            <ArchiveLinkButton className="worlds-primary-action" href="/worlds/submit" variant="primary">
-              <UploadIcon />
-              REPORT A SIGHTING
-            </ArchiveLinkButton>
-            <ArchiveLinkButton className="worlds-secondary-action" href="/signal" variant="ghost">
-              <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
-                <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.2" />
-                <circle cx="9" cy="9" r="3.5" stroke="currentColor" strokeWidth="1.2" />
-                <circle cx="9" cy="9" r="1" fill="currentColor" />
-              </svg>
-              <span>SIGNAL DISPATCH</span>
-              <span aria-hidden="true">→</span>
-            </ArchiveLinkButton>
-          </div>
+          <ArchiveLinkButton className="worlds-report-action" href="/worlds/submit" variant="secondary">
+            <ArrowUp aria-hidden="true" size={14} strokeWidth={1.75} />
+            <span>REPORT A SIGHTING</span>
+          </ArchiveLinkButton>
         )}
-        title="WORLD"
+        title="WORLDS"
       />
 
-      {/* ── Stats bar — streams in (fast Postgres counts) ── */}
-      <Suspense fallback={<StatsBarSkeleton />}>
-        <StatsBar />
-      </Suspense>
+      <WorldsViewTabs activeView={activeView} />
 
-      {/* ── INITIAL VISION — proposed worlds (Stage 1) ── */}
-      <Suspense fallback={<SectionSkeleton title="INITIAL VISION" accentColor="var(--color-warn)" gridClass="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" count={4} />}>
-        <InitialVisionSection />
-      </Suspense>
-
-      {/* ── SIGNAL TUNING — picked / syncing (Stage 2), heaviest section ── */}
-      <Suspense fallback={<SectionSkeleton title="SIGNAL TUNING" accentColor="var(--color-ok)" gridClass="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" count={4} />}>
-        <SignalTuningSection />
-      </Suspense>
-
-      {/* ── ESTABLISHED WORLDS — stable (Stage 3) ── */}
-      <Suspense fallback={<SectionSkeleton title="ESTABLISHED WORLD" accentColor="var(--color-nucleus)" gridClass="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" count={8} />}>
-        <EstablishedSection />
-      </Suspense>
+      {activeView === 'dispatch' ? (
+        <Suspense fallback={<SignalDispatchSkeleton />}>
+          <SignalDispatchSection />
+        </Suspense>
+      ) : (
+        <WorldRecordsContent />
+      )}
 
       <div className="footer-bar" style={{ marginTop: '2rem' }}>
         <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
