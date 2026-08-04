@@ -11,6 +11,7 @@
  */
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
+import { sendPushToUser } from '@/lib/push/apns'
 import { resolveUserEmail } from '@/lib/signal/world-confirmed-email'
 import { buildSchedule, DEFAULT_GAP_HOURS } from '@/lib/signal/reveal'
 
@@ -128,6 +129,16 @@ export async function runSignalRecall(opts?: { skipUserIds?: Set<string> }): Pro
         // dedup guard: claim the (task,user) slot first; skip if already logged
         const { error: logErr } = await admin.from('signal_recall_log').insert({ task_id: task.id, user_id: userId })
         if (logErr) continue // unique violation → already reminded
+
+        const route = worldId ? `/worlds/${encodeURIComponent(worldId)}` : '/signal'
+        const push = await sendPushToUser(userId, {
+          eventType: 'signal_recall',
+          title: 'A NEW SIGNAL HAS APPEARED',
+          body: `${worldName} has a new transmission awaiting your read.`,
+          route,
+          collapseId: `signal-recall-${task.id}`,
+        })
+        if (push.delivered > 0) continue
 
         // auth.users is authoritative — voyager_profiles.email is often null.
         const to = await resolveUserEmail(admin, userId)

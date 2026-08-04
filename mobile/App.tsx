@@ -1,5 +1,7 @@
+import * as Device from 'expo-device'
+import * as Notifications from 'expo-notifications'
 import { StatusBar } from 'expo-status-bar'
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Linking,
@@ -9,14 +11,140 @@ import {
   Text,
   View,
 } from 'react-native'
-import { WebView, type WebViewNavigation } from 'react-native-webview'
+import {
+  WebView,
+  type WebViewMessageEvent,
+  type WebViewNavigation,
+} from 'react-native-webview'
 
-const START_URL = 'https://www.multiverseco.org/console?source=ios_app'
+const SITE_URL = 'https://www.multiverseco.org'
+const START_URL = `${SITE_URL}/console?source=ios_app`
+const APP_ID = 'org.multiverseco.collective'
+const PUSH_PREVIEW = process.env.EXPO_PUBLIC_PUSH_PREVIEW === '1'
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+})
+
+function safeRoute(value: unknown): string | null {
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
+    ? value
+    : null
+}
+
+function sessionProbeScript(): string {
+  return `
+    (function () {
+      if (!location.hostname.endsWith('multiverseco.org')) return;
+      fetch('/api/push/device', { credentials: 'include', cache: 'no-store' })
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'push-session',
+            authenticated: data.authenticated === true
+          }));
+        })
+        .catch(function () {});
+    })();
+    true;
+  `
+}
 
 export default function App() {
   const webView = useRef<WebView>(null)
+  const permissionStarted = useRef(false)
   const [canGoBack, setCanGoBack] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [deviceToken, setDeviceToken] = useState<string | null>(null)
+
+  const openRoute = useCallback((routeValue: unknown) => {
+    const route = safeRoute(routeValue)
+    if (!route) return
+    webView.current?.injectJavaScript(
+      `window.location.assign(${JSON.stringify(`${SITE_URL}${route}`)}); true;`,
+    )
+  }, [])
+
+  const syncDevice = useCallback((token: string) => {
+    const environment = __DEV__ ? 'development' : 'production'
+    webView.current?.injectJavaScript(`
+      (function () {
+        if (!location.hostname.endsWith('multiverseco.org')) return;
+        localStorage.setItem('mc_ios_push_token', ${JSON.stringify(token)});
+        fetch('/api/push/device', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: ${JSON.stringify(token)},
+            environment: ${JSON.stringify(environment)},
+            appId: ${JSON.stringify(APP_ID)}
+          })
+        }).catch(function () {});
+      })();
+      true;
+    `)
+  }, [])
+
+  const loadNativeToken = useCallback(async () => {
+    if (!Device.isDevice) return null
+    const token = await Notifications.getDevicePushTokenAsync()
+    const value = typeof token.data === 'string' ? token.data : null
+    if (value) setDeviceToken(value)
+    return value
+  }, [])
+
+  const requestSystemNotifications = useCallback(async () => {
+    if (permissionStarted.current) return
+    permissionStarted.current = true
+
+    try {
+      let permissions = await Notifications.getPermissionsAsync()
+      if (!permissions.granted && permissions.canAskAgain) {
+        permissions = await Notifications.requestPermissionsAsync({
+          ios: { allowAlert: true, allowBadge: true, allowSound: true },
+        })
+      }
+      if (!permissions.granted) return
+
+      const token = await loadNativeToken()
+      if (token) syncDevice(token)
+    } catch {
+      // Permission or APNs registration can be retried on the next app launch.
+    }
+  }, [loadNativeToken, syncDevice])
+
+  useEffect(() => {
+    void Notifications.getPermissionsAsync().then(async (permissions) => {
+      if (permissions.granted) await loadNativeToken().catch(() => null)
+    })
+
+    const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      openRoute(response.notification.request.content.data.route)
+    })
+    void Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) setTimeout(() => openRoute(response.notification.request.content.data.route), 500)
+    })
+
+    return () => responseSubscription.remove()
+  }, [loadNativeToken, openRoute])
+
+  useEffect(() => {
+    if (!authenticated && !PUSH_PREVIEW) return
+    if (deviceToken) {
+      syncDevice(deviceToken)
+      return
+    }
+
+    const timer = setTimeout(() => void requestSystemNotifications(), 1500)
+    return () => clearTimeout(timer)
+  }, [authenticated, deviceToken, requestSystemNotifications, syncDevice])
 
   const handleNavigation = (event: WebViewNavigation) => {
     setCanGoBack(event.canGoBack)
@@ -31,6 +159,18 @@ export default function App() {
 
     void Linking.openURL(request.url).catch(() => {})
     return false
+  }
+
+  const handleMessage = (event: WebViewMessageEvent) => {
+    try {
+      const message = JSON.parse(event.nativeEvent.data) as {
+        type?: string
+        authenticated?: boolean
+      }
+      if (message.type === 'push-session') setAuthenticated(message.authenticated === true)
+    } catch {
+      // Ignore messages that are not part of the native bridge.
+    }
   }
 
   return (
@@ -54,6 +194,8 @@ export default function App() {
         applicationNameForUserAgent="MultiverseCollective/1.0"
         onNavigationStateChange={handleNavigation}
         onShouldStartLoadWithRequest={handleRequest}
+        onMessage={handleMessage}
+        onLoadEnd={() => webView.current?.injectJavaScript(sessionProbeScript())}
         onError={() => setFailed(true)}
         onHttpError={(event) => {
           if (event.nativeEvent.statusCode >= 500) setFailed(true)

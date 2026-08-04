@@ -7,11 +7,15 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "plugins": ["expo-notifications"],
     "icon": "./ios/MultiverseCollective/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "org.multiverseco.collective",
-      "buildNumber": "1",
+      "buildNumber": "2",
+      "entitlements": {
+        "aps-environment": "development"
+      },
       "infoPlist": {
         "NSCameraUsageDescription": "Attach photos to Multiverse Collective submissions.",
         "NSPhotoLibraryUsageDescription": "Choose photos for Multiverse Collective submissions and profile images.",
