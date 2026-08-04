@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "verify:branch": "bash scripts/verify-branch-ready.sh",
+    "verify:production-source": "bash scripts/verify-production-source.sh",
     "mobile:check": "npm --prefix mobile run check"
   },
   "dependencies": {

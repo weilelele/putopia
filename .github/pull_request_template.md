@@ -1,33 +1,26 @@
-<!--
-Squash-merge this PR into main, then delete the branch (squash-merged branches
-still report as "ahead" and look unmerged). See AGENTS.md.
--->
+## What changed
 
-## What & why
+<!-- Describe the user-visible and technical changes. -->
 
-<!-- One or two sentences. Link the issue if there is one. -->
+## Scope audit
+
+- [ ] This branch was created from the latest `origin/main` in an isolated worktree.
+- [ ] `npm run verify:branch` passes and its complete file list is expected.
+- [ ] This PR contains no changes inherited from another feature branch.
+- [ ] Any Device, checkout, webhook, role, profile, or onboarding write was tested without mutating shared production data.
+- [ ] Any new schema change is an additive `supabase/schema_vN.sql` file, and its production application status is documented below.
 
 ## Verification
-
-Run locally before requesting review (CI gates on these too):
 
 - [ ] `npx tsc --noEmit`
 - [ ] `npm run lint`
 - [ ] `npm test`
 - [ ] `npm run build`
+- [ ] Portrait mobile checked at approximately 390×844 when UI changed.
+- [ ] Vercel Preview reviewed; no Preview deployment was promoted to Production.
 
-## Preview / data safety
+## Database and release notes
 
-> ⚠️ Preview deployments share **production** Supabase, MongoDB, and Stripe
-> unless a preview-scoped env is configured. Any write from the preview hits
-> production data.
+<!-- State whether a migration exists, whether it has been applied, and any release-specific risk. -->
 
-- [ ] No destructive or bulk operations were run against the shared env
-- [ ] Any data writes I tested are safe to have happened against production
-
-## Schema migration
-
-- [ ] No schema change in this PR — **or**:
-- [ ] Added a **new** `supabase/schema_vN.sql` (did not edit an existing
-      versioned file)
-- [ ] Applied to the production database: **yes / no** (state which)
+Production is released only by merging an approved PR into `main`. Direct CLI production deploys and preview promotions are prohibited outside an explicitly requested, verified incident rollback.
