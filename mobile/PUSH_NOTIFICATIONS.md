@@ -1,6 +1,6 @@
 # iOS push rollout
 
-The app asks for notification permission only after the member is signed in and has spent a few seconds in the Console. Dismissing the branded prompt defers it for seven days. Authentication and account-recovery emails are unchanged.
+The app uses the native iOS notification permission alert after the member signs in. There is no custom in-app notification prompt. Authentication and account-recovery emails are unchanged.
 
 ## One-time setup
 
@@ -19,7 +19,7 @@ No Apple credential or Supabase service key belongs in the mobile app, GitHub, o
 ## Acceptance check
 
 1. Install build 2 from TestFlight and sign in.
-2. Wait for `STAY IN THE LOOP`, tap `ENABLE UPDATES`, and allow the iOS prompt.
+2. Allow the native iOS notification permission alert.
 3. While signed in as an Architect, send `POST /api/push/test` from the same authenticated session.
 4. Confirm the notification appears and opens the Console when tapped.
 5. Verify a reply, world confirmation, failed scan, and Signal recall prefer push; a member without a registered iPhone still receives the existing email fallback.
