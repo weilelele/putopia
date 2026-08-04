@@ -1,0 +1,14 @@
+{
+  "campaignKey": "parallel_paris_signal_2026_08",
+  "audience": {
+    "type": "roles",
+    "roles": ["voyager", "architect"]
+  },
+  "title": "{{first_name}}, a signal is waiting",
+  "body": "{{world_name}} has a new transmission ready for you.",
+  "route": "/worlds/{{world_id}}",
+  "variables": {
+    "world_name": "Parallel Paris",
+    "world_id": "replace-with-world-id"
+  }
+}

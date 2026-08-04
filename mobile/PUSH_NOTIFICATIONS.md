@@ -26,3 +26,5 @@ No Apple credential or Supabase service key belongs in the mobile app, GitHub, o
 6. Sign out and confirm that the previous account no longer receives notifications on that device.
 
 The simulator fixture at `mobile/test-fixtures/notification.apns` verifies notification appearance and routing without Apple credentials. Real APNs delivery must be accepted on a signed physical iPhone/TestFlight build.
+
+For personalized manual campaigns operated from code, follow `mobile/PUSH_CAMPAIGNS.md` after applying `supabase/schema_v58.sql`.

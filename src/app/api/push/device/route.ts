@@ -22,7 +22,7 @@ export async function GET() {
       .eq('user_id', user.id)
       .eq('enabled', true),
     (admin.from('push_preferences' as never) as ReturnType<typeof admin.from>)
-      .select('replies, signal, worlds, votes, devices, intel, stories')
+      .select('replies, signal, worlds, votes, devices, intel, stories, announcements')
       .eq('user_id', user.id)
       .maybeSingle(),
   ])
@@ -85,4 +85,3 @@ export async function DELETE(request: Request) {
   if (error) return NextResponse.json({ error: 'Could not unregister device' }, { status: 500 })
   return NextResponse.json({ unregistered: true })
 }
-
