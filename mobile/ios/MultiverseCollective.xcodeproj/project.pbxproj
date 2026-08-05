@@ -21,7 +21,7 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = MultiverseCollective/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = MultiverseCollective/Info.plist; sourceTree = "<group>"; };
 		2E1774056C1AE50797CF778A /* Pods-MultiverseCollective.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiverseCollective.release.xcconfig"; path = "Target Support Files/Pods-MultiverseCollective/Pods-MultiverseCollective.release.xcconfig"; sourceTree = "<group>"; };
-		85FFD9982BF7890F84BC5633 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = MultiverseCollective/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		85FFD9982BF7890F84BC5633 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = MultiverseCollective/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8DAF3A27B7A38BDC9E785370 /* libPods-MultiverseCollective.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MultiverseCollective.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = MultiverseCollective/SplashScreen.storyboard; sourceTree = "<group>"; };
 		AD171F21E4EAB111654BB58E /* Pods-MultiverseCollective.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MultiverseCollective.debug.xcconfig"; path = "Target Support Files/Pods-MultiverseCollective/Pods-MultiverseCollective.debug.xcconfig"; sourceTree = "<group>"; };
@@ -81,7 +81,6 @@
 				AD171F21E4EAB111654BB58E /* Pods-MultiverseCollective.debug.xcconfig */,
 				2E1774056C1AE50797CF778A /* Pods-MultiverseCollective.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -348,6 +347,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MultiverseCollective/MultiverseCollective.entitlements;
 				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = QM26A82MCU;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -384,6 +384,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MultiverseCollective/MultiverseCollective.entitlements;
 				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = QM26A82MCU;
 				INFOPLIST_FILE = MultiverseCollective/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
