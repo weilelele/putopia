@@ -7,8 +7,15 @@ import type { ApplicationInsert, ApplicationStatus } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
 import { upsertLoopsContact } from '@/lib/loops'
 import { resendAccessLink } from '@/lib/actions/auth-resend'
+import {
+  createRedditConversionId,
+  sendRedditConversion,
+} from '@/lib/reddit-capi'
 
-export async function submitApplication(application: ApplicationInsert) {
+export async function submitApplication(
+  application: ApplicationInsert,
+  tracking?: { redditClickId?: string | null },
+) {
   const supabase = await createClient()
 
   const normalizedEmail = (application.email ?? '').trim().toLowerCase()
@@ -111,7 +118,20 @@ export async function submitApplication(application: ApplicationInsert) {
     }
   }
 
-  return { error: null, inviteEmailSent: true, applicationSaved: true }
+  const redditConversionId = createRedditConversionId()
+  await sendRedditConversion({
+    trackingType: 'LEAD',
+    conversionId: redditConversionId,
+    clickId: tracking?.redditClickId,
+    email: normalizedEmail,
+  })
+
+  return {
+    error: null,
+    inviteEmailSent: true,
+    applicationSaved: true,
+    redditConversionId,
+  }
 }
 
 export async function getMyApplication() {
