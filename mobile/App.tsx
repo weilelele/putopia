@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  AppState,
   Linking,
   Pressable,
   SafeAreaView,
@@ -21,6 +22,7 @@ const SITE_URL = 'https://www.multiverseco.org'
 const START_URL = `${SITE_URL}/console?source=ios_app`
 const APP_ID = 'org.multiverseco.collective'
 const PUSH_PREVIEW = process.env.EXPO_PUBLIC_PUSH_PREVIEW === '1'
+const PUSH_SYNC_RETRY_DELAYS = [2_000, 5_000, 15_000, 60_000]
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -42,14 +44,29 @@ function sessionProbeScript(): string {
     (function () {
       if (!location.hostname.endsWith('multiverseco.org')) return;
       fetch('/api/push/device', { credentials: 'include', cache: 'no-store' })
-        .then(function (response) { return response.json(); })
-        .then(function (data) {
+        .then(function (response) {
+          return response.json().catch(function () { return {}; }).then(function (data) {
+            return { ok: response.ok, status: response.status, data: data };
+          });
+        })
+        .then(function (result) {
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'push-session',
-            authenticated: data.authenticated === true
+            authenticated: result.data.authenticated === true,
+            deviceCount: Number(result.data.deviceCount || 0),
+            ok: result.ok,
+            status: result.status,
+            error: typeof result.data.error === 'string' ? result.data.error : null
           }));
         })
-        .catch(function () {});
+        .catch(function (error) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'push-session-error',
+            ok: false,
+            status: 0,
+            error: error && error.message ? error.message : 'Session probe failed'
+          }));
+        });
     })();
     true;
   `
@@ -58,10 +75,14 @@ function sessionProbeScript(): string {
 export default function App() {
   const webView = useRef<WebView>(null)
   const permissionStarted = useRef(false)
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const retryCount = useRef(0)
   const [canGoBack, setCanGoBack] = useState(false)
   const [failed, setFailed] = useState(false)
   const [authenticated, setAuthenticated] = useState(false)
   const [deviceToken, setDeviceToken] = useState<string | null>(null)
+  const [registeredToken, setRegisteredToken] = useState<string | null>(null)
+  const [syncGeneration, setSyncGeneration] = useState(0)
 
   const openRoute = useCallback((routeValue: unknown) => {
     const route = safeRoute(routeValue)
@@ -86,10 +107,35 @@ export default function App() {
             environment: ${JSON.stringify(environment)},
             appId: ${JSON.stringify(APP_ID)}
           })
-        }).catch(function () {});
+        }).then(function (response) {
+          return response.json().catch(function () { return {}; }).then(function (data) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'push-device-sync',
+              ok: response.ok && data.registered === true,
+              status: response.status,
+              error: typeof data.error === 'string' ? data.error : null,
+              code: typeof data.code === 'string' ? data.code : null
+            }));
+          });
+        }).catch(function (error) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'push-device-sync',
+            ok: false,
+            status: 0,
+            error: error && error.message ? error.message : 'Device registration failed'
+          }));
+        });
       })();
       true;
     `)
+  }, [])
+
+  const scheduleDeviceSyncRetry = useCallback(() => {
+    if (retryTimer.current) clearTimeout(retryTimer.current)
+    const index = Math.min(retryCount.current, PUSH_SYNC_RETRY_DELAYS.length - 1)
+    const delay = PUSH_SYNC_RETRY_DELAYS[index]
+    retryCount.current += 1
+    retryTimer.current = setTimeout(() => setSyncGeneration((value) => value + 1), delay)
   }, [])
 
   const loadNativeToken = useCallback(async () => {
@@ -113,12 +159,13 @@ export default function App() {
       }
       if (!permissions.granted) return
 
-      const token = await loadNativeToken()
-      if (token) syncDevice(token)
-    } catch {
-      // Permission or APNs registration can be retried on the next app launch.
+      await loadNativeToken()
+    } catch (error) {
+      permissionStarted.current = false
+      console.warn('[push] Could not obtain the native device token.', error)
+      scheduleDeviceSyncRetry()
     }
-  }, [loadNativeToken, syncDevice])
+  }, [loadNativeToken, scheduleDeviceSyncRetry])
 
   useEffect(() => {
     void Notifications.getPermissionsAsync().then(async (permissions) => {
@@ -136,15 +183,35 @@ export default function App() {
   }, [loadNativeToken, openRoute])
 
   useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return
+      permissionStarted.current = false
+      retryCount.current = 0
+      setRegisteredToken(null)
+      setSyncGeneration((value) => value + 1)
+    })
+    return () => subscription.remove()
+  }, [])
+
+  useEffect(() => {
     if (!authenticated && !PUSH_PREVIEW) return
-    if (deviceToken) {
+    if (deviceToken && registeredToken !== deviceToken) {
       syncDevice(deviceToken)
       return
     }
 
     const timer = setTimeout(() => void requestSystemNotifications(), 1500)
     return () => clearTimeout(timer)
-  }, [authenticated, deviceToken, requestSystemNotifications, syncDevice])
+  }, [authenticated, deviceToken, registeredToken, requestSystemNotifications, syncDevice, syncGeneration])
+
+  useEffect(() => {
+    if (authenticated || syncGeneration === 0) return
+    webView.current?.injectJavaScript(sessionProbeScript())
+  }, [authenticated, syncGeneration])
+
+  useEffect(() => () => {
+    if (retryTimer.current) clearTimeout(retryTimer.current)
+  }, [])
 
   const handleNavigation = (event: WebViewNavigation) => {
     setCanGoBack(event.canGoBack)
@@ -166,8 +233,38 @@ export default function App() {
       const message = JSON.parse(event.nativeEvent.data) as {
         type?: string
         authenticated?: boolean
+        deviceCount?: number
+        ok?: boolean
+        status?: number
+        error?: string | null
+        code?: string | null
       }
-      if (message.type === 'push-session') setAuthenticated(message.authenticated === true)
+      if (message.type === 'push-session') {
+        setAuthenticated(message.authenticated === true)
+        if (message.ok === false && message.authenticated) {
+          console.warn('[push] Push storage check failed.', message.status, message.error)
+        }
+      }
+      if (message.type === 'push-session-error') {
+        console.warn('[push] Could not verify the signed-in session.', message.status, message.error)
+        scheduleDeviceSyncRetry()
+      }
+      if (message.type === 'push-device-sync') {
+        if (message.ok) {
+          retryCount.current = 0
+          if (retryTimer.current) clearTimeout(retryTimer.current)
+          setRegisteredToken(deviceToken)
+        } else {
+          console.warn(
+            '[push] Device registration failed; retry scheduled.',
+            message.status,
+            message.code,
+            message.error,
+          )
+          setRegisteredToken(null)
+          scheduleDeviceSyncRetry()
+        }
+      }
     } catch {
       // Ignore messages that are not part of the native bridge.
     }
