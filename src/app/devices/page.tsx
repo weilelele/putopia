@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { getAllDevices } from '@/lib/actions/devices'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
@@ -14,6 +14,7 @@ import { ArchiveLinkCard } from '@/components/archive-link-card'
 import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { ArchiveStatStrip } from '@/components/archive-stat-strip'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 
 const STATUS_STYLES = {
   available:    { color: '#20D890', bg: 'rgba(32,216,144,0.08)', border: 'rgba(32,216,144,0.3)' },
@@ -191,11 +192,34 @@ export default function DevicesPage() {
   const { isAtLeast } = useAuth()
   const [devices, setDevices] = useState<Device[]>([])
   const [mcFunctions, setMcFunctions] = useState<McFunction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  const loadDevices = useCallback(async () => {
+    await Promise.resolve()
+    setLoading(true)
+    setLoadError(false)
+
+    try {
+      const deviceData = await getAllDevices()
+      setDevices(deviceData)
+
+      try {
+        setMcFunctions(await getMcFunctions())
+      } catch {
+        // Console functions are supplemental; preserve access to the registry.
+        setMcFunctions([])
+      }
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    getAllDevices().then(setDevices)
-    getMcFunctions().then(setMcFunctions)
-  }, [])
+    void Promise.resolve().then(loadDevices)
+  }, [loadDevices])
 
   const unknownDevices = devices.filter((d) => d.knowledge === 'unknown')
   const knownDevices   = devices.filter((d) => d.knowledge === 'known')
@@ -207,35 +231,46 @@ export default function DevicesPage() {
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> DEVICE ARCHIVE</div>
         <div className="right">
-          <div className="item">UNKNOWN <span className="val">{unknownDevices.length}</span></div>
-          <div className="item">KNOWN <span className="val">{knownDevices.length}</span></div>
+          <div className="item">UNKNOWN <span className="val">{loading ? '—' : unknownDevices.length}</span></div>
+          <div className="item">KNOWN <span className="val">{loading ? '—' : knownDevices.length}</span></div>
         </div>
       </div>
 
       <ArchivePageHeader accent="REGISTRY" title="DEVICE" />
 
       <ArchiveStatStrip items={[
-        { value: unknownDevices.length, label: 'UNKNOWN', color: 'var(--color-star-dim)' },
-        { value: knownDevices.length, label: 'KNOWN', color: 'var(--color-ok)' },
-        { value: devices.length, label: 'TOTAL DEVICES', color: 'var(--color-nucleus)' },
+        { value: loading ? '—' : unknownDevices.length, label: 'UNKNOWN', color: 'var(--color-star-dim)' },
+        { value: loading ? '—' : knownDevices.length, label: 'KNOWN', color: 'var(--color-ok)' },
+        { value: loading ? '—' : devices.length, label: 'TOTAL DEVICES', color: 'var(--color-nucleus)' },
       ]} />
 
-      {/* Multiverse Console showcase — confirmed functions + boot flicker */}
-      <div style={{ marginBottom: '2.5rem' }}>
-        <McConsolePanel mcFunctions={mcFunctions} />
-      </div>
+      {loading ? (
+        <ArchiveRouteLoading className="archive-state-page archive-route-state-section" label="LOADING DEVICE REGISTRY" />
+      ) : loadError ? (
+        <ArchiveRouteError
+          className="archive-state-page archive-route-state-section"
+          title="DEVICE REGISTRY UNAVAILABLE"
+          description="The Device registry could not be retrieved."
+          onRetry={loadDevices}
+        />
+      ) : (
+        <>
+          {/* Multiverse Console showcase — confirmed functions + boot flicker */}
+          <div style={{ marginBottom: '2.5rem' }}>
+            <McConsolePanel mcFunctions={mcFunctions} />
+          </div>
 
-      {/* legacy spacer removed */}
-      <div style={{ display: 'contents' }}>
+          {/* legacy spacer removed */}
+          <div style={{ display: 'contents' }}>
 
       {/* FIRST BATCH CLAIM — Cairo Discovery — architect-only until Stripe is live */}
       {isAtLeast('architect') && <section className="mb-10">
         <ArchiveSectionLabel>FIRST BATCH · CAIRO DISCOVERY</ArchiveSectionLabel>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           <ArchiveLinkCard
             href="/devices/claim"
-            className="archive-device-card archive-device-claim-card col-span-2 md:col-span-1"
+            className="archive-device-card archive-device-claim-card"
           >
             {/* Visual */}
             <div className="border-b w-full overflow-hidden relative" style={{ borderColor: 'rgba(227,82,5,0.35)', aspectRatio: '16/9' }}>
@@ -297,7 +332,7 @@ export default function DevicesPage() {
       <section className="mb-10">
         <ArchiveSectionLabel>UNKNOWN DEVICES</ArchiveSectionLabel>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {unknownDevices.map((device) => (
             <ArchiveLinkCard
               key={device.id}
@@ -346,7 +381,7 @@ export default function DevicesPage() {
       <section>
         <ArchiveSectionLabel>KNOWN DEVICES</ArchiveSectionLabel>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {knownDevices.map((device) => {
             const statusKey = device.status ?? 'unknown'
             const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.unknown
@@ -400,12 +435,14 @@ export default function DevicesPage() {
           })}
         </div>
       </section>
-      </div>
+          </div>
 
-      <div className="footer-bar" style={{ marginTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>MULTIVERSE COLLECTIVE</div>
-      </div>
+          <div className="footer-bar" style={{ marginTop: '2rem' }}>
+            <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
+            <div>MULTIVERSE COLLECTIVE</div>
+          </div>
+        </>
+      )}
     </main>
   )
 }

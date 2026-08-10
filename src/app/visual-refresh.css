@@ -3155,13 +3155,6 @@ button.archive-stat-strip__item {
   line-height: 1.7;
 }
 
-.archive-floating-action {
-  position: fixed;
-  right: 1rem;
-  bottom: calc(88px + env(safe-area-inset-bottom));
-  z-index: 40;
-}
-
 .archive-footer-bar {
   margin-top: 2rem;
 }
@@ -3707,6 +3700,48 @@ button.archive-stat-strip__item {
   margin-top: 1.25rem;
 }
 
+.profile-field-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.profile-avatar-edit {
+  position: absolute;
+  right: -10px;
+  bottom: -10px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-burnt);
+  border-radius: 50%;
+  color: var(--color-burnt);
+  background: var(--bg-card);
+  cursor: pointer;
+}
+
+.profile-avatar-edit:hover,
+.profile-avatar-edit:focus-visible {
+  color: var(--color-star);
+  border-color: var(--color-nucleus);
+  outline: 2px solid rgba(227, 82, 5, 0.24);
+  outline-offset: 2px;
+}
+
+.profile-fulfillment {
+  max-width: 640px;
+  margin-top: 2rem;
+}
+
+.profile-order-toggle {
+  width: 100%;
+  justify-content: center;
+}
+
 .voyagers-modal-actions .archive-button {
   min-width: 0;
 }
@@ -3774,14 +3809,15 @@ button.archive-stat-strip__item {
     align-items: center;
   }
 
-  .archive-floating-action {
-    right: 2rem;
-    bottom: 2rem;
-  }
-
   .archive-path-progress-heading {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
+  }
+}
+
+@media (min-width: 640px) {
+  .profile-field-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

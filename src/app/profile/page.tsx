@@ -31,7 +31,7 @@ function getInitials(name: string): string {
 const BIO_LIMIT = 240
 function FieldGroup({ children, cols = 1 }: { children: React.ReactNode; cols?: number }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '12px', marginBottom: '12px' }}>
+    <div className={cols === 2 ? 'profile-field-grid profile-field-grid--two' : 'profile-field-grid'}>
       {children}
     </div>
   )
@@ -120,6 +120,7 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [ordersExpanded, setOrdersExpanded] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loadProfileData = useCallback(async () => {
@@ -249,9 +250,8 @@ export default function ProfilePage() {
       <ArchiveCard style={{ display: 'flex', gap: '18px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative' }}>
           <div
-            onClick={canEdit ? () => fileRef.current?.click() : undefined}
             style={{
-              width: '76px', height: '76px', borderRadius: '50%', overflow: 'hidden', cursor: canEdit ? 'pointer' : 'default',
+              width: '76px', height: '76px', borderRadius: '50%', overflow: 'hidden',
               background: avatarPreview || profile.avatar_url ? 'transparent' : `${accent}18`,
               border: `2px solid ${accent}60`, display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: accent, fontSize: 'var(--fs-title)', fontWeight: 'bold',
@@ -264,10 +264,14 @@ export default function ProfilePage() {
           </div>
           {canEdit && (
             <>
-              <div onClick={() => fileRef.current?.click()}
-                   style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '24px', height: '24px', borderRadius: '50%', background: '#151B3A', border: '1px solid #C84406', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C84406' }}>
+              <button
+                type="button"
+                aria-label="Change profile image"
+                onClick={() => fileRef.current?.click()}
+                className="profile-avatar-edit"
+              >
                 <Camera size={11} />
-              </div>
+              </button>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
             </>
           )}
@@ -301,15 +305,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </ArchiveCard>
-
-      {/* Pack tracking — only for Voyagers+ who have actually paid in */}
-      {canEdit && orders.length > 0 && (
-        <div style={{ marginBottom: '12px' }}>
-          {orders.map((o, i) => (
-            <PackTracker key={o.id} order={o} index={i} total={orders.length} />
-          ))}
-        </div>
-      )}
 
       {/* Edit form — Voyagers+ only; Applicants see a locked notice */}
       {!canEdit ? (
@@ -370,6 +365,29 @@ export default function ProfilePage() {
           </ArchiveButton>
         </div>
       </ArchiveCard>
+      )}
+
+      {/* Fulfillment follows identity editing. Keep the current order visible;
+          older orders are available on demand instead of pushing the profile
+          form several screens below the fold. */}
+      {canEdit && orders.length > 0 && (
+        <section className="profile-fulfillment">
+          <ArchiveSectionLabel>FULFILLMENT</ArchiveSectionLabel>
+          <PackTracker order={orders[0]} index={0} total={orders.length} />
+          {ordersExpanded && orders.slice(1).map((order, index) => (
+            <PackTracker key={order.id} order={order} index={index + 1} total={orders.length} />
+          ))}
+          {orders.length > 1 && (
+            <ArchiveButton
+              onClick={() => setOrdersExpanded((expanded) => !expanded)}
+              variant="ghost"
+              className="profile-order-toggle"
+              aria-expanded={ordersExpanded}
+            >
+              {ordersExpanded ? 'HIDE PREVIOUS ORDERS' : `VIEW ${orders.length - 1} PREVIOUS ORDERS`}
+            </ArchiveButton>
+          )}
+        </section>
       )}
     </div>
   )

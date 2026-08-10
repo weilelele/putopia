@@ -3,7 +3,7 @@
 import { MessageSquare, Plus, Vote, ArrowRight } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { IntelWithAvatar } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
@@ -16,6 +16,7 @@ import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkCard } from '@/components/archive-link-card'
 import { ArchivePageHeader } from '@/components/archive-page-header'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -199,6 +200,8 @@ function IntelPageContent() {
   const [intel, setIntel] = useState<IntelWithAvatar[]>([])
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
   const [showCreate, setShowCreate] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   // Deep-link support: /intel?tab=classified opens the Classified tab directly
   // (used by the Voyager-pack confirmation email).
   const tabParam = useSearchParams().get('tab')
@@ -206,18 +209,38 @@ function IntelPageContent() {
     tabParam === 'classified' || tabParam === 'public' ? tabParam : 'all',
   )
 
-  const loadIntel = async () => {
-    const data = await getAllIntel()
-    const items = data as IntelWithAvatar[]
-    setIntel(items)
-    if (items.length > 0) {
-      const counts = await getCommentCountsBulk('intel', items.map(e => e.id))
-      setCommentCounts(counts)
-    }
-  }
+  const loadIntel = useCallback(async (showLoading = true) => {
+    await Promise.resolve()
+    if (showLoading) setLoading(true)
+    setLoadError(false)
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount; loadIntel() is the shared refetch reused after actions
-  useEffect(() => { loadIntel() }, [])
+    try {
+      const data = await getAllIntel()
+      const items = data as IntelWithAvatar[]
+      setIntel(items)
+
+      if (items.length === 0) {
+        setCommentCounts({})
+        return
+      }
+
+      try {
+        const counts = await getCommentCountsBulk('intel', items.map((entry) => entry.id))
+        setCommentCounts(counts)
+      } catch {
+        // Comments are supplemental; keep the feed usable if their counts fail.
+        setCommentCounts({})
+      }
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void Promise.resolve().then(() => loadIntel())
+  }, [loadIntel])
 
   // Derive displayed list based on filter
   const visibleIntel =
@@ -234,7 +257,7 @@ function IntelPageContent() {
       <div className="top-bar">
         <div className="crumbs">PC://CONSOLE <span>/</span> INTEL FEED</div>
         <div className="right">
-          <div className="item">ENTRIES <span className="val">{intel.length}</span></div>
+          <div className="item">ENTRIES <span className="val">{loading ? '—' : intel.length}</span></div>
           <div className="item">UTC <span className="val">{new Date().toISOString().slice(11, 19)}</span></div>
         </div>
       </div>
@@ -249,17 +272,21 @@ function IntelPageContent() {
             ))}
           </div>
         }
-        action={
-          <ArchiveLinkButton
-          href="/vote"
-          variant="secondary"
-          className="archive-page-header__wide-action"
-          >
-            <Vote size={15} />
-            VOTING HUB
-            <ArrowRight size={14} />
-          </ArchiveLinkButton>
-        }
+        action={(
+          <div className="archive-action-row archive-intel-actions">
+            {isAtLeast('architect') && !loading && !loadError && (
+              <ArchiveButton variant="primary" onClick={() => setShowCreate(true)}>
+                <Plus size={12} />
+                PUBLISH INTEL
+              </ArchiveButton>
+            )}
+            <ArchiveLinkButton href="/vote" variant="secondary">
+              <Vote size={15} />
+              VOTING HUB
+              <ArrowRight size={14} />
+            </ArchiveLinkButton>
+          </div>
+        )}
       />
 
       <FilterBar
@@ -268,36 +295,38 @@ function IntelPageContent() {
         onChange={(k) => setActiveFilter(k as FilterTab)}
       />
 
-      {/* Feed */}
-      <div className="archive-feed-list">
-        {showClassifiedWall
-          ? <ClassifiedWall />
-          : visibleIntel.map(entry => (
-              <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />
-            ))
-        }
-      </div>
+      {loading ? (
+        <ArchiveRouteLoading className="archive-state-page archive-route-state-section" label="LOADING INTEL FEED" />
+      ) : loadError ? (
+        <ArchiveRouteError
+          className="archive-state-page archive-route-state-section"
+          title="INTEL FEED UNAVAILABLE"
+          description="The Intel feed could not be retrieved."
+          onRetry={() => void loadIntel()}
+        />
+      ) : (
+        <>
+          {/* Feed */}
+          <div className="archive-feed-list">
+            {showClassifiedWall
+              ? <ClassifiedWall />
+              : visibleIntel.map(entry => (
+                  <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />
+                ))
+            }
+          </div>
 
-      <div className="footer-bar archive-footer-bar">
-        <div className="tag">MULTIVERSE COLLECTIVE</div>
-        <div>LAST UPDATED: {intel[0] ? new Date(intel[0].timestamp).toLocaleDateString() : '—'}</div>
-      </div>
-
-      {isAtLeast('architect') && (
-        <ArchiveButton
-          className="archive-floating-action"
-          variant="primary"
-          onClick={() => setShowCreate(true)}
-        >
-          <Plus size={12} />
-          PUBLISH INTEL
-        </ArchiveButton>
+          <div className="footer-bar archive-footer-bar">
+            <div className="tag">MULTIVERSE COLLECTIVE</div>
+            <div>LAST UPDATED: {intel[0] ? new Date(intel[0].timestamp).toLocaleDateString() : '—'}</div>
+          </div>
+        </>
       )}
 
       {showCreate && (
         <CreateIntelModal
           onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); loadIntel() }}
+          onCreated={() => { setShowCreate(false); void loadIntel(false) }}
           existingItems={intel}
         />
       )}

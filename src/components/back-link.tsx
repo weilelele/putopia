@@ -16,12 +16,14 @@ export function BackLink({ href, label }: { href: string; label: string }) {
         display: 'inline-flex',
         alignItems: 'center',
         gap: '0.4rem',
+        minHeight: 44,
+        padding: '0.35rem 0.25rem',
         color: 'rgba(227,82,5,0.8)',
         fontFamily: 'var(--font-mono)',
         fontSize: 'var(--fs-caption)',
         letterSpacing: '0.14em',
         textDecoration: 'none',
-        marginBottom: '0.5rem',
+        margin: '-0.35rem -0.25rem 0.15rem',
         width: 'fit-content',
       }}
     >
