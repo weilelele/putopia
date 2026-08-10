@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { Camera, LogOut } from 'lucide-react'
 import { getMyProfile, updateProfile, uploadAvatar } from '@/lib/actions/profile'
@@ -12,6 +12,7 @@ import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 
 // ── helpers (mirrors /voyagers) ─────────────────────────────────────────────
 const ACCENT_COLORS = [
@@ -113,6 +114,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null)
   const [orders, setOrders] = useState<VoyagerOrder[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [form, setForm] = useState<EditForm | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
@@ -120,8 +122,12 @@ export default function ProfilePage() {
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    Promise.all([getMyProfile(), getMyOrders()]).then(([p, o]) => {
+  const loadProfileData = useCallback(async () => {
+    await Promise.resolve()
+    setLoading(true)
+    setLoadError(false)
+    try {
+      const [p, o] = await Promise.all([getMyProfile(), getMyOrders()])
       setProfile(p)
       setOrders(o)
       if (p) {
@@ -134,9 +140,16 @@ export default function ProfilePage() {
           social_linkedin: p.social_linkedin ?? '',
         })
       }
+    } catch {
+      setLoadError(true)
+    } finally {
       setLoading(false)
-    })
+    }
   }, [])
+
+  useEffect(() => {
+    void Promise.resolve().then(loadProfileData)
+  }, [loadProfileData])
 
   const setF = (k: keyof EditForm, v: string) => setForm((f) => (f ? { ...f, [k]: v } : f))
 
@@ -180,12 +193,18 @@ export default function ProfilePage() {
   }
 
   if (loading) {
+    return <ArchiveRouteLoading label="LOADING PROFILE" />
+  }
+
+  if (loadError) {
     return (
-      <div className="main">
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '60px 0', textAlign: 'center', letterSpacing: '0.15em' }}>
-          LOADING PROFILE...
-        </div>
-      </div>
+      <ArchiveRouteError
+        title="PROFILE UNAVAILABLE"
+        description="Your profile and order history could not be retrieved. No account data was changed."
+        onRetry={loadProfileData}
+        returnHref="/console"
+        returnLabel="DASHBOARD"
+      />
     )
   }
 

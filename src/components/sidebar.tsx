@@ -22,7 +22,7 @@ const LockIcon = () => (
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, logout } = useAuth()
+  const { user, logout, loading } = useAuth()
   const isGuest = user.role === 'guest'
 
   const isActive = (href: string) =>
@@ -31,7 +31,7 @@ export function Sidebar() {
   if (pathname.startsWith('/admin') || pathname.startsWith('/newsletter')) return null
 
   return (
-    <aside className="sidebar" aria-label="Workspace navigation">
+    <aside className="sidebar" aria-label="Workspace navigation" aria-busy={loading}>
       <Link href="/console" className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
         <SmartImage
           src="/assets/vi-icon.png"
@@ -56,7 +56,7 @@ export function Sidebar() {
       <nav className="sidebar-nav" aria-label="Primary">
         {navItems.map(({ href, label, icon }) => {
             const isDashboard = href === '/console'
-            const locked = isGuest && !isDashboard
+            const locked = !loading && isGuest && !isDashboard
 
             if (locked) {
               return (
@@ -88,22 +88,24 @@ export function Sidebar() {
 
       {/* Auth block */}
       <div className="sidebar-auth">
-        {user.role === 'guest' ? (
+        {loading ? (
+          <div className="sidebar-auth-name">VERIFYING ACCESS</div>
+        ) : user.role === 'guest' ? (
           <div className="sidebar-auth-name">UNKNOWN OPERATIVE</div>
         ) : (
           <Link href="/profile" className="sidebar-auth-name" style={{ textDecoration: 'none', cursor: 'pointer' }}>
             {user.name ?? user.email ?? '—'}
           </Link>
         )}
-        <div className="sidebar-auth-role">{user.role.toUpperCase()}</div>
-        {user.role === 'guest' ? (
+        <div className="sidebar-auth-role">{loading ? '—' : user.role.toUpperCase()}</div>
+        {loading ? null : user.role === 'guest' ? (
           <Link href="/login" className="sidebar-auth-btn">↗ LOGIN</Link>
         ) : (
           <button onClick={() => logout()} className="sidebar-auth-btn">↗ LOGOUT</button>
         )}
       </div>
 
-      {user.role === 'guest' && (
+      {!loading && user.role === 'guest' && (
         <Link href="/" className="sidebar-apply">REQUEST ACCESS</Link>
       )}
 

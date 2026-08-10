@@ -3172,6 +3172,111 @@ button.archive-stat-strip__item {
   text-align: center;
 }
 
+.archive-route-state {
+  width: min(100%, 680px);
+  margin: auto;
+  text-align: left;
+}
+
+.archive-route-state-section {
+  display: flex;
+  min-height: 360px;
+  padding: 1.5rem 0;
+}
+
+.archive-route-state__eyebrow {
+  margin-bottom: 0.75rem;
+  color: var(--color-nucleus);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.18em;
+}
+
+.archive-route-state__title {
+  width: min(72%, 320px);
+  height: 2rem;
+  margin-bottom: 1rem;
+}
+
+.archive-route-state__line {
+  width: min(92%, 520px);
+  height: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.archive-route-state__line.is-short {
+  width: min(60%, 340px);
+  margin-bottom: 1.5rem;
+}
+
+.archive-route-state__cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.archive-route-skeleton {
+  border-color: var(--archive-line-soft);
+  background: linear-gradient(100deg, rgba(245, 245, 245, 0.025) 30%, rgba(227, 82, 5, 0.1) 50%, rgba(245, 245, 245, 0.025) 70%);
+  background-size: 200% 100%;
+  animation: archive-route-shimmer 1.4s ease-in-out infinite;
+}
+
+.archive-route-state--error {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.archive-route-state--error h1 {
+  margin: 0 0 0.75rem;
+  color: var(--color-fault);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+}
+
+.archive-route-state--error p {
+  margin: 0 auto 1.5rem;
+  max-width: 520px;
+  color: var(--color-star-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: 1.7;
+}
+
+.archive-route-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.smart-image-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--archive-line-soft);
+  background: linear-gradient(135deg, rgba(227, 82, 5, 0.08), rgba(15, 20, 48, 0.92));
+  color: var(--color-star-deep);
+}
+
+@keyframes archive-route-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@media (min-width: 640px) {
+  .archive-route-state__cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-route-skeleton {
+    animation: none;
+  }
+}
+
 .archive-detail-back {
   margin-bottom: 1rem;
 }

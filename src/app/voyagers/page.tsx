@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { getAllVoyagers, updateProfile, uploadAvatar } from '@/lib/actions/profile'
 import { useAuth } from '@/lib/auth-context'
@@ -14,6 +14,7 @@ import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { ArchiveStatStrip, type ArchiveStatItem } from '@/components/archive-stat-strip'
 import { ArchiveTabs } from '@/components/archive-tabs'
 import { SectionTracker } from '@/components/section-tracker'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 import { Camera, X as XClose, FileText, ArrowRight } from 'lucide-react'
 import type { VoyagerProfile, UserRole } from '@/types/database'
 
@@ -85,6 +86,7 @@ export default function VoyagersPage() {
   const { user, isAtLeast } = useAuth()
   const [voyagers, setVoyagers] = useState<VoyagerProfile[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   // ── Edit modal state ───────────────────────────────────────────────────
   const [editing, setEditing] = useState<VoyagerProfile | null>(null)
@@ -102,14 +104,27 @@ export default function VoyagersPage() {
   const selectBatch = (label: string) => { setActiveBatch(label); setBatchExpanded(false) }
   const scrollRail = (dir: number) => batchRailRef.current?.scrollBy({ left: dir * 240, behavior: 'smooth' })
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     const data = await getAllVoyagers()
     setVoyagers(data)
-  }
+  }, [])
+
+  const loadVoyagers = useCallback(async () => {
+    await Promise.resolve()
+    setLoading(true)
+    setLoadError(false)
+    try {
+      await refresh()
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
+  }, [refresh])
 
   useEffect(() => {
-    getAllVoyagers().then(data => { setVoyagers(data); setLoading(false) })
-  }, [])
+    void Promise.resolve().then(loadVoyagers)
+  }, [loadVoyagers])
 
   const openEdit = (v: VoyagerProfile) => {
     setEditing(v)
@@ -238,9 +253,14 @@ export default function VoyagersPage() {
       <ArchiveStatStrip items={statItems} />
 
       {loading ? (
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '60px 0', textAlign: 'center', letterSpacing: '0.15em' }}>
-          LOADING REGISTRY...
-        </div>
+        <ArchiveRouteLoading className="archive-state-page archive-route-state-section" label="LOADING VOYAGER REGISTRY" />
+      ) : loadError ? (
+        <ArchiveRouteError
+          className="archive-state-page archive-route-state-section"
+          title="REGISTRY UNAVAILABLE"
+          description="The Voyager registry could not be retrieved."
+          onRetry={loadVoyagers}
+        />
       ) : (
         <>
           {architects.length > 0 && (
