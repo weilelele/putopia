@@ -19,7 +19,9 @@ This iOS shell reproduces the current production website at
 - The website is the single source of truth for UI, authentication, permissions,
   data and member features.
 - The iOS project does not connect to Supabase directly and contains no API keys.
-- No iOS-only product behavior is implemented.
+- Native iOS behavior is limited to system notifications, safe deep links,
+  network recovery, and a bundled offline field archive. Website data remains
+  the single source of truth.
 - Website deployments become available in the app without a second mobile data
   implementation.
 
@@ -29,7 +31,10 @@ This iOS shell reproduces the current production website at
 - Back/forward swipe gestures and pull to refresh.
 - JavaScript, full-screen/inline media, forms and uploads.
 - `mailto:`, `tel:` and other non-web schemes are passed to iOS.
-- A native reconnect screen is shown for network/server failures.
+- A native offline field archive is shown for network/server failures.
+- The archive stores only fixed public section labels and visit times. It never
+  stores page content, account details, private records, or member activity.
+- The Console automatically reconnects when the network returns.
 
 ## Local validation
 

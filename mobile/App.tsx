@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import NetInfo from '@react-native-community/netinfo'
 import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { StatusBar } from 'expo-status-bar'
@@ -6,7 +8,6 @@ import {
   ActivityIndicator,
   AppState,
   Linking,
-  Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -15,8 +16,16 @@ import {
 import {
   WebView,
   type WebViewMessageEvent,
-  type WebViewNavigation,
 } from 'react-native-webview'
+import { OfflineHome } from './OfflineHome'
+import {
+  OFFLINE_RECENT_STORAGE_KEY,
+  addRecentOfflineVisit,
+  offlineChannelForRoute,
+  offlineVisitScript,
+  parseOfflineVisits,
+  type OfflineVisit,
+} from './offline'
 
 const SITE_URL = 'https://www.multiverseco.org'
 const START_URL = `${SITE_URL}/console?source=ios_app`
@@ -77,8 +86,11 @@ export default function App() {
   const permissionStarted = useRef(false)
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryCount = useRef(0)
-  const [canGoBack, setCanGoBack] = useState(false)
+  const wasOffline = useRef(false)
   const [failed, setFailed] = useState(false)
+  const [networkState, setNetworkState] = useState<'unknown' | 'online' | 'offline'>('unknown')
+  const [reconnecting, setReconnecting] = useState(false)
+  const [recentVisits, setRecentVisits] = useState<OfflineVisit[]>([])
   const [authenticated, setAuthenticated] = useState(false)
   const [deviceToken, setDeviceToken] = useState<string | null>(null)
   const [registeredToken, setRegisteredToken] = useState<string | null>(null)
@@ -168,6 +180,35 @@ export default function App() {
   }, [loadNativeToken, scheduleDeviceSyncRetry])
 
   useEffect(() => {
+    void AsyncStorage.getItem(OFFLINE_RECENT_STORAGE_KEY)
+      .then((value) => setRecentVisits(parseOfflineVisits(value)))
+      .catch(() => setRecentVisits([]))
+
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      if (state.isConnected == null) {
+        setNetworkState('unknown')
+        return
+      }
+      const connected = state.isConnected === true && state.isInternetReachable !== false
+      setNetworkState(connected ? 'online' : 'offline')
+      if (!connected) {
+        wasOffline.current = true
+        setFailed(true)
+        setReconnecting(false)
+        return
+      }
+
+      if (wasOffline.current) {
+        wasOffline.current = false
+        setReconnecting(true)
+        webView.current?.reload()
+      }
+    })
+
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
     void Notifications.getPermissionsAsync().then(async (permissions) => {
       if (permissions.granted) await loadNativeToken().catch(() => null)
     })
@@ -213,10 +254,22 @@ export default function App() {
     if (retryTimer.current) clearTimeout(retryTimer.current)
   }, [])
 
-  const handleNavigation = (event: WebViewNavigation) => {
-    setCanGoBack(event.canGoBack)
-    setFailed(false)
-  }
+  const retryConsole = useCallback(() => {
+    setReconnecting(true)
+    void NetInfo.fetch().then((state) => {
+      const connected = state.isConnected === true && state.isInternetReachable !== false
+      setNetworkState(connected ? 'online' : 'offline')
+      if (connected) {
+        webView.current?.reload()
+      } else {
+        setFailed(true)
+        setReconnecting(false)
+      }
+    }).catch(() => {
+      setFailed(true)
+      setReconnecting(false)
+    })
+  }, [])
 
   const handleRequest = (request: { url: string }) => {
     const scheme = request.url.split(':', 1)[0]?.toLowerCase()
@@ -238,6 +291,7 @@ export default function App() {
         status?: number
         error?: string | null
         code?: string | null
+        route?: string
       }
       if (message.type === 'push-session') {
         setAuthenticated(message.authenticated === true)
@@ -265,6 +319,16 @@ export default function App() {
           scheduleDeviceSyncRetry()
         }
       }
+      if (message.type === 'offline-visit') {
+        const channel = offlineChannelForRoute(message.route)
+        if (channel) {
+          setRecentVisits((current) => {
+            const next = addRecentOfflineVisit(current, channel)
+            void AsyncStorage.setItem(OFFLINE_RECENT_STORAGE_KEY, JSON.stringify(next)).catch(() => {})
+            return next
+          })
+        }
+      }
     } catch {
       // Ignore messages that are not part of the native bridge.
     }
@@ -289,13 +353,27 @@ export default function App() {
         pullToRefreshEnabled
         setSupportMultipleWindows={false}
         applicationNameForUserAgent="MultiverseCollective/1.0"
-        onNavigationStateChange={handleNavigation}
         onShouldStartLoadWithRequest={handleRequest}
         onMessage={handleMessage}
-        onLoadEnd={() => webView.current?.injectJavaScript(sessionProbeScript())}
-        onError={() => setFailed(true)}
+        onLoad={() => {
+          if (networkState !== 'offline') {
+            setFailed(false)
+            setReconnecting(false)
+          }
+        }}
+        onLoadEnd={() => {
+          webView.current?.injectJavaScript(sessionProbeScript())
+          webView.current?.injectJavaScript(offlineVisitScript())
+        }}
+        onError={() => {
+          setFailed(true)
+          setReconnecting(false)
+        }}
         onHttpError={(event) => {
-          if (event.nativeEvent.statusCode >= 500) setFailed(true)
+          if (event.nativeEvent.statusCode >= 500) {
+            setFailed(true)
+            setReconnecting(false)
+          }
         }}
         renderLoading={() => (
           <View style={styles.center}>
@@ -306,32 +384,13 @@ export default function App() {
         startInLoadingState
       />
 
-      {failed && (
-        <View style={styles.error}>
-          <Text style={styles.errorCode}>SIGNAL INTERRUPTED</Text>
-          <Text style={styles.errorBody}>
-            The Console needs a network connection. Check your signal and try again.
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setFailed(false)
-              webView.current?.reload()
-            }}
-            style={({ pressed }) => [styles.button, pressed && styles.pressed]}
-          >
-            <Text style={styles.buttonText}>RECONNECT</Text>
-          </Pressable>
-          {canGoBack && (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => webView.current?.goBack()}
-              style={({ pressed }) => [styles.back, pressed && styles.pressed]}
-            >
-              <Text style={styles.backText}>← PREVIOUS CHANNEL</Text>
-            </Pressable>
-          )}
-        </View>
+      {(failed || networkState === 'offline') && (
+        <OfflineHome
+          connected={networkState === 'online'}
+          reconnecting={reconnecting}
+          recentVisits={recentVisits}
+          onRetry={retryConsole}
+        />
       )}
     </SafeAreaView>
   )
@@ -353,49 +412,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 1.2,
   },
-  error: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'stretch',
-    justifyContent: 'center',
-    padding: 28,
-    gap: 18,
-    backgroundColor: '#070912',
-  },
-  errorCode: {
-    color: '#E35205',
-    fontFamily: 'Courier',
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 2,
-  },
-  errorBody: {
-    color: 'rgba(245,245,245,0.68)',
-    fontFamily: 'Courier',
-    fontSize: 15,
-    lineHeight: 23,
-  },
-  button: {
-    minHeight: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E35205',
-    backgroundColor: '#E35205',
-  },
-  buttonText: {
-    color: '#070912',
-    fontFamily: 'Courier',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-  },
-  back: { minHeight: 48, alignItems: 'center', justifyContent: 'center' },
-  backText: {
-    color: 'rgba(245,245,245,0.55)',
-    fontFamily: 'Courier',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  pressed: { opacity: 0.72 },
 })

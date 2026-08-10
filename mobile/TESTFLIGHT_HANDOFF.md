@@ -5,7 +5,7 @@
 - App name: `Multiverse Collective`
 - Bundle ID: `org.multiverseco.collective`
 - Version: `1.0.0`
-- Build: `1`
+- Build: `4`
 - Website entry: `https://www.multiverseco.org/console?source=ios_app`
 
 The iOS app is a WKWebView shell over the production website. The website remains
@@ -55,7 +55,8 @@ release operator and Apple Developer account, not to source control.
 - Login succeeds and remains active after force-closing and reopening.
 - Dashboard, Intel, Devices, Worlds and Voyagers open normally.
 - Forms, uploads and external `mailto:`/`tel:` links behave as expected.
-- Network loss shows the native reconnect screen.
+- Network loss shows the native offline field archive without exposing account data.
+- Restoring the network automatically reloads the previous Console channel.
 
 ## Review preparation
 
