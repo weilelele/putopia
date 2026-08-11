@@ -18,13 +18,16 @@ import {
   type WebViewMessageEvent,
 } from 'react-native-webview'
 import { OfflineHome } from './OfflineHome'
+import { cacheOfflineMedia } from './offline-media'
 import {
-  OFFLINE_RECENT_STORAGE_KEY,
-  addRecentOfflineVisit,
-  offlineChannelForRoute,
-  offlineVisitScript,
-  parseOfflineVisits,
-  type OfflineVisit,
+  OFFLINE_MEDIA_STORAGE_KEY,
+  OFFLINE_SNAPSHOT_STORAGE_KEY,
+  collectOfflineMediaUrls,
+  offlineSnapshotScript,
+  parseOfflineMediaMap,
+  parseOfflineSnapshot,
+  type OfflineMediaMap,
+  type OfflineSnapshot,
 } from './offline'
 
 const SITE_URL = 'https://www.multiverseco.org'
@@ -87,10 +90,13 @@ export default function App() {
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryCount = useRef(0)
   const wasOffline = useRef(false)
+  const verifiedSession = useRef<boolean | null>(null)
+  const offlineMediaGeneration = useRef(0)
   const [failed, setFailed] = useState(false)
   const [networkState, setNetworkState] = useState<'unknown' | 'online' | 'offline'>('unknown')
   const [reconnecting, setReconnecting] = useState(false)
-  const [recentVisits, setRecentVisits] = useState<OfflineVisit[]>([])
+  const [offlineSnapshot, setOfflineSnapshot] = useState<OfflineSnapshot | null>(null)
+  const [offlineMedia, setOfflineMedia] = useState<OfflineMediaMap>({})
   const [authenticated, setAuthenticated] = useState(false)
   const [deviceToken, setDeviceToken] = useState<string | null>(null)
   const [registeredToken, setRegisteredToken] = useState<string | null>(null)
@@ -180,9 +186,15 @@ export default function App() {
   }, [loadNativeToken, scheduleDeviceSyncRetry])
 
   useEffect(() => {
-    void AsyncStorage.getItem(OFFLINE_RECENT_STORAGE_KEY)
-      .then((value) => setRecentVisits(parseOfflineVisits(value)))
-      .catch(() => setRecentVisits([]))
+    void AsyncStorage.multiGet([OFFLINE_SNAPSHOT_STORAGE_KEY, OFFLINE_MEDIA_STORAGE_KEY])
+      .then((entries) => {
+        setOfflineSnapshot(parseOfflineSnapshot(entries[0]?.[1] ?? null))
+        setOfflineMedia(parseOfflineMediaMap(entries[1]?.[1] ?? null))
+      })
+      .catch(() => {
+        setOfflineSnapshot(null)
+        setOfflineMedia({})
+      })
 
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isConnected == null) {
@@ -291,10 +303,25 @@ export default function App() {
         status?: number
         error?: string | null
         code?: string | null
-        route?: string
+        snapshot?: unknown
       }
       if (message.type === 'push-session') {
-        setAuthenticated(message.authenticated === true)
+        const nextAuthenticated = message.authenticated === true
+        const previouslyAuthenticated = verifiedSession.current === true
+        verifiedSession.current = nextAuthenticated
+        setAuthenticated(nextAuthenticated)
+        if (!nextAuthenticated) {
+          setOfflineSnapshot((current) => {
+            if (!current?.viewer.authenticated) return current
+            offlineMediaGeneration.current += 1
+            void AsyncStorage.multiRemove([OFFLINE_SNAPSHOT_STORAGE_KEY, OFFLINE_MEDIA_STORAGE_KEY]).catch(() => {})
+            void cacheOfflineMedia([], offlineMedia).catch(() => {})
+            setOfflineMedia({})
+            return null
+          })
+        } else {
+          webView.current?.injectJavaScript(offlineSnapshotScript(!previouslyAuthenticated))
+        }
         if (message.ok === false && message.authenticated) {
           console.warn('[push] Push storage check failed.', message.status, message.error)
         }
@@ -319,15 +346,22 @@ export default function App() {
           scheduleDeviceSyncRetry()
         }
       }
-      if (message.type === 'offline-visit') {
-        const channel = offlineChannelForRoute(message.route)
-        if (channel) {
-          setRecentVisits((current) => {
-            const next = addRecentOfflineVisit(current, channel)
-            void AsyncStorage.setItem(OFFLINE_RECENT_STORAGE_KEY, JSON.stringify(next)).catch(() => {})
-            return next
+      if (message.type === 'offline-snapshot') {
+        const next = parseOfflineSnapshot(message.snapshot)
+        if (!next || !next.viewer.authenticated || verifiedSession.current !== true) return
+        const mediaGeneration = offlineMediaGeneration.current
+        setOfflineSnapshot(next)
+        void AsyncStorage.setItem(OFFLINE_SNAPSHOT_STORAGE_KEY, JSON.stringify(next)).catch(() => {})
+        void cacheOfflineMedia(collectOfflineMediaUrls(next), offlineMedia)
+          .then((nextMedia) => {
+            if (mediaGeneration !== offlineMediaGeneration.current) {
+              void cacheOfflineMedia([], nextMedia).catch(() => {})
+              return
+            }
+            setOfflineMedia(nextMedia)
+            void AsyncStorage.setItem(OFFLINE_MEDIA_STORAGE_KEY, JSON.stringify(nextMedia)).catch(() => {})
           })
-        }
+          .catch(() => {})
       }
     } catch {
       // Ignore messages that are not part of the native bridge.
@@ -363,7 +397,6 @@ export default function App() {
         }}
         onLoadEnd={() => {
           webView.current?.injectJavaScript(sessionProbeScript())
-          webView.current?.injectJavaScript(offlineVisitScript())
         }}
         onError={() => {
           setFailed(true)
@@ -388,7 +421,8 @@ export default function App() {
         <OfflineHome
           connected={networkState === 'online'}
           reconnecting={reconnecting}
-          recentVisits={recentVisits}
+          snapshot={offlineSnapshot}
+          media={offlineMedia}
           onRetry={retryConsole}
         />
       )}
