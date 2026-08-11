@@ -16,6 +16,18 @@ Run locally before requesting review (CI gates on these too):
 - [ ] `npm test`
 - [ ] `npm run build`
 
+## Design review
+
+Complete this section when the PR adds or materially changes UI:
+
+- [ ] Started from the 390×844 portrait layout and attached a screenshot
+- [ ] Uses only canonical orange / deep-space-blue / off-white tokens and Courier Prime
+- [ ] Uses flat surfaces with no gradient, glow/shadow, blur/glass, CRT, cyan, grey brand color, or decorative HUD
+- [ ] Uses at most one clipped top-right corner on a prominent control or container
+- [ ] Default, loading, empty, error, disabled, focus, and completed states were considered
+- [ ] Touch targets are at least 44×44px and the page has one primary action
+- [ ] `npm run design:check`
+
 ## Preview / data safety
 
 > ⚠️ Preview deployments share **production** Supabase, MongoDB, and Stripe
