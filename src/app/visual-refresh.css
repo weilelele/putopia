@@ -2998,12 +2998,53 @@ button.archive-stat-strip__item {
 }
 
 .archive-device-card.is-muted {
-  opacity: 0.72;
+  opacity: 0.82;
 }
 
 .archive-device-card.is-muted:hover,
 .archive-device-card.is-muted:focus-visible {
-  opacity: 0.92;
+  opacity: 0.96;
+}
+
+.archive-device-card__id {
+  overflow-wrap: anywhere;
+  color: var(--color-star-deep);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 1.35;
+}
+
+.archive-device-card__name {
+  min-height: 2.5rem;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--color-star);
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.archive-device-card__name.is-muted {
+  color: var(--color-star-dim);
+}
+
+.archive-device-card__meta {
+  min-width: 0;
+  color: var(--color-star-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: 1.45;
+}
+
+.archive-device-card__description {
+  margin: 0 0 0.75rem;
+  color: var(--color-star-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: 1.55;
 }
 
 .archive-device-claim-card {
