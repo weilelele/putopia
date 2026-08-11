@@ -406,8 +406,7 @@ function FeedSkeleton({ hideHeader = false }: { hideHeader?: boolean }) {
     <div style={{ maxWidth: 820, margin: '0 auto' }}>
       <style>{`
         .feed-skel-ph { background-image: linear-gradient(100deg, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.02) 70%); background-size: 200% 100%; animation: feed-skel-ph-shimmer 1.4s ease-in-out infinite; }
-        .feed-skel-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 0 0.5rem; min-height: 70vh; }
-        @media (min-width: 640px) { .feed-skel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .feed-skel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 0.5rem; min-height: 70vh; }
         @keyframes feed-skel-ph-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
       `}</style>
       {!hideHeader && (

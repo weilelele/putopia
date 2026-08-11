@@ -106,6 +106,7 @@ const AMBER = '#FFB020'
 const GREEN = '#20D890'
 const BURNT = '#C84406'
 // Font tokens — never below --fs-caption (12px floor).
+const FS_BODY = 'var(--fs-body)'        // 16
 const FS_LABEL = 'var(--fs-label)'      // 13
 const FS_CAPTION = 'var(--fs-caption)'  // 12
 
@@ -148,7 +149,7 @@ function Cover({ src }: { src: string }) {
       <SmartImage
         src={src}
         alt=""
-        sizes="(min-width: 768px) 600px, 100vw"
+        sizes="(min-width: 768px) 400px, 50vw"
         onLoad={() => setLoaded(true)}
         style={{ objectFit: 'cover', filter: 'brightness(0.85) saturate(0.85)', opacity: loaded ? 1 : 0, transition: 'opacity 0.35s ease' }}
       />
@@ -267,18 +268,18 @@ function ContentCard({ item, onMember, onLocked }: { item: FeedItem; onMember?: 
         )}
 
         {isMember && item.actor?.name && (
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.3, color: 'var(--color-star)', textAlign: 'center', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_BODY, fontWeight: 700, lineHeight: 1.25, color: 'var(--color-star)', textAlign: 'center', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {item.actor.name}
           </div>
         )}
 
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMember ? FS_CAPTION : FS_LABEL, fontWeight: isMember ? 400 : 700, lineHeight: 1.38, color: item.color, textAlign: isMember ? 'center' : 'left' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: isMember ? FS_LABEL : FS_BODY, fontWeight: isMember ? 400 : 700, lineHeight: 1.35, color: item.color, textAlign: isMember ? 'center' : 'left' }}>
           {item.title}
         </div>
 
         {!isMember && item.snippet && (
           <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, lineHeight: 1.5, color: 'rgba(245,245,245,0.5)',
+            fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, lineHeight: 1.5, color: 'rgba(245,245,245,0.55)',
             marginTop: 7, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>{item.snippet}</div>
         )}
@@ -355,7 +356,7 @@ function VoteTofu({ vote, onVote, onLocked, onSignIn, canVote = true }: { vote: 
         }}
       >
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.18em', color: ORANGE, marginBottom: 5 }}>VOTE</div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.38, color: LORANGE }}>{vote.title}</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_BODY, fontWeight: 700, lineHeight: 1.35, color: LORANGE }}>{vote.title}</div>
         <VoyagerOnlyCover minHeight={64} />
       </div>
     )
@@ -369,7 +370,7 @@ function VoteTofu({ vote, onVote, onLocked, onSignIn, canVote = true }: { vote: 
         borderRadius: 3, overflow: 'hidden', cursor: 'pointer', padding: '11px 12px',
       }}
     >
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.38, color: LORANGE }}>{vote.title}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: FS_BODY, fontWeight: 700, lineHeight: 1.35, color: LORANGE }}>{vote.title}</div>
 
       {shown.length > 0 && (
         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -684,10 +685,9 @@ export function FeedProtoClient({ entries, embedded = false, hideHeader = false,
           depending on globals.css (which the dev server's CSS HMR misses). */}
       <style>{`
         .feed-skel { background-image: linear-gradient(100deg, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.02) 70%); background-size: 200% 100%; animation: feed-skel-shimmer 1.4s ease-in-out infinite; }
-        .feed-entry-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-items: start; }
+        .feed-entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start; }
         .feed-entry-grid__item { min-width: 0; }
         .feed-entry-grid__item > * { margin-bottom: 0 !important; }
-        @media (min-width: 640px) { .feed-entry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @keyframes feed-skel-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
       `}</style>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>

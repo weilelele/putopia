@@ -267,10 +267,10 @@ export default function DevicesPage() {
       {isAtLeast('architect') && <section className="mb-10">
         <ArchiveSectionLabel>FIRST BATCH · CAIRO DISCOVERY</ArchiveSectionLabel>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           <ArchiveLinkCard
             href="/devices/claim"
-            className="archive-device-card archive-device-claim-card col-span-2 md:col-span-1"
+            className="archive-device-card archive-device-claim-card"
           >
             {/* Visual */}
             <div className="border-b w-full overflow-hidden relative" style={{ borderColor: 'rgba(227,82,5,0.35)', aspectRatio: '16/9' }}>
@@ -332,7 +332,7 @@ export default function DevicesPage() {
       <section className="mb-10">
         <ArchiveSectionLabel>UNKNOWN DEVICES</ArchiveSectionLabel>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {unknownDevices.map((device) => (
             <ArchiveLinkCard
               key={device.id}
@@ -344,10 +344,10 @@ export default function DevicesPage() {
               </div>
 
               <div className="p-3">
-                <div className="flex items-start justify-between gap-1.5 mb-1.5">
-                  <div className="min-w-0">
-                    <div className="archive-device-card__id">{device.id}</div>
-                    <div className="archive-device-card__name is-muted">{device.name}</div>
+                <div className="flex items-start justify-between mb-1.5">
+                  <div>
+                    <div className="text-xs font-mono" style={{ color: 'rgba(227,82,5,0.28)' }}>{device.id}</div>
+                    <div className="text-xs font-mono font-semibold" style={{ color: 'rgba(245,245,245,0.35)' }}>{device.name}</div>
                   </div>
                   <div
                     className="text-xs font-mono px-1.5 py-0.5 border"
@@ -357,9 +357,9 @@ export default function DevicesPage() {
                   </div>
                 </div>
 
-                <div className="archive-device-card__meta flex items-center gap-1">
+                <div className="flex items-center gap-1 text-xs font-mono" style={{ color: 'rgba(227,82,5,0.28)' }}>
                   <span>◎</span>
-                  <span className="truncate">{device.location}</span>
+                  <span>{device.location}</span>
                 </div>
 
                 <div className="mt-2.5">
@@ -381,7 +381,7 @@ export default function DevicesPage() {
       <section>
         <ArchiveSectionLabel>KNOWN DEVICES</ArchiveSectionLabel>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {knownDevices.map((device) => {
             const statusKey = device.status ?? 'unknown'
             const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.unknown
@@ -398,8 +398,8 @@ export default function DevicesPage() {
 
                 <div className="p-3">
                   <div className="mb-1.5 min-w-0">
-                    <div className="archive-device-card__id">{device.id}</div>
-                    <div className="archive-device-card__name">{device.name}</div>
+                    <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>{device.id}</div>
+                    <div className="text-sm font-mono font-semibold truncate" style={{ color: '#F5F5F5' }}>{device.name}</div>
                     {device.status && (
                       <span
                         className="label-tag whitespace-nowrap mt-1 inline-block"
@@ -410,12 +410,12 @@ export default function DevicesPage() {
                     )}
                   </div>
 
-                  <div className="archive-device-card__meta flex items-center gap-1 mb-2">
+                  <div className="flex items-center gap-1 mb-2 text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
                     <span>◎</span>
                     <span className="truncate">{device.location}</span>
                   </div>
 
-                  <p className="archive-device-card__description line-clamp-3">
+                  <p className="text-xs leading-relaxed mb-3 font-mono line-clamp-3" style={{ color: 'rgba(245,245,245,0.55)' }}>
                     {device.description}
                   </p>
 
