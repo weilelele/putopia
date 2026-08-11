@@ -11,6 +11,7 @@ import { FlameSlider, WorldChoiceCards, ConsoleChoiceCards, WORLD_OPTIONS, URGEN
 import { submitApplication } from '@/lib/actions/applications'
 import { HudField } from '@/components/hud-field'
 import { ArchiveButton } from '@/components/archive-button'
+import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v3'
@@ -161,8 +162,13 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
       utm_content:          utm.utm_content,
       fbclid:               utm.fbclid,
       landing_page_variant: v.key !== 'default' ? v.key : (sp.get('variant') ?? null),
-    })
+    }, { redditClickId: utm.rdt_cid })
     if (result.error && !result.applicationSaved) {
+      setSubmitError(result.error)
+      setSubmitting(false)
+      return
+    }
+    if (result.error) {
       setSubmitError(result.error)
       setSubmitting(false)
       return
@@ -191,10 +197,8 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     if (typeof window !== 'undefined' && w.twq) {
       w.twq('event', 'tw-rd22u-rd2mg', {})
     }
-    if (result.error) {
-      setSubmitError(result.error)
-      setSubmitting(false)
-      return
+    if (result.redditConversionId) {
+      trackRedditPixelEvent('Lead', result.redditConversionId)
     }
     // Persist email so returning users skip onboarding and land on the inbox screen
     localStorage.setItem('putopia_pending_email', normalizedEmail)

@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
 import { ScrollRestorer } from '@/components/scroll-restorer'
 import { PwaProvider } from '@/components/pwa-provider'
+import { REDDIT_PIXEL_ID } from '@/lib/reddit-ads-config'
 
 const courierPrime = Courier_Prime({
   variable: '--font-mono',
@@ -57,6 +58,9 @@ export default function RootLayout({
           },s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
           a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
           twq('config','rd22u');
+        `}</Script>
+        <Script id="reddit-pixel" strategy="afterInteractive">{`
+          !function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement("script");t.src="https://www.redditstatic.com/ads/pixel.js?pixel_id=${REDDIT_PIXEL_ID}",t.async=!0;var s=d.getElementsByTagName("script")[0];s.parentNode.insertBefore(t,s)}}(window,document);rdt('init','${REDDIT_PIXEL_ID}');rdt('track', 'PageVisit');
         `}</Script>
         <PwaProvider>
           <AuthProvider>

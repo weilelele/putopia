@@ -10,6 +10,8 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { syncLoopsRegistration } from '@/lib/actions/profile'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
+import { trackRedditSignUp } from '@/lib/actions/reddit-ads'
+import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
@@ -88,6 +90,10 @@ export default function RegisterPage() {
         syncLoopsRegistration(user.email, displayName.trim(), user.id).catch(() => {})
       }
       const utm = getFirstTouch()
+      const redditResult = await trackRedditSignUp(utm.rdt_cid)
+      if (redditResult.conversionId) {
+        trackRedditPixelEvent('SignUp', redditResult.conversionId)
+      }
       posthog.identify(user.id, { email: user.email, display_name: displayName.trim(), registered_at: new Date().toISOString() })
       posthog.capture('account_registered', {
         experiment_group:  experimentGroup ?? undefined,
