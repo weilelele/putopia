@@ -32,7 +32,7 @@ This iOS shell reproduces the current production website at
 - JavaScript, full-screen/inline media, forms and uploads.
 - `mailto:`, `tel:` and other non-web schemes are passed to iOS.
 - A native offline copy of Dashboard, Intel, Devices, Worlds, Voyagers, Logs,
-  and Votes is shown for network/server failures.
+  and Votes is shown only when the device has no usable network connection.
 - The copy stores sanitized content and a bounded media cache inside the app
   sandbox. It excludes credentials, classified Intel, comments, private drafts,
   social links, and individual vote responses.

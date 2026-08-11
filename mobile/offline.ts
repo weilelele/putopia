@@ -5,6 +5,11 @@ export const OFFLINE_SYNC_INTERVAL_MS = 5 * 60 * 1000
 
 export type OfflineRole = 'guest' | 'applicant' | 'voyager' | 'architect'
 export type OfflineTab = 'dashboard' | 'intel' | 'devices' | 'worlds' | 'voyagers'
+export type OfflineNetworkState = 'unknown' | 'online' | 'offline'
+
+export function shouldShowOffline(networkState: OfflineNetworkState, failed: boolean): boolean {
+  return networkState === 'offline' || (networkState === 'unknown' && failed)
+}
 
 export interface OfflineViewer {
   authenticated: boolean

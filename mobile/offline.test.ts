@@ -3,6 +3,7 @@ import {
   collectOfflineMediaUrls,
   parseOfflineMediaMap,
   parseOfflineSnapshot,
+  shouldShowOffline,
   type OfflineSnapshot,
 } from './offline'
 
@@ -29,6 +30,13 @@ const snapshot: OfflineSnapshot = {
 }
 
 describe('iOS full offline snapshot', () => {
+  it('keeps the original app visible whenever the device is online', () => {
+    expect(shouldShowOffline('online', false)).toBe(false)
+    expect(shouldShowOffline('online', true)).toBe(false)
+    expect(shouldShowOffline('offline', false)).toBe(true)
+    expect(shouldShowOffline('unknown', true)).toBe(true)
+  })
+
   it('accepts a versioned snapshot and rejects malformed or stale payloads', () => {
     expect(parseOfflineSnapshot(JSON.stringify(snapshot))).toEqual(snapshot)
     expect(parseOfflineSnapshot({ ...snapshot, version: 1 })).toBeNull()

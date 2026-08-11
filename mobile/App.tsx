@@ -26,6 +26,7 @@ import {
   offlineSnapshotScript,
   parseOfflineMediaMap,
   parseOfflineSnapshot,
+  shouldShowOffline,
   type OfflineMediaMap,
   type OfflineSnapshot,
 } from './offline'
@@ -368,6 +369,8 @@ export default function App() {
     }
   }
 
+  const showOffline = shouldShowOffline(networkState, failed)
+
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar style="light" backgroundColor="#070912" />
@@ -417,7 +420,7 @@ export default function App() {
         startInLoadingState
       />
 
-      {(failed || networkState === 'offline') && (
+      {showOffline && (
         <OfflineHome
           connected={networkState === 'online'}
           reconnecting={reconnecting}
