@@ -78,23 +78,46 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
             </div>
           )}
         </div>
-
-        {feed.investigations.length === 0 ? (
-          <div style={{ color: 'rgba(245,245,245,0.4)', fontSize: 14, padding: '48px 0', textAlign: 'center' }}>
-            No active investigations.
-          </div>
-        ) : (
-          feed.investigations.map((inv) => (
-            <InvestigationCard
-              key={inv.id}
-              investigation={inv}
-              onFiled={refresh}
-            />
-          ))
-        )}
+        <InvestigationList feed={feed} onFiled={refresh} />
       </div>
     </main>
   )
+}
+
+export function EmbeddedInvestigationFeed({ initial }: { initial: InvestigationFeedData }) {
+  const [feed, setFeed] = useState<InvestigationFeedData>(initial)
+  const refresh = async () => setFeed(await getInvestigationFeed())
+
+  return (
+    <div className="worlds-dispatch-feed">
+      {!feed.loggedIn && (
+        <div className="worlds-dispatch-access-note">
+          Browse only — <a href="/login">log in</a> to respond.
+        </div>
+      )}
+      <InvestigationList feed={feed} onFiled={refresh} />
+    </div>
+  )
+}
+
+function InvestigationList({
+  feed,
+  onFiled,
+}: {
+  feed: InvestigationFeedData
+  onFiled: () => void
+}) {
+  if (feed.investigations.length === 0) {
+    return <div className="worlds-dispatch-empty">No active investigations.</div>
+  }
+
+  return feed.investigations.map((investigation) => (
+    <InvestigationCard
+      key={investigation.id}
+      investigation={investigation}
+      onFiled={onFiled}
+    />
+  ))
 }
 
 export function InvestigationCard({
@@ -139,9 +162,10 @@ export function InvestigationCard({
           <button
             onClick={() => canGoBack && setSelectedSlot((d) => d - 1)}
             disabled={!canGoBack}
+            aria-label="Previous signal day"
             style={{
               background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
-              width: 28, height: 28, cursor: canGoBack ? 'pointer' : 'default', fontFamily: 'monospace', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 44, height: 44, cursor: canGoBack ? 'pointer' : 'default', fontFamily: 'var(--font-mono)', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >◀</button>
           <span style={{ fontSize: 12, color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', minWidth: 48, textAlign: 'center' }}>
@@ -150,9 +174,10 @@ export function InvestigationCard({
           <button
             onClick={() => canGoForward && setSelectedSlot((d) => d + 1)}
             disabled={!canGoForward}
+            aria-label="Next signal day"
             style={{
               background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoForward ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
-              width: 28, height: 28, cursor: canGoForward ? 'pointer' : 'default', fontFamily: 'monospace', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 44, height: 44, cursor: canGoForward ? 'pointer' : 'default', fontFamily: 'var(--font-mono)', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >▶</button>
         </div>
