@@ -1,55 +1,64 @@
 import { describe, expect, it } from 'vitest'
 import {
-  MAX_RECENT_CHANNELS,
-  addRecentOfflineVisit,
-  offlineChannelForRoute,
-  parseOfflineVisits,
+  collectOfflineMediaUrls,
+  parseOfflineMediaMap,
+  parseOfflineSnapshot,
+  type OfflineSnapshot,
 } from './offline'
 
-describe('iOS offline field archive', () => {
-  it('stores only fixed, allowlisted top-level channels', () => {
-    expect(offlineChannelForRoute('/worlds/private-record?token=secret')).toMatchObject({
-      route: '/worlds',
-      label: 'WORLD RECORDS',
-    })
-    expect(offlineChannelForRoute('/profile')).toBeNull()
-    expect(offlineChannelForRoute('https://evil.example/worlds')).toBeNull()
+const snapshot: OfflineSnapshot = {
+  version: 2,
+  syncedAt: '2026-08-10T12:00:00.000Z',
+  viewer: { authenticated: true, role: 'voyager', displayName: 'Mira' },
+  worlds: [{
+    id: 'W-1', name: '镜像', name_en: 'Mirror', description: 'A confirmed world.',
+    image_path: 'https://cdn.example/world.webp', gradient_from: '#000000', gradient_to: '#111111',
+    lifecycle_state: 'stable', discoverer_name: 'Mira', discovery_date: '2026-08-01',
+    submitted_at: null, created_at: '2026-08-01T00:00:00.000Z',
+  }],
+  devices: [],
+  intel: [{
+    id: 'I-1', title: 'Signal confirmed', content: 'Public dispatch.', timestamp: '2026-08-09T00:00:00.000Z',
+    tag: 'NOTICE', images: ['https://cdn.example/intel.webp'], publisher_name: 'Architect',
+    created_at: '2026-08-09T00:00:00.000Z',
+  }],
+  voyagers: [],
+  stories: [],
+  votes: [],
+  functions: [],
+}
+
+describe('iOS full offline snapshot', () => {
+  it('accepts a versioned snapshot and rejects malformed or stale payloads', () => {
+    expect(parseOfflineSnapshot(JSON.stringify(snapshot))).toEqual(snapshot)
+    expect(parseOfflineSnapshot({ ...snapshot, version: 1 })).toBeNull()
+    expect(parseOfflineSnapshot({ ...snapshot, syncedAt: 'invalid' })).toBeNull()
+    expect(parseOfflineSnapshot({ ...snapshot, viewer: { role: 'admin', authenticated: true } })).toBeNull()
+    expect(parseOfflineSnapshot({ ...snapshot, intel: 'not-an-array' })).toBeNull()
   })
 
-  it('deduplicates channels and limits the archive size', () => {
-    const routes = ['/console', '/intel', '/devices', '/worlds', '/voyagers']
-    const visits = routes.reduce((current, route, index) => {
-      const channel = offlineChannelForRoute(route)
-      if (!channel) return current
-      return addRecentOfflineVisit(current, channel, `2026-08-0${index + 1}T12:00:00.000Z`)
-    }, [] as ReturnType<typeof addRecentOfflineVisit>)
-
-    expect(visits).toHaveLength(MAX_RECENT_CHANNELS)
-    expect(visits.map((visit) => visit.route)).toEqual([
-      '/voyagers',
-      '/worlds',
-      '/devices',
-      '/intel',
+  it('collects and deduplicates only HTTPS media URLs', () => {
+    const withDuplicates: OfflineSnapshot = {
+      ...snapshot,
+      devices: [{
+        id: 'D-1', name: 'Console', batch_id: null, knowledge: 'known', location: 'Berlin',
+        description: 'Device', image_path: 'https://cdn.example/world.webp', status: 'in_use',
+        current_user_name: null, exploration_progress: 100, updated_at: '2026-08-10T00:00:00.000Z',
+      }],
+    }
+    expect(collectOfflineMediaUrls(withDuplicates)).toEqual([
+      'https://cdn.example/world.webp',
+      'https://cdn.example/intel.webp',
     ])
   })
 
-  it('rebuilds labels from the allowlist and rejects private or malformed entries', () => {
-    const parsed = parseOfflineVisits(JSON.stringify([
-      {
-        route: '/intel/article-id?private=true',
-        label: 'ATTACKER CONTROLLED LABEL',
-        description: 'PRIVATE CONTENT',
-        visitedAt: '2026-08-07T12:00:00.000Z',
-      },
-      { route: '/profile', visitedAt: '2026-08-07T12:00:00.000Z' },
-      { route: '/worlds', visitedAt: 'not-a-date' },
-    ]))
-
-    expect(parsed).toEqual([{
-      route: '/intel',
-      label: 'INTEL FEED',
-      description: 'Receive the latest field intelligence when the uplink returns.',
-      visitedAt: '2026-08-07T12:00:00.000Z',
-    }])
+  it('keeps only valid remote-to-local media mappings', () => {
+    expect(parseOfflineMediaMap(JSON.stringify({
+      'https://cdn.example/a.webp': 'file:///cache/a.webp',
+      'http://cdn.example/b.webp': 'file:///cache/b.webp',
+      'https://cdn.example/c.webp': '/cache/c.webp',
+    }))).toEqual({
+      'https://cdn.example/a.webp': 'file:///cache/a.webp',
+    })
   })
 })
