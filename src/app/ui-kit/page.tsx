@@ -6,6 +6,7 @@ import { ArchiveLinkCard } from '@/components/archive-link-card'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { ArchiveStatStrip } from '@/components/archive-stat-strip'
 import { ArchiveTabsDemo } from './archive-tabs-demo'
+import { GoldenScreens } from './golden-screens'
 
 export default function UiKitPreview() {
   return (
@@ -68,6 +69,11 @@ export default function UiKitPreview() {
             <h3>NAVIGABLE ARCHIVE CARD</h3>
             <p>The entire card is a clear, keyboard-accessible destination.</p>
           </ArchiveLinkCard>
+        </section>
+
+        <section className="uk-section uk-span">
+          <ArchiveSectionLabel>GOLDEN PAGE EXAMPLES</ArchiveSectionLabel>
+          <GoldenScreens />
         </section>
       </div>
 
