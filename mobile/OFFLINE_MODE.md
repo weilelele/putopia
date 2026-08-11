@@ -1,6 +1,8 @@
 # iOS full offline snapshot
 
-Build 5 keeps the Multiverse Console useful when the website cannot be reached.
+Build 5 keeps the Multiverse Console useful when the device has no usable network
+connection. While online, the original production website remains the complete iOS
+experience; the native snapshot never replaces it.
 The native offline view mirrors the app's five primary destinations and renders
 the last successful content snapshot instead of replacing the product with a
 generic error or field-manual page.
