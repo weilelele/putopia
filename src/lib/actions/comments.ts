@@ -8,6 +8,7 @@ import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types
 // Path to revalidate when a thread changes (only device threads have a route today)
 function subjectPath(type: CommentSubjectType, id: string): string | null {
   if (type === 'device') return `/devices/${id}`
+  if (type === 'device_batch') return `/devices/batches/${id}/discussion`
   if (type === 'intel')  return `/intel/${id}`
   if (type === 'world')  return `/worlds/${id}`
   return null
@@ -17,6 +18,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
 
 const SUBJECT_LABEL: Record<CommentSubjectType, string> = {
   device: 'device',
+  device_batch: 'Device Batch',
   intel:  'intel report',
   world:  'world',
 }

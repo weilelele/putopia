@@ -158,6 +158,35 @@ async function fulfillCheckoutSession(
     order.amount,
     receivedAmount,
   )
+  if (order.product_type === 'device_batch_claim') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: unit, error: unitError } = await (admin.from('device_batch_units') as any)
+      .select('unit_code, status, user_id')
+      .eq('order_id', order.id)
+      .maybeSingle()
+    const metadataUnitCode = session.metadata?.unit_code
+    if (
+      unitError
+      || !unit
+      || !['reserved', 'assigned'].includes(unit.status)
+      || unit.user_id !== order.user_id
+      || (metadataUnitCode && metadataUnitCode !== unit.unit_code)
+    ) {
+      console.error('[stripe/webhook] Device Unit reconciliation failed:', {
+        orderId: order.id,
+        metadataUnitCode,
+        storedUnitCode: unit?.unit_code,
+      })
+      // Keep the Unit reserved for an architect to resolve; never silently bind
+      // a different physical device after money has been received.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (admin.from('voyager_orders') as any)
+        .update({ status: 'payment_review', stripe_session_id: session.id })
+        .eq('id', order.id)
+        .in('status', ['pending', 'payment_failed'])
+      return
+    }
+  }
   if (
     order.amount == null ||
     receivedAmount == null ||

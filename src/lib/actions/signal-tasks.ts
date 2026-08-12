@@ -927,6 +927,13 @@ export async function promoteWorldToTuning(input: {
     lifecycle_state: 'syncing',
     vote_scope: input.voteScope ?? 'all',
   }).eq('id', input.worldId)
+  // If the world entered through a Dreamcatcher, preserve that original device
+  // and attach its existing Signal Dispatch thread to the queued round.
+  await admin.from('dreamcatcher_jobs').update({
+    signal_thread_id: data.id,
+    status: 'awaiting_dispatch',
+    updated_at: new Date().toISOString(),
+  }).eq('world_id', input.worldId).in('status', ['processing', 'awaiting_dispatch'])
   return { ok: true, id: data.id }
 }
 

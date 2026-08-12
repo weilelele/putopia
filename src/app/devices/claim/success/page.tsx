@@ -50,6 +50,12 @@ export default async function DeviceClaimSuccessPage({ searchParams }: SuccessPa
                 <dt>Distribution</dt>
                 <dd>{order.pack_count} packs</dd>
               </div>
+              {order.device_unit_code && (
+                <div>
+                  <dt>Assigned Unit</dt>
+                  <dd>{order.device_unit_code}</dd>
+                </div>
+              )}
               <div>
                 <dt>Payment</dt>
                 <dd className="join-success-status">{order.status.replaceAll('_', ' ')}</dd>

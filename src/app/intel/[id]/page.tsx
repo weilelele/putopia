@@ -12,6 +12,7 @@ import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -32,15 +33,26 @@ export default function IntelDetailPage() {
   const backLabel = isGuest ? '← DASHBOARD' : '← INTEL'
 
   const [entry, setEntry] = useState<Intel | null | undefined>(undefined)
+  const [loadError, setLoadError] = useState(false)
   const scrollRef  = useRef<HTMLDivElement>(null)
   const markedRef  = useRef(false)   // fire once per page load
 
-  useEffect(() => {
-    getIntelById(id).then((e) => {
+  const loadEntry = useCallback(async () => {
+    await Promise.resolve()
+    setEntry(undefined)
+    setLoadError(false)
+    try {
+      const e = await getIntelById(id)
       setEntry(e ?? null)
       if (e) posthog.capture('intel_viewed', { intel_id: id, intel_tag: e.tag, intel_title: e.title })
-    })
+    } catch {
+      setLoadError(true)
+    }
   }, [id])
+
+  useEffect(() => {
+    void Promise.resolve().then(loadEntry)
+  }, [loadEntry])
 
   // Scroll-to-bottom tracker — marks intel read when user reaches ≥90% depth
   const handleScroll = useCallback(() => {
@@ -55,12 +67,19 @@ export default function IntelDetailPage() {
     }
   }, [id, isGuest])
 
-  if (entry === undefined) {
+  if (loadError) {
     return (
-      <div className="main pilot-archive-page archive-state-page">
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
-      </div>
+      <ArchiveRouteError
+        title="INTEL DISPATCH UNAVAILABLE"
+        description="This dispatch could not be retrieved."
+        onRetry={loadEntry}
+        returnHref={backHref}
+      />
     )
+  }
+
+  if (entry === undefined) {
+    return <ArchiveRouteLoading label="LOADING INTEL DISPATCH" />
   }
 
   if (!entry) {

@@ -1,41 +1,50 @@
 import type { Metadata } from 'next'
+import { listStoryWorkflows } from '@/lib/story-workflow-repository'
 import { StoryBlueprintBrowser } from './story-blueprint-browser'
 import styles from './story-blueprints.module.css'
 
 export const metadata: Metadata = {
-  title: 'Batch Story Lab — Multiverse Collective',
+  title: 'Story Lab — Multiverse Collective',
 }
 
-export default function BatchStoryBlueprintsPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function BatchStoryBlueprintsPage() {
+  const result = await listStoryWorkflows()
+
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div>
-          <span>BATCH STORY LAB</span>
-          <h1>Three Device Recovery Stories</h1>
+          <span>STORY LAB</span>
+          <h1>Two review gates before publication</h1>
         </div>
         <p>
-          Compare each Batch&apos;s emotional core, factual boundaries, visual identity, and complete
-          content path. This is a collaborative working draft, not an inventory, price, date, or Pack commitment.
+          First approve an English structural adaptation. Then review every English
+          content item before it can be scheduled or published.
         </p>
       </header>
 
-      <section className={styles.rules} aria-label="Shared rules">
+      <section className={styles.rules} aria-label="Story Lab review rules">
         <div>
-          <span>Discovery window</span>
-          <strong>Within the past year</strong>
+          <span>Review Gate 1</span>
+          <strong>Approve the story structure</strong>
         </div>
         <div>
-          <span>Between Batches</span>
-          <strong>Different color and appearance</strong>
+          <span>Review Gate 2</span>
+          <strong>Approve every content item</strong>
         </div>
         <div>
-          <span>Within one Batch</span>
-          <strong>Every Unit looks identical</strong>
+          <span>Publication rule</span>
+          <strong>Only approved, current-version copy can publish</strong>
         </div>
       </section>
 
-      <StoryBlueprintBrowser />
+      <StoryBlueprintBrowser
+        setupError={result.error}
+        setupRequired={result.setupRequired}
+        workflows={result.workflows}
+      />
     </div>
   )
 }

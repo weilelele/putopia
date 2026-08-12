@@ -11,6 +11,7 @@ import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types
 
 const SUBJECT_BASE: Record<CommentSubjectType, string> = {
   device: '/devices',
+  device_batch: '/devices/batches',
   intel:  '/intel',
   world:  '/worlds',
 }

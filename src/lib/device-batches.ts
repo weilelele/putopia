@@ -141,14 +141,7 @@ export const DEVICE_BATCHES: DeviceBatch[] = [
       latestNote:
         'The housings are more consistent than the first survey suggested. The antennas are not. We are preserving those differences rather than forcing a uniform rebuild.',
     },
-    holders: [
-      { name: 'Mira Sato', unit: 'UNIT PENDING', location: 'Kyoto, JP' },
-      { name: 'Noah Reyes', unit: 'UNIT PENDING', location: 'Austin, US' },
-      { name: 'Lena Voss', unit: 'UNIT PENDING', location: 'Berlin, DE' },
-      { name: 'Idris Vale', unit: 'UNIT PENDING', location: 'Lagos, NG' },
-      { name: 'Suki Chen', unit: 'UNIT PENDING', location: 'Toronto, CA' },
-      { name: 'Rhea Marlowe', unit: 'UNIT PENDING', location: 'Lisbon, PT' },
-    ],
+    holders: [],
     distributionStages: [
       {
         id: 'field-kit',
@@ -278,16 +271,7 @@ export const DEVICE_BATCHES: DeviceBatch[] = [
       latestNote:
         'Twenty-four tuning assemblies now hold a stable return signal. The remaining seven are being rebuilt before the stage can close.',
     },
-    holders: [
-      { name: 'Aria Vance', unit: 'KR-02-004', location: 'Seoul, KR' },
-      { name: 'Kano Sol', unit: 'KR-02-008', location: 'Oslo, NO' },
-      { name: 'Vera Reyes', unit: 'KR-02-011', location: 'Austin, US' },
-      { name: 'Mei Bauer', unit: 'KR-02-014', location: 'Berlin, DE' },
-      { name: 'Soren Cho', unit: 'KR-02-019', location: 'Toronto, CA' },
-      { name: 'Nova Abara', unit: 'KR-02-023', location: 'Lagos, NG' },
-      { name: 'Esme Petrov', unit: 'KR-02-028', location: 'Lisbon, PT' },
-      { name: 'Dax Nakamura', unit: 'KR-02-031', location: 'Kyoto, JP' },
-    ],
+    holders: [],
     distributionStages: [
       {
         id: 'registration',
@@ -379,14 +363,7 @@ export const DEVICE_BATCHES: DeviceBatch[] = [
       latestNote:
         'The batch is no longer a restoration project. It is now a distributed observation network, and the holders are writing the next part of its record.',
     },
-    holders: [
-      { name: 'Iris Vale', unit: 'BO-01-001', location: 'Berlin, DE' },
-      { name: 'Marcus Quill', unit: 'BO-01-003', location: 'Oslo, NO' },
-      { name: 'Lena Marlowe', unit: 'BO-01-006', location: 'Toronto, CA' },
-      { name: 'Cyrus Sol', unit: 'BO-01-009', location: 'Austin, US' },
-      { name: 'Yuki Reyes', unit: 'BO-01-012', location: 'Kyoto, JP' },
-      { name: 'Oona Vance', unit: 'BO-01-018', location: 'Lisbon, PT' },
-    ],
+    holders: [],
     distributionStages: [
       {
         id: 'field-materials',

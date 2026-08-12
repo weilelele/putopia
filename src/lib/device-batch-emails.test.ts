@@ -47,11 +47,14 @@ describe('device Batch transactional emails', () => {
       packCount: 3,
       paidAmount: 36_000,
       currency: 'usd',
+      unitCode: 'CAI-01-042',
     })
 
     expect(email.html).toContain('$360.00')
     expect(email.text).toContain('$360.00')
     expect(email.text).toContain('3 packs')
+    expect(email.html).toContain('CAI-01-042')
+    expect(email.text).toContain('Assigned Unit: CAI-01-042')
   })
 
   it('rejects non-http tracking links from email CTAs', () => {

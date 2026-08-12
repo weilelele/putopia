@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getApplicantTaskStatus } from '@/lib/actions/tasks'
 import { getQuizQuestions, submitQuizAnswers } from '@/lib/actions/quiz'
 import type { QuizQuestion } from '@/lib/actions/quiz'
@@ -9,6 +9,7 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchivePageHeader } from '@/components/archive-page-header'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 
 const QUIZ_ID = 'applicant-baseline-v1'
 
@@ -273,21 +274,34 @@ export default function QuizPage() {
   const [alreadyPassed, setAlreadyPassed] = useState(false)
   const [checking, setChecking]     = useState(true)
   const [questions, setQuestions]   = useState<QuizQuestion[]>([])
+  const [loadError, setLoadError]   = useState(false)
   // Result from server-side scoring
   const [result, setResult]         = useState<{ score: number; total: number; passed: boolean; pass_mark: number } | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  // On mount: check already-passed + load questions in parallel
-  useEffect(() => {
-    Promise.all([
-      getApplicantTaskStatus().catch(() => null),
-      getQuizQuestions(QUIZ_ID),
-    ]).then(([status, qs]) => {
+  const loadQuiz = useCallback(async () => {
+    await Promise.resolve()
+    setChecking(true)
+    setLoadError(false)
+    try {
+      const [status, qs] = await Promise.all([
+        getApplicantTaskStatus().catch(() => null),
+        getQuizQuestions(QUIZ_ID),
+      ])
+      if (qs.length === 0) throw new Error('Quiz has no questions')
       if (status?.quiz) setAlreadyPassed(true)
       setQuestions(qs)
+    } catch {
+      setLoadError(true)
+    } finally {
       setChecking(false)
-    })
+    }
   }, [])
+
+  // On mount: check already-passed + load questions in parallel
+  useEffect(() => {
+    void Promise.resolve().then(loadQuiz)
+  }, [loadQuiz])
 
   const currentQuestion = questions[currentIdx]
 
@@ -336,12 +350,18 @@ export default function QuizPage() {
   const passMark = result?.pass_mark ?? 4
 
   if (checking) {
+    return <ArchiveRouteLoading label="LOADING FIELD ASSESSMENT" />
+  }
+
+  if (loadError) {
     return (
-      <div className="main pilot-archive-page archive-state-page">
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.2em' }}>
-          LOADING...
-        </span>
-      </div>
+      <ArchiveRouteError
+        title="ASSESSMENT UNAVAILABLE"
+        description="The field assessment could not be loaded. Your previous result, if any, is unchanged."
+        onRetry={loadQuiz}
+        returnHref="/console"
+        returnLabel="DASHBOARD"
+      />
     )
   }
 

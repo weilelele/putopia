@@ -673,18 +673,10 @@ export function FeedProtoClient({ entries, embedded = false, hideHeader = false,
     ? { color: 'var(--color-star)' as const }
     : { height: '100dvh', overflowY: 'auto' as const, background: 'var(--color-deep)', color: 'var(--color-star)' }
 
-  // Row-major two-column split: even-index entries fill the left column, odd the
-  // right. The on-page reading order (left→right, top→down) then matches the
-  // newest-first `entries` order. Plain CSS `column-count` is column-major — it
-  // fills the entire left column before the right, floating an older card (top
-  // of the right column) above a newer one (bottom of the left).
-  const leftCol: FeedEntry[] = []
-  const rightCol: FeedEntry[] = []
-  entries.forEach((e, i) => (i % 2 === 0 ? leftCol : rightCol).push(e))
   const renderEntry = (e: FeedEntry) =>
     e.kind === 'vote'
-      ? <VoteTofu key={`vote-${e.vote.id}`} vote={e.vote} canVote={canVote} onVote={() => setActiveVote(e.vote)} onLocked={() => setGate({ kind: 'vote', title: e.vote.title })} onSignIn={() => setSignInTitle(e.vote.title)} />
-      : <ContentCard key={e.item.id} item={e.item} onMember={it => setActiveVoyager(it.actor ?? null)} onLocked={it => setGate({ kind: 'intel', title: it.title })} />
+      ? <VoteTofu vote={e.vote} canVote={canVote} onVote={() => setActiveVote(e.vote)} onLocked={() => setGate({ kind: 'vote', title: e.vote.title })} onSignIn={() => setSignInTitle(e.vote.title)} />
+      : <ContentCard item={e.item} onMember={it => setActiveVoyager(it.actor ?? null)} onLocked={it => setGate({ kind: 'intel', title: it.title })} />
 
   return (
     <div style={outer}>
@@ -692,6 +684,10 @@ export function FeedProtoClient({ entries, embedded = false, hideHeader = false,
           depending on globals.css (which the dev server's CSS HMR misses). */}
       <style>{`
         .feed-skel { background-image: linear-gradient(100deg, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.02) 70%); background-size: 200% 100%; animation: feed-skel-shimmer 1.4s ease-in-out infinite; }
+        .feed-entry-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-items: start; }
+        .feed-entry-grid__item { min-width: 0; }
+        .feed-entry-grid__item > * { margin-bottom: 0 !important; }
+        @media (min-width: 640px) { .feed-entry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @keyframes feed-skel-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
       `}</style>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
@@ -712,16 +708,16 @@ export function FeedProtoClient({ entries, embedded = false, hideHeader = false,
           </div>
         )}
 
-        <div style={{ padding: embedded ? 0 : 10, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {leadSlot && (
-              <div style={{ marginBottom: 11 }}>{leadSlot}</div>
-            )}
-            {leftCol.map(renderEntry)}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {rightCol.map(renderEntry)}
-          </div>
+        <div className="feed-entry-grid" style={{ padding: embedded ? 0 : 10 }}>
+          {leadSlot && <div className="feed-entry-grid__item">{leadSlot}</div>}
+          {entries.map((entry) => (
+            <div
+              key={entry.kind === 'vote' ? `vote-${entry.vote.id}` : entry.item.id}
+              className="feed-entry-grid__item"
+            >
+              {renderEntry(entry)}
+            </div>
+          ))}
         </div>
 
         {!embedded && (

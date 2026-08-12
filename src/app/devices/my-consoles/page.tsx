@@ -5,9 +5,9 @@ import { ArrowRight, Check, Clock3, Package } from 'lucide-react'
 import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
-import { OWNED_BATCH_RECORDS } from '@/lib/batch-participation'
 import { DEVICE_BATCH_STATUS } from '@/lib/device-batches'
 import { listPublicDeviceBatches } from '@/lib/device-batch-repository'
+import { getMyDeviceConsoles } from '@/lib/actions/orders'
 import { FollowedBatchList } from '../_components/followed-batch-list'
 import styles from '../device-batches.module.css'
 
@@ -19,9 +19,12 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function MyConsolesPage() {
-  const batches = await listPublicDeviceBatches()
-  const records = OWNED_BATCH_RECORDS.flatMap((record) => {
-    const batch = batches.find((candidate) => candidate.slug === record.slug)
+  const [batches, consoles] = await Promise.all([
+    listPublicDeviceBatches(),
+    getMyDeviceConsoles(),
+  ])
+  const records = consoles.flatMap((record) => {
+    const batch = batches.find((candidate) => candidate.slug === record.order.device_batch_slug)
     return batch ? [{ batch, record }] : []
   })
 
@@ -54,9 +57,16 @@ export default async function MyConsolesPage() {
         <ArchiveSectionLabel>CLAIMED BATCHES</ArchiveSectionLabel>
         <div className={styles.ownedBatchList}>
           {records.map(({ batch, record }) => {
-            const firstOpenStage = batch.distributionStages.findIndex(
-              (stage) => stage.status !== 'completed',
-            )
+            const displayStages = record.packs.length
+              ? record.packs
+              : batch.distributionStages.map((stage, index) => ({
+                  expected_window: stage.window,
+                  label: stage.label,
+                  stage_id: stage.id,
+                  stage_position: index + 1,
+                  status: 'planned',
+                }))
+            const firstOpenStage = displayStages.findIndex((stage) => stage.status !== 'delivered')
 
             return (
               <article className={styles.ownedBatchCard} key={batch.slug}>
@@ -77,7 +87,7 @@ export default async function MyConsolesPage() {
                   <div className={styles.ownedBatchIdentity}>
                     <span>{DEVICE_BATCH_STATUS[batch.status].label}</span>
                     <h2>{batch.name}</h2>
-                    <p>{record.unit}</p>
+                    <p>{record.unitCode}</p>
                     <Link href={`/devices/batches/${batch.slug}`}>
                       OPEN BATCH <ArrowRight aria-hidden size={14} />
                     </Link>
@@ -87,11 +97,11 @@ export default async function MyConsolesPage() {
                 <div className={styles.ownedRecordFacts}>
                   <div>
                     <span>CLAIMED</span>
-                    <strong>{record.claimedAt}</strong>
+                    <strong>{new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(record.order.paid_at ?? record.order.created_at))}</strong>
                   </div>
                   <div>
                     <span>ORDER</span>
-                    <strong>{record.orderCode}</strong>
+                    <strong>{`MC-${record.order.device_batch_code ?? 'DEVICE'}-${record.order.id.slice(0, 8).toUpperCase()}`}</strong>
                   </div>
                   <div>
                     <span>FINAL DISPATCH</span>
@@ -105,21 +115,22 @@ export default async function MyConsolesPage() {
                     DISTRIBUTION RECORD
                   </div>
                   <ol>
-                    {batch.distributionStages.map((stage, index) => {
-                      const isNext = index === firstOpenStage
+                    {displayStages.map((stage, index) => {
+                      const completed = stage.status === 'delivered'
+                      const isNext = !completed && index === firstOpenStage
                       return (
                         <li
                           className={
-                            stage.status === 'completed'
+                            completed
                               ? styles.ownedStageComplete
                               : isNext
                                 ? styles.ownedStageNext
                                 : ''
                           }
-                          key={stage.id}
+                          key={stage.stage_id}
                         >
                           <span className={styles.ownedStageMarker}>
-                            {stage.status === 'completed' ? (
+                            {completed ? (
                               <Check aria-hidden size={14} />
                             ) : (
                               <Clock3 aria-hidden size={14} />
@@ -127,14 +138,10 @@ export default async function MyConsolesPage() {
                           </span>
                           <span>
                             <strong>{stage.label}</strong>
-                            <small>{stage.window}</small>
+                            <small>{stage.expected_window}</small>
                           </span>
                           <em>
-                            {stage.status === 'completed'
-                              ? 'DELIVERED'
-                              : isNext
-                                ? 'NEXT'
-                                : 'PLANNED'}
+                            {completed ? 'DELIVERED' : stage.status.toUpperCase()}
                           </em>
                         </li>
                       )
@@ -144,6 +151,11 @@ export default async function MyConsolesPage() {
               </article>
             )
           })}
+          {records.length === 0 ? (
+            <div className={styles.emptyArchive}>
+              No payment-confirmed Console is assigned to this account yet.
+            </div>
+          ) : null}
         </div>
       </section>
 
