@@ -11,14 +11,6 @@
     {
       "path": "/api/cron/cosmo-sync",
       "schedule": "0 5 * * *"
-    },
-    {
-      "path": "/api/cron/story-publications",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/cron/dreamcatcher-queue",
-      "schedule": "* * * * *"
     }
   ]
 }
