@@ -30,13 +30,13 @@ import {
 } from "lucide-react";
 
 const steps = [
-  { id: 1, label: "世界设定", short: "设定", status: "approved" },
-  { id: 2, label: "风格镜头", short: "风格", status: "approved" },
-  { id: 3, label: "镜头延展", short: "镜头", status: "approved" },
-  { id: 4, label: "角色设定", short: "角色", status: "optional", optional: true },
-  { id: 5, label: "镜头事件", short: "事件", status: "review" },
-  { id: 6, label: "图片生成", short: "图片", status: "locked", ai: true },
-  { id: 7, label: "视频生成", short: "视频", status: "locked", ai: true },
+  { id: 1, label: "世界设定", short: "设定", status: "approved", lifecycle: "foundation" },
+  { id: 2, label: "风格镜头", short: "风格", status: "approved", lifecycle: "foundation" },
+  { id: 3, label: "镜头延展", short: "镜头", status: "approved", lifecycle: "foundation" },
+  { id: 4, label: "角色设定", short: "角色", status: "optional", optional: true, lifecycle: "ongoing" },
+  { id: 5, label: "镜头事件", short: "事件", status: "review", lifecycle: "ongoing" },
+  { id: 6, label: "图片生成", short: "图片", status: "locked", ai: true, lifecycle: "ongoing" },
+  { id: 7, label: "视频生成", short: "视频", status: "locked", ai: true, lifecycle: "ongoing" },
 ];
 
 const initialTimeSlots = ["清晨", "早上", "中午", "傍晚", "夜晚", "深夜"];
@@ -61,10 +61,38 @@ const initialEventPlan = {
 };
 
 const shotAssets = [
-  { src: "/assets/orbit-ocean.png", label: "镜头 A · 潮汐控制室", note: "起始画面 / 已确认" },
-  { src: "/assets/helix-desert.png", label: "镜头 B · 赤沙回声区", note: "动态测试 / 已确认" },
-  { src: "/assets/fork-ice.png", label: "镜头 C · 冰脊观测站", note: "动态测试 / 已确认" },
+  { id: "shot-a", src: "/assets/orbit-ocean.png", label: "镜头 A · 潮汐控制室", shortLabel: "潮汐控制室", note: "起始画面 / 已确认" },
+  { id: "shot-b", src: "/assets/helix-desert.png", label: "镜头 B · 赤沙回声区", shortLabel: "赤沙回声区", note: "动态测试 / 已确认" },
+  { id: "shot-c", src: "/assets/fork-ice.png", label: "镜头 C · 冰脊观测站", shortLabel: "冰脊观测站", note: "动态测试 / 已确认" },
 ];
+
+const initialShotSystems = {
+  "shot-a": {
+    version: 12,
+    updated: "今天 16:48",
+    timeSlots: initialTimeSlots,
+    eventPlan: initialEventPlan,
+  },
+  "shot-b": {
+    version: 7,
+    updated: "今天 11:20",
+    timeSlots: ["清晨", "中午", "黄昏"],
+    eventPlan: {
+      清晨: [{ id: "sand-dawn", label: "沙暴退去", description: "风速下降后，回声塔从沙幕中逐渐显露", kind: "空镜", asset: "/assets/helix-desert.png", imageStatus: "approved", videoStatus: "draft" }],
+      中午: [{ id: "sand-scan", label: "扫描偏航信号", description: "测绘设备沿地表投射一圈低亮度扫描光", kind: "设备", asset: "/assets/helix-desert.png", imageStatus: "review", videoStatus: "locked" }],
+      黄昏: [],
+    },
+  },
+  "shot-c": {
+    version: 4,
+    updated: "昨天 19:06",
+    timeSlots: ["白昼", "极夜"],
+    eventPlan: {
+      白昼: [{ id: "ice-observe", label: "观测冰层开裂", description: "远处冰层出现缓慢裂隙，观测站保持无人状态", kind: "空镜", asset: "/assets/fork-ice.png", imageStatus: "draft", videoStatus: "locked" }],
+      极夜: [{ id: "ice-aurora", label: "极光干扰设备", description: "紫色极光掠过天线，记录仪短暂出现异常读数", kind: "设备", asset: "/assets/fork-ice.png", imageStatus: "locked", videoStatus: "locked" }],
+    },
+  },
+};
 
 const roleProfiles = {
   admin: { label: "超级管理员", name: "Will", initial: "W", icon: ShieldCheck },
@@ -128,9 +156,9 @@ const initialWorldExamples = [
     owner: "阿沐",
     updated: "今天 16:48",
     asset: "/assets/orbit-ocean.png",
-    summary: "六个时段和六条事件已建立，等待审核事件结构与内容。",
-    creatorAction: "查看已提交的时间与活动；退回后可继续增删修改",
-    adminAction: "审核时间、活动、角色条件与后续上下文来源",
+    summary: "三个镜头已分别建立事件系统；控制室镜头更新到 V12，等待审核本次变更。",
+    creatorAction: "逐镜头维护时段与活动；退回后可继续增删修改",
+    adminAction: "按镜头审核本次事件变更与后续上下文来源",
   },
   {
     id: "W-039",
@@ -140,7 +168,7 @@ const initialWorldExamples = [
     owner: "林星",
     updated: "今天 11:32",
     asset: "/assets/helix-desert.png",
-    summary: "事件表已通过，正在按事件生成和锁定镜头起始图片。",
+    summary: "按三个镜头的独立事件系统持续生成图片，已有 18 个已锁定版本。",
     creatorAction: "选择事件、核对上下文、生成并锁定图片",
     adminAction: "查看生成来源与当前候选；提交后审核图片",
   },
@@ -152,7 +180,7 @@ const initialWorldExamples = [
     owner: "乔伊",
     updated: "今天 09:18",
     asset: "/assets/fork-ice.png",
-    summary: "所有图片已锁定，三条事件视频已提交最终审核。",
+    summary: "持续为各镜头事件增加动态版本，本周新增三条视频等待审核。",
     creatorAction: "查看已提交视频和生成上下文；审核期间只读",
     adminAction: "核对首帧、运动约束与视频结果，完成最终审核",
   },
@@ -221,7 +249,7 @@ function AppTopbar({ role, onRoleChange }) {
 }
 
 function WorldProgress({ currentStep }) {
-  return <div className="world-progress" aria-label={`当前位于第 ${currentStep} 步`}>{steps.map((step) => <span data-state={step.id < currentStep ? "complete" : step.id === currentStep ? "current" : "future"} key={step.id} title={`Step ${step.id} · ${step.label}`} />)}</div>;
+  return <div className="world-progress" aria-label={`当前位于第 ${currentStep} 步`}>{steps.map((step) => <span data-lifecycle={step.lifecycle} data-state={step.id < currentStep ? "complete" : step.id === currentStep ? "current" : "future"} key={step.id} title={`Step ${step.id} · ${step.label}`} />)}</div>;
 }
 
 function WorldOverview({ worlds, role, onOpenWorld }) {
@@ -241,16 +269,24 @@ function WorldOverview({ worlds, role, onOpenWorld }) {
         <div className="overview-stats"><div><strong>{worlds.length}</strong><span>示例世界</span></div><div><strong>{isAdmin ? reviewCount : editableCount}</strong><span>{isAdmin ? "等待审核" : "可以编辑"}</span></div></div>
       </section>
 
-      <div className="overview-section-title"><div><span className="eyebrow">WORKFLOW EXAMPLES</span><h2>不同阶段的世界</h2></div><span>点击任一实例查看该步骤的实际操作</span></div>
+      <section className="lifecycle-overview" aria-label="流程生命周期说明">
+        <div data-lifecycle="foundation"><span>基础构建 · STEP 1–3</span><strong>一次确认，低频回改</strong><p>建立世界设定、风格基准与镜头清单，作为后续长期生产的稳定底座。</p></div>
+        <ArrowRight size={18} />
+        <div data-lifecycle="ongoing"><span>持续生产 · STEP 4–7</span><strong>按镜头长期维护</strong><p>每个镜头拥有独立事件系统，并持续增加图片、视频与生成版本。</p></div>
+      </section>
+
+      <div className="overview-section-title"><div><span className="eyebrow">WORKFLOW EXAMPLES</span><h2>不同阶段的世界</h2></div><span>基础步骤用于定版，生产步骤会持续更新</span></div>
       <section className="world-grid">
         {worlds.map((world) => {
           const currentStep = steps.find((step) => step.id === world.currentStep);
           const action = isAdmin ? world.adminAction : world.creatorAction;
           const canAct = isAdmin ? world.currentStatus === "review" : ["draft", "changes", "optional"].includes(world.currentStatus);
-          return <article className="world-card" key={world.id}>
+          const lifecycle = currentStep.lifecycle;
+          return <article className="world-card" data-lifecycle={lifecycle} key={world.id}>
             <div className="world-card-media"><img src={world.asset} alt={`${world.name}世界预览`} /><span>{world.id}</span><StatusBadge status={world.currentStatus} /></div>
             <div className="world-card-body">
               <div className="world-card-title"><div><span>STEP {world.currentStep} / 7</span><h3>{world.name}</h3></div><strong>{currentStep.label}</strong></div>
+              <div className="lifecycle-tag" data-lifecycle={lifecycle}>{lifecycle === "foundation" ? "基础构建 · 通常一次完成" : "持续生产 · 长期更新"}</div>
               <WorldProgress currentStep={world.currentStep} />
               <p>{world.summary}</p>
               <div className="world-permission"><span>{isAdmin ? "此身份可执行" : "此阶段可修改"}</span><strong>{action}</strong></div>
@@ -264,33 +300,29 @@ function WorldOverview({ worlds, role, onOpenWorld }) {
 }
 
 function WorkflowRail({ activeStep, stepStatuses, onSelect }) {
+  const renderStep = (step) => {
+    const status = stepStatuses[step.id] ?? step.status;
+    const Icon = status === "approved" ? Check : status === "locked" ? LockKeyhole : status === "optional" || status === "skipped" ? SkipForward : Clock3;
+    return (
+      <button
+        className="workflow-step"
+        data-active={activeStep === step.id}
+        data-status={status}
+        key={step.id}
+        onClick={() => onSelect(step.id)}
+        type="button"
+      >
+        <span className="step-node"><Icon size={14} strokeWidth={2.25} /></span>
+        <span className="step-copy"><span className="step-kicker">STEP {step.id}</span><span className="step-label">{step.label}</span></span>
+        {step.ai && <span className="ai-mini">AI</span>}
+        {step.optional && <span className="optional-mini">OPTIONAL</span>}
+      </button>
+    );
+  };
   return (
     <nav className="workflow-rail" aria-label="世界创建步骤">
-      {steps.map((step, index) => {
-        const status = stepStatuses[step.id] ?? step.status;
-        const Icon = status === "approved" ? Check : status === "locked" ? LockKeyhole : status === "optional" || status === "skipped" ? SkipForward : Clock3;
-        return (
-          <button
-            className="workflow-step"
-            data-active={activeStep === step.id}
-            data-status={status}
-            key={step.id}
-            onClick={() => onSelect(step.id)}
-            type="button"
-          >
-            <span className="step-node">
-              <Icon size={14} strokeWidth={2.25} />
-            </span>
-            <span className="step-copy">
-              <span className="step-kicker">STEP {step.id}</span>
-              <span className="step-label">{step.label}</span>
-            </span>
-            {step.ai && <span className="ai-mini">AI</span>}
-            {step.optional && <span className="optional-mini">OPTIONAL</span>}
-            {index < steps.length - 1 && <span className="step-line" aria-hidden="true" />}
-          </button>
-        );
-      })}
+      <div className="workflow-group" data-lifecycle="foundation"><header><strong>基础构建</strong><span>一次确认 · STEP 1–3</span></header><div>{steps.filter((step) => step.lifecycle === "foundation").map(renderStep)}</div></div>
+      <div className="workflow-group" data-lifecycle="ongoing"><header><strong>持续生产</strong><span>长期更新 · STEP 4–7</span></header><div>{steps.filter((step) => step.lifecycle === "ongoing").map(renderStep)}</div></div>
     </nav>
   );
 }
@@ -391,6 +423,21 @@ function StepFour({ canEdit, characterStatus, onSkip, onRestore }) {
   );
 }
 
+function ShotSystemSelector({ activeShotId, shotSystems, onSelectShot }) {
+  return (
+    <section className="shot-system-selector" aria-label="选择镜头事件系统">
+      <header><div><span className="eyebrow">SHOT SYSTEMS</span><h3>选择要维护的镜头</h3></div><p>每个镜头拥有独立的时间、活动、图片与视频版本。</p></header>
+      <div className="shot-system-tabs">
+        {shotAssets.map((shot) => {
+          const system = shotSystems[shot.id];
+          const eventCount = system.timeSlots.reduce((count, time) => count + system.eventPlan[time].length, 0);
+          return <button data-active={activeShotId === shot.id} key={shot.id} onClick={() => onSelectShot(shot.id)} type="button"><img src={shot.src} alt="" /><span><strong>{shot.label}</strong><small>{system.timeSlots.length} 个时段 · {eventCount} 条事件 · V{system.version}</small></span><ChevronRight size={15} /></button>;
+        })}
+      </div>
+    </section>
+  );
+}
+
 function SparseEventBoard({ eventPlan, timeSlots, selectedId, onSelectEvent, onAddEvent, onAddTime, onDeleteEvent, onDeleteTime, editable = false }) {
   return (
     <div className="event-board-wrap">
@@ -411,15 +458,15 @@ function SparseEventBoard({ eventPlan, timeSlots, selectedId, onSelectEvent, onA
   );
 }
 
-function StepFive({ canEdit, eventPlan, timeSlots, selected, onSelectEvent, onAddEvent, onAddTime, onDeleteEvent, onDeleteTime }) {
+function StepFive({ activeShot, canEdit, eventPlan, timeSlots, selected, onSelectEvent, onAddEvent, onAddTime, onDeleteEvent, onDeleteTime }) {
   return (
     <div className="step-stack">
       <section className="panel matrix-panel">
         <div className="section-heading">
-          <div><span className="eyebrow">EVENTS BY TIME</span><h2>按时段规划镜头事件</h2></div>
+          <div><span className="eyebrow">EVENTS BY TIME · {activeShot.label}</span><h2>这个镜头的独立事件系统</h2></div>
           <StatusBadge status="review" />
         </div>
-        <div className="matrix-instruction"><CircleAlert size={15} /><span>每个时段独立维护活动：有内容才添加，没有内容可以保持为空。图片和视频阶段会直接沿用这里确认的事件。</span></div>
+        <div className="matrix-instruction"><CircleAlert size={15} /><span>当前只维护「{activeShot.shortLabel}」：时段与活动不会影响其他镜头。未来可长期追加事件，图片和视频阶段会沿用此镜头的最新事件版本。</span></div>
         <SparseEventBoard editable={canEdit} eventPlan={eventPlan} timeSlots={timeSlots} selectedId={selected?.id} onSelectEvent={onSelectEvent} onAddEvent={onAddEvent} onAddTime={onAddTime} onDeleteEvent={onDeleteEvent} onDeleteTime={onDeleteTime} />
       </section>
       {selected ? <section className="panel cell-detail">
@@ -439,7 +486,7 @@ function StepFive({ canEdit, eventPlan, timeSlots, selected, onSelectEvent, onAd
   );
 }
 
-function ProductionMaterials({ canEdit, selected, mode }) {
+function ProductionMaterials({ activeShot, canEdit, selected, mode }) {
   const isImage = mode === "image";
   if (!selected) return <section className="panel no-selection"><ImageIcon size={22} /><strong>没有生成任务</strong><span>回到 Step 5 添加至少一条事件后，这里才会出现素材。</span></section>;
   const materials = isImage
@@ -447,7 +494,7 @@ function ProductionMaterials({ canEdit, selected, mode }) {
     : shotAssets.map((shot, index) => ({ ...shot, label: `动态版本 0${index + 1}`, meta: `${index + 4} 秒 · 24 FPS` }));
   return (
     <section className="panel material-panel">
-      <div className="material-header"><div><span className="eyebrow">{isImage ? "IMAGE MATERIALS" : "VIDEO MATERIALS"}</span><h3>{selected.time} · {selected.label}</h3><p>{selected.description}</p></div><StatusBadge status={isImage ? selected.imageStatus : selected.videoStatus} /></div>
+      <div className="material-header"><div><span className="eyebrow">{isImage ? "IMAGE MATERIALS" : "VIDEO MATERIALS"} · {activeShot.label}</span><h3>{selected.time} · {selected.label}</h3><p>{selected.description}</p></div><StatusBadge status={isImage ? selected.imageStatus : selected.videoStatus} /></div>
       <div className="material-grid">
         {materials.map((material, index) => <article className="material-card" data-selected={index === 1} key={material.label}><div className="material-image"><img src={material.src} alt={`${selected.label} ${material.label}`} />{!isImage && <button type="button" aria-label={`播放${material.label}`}><Play size={18} fill="currentColor" /></button>}{index === 1 && <span><Check size={12} />当前候选</span>}</div><div><strong>{material.label}</strong><small>{material.meta}</small></div></article>)}
       </div>
@@ -465,7 +512,7 @@ const timeAtmospheres = {
   深夜: "无人值守、深蓝低照度，仅保留异常设备信号与城市余光",
 };
 
-function GenerationContext({ selected, mode }) {
+function GenerationContext({ activeShot, selected, mode }) {
   const [showPrompt, setShowPrompt] = useState(false);
   if (!selected) return null;
 
@@ -496,7 +543,7 @@ function GenerationContext({ selected, mode }) {
       step: "STEP 3",
       title: "镜头与场景",
       target: "参考图 + 镜头约束",
-      detail: "沿用已确认的潮汐控制室镜头空间、机位关系和基础动态，不重新设计场景结构。",
+      detail: `沿用已确认的「${activeShot.shortLabel}」空间、机位关系和基础动态，不重新设计场景结构。`,
       icon: ImageIcon,
       included: true,
     },
@@ -580,15 +627,15 @@ function GenerationContext({ selected, mode }) {
   );
 }
 
-function StepSix({ canEdit, eventPlan, timeSlots, selected, onSelectEvent }) {
+function StepSix({ activeShot, canEdit, eventPlan, timeSlots, selected, onSelectEvent }) {
   return (
-    <div className="step-stack"><section className="panel"><div className="section-heading"><div><span className="eyebrow">IMAGE PRODUCTION · FROM EVENTS</span><h2>在事件表中选择图片任务</h2></div><span className="ai-badge"><WandSparkles size={14} />适合 AI 接管</span></div><p className="section-intro">沿用 Step 5 的完整时段与活动结构。选择一条事件后，先核对它累积的生成背景，再查看、生成和锁定图片候选。</p><SparseEventBoard eventPlan={eventPlan} timeSlots={timeSlots} selectedId={selected?.id} onSelectEvent={onSelectEvent} /></section><GenerationContext selected={selected} mode="image" /><ProductionMaterials canEdit={canEdit} selected={selected} mode="image" /></div>
+    <div className="step-stack"><section className="panel"><div className="section-heading"><div><span className="eyebrow">IMAGE PRODUCTION · {activeShot.label}</span><h2>在此镜头的事件中选择图片任务</h2></div><span className="ai-badge"><WandSparkles size={14} />持续生成</span></div><p className="section-intro">沿用当前镜头在 Step 5 中维护的事件系统。事件更新后，可以持续创建新图片版本，同时保留既有候选和锁定结果。</p><SparseEventBoard eventPlan={eventPlan} timeSlots={timeSlots} selectedId={selected?.id} onSelectEvent={onSelectEvent} /></section><GenerationContext activeShot={activeShot} selected={selected} mode="image" /><ProductionMaterials activeShot={activeShot} canEdit={canEdit} selected={selected} mode="image" /></div>
   );
 }
 
-function StepSeven({ canEdit, eventPlan, timeSlots, selected, onSelectEvent }) {
+function StepSeven({ activeShot, canEdit, eventPlan, timeSlots, selected, onSelectEvent }) {
   return (
-    <div className="step-stack"><section className="panel"><div className="section-heading"><div><span className="eyebrow">VIDEO PRODUCTION · FROM EVENTS</span><h2>在事件表中选择视频任务</h2></div><span className="ai-badge"><Film size={14} />适合 AI 接管</span></div><p className="section-intro">同样保留完整事件表。选择一条事件后，先核对它累积的生成背景，再查看绑定该事件及其已锁定图片的视频版本。</p><SparseEventBoard eventPlan={eventPlan} timeSlots={timeSlots} selectedId={selected?.id} onSelectEvent={onSelectEvent} /></section><GenerationContext selected={selected} mode="video" /><ProductionMaterials canEdit={canEdit} selected={selected} mode="video" /></div>
+    <div className="step-stack"><section className="panel"><div className="section-heading"><div><span className="eyebrow">VIDEO PRODUCTION · {activeShot.label}</span><h2>在此镜头的事件中选择视频任务</h2></div><span className="ai-badge"><Film size={14} />持续生成</span></div><p className="section-intro">视频版本始终绑定当前镜头、当前事件及锁定图片。后续可以长期增加动态版本，不会覆盖其他镜头的素材。</p><SparseEventBoard eventPlan={eventPlan} timeSlots={timeSlots} selectedId={selected?.id} onSelectEvent={onSelectEvent} /></section><GenerationContext activeShot={activeShot} selected={selected} mode="video" /><ProductionMaterials activeShot={activeShot} canEdit={canEdit} selected={selected} mode="video" /></div>
   );
 }
 
@@ -647,14 +694,14 @@ function ReviewPanel({ activeStep, canEdit, currentStatus, onApprove, onRequestC
   );
 }
 
-function StepContent({ activeStep, canEdit, characterStatus, eventPlan, timeSlots, selected, onAddEvent, onAddTime, onDeleteEvent, onDeleteTime, onRestoreCharacter, onSelectEvent, onSkipCharacter }) {
+function StepContent({ activeShot, activeStep, canEdit, characterStatus, eventPlan, timeSlots, selected, onAddEvent, onAddTime, onDeleteEvent, onDeleteTime, onRestoreCharacter, onSelectEvent, onSkipCharacter }) {
   if (activeStep === 1) return <StepOne canEdit={canEdit} />;
   if (activeStep === 2) return <StepTwo canEdit={canEdit} />;
   if (activeStep === 3) return <StepThree canEdit={canEdit} />;
   if (activeStep === 4) return <StepFour canEdit={canEdit} characterStatus={characterStatus} onSkip={onSkipCharacter} onRestore={onRestoreCharacter} />;
-  if (activeStep === 5) return <StepFive canEdit={canEdit} eventPlan={eventPlan} timeSlots={timeSlots} selected={selected} onSelectEvent={onSelectEvent} onAddEvent={onAddEvent} onAddTime={onAddTime} onDeleteEvent={onDeleteEvent} onDeleteTime={onDeleteTime} />;
-  if (activeStep === 6) return <StepSix canEdit={canEdit} eventPlan={eventPlan} timeSlots={timeSlots} selected={selected} onSelectEvent={onSelectEvent} />;
-  return <StepSeven canEdit={canEdit} eventPlan={eventPlan} timeSlots={timeSlots} selected={selected} onSelectEvent={onSelectEvent} />;
+  if (activeStep === 5) return <StepFive activeShot={activeShot} canEdit={canEdit} eventPlan={eventPlan} timeSlots={timeSlots} selected={selected} onSelectEvent={onSelectEvent} onAddEvent={onAddEvent} onAddTime={onAddTime} onDeleteEvent={onDeleteEvent} onDeleteTime={onDeleteTime} />;
+  if (activeStep === 6) return <StepSix activeShot={activeShot} canEdit={canEdit} eventPlan={eventPlan} timeSlots={timeSlots} selected={selected} onSelectEvent={onSelectEvent} />;
+  return <StepSeven activeShot={activeShot} canEdit={canEdit} eventPlan={eventPlan} timeSlots={timeSlots} selected={selected} onSelectEvent={onSelectEvent} />;
 }
 
 export function App() {
@@ -664,13 +711,16 @@ export function App() {
   const [selectedWorldId, setSelectedWorldId] = useState("W-021");
   const [activeStep, setActiveStep] = useState(5);
   const [stepStatuses, setStepStatuses] = useState(statusesForWorld(initialWorldExamples.find((world) => world.id === "W-021")));
-  const [timeSlots, setTimeSlots] = useState(initialTimeSlots);
-  const [eventPlan, setEventPlan] = useState(initialEventPlan);
+  const [shotSystems, setShotSystems] = useState(initialShotSystems);
+  const [activeShotId, setActiveShotId] = useState("shot-a");
   const [selected, setSelected] = useState({ ...initialEventPlan.中午[0], time: "中午" });
   const [note, setNote] = useState("事件与时段独立建立；图片和视频生成前需核对上下文来源、条件引入和素材绑定。\n");
   const [toast, setToast] = useState("");
   const currentStep = useMemo(() => steps.find((step) => step.id === activeStep), [activeStep]);
   const currentWorld = useMemo(() => worlds.find((world) => world.id === selectedWorldId), [selectedWorldId, worlds]);
+  const activeShot = useMemo(() => shotAssets.find((shot) => shot.id === activeShotId), [activeShotId]);
+  const activeShotSystem = shotSystems[activeShotId];
+  const { timeSlots, eventPlan } = activeShotSystem;
   const currentStatus = stepStatuses[activeStep];
   const canEdit = role === "creator" && ["draft", "changes", "optional", "skipped"].includes(currentStatus);
 
@@ -704,13 +754,20 @@ export function App() {
     setSelectedWorldId(world.id);
     setActiveStep(world.currentStep);
     setStepStatuses(statusesForWorld(world));
-    setSelected(firstEventFrom(initialEventPlan, initialTimeSlots));
+    setActiveShotId("shot-a");
+    setSelected(firstEventFrom(initialShotSystems["shot-a"].eventPlan, initialShotSystems["shot-a"].timeSlots));
     setScreen("workflow");
+  }
+
+  function selectShot(shotId) {
+    const system = shotSystems[shotId];
+    setActiveShotId(shotId);
+    setSelected(firstEventFrom(system.eventPlan, system.timeSlots));
   }
 
   function addEvent(time) {
     const newEvent = { id: `${time}-${Date.now()}`, label: "新活动", description: "补充这个时段可能发生的内容", kind: "待定义", asset: shotAssets[Math.max(0, timeSlots.indexOf(time)) % shotAssets.length].src, imageStatus: "locked", videoStatus: "locked" };
-    setEventPlan((plan) => ({ ...plan, [time]: [...plan[time], newEvent] }));
+    setShotSystems((systems) => ({ ...systems, [activeShotId]: { ...systems[activeShotId], updated: "刚刚", version: systems[activeShotId].version + 1, eventPlan: { ...systems[activeShotId].eventPlan, [time]: [...systems[activeShotId].eventPlan[time], newEvent] } } }));
     setSelected({ ...newEvent, time });
     showToast(`已在${time}添加一条新活动`);
   }
@@ -719,14 +776,13 @@ export function App() {
     let suffix = 1;
     while (timeSlots.includes(`新时段 ${suffix}`)) suffix += 1;
     const newTime = `新时段 ${suffix}`;
-    setTimeSlots((slots) => [...slots, newTime]);
-    setEventPlan((plan) => ({ ...plan, [newTime]: [] }));
+    setShotSystems((systems) => ({ ...systems, [activeShotId]: { ...systems[activeShotId], updated: "刚刚", version: systems[activeShotId].version + 1, timeSlots: [...systems[activeShotId].timeSlots, newTime], eventPlan: { ...systems[activeShotId].eventPlan, [newTime]: [] } } }));
     showToast(`已添加${newTime}`);
   }
 
   function deleteEvent(time, eventId) {
     const nextPlan = { ...eventPlan, [time]: eventPlan[time].filter((event) => event.id !== eventId) };
-    setEventPlan(nextPlan);
+    setShotSystems((systems) => ({ ...systems, [activeShotId]: { ...systems[activeShotId], updated: "刚刚", version: systems[activeShotId].version + 1, eventPlan: nextPlan } }));
     if (selected?.id === eventId) {
       const nextSelected = firstEventFrom(nextPlan, timeSlots);
       setSelected(nextSelected);
@@ -743,8 +799,7 @@ export function App() {
     const nextPlan = { ...eventPlan };
     const removedIds = new Set((nextPlan[time] ?? []).map((event) => event.id));
     delete nextPlan[time];
-    setTimeSlots(nextSlots);
-    setEventPlan(nextPlan);
+    setShotSystems((systems) => ({ ...systems, [activeShotId]: { ...systems[activeShotId], updated: "刚刚", version: systems[activeShotId].version + 1, timeSlots: nextSlots, eventPlan: nextPlan } }));
     if (selected && removedIds.has(selected.id)) {
       const nextSelected = firstEventFrom(nextPlan, nextSlots);
       setSelected(nextSelected);
@@ -781,12 +836,14 @@ export function App() {
         <RolePermissionBanner canEdit={canEdit} currentStatus={currentStatus} role={role} />
 
         <div className="active-step-header">
-          <div><span className="step-index">0{activeStep}</span><div><span className="eyebrow">CURRENT STAGE</span><h2>{currentStep.label}</h2><p>{activeStep === 5 ? "按时段分别添加真实存在的活动，不需要把每个时段填满。" : activeStep === 4 ? "可选流程：没有角色的世界可以直接跳过。" : activeStep >= 6 ? "选择事件，核对逐步累积的生成背景，再生成与审核素材。" : "查看本步骤的创作输入、输出与审核状态。"}</p></div></div>
+          <div><span className="step-index">0{activeStep}</span><div><span className="eyebrow">{currentStep.lifecycle === "foundation" ? "FOUNDATION · LOW FREQUENCY" : "ONGOING PRODUCTION · CONTINUOUS"}</span><h2>{currentStep.label}</h2><p>{activeStep === 5 ? "为每个镜头分别维护时间与活动；事件系统会随世界长期更新。" : activeStep === 4 ? "持续生产区的可选入口：没有角色的世界可以直接跳过。" : activeStep >= 6 ? "按镜头选择事件，核对累积背景，并持续新增图片与视频版本。" : "基础构建步骤通常只在初次定版或重大方向调整时修改。"}</p></div></div>
           {currentStep.ai && <span className="ai-badge"><Sparkles size={14} />AI 优先执行</span>}
         </div>
 
+        {activeStep >= 5 && <ShotSystemSelector activeShotId={activeShotId} shotSystems={shotSystems} onSelectShot={selectShot} />}
+
         <div className="content-layout">
-          <section className="step-content"><StepContent activeStep={activeStep} canEdit={canEdit} characterStatus={stepStatuses[4]} eventPlan={eventPlan} timeSlots={timeSlots} selected={selected} onAddEvent={addEvent} onAddTime={addTime} onDeleteEvent={deleteEvent} onDeleteTime={deleteTime} onRestoreCharacter={restoreCharacter} onSelectEvent={setSelected} onSkipCharacter={skipCharacter} /></section>
+          <section className="step-content"><StepContent activeShot={activeShot} activeStep={activeStep} canEdit={canEdit} characterStatus={stepStatuses[4]} eventPlan={eventPlan} timeSlots={timeSlots} selected={selected} onAddEvent={addEvent} onAddTime={addTime} onDeleteEvent={deleteEvent} onDeleteTime={deleteTime} onRestoreCharacter={restoreCharacter} onSelectEvent={setSelected} onSkipCharacter={skipCharacter} /></section>
           <ReviewPanel activeStep={activeStep} canEdit={canEdit} currentStatus={currentStatus} note={note} role={role} setNote={setNote} onApprove={approveStep} onRequestChanges={requestChanges} onSubmit={submitForReview} />
         </div>
       </main>
