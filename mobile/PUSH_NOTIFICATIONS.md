@@ -38,3 +38,5 @@ The test endpoint now returns an actionable `message` and `nextStep`. In particu
 - `Apple rejected`: confirm Release signing has the production APNs entitlement and inspect `push_delivery_log`.
 
 The simulator fixture at `mobile/test-fixtures/notification.apns` verifies notification appearance and routing without Apple credentials. Real APNs delivery must be accepted on a signed physical iPhone/TestFlight build.
+
+For personalized manual campaigns operated from code, follow `mobile/PUSH_CAMPAIGNS.md` after applying `supabase/schema_v59.sql`.

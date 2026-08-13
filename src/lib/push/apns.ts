@@ -14,9 +14,10 @@ export type PushEventType =
   | 'device_update'
   | 'intel_published'
   | 'story_published'
+  | 'campaign'
   | 'test'
 
-type PreferenceKey = 'replies' | 'signal' | 'worlds' | 'votes' | 'devices' | 'intel' | 'stories'
+type PreferenceKey = 'replies' | 'signal' | 'worlds' | 'votes' | 'devices' | 'intel' | 'stories' | 'announcements'
 
 const EVENT_PREFERENCE: Record<PushEventType, PreferenceKey | null> = {
   comment_reply: 'replies',
@@ -28,6 +29,7 @@ const EVENT_PREFERENCE: Record<PushEventType, PreferenceKey | null> = {
   device_update: 'devices',
   intel_published: 'intel',
   story_published: 'stories',
+  campaign: 'announcements',
   test: null,
 }
 

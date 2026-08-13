@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "mobile:check": "npm --prefix mobile run check"
+    "mobile:check": "npm --prefix mobile run check",
+    "push:campaign": "node scripts/push-campaign.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
