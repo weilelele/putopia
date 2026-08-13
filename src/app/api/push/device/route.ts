@@ -16,7 +16,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ authenticated: false })
 
   const admin = createAdminClient()
-  const [{ count }, { data: preferences }] = await Promise.all([
+  const [devicesResult, preferencesResult] = await Promise.all([
     (admin.from('push_devices' as never) as ReturnType<typeof admin.from>)
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
@@ -27,7 +27,24 @@ export async function GET() {
       .maybeSingle(),
   ])
 
-  return NextResponse.json({ authenticated: true, deviceCount: count ?? 0, preferences })
+  if (devicesResult.error || preferencesResult.error) {
+    console.error(
+      '[push/device] Push storage is unavailable.',
+      devicesResult.error ?? preferencesResult.error,
+    )
+    return NextResponse.json({
+      authenticated: true,
+      deviceCount: 0,
+      error: 'Push storage is unavailable. Apply schema_v57.sql and retry.',
+      code: 'PUSH_STORAGE_UNAVAILABLE',
+    }, { status: 503 })
+  }
+
+  return NextResponse.json({
+    authenticated: true,
+    deviceCount: devicesResult.count ?? 0,
+    preferences: preferencesResult.data,
+  })
 }
 
 export async function POST(request: Request) {
@@ -61,10 +78,23 @@ export async function POST(request: Request) {
       updated_at: now,
       last_seen_at: now,
     }, { onConflict: 'token' })
-  if (error) return NextResponse.json({ error: 'Could not register device' }, { status: 500 })
+  if (error) {
+    console.error('[push/device] Could not register device.', error)
+    return NextResponse.json({
+      error: 'Could not register device. Confirm schema_v57.sql is applied.',
+      code: 'PUSH_DEVICE_REGISTRATION_FAILED',
+    }, { status: 503 })
+  }
 
-  await (admin.from('push_preferences' as never) as ReturnType<typeof admin.from>)
+  const { error: preferencesError } = await (admin.from('push_preferences' as never) as ReturnType<typeof admin.from>)
     .upsert({ user_id: user.id, updated_at: now }, { onConflict: 'user_id', ignoreDuplicates: true })
+  if (preferencesError) {
+    console.error('[push/device] Could not initialize push preferences.', preferencesError)
+    return NextResponse.json({
+      error: 'Device registered, but notification preferences could not be initialized.',
+      code: 'PUSH_PREFERENCES_INITIALIZATION_FAILED',
+    }, { status: 503 })
+  }
 
   return NextResponse.json({ registered: true })
 }
@@ -82,6 +112,9 @@ export async function DELETE(request: Request) {
     query = query.eq('token', body.token)
   }
   const { error } = await query
-  if (error) return NextResponse.json({ error: 'Could not unregister device' }, { status: 500 })
+  if (error) {
+    console.error('[push/device] Could not unregister device.', error)
+    return NextResponse.json({ error: 'Could not unregister device' }, { status: 503 })
+  }
   return NextResponse.json({ unregistered: true })
 }

@@ -53,6 +53,20 @@ interface ApnsResult {
   reason: string | null
 }
 
+export type PushFailureReason =
+  | 'not_configured'
+  | 'storage_unavailable'
+  | 'preferences_disabled'
+  | 'no_registered_devices'
+  | 'provider_rejected'
+
+export interface PushSendResult {
+  delivered: number
+  attempted: number
+  configured: boolean
+  reason?: PushFailureReason
+}
+
 let cachedJwt: { value: string; issuedAt: number } | null = null
 
 function base64url(value: Buffer | string): string {
@@ -142,29 +156,47 @@ function sendApns(device: PushDevice, message: PushMessage, jwt: string): Promis
 export async function sendPushToUser(
   userId: string,
   message: PushMessage,
-): Promise<{ delivered: number; attempted: number; configured: boolean }> {
-  const jwt = apnsJwt()
-  if (!jwt) return { delivered: 0, attempted: 0, configured: false }
+): Promise<PushSendResult> {
+  let jwt: string | null = null
+  try {
+    jwt = apnsJwt()
+  } catch (error) {
+    console.error('[push] Invalid APNs configuration.', error)
+  }
+  if (!jwt) {
+    return { delivered: 0, attempted: 0, configured: false, reason: 'not_configured' }
+  }
 
   const admin = createAdminClient()
   const preference = EVENT_PREFERENCE[message.eventType]
   if (preference) {
-    const { data: row } = await (admin.from('push_preferences' as never) as ReturnType<typeof admin.from>)
+    const { data: row, error } = await (admin.from('push_preferences' as never) as ReturnType<typeof admin.from>)
       .select(preference)
       .eq('user_id', userId)
       .maybeSingle()
+    if (error) {
+      console.error('[push] Could not read push preferences.', error)
+      return { delivered: 0, attempted: 0, configured: true, reason: 'storage_unavailable' }
+    }
     const preferences = row as Record<string, boolean> | null
     if (preferences && preferences[preference] === false) {
-      return { delivered: 0, attempted: 0, configured: true }
+      return { delivered: 0, attempted: 0, configured: true, reason: 'preferences_disabled' }
     }
   }
 
-  const { data } = await (admin.from('push_devices' as never) as ReturnType<typeof admin.from>)
+  const { data, error: devicesError } = await (admin.from('push_devices' as never) as ReturnType<typeof admin.from>)
     .select('id, token, environment')
     .eq('user_id', userId)
     .eq('platform', 'ios')
     .eq('enabled', true)
+  if (devicesError) {
+    console.error('[push] Could not read registered push devices.', devicesError)
+    return { delivered: 0, attempted: 0, configured: true, reason: 'storage_unavailable' }
+  }
   const devices = (data ?? []) as PushDevice[]
+  if (devices.length === 0) {
+    return { delivered: 0, attempted: 0, configured: true, reason: 'no_registered_devices' }
+  }
   let delivered = 0
 
   for (const device of devices) {
@@ -175,7 +207,7 @@ export async function sendPushToUser(
         .update({ enabled: false, updated_at: new Date().toISOString() })
         .eq('id', device.id)
     }
-    await (admin.from('push_delivery_log' as never) as ReturnType<typeof admin.from>).insert({
+    const { error: logError } = await (admin.from('push_delivery_log' as never) as ReturnType<typeof admin.from>).insert({
       user_id: userId,
       device_id: device.id,
       event_type: message.eventType,
@@ -184,7 +216,13 @@ export async function sendPushToUser(
       provider_status: result.status || null,
       provider_reason: result.reason,
     })
+    if (logError) console.error('[push] Could not write delivery audit log.', logError)
   }
 
-  return { delivered, attempted: devices.length, configured: true }
+  return {
+    delivered,
+    attempted: devices.length,
+    configured: true,
+    ...(delivered === 0 ? { reason: 'provider_rejected' as const } : {}),
+  }
 }

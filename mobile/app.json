@@ -12,9 +12,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "org.multiverseco.collective",
-      "buildNumber": "2",
+      "buildNumber": "5",
       "entitlements": {
-        "aps-environment": "development"
+        "aps-environment": "production"
       },
       "infoPlist": {
         "NSCameraUsageDescription": "Attach photos to Multiverse Collective submissions.",

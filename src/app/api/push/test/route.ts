@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { sendPushToUser } from '@/lib/push/apns'
+import { diagnosePushTest } from '@/lib/push/diagnostics'
 import { createClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
@@ -24,5 +25,6 @@ export async function POST() {
     body: 'Push notifications are connected. Tap to return to the Console.',
     route: '/console?source=push_test',
   })
-  return NextResponse.json(result, { status: result.configured ? 200 : 503 })
+  const diagnostic = diagnosePushTest(result)
+  return NextResponse.json({ ...result, ...diagnostic }, { status: diagnostic.status })
 }

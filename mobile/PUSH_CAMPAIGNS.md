@@ -5,7 +5,7 @@ This is the operator workflow for manually sending native iOS notifications. It 
 ## One-time production setup
 
 1. Complete the APNs setup in `mobile/PUSH_NOTIFICATIONS.md`.
-2. Apply `supabase/schema_v58.sql` after `schema_v57.sql`.
+2. Apply `supabase/schema_v59.sql` after `schema_v58.sql`.
 3. Generate a long random `PUSH_CAMPAIGN_SECRET` and add it to Vercel Production as an encrypted environment variable.
 4. Give the same secret only to the engineers authorized to send campaigns. Store it in their local `.env.local`; never paste it into chat, GitHub, screenshots, or the mobile app.
 5. Redeploy after the schema and environment variable are ready.

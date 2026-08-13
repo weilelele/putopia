@@ -2,7 +2,7 @@
 
 /* ============================================================
    PUTOPIA COLLECTIVE — DESIGN TOKENS v2.0
-   Brand spec: public/assets/brand-guidelines.png
+   Authoritative spec: docs/design-system.md
    ============================================================ */
 
 /* ---------- CSS VARIABLES (TOKENS) ---------- */
@@ -31,7 +31,7 @@
   --color-fault:      #E83030;
 
   /* ============================================================
-     SEMANTIC TOKENS — Brand Color Palette (brand-guidelines.png p.03)
+     SEMANTIC TOKENS — Brand Color Palette (docs/design-system.md)
      Brand layer = 3 oranges + deep space blue + off white (NO grey).
      Signal layer = ok/warn/fault, status-only, never brand/structure.
      ============================================================ */

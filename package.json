@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "design:check": "node scripts/check-design-diff.mjs",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
