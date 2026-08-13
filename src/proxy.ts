@@ -1,10 +1,70 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Category listing pages require a logged-in user; guests can open individual
+// content pages (e.g. /intel/[id]) but not the root listings.
+const GUEST_BLOCKED = ['/intel', '/devices', '/worlds', '/voyagers', '/vote', '/logs']
+
+function loginRedirect(request: NextRequest, redirectTo: string) {
+  const loginUrl = request.nextUrl.clone()
+  loginUrl.pathname = '/login'
+  loginUrl.search = ''
+  loginUrl.searchParams.set('redirect', redirectTo)
+  return NextResponse.redirect(loginUrl)
+}
+
+// Routing for a visitor with no session. Shared by the cookie-less fast path
+// and (behaviourally) mirrored by the `!user` branches of the full flow below.
+function routeGuest(request: NextRequest): NextResponse {
+  const { pathname } = request.nextUrl
+
+  if (pathname === '/') {
+    const qs = request.nextUrl.searchParams.toString()
+    if (qs) {
+      // Auth error params should not trigger the onboarding flow
+      if (request.nextUrl.searchParams.has('error')) {
+        return NextResponse.redirect(new URL('/auth/expired', request.url))
+      }
+      // Preserve UTM/preview params for onboarding
+      return NextResponse.redirect(new URL('/new?' + qs, request.url))
+    }
+    return NextResponse.redirect(new URL('/console', request.url))
+  }
+
+  if (GUEST_BLOCKED.some((p) => pathname === p || pathname === p + '/')) {
+    return loginRedirect(request, pathname)
+  }
+  if (pathname.startsWith('/profile')) {
+    return loginRedirect(request, pathname)
+  }
+  if (pathname.startsWith('/devices/claim')) {
+    return loginRedirect(request, '/devices/claim')
+  }
+  if (pathname.startsWith('/admin') || pathname.startsWith('/studio')) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // Guest console is served from the ISR shell so the CDN cache answers the
+  // highest-traffic page with zero function invocations. The URL stays
+  // /console; only the render target changes.
+  if (pathname === '/console') {
+    return NextResponse.rewrite(new URL('/console-guest', request.url))
+  }
+
+  return NextResponse.next({ request })
+}
+
 export async function proxy(request: NextRequest) {
   // Skip auth middleware if Supabase is not configured yet
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next({ request })
+  }
+
+  // Guest fast path: no Supabase auth cookie (`sb-*`) means there is no
+  // session to refresh or validate — skip creating the Supabase client and
+  // the getUser() network roundtrip entirely.
+  if (!request.cookies.getAll().some((c) => c.name.startsWith('sb-'))) {
+    return routeGuest(request)
   }
 
   let supabaseResponse = NextResponse.next({ request })
@@ -101,10 +161,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/console', request.url))
   }
 
-  // Category listing pages require a logged-in user.
-  // Guests can access individual content pages (e.g. /intel/[id]) but not the root listings.
+  // Signed-in visitors never see the guest ISR shell — send direct hits back.
+  if (user && pathname === '/console-guest') {
+    return NextResponse.redirect(new URL('/console', request.url))
+  }
+
+  // Category listing pages require a logged-in user (see GUEST_BLOCKED above).
   // Redirect to /login with a ?redirect= param so the user lands on the right page after signing in.
-  const GUEST_BLOCKED = ['/intel', '/devices', '/worlds', '/voyagers', '/vote', '/logs']
   if (!user && GUEST_BLOCKED.some(p => pathname === p || pathname === p + '/')) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'

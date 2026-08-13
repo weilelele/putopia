@@ -390,3 +390,10 @@ export async function getSignalFeed(): Promise<FeedEntry[]> {
   const canSeeGated = await viewerCanSeeGated()
   return getSignalFeedCached(canSeeGated)
 }
+
+/** The guest bucket directly — no cookie/viewer resolution, so it is safe to
+ *  call from statically rendered (ISR) routes like the guest console shell.
+ *  Gated bodies are always stripped in this bucket. */
+export async function getGuestSignalFeed(): Promise<FeedEntry[]> {
+  return getSignalFeedCached(false)
+}
