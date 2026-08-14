@@ -28,6 +28,7 @@ export async function POST(request: Request) {
   const worldId = String(form.get('worldId') ?? '')
   const shotId = String(form.get('shotId') ?? '') || null
   const eventId = String(form.get('eventId') ?? '') || null
+  const characterId = String(form.get('characterId') ?? '') || null
   const step = Number(form.get('step'))
   if (!(file instanceof File)) return NextResponse.json({ error: '请选择本地素材。' }, { status: 400 })
   if (!worldId || !Number.isInteger(step) || step < 1 || step > 7) {
@@ -53,7 +54,8 @@ export async function POST(request: Request) {
   }
   const state = world.workflow_state as {
     shots?: Array<{ id: string }>
-    eventSystems?: Record<string, { timeSlots?: Array<{ events?: Array<{ id: string }> }> }>
+    characters?: Array<{ id: string }>
+    eventSystems?: Record<string, { timeSlots?: Array<{ events?: Array<{ id: string; subEvents?: Array<{ id: string }> }> }> }>
     stepStatuses?: Record<string, string>
   }
   if (['review', 'approved'].includes(state.stepStatuses?.[String(step)] ?? '')) {
@@ -68,8 +70,19 @@ export async function POST(request: Request) {
   if (shotId && !state.shots?.some((shot) => shot.id === shotId)) {
     return NextResponse.json({ error: '镜头无效。' }, { status: 400 })
   }
+  if (characterId && !state.characters?.some((character) => character.id === characterId)) {
+    return NextResponse.json({ error: '角色无效。' }, { status: 400 })
+  }
+  if (step === 3 && !shotId) {
+    return NextResponse.json({ error: '镜头素材必须绑定到具体镜头。' }, { status: 400 })
+  }
+  if (step === 4 && (!characterId || media.mediaType !== 'image')) {
+    return NextResponse.json({ error: '角色素材必须是绑定到具体角色的图片。' }, { status: 400 })
+  }
   const eventExists = shotId && eventId
-    ? state.eventSystems?.[shotId]?.timeSlots?.some((slot) => slot.events?.some((event) => event.id === eventId))
+    ? state.eventSystems?.[shotId]?.timeSlots?.some((slot) => slot.events?.some((event) => (
+      event.id === eventId || event.subEvents?.some((subEvent) => subEvent.id === eventId)
+    )))
     : false
   if ((step >= 6 && (!shotId || !eventId)) || (eventId && !eventExists)) {
     return NextResponse.json({ error: '请选择有效的镜头和事件。' }, { status: 400 })
@@ -88,6 +101,7 @@ export async function POST(request: Request) {
     .eq('step', step)
   versionQuery = shotId ? versionQuery.eq('shot_id', shotId) : versionQuery.is('shot_id', null)
   versionQuery = eventId ? versionQuery.eq('event_id', eventId) : versionQuery.is('event_id', null)
+  versionQuery = characterId ? versionQuery.eq('character_id', characterId) : versionQuery.is('character_id', null)
   const { count } = await versionQuery
 
   const assetId = randomUUID()
@@ -99,6 +113,7 @@ export async function POST(request: Request) {
       step,
       shot_id: shotId,
       event_id: eventId,
+      character_id: characterId,
       media_type: media.mediaType,
       file_name: file.name.slice(0, 240),
       storage_path: path,

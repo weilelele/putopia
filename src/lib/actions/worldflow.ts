@@ -4,13 +4,21 @@ import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { asWorldflowAdmin } from '@/lib/worldflow-database'
+import { validateWorldflowSubmission } from '@/lib/worldflow-validation'
 
 export type WorldflowStepStatus = 'draft' | 'review' | 'changes' | 'approved' | 'optional' | 'skipped'
+
+export type WorldflowSubEvent = {
+  id: string
+  name: string
+  description: string
+}
 
 export type WorldflowEvent = {
   id: string
   name: string
   description: string
+  subEvents: WorldflowSubEvent[]
 }
 
 export type WorldflowTimeSlot = {
@@ -30,7 +38,7 @@ export type WorldflowState = {
   worldRules: string
   coreConflict: string
   visualDirection: string
-  characters: Array<{ id: string; name: string; environment: string; motivation: string }>
+  characters: Array<{ id: string; name: string; description: string; environment: string; motivation: string }>
   shots: WorldflowShot[]
   eventSystems: Record<string, { version: number; timeSlots: WorldflowTimeSlot[] }>
   stepStatuses: Record<string, WorldflowStepStatus>
@@ -56,6 +64,7 @@ export type WorldflowAsset = {
   step: number
   shot_id: string | null
   event_id: string | null
+  character_id: string | null
   media_type: 'image' | 'video'
   file_name: string
   public_url: string
@@ -177,6 +186,15 @@ export async function submitWorldflowStep(input: { worldId: string; state: World
   if (access.world.owner_id !== access.me.id) return { error: '只有创建者可以提交这个世界。' }
   if (!Number.isInteger(input.step) || input.step < 1 || input.step > 7) return { error: '步骤无效。' }
   if (input.step > access.world.current_step) return { error: '请先完成当前步骤的审核。' }
+  if (input.step === 3 || input.step === 4) {
+    const { data: assets, error: assetError } = await access.admin.from('worldflow_assets')
+      .select('character_id, media_type, shot_id')
+      .eq('world_id', input.worldId)
+      .eq('step', input.step)
+    if (assetError) return { error: assetError.message }
+    const validationError = validateWorldflowSubmission(input.step, input.state, assets ?? [])
+    if (validationError) return { error: validationError }
+  }
   const state = { ...input.state, stepStatuses: { ...input.state.stepStatuses, [String(input.step)]: 'review' as const } }
   const { error } = await access.admin.from('worldflow_worlds')
     .update({ workflow_state: state, current_step: input.step, current_status: 'review', updated_at: new Date().toISOString() })

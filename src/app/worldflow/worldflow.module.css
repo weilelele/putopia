@@ -463,6 +463,72 @@ button.worldCard {
   background: var(--bg-panel);
 }
 
+.recordList .assetRecord {
+  display: block;
+  padding: var(--s-4);
+}
+
+.recordFields {
+  display: grid;
+  gap: var(--s-3);
+  align-items: start;
+}
+
+.characterHeader {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-2);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--bd-faint);
+}
+
+.characterHeader > button {
+  display: grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--color-star-dim);
+  cursor: pointer;
+}
+
+.characterFields {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+}
+
+.characterFields label {
+  display: grid;
+  gap: var(--s-2);
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
+}
+
+.characterFields input,
+.characterFields textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: var(--s-3);
+  border: 1px solid var(--color-star-deep);
+  border-radius: var(--radius);
+  outline: none;
+  background: var(--bg-panel);
+  color: var(--color-star);
+}
+
+.characterFields textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.characterFields input:focus,
+.characterFields textarea:focus {
+  border-color: var(--color-nucleus);
+}
+
 .recordList article > button,
 .timeLane header > button,
 .eventRow > button:last-child {
@@ -540,6 +606,61 @@ button.worldCard {
   color: var(--color-star);
 }
 
+.eventGroup {
+  margin-bottom: var(--s-3);
+}
+
+.subEventList {
+  display: grid;
+  gap: var(--s-1);
+  margin: calc(var(--s-2) * -1) 0 var(--s-2) var(--s-3);
+  padding: var(--s-2) 0 0 var(--s-3);
+  border-left: 1px solid var(--bd-orange);
+}
+
+.subEventRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  border: 1px solid var(--bd-faint);
+  background: var(--color-void);
+}
+
+.subEventRow > button:first-child {
+  display: grid;
+  min-height: 52px;
+  gap: var(--s-1);
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-star);
+  text-align: left;
+  cursor: pointer;
+}
+
+.subEventRow > button:first-child span {
+  color: var(--color-nucleus);
+  font-size: var(--fs-caption);
+}
+
+.subEventRow > button:first-child[data-active='true'] {
+  background: var(--color-nucleus);
+}
+
+.subEventRow > button:first-child[data-active='true'] span {
+  color: var(--color-star);
+}
+
+.subEventRow > button:last-child {
+  display: grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--color-star-dim);
+  cursor: pointer;
+}
+
 .addEvent {
   display: inline-flex;
   min-height: 44px;
@@ -555,6 +676,116 @@ button.worldCard {
   margin-top: var(--s-4);
   padding-top: var(--s-4);
   border-top: 1px solid var(--bd-faint);
+}
+
+.eventType {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-faint);
+  background: var(--bg-panel);
+}
+
+.eventType span {
+  color: var(--color-nucleus);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.08em;
+}
+
+.eventType strong {
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
+}
+
+.subjectTable {
+  margin-bottom: var(--s-4);
+  border: 1px solid var(--bd-faint);
+  background: var(--bg-panel);
+}
+
+.subjectTableIntro {
+  display: grid;
+  gap: var(--s-1);
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--bd-faint);
+}
+
+.subjectTableIntro span {
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
+  line-height: 1.5;
+}
+
+.subjectColumns {
+  display: grid;
+  grid-auto-columns: minmax(210px, 1fr);
+  grid-auto-flow: column;
+  overflow-x: auto;
+}
+
+.subjectColumn {
+  min-width: 210px;
+  border-right: 1px solid var(--bd-faint);
+}
+
+.subjectColumn:last-child {
+  border-right: 0;
+}
+
+.subjectColumn > header {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-bottom: 1px solid var(--bd-faint);
+  color: var(--color-star-dim);
+}
+
+.subjectGroup {
+  padding: var(--s-2);
+  border-bottom: 1px solid var(--bd-faint);
+}
+
+.subjectGroup:last-child {
+  border-bottom: 0;
+}
+
+.subjectGroup button {
+  display: grid;
+  width: 100%;
+  min-height: 58px;
+  gap: var(--s-1);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-faint);
+  background: var(--color-void);
+  color: var(--color-star);
+  text-align: left;
+  cursor: pointer;
+}
+
+.subjectGroup button + button {
+  margin-top: var(--s-1);
+  margin-left: var(--s-2);
+  width: calc(100% - var(--s-2));
+}
+
+.subjectGroup button small {
+  color: var(--color-nucleus);
+  font-size: var(--fs-caption);
+}
+
+.subjectGroup button[data-active='true'] {
+  border-color: var(--color-nucleus);
+  background: var(--color-nucleus);
+}
+
+.subjectGroup button[data-active='true'] small {
+  color: var(--color-star);
 }
 
 .eventChooser {
@@ -617,6 +848,31 @@ button.worldCard {
   color: var(--color-star-dim);
   font-size: var(--fs-label);
   line-height: 1.5;
+}
+
+.contextAssetRefs {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  padding-top: var(--s-1);
+}
+
+.contextAssetRefs img {
+  width: 96px;
+  height: 54px;
+  flex: 0 0 auto;
+  border: 1px solid var(--bd-faint);
+  object-fit: cover;
+}
+
+.contextAssetRefs span {
+  display: grid;
+  min-width: 54px;
+  min-height: 54px;
+  place-items: center;
+  border: 1px solid var(--bd-faint);
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
 }
 
 .materialSection {
@@ -758,6 +1014,14 @@ button.emptyAsset {
 
   .recordList article {
     grid-template-columns: auto minmax(160px, 0.6fr) minmax(240px, 1fr) auto;
+  }
+
+  .recordFields {
+    grid-template-columns: auto minmax(160px, 0.6fr) minmax(240px, 1fr) auto;
+  }
+
+  .characterFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .contextLayers {
