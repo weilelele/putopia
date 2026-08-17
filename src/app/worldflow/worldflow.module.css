@@ -561,14 +561,22 @@ button.worldCard {
 
 .eventBoard {
   display: grid;
+  grid-auto-columns: clamp(300px, 32vw, 520px);
+  grid-auto-flow: column;
   gap: var(--s-3);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
   margin-bottom: var(--s-3);
+  padding-bottom: var(--s-2);
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
 }
 
 .timeLane {
   padding: var(--s-3);
   border: 1px solid var(--bd-faint);
   background: var(--bg-panel);
+  scroll-snap-align: start;
 }
 
 .timeLane > header {
@@ -1002,8 +1010,7 @@ button.emptyAsset {
   }
 
   .worldList,
-  .assetGrid,
-  .eventBoard {
+  .assetGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1068,7 +1075,4 @@ button.emptyAsset {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .eventBoard {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
