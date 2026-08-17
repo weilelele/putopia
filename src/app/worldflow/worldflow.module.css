@@ -302,17 +302,17 @@ button.worldCard {
   font-size: var(--fs-caption);
 }
 
-.status[data-status='review'] {
+.status[data-status="review"] {
   border-color: var(--color-warn);
   color: var(--color-warn);
 }
 
-.status[data-status='approved'] {
+.status[data-status="approved"] {
   border-color: var(--color-ok);
   color: var(--color-ok);
 }
 
-.status[data-status='changes'] {
+.status[data-status="changes"] {
   border-color: var(--color-fault);
   color: var(--color-fault);
 }
@@ -363,12 +363,12 @@ button.worldCard {
   font-size: var(--fs-caption);
 }
 
-.stepNav button[data-active='true'] {
+.stepNav button[data-active="true"] {
   background: var(--color-nucleus);
 }
 
-.stepNav button[data-active='true'] > span,
-.stepNav button[data-active='true'] small {
+.stepNav button[data-active="true"] > span,
+.stepNav button[data-active="true"] small {
   color: var(--color-star);
 }
 
@@ -449,9 +449,34 @@ button.worldCard {
   font-size: var(--fs-caption);
 }
 
-.shotSelector > div button[data-active='true'],
-.eventChooser button[data-active='true'] {
+.shotSelector > div button[data-active="true"],
+.eventChooser button[data-active="true"] {
   border-color: var(--color-nucleus);
+}
+
+.shotSelector > div .shotOption {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 190px;
+}
+
+.shotSelector > div .shotOption > button:first-child {
+  width: 100%;
+  padding-right: 52px;
+}
+
+.shotSelector > div .shotOption .deleteShot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-star-dim);
 }
 
 .recordList {
@@ -572,6 +597,37 @@ button.worldCard {
   scrollbar-width: thin;
 }
 
+.structureEditor {
+  margin-bottom: var(--s-4);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-faint);
+  background: var(--color-void);
+}
+
+.structureEditor > header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.structureEditor > header > div {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.structureEditor > header span,
+.emptyStructure {
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
+}
+
+.emptyStructure {
+  min-width: min(100%, 320px);
+  padding: var(--s-5);
+  border: 1px dashed var(--bd-faint);
+}
+
 .timeLane {
   padding: var(--s-3);
   border: 1px solid var(--bd-faint);
@@ -607,7 +663,7 @@ button.worldCard {
   cursor: pointer;
 }
 
-.eventRow > button:first-child[data-active='true'] {
+.eventRow > button:first-child[data-active="true"] {
   background: var(--color-nucleus);
 }
 
@@ -616,7 +672,7 @@ button.worldCard {
   font-size: var(--fs-caption);
 }
 
-.eventRow > button:first-child[data-active='true'] span {
+.eventRow > button:first-child[data-active="true"] span {
   color: var(--color-star);
 }
 
@@ -656,11 +712,11 @@ button.worldCard {
   font-size: var(--fs-caption);
 }
 
-.subEventRow > button:first-child[data-active='true'] {
+.subEventRow > button:first-child[data-active="true"] {
   background: var(--color-nucleus);
 }
 
-.subEventRow > button:first-child[data-active='true'] span {
+.subEventRow > button:first-child[data-active="true"] span {
   color: var(--color-star);
 }
 
@@ -683,6 +739,19 @@ button.worldCard {
   border: 0;
   background: transparent;
   color: var(--color-nucleus);
+  cursor: pointer;
+}
+
+.addSubEvent {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--s-1);
+  margin-left: var(--s-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
   cursor: pointer;
 }
 
@@ -793,12 +862,12 @@ button.worldCard {
   font-size: var(--fs-caption);
 }
 
-.subjectGroup button[data-active='true'] {
+.subjectGroup button[data-active="true"] {
   border-color: var(--color-nucleus);
   background: var(--color-nucleus);
 }
 
-.subjectGroup button[data-active='true'] small {
+.subjectGroup button[data-active="true"] small {
   color: var(--color-star);
 }
 
@@ -822,6 +891,7 @@ button.worldCard {
 
 .context > header {
   display: flex;
+  flex-direction: column;
   gap: var(--s-3);
   padding: var(--s-4);
   border-bottom: 1px solid var(--bd-faint);
@@ -893,6 +963,170 @@ button.worldCard {
   margin-top: var(--s-5);
   padding-top: var(--s-4);
   border-top: 1px solid var(--bd-faint);
+}
+
+.materialActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.cloudLibrary {
+  margin-bottom: var(--s-4);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-orange);
+  background: var(--color-deep);
+}
+
+.cloudLibrary > header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+}
+
+.cloudLibrary > header > div {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.cloudLibrary > header span,
+.cloudStatus {
+  margin: 0;
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.cloudAssetGrid {
+  display: grid;
+  grid-auto-columns: minmax(190px, 72vw);
+  grid-auto-flow: column;
+  gap: var(--s-2);
+  overflow-x: auto;
+  padding-bottom: var(--s-2);
+  scroll-snap-type: x proximity;
+}
+
+.cloudAssetCard {
+  position: relative;
+  display: grid;
+  min-height: 240px;
+  align-content: start;
+  gap: var(--s-1);
+  overflow: hidden;
+  padding: 0 0 var(--s-3);
+  border: 1px solid var(--bd-faint);
+  background: var(--bg-panel);
+  color: var(--color-star);
+  text-align: left;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.cloudAssetCard img,
+.cloudAssetCard video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--color-void);
+}
+
+.cloudAssetCard > span {
+  position: absolute;
+  top: var(--s-2);
+  left: var(--s-2);
+  padding: var(--s-1) var(--s-2);
+  background: var(--color-nucleus);
+  color: var(--color-star);
+  font-size: var(--fs-caption);
+}
+
+.cloudAssetCard strong,
+.cloudAssetCard small {
+  margin-inline: var(--s-3);
+}
+
+.cloudAssetCard small {
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.videoSequence {
+  margin-top: var(--s-5);
+  border: 1px solid var(--bd-orange);
+  background: var(--bg-panel);
+}
+
+.videoSequence > header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--bd-faint);
+}
+
+.videoSequence > header > div {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.videoSequence > header span,
+.videoSequence > header p,
+.videoSequence li p,
+.videoSequence li small {
+  margin: 0;
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.videoSequence h3 {
+  margin: 0;
+}
+
+.videoSequence ol {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.videoSequence li {
+  display: grid;
+  grid-template-columns: 44px 96px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-bottom: 1px solid var(--bd-faint);
+}
+
+.videoSequence li:last-child {
+  border-bottom: 0;
+}
+
+.videoSequence li > span {
+  color: var(--color-nucleus);
+  font-weight: 700;
+}
+
+.videoSequence li video {
+  width: 96px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--color-deep);
+}
+
+.videoSequence li > div {
+  display: grid;
+  min-width: 0;
+  gap: var(--s-1);
+}
+
+.emptySequence {
+  padding: var(--s-5);
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
+  text-align: center;
 }
 
 .assetGrid {
@@ -1044,6 +1278,27 @@ button.emptyAsset {
   .contextLayers article {
     border-right: 1px solid var(--bd-faint);
   }
+
+  .structureEditor > header,
+  .cloudLibrary > header,
+  .context > header,
+  .videoSequence > header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cloudAssetGrid {
+    grid-auto-columns: minmax(210px, 280px);
+  }
+
+  .videoSequence li {
+    grid-template-columns: 52px 180px minmax(0, 1fr);
+  }
+
+  .videoSequence li video {
+    width: 180px;
+  }
 }
 
 @media (min-width: 1100px) {
@@ -1074,5 +1329,4 @@ button.emptyAsset {
   .assetGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
 }

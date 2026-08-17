@@ -15,7 +15,9 @@ const MEDIA_TYPES: Record<string, { extension: string; mediaType: 'image' | 'vid
 
 async function authenticatedUser() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   return user
 }
 
@@ -41,10 +43,7 @@ export async function POST(request: Request) {
   }
 
   const admin = asWorldflowAdmin(createAdminClient())
-  const { data: world } = await admin.from('worldflow_worlds')
-    .select('current_step, owner_id, workflow_state')
-    .eq('id', worldId)
-    .maybeSingle()
+  const { data: world } = await admin.from('worldflow_worlds').select('current_step, owner_id, workflow_state').eq('id', worldId).maybeSingle()
   if (!world) return NextResponse.json({ error: '找不到这个世界。' }, { status: 404 })
   if (world.owner_id !== user.id) {
     return NextResponse.json({ error: '只有创建者可以添加素材。' }, { status: 403 })
@@ -55,7 +54,14 @@ export async function POST(request: Request) {
   const state = world.workflow_state as {
     shots?: Array<{ id: string }>
     characters?: Array<{ id: string }>
-    eventSystems?: Record<string, { timeSlots?: Array<{ events?: Array<{ id: string; subEvents?: Array<{ id: string }> }> }> }>
+    eventSystems?: Record<
+      string,
+      {
+        timeSlots?: Array<{
+          events?: Array<{ id: string; subEvents?: Array<{ id: string }> }>
+        }>
+      }
+    >
     stepStatuses?: Record<string, string>
   }
   if (['review', 'approved'].includes(state.stepStatuses?.[String(step)] ?? '')) {
@@ -79,33 +85,28 @@ export async function POST(request: Request) {
   if (step === 4 && (!characterId || media.mediaType !== 'image')) {
     return NextResponse.json({ error: '角色素材必须是绑定到具体角色的图片。' }, { status: 400 })
   }
-  const eventExists = shotId && eventId
-    ? state.eventSystems?.[shotId]?.timeSlots?.some((slot) => slot.events?.some((event) => (
-      event.id === eventId || event.subEvents?.some((subEvent) => subEvent.id === eventId)
-    )))
-    : false
+  const eventExists =
+    shotId && eventId
+      ? state.eventSystems?.[shotId]?.timeSlots?.some((slot) => slot.events?.some((event) => event.id === eventId || event.subEvents?.some((subEvent) => subEvent.id === eventId)))
+      : false
   if ((step >= 6 && (!shotId || !eventId)) || (eventId && !eventExists)) {
     return NextResponse.json({ error: '请选择有效的镜头和事件。' }, { status: 400 })
   }
 
   const path = `${user.id}/${worldId}/step-${step}/${randomUUID()}.${media.extension}`
   const bytes = new Uint8Array(await file.arrayBuffer())
-  const { error: uploadError } = await admin.storage
-    .from('worldflow-assets')
-    .upload(path, bytes, { contentType: file.type, upsert: false })
+  const { error: uploadError } = await admin.storage.from('worldflow-assets').upload(path, bytes, { contentType: file.type, upsert: false })
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 
-  let versionQuery = admin.from('worldflow_assets')
-    .select('id', { count: 'exact', head: true })
-    .eq('world_id', worldId)
-    .eq('step', step)
+  let versionQuery = admin.from('worldflow_assets').select('id', { count: 'exact', head: true }).eq('world_id', worldId).eq('step', step)
   versionQuery = shotId ? versionQuery.eq('shot_id', shotId) : versionQuery.is('shot_id', null)
   versionQuery = eventId ? versionQuery.eq('event_id', eventId) : versionQuery.is('event_id', null)
   versionQuery = characterId ? versionQuery.eq('character_id', characterId) : versionQuery.is('character_id', null)
   const { count } = await versionQuery
 
   const assetId = randomUUID()
-  const { data: asset, error: insertError } = await admin.from('worldflow_assets')
+  const { data: asset, error: insertError } = await admin
+    .from('worldflow_assets')
     .insert({
       id: assetId,
       world_id: worldId,
@@ -121,6 +122,10 @@ export async function POST(request: Request) {
       file_size: file.size,
       mime_type: file.type,
       version: (count ?? 0) + 1,
+      source_type: 'local',
+      source_provider: null,
+      source_asset_id: null,
+      source_url: null,
     })
     .select('*')
     .single()

@@ -38,7 +38,13 @@ export type WorldflowState = {
   worldRules: string
   coreConflict: string
   visualDirection: string
-  characters: Array<{ id: string; name: string; description: string; environment: string; motivation: string }>
+  characters: Array<{
+    id: string
+    name: string
+    description: string
+    environment: string
+    motivation: string
+  }>
   shots: WorldflowShot[]
   eventSystems: Record<string, { version: number; timeSlots: WorldflowTimeSlot[] }>
   stepStatuses: Record<string, WorldflowStepStatus>
@@ -68,9 +74,23 @@ export type WorldflowAsset = {
   media_type: 'image' | 'video'
   file_name: string
   public_url: string
-  file_size: number
+  file_size: number | null
   mime_type: string
   version: number
+  source_type: 'cloud' | 'local'
+  source_provider: 'signal_task_assets' | 'world_final_assets' | null
+  source_asset_id: string | null
+  source_url: string | null
+  created_at: string
+}
+
+export type WorldflowCloudAsset = {
+  id: string
+  media_type: 'image' | 'video'
+  name: string
+  preview_url: string
+  provider: 'signal_task_assets' | 'world_final_assets'
+  source_url: string
   created_at: string
 }
 
@@ -93,22 +113,25 @@ function initialState(): WorldflowState {
       },
     },
     stepStatuses: {
-      '1': 'draft', '2': 'draft', '3': 'draft', '4': 'optional',
-      '5': 'draft', '6': 'draft', '7': 'draft',
+      '1': 'draft',
+      '2': 'draft',
+      '3': 'draft',
+      '4': 'optional',
+      '5': 'draft',
+      '6': 'draft',
+      '7': 'draft',
     },
   }
 }
 
 async function caller() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return null
   const admin = asWorldflowAdmin(createAdminClient())
-  const { data: profile } = await admin
-    .from('voyager_profiles')
-    .select('role, display_name')
-    .eq('id', user.id)
-    .maybeSingle()
+  const { data: profile } = await admin.from('voyager_profiles').select('role, display_name').eq('id', user.id).maybeSingle()
   return {
     id: user.id,
     role: profile?.role ?? 'applicant',
@@ -120,10 +143,7 @@ async function worldAccess(worldId: string) {
   const me = await caller()
   if (!me) return { error: '请先登录。' } as const
   const admin = asWorldflowAdmin(createAdminClient())
-  const { data: world } = await admin.from('worldflow_worlds')
-    .select('*')
-    .eq('id', worldId)
-    .maybeSingle()
+  const { data: world } = await admin.from('worldflow_worlds').select('*').eq('id', worldId).maybeSingle()
   if (!world) return { error: '找不到这个世界。' } as const
   return { me, world, admin } as const
 }
@@ -135,7 +155,8 @@ export async function createWorldflowWorld(input: { name: string; description: s
   if (!name) return { error: '请填写世界名称。' }
 
   const admin = asWorldflowAdmin(createAdminClient())
-  const { data, error } = await admin.from('worldflow_worlds')
+  const { data, error } = await admin
+    .from('worldflow_worlds')
     .insert({
       name,
       description: input.description.trim().slice(0, 2000),
@@ -152,11 +173,7 @@ export async function createWorldflowWorld(input: { name: string; description: s
   return { id: data.id as string }
 }
 
-export async function saveWorldflowState(input: {
-  worldId: string
-  state: WorldflowState
-  currentStep: number
-}) {
+export async function saveWorldflowState(input: { worldId: string; state: WorldflowState; currentStep: number }) {
   const access = await worldAccess(input.worldId)
   if ('error' in access) return { error: access.error }
   if (access.world.owner_id !== access.me.id) return { error: '只有创建者可以修改这个世界。' }
@@ -167,7 +184,8 @@ export async function saveWorldflowState(input: {
   const serialized = JSON.stringify(input.state)
   if (serialized.length > 1_000_000) return { error: '工作流内容过大，请精简后再保存。' }
   const status = input.state.stepStatuses[String(input.currentStep)] ?? 'draft'
-  const { error } = await access.admin.from('worldflow_worlds')
+  const { error } = await access.admin
+    .from('worldflow_worlds')
     .update({
       workflow_state: input.state,
       current_step: input.currentStep,
@@ -187,7 +205,8 @@ export async function submitWorldflowStep(input: { worldId: string; state: World
   if (!Number.isInteger(input.step) || input.step < 1 || input.step > 7) return { error: '步骤无效。' }
   if (input.step > access.world.current_step) return { error: '请先完成当前步骤的审核。' }
   if (input.step === 3 || input.step === 4) {
-    const { data: assets, error: assetError } = await access.admin.from('worldflow_assets')
+    const { data: assets, error: assetError } = await access.admin
+      .from('worldflow_assets')
       .select('character_id, media_type, shot_id')
       .eq('world_id', input.worldId)
       .eq('step', input.step)
@@ -195,21 +214,28 @@ export async function submitWorldflowStep(input: { worldId: string; state: World
     const validationError = validateWorldflowSubmission(input.step, input.state, assets ?? [])
     if (validationError) return { error: validationError }
   }
-  const state = { ...input.state, stepStatuses: { ...input.state.stepStatuses, [String(input.step)]: 'review' as const } }
-  const { error } = await access.admin.from('worldflow_worlds')
-    .update({ workflow_state: state, current_step: input.step, current_status: 'review', updated_at: new Date().toISOString() })
+  const state = {
+    ...input.state,
+    stepStatuses: {
+      ...input.state.stepStatuses,
+      [String(input.step)]: 'review' as const,
+    },
+  }
+  const { error } = await access.admin
+    .from('worldflow_worlds')
+    .update({
+      workflow_state: state,
+      current_step: input.step,
+      current_status: 'review',
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', input.worldId)
   if (error) return { error: error.message }
   revalidatePath('/worldflow')
   return { ok: true, state }
 }
 
-export async function reviewWorldflowStep(input: {
-  worldId: string
-  state: WorldflowState
-  step: number
-  decision: 'approve' | 'changes'
-}) {
+export async function reviewWorldflowStep(input: { worldId: string; state: WorldflowState; step: number; decision: 'approve' | 'changes' }) {
   const access = await worldAccess(input.worldId)
   if ('error' in access) return { error: access.error }
   if (access.me.role !== 'architect') return { error: '只有 architect 可以审核。' }
@@ -226,7 +252,8 @@ export async function reviewWorldflowStep(input: {
       ...(input.decision === 'approve' && input.step < 7 ? { [String(nextStep)]: 'draft' as const } : {}),
     },
   }
-  const { error } = await access.admin.from('worldflow_worlds')
+  const { error } = await access.admin
+    .from('worldflow_worlds')
     .update({
       workflow_state: state,
       current_step: nextStep,
