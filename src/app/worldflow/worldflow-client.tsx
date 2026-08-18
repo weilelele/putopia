@@ -746,7 +746,7 @@ export function WorldflowClient({
       const result = await saveWorldflowState({
         worldId: selectedSource.id,
         state,
-        currentStep: activeStep,
+        currentStep: activeStep >= 5 ? selectedSource.current_step : activeStep,
       });
       setMessage(result.error ?? "已保存");
       if (!result.error) router.refresh();
@@ -758,7 +758,7 @@ export function WorldflowClient({
     const result = await saveWorldflowState({
       worldId: selectedSource.id,
       state,
-      currentStep: activeStep,
+      currentStep: activeStep >= 5 ? selectedSource.current_step : activeStep,
     });
     if (result.error) return result.error;
     setMessage("已自动保存当前草稿");
@@ -819,13 +819,13 @@ export function WorldflowClient({
         </header>
         <section className={styles.lifecycle}>
           <div>
-            <strong>基础构建 · STEP 1–3</strong>
-            <span>世界设定、风格基准和镜头清单，通常一次确认。</span>
+            <strong>准备阶段 · STEP 1–4</strong>
+            <span>世界设定、风格基准、镜头清单和可选角色，通常一次确认。</span>
           </div>
           <ChevronRight />
           <div>
-            <strong>持续生产 · STEP 4–7</strong>
-            <span>逐镜头维护事件，长期添加图片和视频素材。</span>
+            <strong>持续制作工作台 · STEP 5–7</strong>
+            <span>事件始终可编辑，并按里程碑逐步解锁图片、视频和编排。</span>
           </div>
         </section>
         <section className={styles.worldList}>
@@ -927,18 +927,24 @@ export function WorldflowClient({
     );
 
   const stepStatus = statusOf(state, activeStep);
-  const editable =
+  const milestoneEditable =
     isOwner &&
     activeStep <= selectedSource.current_step &&
     stepStatus !== "review" &&
     stepStatus !== "approved";
+  const productionEditable = isOwner && selectedSource.current_step >= 5;
+  const editable = activeStep >= 5 ? productionEditable : milestoneEditable;
+  const canSubmitMilestone =
+    isOwner &&
+    activeStep <= selectedSource.current_step &&
+    !["review", "approved"].includes(stepStatus);
 
   function beginNewIteration() {
     updateState((current) => ({
       ...current,
       stepStatuses: { ...current.stepStatuses, [String(activeStep)]: "draft" },
     }));
-    setMessage("已开启新一轮迭代，请修改并保存");
+    setMessage("本里程碑已重新打开；持续制作内容仍可随时修改");
   }
 
   function updateEventSystem(
@@ -1063,9 +1069,9 @@ export function WorldflowClient({
         </div>
         <div>
           <header>
-            持续生产 <span>长期更新素材</span>
+            持续生产 <span>统一工作台</span>
           </header>
-          {STEPS.slice(3).map((step, index) => (
+          {STEPS.slice(3, 4).map((step, index) => (
             <button
               data-active={activeStep === index + 4}
               key={step[0]}
@@ -1080,6 +1086,23 @@ export function WorldflowClient({
               <small>{STATUS[statusOf(state, index + 4)]}</small>
             </button>
           ))}
+          <button
+            data-active={activeStep >= 5}
+            disabled={selectedSource.current_step < 5}
+            onClick={() => {
+              setActiveStep(Math.max(5, selectedSource.current_step));
+              setContextExpanded(false);
+            }}
+            type="button"
+          >
+            <span>05–07</span>
+            <strong>持续制作工作台</strong>
+            <small>
+              {selectedSource.current_step < 5
+                ? "完成角色设定后解锁"
+                : `已解锁至 STEP ${selectedSource.current_step}`}
+            </small>
+          </button>
         </div>
       </nav>
 
@@ -1096,7 +1119,9 @@ export function WorldflowClient({
             </strong>
             <span>
               {isOwner
-                ? "可编辑、上传本地素材并提交审核。"
+                ? activeStep >= 5
+                  ? "事件与时段提交后仍可修改；审核只负责解锁下一层素材能力。"
+                  : "可编辑、上传或关联素材并提交审核。"
                 : isArchitect
                   ? "可查看全部内容并处理待审核步骤；你仍然可以创建自己的世界。"
                   : "可以浏览，但只有创建者能修改。"}
@@ -1118,17 +1143,52 @@ export function WorldflowClient({
       </section>
 
       <div className={styles.stepTitle}>
-        <span>0{activeStep}</span>
+        <span>{activeStep >= 5 ? "05–07" : `0${activeStep}`}</span>
         <div>
           <small>
             {STEPS[activeStep - 1][2] === "foundation"
               ? "FOUNDATION · LOW FREQUENCY"
               : "ONGOING · CONTINUOUS"}
           </small>
-          <h2>{STEPS[activeStep - 1][0]}</h2>
-          <p>{STEPS[activeStep - 1][1]}</p>
+          <h2>
+            {activeStep >= 5 ? "持续制作工作台" : STEPS[activeStep - 1][0]}
+          </h2>
+          <p>
+            {activeStep >= 5
+              ? "统一维护镜头、时段、事件、图片和视频；里程碑审核逐步解锁新能力。"
+              : STEPS[activeStep - 1][1]}
+          </p>
         </div>
       </div>
+
+      {activeStep >= 5 ? (
+        <section className={styles.productionMilestones}>
+          {[5, 6, 7].map((step) => {
+            const unlocked = selectedSource.current_step >= step;
+            return (
+              <button
+                data-active={activeStep === step}
+                data-unlocked={unlocked}
+                disabled={!unlocked}
+                key={step}
+                onClick={() => {
+                  setActiveStep(step);
+                  setContextExpanded(false);
+                }}
+                type="button"
+              >
+                <span>STEP 0{step}</span>
+                <strong>{STEPS[step - 1][0]}</strong>
+                <small>
+                  {unlocked
+                    ? STATUS[statusOf(state, step)]
+                    : "完成前一里程碑审核后解锁"}
+                </small>
+              </button>
+            );
+          })}
+        </section>
+      ) : null}
 
       {activeStep >= 5 ? (
         <section className={styles.shotSelector}>
@@ -1564,7 +1624,7 @@ export function WorldflowClient({
             ) : null}
           </div>
         ) : null}
-        {activeStep === 5 && activeShot && eventSystem ? (
+        {activeStep >= 5 && activeShot && eventSystem ? (
           <div>
             <EventStructureEditor
               editable={editable}
@@ -1662,15 +1722,8 @@ export function WorldflowClient({
             ) : null}
           </div>
         ) : null}
-        {(activeStep === 6 || activeStep === 7) && activeShot && eventSystem ? (
+        {activeStep >= 5 && activeShot && eventSystem ? (
           <div>
-            <EventStructureEditor
-              editable={editable}
-              onChange={updateEventSystem}
-              onSelect={selectEvent}
-              selectedEventId={selectedEventId}
-              slots={eventSystem.timeSlots}
-            />
             <div className={styles.subjectTable}>
               <div className={styles.subjectTableIntro}>
                 <strong>选择素材单元</strong>
@@ -1820,27 +1873,78 @@ export function WorldflowClient({
                     </div>
                   ) : null}
                 </section>
-                <MaterialUploader
-                  beforeUpload={saveBeforeMaterialUpload}
-                  assets={assetsForScope(activeStep, {
-                    eventId: selectedEvent.id,
-                    shotId: activeShot.id,
-                  })}
-                  canUpload={editable}
-                  eventId={selectedEvent.id}
-                  mediaKind={activeStep === 6 ? "image" : "video"}
-                  onUploaded={(asset) =>
-                    setAssets((items) => [asset, ...items])
-                  }
-                  shotId={activeShot.id}
-                  step={activeStep}
-                  title={
-                    activeStep === 6
-                      ? `${eventSelection?.isSubEvent ? "子事件" : "父事件"}图片版本`
-                      : `${eventSelection?.isSubEvent ? "子事件" : "父事件"}视频版本`
-                  }
-                  worldId={selectedSource.id}
-                />
+                {selectedSource.current_step >= 6 ? (
+                  <section className={styles.productionSection}>
+                    <header>
+                      <div>
+                        <span>STEP 06 · UNLOCKED</span>
+                        <h3>图片素材</h3>
+                      </div>
+                      <small>{STATUS[statusOf(state, 6)]}</small>
+                    </header>
+                    <MaterialUploader
+                      beforeUpload={saveBeforeMaterialUpload}
+                      assets={assetsForScope(6, {
+                        eventId: selectedEvent.id,
+                        shotId: activeShot.id,
+                      })}
+                      canUpload={productionEditable}
+                      eventId={selectedEvent.id}
+                      mediaKind="image"
+                      onUploaded={(asset) =>
+                        setAssets((items) => [asset, ...items])
+                      }
+                      shotId={activeShot.id}
+                      step={6}
+                      title={`${eventSelection?.isSubEvent ? "子事件" : "父事件"}图片版本`}
+                      worldId={selectedSource.id}
+                    />
+                  </section>
+                ) : (
+                  <section className={styles.unlockPanel}>
+                    <LockKeyhole size={21} />
+                    <div>
+                      <strong>图片素材尚未解锁</strong>
+                      <span>STEP 5 审核通过后，会在同一页面开放图片素材。</span>
+                    </div>
+                  </section>
+                )}
+                {selectedSource.current_step >= 7 ? (
+                  <section className={styles.productionSection}>
+                    <header>
+                      <div>
+                        <span>STEP 07 · UNLOCKED</span>
+                        <h3>视频素材</h3>
+                      </div>
+                      <small>{STATUS[statusOf(state, 7)]}</small>
+                    </header>
+                    <MaterialUploader
+                      beforeUpload={saveBeforeMaterialUpload}
+                      assets={assetsForScope(7, {
+                        eventId: selectedEvent.id,
+                        shotId: activeShot.id,
+                      })}
+                      canUpload={productionEditable}
+                      eventId={selectedEvent.id}
+                      mediaKind="video"
+                      onUploaded={(asset) =>
+                        setAssets((items) => [asset, ...items])
+                      }
+                      shotId={activeShot.id}
+                      step={7}
+                      title={`${eventSelection?.isSubEvent ? "子事件" : "父事件"}视频版本`}
+                      worldId={selectedSource.id}
+                    />
+                  </section>
+                ) : (
+                  <section className={styles.unlockPanel}>
+                    <LockKeyhole size={21} />
+                    <div>
+                      <strong>视频素材与编排尚未解锁</strong>
+                      <span>STEP 6 审核通过后，会继续在这里开放视频能力。</span>
+                    </div>
+                  </section>
+                )}
               </>
             ) : (
               <div className={styles.noSelection}>
@@ -1849,7 +1953,7 @@ export function WorldflowClient({
                 <span>素材会绑定到当前镜头和事件主体，不会混入其他镜头。</span>
               </div>
             )}
-            {activeStep === 7 ? (
+            {selectedSource.current_step >= 7 ? (
               <section className={styles.videoSequence}>
                 <header>
                   <div>
@@ -1909,7 +2013,9 @@ export function WorldflowClient({
         <span>
           {message ||
             (editable
-              ? "修改后请保存；准备好后提交审核。"
+              ? activeStep >= 5
+                ? "事件、时段与已解锁素材可持续维护；里程碑审核不会锁死内容。"
+                : "修改后请保存；准备好后提交审核。"
               : "当前内容为只读。")}
         </span>
         <div>
@@ -1919,7 +2025,7 @@ export function WorldflowClient({
               onClick={beginNewIteration}
               type="button"
             >
-              开启新一轮迭代
+              重新提交本里程碑
             </button>
           ) : null}
           {isOwner && editable ? (
@@ -1933,15 +2039,17 @@ export function WorldflowClient({
                 <Save size={16} />
                 保存草稿
               </button>
-              <button
-                className={styles.primary}
-                disabled={pending}
-                onClick={submit}
-                type="button"
-              >
-                <Upload size={16} />
-                提交审核
-              </button>
+              {canSubmitMilestone ? (
+                <button
+                  className={styles.primary}
+                  disabled={pending}
+                  onClick={submit}
+                  type="button"
+                >
+                  <Upload size={16} />
+                  提交 STEP {activeStep} 审核
+                </button>
+              ) : null}
             </>
           ) : null}
           {isArchitect && stepStatus === "review" ? (

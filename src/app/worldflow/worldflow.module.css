@@ -390,6 +390,7 @@ button.worldCard {
 .stepTitle,
 .editor,
 .shotSelector,
+.productionMilestones,
 .actionBar {
   max-width: 1440px;
   margin-inline: auto;
@@ -411,6 +412,55 @@ button.worldCard {
 .stepTitle h2 {
   margin: var(--s-1) 0;
   font-size: var(--fs-h2);
+}
+
+.productionMilestones {
+  display: grid;
+  grid-auto-columns: minmax(220px, 1fr);
+  grid-auto-flow: column;
+  gap: var(--s-2);
+  overflow-x: auto;
+  margin-bottom: var(--s-4);
+  padding-bottom: var(--s-1);
+  scroll-snap-type: x proximity;
+}
+
+.productionMilestones button {
+  display: grid;
+  min-height: 100px;
+  gap: var(--s-1);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-faint);
+  background: var(--color-void);
+  color: var(--color-star);
+  text-align: left;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.productionMilestones button > span,
+.productionSection > header span {
+  color: var(--color-nucleus);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.08em;
+}
+
+.productionMilestones button small,
+.productionSection > header small,
+.unlockPanel span {
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.productionMilestones button[data-active="true"] {
+  border-color: var(--color-nucleus);
+  background: var(--bg-panel);
+  box-shadow: inset 3px 0 0 var(--color-nucleus);
+}
+
+.productionMilestones button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
 }
 
 .shotSelector,
@@ -788,6 +838,43 @@ button.worldCard {
   margin-bottom: var(--s-4);
   border: 1px solid var(--bd-faint);
   background: var(--bg-panel);
+}
+
+.productionSection {
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--bd-orange);
+}
+
+.productionSection > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.productionSection > header h3 {
+  margin: var(--s-1) 0 0;
+}
+
+.unlockPanel {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+  padding: var(--s-4);
+  border: 1px dashed var(--bd-faint);
+  color: var(--color-star-dim);
+}
+
+.unlockPanel > div {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.unlockPanel strong {
+  color: var(--color-star);
 }
 
 .subjectTableIntro {

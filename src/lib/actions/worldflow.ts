@@ -225,8 +225,9 @@ export async function submitWorldflowStep(input: { worldId: string; state: World
     .from('worldflow_worlds')
     .update({
       workflow_state: state,
-      current_step: input.step,
-      current_status: 'review',
+      current_step: access.world.current_step,
+      current_status:
+        input.step === access.world.current_step ? 'review' : access.world.current_status,
       updated_at: new Date().toISOString(),
     })
     .eq('id', input.worldId)
@@ -243,13 +244,20 @@ export async function reviewWorldflowStep(input: { worldId: string; state: World
   const persistedState = access.world.workflow_state as WorldflowState
   if (persistedState.stepStatuses[String(input.step)] !== 'review') return { error: '这个步骤当前不在待审核状态。' }
   const nextStatus: WorldflowStepStatus = input.decision === 'approve' ? 'approved' : 'changes'
-  const nextStep = input.decision === 'approve' ? Math.min(7, input.step + 1) : input.step
+  const nextStep =
+    input.decision === 'approve'
+      ? Math.max(access.world.current_step, Math.min(7, input.step + 1))
+      : access.world.current_step
   const state = {
     ...persistedState,
     stepStatuses: {
       ...persistedState.stepStatuses,
       [String(input.step)]: nextStatus,
-      ...(input.decision === 'approve' && input.step < 7 ? { [String(nextStep)]: 'draft' as const } : {}),
+      ...(input.decision === 'approve' &&
+      input.step === access.world.current_step &&
+      input.step < 7
+        ? { [String(input.step + 1)]: 'draft' as const }
+        : {}),
     },
   }
   const { error } = await access.admin
@@ -257,7 +265,12 @@ export async function reviewWorldflowStep(input: { worldId: string; state: World
     .update({
       workflow_state: state,
       current_step: nextStep,
-      current_status: input.decision === 'approve' && input.step < 7 ? 'draft' : nextStatus,
+      current_status:
+        input.step < access.world.current_step
+          ? access.world.current_status
+          : input.decision === 'approve' && input.step < 7
+            ? 'draft'
+            : nextStatus,
       updated_at: new Date().toISOString(),
     })
     .eq('id', input.worldId)
