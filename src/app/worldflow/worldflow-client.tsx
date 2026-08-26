@@ -16,6 +16,7 @@ import {
   LockKeyhole,
   Plus,
   Save,
+  Search,
   ShieldCheck,
   SkipForward,
   Trash2,
@@ -29,6 +30,7 @@ import {
   submitWorldflowStep,
   type WorldflowAsset,
   type WorldflowCloudAsset,
+  type WorldflowCosmoChannel,
   type WorldflowEvent,
   type WorldflowState,
   type WorldflowStepStatus,
@@ -140,6 +142,12 @@ function MaterialUploader({
   const [uploading, setUploading] = useState(false);
   const [cloudOpen, setCloudOpen] = useState(false);
   const [cloudAssets, setCloudAssets] = useState<WorldflowCloudAsset[]>([]);
+  const [cosmoChannels, setCosmoChannels] = useState<WorldflowCosmoChannel[]>(
+    [],
+  );
+  const [channelQuery, setChannelQuery] = useState("");
+  const [selectedCosmoChannelId, setSelectedCosmoChannelId] = useState("");
+  const [selectedCosmoBandId, setSelectedCosmoBandId] = useState("");
   const [cloudLoading, setCloudLoading] = useState(false);
   const [linkingId, setLinkingId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -184,30 +192,66 @@ function MaterialUploader({
     }
   }
 
-  async function openCloudLibrary() {
-    const nextOpen = !cloudOpen;
-    setCloudOpen(nextOpen);
-    if (!nextOpen || cloudAssets.length) return;
+  const selectedCosmoChannel = cosmoChannels.find(
+    (channel) => channel.id === selectedCosmoChannelId,
+  );
+
+  async function loadCosmoChannels(query = channelQuery) {
     setCloudLoading(true);
     setError("");
+    setCloudAssets([]);
+    setSelectedCosmoChannelId("");
+    setSelectedCosmoBandId("");
     try {
       const response = await fetch(
-        `/api/worldflow/cloud-assets?media=${mediaKind}`,
+        `/api/worldflow/cosmo-assets?media=${mediaKind}&q=${encodeURIComponent(query.trim())}`,
+      );
+      const result = (await response.json()) as {
+        channels?: WorldflowCosmoChannel[];
+        error?: string;
+      };
+      if (!response.ok) {
+        setError(result.error ?? "Cosmo 频道读取失败。");
+        return;
+      }
+      setCosmoChannels(result.channels ?? []);
+    } catch {
+      setError("Cosmo 频道读取失败，请重试。");
+    } finally {
+      setCloudLoading(false);
+    }
+  }
+
+  async function loadCosmoAssets(channelId: string, bandId: string) {
+    setSelectedCosmoBandId(bandId);
+    setCloudLoading(true);
+    setError("");
+    setCloudAssets([]);
+    try {
+      const response = await fetch(
+        `/api/worldflow/cosmo-assets?media=${mediaKind}&channelId=${encodeURIComponent(channelId)}&bandId=${encodeURIComponent(bandId)}`,
       );
       const result = (await response.json()) as {
         assets?: WorldflowCloudAsset[];
         error?: string;
       };
       if (!response.ok) {
-        setError(result.error ?? "云端素材读取失败。");
+        setError(result.error ?? "Cosmo 素材读取失败。");
         return;
       }
       setCloudAssets(result.assets ?? []);
     } catch {
-      setError("云端素材读取失败，请重试。");
+      setError("Cosmo 素材读取失败，请重试。");
     } finally {
       setCloudLoading(false);
     }
+  }
+
+  async function openCloudLibrary() {
+    const nextOpen = !cloudOpen;
+    setCloudOpen(nextOpen);
+    if (!nextOpen || cosmoChannels.length) return;
+    await loadCosmoChannels("");
   }
 
   async function linkCloudAsset(cloudAsset: WorldflowCloudAsset) {
@@ -222,10 +266,13 @@ function MaterialUploader({
       const response = await fetch("/api/worldflow/assets/link", {
         body: JSON.stringify({
           characterId,
+          channelId: cloudAsset.channel_id,
+          bandId: cloudAsset.band_id,
           eventId,
           provider: cloudAsset.provider,
           shotId,
           sourceAssetId: cloudAsset.id,
+          sourceMedia: cloudAsset.media_type,
           step,
           worldId,
         }),
@@ -249,7 +296,7 @@ function MaterialUploader({
     <section className={styles.materialSection}>
       <header>
         <div>
-          <span>MATERIALS · LOCAL / CLOUD</span>
+          <span>MATERIALS · FORGE / COSMO / LOCAL</span>
           <h3>{title}</h3>
         </div>
         {canUpload ? (
@@ -272,7 +319,7 @@ function MaterialUploader({
               type="button"
             >
               <Cloud size={18} />
-              云端素材
+              Forge / Cosmo
               {cloudOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
           </div>
@@ -296,25 +343,120 @@ function MaterialUploader({
         <div className={styles.cloudLibrary}>
           <header>
             <div>
-              <strong>服务器素材库</strong>
-              <span>选择后只建立关联，不会复制原文件。</span>
+              <strong>Forge / Cosmo 素材库</strong>
+              <span>按频道名称、频率或频道编号搜索；关联不会复制原文件。</span>
             </div>
-            <span>{cloudAssets.length} 份可用素材</span>
+            <span>
+              {selectedCosmoBandId
+                ? `${cloudAssets.length} 份可用素材`
+                : `${cosmoChannels.length} 个频道`}
+            </span>
           </header>
+          <form
+            className={styles.cosmoSearch}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void loadCosmoChannels();
+            }}
+          >
+            <label>
+              <span>搜索 Cosmo 频道</span>
+              <input
+                onChange={(event) => setChannelQuery(event.target.value)}
+                placeholder="频道名称、频率或频道 ID"
+                value={channelQuery}
+              />
+            </label>
+            <button
+              className={styles.secondary}
+              disabled={cloudLoading}
+              type="submit"
+            >
+              <Search size={17} />
+              搜索
+            </button>
+          </form>
           {cloudLoading ? (
-            <p className={styles.cloudStatus}>正在读取云端素材…</p>
+            <p className={styles.cloudStatus}>正在读取 Forge / Cosmo…</p>
           ) : null}
-          {!cloudLoading && !cloudAssets.length ? (
+          {!cloudLoading && !cosmoChannels.length ? (
             <p className={styles.cloudStatus}>
-              暂时没有符合当前步骤的云端素材。
+              没有找到符合条件的 Cosmo 频道。
             </p>
+          ) : null}
+          {cosmoChannels.length ? (
+            <div
+              aria-label="Cosmo 频道搜索结果"
+              className={styles.cosmoChannelList}
+            >
+              {cosmoChannels.map((channel) => (
+                <button
+                  data-active={selectedCosmoChannelId === channel.id}
+                  key={channel.id}
+                  onClick={() => {
+                    setSelectedCosmoChannelId(channel.id);
+                    setSelectedCosmoBandId("");
+                    setCloudAssets([]);
+                  }}
+                  type="button"
+                >
+                  <span>
+                    {channel.number !== null
+                      ? `频道 ${channel.number}`
+                      : "未分配频率"}
+                  </span>
+                  <strong>{channel.name || "未命名频道"}</strong>
+                  <small>{channel.id}</small>
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {selectedCosmoChannel ? (
+            <section className={styles.cosmoBands}>
+              <header>
+                <div>
+                  <strong>{selectedCosmoChannel.name}</strong>
+                  <span>选择一个波段以加载其中的图片和视频。</span>
+                </div>
+                <small>{selectedCosmoChannel.id}</small>
+              </header>
+              <div>
+                {selectedCosmoChannel.bands.map((band) => {
+                  const availableCount =
+                    mediaKind === "image"
+                      ? band.image_count
+                      : mediaKind === "video"
+                        ? band.video_count
+                        : band.image_count + band.video_count;
+                  return (
+                    <button
+                      data-active={selectedCosmoBandId === band.id}
+                      disabled={!availableCount || cloudLoading}
+                      key={band.id}
+                      onClick={() =>
+                        void loadCosmoAssets(selectedCosmoChannel.id, band.id)
+                      }
+                      type="button"
+                    >
+                      <strong>{band.name || "未命名波段"}</strong>
+                      <span>
+                        {band.image_count} 图片 · {band.video_count} 视频
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+          {!cloudLoading && selectedCosmoBandId && !cloudAssets.length ? (
+            <p className={styles.cloudStatus}>这个波段暂无适用素材。</p>
           ) : null}
           <div className={styles.cloudAssetGrid}>
             {cloudAssets.map((asset) => (
               <button
                 className={styles.cloudAssetCard}
                 disabled={Boolean(linkingId)}
-                key={`${asset.provider}:${asset.id}`}
+                key={`${asset.provider}:${asset.band_id}:${asset.id}`}
                 onClick={() => void linkCloudAsset(asset)}
                 type="button"
               >
@@ -332,6 +474,13 @@ function MaterialUploader({
                 )}
                 <span>{asset.media_type === "image" ? "图片" : "视频"}</span>
                 <strong>{asset.name}</strong>
+                <small>
+                  {asset.channel_number !== null &&
+                  asset.channel_number !== undefined
+                    ? `${asset.channel_number} · `
+                    : ""}
+                  {asset.channel_name} / {asset.band_name}
+                </small>
                 <small>
                   {linkingId === asset.id ? "关联中…" : "点击关联到当前单元"}
                 </small>
@@ -373,7 +522,7 @@ function MaterialUploader({
           >
             <Plus size={24} />
             <strong>添加第一份素材</strong>
-            <span>可从本地上传，也可使用上方按钮关联服务器素材。</span>
+            <span>优先从 Forge / Cosmo 关联，也可以从本地上传。</span>
           </button>
         ) : null}
         {!assets.length && !canUpload ? (

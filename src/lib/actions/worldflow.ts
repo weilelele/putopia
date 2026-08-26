@@ -78,7 +78,7 @@ export type WorldflowAsset = {
   mime_type: string
   version: number
   source_type: 'cloud' | 'local'
-  source_provider: 'signal_task_assets' | 'world_final_assets' | null
+  source_provider: 'cosmo' | 'signal_task_assets' | 'world_final_assets' | null
   source_asset_id: string | null
   source_url: string | null
   created_at: string
@@ -89,9 +89,27 @@ export type WorldflowCloudAsset = {
   media_type: 'image' | 'video'
   name: string
   preview_url: string
-  provider: 'signal_task_assets' | 'world_final_assets'
+  provider: 'cosmo' | 'signal_task_assets' | 'world_final_assets'
   source_url: string
   created_at: string
+  channel_id?: string
+  channel_name?: string
+  channel_number?: number | null
+  band_id?: string
+  band_name?: string
+}
+
+export type WorldflowCosmoChannel = {
+  id: string
+  name: string
+  number: number | null
+  description: string | null
+  bands: Array<{
+    id: string
+    name: string
+    image_count: number
+    video_count: number
+  }>
 }
 
 function initialState(): WorldflowState {

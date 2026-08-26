@@ -1,14 +1,18 @@
 import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { getBandAssets, getFrequency } from '@/lib/cosmo'
 import { asWorldflowAdmin } from '@/lib/worldflow-database'
 
 type LinkRequest = {
   characterId?: string | null
+  channelId?: string | null
+  bandId?: string | null
   eventId?: string | null
-  provider?: 'signal_task_assets' | 'world_final_assets'
+  provider?: 'cosmo' | 'signal_task_assets' | 'world_final_assets'
   shotId?: string | null
   sourceAssetId?: string
+  sourceMedia?: 'image' | 'video'
   step?: number
   worldId?: string
 }
@@ -26,7 +30,8 @@ export async function POST(request: Request) {
   const eventId = body.eventId || null
   const characterId = body.characterId || null
   const step = Number(body.step)
-  if (!worldId || !body.sourceAssetId || !body.provider || !Number.isInteger(step) || step < 1 || step > 7) {
+  const supportedProviders = ['cosmo', 'signal_task_assets', 'world_final_assets']
+  if (!worldId || !body.sourceAssetId || !body.provider || !supportedProviders.includes(body.provider) || !Number.isInteger(step) || step < 1 || step > 7) {
     return NextResponse.json({ error: '云端素材位置无效。' }, { status: 400 })
   }
 
@@ -66,7 +71,27 @@ export async function POST(request: Request) {
   let mediaType: 'image' | 'video'
   let sourceUrl: string
   let fileName: string
-  if (body.provider === 'signal_task_assets') {
+  if (body.provider === 'cosmo') {
+    if (!body.channelId || !body.bandId || (body.sourceMedia !== 'image' && body.sourceMedia !== 'video')) {
+      return NextResponse.json({ error: 'Cosmo 素材来源信息不完整。' }, { status: 400 })
+    }
+    let channel: Awaited<ReturnType<typeof getFrequency>>
+    let sources: Awaited<ReturnType<typeof getBandAssets>>
+    try {
+      ;[channel, sources] = await Promise.all([getFrequency(body.channelId), getBandAssets(body.channelId, body.bandId, body.sourceMedia)])
+    } catch (error) {
+      console.error('[worldflow] Cosmo asset validation failed', error)
+      return NextResponse.json({ error: 'Cosmo 素材读取失败，请稍后重试。' }, { status: 502 })
+    }
+    const band = channel?.bands.find((item) => item.bandId === body.bandId && item.enabled)
+    const source = sources.find((item) => item.assetId === body.sourceAssetId)
+    if (!channel || !band || !source) {
+      return NextResponse.json({ error: '找不到可关联的 Cosmo 素材。' }, { status: 404 })
+    }
+    mediaType = source.media
+    sourceUrl = source.url
+    fileName = `${channel.freq !== null ? `${channel.freq} · ` : ''}${channel.name} / ${band.name}`
+  } else if (body.provider === 'signal_task_assets') {
     const { data: source } = await admin
       .from('signal_task_assets')
       .select('id, media, processed_url, source_channel_name, source_band_name')
