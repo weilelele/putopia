@@ -2,12 +2,18 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, MessageCircle } from 'lucide-react'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
-import { getBatchDiscussionPosts } from '@/lib/batch-discussions'
+import type { DeviceBatchDiscussionPost } from '@/lib/actions/device-batch-community'
 import type { DeviceBatch } from '@/lib/device-batches'
 import styles from '../device-batches.module.css'
 
-export function BatchDiscussionPreview({ batch }: { batch: DeviceBatch }) {
-  const posts = getBatchDiscussionPosts(batch).slice(0, 3)
+export function BatchDiscussionPreview({
+  batch,
+  posts,
+}: {
+  batch: DeviceBatch
+  posts: DeviceBatchDiscussionPost[]
+}) {
+  const previewPosts = posts.slice(0, 3)
 
   return (
     <section className={styles.discussionPreview}>
@@ -18,7 +24,7 @@ export function BatchDiscussionPreview({ batch }: { batch: DeviceBatch }) {
         </Link>
       </div>
       <div className={styles.discussionPreviewRail}>
-        {posts.map((post) => (
+        {previewPosts.map((post) => (
           <article
             className={styles.discussionPreviewPost}
             key={post.id}
@@ -29,7 +35,7 @@ export function BatchDiscussionPreview({ batch }: { batch: DeviceBatch }) {
                 <strong>{post.author}</strong>
                 <small>{post.role}</small>
               </span>
-              <time>{post.timestamp}</time>
+              <time>{new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(post.timestamp))}</time>
             </div>
             <div
               className={
@@ -58,6 +64,9 @@ export function BatchDiscussionPreview({ batch }: { batch: DeviceBatch }) {
           </article>
         ))}
       </div>
+      {previewPosts.length === 0 ? (
+        <div className={styles.emptyArchive}>No holder messages have been added yet.</div>
+      ) : null}
     </section>
   )
 }

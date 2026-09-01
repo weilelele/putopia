@@ -30,6 +30,10 @@ import { ArchiveModal, FollowBatchButton } from './batch-actions'
 import { BatchDiscussionPreview } from './batch-discussion-preview'
 import { BatchHeroMedia } from './batch-hero-media'
 import { BatchParticipation } from './batch-participation'
+import type {
+  DeviceBatchDecision,
+  DeviceBatchDiscussionPost,
+} from '@/lib/actions/device-batch-community'
 import {
   BatchMediaGallery,
   type BatchMediaItem,
@@ -150,7 +154,15 @@ function getDistributionMedia(
   return [imageItem]
 }
 
-export function BatchDetailClient({ batch }: { batch: DeviceBatch }) {
+export function BatchDetailClient({
+  batch,
+  decision,
+  discussionPosts,
+}: {
+  batch: DeviceBatch
+  decision: DeviceBatchDecision | null
+  discussionPosts: DeviceBatchDiscussionPost[]
+}) {
   const [activeTab, setActiveTab] = useState<DetailTab>('status')
   const [modal, setModal] = useState<ModalState>(null)
   const tabsRef = useRef<HTMLDivElement>(null)
@@ -276,7 +288,7 @@ export function BatchDetailClient({ batch }: { batch: DeviceBatch }) {
           </div>
         </header>
 
-        <BatchDiscussionPreview batch={batch} />
+        <BatchDiscussionPreview batch={batch} posts={discussionPosts} />
 
         <div className={styles.detailTabs} ref={tabsRef}>
           <ArchiveTabs
@@ -503,7 +515,7 @@ export function BatchDetailClient({ batch }: { batch: DeviceBatch }) {
                 )}
               </section>
 
-              <BatchParticipation batch={batch} />
+              <BatchParticipation batch={batch} decision={decision} />
             </div>
           ) : null}
         </div>

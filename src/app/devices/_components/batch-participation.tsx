@@ -1,30 +1,49 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { Check, Vote } from 'lucide-react'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
-import { getBatchDecision } from '@/lib/batch-participation'
+import {
+  castDeviceBatchVote,
+  type DeviceBatchDecision,
+} from '@/lib/actions/device-batch-community'
 import type { DeviceBatch } from '@/lib/device-batches'
 import styles from '../device-batches.module.css'
 
-export function BatchParticipation({ batch }: { batch: DeviceBatch }) {
-  const decision = getBatchDecision(batch.slug)
-  const [selectedOption, setSelectedOption] = useState('')
-  const [voteRecorded, setVoteRecorded] = useState(false)
+export function BatchParticipation({
+  batch,
+  decision,
+}: {
+  batch: DeviceBatch
+  decision: DeviceBatchDecision | null
+}) {
+  const [selectedOption, setSelectedOption] = useState(decision?.selectedOption ?? '')
+  const [recordedOption, setRecordedOption] = useState(decision?.selectedOption ?? '')
+  const [error, setError] = useState('')
+  const [isPending, startTransition] = useTransition()
 
   const totalVotes = decision?.options.reduce((sum, option) => sum + option.votes, 0) ?? 0
 
   function recordVote() {
     if (!decision || !selectedOption) return
-    setVoteRecorded(true)
+    setError('')
+    startTransition(async () => {
+      const result = await castDeviceBatchVote(batch.slug, decision.id, selectedOption)
+      if (result.error) setError(result.error)
+      else setRecordedOption(selectedOption)
+    })
   }
+
+  const closesLabel = decision?.closesAt
+    ? new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(decision.closesAt))
+    : null
 
   return (
     <section className={styles.sectionBlock}>
       <div className={styles.sectionHeadingRow}>
         <ArchiveSectionLabel>HOLDER DECISION</ArchiveSectionLabel>
-        <span>{decision ? `CLOSES ${decision.closesAt.toUpperCase()}` : 'NO ACTIVE DECISION'}</span>
+        <span>{decision ? (closesLabel ? `CLOSES ${closesLabel.toUpperCase()}` : 'OPEN DECISION') : 'NO ACTIVE DECISION'}</span>
       </div>
 
       {decision ? (
@@ -39,16 +58,18 @@ export function BatchParticipation({ batch }: { batch: DeviceBatch }) {
 
           <div className={styles.decisionOptions}>
             {decision.options.map((option) => {
-              const optionVotes =
-                option.votes + (voteRecorded && selectedOption === option.id ? 1 : 0)
-              const adjustedTotal = totalVotes + (voteRecorded ? 1 : 0)
-              const percentage = Math.round((optionVotes / adjustedTotal) * 100)
+              const originalOption = decision.selectedOption
+              const optionVotes = option.votes
+                - (originalOption === option.id && recordedOption !== originalOption ? 1 : 0)
+                + (recordedOption === option.id && recordedOption !== originalOption ? 1 : 0)
+              const adjustedTotal = totalVotes + (!originalOption && recordedOption ? 1 : 0)
+              const percentage = adjustedTotal ? Math.round((optionVotes / adjustedTotal) * 100) : 0
 
               return (
                 <button
                   aria-pressed={selectedOption === option.id}
                   className={selectedOption === option.id ? styles.decisionOptionSelected : ''}
-                  disabled={voteRecorded}
+                  disabled={!decision.canVote || isPending}
                   key={option.id}
                   onClick={() => setSelectedOption(option.id)}
                   type="button"
@@ -67,17 +88,21 @@ export function BatchParticipation({ batch }: { batch: DeviceBatch }) {
           </div>
 
           <div className={styles.decisionFooter}>
-            <span>{totalVotes + (voteRecorded ? 1 : 0)} HOLDERS PARTICIPATED</span>
-            {voteRecorded ? (
+            <span>{totalVotes + (!decision.selectedOption && recordedOption ? 1 : 0)} HOLDERS PARTICIPATED</span>
+            {recordedOption && recordedOption === selectedOption ? (
               <strong>
                 <Check aria-hidden size={14} /> VOTE RECORDED
               </strong>
             ) : (
-              <ArchiveButton disabled={!selectedOption} onClick={recordVote}>
-                CAST VOTE
+              <ArchiveButton disabled={!selectedOption || !decision.canVote || isPending} onClick={recordVote}>
+                {isPending ? 'RECORDING…' : 'CAST VOTE'}
               </ArchiveButton>
             )}
           </div>
+          {error ? <p aria-live="polite">{error}</p> : null}
+          {!decision.canVote && !recordedOption ? (
+            <p>Payment-confirmed holders can participate in this decision.</p>
+          ) : null}
         </div>
       ) : (
         <div className={styles.emptyArchive}>

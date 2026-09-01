@@ -37,6 +37,10 @@ import {
   type WorldflowWorld,
 } from "@/lib/actions/worldflow";
 import { buildWorldflowVideoSequence } from "@/lib/worldflow-production";
+import {
+  isWorldflowMaterialTargetPersisted,
+  type WorldflowMaterialTarget,
+} from "@/lib/worldflow-material-target";
 import styles from "./worldflow.module.css";
 
 const STEPS = [
@@ -127,7 +131,9 @@ function MaterialUploader({
   worldId,
 }: {
   assets: WorldflowAsset[];
-  beforeUpload: () => Promise<string | null>;
+  beforeUpload: (
+    target: WorldflowMaterialTarget,
+  ) => Promise<string | null>;
   canUpload: boolean;
   characterId?: string | null;
   eventId?: string | null;
@@ -162,7 +168,7 @@ function MaterialUploader({
     setUploading(true);
     setError("");
     try {
-      const saveError = await beforeUpload();
+      const saveError = await beforeUpload({ characterId, eventId, shotId });
       if (saveError) {
         setError(`自动保存失败：${saveError}`);
         return;
@@ -258,7 +264,7 @@ function MaterialUploader({
     setLinkingId(cloudAsset.id);
     setError("");
     try {
-      const saveError = await beforeUpload();
+      const saveError = await beforeUpload({ characterId, eventId, shotId });
       if (saveError) {
         setError(`自动保存失败：${saveError}`);
         return;
@@ -820,6 +826,9 @@ export function WorldflowClient({
   const [state, setState] = useState<WorldflowState | null>(
     selectedSource ? normalizeState(selectedSource.workflow_state) : null,
   );
+  const persistedStateRef = useRef<WorldflowState | null>(
+    selectedSource ? normalizeState(selectedSource.workflow_state) : null,
+  );
   const [activeStep, setActiveStep] = useState(
     selectedSource?.current_step ?? 1,
   );
@@ -874,8 +883,10 @@ export function WorldflowClient({
   }
 
   function openWorld(world: WorldflowWorld) {
+    const nextState = normalizeState(world.workflow_state);
     setSelectedId(world.id);
-    setState(normalizeState(world.workflow_state));
+    setState(nextState);
+    persistedStateRef.current = nextState;
     setActiveStep(world.current_step);
     setActiveShotId(world.workflow_state.shots[0]?.id ?? "");
     selectEvent(null);
@@ -898,18 +909,25 @@ export function WorldflowClient({
         currentStep: activeStep >= 5 ? selectedSource.current_step : activeStep,
       });
       setMessage(result.error ?? "已保存");
-      if (!result.error) router.refresh();
+      if (!result.error) {
+        persistedStateRef.current = state;
+        router.refresh();
+      }
     });
   }
 
-  async function saveBeforeMaterialUpload() {
+  async function saveBeforeMaterialUpload(target: WorldflowMaterialTarget) {
     if (!state || !selectedSource) return "当前世界尚未准备好。";
+    if (isWorldflowMaterialTargetPersisted(persistedStateRef.current, target)) {
+      return null;
+    }
     const result = await saveWorldflowState({
       worldId: selectedSource.id,
       state,
       currentStep: activeStep >= 5 ? selectedSource.current_step : activeStep,
     });
     if (result.error) return result.error;
+    persistedStateRef.current = state;
     setMessage("已自动保存当前草稿");
     return null;
   }
@@ -922,7 +940,10 @@ export function WorldflowClient({
         state,
         step: activeStep,
       });
-      if (result.state) setState(result.state);
+      if (result.state) {
+        setState(result.state);
+        persistedStateRef.current = result.state;
+      }
       setMessage(result.error ?? "已提交 architect 审核");
       if (!result.error) router.refresh();
     });
@@ -937,7 +958,10 @@ export function WorldflowClient({
         step: activeStep,
         decision,
       });
-      if (result.state) setState(result.state);
+      if (result.state) {
+        setState(result.state);
+        persistedStateRef.current = result.state;
+      }
       if (result.nextStep) setActiveStep(result.nextStep);
       setMessage(
         result.error ?? (decision === "approve" ? "审核通过" : "已退回修改"),

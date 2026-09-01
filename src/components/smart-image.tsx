@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { useState } from 'react'
 import type { CSSProperties, SyntheticEvent } from 'react'
 
 // Hosts allowed in next.config.ts images.remotePatterns. Anything else
@@ -48,6 +49,35 @@ export default function SmartImage({
   onLoad,
 }: SmartImageProps) {
   const fill = width == null || height == null
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const failed = failedSrc === src
+
+  const handleError = (event: SyntheticEvent<HTMLImageElement>) => {
+    setFailedSrc(src)
+    onError?.(event)
+  }
+
+  if (failed) {
+    const fallbackStyle: CSSProperties = fill
+      ? { position: 'absolute', inset: 0, width: '100%', height: '100%', ...style }
+      : { width, height, ...style }
+
+    return (
+      <span
+        className={`smart-image-fallback${className ? ` ${className}` : ''}`}
+        style={fallbackStyle}
+        role={alt ? 'img' : undefined}
+        aria-label={alt ? `${alt} image unavailable` : undefined}
+        aria-hidden={alt ? undefined : true}
+      >
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <rect x="3.5" y="5.5" width="21" height="17" rx="1" stroke="currentColor" />
+          <path d="m5 20 5.2-5.2 3.2 3.2 2.8-2.8 6.8 6.8M17.5 10.5h.01" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M5 3 23 25" stroke="currentColor" strokeLinecap="round" />
+        </svg>
+      </span>
+    )
+  }
 
   if (!isOptimizable(src)) {
     const fillStyle: CSSProperties = fill
@@ -62,7 +92,7 @@ export default function SmartImage({
         decoding="async"
         className={className}
         style={{ ...fillStyle, ...style }}
-        onError={onError}
+        onError={handleError}
         onLoad={onLoad}
       />
     )
@@ -78,7 +108,7 @@ export default function SmartImage({
       quality={quality}
       className={className}
       style={style}
-      onError={onError}
+      onError={handleError}
       onLoad={onLoad}
     />
   )

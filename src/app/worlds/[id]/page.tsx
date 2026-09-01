@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { getWorldById, rescanWorld } from '@/lib/actions/worlds'
@@ -22,6 +22,7 @@ import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 
 const DESC_CLAMP = 320 // chars before the "expand all" fold
 
@@ -35,6 +36,7 @@ export default function WorldDetailPage() {
 
   const [world, setWorld] = useState<World | null | undefined>(undefined)
   const [inv, setInv] = useState<WorldInvestigationData | null>(null)
+  const [loadError, setLoadError] = useState(false)
   const [descExpanded, setDescExpanded] = useState(false)
   const [scope, setScope] = useState<WorldVoteScope>('all')
   const [scopeSaving, setScopeSaving] = useState(false)
@@ -43,9 +45,17 @@ export default function WorldDetailPage() {
   const [retryDesc, setRetryDesc] = useState('')
   const [retrySaving, setRetrySaving] = useState(false)
 
-  useEffect(() => {
-    getWorldById(id).then((w) => {
+  const loadWorld = useCallback(async () => {
+    await Promise.resolve()
+    setWorld(undefined)
+    setLoadError(false)
+    try {
+      const [w, investigation] = await Promise.all([
+        getWorldById(id),
+        getWorldInvestigation(id).catch(() => null),
+      ])
       setWorld(w ?? null)
+      setInv(investigation)
       if (w) {
         setScope(w.vote_scope ?? 'all')
         posthog.capture('world_viewed', { world_id: id, world_name: w.name_en || w.name })
@@ -53,9 +63,14 @@ export default function WorldDetailPage() {
           resolveWorldScan(id).catch(() => {})
         }
       }
-    })
-    getWorldInvestigation(id).then(setInv)
+    } catch {
+      setLoadError(true)
+    }
   }, [id])
+
+  useEffect(() => {
+    void Promise.resolve().then(loadWorld)
+  }, [loadWorld])
 
   const isOwner = !!user.id && !!world && (user.id === world.submitted_by || user.id === world.discoverer_id)
 
@@ -71,8 +86,7 @@ export default function WorldDetailPage() {
 
   const refreshInvestigation = () => getWorldInvestigation(id).then(setInv)
   const refreshAll = () => {
-    getWorldById(id).then((w) => setWorld(w ?? null))
-    refreshInvestigation()
+    void loadWorld()
   }
 
   const openRetry = () => { setRetryDesc(world?.description ?? ''); setRetryOpen(true) }
@@ -83,12 +97,19 @@ export default function WorldDetailPage() {
     if (res.ok) { setRetryOpen(false); refreshAll() }
   }
 
-  if (world === undefined) {
+  if (loadError) {
     return (
-      <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
-      </div>
+      <ArchiveRouteError
+        title="WORLD RECORD UNAVAILABLE"
+        description="This world record could not be retrieved."
+        onRetry={loadWorld}
+        returnHref={backHref}
+      />
     )
+  }
+
+  if (world === undefined) {
+    return <ArchiveRouteLoading label="LOADING WORLD RECORD" />
   }
 
   if (!world) {

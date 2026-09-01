@@ -188,9 +188,9 @@ PLATFORM RULES:
 
 IMAGE PROMPT RULES (for LovArt / Midjourney):
 • Be specific and directed — shot type, lighting setup, color palette, mood, texture.
-• Putopia aesthetic: void-dark backgrounds (#050810 deep space), retro-futuristic analog hardware, nebula cyan (#22D4E0) and nucleus orange (#FF5A1F) accent lighting, CRT displays with scan-line grain, cosmic scale, cinematic depth of field.
-• Style references: Blade Runner 2049 color grading, retro NASA control room aesthetics, Lo-fi sci-fi hardware photography.
-• Avoid: generic "space background", white backgrounds, cartoonish, stock-photo feel.`
+• Multiverse Collective aesthetic: deep-space blue (#080C20), off-white (#F5F5F5), and one controlled Pantone 1665 C orange (#E35205). Orange identifies the organization, an active signal, or the path inward; it is never ambient decoration.
+• Favor sparse, precise compositions, flat color, sharp edges, generous negative space, restrained surface contrast, and carefully placed documentary or product imagery.
+• Avoid cyan, grey as a brand color, gradients, glow, bloom, glass blur, CRT scan lines, HUD rails, generic sci-fi dashboards, cartoonish imagery, and stock-photo styling.`
 
   /* ── User message (not cached — changes per request) ── */
   const requestedPlatforms = platforms.join(', ')
@@ -255,7 +255,7 @@ IMAGE PROMPT RULES (for LovArt / Midjourney):
 
   /* ── Build Pollinations URL for draft preview ── */
   const previewPrompt = encodeURIComponent(
-    `${parsed.image_prompt_short ?? 'retro futuristic parallel world device'}, dark void space background, nebula cyan and deep orange lighting, cinematic, photorealistic, no text, no logo`
+    `${parsed.image_prompt_short ?? 'minimal archival parallel world artifact'}, deep-space blue background, off-white details, one controlled Pantone 1665 C orange accent, flat color, precise composition, no cyan, no grey brand color, no gradients, no glow, no HUD decoration, no text, no logo`
   )
   const pollinationsUrl =
     `https://image.pollinations.ai/prompt/${previewPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${Date.now()}`

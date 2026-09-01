@@ -70,6 +70,15 @@ export async function sendDeviceOrderStatusNotification(
   const batch = await getPublicDeviceBatch(order.device_batch_slug)
   if (!batch) return { error: 'Batch not found', sent: false, skipped: false }
 
+  const admin = createAdminClient()
+  // Unit lookup happens after the payment status transition, so the paid email
+  // contains the same immutable assignment shown in My Consoles.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: unit } = await (admin.from('device_batch_units') as any)
+    .select('unit_code')
+    .eq('order_id', order.id)
+    .maybeSingle()
+
   const email = buildDeviceOrderStatusEmail({
     batch,
     status,
@@ -78,6 +87,7 @@ export async function sendDeviceOrderStatusNotification(
     currency: order.currency,
     trackingNumber: order.tracking_number,
     trackingUrl: order.tracking_url,
+    unitCode: unit?.unit_code ?? null,
   })
   const trackingSuffix = status === 'shipped'
     ? `/${eventDigest([order.tracking_number, order.tracking_url])}`

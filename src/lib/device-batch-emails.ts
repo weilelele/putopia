@@ -216,6 +216,7 @@ export function buildDeviceOrderStatusEmail(opts: {
   currency?: string | null
   trackingNumber?: string | null
   trackingUrl?: string | null
+  unitCode?: string | null
 }): BuiltEmail {
   const copy = ORDER_STATUS_COPY[opts.status]
   const batchHref = `${SITE}/devices/batches/${encodeURIComponent(opts.batch.slug)}`
@@ -228,6 +229,7 @@ export function buildDeviceOrderStatusEmail(opts: {
       : 'Open batch record'
   const rows = [
     { label: 'Batch', value: opts.batch.code },
+    ...(opts.unitCode ? [{ label: 'Assigned Unit', value: opts.unitCode }] : []),
     { label: 'Distribution', value: `${opts.packCount} packs` },
     ...(opts.status === 'paid' && opts.paidAmount != null && opts.currency
       ? [{
@@ -255,6 +257,7 @@ export function buildDeviceOrderStatusEmail(opts: {
       '',
       copy.intro,
       `Batch: ${opts.batch.code}`,
+      ...(opts.unitCode ? [`Assigned Unit: ${opts.unitCode}`] : []),
       `Distribution: ${opts.packCount} packs`,
       ...(opts.status === 'paid' && opts.paidAmount != null && opts.currency
         ? [`Total: ${formatStripeMinorUnits(opts.paidAmount, opts.currency)}`]

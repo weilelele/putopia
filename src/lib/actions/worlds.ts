@@ -129,6 +129,103 @@ export async function submitWorld(payload: {
   return { error: null, data }
 }
 
+/** Submit a world to one specific Dreamcatcher. The device queue, rather than
+ * submission time, decides when Signal Scanning begins. */
+export async function submitDreamcatcherWorld(payload: {
+  dreamcatcherSlug: string
+  name: string
+  description: string
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Please log in before submitting a dream.', data: null }
+
+  const name = payload.name.trim()
+  const description = payload.description.trim()
+  if (!name || name.length > 80 || description.length < 20 || description.length > 2000) {
+    return { error: 'Add a name and a description between 20 and 2,000 characters.', data: null }
+  }
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin
+    .from('voyager_profiles')
+    .select('display_name, role')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (!profile || !['applicant', 'voyager', 'architect'].includes(profile.role)) {
+    return { error: 'Applicant access or above is required.', data: null }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = admin as any
+  const { data: catcher } = await db
+    .from('dreamcatchers')
+    .select('id, round_duration_minutes, status')
+    .eq('slug', payload.dreamcatcherSlug)
+    .eq('is_public', true)
+    .maybeSingle()
+  if (!catcher) return { error: 'This Dreamcatcher is not accepting dreams yet.', data: null }
+  if (catcher.status === 'offline') return { error: 'This Dreamcatcher is offline. Choose another device.', data: null }
+
+  const discovererName = profile.display_name?.trim() || user.email?.split('@')[0] || 'Unknown Operative'
+  const worldId = `PROP-${Date.now().toString(36).toUpperCase()}`
+  const submittedAt = new Date().toISOString()
+  const { data: world, error: worldError } = await admin
+    .from('worlds')
+    .insert({
+      id: worldId,
+      name,
+      name_en: name,
+      discoverer_id: user.id,
+      discoverer_name: discovererName,
+      discovery_date: submittedAt.slice(0, 10),
+      gradient_from: '#1a1a2e',
+      gradient_to: '#16213e',
+      image_path: null,
+      description,
+      is_verified: false,
+      lifecycle_state: 'proposed',
+      submitted_by: user.id,
+      submitted_at: submittedAt,
+      scan_until: null,
+      dreamcatcher_id: catcher.id,
+    })
+    .select()
+    .single()
+  if (worldError || !world) return { error: worldError?.message ?? 'Could not create the world.', data: null }
+
+  const { error: queueError } = await db.from('dreamcatcher_jobs').insert({
+    dreamcatcher_id: catcher.id,
+    world_id: world.id,
+    submitted_by: user.id,
+    status: 'queued',
+    round_number: 1,
+    round_duration_minutes: catcher.round_duration_minutes,
+  })
+  if (queueError) {
+    await admin.from('worlds').delete().eq('id', world.id)
+    const message = queueError.code === '23505'
+      ? 'You already have an unfinished dream in this Dreamcatcher.'
+      : queueError.message.includes('queue is full')
+        ? 'This Dreamcatcher queue is full. Choose another device.'
+        : queueError.message
+    return { error: message, data: null }
+  }
+
+  revalidatePath('/worlds/live')
+  revalidatePath('/worlds')
+  logActivity({
+    actor_id: user.id,
+    actor_name: discovererName,
+    actor_role: profile.role,
+    event_type: 'world_added',
+    target_id: world.id,
+    target_title: name,
+    target_href: `/worlds/${encodeURIComponent(world.id)}`,
+  })
+  return { error: null, data: world }
+}
+
 /**
  * Re-run the Signal Scanning ceremony for a world (owner only). Used from the
  * "no signal returned" state: the proposer can revise their field notes and try

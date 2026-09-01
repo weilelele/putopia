@@ -57,14 +57,14 @@ const PRIMARY_NAV = [
   { href: '/console',  label: 'DASHBOARD', icon: <HomeIcon /> },
   { href: '/intel',    label: 'INTEL',     icon: <RadarIcon /> },
   { href: '/devices',  label: 'DEVICES',   icon: <ArchiveIcon /> },
-  { href: '/worlds',   label: 'WORLDS',    icon: <WorldsIcon /> },
+  { href: '/worlds/live', label: 'WORLDS',  icon: <WorldsIcon /> },
   { href: '/voyagers', label: 'VOYAGERS',  icon: <VoyagersIcon /> },
 ]
 
 export function BottomNav() {
   const pathname = usePathname()
   const [sheetOpen, setSheetOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
 
   // /voyager-pack is a standalone long-scroll page — no nav needed there.
   // Return null AFTER all hooks so hook call order is consistent.
@@ -90,11 +90,20 @@ export function BottomNav() {
       aria-label="Primary navigation"
       className="bottom-nav"
       hidden={sheetOpen}
+      aria-busy={loading}
     >
       {PRIMARY_NAV.map(({ href, label, icon }) => {
         const isHome = href === '/console'
-        const isActive = isHome ? pathname === '/console' : pathname === href || pathname.startsWith(href + '/')
-        const locked = isGuest && !isHome
+        const isWorlds = href === '/worlds/live'
+        const isActive = isHome
+          ? pathname === '/console'
+          : isWorlds
+            ? pathname.startsWith('/worlds')
+            : pathname === href || pathname.startsWith(href + '/')
+        // Until the session has resolved, keep real destinations in the DOM.
+        // Treating the initial placeholder user as a confirmed guest caused
+        // logged-in Voyagers to see locked tabs and /login links on first paint.
+        const locked = !loading && isGuest && !isHome
 
         if (locked) {
           return (

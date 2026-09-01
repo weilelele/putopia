@@ -15,7 +15,6 @@ import {
 } from 'lucide-react'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
-import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { ArchiveTabs } from '@/components/archive-tabs'
 import {
   saveDeviceBatchRecord,
@@ -396,53 +395,63 @@ export function BatchConfigEditor({
           <ArchiveButton
             disabled={!hasUnsavedChanges || Boolean(saveBusy)}
             onClick={() => void persistBatch(false)}
+            variant="secondary"
           >
             <Save aria-hidden size={15} />
             {saveBusy === 'draft' ? 'SAVING…' : 'SAVE DRAFT'}
           </ArchiveButton>
         </div>
+
+        <section className={styles.batchSummary} aria-label="Selected Batch summary">
+          <div className={styles.batchIdentity}>
+            <span>{selectedBatch.code}</span>
+            <strong>{selectedBatch.name}</strong>
+            <small>{selectedBatch.location}</small>
+          </div>
+          <div>
+            <span>PUBLICATION</span>
+            <strong>
+              {selectedRecord.publicationStatus.toUpperCase()}
+              {selectedRecord.hasUnpublishedChanges ? ' · CHANGES' : ''}
+            </strong>
+          </div>
+          <div>
+            <span>LISTED</span>
+            <strong>{draft.inventory?.listingQuantity ?? '—'}</strong>
+          </div>
+          <div>
+            <span>AVAILABLE</span>
+            <strong>{draft.inventory ? remainingQuantity : '—'}</strong>
+          </div>
+          <div>
+            <span>CHANGES</span>
+            <strong className={hasUnsavedChanges ? styles.pending : styles.ready}>
+              {hasUnsavedChanges
+                ? 'UNSAVED'
+                : `REV ${selectedRecord.revision || 'SOURCE'}`}
+            </strong>
+          </div>
+        </section>
       </section>
 
-      <section className={styles.batchSummary} aria-label="Selected Batch summary">
-        <div className={styles.batchIdentity}>
-          <span>{selectedBatch.code}</span>
-          <strong>{selectedBatch.name}</strong>
-          <small>{selectedBatch.location}</small>
-        </div>
-        <div>
-          <span>PUBLICATION</span>
-          <strong>
-            {selectedRecord.publicationStatus.toUpperCase()}
-            {selectedRecord.hasUnpublishedChanges ? ' · CHANGES' : ''}
-          </strong>
-        </div>
-        <div>
-          <span>LISTED</span>
-          <strong>{draft.inventory?.listingQuantity ?? '—'}</strong>
-        </div>
-        <div>
-          <span>AVAILABLE</span>
-          <strong>{draft.inventory ? remainingQuantity : '—'}</strong>
-        </div>
-        <div>
-          <span>CHANGES</span>
-          <strong className={hasUnsavedChanges ? styles.pending : styles.ready}>
-            {hasUnsavedChanges
-              ? 'UNSAVED'
-              : `REV ${selectedRecord.revision || 'SOURCE'}`}
-          </strong>
-        </div>
-      </section>
+      <div className={styles.workspaceShell}>
+        <aside className={styles.sectionNavigation} aria-label="Edit Batch sections">
+          <div className={styles.sectionNavigationHeading}>
+            <span>EDIT BATCH</span>
+            <strong>{selectedBatch.name}</strong>
+          </div>
+          <ArchiveTabs
+            activeId={activeTab}
+            ariaLabel="Batch configuration sections"
+            items={tabs}
+            onChange={(id) => {
+              setActiveTab(id as WorkspaceTab)
+              setMessage('')
+            }}
+          />
+        </aside>
 
-      <ArchiveTabs
-        activeId={activeTab}
-        ariaLabel="Batch configuration sections"
-        items={tabs}
-        onChange={(id) => {
-          setActiveTab(id as WorkspaceTab)
-          setMessage('')
-        }}
-      />
+        <div className={styles.workspaceContent}>
 
       {previewOpen ? (
         <section className={styles.previewPanel} aria-label="Batch frontend preview">
@@ -492,10 +501,14 @@ export function BatchConfigEditor({
       ) : null}
 
       {activeTab === 'overview' ? (
-        <section className={styles.workspaceSection}>
+        <section
+          aria-label="Public overview"
+          className={styles.workspaceSection}
+          role="tabpanel"
+        >
           <div className={styles.sectionHeading}>
             <div>
-              <ArchiveSectionLabel>PUBLIC OVERVIEW</ArchiveSectionLabel>
+              <h2>Public overview</h2>
               <p>Update the Batch state and the short information visible across the archive.</p>
             </div>
           </div>
@@ -698,10 +711,14 @@ export function BatchConfigEditor({
       ) : null}
 
       {activeTab === 'claim' ? (
-        <section className={styles.workspaceSection}>
+        <section
+          aria-label="Claim and stock"
+          className={styles.workspaceSection}
+          role="tabpanel"
+        >
           <div className={styles.sectionHeading}>
             <div>
-              <ArchiveSectionLabel>CLAIM & STOCK</ArchiveSectionLabel>
+              <h2>Claim &amp; stock</h2>
               <p>Set one Batch price and the number of Consoles available for claim.</p>
             </div>
           </div>
@@ -788,10 +805,14 @@ export function BatchConfigEditor({
       ) : null}
 
       {activeTab === 'packs' ? (
-        <section className={styles.workspaceSection}>
+        <section
+          aria-label="Distribution packs"
+          className={styles.workspaceSection}
+          role="tabpanel"
+        >
           <div className={styles.sectionHeading}>
             <div>
-              <ArchiveSectionLabel>DISTRIBUTION PACKS</ArchiveSectionLabel>
+              <h2>Distribution packs</h2>
               <p>Add, reorder, and update each shipment in this Batch.</p>
             </div>
             <ArchiveButton onClick={addStage} variant="secondary">
@@ -930,10 +951,14 @@ export function BatchConfigEditor({
       ) : null}
 
       {activeTab === 'update' ? (
-        <section className={styles.workspaceSection}>
+        <section
+          aria-label="Latest public update"
+          className={styles.workspaceSection}
+          role="tabpanel"
+        >
           <div className={styles.sectionHeading}>
             <div>
-              <ArchiveSectionLabel>LATEST PUBLIC UPDATE</ArchiveSectionLabel>
+              <h2>Latest public update</h2>
               <p>Publish the newest field progress without editing the full Batch dossier.</p>
             </div>
           </div>
@@ -1014,6 +1039,8 @@ export function BatchConfigEditor({
           </div>
         </section>
       ) : null}
+        </div>
+      </div>
 
       <section className={styles.saveBar}>
         <div>

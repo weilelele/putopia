@@ -184,6 +184,25 @@ consume them.
 Legacy `.btn-*`, `.input-dark`, `.hud-field`, and `.card-*` classes remain as a
 migration bridge. New or migrated pages should render the shared components.
 
+### Golden page examples
+
+`/ui-kit` contains three portrait-first, code-rendered page references under
+**GOLDEN PAGE EXAMPLES**. They use the real Courier Prime font, canonical tokens,
+production interaction states, and 390×844 reference frames. Treat them as
+composition guidance, not page templates to copy wholesale:
+
+| Example | Use it to guide | Structural lesson |
+|---|---|---|
+| Content discovery | World, device, log, and editorial indexes | One featured object, then lightweight rows; media establishes atmosphere while controls stay flat. |
+| Focused participation | Signal, quiz, voting, application, and claim steps | One question or decision per view; progress, evidence, choice, then one primary action. |
+| Identity and progress | Profile, onboarding status, membership, and path views | One current identity and next action; milestones share a sequence instead of becoming metric cards. |
+
+All three examples intentionally share the same color, type, geometry, and
+interaction grammar while using different information hierarchies. New work
+should vary hierarchy and composition for the task before inventing new visual
+decoration. The implementation lives in
+`src/app/ui-kit/golden-screens.tsx` and its colocated CSS Module.
+
 ### Current Style A route coverage
 
 The following user-facing routes consume the canonical archive primitives and

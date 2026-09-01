@@ -13,11 +13,26 @@
  * Connection string: COSMO_MONGO_URI.
  */
 import { MongoClient, ObjectId, type Db, type WithId, type Document } from 'mongodb'
+import {
+  groupDreamcatcherLiveVideos,
+  type DreamcatcherLiveVideoLibrary,
+} from '@/lib/dreamcatcher-live'
 
 const COLL_CHANNEL = 'channel'
 const COLL_IMAGE = 'ai-image'
 const COLL_VIDEO = 'ai-video'
 const COLL_CUBICLE = 'cubicle'
+
+export const DREAMCATCHER_LIVE_VIDEO_SOURCE = {
+  roomSlug: 'kyoto-02',
+  channelId: '6a85654041b16262cb633ac7',
+  bandId: '6a85655f41b16262cb633aef',
+} as const
+
+export const DEVICE_LIVE_VIDEO_SOURCE = {
+  channelId: '6a8ecbc041b16262cb634785',
+  bandId: '6a8ecbcf41b16262cb634790',
+} as const
 
 export type CosmoMedia = 'image' | 'video'
 
@@ -48,6 +63,14 @@ export interface CosmoAsset {
   duration?: number | null
   prompt?: string | null
   tags?: string[]
+}
+
+export type CosmoLiveVideo = Pick<CosmoAsset, 'assetId' | 'url' | 'posterUrl'>
+
+export interface CosmoBandAsset {
+  asset: CosmoAsset
+  band: CosmoBand
+  channel: CosmoFrequency
 }
 
 // ── Connection singleton (survives Next.js hot reloads) ──────────────────────
@@ -144,6 +167,59 @@ export async function getFrequency(channelId: string): Promise<CosmoFrequency | 
   return ch ? mapFrequency(ch) : null
 }
 
+/** Resolve one completed asset and verify that it belongs to the requested band.
+ *  This intentionally avoids loading the band's entire pool or resolving video
+ *  poster frames, which are unnecessary when creating a zero-copy association. */
+export async function getBandAssetById(
+  channelId: string,
+  bandId: string,
+  media: CosmoMedia,
+  assetId: string,
+): Promise<CosmoBandAsset | null> {
+  const d = await db()
+  let channelObjectId: ObjectId
+  let assetObjectId: ObjectId
+  try {
+    channelObjectId = new ObjectId(channelId)
+    assetObjectId = new ObjectId(assetId)
+  } catch {
+    return null
+  }
+
+  const collection = media === 'image' ? COLL_IMAGE : COLL_VIDEO
+  const [channelDocument, assetDocument] = await Promise.all([
+    d.collection(COLL_CHANNEL).findOne({ _id: channelObjectId }),
+    d.collection(collection).findOne({
+      _id: assetObjectId,
+      status: 'completed',
+      deletedAt: null,
+      url: { $ne: null },
+    }),
+  ])
+  if (!channelDocument || !assetDocument) return null
+
+  const bandDocument = findBand(channelDocument, bandId)
+  if (!bandDocument || bandDocument.enabled === false) return null
+  const poolIds = toObjectIds(
+    media === 'image' ? bandDocument.imagePoolIds : bandDocument.videoPoolIds,
+  )
+  if (!poolIds.some((poolId) => poolId.equals(assetObjectId))) return null
+
+  return {
+    asset: {
+      assetId: String(assetDocument._id),
+      media,
+      url: assetDocument.url as string,
+      duration:
+        typeof assetDocument.duration === 'number' ? assetDocument.duration : null,
+      prompt: assetDocument.prompt ?? null,
+      tags: Array.isArray(assetDocument.tags) ? assetDocument.tags : [],
+    },
+    band: mapBand(bandDocument),
+    channel: mapFrequency(channelDocument),
+  }
+}
+
 /**
  * Usable assets for a given (channel, band). For `media: 'video'` this also serves
  * audio puzzles (caller extracts the audio track afterwards).
@@ -193,7 +269,11 @@ export async function getBandAssets(
     }
   }
 
-  return docs.map((doc) => ({
+  const docById = new Map(docs.map((doc) => [String(doc._id), doc]))
+  return poolIds.flatMap((poolId) => {
+    const doc = docById.get(String(poolId))
+    if (!doc) return []
+    return [{
     assetId: String(doc._id),
     media,
     url: doc.url as string,
@@ -201,7 +281,8 @@ export async function getBandAssets(
     duration: typeof doc.duration === 'number' ? doc.duration : null,
     prompt: doc.prompt ?? null,
     tags: Array.isArray(doc.tags) ? doc.tags : [],
-  }))
+    }]
+  })
 }
 
 /** Randomly sample up to `n` usable assets from a (channel, band). */
@@ -214,6 +295,31 @@ export async function sampleBandAssets(
   const all = await getBandAssets(channelId, bandId, media)
   if (all.length <= n) return shuffle(all)
   return shuffle(all).slice(0, n)
+}
+
+/** Tagged live-camera material for the first Worlds device. This deliberately
+ *  resolves the band's pool on every call rather than persisting asset ids, so
+ *  newly completed, non-deleted videos added to the Cosmo band are picked up on
+ *  the next dynamic page request. */
+export async function getDreamcatcherLiveVideoLibrary(): Promise<DreamcatcherLiveVideoLibrary> {
+  const assets = await getBandAssets(
+    DREAMCATCHER_LIVE_VIDEO_SOURCE.channelId,
+    DREAMCATCHER_LIVE_VIDEO_SOURCE.bandId,
+    'video',
+  )
+  return groupDreamcatcherLiveVideos(assets)
+}
+
+/** Live material for the demonstration Console on the Devices pages. The band
+ *  pool order is preserved by `getBandAssets`, so playback follows the order
+ *  curated in Cosmo and wraps back to the first clip on the client. */
+export async function getDeviceLiveVideoPlaylist(): Promise<CosmoLiveVideo[]> {
+  const assets = await getBandAssets(
+    DEVICE_LIVE_VIDEO_SOURCE.channelId,
+    DEVICE_LIVE_VIDEO_SOURCE.bandId,
+    'video',
+  )
+  return assets.map(({ assetId, posterUrl, url }) => ({ assetId, posterUrl, url }))
 }
 
 function shuffle<T>(arr: T[]): T[] {

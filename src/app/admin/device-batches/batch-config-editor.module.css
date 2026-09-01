@@ -1,5 +1,7 @@
 .page,
 .editor,
+.workspaceShell,
+.workspaceContent,
 .workspaceSection,
 .stageList {
   display: grid;
@@ -78,6 +80,13 @@
     100% 100%,
     0 100%
   );
+}
+
+.workspaceHeader .batchSummary {
+  grid-column: 1 / -1;
+  margin: 0 calc(var(--s-4) * -1) calc(var(--s-4) * -1);
+  border-width: 1px 0 0;
+  background: transparent;
 }
 
 .workspaceActions,
@@ -179,11 +188,59 @@
   color: var(--color-ok);
 }
 
+.sectionNavigation {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--bd-faint);
+  background: var(--color-void);
+}
+
+.sectionNavigationHeading {
+  display: grid;
+  gap: var(--s-1);
+  padding: var(--s-3);
+  border-bottom: 1px solid var(--bd-faint);
+}
+
+.sectionNavigationHeading span,
+.sectionNavigationHeading strong {
+  display: block;
+  font-family: var(--font-mono);
+}
+
+.sectionNavigationHeading span {
+  color: var(--color-nucleus);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.12em;
+}
+
+.sectionNavigationHeading strong {
+  color: var(--color-star);
+  font-size: var(--fs-body);
+  line-height: 1.35;
+}
+
+.sectionNavigation :global(.archive-tabs) {
+  border: 0;
+}
+
+.sectionNavigation :global(.archive-tabs__tab.is-active) {
+  color: var(--color-star);
+  background: var(--bg-card);
+}
+
+.workspaceContent {
+  min-width: 0;
+  align-content: start;
+}
+
 .sectionHeading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--s-3);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--bd-faint);
 }
 
 .sectionHeading > div {
@@ -191,14 +248,20 @@
   gap: var(--s-2);
 }
 
-.sectionHeading :global(.archive-section-label) {
-  margin-bottom: 0;
+.sectionHeading h2 {
+  margin: 0;
+  color: var(--color-star);
+  font-family: var(--font-mono);
+  font-size: var(--fs-title);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .formCard {
   display: grid;
   gap: var(--s-4);
   padding: var(--s-4);
+  background: var(--bg-panel);
 }
 
 .twoColumnGrid,
@@ -537,6 +600,43 @@
   .workspaceHeader {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
+  }
+
+  .workspaceShell {
+    grid-template-columns: minmax(12rem, 14rem) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--s-6);
+  }
+
+  .sectionNavigation {
+    position: sticky;
+    top: calc(46px + var(--s-3));
+  }
+
+  .sectionNavigation :global(.archive-tabs) {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .sectionNavigation :global(.archive-tabs__tab) {
+    width: 100%;
+    justify-content: flex-start;
+    padding-inline: var(--s-3);
+    border-left: 3px solid transparent;
+  }
+
+  .sectionNavigation :global(.archive-tabs__tab + .archive-tabs__tab) {
+    border-top: 1px solid var(--bd-faint);
+    border-left: 3px solid transparent;
+  }
+
+  .sectionNavigation :global(.archive-tabs__tab.is-active) {
+    border-left-color: var(--color-nucleus);
+    box-shadow: none;
+  }
+
+  .sectionNavigation :global(.archive-tabs__count) {
+    margin-left: auto;
   }
 
   .threeColumnGrid {

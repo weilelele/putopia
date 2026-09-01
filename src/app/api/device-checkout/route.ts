@@ -181,6 +181,26 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // The database reserves the concrete physical Unit in the same transaction
+  // that created this order. Never create a Stripe Session without that binding.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: reservedUnit, error: unitError } = await (admin.from('device_batch_units') as any)
+    .select('unit_code')
+    .eq('order_id', order.id)
+    .eq('status', 'reserved')
+    .maybeSingle()
+  if (unitError || !reservedUnit?.unit_code) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin.from('voyager_orders') as any)
+      .update({ status: 'canceled' })
+      .eq('id', order.id)
+      .eq('status', 'pending')
+    return NextResponse.json(
+      { error: 'Could not reserve a physical Device Unit' },
+      { status: 500 },
+    )
+  }
+
   const origin = checkoutOrigin(req)
   const metadata = {
     order_id: order.id as string,
@@ -188,6 +208,7 @@ export async function POST(req: NextRequest) {
     product_type: DEVICE_ORDER_PRODUCT_TYPE,
     batch_slug: batch.slug,
     batch_code: batch.code,
+    unit_code: reservedUnit.unit_code as string,
   }
 
   try {

@@ -1,3 +1,5 @@
+import type { StoryAdaptation } from '@/lib/story-workflows'
+
 // Auto-generated types matching the Supabase schema.
 // Keep in sync with supabase/schema.sql and supabase/schema_v2.sql
 
@@ -43,7 +45,7 @@ export type VoyagerProfileUpdate = Partial<Pick<
 
 // ---------- comments ----------
 // Persistent comment threads. Generic: one table backs device / intel / world threads.
-export type CommentSubjectType = 'device' | 'intel' | 'world'
+export type CommentSubjectType = 'device' | 'device_batch' | 'intel' | 'world'
 
 export type Comment = {
   id: string
@@ -84,6 +86,7 @@ export type Vote = {
   created_by: string | null   // voyager_profile id
   created_at: string
   ends_at: string | null
+  device_batch_slug?: string | null
 }
 
 export type VoteInsert = Omit<Vote, 'id' | 'created_at'>
@@ -200,25 +203,27 @@ export type World = {
   submitted_at: string | null
   scan_until: string | null   // Signal Scanning completes at this ISO ts (null = no scan ceremony)
   scan_resolved_at: string | null // outcome (success/failure email) settled at this ts; null = pending
+  dreamcatcher_id: string | null // owning Dreamcatcher; queue state lives in dreamcatcher_jobs
   is_test: boolean            // test-console world; excluded from public listings
   created_at: string
 }
 
 // lifecycle_state / vote_scope / submitted_by / submitted_at have DB defaults — optional on insert
-export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'vote_scope' | 'submitted_by' | 'submitted_at' | 'scan_until' | 'scan_resolved_at' | 'is_test'> & {
+export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'vote_scope' | 'submitted_by' | 'submitted_at' | 'scan_until' | 'scan_resolved_at' | 'dreamcatcher_id' | 'is_test'> & {
   lifecycle_state?: WorldLifecycle
   vote_scope?: WorldVoteScope
   submitted_by?: string | null
   submitted_at?: string | null
   scan_until?: string | null
   scan_resolved_at?: string | null
+  dreamcatcher_id?: string | null
   is_test?: boolean
 }
 export type WorldUpdate = Partial<Pick<
   World,
   'name' | 'name_en' | 'discoverer_id' | 'discoverer_name' | 'discovery_date' |
   'gradient_from' | 'gradient_to' | 'image_path' | 'description' | 'is_verified' |
-  'lifecycle_state' | 'vote_scope' | 'scan_until' | 'scan_resolved_at'
+  'lifecycle_state' | 'vote_scope' | 'scan_until' | 'scan_resolved_at' | 'dreamcatcher_id'
 >>
 
 export type WorldImage = {
@@ -333,6 +338,70 @@ export type StoryUpdate = Partial<Pick<
   'title' | 'author_id' | 'author_name' | 'date' | 'tags' | 'excerpt' | 'content' | 'youtube_id' | 'is_published'
 >>
 
+export type DeviceBatchStoryWorkflowRow = {
+  id: string
+  workspace_slug: string
+  batch_name: string
+  location: string
+  source_story: string
+  source_version: number
+  adaptation: StoryAdaptation | null
+  adaptation_status: 'draft' | 'in_review' | 'changes_requested' | 'approved'
+  adaptation_revision: number
+  adaptation_approved_revision: number | null
+  review_note: string
+  version: number
+  created_by: string | null
+  updated_by: string | null
+  approved_by: string | null
+  approved_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type DeviceBatchStoryContentItemRow = {
+  id: string
+  workflow_id: string
+  position: number
+  title: string
+  channel: string
+  content_type: string
+  body: string
+  narrative_purpose: string
+  facts: string[]
+  required_assets: string[]
+  recommended_publish_at: string | null
+  timing_rationale: string
+  dependencies: string[]
+  follow_up: string
+  status: 'draft' | 'in_review' | 'changes_requested' | 'approved' | 'scheduled' | 'published' | 'needs_re_review'
+  review_note: string
+  story_revision: number
+  version: number
+  scheduled_for: string | null
+  approved_by: string | null
+  approved_at: string | null
+  published_by: string | null
+  published_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type StoryPublicationRow = {
+  id: string
+  source_item_id: string
+  workflow_id: string
+  batch_name: string
+  title: string
+  channel: string
+  content_type: string
+  body: string
+  context: Record<string, unknown>
+  scheduled_for: string | null
+  published_by: string | null
+  published_at: string
+}
+
 // ---------- Supabase Database shape (for createClient generic) ----------
 export type Database = {
   public: {
@@ -446,6 +515,38 @@ export type Database = {
         Update: StoryUpdate
         Relationships: []
       }
+      device_batch_story_workflows: {
+        Row: DeviceBatchStoryWorkflowRow
+        Insert: Omit<DeviceBatchStoryWorkflowRow, 'approved_at' | 'created_at' | 'id' | 'updated_at'> & {
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: Partial<Omit<DeviceBatchStoryWorkflowRow, 'created_at' | 'id'>>
+        Relationships: []
+      }
+      device_batch_story_content_items: {
+        Row: DeviceBatchStoryContentItemRow
+        Insert: Omit<DeviceBatchStoryContentItemRow, 'approved_at' | 'created_at' | 'id' | 'published_at' | 'updated_at'> & {
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          updated_at?: string
+        }
+        Update: Partial<Omit<DeviceBatchStoryContentItemRow, 'created_at' | 'id' | 'workflow_id'>>
+        Relationships: []
+      }
+      story_publications: {
+        Row: StoryPublicationRow
+        Insert: Omit<StoryPublicationRow, 'id' | 'published_at'> & {
+          id?: string
+          published_at?: string
+        }
+        Update: Partial<Omit<StoryPublicationRow, 'id' | 'source_item_id' | 'workflow_id'>>
+        Relationships: []
+      }
       quiz_questions: {
         Row: {
           id: string
@@ -508,7 +609,18 @@ export type Database = {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      replace_story_content_plan: {
+        Args: {
+          p_workflow_id: string
+          p_story_revision: number
+          p_expected_workflow_version: number
+          p_updated_by: string
+          p_items: Record<string, unknown>[]
+        }
+        Returns: undefined
+      }
+    }
     Enums: {
       user_role: UserRole
       vote_type: VoteType

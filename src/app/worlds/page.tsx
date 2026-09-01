@@ -145,7 +145,7 @@ async function SignalTuningSection() {
   return (
     <section id="section-signal-tuning" style={{ marginBottom: '2rem' }}>
       <SectionHeader title="SIGNAL TUNING" accentColor="var(--color-ok)" />
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {worldBuilding.map((world) => (
           <WorldPoster
             key={world.id}
@@ -230,9 +230,9 @@ export default async function WorldsPage({
         accent="RECORDS"
         action={(
           <div className="worlds-action-stack">
-            <ArchiveLinkButton className="worlds-primary-action" href="/worlds/submit" variant="primary">
+            <ArchiveLinkButton className="worlds-primary-action" href="/worlds/live" variant="primary">
               <UploadIcon />
-              REPORT A SIGHTING
+              OPEN DREAMCATCHERS
             </ArchiveLinkButton>
             <ArchiveLinkButton className="worlds-secondary-action" href="/signal" variant="ghost">
               <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
@@ -254,12 +254,12 @@ export default async function WorldsPage({
       </Suspense>
 
       {/* ── INITIAL VISION — proposed worlds (Stage 1) ── */}
-      <Suspense fallback={<SectionSkeleton title="INITIAL VISION" accentColor="var(--color-warn)" gridClass="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" count={4} />}>
+      <Suspense fallback={<SectionSkeleton title="INITIAL VISION" accentColor="var(--color-warn)" gridClass="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" count={4} />}>
         <InitialVisionSection />
       </Suspense>
 
       {/* ── SIGNAL TUNING — picked / syncing (Stage 2), heaviest section ── */}
-      <Suspense fallback={<SectionSkeleton title="SIGNAL TUNING" accentColor="var(--color-ok)" gridClass="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" count={4} />}>
+      <Suspense fallback={<SectionSkeleton title="SIGNAL TUNING" accentColor="var(--color-ok)" gridClass="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" count={4} />}>
         <SignalTuningSection />
       </Suspense>
 

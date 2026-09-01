@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
-import { getBandAssets, getFrequency } from '@/lib/cosmo'
+import { getBandAssetById } from '@/lib/cosmo'
 import { asWorldflowAdmin } from '@/lib/worldflow-database'
 
 type LinkRequest = {
@@ -75,19 +75,22 @@ export async function POST(request: Request) {
     if (!body.channelId || !body.bandId || (body.sourceMedia !== 'image' && body.sourceMedia !== 'video')) {
       return NextResponse.json({ error: 'Cosmo 素材来源信息不完整。' }, { status: 400 })
     }
-    let channel: Awaited<ReturnType<typeof getFrequency>>
-    let sources: Awaited<ReturnType<typeof getBandAssets>>
+    let result: Awaited<ReturnType<typeof getBandAssetById>>
     try {
-      ;[channel, sources] = await Promise.all([getFrequency(body.channelId), getBandAssets(body.channelId, body.bandId, body.sourceMedia)])
+      result = await getBandAssetById(
+        body.channelId,
+        body.bandId,
+        body.sourceMedia,
+        body.sourceAssetId,
+      )
     } catch (error) {
       console.error('[worldflow] Cosmo asset validation failed', error)
       return NextResponse.json({ error: 'Cosmo 素材读取失败，请稍后重试。' }, { status: 502 })
     }
-    const band = channel?.bands.find((item) => item.bandId === body.bandId && item.enabled)
-    const source = sources.find((item) => item.assetId === body.sourceAssetId)
-    if (!channel || !band || !source) {
+    if (!result) {
       return NextResponse.json({ error: '找不到可关联的 Cosmo 素材。' }, { status: 404 })
     }
+    const { asset: source, band, channel } = result
     mediaType = source.media
     sourceUrl = source.url
     fileName = `${channel.freq !== null ? `${channel.freq} · ` : ''}${channel.name} / ${band.name}`
