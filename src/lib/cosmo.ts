@@ -50,6 +50,12 @@ export interface CosmoAsset {
   tags?: string[]
 }
 
+export interface CosmoBandAsset {
+  asset: CosmoAsset
+  band: CosmoBand
+  channel: CosmoFrequency
+}
+
 // ── Connection singleton (survives Next.js hot reloads) ──────────────────────
 const globalForCosmo = globalThis as unknown as {
   __cosmoClientPromise?: Promise<MongoClient>
@@ -142,6 +148,59 @@ export async function getFrequency(channelId: string): Promise<CosmoFrequency | 
   }
   const ch = await d.collection(COLL_CHANNEL).findOne({ _id })
   return ch ? mapFrequency(ch) : null
+}
+
+/** Resolve one completed asset and verify that it belongs to the requested band.
+ *  This intentionally avoids loading the band's entire pool or resolving video
+ *  poster frames, which are unnecessary when creating a zero-copy association. */
+export async function getBandAssetById(
+  channelId: string,
+  bandId: string,
+  media: CosmoMedia,
+  assetId: string,
+): Promise<CosmoBandAsset | null> {
+  const d = await db()
+  let channelObjectId: ObjectId
+  let assetObjectId: ObjectId
+  try {
+    channelObjectId = new ObjectId(channelId)
+    assetObjectId = new ObjectId(assetId)
+  } catch {
+    return null
+  }
+
+  const collection = media === 'image' ? COLL_IMAGE : COLL_VIDEO
+  const [channelDocument, assetDocument] = await Promise.all([
+    d.collection(COLL_CHANNEL).findOne({ _id: channelObjectId }),
+    d.collection(collection).findOne({
+      _id: assetObjectId,
+      status: 'completed',
+      deletedAt: null,
+      url: { $ne: null },
+    }),
+  ])
+  if (!channelDocument || !assetDocument) return null
+
+  const bandDocument = findBand(channelDocument, bandId)
+  if (!bandDocument || bandDocument.enabled === false) return null
+  const poolIds = toObjectIds(
+    media === 'image' ? bandDocument.imagePoolIds : bandDocument.videoPoolIds,
+  )
+  if (!poolIds.some((poolId) => poolId.equals(assetObjectId))) return null
+
+  return {
+    asset: {
+      assetId: String(assetDocument._id),
+      media,
+      url: assetDocument.url as string,
+      duration:
+        typeof assetDocument.duration === 'number' ? assetDocument.duration : null,
+      prompt: assetDocument.prompt ?? null,
+      tags: Array.isArray(assetDocument.tags) ? assetDocument.tags : [],
+    },
+    band: mapBand(bandDocument),
+    channel: mapFrequency(channelDocument),
+  }
 }
 
 /**
