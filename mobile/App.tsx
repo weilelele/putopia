@@ -85,6 +85,63 @@ function sessionProbeScript(): string {
   `
 }
 
+function firstVisibleContentProbeScript(): string {
+  return `
+    (function () {
+      if (window.__mcFirstVisibleContentProbeInstalled) return;
+      window.__mcFirstVisibleContentProbeInstalled = true;
+
+      var sent = false;
+      var scheduled = false;
+      var observer;
+
+      function hasVisibleContent() {
+        if (!document.body) return false;
+        var candidates = document.body.querySelectorAll('main, [role="main"], nav, header, [aria-busy="true"]');
+        for (var i = 0; i < candidates.length; i += 1) {
+          var element = candidates[i];
+          var style = window.getComputedStyle(element);
+          var rect = element.getBoundingClientRect();
+          if (
+            style.display !== 'none' &&
+            style.visibility !== 'hidden' &&
+            style.opacity !== '0' &&
+            rect.width > 0 &&
+            rect.height > 0
+          ) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function postVisible() {
+        if (sent || !window.ReactNativeWebView) return;
+        sent = true;
+        if (observer) observer.disconnect();
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'web-first-visible-content' }));
+      }
+
+      function scheduleProbe() {
+        if (sent || scheduled || !hasVisibleContent()) return;
+        scheduled = true;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            scheduled = false;
+            if (hasVisibleContent()) postVisible();
+          });
+        });
+      }
+
+      observer = new MutationObserver(scheduleProbe);
+      observer.observe(document.documentElement, { childList: true, subtree: true });
+      document.addEventListener('DOMContentLoaded', scheduleProbe, { once: true });
+      scheduleProbe();
+    })();
+    true;
+  `
+}
+
 export default function App() {
   const webView = useRef<WebView>(null)
   const permissionStarted = useRef(false)
@@ -102,6 +159,7 @@ export default function App() {
   const [deviceToken, setDeviceToken] = useState<string | null>(null)
   const [registeredToken, setRegisteredToken] = useState<string | null>(null)
   const [syncGeneration, setSyncGeneration] = useState(0)
+  const [showInitialLoading, setShowInitialLoading] = useState(true)
 
   const openRoute = useCallback((routeValue: unknown) => {
     const route = safeRoute(routeValue)
@@ -364,6 +422,9 @@ export default function App() {
           })
           .catch(() => {})
       }
+      if (message.type === 'web-first-visible-content') {
+        setShowInitialLoading(false)
+      }
     } catch {
       // Ignore messages that are not part of the native bridge.
     }
@@ -390,9 +451,14 @@ export default function App() {
         pullToRefreshEnabled
         setSupportMultipleWindows={false}
         applicationNameForUserAgent="MultiverseCollective/1.0"
+        injectedJavaScriptBeforeContentLoaded={firstVisibleContentProbeScript()}
+        injectedJavaScriptBeforeContentLoadedForMainFrameOnly
         onShouldStartLoadWithRequest={handleRequest}
         onMessage={handleMessage}
         onLoad={() => {
+          // Fallback for documents that never render one of the semantic nodes
+          // watched by the first-visible-content probe.
+          setShowInitialLoading(false)
           if (networkState !== 'offline') {
             setFailed(false)
             setReconnecting(false)
@@ -411,14 +477,14 @@ export default function App() {
             setReconnecting(false)
           }
         }}
-        renderLoading={() => (
-          <View style={styles.center}>
-            <ActivityIndicator color="#E35205" size="large" />
-            <Text style={styles.signal}>CONNECTING TO THE COLLECTIVE…</Text>
-          </View>
-        )}
-        startInLoadingState
       />
+
+      {showInitialLoading && !showOffline && (
+        <View pointerEvents="none" style={styles.center}>
+          <ActivityIndicator color="#E35205" size="large" />
+          <Text style={styles.signal}>CONNECTING TO THE COLLECTIVE…</Text>
+        </View>
+      )}
 
       {showOffline && (
         <OfflineHome
