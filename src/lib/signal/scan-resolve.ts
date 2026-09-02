@@ -10,6 +10,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { maybeSendWorldConfirmedEmail } from './world-confirmed-email'
 import { sendScanFailedEmail } from './scan-failed-email'
+import { SCAN_NOTIFICATIONS_ENABLED } from './scan-notification-policy'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -37,6 +38,9 @@ async function hasPublishedSignal(admin: DB, worldId: string): Promise<boolean> 
 export async function resolveWorldScan(
   worldId: string,
 ): Promise<{ resolved: boolean; outcome?: 'ready' | 'failed' }> {
+  // Pause before claiming an outcome: no reads, writes, email, or push.
+  if (!SCAN_NOTIFICATIONS_ENABLED) return { resolved: false }
+
   const admin = createAdminClient() as DB
 
   const { data: world } = await admin
@@ -69,6 +73,8 @@ export async function resolveCompletedScans(): Promise<{
   ready: number
   failed: number
 }> {
+  if (!SCAN_NOTIFICATIONS_ENABLED) return { checked: 0, resolved: 0, ready: 0, failed: 0 }
+
   const admin = createAdminClient() as DB
   const { data } = await admin
     .from('worlds')
