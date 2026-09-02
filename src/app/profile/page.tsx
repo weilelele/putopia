@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { Camera, LogOut } from 'lucide-react'
 import { getMyProfile, updateProfile, uploadAvatar } from '@/lib/actions/profile'
@@ -12,6 +12,7 @@ import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 
 // ── helpers (mirrors /voyagers) ─────────────────────────────────────────────
 const ACCENT_COLORS = [
@@ -52,23 +53,30 @@ const STEP_LABEL: Record<string, string> = {
 }
 
 function PackTracker({ order, index, total }: { order: VoyagerOrder; index: number; total: number }) {
-  const refunded = order.status === 'refunded' || order.status === 'canceled'
-  const activeIdx = Math.max(0, PACK_STEPS.indexOf(order.status as (typeof PACK_STEPS)[number]))
+  const issue = ['refunded', 'canceled', 'payment_failed', 'payment_review'].includes(order.status)
+  const activeIdx = PACK_STEPS.indexOf(order.status as (typeof PACK_STEPS)[number])
   const date = new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  const orderLabel = order.product_type === 'device_batch_claim'
+    ? order.device_batch_code ?? order.batch_label ?? 'DEVICE BATCH'
+    : total > 1
+      ? `ORDER #${total - index}`
+      : 'MY VOYAGER PACK'
 
   return (
     <ArchiveCard style={{ marginBottom: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em' }}>{total > 1 ? `ORDER #${total - index}` : 'MY VOYAGER PACK'}
+        <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em' }}>{orderLabel}
         </div>
         <div style={{ color: 'rgba(245,245,245,0.3)', fontSize: 'var(--fs-caption)', letterSpacing: '0.08em' }}>
           {date}
         </div>
       </div>
 
-      {refunded ? (
+      {issue ? (
         <div style={{ color: '#E83030', fontSize: 'var(--fs-label)', letterSpacing: '0.05em' }}>
-          This order was {order.status}.
+          {order.status === 'payment_review'
+            ? 'This payment requires review before fulfillment.'
+            : `This order was ${order.status.replaceAll('_', ' ')}.`}
         </div>
       ) : (
         <div style={{ display: 'flex', gap: '6px' }}>
@@ -113,6 +121,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null)
   const [orders, setOrders] = useState<VoyagerOrder[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [form, setForm] = useState<EditForm | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
@@ -120,8 +129,12 @@ export default function ProfilePage() {
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    Promise.all([getMyProfile(), getMyOrders()]).then(([p, o]) => {
+  const loadProfileData = useCallback(async () => {
+    await Promise.resolve()
+    setLoading(true)
+    setLoadError(false)
+    try {
+      const [p, o] = await Promise.all([getMyProfile(), getMyOrders()])
       setProfile(p)
       setOrders(o)
       if (p) {
@@ -134,9 +147,16 @@ export default function ProfilePage() {
           social_linkedin: p.social_linkedin ?? '',
         })
       }
+    } catch {
+      setLoadError(true)
+    } finally {
       setLoading(false)
-    })
+    }
   }, [])
+
+  useEffect(() => {
+    void Promise.resolve().then(loadProfileData)
+  }, [loadProfileData])
 
   const setF = (k: keyof EditForm, v: string) => setForm((f) => (f ? { ...f, [k]: v } : f))
 
@@ -180,12 +200,18 @@ export default function ProfilePage() {
   }
 
   if (loading) {
+    return <ArchiveRouteLoading label="LOADING PROFILE" />
+  }
+
+  if (loadError) {
     return (
-      <div className="main">
-        <div style={{ color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '60px 0', textAlign: 'center', letterSpacing: '0.15em' }}>
-          LOADING PROFILE...
-        </div>
-      </div>
+      <ArchiveRouteError
+        title="PROFILE UNAVAILABLE"
+        description="Your profile and order history could not be retrieved. No account data was changed."
+        onRetry={loadProfileData}
+        returnHref="/console"
+        returnLabel="DASHBOARD"
+      />
     )
   }
 

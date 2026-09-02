@@ -85,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
+        setLoading(true)
         loadProfile(session.user.id, session.user.email).finally(() => setLoading(false))
       } else {
         setUser(GUEST)

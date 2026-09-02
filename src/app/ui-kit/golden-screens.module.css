@@ -3,14 +3,6 @@
   gap: var(--s-6);
 }
 
-:global(body:has(.uk-root) .sidebar) {
-  display: none;
-}
-
-:global(.app-shell:has(.uk-root)) {
-  grid-template-columns: minmax(0, 1fr);
-}
-
 .intro {
   max-width: 62ch;
   margin: 0;

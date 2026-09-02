@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { getDeviceById } from '@/lib/actions/devices'
 import posthog from 'posthog-js'
@@ -9,6 +9,7 @@ import { CommentThread } from '@/components/comment-thread'
 import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 
 const STATUS_STYLES: Record<string, { color: string; border: string }> = {
   available:    { color: '#20D890', border: 'rgba(32,216,144,0.3)' },
@@ -48,20 +49,38 @@ export default function DeviceDetailPage() {
   const id = params?.id as string
 
   const [device, setDevice] = useState<Device | null | undefined>(undefined)
+  const [loadError, setLoadError] = useState(false)
 
-  useEffect(() => {
-    getDeviceById(id).then((d) => {
+  const loadDevice = useCallback(async () => {
+    await Promise.resolve()
+    setDevice(undefined)
+    setLoadError(false)
+    try {
+      const d = await getDeviceById(id)
       setDevice((d as Device) ?? null)
       if (d) posthog.capture('device_viewed', { device_id: id, device_knowledge: (d as Device).knowledge })
-    })
+    } catch {
+      setLoadError(true)
+    }
   }, [id])
 
-  if (device === undefined) {
+  useEffect(() => {
+    void Promise.resolve().then(loadDevice)
+  }, [loadDevice])
+
+  if (loadError) {
     return (
-      <div className="main" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>LOADING...</div>
-      </div>
+      <ArchiveRouteError
+        title="DEVICE RECORD UNAVAILABLE"
+        description="This device record could not be retrieved."
+        onRetry={loadDevice}
+        returnHref="/devices"
+      />
     )
+  }
+
+  if (device === undefined) {
+    return <ArchiveRouteLoading label="LOADING DEVICE RECORD" />
   }
 
   if (!device) {

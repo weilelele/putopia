@@ -1,0 +1,119 @@
+.page,
+.formLayout,
+.formCard,
+.formIntro {
+  display: grid;
+  gap: var(--s-4);
+}
+
+.page {
+  gap: var(--s-6);
+}
+
+.pageHeader {
+  display: grid;
+  gap: var(--s-3);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--bd-faint);
+}
+
+.pageHeader span,
+.formIntro span {
+  color: var(--color-nucleus);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.12em;
+}
+
+.pageHeader h1,
+.formIntro h2 {
+  margin: var(--s-2) 0 0;
+  color: var(--color-star);
+  font-family: var(--font-mono);
+}
+
+.pageHeader h1 {
+  font-size: var(--fs-h3);
+}
+
+.formIntro h2 {
+  font-size: var(--fs-title);
+}
+
+.pageHeader p,
+.formIntro p,
+.formFooter p,
+.message {
+  margin: 0;
+  color: var(--color-star-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 1.65;
+}
+
+.formIntro {
+  align-content: start;
+}
+
+.formIntro > div {
+  padding: var(--s-4);
+  border: 1px solid var(--bd-faint);
+  background: var(--color-void);
+}
+
+.formIntro p {
+  margin-top: var(--s-3);
+}
+
+.formCard {
+  padding: var(--s-4);
+  border: 1px solid var(--bd-orange);
+  background: var(--color-void);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--archive-notch)) 0,
+    100% var(--archive-notch),
+    100% 100%,
+    0 100%
+  );
+}
+
+.twoColumnGrid {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.formFooter {
+  display: grid;
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--bd-faint);
+}
+
+.formFooter :global(.archive-button) {
+  min-height: 44px;
+}
+
+.message {
+  color: var(--color-nucleus);
+}
+
+@media (min-width: 640px) {
+  .pageHeader,
+  .formLayout {
+    grid-template-columns: minmax(0, 0.65fr) minmax(22rem, 1.35fr);
+  }
+
+  .pageHeader {
+    align-items: end;
+  }
+
+  .twoColumnGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .formFooter {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}

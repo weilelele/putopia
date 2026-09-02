@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: '平行世界观测组织｜Limited Investor Briefing',
-  description: 'A limited-access briefing from the Multiverse Collective.',
+  title: 'Multiverse Collective｜Investor Briefing',
+  description: 'A sci-fi hardware game where fictional worlds break into real life.',
   robots: { index: false, follow: false },
 }
 

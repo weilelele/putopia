@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { getAllOrders, updateOrderFulfillment, createOrderManually, type AdminOrder } from '@/lib/actions/orders'
+import { getAllowedDeviceOrderStatuses } from '@/lib/device-order-status'
 
-const STATUSES = ['paid', 'preparing', 'shipped', 'delivered', 'refunded', 'canceled'] as const
+const STATUSES = ['paid', 'preparing', 'shipped', 'delivered', 'payment_review', 'payment_failed', 'refunded', 'canceled'] as const
 const STATUS_COLOR: Record<string, string> = {
   paid: '#E35205', preparing: '#E8A020', shipped: '#20D890', delivered: '#20D890',
   refunded: '#E83030', canceled: '#E83030', pending: 'rgba(245,245,245,0.4)',
+  payment_review: '#FFB020', payment_failed: '#E83030',
 }
 
 const S = {
@@ -21,7 +23,13 @@ const S = {
   }),
 }
 
-type Draft = { status: string; carrier: string; tracking_number: string; tracking_url: string }
+type Draft = {
+  status: string
+  carrier: string
+  tracking_number: string
+  tracking_url: string
+  expected_unit_code: string
+}
 
 function addressLines(o: AdminOrder): string[] {
   return [
@@ -56,6 +64,7 @@ export default function OrdersAdmin() {
       carrier: o.carrier ?? '',
       tracking_number: o.tracking_number ?? '',
       tracking_url: o.tracking_url ?? '',
+      expected_unit_code: '',
     }])))
     setLoading(false)
   }
@@ -83,15 +92,23 @@ export default function OrdersAdmin() {
   const save = async (o: AdminOrder) => {
     const d = drafts[o.id]
     setSavingId(o.id); setMsg(null)
-    const { error } = await updateOrderFulfillment(o.id, {
+    const { error, emailWarning } = await updateOrderFulfillment(o.id, {
       status: d.status,
       carrier: d.carrier.trim() || null,
       tracking_number: d.tracking_number.trim() || null,
       tracking_url: d.tracking_url.trim() || null,
+      expected_unit_code: d.expected_unit_code.trim() || null,
     })
     setSavingId(null)
     if (error) setMsg({ id: o.id, text: error, ok: false })
-    else { setMsg({ id: o.id, text: 'Saved ✓', ok: true }); await load() }
+    else {
+      setMsg({
+        id: o.id,
+        text: emailWarning ? `Saved · email pending (${emailWarning})` : 'Saved · email sent or already recorded ✓',
+        ok: !emailWarning,
+      })
+      await load()
+    }
   }
 
   const counts = useMemo(() => ({
@@ -170,8 +187,16 @@ export default function OrdersAdmin() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
                 <div style={{ fontSize: '14px' }}>
                   <span style={{ color: '#F5F5F5' }}>{o.email ?? '—'}</span>
-                  {o.amount != null && <span style={{ color: 'rgba(245,245,245,0.45)' }}> · ${(o.amount / 100).toFixed(2)}</span>}
-                  {o.batch_label && <span style={{ color: 'rgba(245,245,245,0.45)' }}> · {o.batch_label}</span>}
+                  {o.amount != null && <span style={{ color: 'rgba(245,245,245,0.45)' }}> · {(o.amount / 100).toFixed(2)} {o.currency.toUpperCase()}</span>}
+                  <span style={{ color: 'rgba(245,245,245,0.45)' }}>
+                    {' · '}
+                    {o.product_type === 'device_batch_claim'
+                      ? o.device_batch_code ?? o.batch_label ?? 'DEVICE BATCH'
+                      : 'VOYAGER PACK'}
+                  </span>
+                  {o.product_type === 'device_batch_claim' && (
+                    <span style={{ color: 'rgba(245,245,245,0.45)' }}> · {o.pack_count} PACKS</span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', textTransform: 'uppercase', color: STATUS_COLOR[o.status] ?? '#F5F5F5' }}>● {o.status}</span>
@@ -180,7 +205,7 @@ export default function OrdersAdmin() {
               </div>
 
               {/* Address + fulfillment */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px,1fr) minmax(280px,2fr)', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '20px' }}>
                 <div>
                   <div style={S.label}>SHIP TO</div>
                   {addressLines(o).length ? (
@@ -190,14 +215,28 @@ export default function OrdersAdmin() {
                   ) : (
                     <div style={{ fontSize: '12px', color: 'rgba(245,245,245,0.35)' }}>No address on file (mock / pending).</div>
                   )}
+                  {o.product_type === 'device_batch_claim' && (
+                    <div style={{ marginTop: '14px' }}>
+                      <div style={S.label}>BOUND DEVICE UNIT</div>
+                      <strong style={{ color: '#E35205', fontSize: '14px', letterSpacing: '0.08em' }}>
+                        {o.device_unit_code ?? 'NOT ASSIGNED'}
+                      </strong>
+                      <div style={{ color: 'rgba(245,245,245,0.45)', fontSize: 'var(--fs-caption)', marginTop: '4px', textTransform: 'uppercase' }}>
+                        {o.device_unit_status ?? 'Unit migration pending'}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '10px', marginBottom: '10px' }}>
                     <div>
                       <label style={S.label}>STATUS</label>
                       <select style={S.input} value={d.status} onChange={(e) => setD(o.id, 'status', e.target.value)}>
-                        {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        {(o.product_type === 'device_batch_claim'
+                          ? getAllowedDeviceOrderStatuses(o.status)
+                          : STATUSES
+                        ).map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
                     <div>
@@ -213,6 +252,21 @@ export default function OrdersAdmin() {
                     <label style={S.label}>TRACKING URL (optional)</label>
                     <input style={S.input} value={d.tracking_url} onChange={(e) => setD(o.id, 'tracking_url', e.target.value)} placeholder="https://tools.usps.com/go/TrackConfirmAction?tLabels=..." />
                   </div>
+                  {o.product_type === 'device_batch_claim' && d.status === 'shipped' && o.status !== 'shipped' && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={S.label}>VERIFY PHYSICAL UNIT CODE *</label>
+                      <input
+                        autoComplete="off"
+                        placeholder="Type or scan the code printed on the Unit"
+                        style={{ ...S.input, borderColor: '#E35205' }}
+                        value={d.expected_unit_code}
+                        onChange={(e) => setD(o.id, 'expected_unit_code', e.target.value.toUpperCase())}
+                      />
+                      <div style={{ color: 'rgba(245,245,245,0.45)', fontSize: 'var(--fs-caption)', marginTop: '5px' }}>
+                        Shipping is rejected unless this exactly matches the paid order.
+                      </div>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px' }}>
                     {msg?.id === o.id && (
                       <span style={{ fontSize: '12px', color: msg.ok ? '#20D890' : '#E83030' }}>{msg.text}</span>

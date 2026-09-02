@@ -406,6 +406,8 @@ function FeedSkeleton({ hideHeader = false }: { hideHeader?: boolean }) {
     <div style={{ maxWidth: 820, margin: '0 auto' }}>
       <style>{`
         .feed-skel-ph { background-image: linear-gradient(100deg, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.02) 70%); background-size: 200% 100%; animation: feed-skel-ph-shimmer 1.4s ease-in-out infinite; }
+        .feed-skel-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 0 0.5rem; min-height: 70vh; }
+        @media (min-width: 640px) { .feed-skel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @keyframes feed-skel-ph-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
       `}</style>
       {!hideHeader && (
@@ -418,9 +420,9 @@ function FeedSkeleton({ hideHeader = false }: { hideHeader?: boolean }) {
       {/* min-height keeps the reserved feed area taller than the viewport's
           leftover space, so the hero stays at its natural height (not stretched)
           in both the skeleton and the loaded-feed state — no upward jump. */}
-      <div style={{ columnCount: 2, columnGap: 8, padding: '0 0.5rem', minHeight: '70vh' }} aria-hidden="true">
+      <div className="feed-skel-grid" aria-hidden="true">
         {heights.map((h, i) => (
-          <div key={i} className="feed-skel-ph" style={{ breakInside: 'avoid', marginBottom: 8, height: h, borderRadius: 3, border: '1px solid rgba(255,255,255,0.05)' }} />
+          <div key={i} className="feed-skel-ph" style={{ height: h, borderRadius: 3, border: '1px solid rgba(255,255,255,0.05)' }} />
         ))}
       </div>
     </div>

@@ -13,7 +13,7 @@ const RULES = [
   },
   {
     id: 'no-glow-or-shadow',
-    test: /(?:box|text)-shadow\s*:\s*(?!none\b)/i,
+    test: /(?:box|text)-shadow\s*:(?!\s*none\b)/i,
     message: 'Use spacing, borders, and flat surface contrast; shadows/glow are prohibited.',
   },
   {
@@ -54,7 +54,7 @@ function readDiff(base) {
       args.push('--cached')
     }
   }
-  return execFileSync('git', args, { encoding: 'utf8' })
+  return execFileSync('git', args, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })
 }
 
 export function inspectAddedUiLines(diff) {
@@ -76,7 +76,11 @@ export function inspectAddedUiLines(diff) {
     if (line.startsWith('+')) {
       const source = line.slice(1)
       for (const rule of RULES) {
-        if (rule.test.test(source)) {
+        // These legacy-named tokens are explicitly orange in the design spec.
+        const checkedSource = rule.id === 'no-cyan'
+          ? source.replace(/var\(--bd-cyan(?:-2)?\)/g, 'var(--orange-border)')
+          : source
+        if (rule.test.test(checkedSource)) {
           failures.push({ file, line: newLine, rule: rule.id, message: rule.message })
         }
       }

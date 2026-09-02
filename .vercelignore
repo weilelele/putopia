@@ -1,0 +1,18 @@
+.claude/worktrees/
+.codex/
+.codex-worktrees/
+android/
+ios/
+tmp/
+
+# Local design-review evidence; product assets live under public/.
+audit-*.png
+design-audit-*.png
+design-qa-*.jpg
+design-qa-*.png
+device-live-mobile-qa.png
+worlds-live-mobile-qa.png
+
+# Standalone export artifacts kept outside the application.
+multiverse-collective-qr-updated.png
+multiverseco-*.png

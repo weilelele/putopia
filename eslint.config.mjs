@@ -20,7 +20,10 @@ const eslintConfig = defineConfig([
     ".netlify/**",
     ".vercel/**",
     "coverage/**",
+    "prototypes/**/dist/**",
+    "tmp/**",
     // Local agent worktrees and native app shells — not part of the web lint surface.
+    ".claude/worktrees/**",
     ".codex-worktrees/**",
     "android/**",
     "ios/**",

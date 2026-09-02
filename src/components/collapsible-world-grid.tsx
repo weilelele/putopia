@@ -16,10 +16,8 @@ function formatSubmitted(submitted_at?: string | null) {
  * Initial Vision grid with an incremental "More" reveal, so a long proposed-worlds
  * list doesn't push Signal Tuning off screen.
  *
- * Default (step 0): one row on PC, four items on mobile.
- *   mobile (2-col) 4 · lg (3-col) 3 · xl (4-col) 4
- * Each click reveals two more rows (≈6 on mobile/lg, 8 on xl):
- *   mobile/lg +6 · xl +8
+ * Default (step 0): four readable posters on portrait phones, then one row on
+ * wide screens. Each click reveals the next batch without changing the order.
  */
 export function CollapsibleWorldGrid({ worlds }: { worlds: PosterWorld[] }) {
   const [step, setStep] = useState(0)
@@ -41,7 +39,7 @@ export function CollapsibleWorldGrid({ worlds }: { worlds: PosterWorld[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {worlds.map((world, i) => (
           <div key={world.id} className={cellClass(i)}>
             <WorldPoster world={world} date={formatSubmitted(world.submitted_at)} />

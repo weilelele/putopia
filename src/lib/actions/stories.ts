@@ -5,16 +5,23 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { StoryInsert, StoryUpdate } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
 
+function hasYouTubeId(value: string | null | undefined) {
+  return Boolean(value?.trim())
+}
+
 // List all published stories (with author avatar). Read via the admin client:
 // published logs are member-facing content, but the `stories_select_published`
 // RLS policy only grants reads to voyager/architect — which silently hid the
-// whole feed from applicants. Filtering to is_published keeps drafts private.
+// whole feed from applicants. Voyager Logs are video logs, so entries without
+// a YouTube ID are excluded as well.
 export async function getPublishedStories() {
   const supabase = createAdminClient()
   const { data: stories, error } = await supabase
     .from('stories')
     .select('*')
     .eq('is_published', true)
+    .not('youtube_id', 'is', null)
+    .neq('youtube_id', '')
     .order('date', { ascending: false })
 
   if (error) console.error('[getPublishedStories]', error.message)
@@ -46,6 +53,8 @@ export async function getStoryById(id: string) {
     .select('*')
     .eq('id', id)
     .eq('is_published', true)
+    .not('youtube_id', 'is', null)
+    .neq('youtube_id', '')
     .single()
 
   if (!story) return null
@@ -144,6 +153,18 @@ export async function updateMyStory(id: string, updates: Omit<StoryUpdate, 'is_p
 // Architect: publish a story
 export async function publishStory(id: string) {
   const admin = createAdminClient()
+  const { data: story, error: readError } = await admin
+    .from('stories')
+    .select('youtube_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (readError) return { error: readError.message }
+  if (!story) return { error: 'Story not found' }
+  if (!hasYouTubeId(story.youtube_id)) {
+    return { error: 'A YouTube video ID is required before publishing a Voyager Log' }
+  }
+
   const { error } = await admin
     .from('stories')
     .update({ is_published: true })
@@ -172,6 +193,23 @@ export async function unpublishStory(id: string) {
 // Architect: update any story (content + metadata)
 export async function updateStory(id: string, updates: StoryUpdate) {
   const admin = createAdminClient()
+  if (updates.is_published) {
+    let youtubeId = updates.youtube_id
+    if (youtubeId === undefined) {
+      const { data: story, error: readError } = await admin
+        .from('stories')
+        .select('youtube_id')
+        .eq('id', id)
+        .maybeSingle()
+      if (readError) return { error: readError.message }
+      if (!story) return { error: 'Story not found' }
+      youtubeId = story.youtube_id
+    }
+    if (!hasYouTubeId(youtubeId)) {
+      return { error: 'A YouTube video ID is required before publishing a Voyager Log' }
+    }
+  }
+
   const { error } = await admin
     .from('stories')
     .update(updates)

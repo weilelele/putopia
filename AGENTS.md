@@ -28,10 +28,10 @@ rules to keep front of mind:
 
 # Deployments & preview environments
 
-`main` is the production trunk. Work happens on `feat/*` (human) or `claude/*`
-(agent) branches, opened as a PR and **squash-merged** into `main`. Delete the
-branch after merge — squash-merged branches still report as "ahead" of `main`
-and look unmerged.
+`main` is the production trunk. Work happens on `feat/*` (human), `claude/*`
+(Claude), or `codex/*` (Codex) branches, opened as a PR and **squash-merged**
+into `main`. Delete the branch after merge — squash-merged branches still
+report as "ahead" of `main` and look unmerged.
 
 Every branch/PR gets its own **preview deployment** (Vercel/Netlify) — you do
 not need to merge to `main` to see a change live. Production crons are defined
@@ -53,6 +53,8 @@ deployments share **production** Supabase, MongoDB, and Stripe. Therefore:
 
 - `.claude/hooks/session-start.sh` runs `npm install` on web sessions so
   `node_modules/` (and the Next.js docs above) are available.
+- `.codex/environments/environment.toml` runs `npm install` when the Codex
+  desktop app creates a worktree, so fresh worktrees have the same dependencies.
 - A PostToolUse hook auto-fixes edited TS/TSX and blocks on any remaining
   ESLint error.
 - CI (`.github/workflows/ci.yml`) gates PRs on `tsc --noEmit`, `npm run lint`,

@@ -1,0 +1,469 @@
+export type DeviceBatchStatus = 'survey' | 'claim_open' | 'distribution' | 'active'
+export type DistributionStageStatus = 'completed' | 'current' | 'upcoming'
+
+export type DeviceBatchLead = {
+  name: string
+  role: string
+  initials: string
+  location: string
+  bio: string
+  latestNote: string
+}
+
+export type DeviceBatchHolder = {
+  name: string
+  unit: string
+  location: string
+}
+
+export type DeviceBatchMedia = {
+  alt: string
+  caption: string
+  kind: 'image' | 'video'
+  poster?: string
+  src: string
+}
+
+export type DistributionStage = {
+  id: string
+  label: string
+  window: string
+  status: DistributionStageStatus
+  summary: string
+  contents: string[]
+  archiveNote?: string
+  media?: DeviceBatchMedia[]
+}
+
+export type BatchArchiveStage = {
+  id: string
+  label: string
+  period: string
+  summary: string
+  evidence: string[]
+}
+
+export type BatchPrice = {
+  amount: number
+  currency: string
+  description: string
+}
+
+export type BatchInventory = {
+  claimedQuantity: number
+  listingQuantity: number
+}
+
+export type DeviceBatch = {
+  slug: string
+  code: string
+  name: string
+  location: string
+  status: DeviceBatchStatus
+  statusLine: string
+  updatedAt: string
+  nextMilestone: string
+  image: string
+  imageAlt: string
+  imageFit?: 'cover' | 'contain'
+  heroCaption: string
+  heroMedia?: DeviceBatchMedia[]
+  summary: string
+  claimPrice?: BatchPrice
+  inventory?: BatchInventory
+  availability?: string
+  estimatedCompletion: string
+  explorationProgress?: number
+  claimHref?: string
+  facts: { label: string; value: string }[]
+  lead: DeviceBatchLead
+  holders: DeviceBatchHolder[]
+  distributionStages: DistributionStage[]
+  archiveStages: BatchArchiveStage[]
+  latestUpdate: {
+    date: string
+    title: string
+    body: string
+    media?: DeviceBatchMedia[]
+  }
+}
+
+export const DEVICE_BATCH_STATUS: Record<
+  DeviceBatchStatus,
+  { label: string; shortLabel: string }
+> = {
+  survey: { label: 'UNDER SURVEY', shortLabel: 'SURVEY' },
+  claim_open: { label: 'CLAIM OPEN', shortLabel: 'CLAIM' },
+  distribution: { label: 'DISTRIBUTION IN PROGRESS', shortLabel: 'DISTRIBUTING' },
+  active: { label: 'ACTIVE IN FIELD', shortLabel: 'ACTIVE' },
+}
+
+export const DEVICE_BATCHES: DeviceBatch[] = [
+  {
+    slug: 'cairo-batch-01',
+    code: 'CAIRO-BATCH-01',
+    name: 'Cairo Receiver Array',
+    location: 'Cairo, Egypt',
+    status: 'claim_open',
+    statusLine: '64 recoverable units confirmed',
+    updatedAt: 'Jul 26, 2026',
+    nextMilestone: 'Component sorting closes Aug 08',
+    image: '/assets/device-console.jpg',
+    imageAlt: 'Multiverse Console recovered for the Cairo batch',
+    imageFit: 'contain',
+    heroCaption: 'Recovery unit photographed after the first stable power test.',
+    summary:
+      'A concentrated group of receivers was recovered from three antique markets east of the old city. The chassis are stable; antenna assemblies vary from unit to unit.',
+    claimPrice: {
+      amount: 360,
+      currency: 'USD',
+      description: 'The complete three-pack distribution and one assigned Console.',
+    },
+    inventory: {
+      claimedQuantity: 42,
+      listingQuantity: 64,
+    },
+    estimatedCompletion: 'Estimated final dispatch: November 2026',
+    claimHref: '/devices/claim',
+    facts: [
+      { label: 'DISCOVERED', value: 'May 18, 2026' },
+      { label: 'CONFIRMED UNITS', value: '64' },
+      { label: 'CHASSIS', value: 'Stable · surface restoration required' },
+      { label: 'ANTENNAS', value: 'Nine distinct receiver patterns' },
+      { label: 'NEXT REPORT', value: 'Aug 08, 2026' },
+    ],
+    lead: {
+      name: 'Weile Chen',
+      role: 'Field Architect · Recovery lead',
+      initials: 'WC',
+      location: 'Cairo field station',
+      bio: 'Weile coordinates intake, chassis recovery, and the final assignment of receiver assemblies across the Cairo units.',
+      latestNote:
+        'The housings are more consistent than the first survey suggested. The antennas are not. We are preserving those differences rather than forcing a uniform rebuild.',
+    },
+    holders: [],
+    distributionStages: [
+      {
+        id: 'field-kit',
+        label: 'Field registration kit',
+        window: 'Aug 18–24, 2026',
+        status: 'upcoming',
+        summary: 'Collective seal, recovery index, and the first isolated antenna fragment.',
+        contents: ['Collective registration seal', 'Cairo recovery index', 'Isolated antenna fragment'],
+      },
+      {
+        id: 'receiver-set',
+        label: 'Receiver component set',
+        window: 'Sep 22–30, 2026',
+        status: 'upcoming',
+        summary: 'A matched receiver component and the field notes that led to its classification.',
+        contents: ['Matched receiver component', 'Classification notes', 'Calibration card'],
+      },
+      {
+        id: 'console',
+        label: 'Multiverse Console',
+        window: 'Nov 10–24, 2026',
+        status: 'upcoming',
+        summary: 'Assigned Console, final antenna assembly, and first-start instructions.',
+        contents: ['Multiverse Console', 'Assigned antenna assembly', 'First-start instructions'],
+      },
+    ],
+    archiveStages: [
+      {
+        id: 'survey',
+        label: 'Initial survey',
+        period: 'May 18–Jun 02, 2026',
+        summary: 'Three linked caches were confirmed and moved to a single recovery station.',
+        evidence: [
+          'First signal triangulated across three market stalls.',
+          'Seventy-one chassis logged; sixty-four passed the structural check.',
+          'Nine antenna families separated for later assignment.',
+        ],
+      },
+    ],
+    latestUpdate: {
+      date: 'Jul 26, 2026',
+      title: 'Receiver differences will be preserved',
+      body:
+        'The recovery team has completed the second chassis pass. Rather than standardizing every unit, the nine receiver patterns will remain part of each Console’s individual record.',
+    },
+  },
+  {
+    slug: 'gobi-array-07',
+    code: 'GOBI-ARRAY-07',
+    name: 'Gobi Long-Range Array',
+    location: 'Dornogovi, Mongolia',
+    status: 'survey',
+    statusLine: 'Signal source confirmed · surface inventory underway',
+    updatedAt: 'Jul 28, 2026',
+    nextMilestone: 'First chassis power test',
+    image: '/assets/device-desk.png',
+    imageAlt: 'Console equipment arranged for a field survey',
+    heroCaption: 'Field arrangement after the signal source was moved out of open exposure.',
+    summary:
+      'A long-range signal led the team to a partially buried relay array. The number of recoverable Consoles remains unconfirmed.',
+    estimatedCompletion: 'Claim timing not yet confirmed',
+    explorationProgress: 38,
+    facts: [
+      { label: 'SIGNAL FOUND', value: 'Jul 03, 2026' },
+      { label: 'SITE', value: 'Dry relay trench · Sector 4' },
+      { label: 'ESTIMATED UNITS', value: '18–40 · unconfirmed' },
+      { label: 'PRIMARY RISK', value: 'Sand ingress in tuning assemblies' },
+      { label: 'NEXT REPORT', value: 'Aug 04, 2026' },
+    ],
+    lead: {
+      name: 'Tariq Okonkwo',
+      role: 'Survey Architect · Signal recovery',
+      initials: 'TO',
+      location: 'Dornogovi mobile station',
+      bio: 'Tariq leads remote signal verification and decides when newly located equipment is stable enough to enter recovery.',
+      latestNote:
+        'We have a real array, but not yet a count. Until the first chassis holds power for a full cycle, every quantity remains provisional.',
+    },
+    holders: [],
+    distributionStages: [
+      {
+        id: 'plan-pending',
+        label: 'Distribution plan pending',
+        window: 'Published after recovery count',
+        status: 'upcoming',
+        summary: 'Stage count and timing will be published before claims open.',
+        contents: ['No contents confirmed'],
+      },
+    ],
+    archiveStages: [],
+    latestUpdate: {
+      date: 'Jul 28, 2026',
+      title: 'The relay trench extends farther north',
+      body:
+        'A second buried conduit was found beyond the initial perimeter. Survey has been extended before any recovery count is published.',
+    },
+  },
+  {
+    slug: 'kyoto-relay-02',
+    code: 'KYOTO-RELAY-02',
+    name: 'Kyoto Relay Consoles',
+    location: 'Kyoto, Japan',
+    status: 'distribution',
+    statusLine: 'Stage 3 of 4 · tuning assemblies in preparation',
+    updatedAt: 'Jul 24, 2026',
+    nextMilestone: 'Stage 3 dispatch begins Aug 12',
+    image: '/assets/device.png',
+    imageAlt: 'Multiverse Console prepared for the Kyoto relay batch',
+    heroCaption: 'Reference unit during tuning assembly alignment.',
+    summary:
+      'Compact relay Consoles recovered from a closed broadcast workshop. The holders have completed two of four configured distribution stages.',
+    estimatedCompletion: 'Estimated final dispatch: October 2026',
+    availability: 'Claims closed · 31 holders',
+    facts: [
+      { label: 'DISCOVERED', value: 'Jan 11, 2026' },
+      { label: 'HOLDERS', value: '31' },
+      { label: 'CURRENT STAGE', value: '3 of 4' },
+      { label: 'UNITS CALIBRATED', value: '24 of 31' },
+      { label: 'NEXT DISPATCH', value: 'Aug 12, 2026' },
+    ],
+    lead: {
+      name: 'Mei Tanaka',
+      role: 'Restoration Architect · Relay systems',
+      initials: 'MT',
+      location: 'Kyoto restoration room',
+      bio: 'Mei documents relay behavior and leads the shared calibration decisions for the Kyoto holder group.',
+      latestNote:
+        'Twenty-four tuning assemblies now hold a stable return signal. The remaining seven are being rebuilt before the stage can close.',
+    },
+    holders: [],
+    distributionStages: [
+      {
+        id: 'registration',
+        label: 'Registration packet',
+        window: 'Mar 04–08, 2026',
+        status: 'completed',
+        summary: 'Holder seal and workshop recovery record.',
+        contents: ['Holder seal', 'Workshop recovery record'],
+        archiveNote: 'All 31 packets delivered. Twelve holder images were added to the batch archive.',
+      },
+      {
+        id: 'relay-fragments',
+        label: 'Relay fragments',
+        window: 'May 16–22, 2026',
+        status: 'completed',
+        summary: 'Matched ceramic relay fragment and signal diagram.',
+        contents: ['Ceramic relay fragment', 'Signal diagram', 'Workshop label'],
+        archiveNote: 'The holder comparison identified four distinct workshop markings.',
+      },
+      {
+        id: 'tuning-assembly',
+        label: 'Tuning assembly',
+        window: 'Aug 12–20, 2026',
+        status: 'current',
+        summary: 'A functional tuning assembly matched to the holder’s assigned Unit.',
+        contents: ['Tuning assembly', 'Calibration record', 'Unit assignment card'],
+      },
+      {
+        id: 'console',
+        label: 'Multiverse Console',
+        window: 'Oct 06–18, 2026',
+        status: 'upcoming',
+        summary: 'Final Console delivery and first relay sequence.',
+        contents: ['Multiverse Console', 'Power interface', 'First relay sequence'],
+      },
+    ],
+    archiveStages: [
+      {
+        id: 'survey',
+        label: 'Workshop survey',
+        period: 'Jan 11–26, 2026',
+        summary: 'The closed workshop and thirty-one recoverable units were documented.',
+        evidence: ['Workshop floor mapped.', 'Relay families catalogued.', 'Thirty-one holders approved.'],
+      },
+      {
+        id: 'claim',
+        label: 'Claim period',
+        period: 'Feb 03–19, 2026',
+        summary: 'All available units were secured and the holder group was formed.',
+        evidence: ['Claims closed in sixteen days.', 'Holder channel opened.', 'First calibration vote completed.'],
+      },
+    ],
+    latestUpdate: {
+      date: 'Jul 24, 2026',
+      title: 'Seven assemblies remain on the bench',
+      body:
+        'Stage 3 remains inside its published window. The team will not dispatch any assembly until all thirty-one pass the same return-signal test.',
+    },
+  },
+  {
+    slug: 'berlin-origin-01',
+    code: 'BERLIN-ORIGIN-01',
+    name: 'Originator Field Units',
+    location: 'Berlin, Germany',
+    status: 'active',
+    statusLine: 'All units delivered · 18 Consoles active in field',
+    updatedAt: 'Jul 18, 2026',
+    nextMilestone: 'Quarterly field record · Sep 2026',
+    image: '/console.jpg',
+    imageAlt: 'An active Multiverse Console from the Berlin origin batch',
+    heroCaption: 'Unit BO-01-006 after its first recorded field signal.',
+    summary:
+      'The earliest fully documented Collective batch. Its completed recovery and distribution record now serves as the reference archive for later actions.',
+    estimatedCompletion: 'Distribution completed March 2026',
+    availability: '18 active units',
+    facts: [
+      { label: 'DISCOVERED', value: 'Sep 08, 2025' },
+      { label: 'DELIVERED', value: '18 of 18' },
+      { label: 'ACTIVE SIGNALS', value: '11 recorded' },
+      { label: 'FIELD REGIONS', value: 'Eight countries' },
+      { label: 'NEXT RECORD', value: 'Sep 2026' },
+    ],
+    lead: {
+      name: 'Iris Vale',
+      role: 'Archive Architect · Original recovery',
+      initials: 'IV',
+      location: 'Berlin archive room',
+      bio: 'Iris directed the original recovery and now maintains the batch’s long-term field record.',
+      latestNote:
+        'The batch is no longer a restoration project. It is now a distributed observation network, and the holders are writing the next part of its record.',
+    },
+    holders: [],
+    distributionStages: [
+      {
+        id: 'field-materials',
+        label: 'Field materials',
+        window: 'Nov 2025',
+        status: 'completed',
+        summary: 'Archive seal, receiver fragment, and recovery transcript.',
+        contents: ['Archive seal', 'Receiver fragment', 'Recovery transcript'],
+        archiveNote: 'Completed for all holders.',
+      },
+      {
+        id: 'console',
+        label: 'Multiverse Console',
+        window: 'Feb–Mar 2026',
+        status: 'completed',
+        summary: 'Restored Console and first-start record.',
+        contents: ['Multiverse Console', 'Restored receiver', 'First-start record'],
+        archiveNote: 'All eighteen units delivered and registered active.',
+      },
+    ],
+    archiveStages: [
+      {
+        id: 'survey',
+        label: 'Recovery',
+        period: 'Sep–Oct 2025',
+        summary: 'The first eighteen units were removed, catalogued, and stabilized.',
+        evidence: ['Origin room documented.', 'Eighteen unit records created.', 'Receiver history reconstructed.'],
+      },
+      {
+        id: 'claim',
+        label: 'Holder formation',
+        period: 'Oct–Nov 2025',
+        summary: 'The first holder group was formed around the recovered units.',
+        evidence: ['Eighteen holders registered.', 'Shared archive opened.', 'Field materials dispatched.'],
+      },
+      {
+        id: 'distribution',
+        label: 'Distribution',
+        period: 'Nov 2025–Mar 2026',
+        summary: 'Every Console reached its assigned holder and entered active status.',
+        evidence: ['Two configured stages completed.', 'All deliveries confirmed.', 'Eleven first signals recorded.'],
+      },
+    ],
+    latestUpdate: {
+      date: 'Jul 18, 2026',
+      title: 'Field record 006 added',
+      body:
+        'Lena Marlowe added a new return-signal image from BO-01-006. The record is now part of the shared running archive.',
+    },
+  },
+]
+
+export function getDeviceBatch(slug: string) {
+  return DEVICE_BATCHES.find((batch) => batch.slug === slug)
+}
+
+export function formatBatchPrice(price: BatchPrice) {
+  const currency = price.currency.toUpperCase()
+  const numberOptions = {
+    maximumFractionDigits: Number.isInteger(price.amount) ? 0 : 2,
+    minimumFractionDigits: Number.isInteger(price.amount) ? 0 : 2,
+  } as const
+
+  if (!/^[A-Z]{3}$/.test(currency)) {
+    return `${new Intl.NumberFormat('en-US', numberOptions).format(price.amount)} ${
+      currency || '---'
+    }`
+  }
+
+  let amount: string
+  try {
+    amount = new Intl.NumberFormat('en-US', {
+      ...numberOptions,
+      currency,
+      currencyDisplay: 'narrowSymbol',
+      style: 'currency',
+    }).format(price.amount)
+  } catch {
+    amount = new Intl.NumberFormat('en-US', numberOptions).format(price.amount)
+  }
+
+  return `${amount} ${currency}`
+}
+
+export function getBatchClaimHref(batch: DeviceBatch) {
+  if (!batch.claimHref) return undefined
+
+  const params = new URLSearchParams({ batch: batch.slug })
+  return `${batch.claimHref}?${params.toString()}`
+}
+
+export function getBatchAvailability(batch: DeviceBatch) {
+  if (batch.inventory) {
+    return `${batch.inventory.claimedQuantity} of ${batch.inventory.listingQuantity} units secured`
+  }
+
+  return batch.availability
+}
+
+export function getBatchRemainingQuantity(batch: DeviceBatch) {
+  if (!batch.inventory) return undefined
+  return Math.max(batch.inventory.listingQuantity - batch.inventory.claimedQuantity, 0)
+}

@@ -59,7 +59,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
           aria-pressed={started}
           className="mc-console-panel__media"
         >
-          <SmartImage src="/assets/device-console.jpg" alt="Multiverse Console" sizes="(min-width: 768px) 600px, 100vw" width={1280} height={1023} className="mc-console-panel__image" />
+          <SmartImage src="/assets/device-console.jpg" alt="Multiverse Console" sizes="(min-width: 768px) 600px, 100vw" width={1280} height={1023} preload className="mc-console-panel__image" />
         </button>
 
         {/* Confirmed functions — the whole module appears only after the tap */}
