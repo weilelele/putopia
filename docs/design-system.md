@@ -26,7 +26,7 @@ white at reduced opacity, never a grey-blue.
 |------|-----|-----------------|
 | Pantone 1665 C screen orange — primary / logo / active / CTA | `#E35205` | `--color-nucleus` |
 | Burnt Orange — hover / border / divider / accent | `#C84406` | `--color-burnt` (alias `--color-nebula`) |
-| Deep Orange — pressed / gradient-bottom / emphasis | `#A92F06` | `--color-nucleus-3` |
+| Deep Orange — pressed / emphasis | `#A92F06` | `--color-nucleus-3` |
 | Deep Space Blue — **page background** | `#080C20` | `--color-deep` |
 | Off White — **body text** | `#F5F5F5` | `--color-star` |
 
@@ -56,7 +56,7 @@ it for new Style A surfaces; migrate callers to the canonical image assets.
 ```
 --color-nucleus    #E35205   primary / CTA / active / logo
 --color-nucleus-2  #F2783E   lighter highlight
---color-nucleus-3  #A92F06   deep orange (pressed / gradient bottom)
+--color-nucleus-3  #A92F06   deep orange (pressed / emphasis)
 --color-burnt      #C84406   burnt orange (hover / border / accent)
 --color-nebula     #C84406   = --color-burnt (kept as alias; prefer --color-burnt)
 --color-star       #F5F5F5   primary text (off-white)
@@ -197,11 +197,37 @@ composition guidance, not page templates to copy wholesale:
 | Focused participation | Signal, quiz, voting, application, and claim steps | One question or decision per view; progress, evidence, choice, then one primary action. |
 | Identity and progress | Profile, onboarding status, membership, and path views | One current identity and next action; milestones share a sequence instead of becoming metric cards. |
 
+Rendered portrait references used during review:
+
+- `docs/design/golden-screen-01-world-records.png`
+- `docs/design/golden-screen-02-signal-check.png`
+- `docs/design/golden-screen-03-voyager-record.png`
+
 All three examples intentionally share the same color, type, geometry, and
 interaction grammar while using different information hierarchies. New work
 should vary hierarchy and composition for the task before inventing new visual
 decoration. The implementation lives in
 `src/app/ui-kit/golden-screens.tsx` and its colocated CSS Module.
+
+### New-interface delivery workflow
+
+Every new or materially redesigned interface follows the same delivery path:
+
+1. Start from one of the three golden-example information hierarchies and make
+   the portrait 390×844 view complete before adding wider layouts.
+2. Use shared archive components and canonical tokens. Do not copy a golden
+   screen wholesale or create a route-local palette, font stack, button system,
+   corner language, or decorative visual layer.
+3. Verify default, loading, empty, error, disabled, focus, and completed states.
+   One page has one primary action; touch targets are at least 44×44px.
+4. Run `npm run design:check` before requesting review. The CI design gate checks
+   only UI lines added by the PR, so legacy debt does not excuse new gradients,
+   glow/shadows, blur, cyan, obsolete palette values, or non-Courier typography.
+5. Attach a 390×844 screenshot to the PR and complete the Design review checklist.
+
+Human review remains responsible for hierarchy, clarity, content, image choice,
+and whether the single clipped corner is used with restraint; these qualities
+cannot be decided reliably by a text scanner.
 
 ### Current Style A route coverage
 

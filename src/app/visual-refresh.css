@@ -3245,6 +3245,15 @@ button.archive-stat-strip__item {
   margin-bottom: 1.5rem;
 }
 
+/* Global UI Kit shell rules must stay outside a CSS Module (Webpack pure mode). */
+body:has(.uk-root) .sidebar {
+  display: none;
+}
+
+.app-shell:has(.uk-root) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .archive-route-state__cards {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -3253,7 +3262,7 @@ button.archive-stat-strip__item {
 
 .archive-route-skeleton {
   border-color: var(--archive-line-soft);
-  background: linear-gradient(100deg, rgba(245, 245, 245, 0.025) 30%, rgba(227, 82, 5, 0.1) 50%, rgba(245, 245, 245, 0.025) 70%);
+  background: var(--color-void);
   background-size: 200% 100%;
   animation: archive-route-shimmer 1.4s ease-in-out infinite;
 }
@@ -3292,7 +3301,7 @@ button.archive-stat-strip__item {
   justify-content: center;
   overflow: hidden;
   border: 1px solid var(--archive-line-soft);
-  background: linear-gradient(135deg, rgba(227, 82, 5, 0.08), rgba(15, 20, 48, 0.92));
+  background: var(--color-void);
   color: var(--color-star-deep);
 }
 

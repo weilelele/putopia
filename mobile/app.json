@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Multiverse Collective",
+    "slug": "multiverse-collective",
+    "platforms": ["ios"],
+    "scheme": "multiverse",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "plugins": ["expo-notifications"],
+    "icon": "./ios/MultiverseCollective/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "org.multiverseco.collective",
+      "buildNumber": "5",
+      "entitlements": {
+        "aps-environment": "production"
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "Attach photos to Multiverse Collective submissions.",
+        "NSPhotoLibraryUsageDescription": "Choose photos for Multiverse Collective submissions and profile images.",
+        "NSMicrophoneUsageDescription": "Record media for Multiverse Collective submissions."
+      }
+    }
+  }
+}

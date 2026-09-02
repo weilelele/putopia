@@ -1285,7 +1285,7 @@
 }
 
 .decisionOptions .decisionOptionSelected {
-  box-shadow: inset 2px 0 0 var(--color-nucleus);
+  border-left: 2px solid var(--color-nucleus);
 }
 
 .decisionOptions button:disabled {
@@ -1638,7 +1638,7 @@
 }
 
 .ownedTimeline li.ownedStageNext {
-  box-shadow: inset 2px 0 0 var(--color-nucleus);
+  border-left: 2px solid var(--color-nucleus);
   padding-left: 0.7rem;
 }
 

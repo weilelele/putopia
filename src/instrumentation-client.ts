@@ -20,6 +20,7 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
       first_touch_utm_campaign: utm.utm_campaign,
       first_touch_utm_content:  utm.utm_content,
       first_touch_fbclid:       utm.fbclid,
+      first_touch_rdt_cid:      utm.rdt_cid,
     })
   }
 }

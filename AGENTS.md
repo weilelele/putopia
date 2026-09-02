@@ -7,7 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Design & UX
 
 `docs/design-system.md` is the authoritative design spec (palette, type scale,
-tokens, component conventions) — read it before touching UI. Two load-bearing
+tokens, component conventions) — read it before touching UI. Three load-bearing
 rules to keep front of mind:
 
 - **Portrait-first is the default.** ~90% of users arrive on a phone in
@@ -20,6 +20,11 @@ rules to keep front of mind:
 - **Type scale floor.** `--fs-caption` (12px) is the smallest permitted size;
   never hard-code a smaller inline `fontSize`. `design-tokens/min-font-size`
   flags it.
+- **One visual language.** New UI uses only orange, deep-space blue, and
+  off-white brand colors; Courier Prime; flat surfaces; and at most one clipped
+  top-right corner on a prominent control or container. Do not add cyan, grey
+  brand colors, gradients, glow/shadows, blur/glass, CRT effects, or decorative
+  HUD elements. Run `npm run design:check` before requesting review.
 
 # Deployments & preview environments
 
@@ -57,8 +62,10 @@ deployments share **production** Supabase, MongoDB, and Stripe. Therefore:
   React-compiler correctness rules are enforced as **errors** (intentional
   exceptions carry inline `eslint-disable … -- reason` comments), and
   `design-tokens/min-font-size` (the 12px type-scale floor) is tracked as a
-  warning — see `eslint.config.mjs`. Before pushing, run `npx tsc --noEmit`,
-  `npm run lint`, `npm test`, and `npm run build` locally.
+  warning — see `eslint.config.mjs`. The diff-aware `npm run design:check` gate
+  rejects prohibited visual treatments in newly added UI lines without making
+  legacy debt block unrelated work. Before pushing, run `npm run design:check`,
+  `npx tsc --noEmit`, `npm run lint`, `npm test`, and `npm run build` locally.
 - Tests run on **Vitest** (`*.test.ts` next to the code, `node` env — see
   `vitest.config.ts`). Keep them pure: no DOM, DB, network, or env. Previews
   share production services, so a test must never touch them.

@@ -128,7 +128,7 @@ Worlds：
 
 ### P0-5：上线基础设施与端到端验证
 
-- 确认 `schema_v57` 至 `schema_v66` 已按顺序应用到目标环境；
+- 确认 Device 前置结构与后续迁移已经应用：合入 main 后，原 Device v57/v58 保存在 v68；首次安装需先 v68，再按顺序应用缺失的 v59–v67。已安装的环境须核对实际结构，不要盲目重放。参见 [合并与迁移说明](../releases/device-worlds-main-integration.md)；
 - Stripe 测试/生产密钥、Webhook Secret、回调域名与 Shipping Countries 分环境配置；
 - 独立 Preview 数据环境，避免预览直接写生产订单和社区内容；
 - 库存并发、Checkout 过期、Webhook 重放、退款、支付复核和超卖 E2E；

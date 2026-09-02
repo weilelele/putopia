@@ -475,7 +475,6 @@
 .consoleProductPreview img {
   object-fit: cover;
   object-position: 57.2% 58.9%;
-  filter: drop-shadow(0 0 50px rgba(227, 82, 5, 0.3));
 }
 
 .deviceSlide {
@@ -728,11 +727,7 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  background-image:
-    repeating-linear-gradient(0deg, transparent 0 3px, rgba(245, 245, 245, 0.055) 4px),
-    radial-gradient(circle at 18% 31%, rgba(245, 245, 245, 0.14) 0 0.6px, transparent 0.8px),
-    radial-gradient(circle at 73% 62%, rgba(227, 82, 5, 0.12) 0 0.6px, transparent 0.8px);
-  background-size: auto, 7px 7px, 11px 11px;
+  background: color-mix(in srgb, var(--color-star) 3%, transparent);
   mix-blend-mode: screen;
   opacity: 0.34;
   pointer-events: none;

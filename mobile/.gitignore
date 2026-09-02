@@ -1,0 +1,13 @@
+node_modules/
+.expo/
+build/
+dist/
+.env
+.env.local
+*.ipa
+*.xcarchive
+ios/.xcode.env.local
+ios/Pods/
+ios/build/
+assets/vi-icon.png
+assets/vi-wordmark.png

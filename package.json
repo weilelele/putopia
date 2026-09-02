@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
+    "design:check": "node scripts/check-design-diff.mjs",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "cosmo:live-videos": "node --env-file-if-exists=.env.local scripts/check-cosmo-live-videos.mjs"
+    "cosmo:live-videos": "node --env-file-if-exists=.env.local scripts/check-cosmo-live-videos.mjs",
+    "mobile:check": "npm --prefix mobile run check"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

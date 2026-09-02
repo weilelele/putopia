@@ -97,7 +97,7 @@ export default function VotesAdmin() {
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>投票管理</div>
           <button
             onClick={() => setShowDecision((visible) => !visible)}
-            style={{ background: '#E35205', border: 0, color: '#0A0E27', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, padding: '9px 14px' }}
+            style={{ background: '#E35205', border: 0, color: 'var(--color-deep)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, padding: '9px 14px' }}
           >
             {showDecision ? '取消' : '+ 新建 Batch Holder 决策'}
           </button>
@@ -124,7 +124,7 @@ export default function VotesAdmin() {
               截止时间
               <input type="datetime-local" value={decisionClosesAt} onChange={(event) => setDecisionClosesAt(event.target.value)} style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.3)', color: '#F5F5F5', display: 'block', fontSize: '13px', marginTop: '5px', padding: '9px', width: '100%' }} />
             </label>
-            <button disabled={creating || !batchSlug} onClick={handleCreateDecision} style={{ background: '#E35205', border: 0, color: '#0A0E27', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, justifySelf: 'start', padding: '9px 16px' }}>
+            <button disabled={creating || !batchSlug} onClick={handleCreateDecision} style={{ background: '#E35205', border: 0, color: 'var(--color-deep)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, justifySelf: 'start', padding: '9px 16px' }}>
               {creating ? '上线中…' : '上线 Holder 决策'}
             </button>
           </div>

@@ -27,6 +27,7 @@ const eslintConfig = defineConfig([
     ".codex-worktrees/**",
     "android/**",
     "ios/**",
+    "mobile/**",
   ]),
   {
     // React Compiler correctness rules (eslint-plugin-react-hooks v7),

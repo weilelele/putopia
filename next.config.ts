@@ -27,14 +27,6 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  async rewrites() {
-    return [
-      {
-        source: '/worldflow/:path*',
-        destination: 'https://world-production-workflow.vercel.app/worldflow/:path*',
-      },
-    ]
-  },
   images: {
     formats: ['image/avif', 'image/webp'],
     qualities: [60, 75],

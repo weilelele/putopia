@@ -1,4 +1,3 @@
-import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { getGuestHeroStats } from '@/lib/actions/hero-stats'
@@ -53,14 +52,12 @@ export default async function ConsolePage() {
   ])
 
   return (
-    <Suspense>
-      <ConsoleClient
-        initialUser={initialUser}
-        initialMcFunctions={(mcFunctions ?? []) as McFunction[]}
-        initialHeroStats={heroStats ?? null}
-        initialFeed={feed ?? []}
-        initialExperimentGroup={experimentGroup ?? null}
-      />
-    </Suspense>
+    <ConsoleClient
+      initialUser={initialUser}
+      initialMcFunctions={(mcFunctions ?? []) as McFunction[]}
+      initialHeroStats={heroStats ?? null}
+      initialFeed={feed ?? []}
+      initialExperimentGroup={experimentGroup ?? null}
+    />
   )
 }

@@ -147,39 +147,14 @@
 }
 
 .signalFeed::before {
-  background-image:
-    linear-gradient(
-      to bottom,
-      transparent 0%,
-      transparent 34%,
-      rgba(245, 245, 245, 0.03) 42%,
-      rgba(245, 245, 245, 0.15) 49%,
-      rgba(8, 12, 32, 0.3) 55%,
-      transparent 66%,
-      transparent 100%
-    ),
-    repeating-linear-gradient(
-      to bottom,
-      rgba(8, 12, 32, 0.06) 0,
-      rgba(8, 12, 32, 0.06) 1px,
-      rgba(245, 245, 245, 0.035) 1px,
-      rgba(245, 245, 245, 0.035) 2px,
-      transparent 2px,
-      transparent 4px
-    );
-  background-size: 100% 170%, 100% 4px;
+  background: color-mix(in srgb, var(--color-star) 3%, transparent);
   mix-blend-mode: screen;
   opacity: var(--signal-roll-opacity);
   animation: signalRoll 4.8s linear infinite;
 }
 
 .signalFeed::after {
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(245, 245, 245, 0.6) 0 0.45px, transparent 0.8px),
-    radial-gradient(circle at 75% 65%, rgba(245, 245, 245, 0.42) 0 0.4px, transparent 0.75px),
-    radial-gradient(circle at 45% 80%, rgba(8, 12, 32, 0.75) 0 0.5px, transparent 0.9px);
-  background-position: 0 0, 1px 2px, 2px 1px;
-  background-size: 3px 3px, 5px 4px, 4px 5px;
+  background: color-mix(in srgb, var(--color-deep) 8%, transparent);
   mix-blend-mode: overlay;
   opacity: var(--signal-snow-opacity);
   animation: signalSnow 240ms steps(2, end) infinite;
@@ -227,7 +202,6 @@
   display: block;
   object-fit: cover;
   filter:
-    blur(var(--signal-blur))
     saturate(var(--signal-saturation))
     contrast(var(--signal-contrast))
     brightness(var(--signal-brightness))
@@ -379,7 +353,6 @@
   0%,
   100% {
     filter:
-      blur(var(--signal-blur))
       saturate(var(--signal-saturation))
       contrast(var(--signal-contrast))
       brightness(var(--signal-brightness))
@@ -388,17 +361,17 @@
     transform: scale(1.018);
   }
   22% {
-    filter: blur(2.4px) saturate(0.18) contrast(1.42) brightness(0.6);
+    filter: saturate(0.18) contrast(1.42) brightness(0.6);
     opacity: 0.7;
     transform: scale(1.04) translateX(-2.5%);
   }
   42% {
-    filter: blur(4px) saturate(0.08) contrast(1.7) brightness(0.42);
+    filter: saturate(0.08) contrast(1.7) brightness(0.42);
     opacity: 0.42;
     transform: scale(1.06) translateX(3.5%);
   }
   64% {
-    filter: blur(1.8px) saturate(0.24) contrast(1.32) brightness(0.65);
+    filter: saturate(0.24) contrast(1.32) brightness(0.65);
     opacity: 0.78;
     transform: scale(1.035) translateX(-1.2%);
   }
@@ -1085,7 +1058,7 @@
 }
 
 .queueItem[data-active='true'] {
-  box-shadow: inset 2px 0 0 var(--color-nucleus);
+  border-left: 2px solid var(--color-nucleus);
 }
 
 .queueStatus {

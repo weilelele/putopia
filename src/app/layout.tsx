@@ -7,6 +7,8 @@ import { AuthProvider } from '@/lib/auth-context'
 import { Sidebar } from '@/components/sidebar'
 import { BottomNav } from '@/components/bottom-nav'
 import { ScrollRestorer } from '@/components/scroll-restorer'
+import { PwaProvider } from '@/components/pwa-provider'
+import { REDDIT_PIXEL_ID } from '@/lib/reddit-ads-config'
 
 const courierPrime = localFont({
   src: [
@@ -30,6 +32,12 @@ const courierPrime = localFont({
 export const metadata: Metadata = {
   title: 'MULTIVERSE COLLECTIVE — Explore Parallel Worlds',
   description: 'Classified internal workspace. Authorized personnel only.',
+  applicationName: 'Multiverse Collective',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Multiverse',
+  },
 }
 
 export const viewport: Viewport = {
@@ -64,14 +72,19 @@ export default function RootLayout({
           a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
           twq('config','rd22u');
         `}</Script>
-        <AuthProvider>
-          <ScrollRestorer />
-          <div className="app-shell w-full">
-            <Sidebar />
-            {children}
-          </div>
-          <BottomNav />
-        </AuthProvider>
+        <Script id="reddit-pixel" strategy="afterInteractive">{`
+          !function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement("script");t.src="https://www.redditstatic.com/ads/pixel.js?pixel_id=${REDDIT_PIXEL_ID}",t.async=!0;var s=d.getElementsByTagName("script")[0];s.parentNode.insertBefore(t,s)}}(window,document);rdt('init','${REDDIT_PIXEL_ID}');rdt('track', 'PageVisit');
+        `}</Script>
+        <PwaProvider>
+          <AuthProvider>
+            <ScrollRestorer />
+            <div className="app-shell w-full">
+              <Sidebar />
+              {children}
+            </div>
+            <BottomNav />
+          </AuthProvider>
+        </PwaProvider>
       </body>
     </html>
   )

@@ -455,7 +455,7 @@ button.worldCard {
 .productionMilestones button[data-active="true"] {
   border-color: var(--color-nucleus);
   background: var(--bg-panel);
-  box-shadow: inset 3px 0 0 var(--color-nucleus);
+  border-left: 3px solid var(--color-nucleus);
 }
 
 .productionMilestones button:disabled {
@@ -1147,7 +1147,7 @@ button.worldCard {
 .cosmoChannelList button[data-active="true"],
 .cosmoBands button[data-active="true"] {
   border-color: var(--color-nucleus);
-  box-shadow: inset 3px 0 0 var(--color-nucleus);
+  border-left: 3px solid var(--color-nucleus);
 }
 
 .cosmoChannelList span,

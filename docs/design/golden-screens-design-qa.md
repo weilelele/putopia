@@ -26,6 +26,8 @@
   selection updates `aria-checked` and submission changes the action to
   `OBSERVATION RECORDED`.
 - No browser console errors were observed.
+- The diff-aware design gate passes this change set and rejects a synthetic
+  newly added gradient declaration.
 
 ## Deliberate differences from the generated concepts
 
@@ -38,5 +40,9 @@
   separation, and no glow, blur, or gradient.
 
 ## Result
+
+No blocking or major review findings remain. The automated gate intentionally
+checks only newly added UI lines; visual hierarchy, image judgment, and restrained
+use of the clipped corner remain part of human screenshot review.
 
 final result: passed

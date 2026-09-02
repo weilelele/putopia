@@ -33,4 +33,4 @@
 - `COLLECTIVE_REPLY_TO`：成员回复邮件时进入的团队邮箱。
 - `NEXT_PUBLIC_SITE_URL`：邮件内 Batch 链接的站点根地址。
 
-数据库需要依次应用 `supabase/schema_v57.sql` 与 `supabase/schema_v58.sql`。后者保存 followers 和邮件投递日志；迁移本身不会发送任何邮件。
+Device 分支原 v57/v58 的前置表结构已保存在 `supabase/schema_v68.sql`；`main` 的 v57/v58 是 iOS 推送迁移，不可替换。首次安装 Device 功能需先应用 v68，再应用 v59–v67 中尚未应用的部分。已安装 Device 功能的数据库不要重放旧前置定义，先核对实际结构。详见 [合并与迁移说明](../releases/device-worlds-main-integration.md)。迁移本身不会发送邮件。
