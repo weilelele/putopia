@@ -16,6 +16,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
 import { sendPushToUser } from '@/lib/push/apns'
+import { SCAN_NOTIFICATIONS_ENABLED } from './scan-notification-policy'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -205,6 +206,9 @@ async function firstDayOptionUrls(admin: DB, worldId: string): Promise<string[]>
  * Best-effort and idempotent — safe to call on every day publish.
  */
 export async function maybeSendWorldConfirmedEmail(worldId: string): Promise<void> {
+  // Also covers legacy worlds notified directly when a Signal day is published.
+  if (!SCAN_NOTIFICATIONS_ENABLED) return
+
   const admin = createAdminClient() as DB
 
   const { data: world } = await admin

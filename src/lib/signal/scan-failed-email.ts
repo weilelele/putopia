@@ -9,6 +9,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
 import { sendPushToUser } from '@/lib/push/apns'
 import { resolveUserEmail } from './world-confirmed-email'
+import { SCAN_NOTIFICATIONS_ENABLED } from './scan-notification-policy'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DB = any
@@ -46,6 +47,8 @@ function buildHtml(worldId: string, worldName: string): string {
 
 /** Email the proposer that their scan returned no signal. Best-effort. */
 export async function sendScanFailedEmail(worldId: string): Promise<void> {
+  if (!SCAN_NOTIFICATIONS_ENABLED) return
+
   const admin = createAdminClient() as DB
 
   const { data: world } = await admin
