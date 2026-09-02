@@ -444,6 +444,12 @@
   background: var(--bg-panel);
 }
 
+.manualPublicationNote {
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
+  line-height: 1.55;
+}
+
 .scheduledLine,
 .publishedLine {
   padding: var(--s-2) var(--s-3);

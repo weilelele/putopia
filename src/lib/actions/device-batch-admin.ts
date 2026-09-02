@@ -11,7 +11,7 @@ import {
   normalizeLocalBatchSeed,
   validateLocalBatchSeed,
   type LocalBatchSeed,
-} from '@/lib/local-device-batches'
+} from '@/lib/device-batch-seed'
 import type { DeviceBatch } from '@/lib/device-batches'
 import type {
   AdminDeviceBatchRecord,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { listDeviceLibraryEntries } from '@/lib/device-library-repository'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -38,11 +39,9 @@ export async function GET() {
       .order('created_at', { ascending: false })
       .limit(LIMITS.worlds),
     authenticated
-      ? admin
-        .from('devices')
-        .select('id, name, batch_id, knowledge, location, description, image_path, status, current_user_name, exploration_progress, updated_at')
-        .order('updated_at', { ascending: false })
-        .limit(LIMITS.devices)
+      ? listDeviceLibraryEntries(LIMITS.devices)
+        .then((data) => ({ data, error: null }))
+        .catch((error: unknown) => ({ data: [], error }))
       : Promise.resolve({ data: [], error: null }),
     admin
       .from('intel')
@@ -100,7 +99,12 @@ export async function GET() {
     submitted_at: world.submitted_at,
     created_at: world.created_at,
   }))
-  const devices = devicesResult.data ?? []
+  const devices = (devicesResult.data ?? []).map((batch) => ({
+    ...batch,
+    batch_status: batch.status,
+    // Older native clients understand only unit statuses, not Batch stages.
+    status: 'unknown',
+  }))
   const intel = intelResult.data ?? []
   const voyagers = voyagersResult.data ?? []
   const stories = storiesResult.data ?? []

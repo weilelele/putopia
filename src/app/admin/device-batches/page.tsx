@@ -4,6 +4,8 @@ import { listAdminDeviceBatchRecords } from '@/lib/device-batch-repository'
 import { BatchConfigEditor } from './batch-config-editor'
 import styles from './batch-config-editor.module.css'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Batch Configuration — Multiverse Collective',
 }
@@ -25,8 +27,8 @@ export default async function DeviceBatchAdminPage({
           <h1>Batch configuration</h1>
         </div>
         <p>
-          Update public status, claim stock, distribution packs, and the latest field
-          report one section at a time.
+          Manual publishing is active. Update status, Packs, and field reports, save
+          a private draft, then use PUBLISH LIVE when ready. Dates never publish content automatically.
         </p>
         <div className={styles.pageHeaderActions}>
           <ArchiveLinkButton href="/admin/device-batches/blueprints" variant="secondary">

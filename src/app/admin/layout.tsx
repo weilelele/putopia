@@ -78,8 +78,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ? [{ href: '/admin/onboarding-preview', label: 'ONBOARDING' }]
     : [
         { href: '/admin/stories',     label: 'STORIES'  },
-        { href: '/admin/devices',     label: 'DEVICES'  },
-        { href: '/admin/device-batches', label: 'BATCHES' },
+        { href: '/admin/device-batches', label: 'DEVICE LIBRARY' },
         { href: '/admin/device-batches/blueprints', label: 'STORY LAB' },
         { href: '/admin/intel',       label: 'INTEL'    },
         { href: '/admin/worlds',      label: 'WORLDS'   },

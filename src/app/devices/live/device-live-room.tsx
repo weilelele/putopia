@@ -17,7 +17,7 @@ import styles from '../../live-observation-room.module.css'
 import { BatchDiscussionBoard } from '../_components/batch-discussion-board'
 import { FollowBatchButton } from '../_components/batch-actions'
 import { useFollowedBatchSlugs } from '../_components/use-followed-batches'
-import { DeviceLiveVideo } from './device-live-video'
+import { LiveFeedPlaceholder } from '@/components/live-feed-placeholder'
 import {
   DEVICE_BATCH_STATUS,
   formatBatchPrice,
@@ -28,7 +28,6 @@ import {
 } from '@/lib/device-batches'
 import type { DeviceBatchDiscussionPost } from '@/lib/actions/device-batch-community'
 import type { DeviceConsoleRecord } from '@/lib/actions/orders'
-import type { CosmoLiveVideo } from '@/lib/cosmo'
 
 type ContentTab = 'info' | 'updates' | 'discussion'
 type BatchFilter = 'all' | 'following' | 'survey' | 'claim' | 'distributing' | 'active'
@@ -41,12 +40,6 @@ function statusDotColor(status: DeviceBatchStatus) {
 
 function cityLabel(batch: DeviceBatch) {
   return batch.location.split(',')[0]?.trim().toUpperCase() || batch.code
-}
-
-function cameraState(batch: DeviceBatch) {
-  if (batch.status === 'survey') return 'FIELD SIGNAL'
-  if (batch.status === 'active') return 'FIELD LINK'
-  return 'LIVE'
 }
 
 function batchProgress(batch: DeviceBatch) {
@@ -65,14 +58,12 @@ export function DeviceLiveRoom({
   batches,
   canPost,
   discussionPosts,
-  liveVideos,
   ownedConsole,
 }: {
   batch: DeviceBatch
   batches: DeviceBatch[]
   canPost: boolean
   discussionPosts: DeviceBatchDiscussionPost[]
-  liveVideos: CosmoLiveVideo[]
   ownedConsole: DeviceConsoleRecord | null
 }) {
   const router = useRouter()
@@ -134,21 +125,10 @@ export function DeviceLiveRoom({
         </button>
       </nav>
 
-      <section className={styles.liveFrame} aria-label={`${batch.name} live camera`}>
-        <div className={styles.liveImage}>
-          <DeviceLiveVideo
-            fallbackImage="/assets/concepts/device-live-feed.png"
-            label={`${batch.name} live workshop camera`}
-            videos={liveVideos}
-          />
-          <div className={styles.liveMeta}>
-            <span className={styles.liveMetaItem}><span className={`${styles.dot} ${batch.status === 'survey' ? '' : styles.dotLive}`} />{cameraState(batch)}</span>
-            <span>OBSERVATION OPEN</span>
-            <span>{batch.name.toUpperCase()}</span>
-            <span className={styles.liveMetaItem}><span className={styles.dot} style={{ background: statusDotColor(batch.status) }} />{DEVICE_BATCH_STATUS[batch.status].label}</span>
-          </div>
-        </div>
-      </section>
+      <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}>
+        <span>{batch.name.toUpperCase()}</span>
+        <span className={styles.liveMetaItem}><span className={styles.dot} style={{ background: statusDotColor(batch.status) }} />{DEVICE_BATCH_STATUS[batch.status].label}</span>
+      </LiveFeedPlaceholder>
 
       {(batch.status === 'claim_open' && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
         <div className={styles.paymentHeader}>

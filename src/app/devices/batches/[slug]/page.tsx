@@ -4,7 +4,6 @@ import { DeviceLiveRoom } from '../../live/device-live-room'
 import { getPublicDeviceBatch, listPublicDeviceBatches } from '@/lib/device-batch-repository'
 import { getDeviceBatchDiscussion } from '@/lib/actions/device-batch-community'
 import { getMyDeviceConsoles } from '@/lib/actions/orders'
-import { getDeviceLiveVideoPlaylist } from '@/lib/cosmo'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,11 +29,10 @@ export default async function BatchDetailPage({ params }: BatchDetailPageProps) 
 
   if (!batch) notFound()
 
-  const [batches, discussion, consoles, liveVideos] = await Promise.all([
+  const [batches, discussion, consoles] = await Promise.all([
     listPublicDeviceBatches(),
     getDeviceBatchDiscussion(slug),
     getMyDeviceConsoles(),
-    getDeviceLiveVideoPlaylist().catch(() => []),
   ])
   const ownedConsole = consoles.find((console) => console.order.device_batch_slug === batch.slug) ?? null
 
@@ -44,7 +42,6 @@ export default async function BatchDetailPage({ params }: BatchDetailPageProps) 
       batches={batches}
       canPost={discussion.canPost}
       discussionPosts={discussion.posts}
-      liveVideos={liveVideos}
       ownedConsole={ownedConsole}
     />
   )

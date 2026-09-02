@@ -8,7 +8,7 @@ import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types
 
 // Path to revalidate when a thread changes (only device threads have a route today)
 function subjectPath(type: CommentSubjectType, id: string): string | null {
-  if (type === 'device') return `/devices/${id}`
+  if (type === 'device') return '/devices'
   if (type === 'device_batch') return `/devices/batches/${id}/discussion`
   if (type === 'intel')  return `/intel/${id}`
   if (type === 'world')  return `/worlds/${id}`

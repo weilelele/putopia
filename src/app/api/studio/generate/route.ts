@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { Database } from '@/types/database'
+import { listDeviceLibraryEntries } from '@/lib/device-library-repository'
 
 // Lazy getter — reads env var at request time, not at module load time.
 // Module-level init causes "Could not resolve authentication method" in
@@ -62,7 +63,7 @@ async function handleGenerate(request: NextRequest) {
   const admin = createAdminClient()
 
   /* ── Fetch knowledge base ── */
-  const [{ data: intelRows }, { data: worldRows }, { data: deviceRows }] = await Promise.all([
+  const [{ data: intelRows }, { data: worldRows }, deviceRows] = await Promise.all([
     admin.from('intel')
       .select('title, content, tag')
       .eq('classified', false)
@@ -72,10 +73,7 @@ async function handleGenerate(request: NextRequest) {
       .select('name, description, discoverer_name, discovery_date')
       .order('created_at', { ascending: false })
       .limit(10),
-    admin.from('devices')
-      .select('name, location, description, knowledge, status')
-      .eq('knowledge', 'known')
-      .limit(6),
+    listDeviceLibraryEntries(),
   ])
 
   /* ── Fetch optional reference entry ── */
@@ -89,7 +87,7 @@ async function handleGenerate(request: NextRequest) {
     } else if (referenceId.startsWith('d-')) {
       // Device reference
       const did = referenceId.slice(2)
-      const { data: d } = await admin.from('devices').select('name, location, description, knowledge, status').eq('id', did).single()
+      const d = deviceRows.find((batch) => batch.id === did)
       if (d) refContent = `REFERENCE — DEVICE:\nName: ${d.name}\nLocation: ${d.location}\nStatus: ${d.knowledge} / ${d.status ?? 'unknown'}\n${d.description}`
     } else {
       // Intel reference
@@ -107,7 +105,7 @@ async function handleGenerate(request: NextRequest) {
     .map(w => `${w.name} — ${w.description} (first contact: ${w.discoverer_name}, ${w.discovery_date})`)
     .join('\n')
 
-  const devicesSection = (deviceRows ?? [])
+  const devicesSection = deviceRows.slice(0, 6)
     .map(d => `${d.name} @ ${d.location} [${d.status ?? 'unknown'}] — ${d.description}`)
     .join('\n')
 

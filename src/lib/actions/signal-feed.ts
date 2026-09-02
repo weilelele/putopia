@@ -3,6 +3,7 @@
 import { unstable_cache } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getTuningCovers } from '@/lib/actions/signal-tasks'
+import { listDeviceLibraryEntries } from '@/lib/device-library-repository'
 import { worldStage, type WorldLifecycle } from '@/types/database'
 import type { FeedEntry, FeedItem, FeedStat, Person, PosterWorld, VoteCard } from '@/app/feed-proto/feed-client'
 
@@ -86,14 +87,14 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
     // feed; only Signal Tuning (syncing) and Established (stable) worlds show.
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'syncing').order('created_at', { ascending: false }).limit(8),
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'stable').order('created_at', { ascending: false }).limit(4),
-    db.from('devices').select('id, name, description, knowledge, image_path, status, location, current_user_name, current_user_id, updated_at').order('updated_at', { ascending: false }).limit(8),
+    listDeviceLibraryEntries(8),
     db.from('activity_events').select('actor_id, actor_name, target_title, created_at').eq('event_type', 'voyager_activated').eq('is_visible', true).order('created_at', { ascending: false }).limit(10),
     db.from('votes').select('id, title, options, scope, ends_at, created_at').eq('is_active', true).order('created_at', { ascending: false }).limit(8),
   ])
 
   const intelRows = (intelR.data ?? []) as Record<string, unknown>[]
   const worldRows = [...(wSyncingR.data ?? []), ...(wStableR.data ?? [])] as Record<string, unknown>[]
-  const deviceRows = (deviceR.data ?? []) as Record<string, unknown>[]
+  const deviceRows = deviceR
   const voyagerRows = (voyagerR.data ?? []) as { actor_id: string | null; actor_name: string; target_title: string | null; created_at: string }[]
   const voteRows = (voteR.data ?? []) as Record<string, unknown>[]
 
@@ -137,7 +138,6 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
     const subjectIds = [
       ...intelRows.map(r => String(r.id)),
       ...worldRows.map(r => String(r.id)),
-      ...deviceRows.map(r => String(r.id)),
     ]
     if (subjectIds.length) {
       const { data: cRows } = await db.from('comments').select('subject_type, subject_id').in('subject_id', subjectIds)
@@ -151,7 +151,6 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   const ids = new Set<string>()
   intelRows.forEach(r => r.publisher_id && ids.add(String(r.publisher_id)))
   worldRows.forEach(r => r.discoverer_id && ids.add(String(r.discoverer_id)))
-  deviceRows.forEach(r => r.current_user_id && ids.add(String(r.current_user_id)))
   voyagerRows.forEach(r => r.actor_id && ids.add(r.actor_id))
 
   // All active votes: batch-fetch responses for all vote IDs in one query.
@@ -311,9 +310,8 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
       title: String(r.name ?? 'Device'),
       snippet: snippet((r.description as string) || (r.knowledge as string) || (r.status as string), 140),
       image: (r.image_path as string) || null,
-      actor: person(r.current_user_name as string, r.current_user_id as string),
-      href: `/devices/${r.id}`, time: rel(r.updated_at as string),
-      stat: commentStat('device', String(r.id)),
+      actor: null,
+      href: r.href, time: rel(r.updated_at),
     },
   }))
 

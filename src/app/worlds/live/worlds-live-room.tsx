@@ -8,11 +8,7 @@ import { Check, ChevronRight, CircleHelp, Clock3, ListFilter, Radio, X } from 'l
 import { submitDreamcatcherWorld } from '@/lib/actions/worlds'
 import { submitSignalResponse, type PublicInvestigation } from '@/lib/actions/signal-tasks'
 import type { DreamcatcherJob, DreamcatcherRoom, DreamcatcherStatus } from '@/lib/dreamcatchers'
-import {
-  isDreamcatcherWorking,
-  type DreamcatcherLiveVideoLibrary,
-} from '@/lib/dreamcatcher-live'
-import { DreamcatcherLiveVideo } from './dreamcatcher-live-video'
+import { LiveFeedPlaceholder } from '@/components/live-feed-placeholder'
 import styles from '../../live-observation-room.module.css'
 
 type RoomTab = 'queue' | 'dispatch' | 'chat'
@@ -46,14 +42,10 @@ function jobStatus(job: DreamcatcherJob) {
 export function WorldsLiveRoom({
   rooms,
   investigations,
-  liveVideoLibrary,
-  liveVideoRoomSlug,
   loggedIn,
 }: {
   rooms: DreamcatcherRoom[]
   investigations: PublicInvestigation[]
-  liveVideoLibrary: DreamcatcherLiveVideoLibrary | null
-  liveVideoRoomSlug: string
   loggedIn: boolean
 }) {
   const router = useRouter()
@@ -71,7 +63,6 @@ export function WorldsLiveRoom({
   const [now, setNow] = useState(rooms[0]?.observedAt ?? 0)
   const queueFull = !!selected && selected.queue.length >= selected.queueCapacity
   const currentJob = selected?.queue.find((job) => job.status === 'processing')
-  const working = isDreamcatcherWorking(selected?.status ?? 'idle', selected?.queue ?? [])
   const clock = localTime(selected?.timeZone ?? 'UTC', now)
   const statusAgeSeconds = Math.max(0, Math.floor((now - (selected?.observedAt ?? now)) / 1000))
   const statusFreshness = statusAgeSeconds < 5 ? 'CHECKED NOW' : `CHECKED ${statusAgeSeconds}S AGO`
@@ -157,22 +148,12 @@ export function WorldsLiveRoom({
         <button aria-label="Open all Dreamcatchers" className={styles.listButton} onClick={() => setListOpen(true)} type="button"><ListFilter aria-hidden size={20} /></button>
       </nav>
 
-      <section className={styles.liveFrame} aria-label={`${selected.city} Dreamcatcher live camera`}>
-        <div className={styles.liveImage}>
-          <DreamcatcherLiveVideo
-            fallbackImage={selected.cameraImagePath}
-            label={`${selected.name} operating at ${selected.location}`}
-            library={selected.slug === liveVideoRoomSlug ? liveVideoLibrary : null}
-            working={working}
-          />
-          <div className={styles.liveMeta}>
-            <span className={styles.liveMetaItem}><span className={`${styles.dot} ${styles.livePulse}`} data-status={selected.status} />{STATUS_LABEL[selected.status]}</span>
-            <span>LIVE · {statusFreshness}</span>
-            <span>{selected.location.toUpperCase()}</span>
-            <span className={styles.liveMetaItem}><Clock3 aria-hidden size={14} />{clock}</span>
-          </div>
-        </div>
-      </section>
+      <LiveFeedPlaceholder label={`${selected.city} Dreamcatcher live feed — not connected`}>
+        <span>DEVICE · {STATUS_LABEL[selected.status]}</span>
+        <span>{statusFreshness}</span>
+        <span>{selected.location.toUpperCase()}</span>
+        <span className={styles.liveMetaItem}><Clock3 aria-hidden size={14} />{clock}</span>
+      </LiveFeedPlaceholder>
 
       <div className={styles.desktopSplit}>
         <section className={styles.sectionPanel} aria-labelledby="device-status">

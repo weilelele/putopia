@@ -11,7 +11,7 @@ import {
   toBatchSlug,
   validateLocalBatchSeed,
   type LocalBatchSeed,
-} from '@/lib/local-device-batches'
+} from '@/lib/device-batch-seed'
 import styles from './new-batch.module.css'
 
 const EMPTY_SEED: LocalBatchSeed = {

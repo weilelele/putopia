@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getDeviceBatch } from './device-batches'
+import { getDeviceBatch } from './__fixtures__/device-batches'
 import {
   buildBatchMajorUpdateEmail,
   buildDeviceOrderStatusEmail,

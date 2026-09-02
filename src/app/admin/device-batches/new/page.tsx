@@ -3,6 +3,8 @@ import { listAdminDeviceBatchRecords } from '@/lib/device-batch-repository'
 import { NewBatchForm } from './new-batch-form'
 import styles from './new-batch.module.css'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Create Batch Draft — Multiverse Collective',
 }

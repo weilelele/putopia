@@ -5,7 +5,7 @@ import {
   parseBatchConfigDrafts,
   validateBatchConfigDraft,
 } from './device-batch-config-drafts'
-import { getDeviceBatch } from './device-batches'
+import { getDeviceBatch } from './__fixtures__/device-batches'
 
 describe('batch configuration drafts', () => {
   it('copies configurable data without retaining nested array references', () => {

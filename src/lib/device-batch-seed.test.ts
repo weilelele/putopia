@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   createDeviceBatchFromSeed,
   normalizeLocalBatchSeed,
-  parseLocalBatchSeeds,
   toBatchSlug,
   validateLocalBatchSeed,
   type LocalBatchSeed,
-} from './local-device-batches'
+} from './device-batch-seed'
 
 const seed: LocalBatchSeed = {
   code: 'lisbon-echo-03',
@@ -18,7 +17,7 @@ const seed: LocalBatchSeed = {
   updatedAt: 'Jul 30, 2026',
 }
 
-describe('local device batches', () => {
+describe('device batch draft seeds', () => {
   it('creates URL-safe slugs', () => {
     expect(toBatchSlug(' Lisbon Echo 03 ')).toBe('lisbon-echo-03')
   })
@@ -29,17 +28,6 @@ describe('local device batches', () => {
     expect(validateLocalBatchSeed({ ...seed, slug: 'Invalid Slug' })).toContain(
       'Slug must use at least three lowercase letters, numbers, or hyphens.',
     )
-  })
-
-  it('parses only complete saved seeds', () => {
-    expect(
-      parseLocalBatchSeeds(
-        JSON.stringify({
-          [seed.slug]: seed,
-          invalid: { name: 'Missing fields' },
-        }),
-      ),
-    ).toEqual({ [seed.slug]: seed })
   })
 
   it('turns a seed into an editable survey Batch', () => {

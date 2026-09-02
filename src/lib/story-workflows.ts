@@ -10,6 +10,12 @@ export type StoryContentStatus =
   | 'published'
   | 'needs_re_review'
 
+// Temporary operator-led release mode. Re-enabling this requires a scheduler
+// and restoring the scheduling controls and cron configuration together.
+export const STORY_AUTOMATIC_PUBLICATION_ENABLED = false
+export const STORY_MANUAL_PUBLICATION_MESSAGE =
+  'Automatic publication is paused. Publish the Batch update manually, then record the publication in Story Lab.'
+
 export type StoryCoreItem = {
   label: string
   value: string
@@ -119,7 +125,7 @@ export const STORY_REVIEW_LABELS: Record<StoryReviewStatus, string> = {
 
 export const STORY_CONTENT_LABELS: Record<StoryContentStatus, string> = {
   ...STORY_REVIEW_LABELS,
-  scheduled: 'SCHEDULED',
+  scheduled: 'AWAITING MANUAL RELEASE',
   published: 'PUBLISHED',
   needs_re_review: 'NEEDS RE-REVIEW',
 }
@@ -202,7 +208,14 @@ export function canApproveContent(item: StoryContentItem, workflow: StoryWorkflo
 }
 
 export function canScheduleContent(item: StoryContentItem, workflow: StoryWorkflow) {
-  return workflow.adaptationStatus === 'approved'
+  return STORY_AUTOMATIC_PUBLICATION_ENABLED
+    && workflow.adaptationStatus === 'approved'
     && item.storyRevision === workflow.adaptationApprovedRevision
     && item.status === 'approved'
+}
+
+export function canPublishContent(item: StoryContentItem, workflow: StoryWorkflow) {
+  return workflow.adaptationStatus === 'approved'
+    && item.storyRevision === workflow.adaptationApprovedRevision
+    && ['approved', 'scheduled'].includes(item.status)
 }

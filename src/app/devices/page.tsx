@@ -3,7 +3,6 @@ import { DeviceLiveRoom } from './live/device-live-room'
 import { listPublicDeviceBatches } from '@/lib/device-batch-repository'
 import { getDeviceBatchDiscussion } from '@/lib/actions/device-batch-community'
 import { getMyDeviceConsoles } from '@/lib/actions/orders'
-import { getDeviceLiveVideoPlaylist } from '@/lib/cosmo'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,12 +12,14 @@ export const metadata: Metadata = {
 }
 
 export default async function DevicesPage() {
-  const [batches, liveVideos] = await Promise.all([
-    listPublicDeviceBatches(),
-    getDeviceLiveVideoPlaylist().catch(() => []),
-  ])
+  const batches = await listPublicDeviceBatches()
   const batch = batches[0]
-  if (!batch) return null
+  if (!batch) return (
+    <main className="mx-auto max-w-xl px-6 py-20">
+      <h1 className="text-2xl">DEVICE LIBRARY</h1>
+      <p className="mt-4">No device batches have been published yet. Check back for recovery updates.</p>
+    </main>
+  )
   const [discussion, consoles] = await Promise.all([
     getDeviceBatchDiscussion(batch.slug),
     getMyDeviceConsoles(),
@@ -30,7 +31,6 @@ export default async function DevicesPage() {
       batches={batches}
       canPost={discussion.canPost}
       discussionPosts={discussion.posts}
-      liveVideos={liveVideos}
       ownedConsole={ownedConsole}
     />
   )

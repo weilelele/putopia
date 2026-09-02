@@ -4,8 +4,8 @@ import {
   getBatchAvailability,
   getBatchClaimHref,
   getBatchRemainingQuantity,
-  getDeviceBatch,
 } from './device-batches'
+import { getDeviceBatch } from './__fixtures__/device-batches'
 
 describe('device batch pricing', () => {
   const cairoBatch = getDeviceBatch('cairo-batch-01')
