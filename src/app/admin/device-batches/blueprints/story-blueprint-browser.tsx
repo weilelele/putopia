@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveTabs } from '@/components/archive-tabs'
 import {
@@ -25,11 +26,11 @@ import {
   saveStoryAdaptation,
   saveStoryContentItem,
   saveStorySource,
-  scheduleStoryContentItem,
 } from '@/lib/actions/story-workflows'
 import {
   STORY_CONTENT_LABELS,
   STORY_REVIEW_LABELS,
+  canPublishContent,
   toStoryWorkspaceSlug,
   type StoryAdaptation,
   type StoryContentDraft,
@@ -105,7 +106,6 @@ export function StoryBlueprintBrowser({
   const [adaptationNotes, setAdaptationNotes] = useState<Record<string, string>>({})
   const [contentDrafts, setContentDrafts] = useState<Record<string, StoryContentDraft>>({})
   const [contentNotes, setContentNotes] = useState<Record<string, string>>({})
-  const [scheduleDrafts, setScheduleDrafts] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState('')
   const [message, setMessage] = useState('')
 
@@ -294,28 +294,12 @@ export function StoryBlueprintBrowser({
         : `Changes requested for content ${item.position}.`)
   }
 
-  async function scheduleContent(item: StoryWorkflow['contentItems'][number]) {
-    const value = scheduleDrafts[item.id] ?? toLocalDateTime(item.recommendedPublishAt)
-    if (!value) {
-      setMessage('Choose a publishing date and time first.')
-      return
-    }
-    setBusy(`content-schedule-${item.id}`)
-    setMessage('')
-    const result = await scheduleStoryContentItem({
-      itemId: item.id,
-      scheduledFor: new Date(value).toISOString(),
-      expectedVersion: item.version,
-    })
-    report(result.error, `Content ${item.position} scheduled.`)
-  }
-
   async function publishNow(item: StoryWorkflow['contentItems'][number]) {
-    if (!window.confirm(`Publish “${item.title}” now? Published copy is immutable.`)) return
+    if (!window.confirm(`Have you published “${item.title}” in the Batch editor or its intended channel? This records the publication and locks the copy. It does not update the public Device page.`)) return
     setBusy(`content-publish-${item.id}`)
     setMessage('')
-    const result = await publishStoryContentNow({ itemId: item.id })
-    report(result.error, `Content ${item.position} published.`)
+    const result = await publishStoryContentNow({ itemId: item.id, expectedVersion: item.version })
+    report(result.error, `Publication recorded for content ${item.position}.`)
   }
 
   function updateSource(patch: Partial<SourceDraft>) {
@@ -571,7 +555,7 @@ export function StoryBlueprintBrowser({
                     <div>
                       <span className={styles.sectionLabel}>Approved source revision {workflow.adaptationApprovedRevision}</span>
                       <h2>Individual content review</h2>
-                      <p>AI timing is a recommendation. Each item must be saved, reviewed, and approved before scheduling or publishing.</p>
+                      <p>Dates are planning notes only. Review and approve each item, publish it manually in its intended channel, then record the release here.</p>
                     </div>
                     <ArchiveButton
                       disabled={Boolean(busy) || workflow.contentItems.some((item) => ['approved', 'scheduled', 'published'].includes(item.status))}
@@ -615,9 +599,6 @@ export function StoryBlueprintBrowser({
                             onPublish={() => void publishNow(item)}
                             onReview={(action) => void reviewContentItem(item, action)}
                             onSave={() => void persistContentItem(item)}
-                            onSchedule={() => void scheduleContent(item)}
-                            scheduleValue={scheduleDrafts[item.id] ?? toLocalDateTime(item.recommendedPublishAt)}
-                            setScheduleValue={(value) => setScheduleDrafts((current) => ({ ...current, [item.id]: value }))}
                             workflow={workflow}
                           />
                         )
@@ -898,9 +879,6 @@ function ContentEditor({
   onPublish,
   onReview,
   onSave,
-  onSchedule,
-  scheduleValue,
-  setScheduleValue,
   workflow,
 }: {
   busy: string
@@ -914,9 +892,6 @@ function ContentEditor({
   onPublish: () => void
   onReview: (action: 'submit' | 'request_changes' | 'approve') => void
   onSave: () => void
-  onSchedule: () => void
-  scheduleValue: string
-  setScheduleValue: (value: string) => void
   workflow: StoryWorkflow
 }) {
   const blocked = Boolean(busy) || immutable
@@ -1090,29 +1065,23 @@ function ContentEditor({
 
       {['approved', 'scheduled'].includes(item.status) ? (
         <div className={styles.publishControls}>
-          <ArchiveField htmlFor={`schedule-${item.id}`} label="ACTUAL PUBLISHING TIME">
-            <input
-              id={`schedule-${item.id}`}
-              onChange={(event) => setScheduleValue(event.target.value)}
-              type="datetime-local"
-              value={scheduleValue}
-            />
-          </ArchiveField>
+          <p className={styles.manualPublicationNote}>
+            Publish the approved copy in the Batch editor or its intended channel first.
+            Recording it here does not change the public Device page.
+          </p>
           <div>
-            {item.status === 'approved' ? (
-              <ArchiveButton disabled={Boolean(busy)} onClick={onSchedule} variant="secondary">
-                <CalendarClock aria-hidden size={15} /> SCHEDULE
-              </ArchiveButton>
-            ) : null}
-            <ArchiveButton disabled={Boolean(busy)} onClick={onPublish}>
-              <Send aria-hidden size={15} /> PUBLISH NOW
+            <ArchiveLinkButton href={`/admin/device-batches?batch=${encodeURIComponent(workflow.workspaceSlug)}`} variant="secondary">
+              OPEN BATCH EDITOR
+            </ArchiveLinkButton>
+            <ArchiveButton disabled={Boolean(busy) || dirty || !canPublishContent(item, workflow)} onClick={onPublish}>
+              <Send aria-hidden size={15} /> RECORD AS PUBLISHED
             </ArchiveButton>
           </div>
         </div>
       ) : null}
 
       {item.status === 'scheduled' && item.scheduledFor ? (
-        <p className={styles.scheduledLine}>Scheduled for {new Date(item.scheduledFor).toLocaleString()}</p>
+        <p className={styles.scheduledLine}>Previously planned for {new Date(item.scheduledFor).toLocaleString()} · automatic publication is paused.</p>
       ) : null}
       {item.status === 'published' && item.publishedAt ? (
         <p className={styles.publishedLine}>Published {new Date(item.publishedAt).toLocaleString()} · record is immutable</p>

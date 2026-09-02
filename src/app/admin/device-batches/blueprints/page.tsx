@@ -17,11 +17,12 @@ export default async function BatchStoryBlueprintsPage() {
       <header className={styles.pageHeader}>
         <div>
           <span>STORY LAB</span>
-          <h1>Two review gates before publication</h1>
+          <h1>Review first. Publish manually.</h1>
         </div>
         <p>
-          First approve an English structural adaptation. Then review every English
-          content item before it can be scheduled or published.
+          Approve the story structure and each content item. Publish Device updates
+          from the Batch editor, then record the release here. Automatic publication
+          is paused; recommended dates do not trigger a release.
         </p>
       </header>
 
@@ -35,8 +36,8 @@ export default async function BatchStoryBlueprintsPage() {
           <strong>Approve every content item</strong>
         </div>
         <div>
-          <span>Publication rule</span>
-          <strong>Only approved, current-version copy can publish</strong>
+          <span>Manual publication</span>
+          <strong>Publish in the intended channel, then record the release</strong>
         </div>
       </section>
 

@@ -7,6 +7,8 @@ import {
   canApproveAdaptation,
   canApproveContent,
   canScheduleContent,
+  STORY_AUTOMATIC_PUBLICATION_ENABLED,
+  STORY_MANUAL_PUBLICATION_MESSAGE,
   validateStoryAdaptation,
   validateStoryContentDraft,
   validateStoryWorkflowDraft,
@@ -434,6 +436,9 @@ export async function scheduleStoryContentItem(input: {
 }): Promise<ActionResult> {
   const user = await requireArchitect()
   if (!user) return { error: 'Forbidden' }
+  if (!STORY_AUTOMATIC_PUBLICATION_ENABLED) {
+    return { error: STORY_MANUAL_PUBLICATION_MESSAGE }
+  }
   const scheduledFor = new Date(input.scheduledFor)
   if (Number.isNaN(scheduledFor.getTime())) return { error: 'Choose a valid publishing date and time.' }
   if (scheduledFor.getTime() <= Date.now()) {
@@ -477,13 +482,18 @@ export async function scheduleStoryContentItem(input: {
 
 export async function publishStoryContentNow(input: {
   itemId: string
+  expectedVersion: number
 }): Promise<ActionResult> {
   const user = await requireArchitect()
   if (!user) return { error: 'Forbidden' }
+  if (!Number.isInteger(input.expectedVersion) || input.expectedVersion < 1) {
+    return { error: 'Reload the content item before recording its publication.' }
+  }
   const result = await publishStoryContentItem({
     itemId: input.itemId,
     publishedBy: user.id,
     respectSchedule: false,
+    expectedVersion: input.expectedVersion,
   })
   if (result.error) return { error: result.error }
   refreshStoryLab()

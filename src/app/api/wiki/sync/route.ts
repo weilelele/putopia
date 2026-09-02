@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { Database } from '@/types/database'
+import { listDeviceLibraryEntries } from '@/lib/device-library-repository'
 
 /* ─── Types ───────────────────────────────────────────────── */
 interface GitFile { path: string; content: string }
@@ -166,12 +167,12 @@ async function runSync() {
   const [
     { data: intel },
     { data: worlds },
-    { data: devices },
+    devices,
     { data: stories },
   ] = await Promise.all([
     admin.from('intel').select('*').order('timestamp', { ascending: false }),
     admin.from('worlds').select('*').order('discovery_date', { ascending: true }),
-    admin.from('devices').select('*').order('created_at', { ascending: true }),
+    listDeviceLibraryEntries(),
     admin.from('stories').select('*').eq('is_published', true).order('date', { ascending: false }),
   ])
 

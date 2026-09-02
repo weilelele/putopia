@@ -1,6 +1,10 @@
 import 'server-only'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import {
+  STORY_AUTOMATIC_PUBLICATION_ENABLED,
+  STORY_MANUAL_PUBLICATION_MESSAGE,
+} from '@/lib/story-workflows'
 import type {
   DeviceBatchStoryContentItemRow,
   DeviceBatchStoryWorkflowRow,
@@ -134,8 +138,12 @@ export async function publishStoryContentItem(input: {
   itemId: string
   publishedBy: string | null
   respectSchedule: boolean
+  expectedVersion?: number
   now?: string
 }) {
+  if (!STORY_AUTOMATIC_PUBLICATION_ENABLED && (input.respectSchedule || !input.publishedBy)) {
+    return { error: STORY_MANUAL_PUBLICATION_MESSAGE, published: false }
+  }
   const admin = createAdminClient()
   const now = input.now ?? new Date().toISOString()
   const { data: item, error: itemError } = await admin
@@ -149,6 +157,9 @@ export async function publishStoryContentItem(input: {
   const typedItem = item as DeviceBatchStoryContentItemRow
   if (typedItem.status === 'published') {
     return { error: null, published: false }
+  }
+  if (input.expectedVersion !== undefined && typedItem.version !== input.expectedVersion) {
+    return { error: 'This content item changed in another session. Reload before publishing.', published: false }
   }
   if (!['approved', 'scheduled'].includes(typedItem.status)) {
     return { error: 'Only approved content can be published.', published: false }
@@ -223,6 +234,9 @@ export async function publishStoryContentItem(input: {
 }
 
 export async function publishDueStoryContent(now = new Date().toISOString()) {
+  if (!STORY_AUTOMATIC_PUBLICATION_ENABLED) {
+    return { errors: [], published: 0, checked: 0, skipped: 'manual_publication_mode' }
+  }
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('device_batch_story_content_items')

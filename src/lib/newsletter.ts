@@ -12,6 +12,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
+import { listDeviceLibraryEntries } from '@/lib/device-library-repository'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -107,11 +108,7 @@ async function gatherWeeklyData(): Promise<{
       .limit(40),
 
     // Most recently updated devices (for unregistered strip)
-    admin
-      .from('devices')
-      .select('id, name, status, location, image_path')
-      .order('updated_at', { ascending: false })
-      .limit(4),
+    listDeviceLibraryEntries(4),
 
     // Latest published signal task
     admin
@@ -199,7 +196,7 @@ async function gatherWeeklyData(): Promise<{
     }
   }
 
-  const stripDevices: DeviceItem[] = (devicesRes.data ?? [])
+  const stripDevices: DeviceItem[] = devicesRes
     .map((d) => ({
       id: d.id, name: d.name, status: d.status, location: d.location,
       imagePath: d.image_path, activeCount: 0,

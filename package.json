@@ -9,7 +9,6 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "cosmo:live-videos": "node --env-file-if-exists=.env.local scripts/check-cosmo-live-videos.mjs",
     "mobile:check": "npm --prefix mobile run check"
   },
   "dependencies": {

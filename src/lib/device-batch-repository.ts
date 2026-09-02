@@ -1,71 +1,10 @@
 import 'server-only'
 
 import { createAdminClient } from '@/lib/supabase/server'
-import {
-  DEVICE_BATCHES,
-  type DeviceBatch,
-} from '@/lib/device-batches'
+import type { DeviceBatch } from '@/lib/device-batches'
 
-export type BatchPublicationStatus = 'draft' | 'published' | 'archived'
-
-export type AdminDeviceBatchRecord = {
-  batch: DeviceBatch
-  hasUnpublishedChanges: boolean
-  publicationStatus: BatchPublicationStatus
-  revision: number
-  persisted: boolean
-  reservedQuantity: number
-}
-
-type DeviceBatchRow = {
-  content: unknown
-  published_content?: unknown
-  has_unpublished_changes?: boolean
-  publication_status: BatchPublicationStatus
-  revision: number
-  listing_quantity: number
-  claimed_quantity: number
-  reserved_quantity: number
-  price_amount: number | string | null
-  price_currency: string | null
-}
-
-function rowToBatch(row: DeviceBatchRow, published = false): DeviceBatch | null {
-  const source = published ? row.published_content : row.content
-  if (!source || typeof source !== 'object' || Array.isArray(source)) {
-    return null
-  }
-
-  const content = source as DeviceBatch
-  if (!content.slug || !content.code || !content.name) return null
-
-  return {
-    ...content,
-    claimPrice: published && row.price_amount !== null && row.price_currency
-        ? {
-            amount: Number(row.price_amount),
-            currency: row.price_currency,
-            description: content.claimPrice?.description ?? '',
-          }
-        : content.claimPrice,
-    inventory: published
-      ? {
-          claimedQuantity: row.claimed_quantity + row.reserved_quantity,
-          listingQuantity: row.listing_quantity,
-        }
-      : {
-          claimedQuantity: row.claimed_quantity,
-          listingQuantity:
-            content.inventory?.listingQuantity ?? row.listing_quantity,
-        },
-  }
-}
-
-function publishedRowsToBatches(rows: DeviceBatchRow[]) {
-  return rows
-    .map((row) => rowToBatch(row, true))
-    .filter((batch): batch is DeviceBatch => batch !== null)
-}
+import { publishedRowsToBatches, rowToBatch, type DeviceBatchRow, type AdminDeviceBatchRecord } from '@/lib/device-batch-records'
+export type { BatchPublicationStatus, AdminDeviceBatchRecord } from '@/lib/device-batch-records'
 
 async function attachLiveHolderDirectory(
   admin: ReturnType<typeof createAdminClient>,
@@ -113,13 +52,12 @@ export async function listPublicDeviceBatches(): Promise<DeviceBatch[]> {
       .order('updated_at', { ascending: false })
 
     if (error) throw error
-    // Once the persistent registry is reachable it is authoritative. In
-    // particular, an archived Batch must not reappear from the static fallback.
+    // Only persistent published snapshots are authoritative; never show mocks.
     const batches = publishedRowsToBatches((data ?? []) as DeviceBatchRow[])
     return attachLiveHolderDirectory(admin, batches)
   } catch (error) {
-    console.warn('[device-batches] using static registry fallback:', error)
-    return DEVICE_BATCHES
+    console.error('[device-batches] published registry unavailable:', error)
+    throw new Error('The Device Library is temporarily unavailable. Please try again.')
   }
 }
 
@@ -153,33 +91,10 @@ export async function listAdminDeviceBatchRecords(): Promise<AdminDeviceBatchRec
       })
     }
 
-    const staticSlugs = new Set(DEVICE_BATCHES.map((batch) => batch.slug))
-    return [
-      ...DEVICE_BATCHES.map(
-        (batch) =>
-          persisted.get(batch.slug) ?? {
-            batch,
-            hasUnpublishedChanges: false,
-            publicationStatus: 'published' as const,
-            revision: 0,
-            persisted: false,
-            reservedQuantity: 0,
-          },
-      ),
-      ...[...persisted.values()].filter(
-        (record) => !staticSlugs.has(record.batch.slug),
-      ),
-    ]
+    return [...persisted.values()]
   } catch (error) {
-    console.warn('[device-batches] admin registry fallback:', error)
-    return DEVICE_BATCHES.map((batch) => ({
-      batch,
-      hasUnpublishedChanges: false,
-      publicationStatus: 'published',
-      revision: 0,
-      persisted: false,
-      reservedQuantity: 0,
-    }))
+    console.error('[device-batches] admin registry unavailable:', error)
+    throw new Error('The Device Library is temporarily unavailable. Please try again.')
   }
 }
 

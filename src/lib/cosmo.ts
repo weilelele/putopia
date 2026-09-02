@@ -13,26 +13,11 @@
  * Connection string: COSMO_MONGO_URI.
  */
 import { MongoClient, ObjectId, type Db, type WithId, type Document } from 'mongodb'
-import {
-  groupDreamcatcherLiveVideos,
-  type DreamcatcherLiveVideoLibrary,
-} from '@/lib/dreamcatcher-live'
 
 const COLL_CHANNEL = 'channel'
 const COLL_IMAGE = 'ai-image'
 const COLL_VIDEO = 'ai-video'
 const COLL_CUBICLE = 'cubicle'
-
-export const DREAMCATCHER_LIVE_VIDEO_SOURCE = {
-  roomSlug: 'kyoto-02',
-  channelId: '6a85654041b16262cb633ac7',
-  bandId: '6a85655f41b16262cb633aef',
-} as const
-
-export const DEVICE_LIVE_VIDEO_SOURCE = {
-  channelId: '6a8ecbc041b16262cb634785',
-  bandId: '6a8ecbcf41b16262cb634790',
-} as const
 
 export type CosmoMedia = 'image' | 'video'
 
@@ -64,8 +49,6 @@ export interface CosmoAsset {
   prompt?: string | null
   tags?: string[]
 }
-
-export type CosmoLiveVideo = Pick<CosmoAsset, 'assetId' | 'url' | 'posterUrl'>
 
 export interface CosmoBandAsset {
   asset: CosmoAsset
@@ -295,31 +278,6 @@ export async function sampleBandAssets(
   const all = await getBandAssets(channelId, bandId, media)
   if (all.length <= n) return shuffle(all)
   return shuffle(all).slice(0, n)
-}
-
-/** Tagged live-camera material for the first Worlds device. This deliberately
- *  resolves the band's pool on every call rather than persisting asset ids, so
- *  newly completed, non-deleted videos added to the Cosmo band are picked up on
- *  the next dynamic page request. */
-export async function getDreamcatcherLiveVideoLibrary(): Promise<DreamcatcherLiveVideoLibrary> {
-  const assets = await getBandAssets(
-    DREAMCATCHER_LIVE_VIDEO_SOURCE.channelId,
-    DREAMCATCHER_LIVE_VIDEO_SOURCE.bandId,
-    'video',
-  )
-  return groupDreamcatcherLiveVideos(assets)
-}
-
-/** Live material for the demonstration Console on the Devices pages. The band
- *  pool order is preserved by `getBandAssets`, so playback follows the order
- *  curated in Cosmo and wraps back to the first clip on the client. */
-export async function getDeviceLiveVideoPlaylist(): Promise<CosmoLiveVideo[]> {
-  const assets = await getBandAssets(
-    DEVICE_LIVE_VIDEO_SOURCE.channelId,
-    DEVICE_LIVE_VIDEO_SOURCE.bandId,
-    'video',
-  )
-  return assets.map(({ assetId, posterUrl, url }) => ({ assetId, posterUrl, url }))
 }
 
 function shuffle<T>(arr: T[]): T[] {

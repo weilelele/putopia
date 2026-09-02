@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { listDeviceLibraryEntries } from '@/lib/device-library-repository'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -34,13 +35,6 @@ function trunc(s: string, max: number) {
   return s.length <= max ? s : s.slice(0, max - 1) + '…'
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  available:    'now AVAILABLE',
-  in_use:       'confirmed IN USE',
-  needs_repair: 'flagged for REPAIR',
-  unknown:      'status UNKNOWN',
-}
-
 // ── Read latest feed ──────────────────────────────────────────────────────────
 
 export async function getLatestFeed(): Promise<DashboardFeed | null> {
@@ -65,18 +59,14 @@ export async function generateAndSaveFeed(): Promise<{ error: string | null; fee
   const since = new Date(Date.now() - DAYS_BACK * 24 * 60 * 60 * 1000).toISOString()
 
   // 1. Pull data from all modules
-  const [{ data: intelRows }, { data: devices }, { data: voyagers }] = await Promise.all([
+  const [{ data: intelRows }, devices, { data: voyagers }] = await Promise.all([
     admin.from('intel')
       .select('id, title, content, timestamp, tag, classified')
       .eq('classified', false)
       .gte('timestamp', since)
       .order('timestamp', { ascending: false })
       .limit(12),
-    admin.from('devices')
-      .select('id, name, status, location, current_user_name, knowledge, image_path, updated_at')
-      .eq('knowledge', 'known')
-      .order('updated_at', { ascending: false })
-      .limit(8),
+    listDeviceLibraryEntries(8),
     admin.from('voyager_profiles')
       .select('id, display_name, avatar_url, role, joined_at')
       .in('role', ['voyager', 'architect'])   // applicants and guests never appear
@@ -101,10 +91,9 @@ export async function generateAndSaveFeed(): Promise<{ error: string | null; fee
 
   // Known devices → one line per device with status
   for (const d of devices ?? []) {
-    const statusStr = STATUS_LABEL[d.status ?? 'unknown'] ?? `status ${d.status}`
+    const statusStr = d.status_label
     const loc = d.location ? ` — ${d.location}` : ''
-    const user = d.current_user_name && d.status === 'in_use' ? `, operated by ${d.current_user_name}` : ''
-    const text = trunc(`${d.name} ${statusStr}${loc}${user}`, 80)
+    const text = trunc(`${d.name} ${statusStr}${loc}`, 80)
     candidates.push({
       ts: fmtTs(d.updated_at),
       text,

@@ -3,14 +3,15 @@ import {
   DEVICE_ORDER_PRODUCT_TYPE,
   formatStripeMinorUnits,
   getDeviceCheckoutExpiration,
-  getDeviceCheckoutDetails,
+  getDeviceCheckoutDetailsForBatch,
   isCheckoutAmountValid,
   toStripeMinorUnits,
 } from './device-checkout'
+import { getDeviceBatch } from './__fixtures__/device-batches'
 
 describe('device checkout pricing', () => {
   it('uses the selected batch price as Stripe minor units', () => {
-    const result = getDeviceCheckoutDetails('cairo-batch-01')
+    const result = getDeviceCheckoutDetailsForBatch(getDeviceBatch('cairo-batch-01')!)
 
     expect(result.ok).toBe(true)
     if (!result.ok) return
@@ -21,18 +22,10 @@ describe('device checkout pricing', () => {
   })
 
   it('rejects batches that are not currently claimable', () => {
-    expect(getDeviceCheckoutDetails('gobi-array-07')).toEqual({
+    expect(getDeviceCheckoutDetailsForBatch(getDeviceBatch('gobi-array-07')!)).toEqual({
       ok: false,
       status: 409,
       error: 'Claims are not open for this batch',
-    })
-  })
-
-  it('rejects unknown batches', () => {
-    expect(getDeviceCheckoutDetails('missing')).toEqual({
-      ok: false,
-      status: 404,
-      error: 'Batch not found',
     })
   })
 

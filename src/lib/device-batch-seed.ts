@@ -10,29 +10,6 @@ export type LocalBatchSeed = {
   updatedAt: string
 }
 
-export type LocalBatchSeeds = Record<string, LocalBatchSeed>
-
-export const LOCAL_DEVICE_BATCHES_KEY = 'mc-local-device-batches:v1'
-export const EMPTY_LOCAL_DEVICE_BATCHES_SNAPSHOT = '{}'
-
-const listeners = new Set<() => void>()
-let storageListenerAttached = false
-
-function isLocalBatchSeed(value: unknown): value is LocalBatchSeed {
-  if (!value || typeof value !== 'object') return false
-
-  const seed = value as Partial<LocalBatchSeed>
-  return (
-    typeof seed.code === 'string' &&
-    typeof seed.leadName === 'string' &&
-    typeof seed.location === 'string' &&
-    typeof seed.name === 'string' &&
-    typeof seed.slug === 'string' &&
-    typeof seed.summary === 'string' &&
-    typeof seed.updatedAt === 'string'
-  )
-}
-
 export function toBatchSlug(value: string) {
   return value
     .toLowerCase()
@@ -70,23 +47,6 @@ export function normalizeLocalBatchSeed(seed: LocalBatchSeed): LocalBatchSeed {
     slug: toBatchSlug(seed.slug),
     summary: seed.summary.trim(),
     updatedAt: seed.updatedAt.trim(),
-  }
-}
-
-export function parseLocalBatchSeeds(snapshot: string | null): LocalBatchSeeds {
-  try {
-    const parsed: unknown = JSON.parse(
-      snapshot ?? EMPTY_LOCAL_DEVICE_BATCHES_SNAPSHOT,
-    )
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-
-    return Object.fromEntries(
-      Object.entries(parsed)
-        .filter(([, seed]) => isLocalBatchSeed(seed))
-        .map(([slug, seed]) => [slug, seed as LocalBatchSeed]),
-    )
-  } catch {
-    return {}
   }
 }
 
@@ -145,62 +105,4 @@ export function createDeviceBatchFromSeed(seed: LocalBatchSeed): DeviceBatch {
     updatedAt: normalized.updatedAt,
     heroCaption: 'Primary Batch image pending.',
   }
-}
-
-export function getLocalBatchSeedsSnapshot() {
-  if (typeof window === 'undefined') return EMPTY_LOCAL_DEVICE_BATCHES_SNAPSHOT
-
-  try {
-    return (
-      window.localStorage.getItem(LOCAL_DEVICE_BATCHES_KEY) ??
-      EMPTY_LOCAL_DEVICE_BATCHES_SNAPSHOT
-    )
-  } catch {
-    return EMPTY_LOCAL_DEVICE_BATCHES_SNAPSHOT
-  }
-}
-
-function emitChange() {
-  listeners.forEach((listener) => listener())
-}
-
-function handleStorageChange(event: StorageEvent) {
-  if (event.key === LOCAL_DEVICE_BATCHES_KEY) emitChange()
-}
-
-export function subscribeToLocalBatchSeeds(callback: () => void) {
-  listeners.add(callback)
-  if (!storageListenerAttached) {
-    window.addEventListener('storage', handleStorageChange)
-    storageListenerAttached = true
-  }
-
-  return () => {
-    listeners.delete(callback)
-    if (listeners.size === 0) {
-      window.removeEventListener('storage', handleStorageChange)
-      storageListenerAttached = false
-    }
-  }
-}
-
-export function saveLocalBatchSeed(seed: LocalBatchSeed) {
-  const normalized = normalizeLocalBatchSeed(seed)
-  const seeds = parseLocalBatchSeeds(getLocalBatchSeedsSnapshot())
-
-  if (normalized.slug in seeds) {
-    return { error: 'A local Batch with this slug already exists.', ok: false } as const
-  }
-
-  try {
-    window.localStorage.setItem(
-      LOCAL_DEVICE_BATCHES_KEY,
-      JSON.stringify({ ...seeds, [normalized.slug]: normalized }),
-    )
-  } catch {
-    return { error: 'This browser could not save the new Batch.', ok: false } as const
-  }
-
-  emitChange()
-  return { ok: true, seed: normalized } as const
 }

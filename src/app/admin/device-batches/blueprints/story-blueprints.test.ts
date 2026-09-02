@@ -3,6 +3,9 @@ import {
   canApproveAdaptation,
   canApproveContent,
   canScheduleContent,
+  canPublishContent,
+  STORY_AUTOMATIC_PUBLICATION_ENABLED,
+  STORY_CONTENT_LABELS,
   toStoryWorkspaceSlug,
   validateStoryAdaptation,
   validateStoryContentDraft,
@@ -111,15 +114,32 @@ describe('Story Lab review gates', () => {
     expect(canApproveAdaptation(workflow({ adaptationStatus: 'draft' }))).toBe(false)
   })
 
-  it('requires the current approved story revision for content approval and scheduling', () => {
+  it('requires the current approved story revision for content approval and manual publication', () => {
     const approvedWorkflow = workflow({
       adaptationStatus: 'approved',
       adaptationApprovedRevision: 3,
     })
     expect(canApproveContent(contentItem, approvedWorkflow)).toBe(true)
     expect(canApproveContent({ ...contentItem, storyRevision: 2 }, approvedWorkflow)).toBe(false)
-    expect(canScheduleContent({ ...contentItem, status: 'approved' }, approvedWorkflow)).toBe(true)
-    expect(canScheduleContent(contentItem, approvedWorkflow)).toBe(false)
+    expect(canPublishContent({ ...contentItem, status: 'approved' }, approvedWorkflow)).toBe(true)
+    expect(canPublishContent(contentItem, approvedWorkflow)).toBe(false)
+    expect(canPublishContent({ ...contentItem, status: 'approved', storyRevision: 2 }, approvedWorkflow)).toBe(false)
+    expect(canPublishContent({ ...contentItem, status: 'approved' }, workflow())).toBe(false)
+  })
+
+  it('disables automatic scheduling during the manual-publication transition', () => {
+    expect(STORY_AUTOMATIC_PUBLICATION_ENABLED).toBe(false)
+    expect(canScheduleContent({ ...contentItem, status: 'approved' }, workflow({
+      adaptationStatus: 'approved', adaptationApprovedRevision: 3,
+    }))).toBe(false)
+  })
+
+  it('keeps existing scheduled content manually publishable without reopening published records', () => {
+    const approvedWorkflow = workflow({ adaptationStatus: 'approved', adaptationApprovedRevision: 3 })
+    expect(canPublishContent({ ...contentItem, status: 'scheduled' }, approvedWorkflow)).toBe(true)
+    expect(STORY_CONTENT_LABELS.scheduled).toBe('AWAITING MANUAL RELEASE')
+    expect(canPublishContent({ ...contentItem, status: 'published' }, approvedWorkflow)).toBe(false)
+    expect(canPublishContent({ ...contentItem, status: 'needs_re_review' }, approvedWorkflow)).toBe(false)
   })
 
   it('validates every generated content draft before review', () => {

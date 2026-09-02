@@ -308,6 +308,7 @@ export function BatchConfigEditor({
     }
 
     const normalizedDraft = normalizeBatchConfigDraft(draft)
+    if (publish && !window.confirm(`Publish all current changes for “${draft.name}” to the live Device page? This also applies any stock, pricing, and Pack changes. Preview environments may share production data. Follower emails are sent separately.`)) return
     const batch = { ...selectedBatch, ...normalizedDraft }
     setSaveBusy(publish ? 'publish' : 'draft')
     setMessage('')
@@ -959,7 +960,7 @@ export function BatchConfigEditor({
           <div className={styles.sectionHeading}>
             <div>
               <h2>Latest public update</h2>
-              <p>Publish the newest field progress without editing the full Batch dossier.</p>
+              <p>Edit this report, save a private draft, then choose PUBLISH LIVE below. Publishing applies all current Batch changes; the date is descriptive, not a schedule.</p>
             </div>
           </div>
           <div className={styles.updateLayout}>

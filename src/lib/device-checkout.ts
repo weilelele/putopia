@@ -1,6 +1,5 @@
 import {
   getBatchRemainingQuantity,
-  getDeviceBatch,
   type DeviceBatch,
 } from '@/lib/device-batches'
 
@@ -91,12 +90,6 @@ export function isCheckoutAmountValid(
 
 export function getDeviceCheckoutExpiration(now = new Date()) {
   return new Date(now.getTime() + DEVICE_CHECKOUT_HOLD_SECONDS * 1000)
-}
-
-export function getDeviceCheckoutDetails(batchSlug: string): DeviceCheckoutValidation {
-  const batch = getDeviceBatch(batchSlug)
-  if (!batch) return { ok: false, status: 404, error: 'Batch not found' }
-  return getDeviceCheckoutDetailsForBatch(batch)
 }
 
 export function getDeviceCheckoutDetailsForBatch(
