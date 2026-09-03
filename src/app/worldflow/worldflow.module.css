@@ -606,7 +606,7 @@ button.worldCard {
   margin-bottom: var(--s-3);
 }
 
-.recordList article {
+.recordList > article {
   display: grid;
   gap: var(--s-3);
   align-items: start;
@@ -681,7 +681,7 @@ button.worldCard {
   border-color: var(--color-nucleus);
 }
 
-.recordList article > button,
+.recordList > article > button,
 .timeLane header > button,
 .eventRow > button:last-child {
   display: grid;
@@ -1671,7 +1671,7 @@ button.emptyAsset {
     place-items: center;
   }
 
-  .recordList article {
+  .recordList > article {
     grid-template-columns: auto minmax(160px, 0.6fr) minmax(240px, 1fr) auto;
   }
 
