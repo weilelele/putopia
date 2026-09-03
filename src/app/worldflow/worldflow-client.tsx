@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, type RefObject } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   SkipForward,
   Trash2,
+  Undo2,
   Upload,
   UserRound,
 } from "lucide-react";
@@ -75,6 +76,26 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function scrollHorizontal(
+  ref: RefObject<HTMLDivElement | null>,
+  direction: -1 | 1,
+) {
+  const element = ref.current;
+  if (!element) return;
+  element.scrollBy({
+    behavior: "smooth",
+    left: direction * Math.max(220, Math.round(element.clientWidth * 0.78)),
+  });
+}
+
+async function deleteWorldflowAsset(assetId: string) {
+  const response = await fetch(`/api/worldflow/assets/${assetId}`, {
+    method: "DELETE",
+  });
+  const result = (await response.json()) as { error?: string };
+  return response.ok ? null : (result.error ?? "移除素材失败。");
+}
+
 function normalizeState(state: WorldflowState): WorldflowState {
   return {
     ...state,
@@ -124,9 +145,11 @@ function MaterialUploader({
   characterId,
   eventId,
   mediaKind = "mixed",
+  onDeleted,
   onUploaded,
   shotId,
   step,
+  targetLabel,
   title,
   worldId,
 }: {
@@ -138,13 +161,18 @@ function MaterialUploader({
   characterId?: string | null;
   eventId?: string | null;
   mediaKind?: "image" | "mixed" | "video";
+  onDeleted: (assetId: string) => void;
   onUploaded: (asset: WorldflowAsset) => void;
   shotId?: string | null;
   step: number;
+  targetLabel: string;
   title: string;
   worldId: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const channelListRef = useRef<HTMLDivElement>(null);
+  const bandListRef = useRef<HTMLDivElement>(null);
+  const cloudAssetListRef = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
   const [cloudOpen, setCloudOpen] = useState(false);
   const [cloudAssets, setCloudAssets] = useState<WorldflowCloudAsset[]>([]);
@@ -156,6 +184,7 @@ function MaterialUploader({
   const [selectedCosmoBandId, setSelectedCosmoBandId] = useState("");
   const [cloudLoading, setCloudLoading] = useState(false);
   const [linkingId, setLinkingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const accept =
     mediaKind === "video"
@@ -261,6 +290,16 @@ function MaterialUploader({
   }
 
   async function linkCloudAsset(cloudAsset: WorldflowCloudAsset) {
+    const alreadyLinked = assets.some(
+      (asset) =>
+        asset.source_type === "cloud" &&
+        asset.source_provider === cloudAsset.provider &&
+        asset.source_asset_id === cloudAsset.id,
+    );
+    if (alreadyLinked) {
+      setError("这个素材已经关联到当前位置。");
+      return;
+    }
     setLinkingId(cloudAsset.id);
     setError("");
     try {
@@ -298,12 +337,33 @@ function MaterialUploader({
     }
   }
 
+  async function removeAsset(asset: WorldflowAsset) {
+    setDeletingId(asset.id);
+    setError("");
+    try {
+      const deleteError = await deleteWorldflowAsset(asset.id);
+      if (deleteError) {
+        setError(deleteError);
+        return;
+      }
+      onDeleted(asset.id);
+    } catch {
+      setError("移除素材失败，请重试。");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <section className={styles.materialSection}>
       <header>
         <div>
           <span>MATERIALS · FORGE / COSMO / LOCAL</span>
           <h3>{title}</h3>
+          <p className={styles.materialTarget}>
+            <span>关联位置</span>
+            <strong>{targetLabel}</strong>
+          </p>
         </div>
         {canUpload ? (
           <div className={styles.materialActions}>
@@ -391,31 +451,53 @@ function MaterialUploader({
             </p>
           ) : null}
           {cosmoChannels.length ? (
-            <div
-              aria-label="Cosmo 频道搜索结果"
-              className={styles.cosmoChannelList}
-            >
-              {cosmoChannels.map((channel) => (
-                <button
-                  data-active={selectedCosmoChannelId === channel.id}
-                  key={channel.id}
-                  onClick={() => {
-                    setSelectedCosmoChannelId(channel.id);
-                    setSelectedCosmoBandId("");
-                    setCloudAssets([]);
-                  }}
-                  type="button"
-                >
-                  <span>
-                    {channel.number !== null
-                      ? `频道 ${channel.number}`
-                      : "未分配频率"}
-                  </span>
-                  <strong>{channel.name || "未命名频道"}</strong>
-                  <small>{channel.id}</small>
-                </button>
-              ))}
-            </div>
+            <>
+              <div className={styles.scrollRegionHeader}>
+                <span>频道结果</span>
+                <div className={styles.scrollControls}>
+                  <button
+                    aria-label="向左浏览频道"
+                    onClick={() => scrollHorizontal(channelListRef, -1)}
+                    type="button"
+                  >
+                    <ArrowLeft size={16} />
+                  </button>
+                  <button
+                    aria-label="向右浏览频道"
+                    onClick={() => scrollHorizontal(channelListRef, 1)}
+                    type="button"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+              <div
+                aria-label="Cosmo 频道搜索结果"
+                className={styles.cosmoChannelList}
+                ref={channelListRef}
+              >
+                {cosmoChannels.map((channel) => (
+                  <button
+                    data-active={selectedCosmoChannelId === channel.id}
+                    key={channel.id}
+                    onClick={() => {
+                      setSelectedCosmoChannelId(channel.id);
+                      setSelectedCosmoBandId("");
+                      setCloudAssets([]);
+                    }}
+                    type="button"
+                  >
+                    <span>
+                      {channel.number !== null
+                        ? `频道 ${channel.number}`
+                        : "未分配频率"}
+                    </span>
+                    <strong>{channel.name || "未命名频道"}</strong>
+                    <small>{channel.id}</small>
+                  </button>
+                ))}
+              </div>
+            </>
           ) : null}
           {selectedCosmoChannel ? (
             <section className={styles.cosmoBands}>
@@ -424,9 +506,27 @@ function MaterialUploader({
                   <strong>{selectedCosmoChannel.name}</strong>
                   <span>选择一个波段以加载其中的图片和视频。</span>
                 </div>
-                <small>{selectedCosmoChannel.id}</small>
+                <div className={styles.scrollMeta}>
+                  <small>{selectedCosmoChannel.id}</small>
+                  <div className={styles.scrollControls}>
+                    <button
+                      aria-label="向左浏览波段"
+                      onClick={() => scrollHorizontal(bandListRef, -1)}
+                      type="button"
+                    >
+                      <ArrowLeft size={16} />
+                    </button>
+                    <button
+                      aria-label="向右浏览波段"
+                      onClick={() => scrollHorizontal(bandListRef, 1)}
+                      type="button"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
               </header>
-              <div>
+              <div ref={bandListRef}>
                 {selectedCosmoChannel.bands.map((band) => {
                   const availableCount =
                     mediaKind === "image"
@@ -457,41 +557,74 @@ function MaterialUploader({
           {!cloudLoading && selectedCosmoBandId && !cloudAssets.length ? (
             <p className={styles.cloudStatus}>这个波段暂无适用素材。</p>
           ) : null}
-          <div className={styles.cloudAssetGrid}>
-            {cloudAssets.map((asset) => (
-              <button
-                className={styles.cloudAssetCard}
-                disabled={Boolean(linkingId)}
-                key={`${asset.provider}:${asset.band_id}:${asset.id}`}
-                onClick={() => void linkCloudAsset(asset)}
-                type="button"
-              >
-                {asset.media_type === "video" &&
-                /\.(mp4|webm|mov)(\?|$)/i.test(asset.preview_url) ? (
-                  <video muted preload="metadata" src={asset.preview_url} />
-                ) : (
-                  <Image
-                    alt={asset.name}
-                    height={180}
-                    src={asset.preview_url}
-                    unoptimized
-                    width={320}
-                  />
-                )}
-                <span>{asset.media_type === "image" ? "图片" : "视频"}</span>
-                <strong>{asset.name}</strong>
-                <small>
-                  {asset.channel_number !== null &&
-                  asset.channel_number !== undefined
-                    ? `${asset.channel_number} · `
-                    : ""}
-                  {asset.channel_name} / {asset.band_name}
-                </small>
-                <small>
-                  {linkingId === asset.id ? "关联中…" : "点击关联到当前单元"}
-                </small>
-              </button>
-            ))}
+          {cloudAssets.length ? (
+            <div className={styles.scrollRegionHeader}>
+              <span>波段素材 · 将关联到 {targetLabel}</span>
+              <div className={styles.scrollControls}>
+                <button
+                  aria-label="向左浏览素材"
+                  onClick={() => scrollHorizontal(cloudAssetListRef, -1)}
+                  type="button"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <button
+                  aria-label="向右浏览素材"
+                  onClick={() => scrollHorizontal(cloudAssetListRef, 1)}
+                  type="button"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          ) : null}
+          <div className={styles.cloudAssetGrid} ref={cloudAssetListRef}>
+            {cloudAssets.map((asset) => {
+              const alreadyLinked = assets.some(
+                (linkedAsset) =>
+                  linkedAsset.source_type === "cloud" &&
+                  linkedAsset.source_provider === asset.provider &&
+                  linkedAsset.source_asset_id === asset.id,
+              );
+              return (
+                <button
+                  className={styles.cloudAssetCard}
+                  disabled={Boolean(linkingId) || alreadyLinked}
+                  key={`${asset.provider}:${asset.band_id}:${asset.id}`}
+                  onClick={() => void linkCloudAsset(asset)}
+                  type="button"
+                >
+                  {asset.media_type === "video" &&
+                  /\.(mp4|webm|mov)(\?|$)/i.test(asset.preview_url) ? (
+                    <video muted preload="metadata" src={asset.preview_url} />
+                  ) : (
+                    <Image
+                      alt={asset.name}
+                      height={180}
+                      src={asset.preview_url}
+                      unoptimized
+                      width={320}
+                    />
+                  )}
+                  <span>{asset.media_type === "image" ? "图片" : "视频"}</span>
+                  <strong>{asset.name}</strong>
+                  <small>
+                    {asset.channel_number !== null &&
+                    asset.channel_number !== undefined
+                      ? `${asset.channel_number} · `
+                      : ""}
+                    {asset.channel_name} / {asset.band_name}
+                  </small>
+                  <small>
+                    {alreadyLinked
+                      ? "已关联到当前位置"
+                      : linkingId === asset.id
+                        ? "关联中…"
+                        : `关联到：${targetLabel}`}
+                  </small>
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -517,6 +650,22 @@ function MaterialUploader({
                 {asset.source_type === "cloud" ? "云端关联" : "本地上传"} ·{" "}
                 {formatDate(asset.created_at)}
               </span>
+              {canUpload ? (
+                <button
+                  aria-label={`${asset.source_type === "cloud" ? "移除关联" : "删除素材"} ${asset.file_name}`}
+                  className={styles.removeAsset}
+                  disabled={deletingId === asset.id}
+                  onClick={() => void removeAsset(asset)}
+                  type="button"
+                >
+                  <Trash2 size={15} />
+                  {deletingId === asset.id
+                    ? "移除中…"
+                    : asset.source_type === "cloud"
+                      ? "移除关联"
+                      : "删除素材"}
+                </button>
+              ) : null}
             </div>
           </article>
         ))}
@@ -570,6 +719,12 @@ function ContextAssetRefs({
 }
 
 type EventSlots = WorldflowState["eventSystems"][string]["timeSlots"];
+type UndoSnapshot = {
+  activeShotId: string;
+  label: string;
+  selectedEventId: string | null;
+  state: WorldflowState;
+};
 
 function EventStructureEditor({
   editable,
@@ -581,7 +736,10 @@ function EventStructureEditor({
   editable: boolean;
   selectedEventId: string | null;
   slots: EventSlots;
-  onChange: (mutator: (slots: EventSlots) => EventSlots) => void;
+  onChange: (
+    mutator: (slots: EventSlots) => EventSlots,
+    undoLabel?: string,
+  ) => void;
   onSelect: (eventId: string | null) => void;
 }) {
   return (
@@ -598,7 +756,7 @@ function EventStructureEditor({
               onChange((current) => [
                 ...current,
                 { id: crypto.randomUUID(), name: "新时段", events: [] },
-              ])
+              ], "新增时段")
             }
             type="button"
           >
@@ -633,8 +791,10 @@ function EventStructureEditor({
                       event.id,
                       ...event.subEvents.map((subEvent) => subEvent.id),
                     ]);
-                    onChange((current) =>
-                      current.filter((item) => item.id !== slot.id),
+                    onChange(
+                      (current) =>
+                        current.filter((item) => item.id !== slot.id),
+                      `删除时段“${slot.name}”`,
                     );
                     if (selectedEventId && removedIds.includes(selectedEventId))
                       onSelect(null);
@@ -663,17 +823,19 @@ function EventStructureEditor({
                     <button
                       aria-label={`删除事件 ${event.name}`}
                       onClick={() => {
-                        onChange((current) =>
-                          current.map((item) =>
-                            item.id === slot.id
-                              ? {
-                                  ...item,
-                                  events: item.events.filter(
-                                    (itemEvent) => itemEvent.id !== event.id,
-                                  ),
-                                }
-                              : item,
-                          ),
+                        onChange(
+                          (current) =>
+                            current.map((item) =>
+                              item.id === slot.id
+                                ? {
+                                    ...item,
+                                    events: item.events.filter(
+                                      (itemEvent) => itemEvent.id !== event.id,
+                                    ),
+                                  }
+                                : item,
+                            ),
+                          `删除父事件“${event.name}”`,
                         );
                         if (
                           selectedEventId === event.id ||
@@ -705,20 +867,22 @@ function EventStructureEditor({
                           <button
                             aria-label={`删除子事件 ${subEvent.name}`}
                             onClick={() => {
-                              onChange((current) =>
-                                current.map((item) => ({
-                                  ...item,
-                                  events: item.events.map((parent) =>
-                                    parent.id === event.id
-                                      ? {
-                                          ...parent,
-                                          subEvents: parent.subEvents.filter(
-                                            (item) => item.id !== subEvent.id,
-                                          ),
-                                        }
-                                      : parent,
-                                  ),
-                                })),
+                              onChange(
+                                (current) =>
+                                  current.map((item) => ({
+                                    ...item,
+                                    events: item.events.map((parent) =>
+                                      parent.id === event.id
+                                        ? {
+                                            ...parent,
+                                            subEvents: parent.subEvents.filter(
+                                              (item) => item.id !== subEvent.id,
+                                            ),
+                                          }
+                                        : parent,
+                                    ),
+                                  })),
+                                `删除子事件“${subEvent.name}”`,
                               );
                               if (selectedEventId === subEvent.id)
                                 onSelect(null);
@@ -737,21 +901,23 @@ function EventStructureEditor({
                     className={styles.addSubEvent}
                     onClick={() => {
                       const id = crypto.randomUUID();
-                      onChange((current) =>
-                        current.map((item) => ({
-                          ...item,
-                          events: item.events.map((parent) =>
-                            parent.id === event.id
-                              ? {
-                                  ...parent,
-                                  subEvents: [
-                                    ...parent.subEvents,
-                                    { id, name: "新子事件", description: "" },
-                                  ],
-                                }
-                              : parent,
-                          ),
-                        })),
+                      onChange(
+                        (current) =>
+                          current.map((item) => ({
+                            ...item,
+                            events: item.events.map((parent) =>
+                              parent.id === event.id
+                                ? {
+                                    ...parent,
+                                    subEvents: [
+                                      ...parent.subEvents,
+                                      { id, name: "新子事件", description: "" },
+                                    ],
+                                  }
+                                : parent,
+                            ),
+                          })),
+                        `在“${event.name}”内新增子事件`,
                       );
                       onSelect(id);
                     }}
@@ -767,23 +933,25 @@ function EventStructureEditor({
               <button
                 className={styles.addEvent}
                 onClick={() =>
-                  onChange((current) =>
-                    current.map((item) =>
-                      item.id === slot.id
-                        ? {
-                            ...item,
-                            events: [
-                              ...item.events,
-                              {
-                                id: crypto.randomUUID(),
-                                name: "新事件",
-                                description: "",
-                                subEvents: [],
-                              },
-                            ],
-                          }
-                        : item,
-                    ),
+                  onChange(
+                    (current) =>
+                      current.map((item) =>
+                        item.id === slot.id
+                          ? {
+                              ...item,
+                              events: [
+                                ...item.events,
+                                {
+                                  id: crypto.randomUUID(),
+                                  name: "新事件",
+                                  description: "",
+                                  subEvents: [],
+                                },
+                              ],
+                            }
+                          : item,
+                      ),
+                    `在“${slot.name}”内新增父事件`,
                   )
                 }
                 type="button"
@@ -837,11 +1005,14 @@ export function WorldflowClient({
   );
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [contextExpanded, setContextExpanded] = useState(false);
+  const [shotSetupExpanded, setShotSetupExpanded] = useState(false);
   const [assets, setAssets] = useState(initialAssets);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [message, setMessage] = useState("");
+  const [undoSnapshot, setUndoSnapshot] = useState<UndoSnapshot | null>(null);
+  const [removingAssetId, setRemovingAssetId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const isArchitect = user.role === "architect";
   const isOwner = selectedSource?.owner_id === user.id;
@@ -882,6 +1053,10 @@ export function WorldflowClient({
     );
   }
 
+  function removeAssetFromState(assetId: string) {
+    setAssets((items) => items.filter((item) => item.id !== assetId));
+  }
+
   function openWorld(world: WorldflowWorld) {
     const nextState = normalizeState(world.workflow_state);
     setSelectedId(world.id);
@@ -890,6 +1065,8 @@ export function WorldflowClient({
     setActiveStep(world.current_step);
     setActiveShotId(world.workflow_state.shots[0]?.id ?? "");
     selectEvent(null);
+    setShotSetupExpanded(false);
+    setUndoSnapshot(null);
     setMessage("");
     window.history.replaceState(null, "", `/worldflow?world=${world.id}`);
   }
@@ -898,6 +1075,46 @@ export function WorldflowClient({
     if (!state || !isOwner) return;
     setState(update(state));
     setMessage("尚未保存");
+  }
+
+  function updateStructure(
+    label: string,
+    update: (current: WorldflowState) => WorldflowState,
+  ) {
+    if (!state || !isOwner) return;
+    setUndoSnapshot({
+      activeShotId,
+      label,
+      selectedEventId,
+      state,
+    });
+    updateState(update);
+  }
+
+  function undoStructureChange() {
+    if (!undoSnapshot) return;
+    setState(undoSnapshot.state);
+    setActiveShotId(undoSnapshot.activeShotId);
+    setSelectedEventId(undoSnapshot.selectedEventId);
+    setUndoSnapshot(null);
+    setMessage("已撤回上一步结构调整，保存后生效");
+  }
+
+  async function removeLinkedAsset(assetId: string) {
+    setRemovingAssetId(assetId);
+    try {
+      const deleteError = await deleteWorldflowAsset(assetId);
+      if (deleteError) {
+        setMessage(deleteError);
+      } else {
+        setAssets((items) => items.filter((item) => item.id !== assetId));
+        setMessage("已从内容编排中移除素材");
+      }
+    } catch {
+      setMessage("移除素材失败，请重试。");
+    } finally {
+      setRemovingAssetId(null);
+    }
   }
 
   function save() {
@@ -1106,7 +1323,12 @@ export function WorldflowClient({
     stepStatus !== "review" &&
     stepStatus !== "approved";
   const productionEditable = isOwner && selectedSource.current_step >= 5;
-  const editable = activeStep >= 5 ? productionEditable : milestoneEditable;
+  const continuingShotEdit =
+    isOwner && activeStep === 3 && selectedSource.current_step >= 5;
+  const editable =
+    activeStep >= 5
+      ? productionEditable
+      : milestoneEditable || continuingShotEdit;
   const canSubmitMilestone =
     isOwner &&
     activeStep <= selectedSource.current_step &&
@@ -1124,9 +1346,10 @@ export function WorldflowClient({
     mutator: (
       slots: NonNullable<typeof eventSystem>["timeSlots"],
     ) => NonNullable<typeof eventSystem>["timeSlots"],
+    undoLabel?: string,
   ) {
     if (!activeShot || !eventSystem) return;
-    updateState((current) => ({
+    const update = (current: WorldflowState) => ({
       ...current,
       eventSystems: {
         ...current.eventSystems,
@@ -1135,7 +1358,9 @@ export function WorldflowClient({
           timeSlots: mutator(eventSystem.timeSlots),
         },
       },
-    }));
+    });
+    if (undoLabel) updateStructure(undoLabel, update);
+    else updateState(update);
   }
 
   function updateEventSubject(
@@ -1168,7 +1393,8 @@ export function WorldflowClient({
       setActiveShotId(remaining[0]?.id ?? "");
       selectEvent(null);
     }
-    updateState((current) => {
+    const deletedShot = state.shots.find((shot) => shot.id === shotId);
+    updateStructure(`删除镜头“${deletedShot?.name || "未命名镜头"}”`, (current) => {
       const eventSystems = { ...current.eventSystems };
       delete eventSystems[shotId];
       return {
@@ -1178,6 +1404,35 @@ export function WorldflowClient({
       };
     });
   }
+
+  function addShot() {
+    if (!state) return;
+    const id = crypto.randomUUID();
+    updateStructure("新增镜头", (current) => ({
+      ...current,
+      shots: [
+        ...current.shots,
+        {
+          id,
+          name: `镜头 ${String.fromCharCode(65 + current.shots.length)}`,
+          description: "",
+        },
+      ],
+      eventSystems: {
+        ...current.eventSystems,
+        [id]: { version: 1, timeSlots: [] },
+      },
+    }));
+    setActiveShotId(id);
+    selectEvent(null);
+    setShotSetupExpanded(true);
+  }
+
+  const activeShotImageCount = activeShot
+    ? assetsForScope(3, { shotId: activeShot.id }).filter(
+        (asset) => asset.media_type === "image",
+      ).length
+    : 0;
 
   return (
     <main className={styles.page}>
@@ -1373,27 +1628,7 @@ export function WorldflowClient({
             {editable ? (
               <button
                 className={styles.secondary}
-                onClick={() =>
-                  updateState((current) => {
-                    const id = crypto.randomUUID();
-                    setActiveShotId(id);
-                    return {
-                      ...current,
-                      shots: [
-                        ...current.shots,
-                        {
-                          id,
-                          name: `镜头 ${String.fromCharCode(65 + current.shots.length)}`,
-                          description: "",
-                        },
-                      ],
-                      eventSystems: {
-                        ...current.eventSystems,
-                        [id]: { version: 1, timeSlots: [] },
-                      },
-                    };
-                  })
-                }
+                onClick={addShot}
                 type="button"
               >
                 <Plus size={16} />
@@ -1409,6 +1644,7 @@ export function WorldflowClient({
                   onClick={() => {
                     setActiveShotId(shot.id);
                     selectEvent(null);
+                    setShotSetupExpanded(false);
                   }}
                   type="button"
                 >
@@ -1431,6 +1667,88 @@ export function WorldflowClient({
               </article>
             ))}
           </div>
+        </section>
+      ) : null}
+
+      {activeStep >= 5 && activeShot ? (
+        <section className={styles.shotFoundation}>
+          <header>
+            <div>
+              <span>ACTIVE SHOT FOUNDATION</span>
+              <strong>{activeShot.name || "未命名镜头"}</strong>
+              <small data-required={activeShotImageCount === 0}>
+                {activeShotImageCount
+                  ? `${activeShotImageCount} 张起始图片`
+                  : "需要至少 1 张起始图片"}
+              </small>
+            </div>
+            <button
+              aria-expanded={shotSetupExpanded}
+              className={styles.secondary}
+              onClick={() => setShotSetupExpanded((expanded) => !expanded)}
+              type="button"
+            >
+              {shotSetupExpanded ? (
+                <ChevronUp size={16} />
+              ) : (
+                <ChevronDown size={16} />
+              )}
+              {shotSetupExpanded ? "收起镜头基础" : "编辑镜头基础"}
+            </button>
+          </header>
+          {shotSetupExpanded ? (
+            <div>
+              <label>
+                镜头名称
+                <input
+                  disabled={!productionEditable}
+                  onChange={(event) =>
+                    updateState((current) => ({
+                      ...current,
+                      shots: current.shots.map((shot) =>
+                        shot.id === activeShot.id
+                          ? { ...shot, name: event.target.value }
+                          : shot,
+                      ),
+                    }))
+                  }
+                  value={activeShot.name}
+                />
+              </label>
+              <label>
+                镜头描述
+                <textarea
+                  disabled={!productionEditable}
+                  onChange={(event) =>
+                    updateState((current) => ({
+                      ...current,
+                      shots: current.shots.map((shot) =>
+                        shot.id === activeShot.id
+                          ? { ...shot, description: event.target.value }
+                          : shot,
+                      ),
+                    }))
+                  }
+                  value={activeShot.description}
+                />
+              </label>
+              <MaterialUploader
+                assets={assetsForScope(3, { shotId: activeShot.id })}
+                beforeUpload={saveBeforeMaterialUpload}
+                canUpload={productionEditable}
+                mediaKind="image"
+                onDeleted={removeAssetFromState}
+                onUploaded={(asset) =>
+                  setAssets((items) => [asset, ...items])
+                }
+                shotId={activeShot.id}
+                step={3}
+                targetLabel={`镜头 / ${activeShot.name || "未命名镜头"}`}
+                title="镜头起始图片"
+                worldId={selectedSource.id}
+              />
+            </div>
+          ) : null}
         </section>
       ) : null}
 
@@ -1480,8 +1798,10 @@ export function WorldflowClient({
               beforeUpload={saveBeforeMaterialUpload}
               assets={assetsForScope(1)}
               canUpload={editable}
+              onDeleted={removeAssetFromState}
               onUploaded={(asset) => setAssets((items) => [asset, ...items])}
               step={1}
+              targetLabel={`${selectedSource.name} / 世界设定`}
               title="世界参考素材"
               worldId={selectedSource.id}
             />
@@ -1506,8 +1826,10 @@ export function WorldflowClient({
               beforeUpload={saveBeforeMaterialUpload}
               assets={assetsForScope(2)}
               canUpload={editable}
+              onDeleted={removeAssetFromState}
               onUploaded={(asset) => setAssets((items) => [asset, ...items])}
               step={2}
+              targetLabel={`${selectedSource.name} / 风格基准`}
               title="风格基准候选"
               worldId={selectedSource.id}
             />
@@ -1551,14 +1873,7 @@ export function WorldflowClient({
                     {editable && state.shots.length > 1 ? (
                       <button
                         aria-label="删除镜头"
-                        onClick={() =>
-                          updateState((current) => ({
-                            ...current,
-                            shots: current.shots.filter(
-                              (item) => item.id !== shot.id,
-                            ),
-                          }))
-                        }
+                        onClick={() => deleteShot(shot.id)}
                         type="button"
                       >
                         <Trash2 size={16} />
@@ -1570,11 +1885,13 @@ export function WorldflowClient({
                     assets={assetsForScope(3, { shotId: shot.id })}
                     canUpload={editable}
                     mediaKind="mixed"
+                    onDeleted={removeAssetFromState}
                     onUploaded={(asset) =>
                       setAssets((items) => [asset, ...items])
                     }
                     shotId={shot.id}
                     step={3}
+                    targetLabel={`镜头 / ${shot.name || "未命名镜头"}`}
                     title={`${shot.name || "未命名镜头"}的起始图片`}
                     worldId={selectedSource.id}
                   />
@@ -1584,26 +1901,7 @@ export function WorldflowClient({
             {editable ? (
               <button
                 className={styles.dashed}
-                onClick={() =>
-                  updateState((current) => {
-                    const id = crypto.randomUUID();
-                    return {
-                      ...current,
-                      shots: [
-                        ...current.shots,
-                        {
-                          id,
-                          name: `镜头 ${String.fromCharCode(65 + current.shots.length)}`,
-                          description: "",
-                        },
-                      ],
-                      eventSystems: {
-                        ...current.eventSystems,
-                        [id]: { version: 1, timeSlots: [] },
-                      },
-                    };
-                  })
-                }
+                onClick={addShot}
                 type="button"
               >
                 <Plus size={18} />
@@ -1759,10 +2057,12 @@ export function WorldflowClient({
                         canUpload={editable}
                         characterId={character.id}
                         mediaKind="image"
+                        onDeleted={removeAssetFromState}
                         onUploaded={(asset) =>
                           setAssets((items) => [asset, ...items])
                         }
                         step={4}
+                        targetLabel={`角色 / ${character.name || "未命名角色"}`}
                         title={`${character.name || "未命名角色"}的形象图片`}
                         worldId={selectedSource.id}
                       />
@@ -1847,21 +2147,23 @@ export function WorldflowClient({
                     className={styles.dashed}
                     onClick={() => {
                       const id = crypto.randomUUID();
-                      updateEventSystem((slots) =>
-                        slots.map((slot) => ({
-                          ...slot,
-                          events: slot.events.map((event) =>
-                            event.id === selectedParentEvent.id
-                              ? {
-                                  ...event,
-                                  subEvents: [
-                                    ...event.subEvents,
-                                    { id, name: "新子事件", description: "" },
-                                  ],
-                                }
-                              : event,
-                          ),
-                        })),
+                      updateEventSystem(
+                        (slots) =>
+                          slots.map((slot) => ({
+                            ...slot,
+                            events: slot.events.map((event) =>
+                              event.id === selectedParentEvent.id
+                                ? {
+                                    ...event,
+                                    subEvents: [
+                                      ...event.subEvents,
+                                      { id, name: "新子事件", description: "" },
+                                    ],
+                                  }
+                                : event,
+                            ),
+                          })),
+                        `在“${selectedParentEvent.name}”内新增子事件`,
                       );
                       selectEvent(id);
                     }}
@@ -1879,11 +2181,13 @@ export function WorldflowClient({
                   })}
                   canUpload={editable}
                   eventId={selectedEvent.id}
+                  onDeleted={removeAssetFromState}
                   onUploaded={(asset) =>
                     setAssets((items) => [asset, ...items])
                   }
                   shotId={activeShot.id}
                   step={5}
+                  targetLabel={`${activeShot.name} / ${selectedTimeSlot?.name || "未命名时段"} / ${selectedParentEvent.name}${eventSelection?.isSubEvent ? ` / ${selectedEvent.name}` : ""}`}
                   title={
                     eventSelection?.isSubEvent
                       ? "子事件参考素材"
@@ -1940,6 +2244,19 @@ export function WorldflowClient({
             </div>
             {selectedEvent && selectedParentEvent ? (
               <>
+                <section className={styles.selectionSummary}>
+                  <span>当前素材关联位置</span>
+                  <strong>
+                    {activeShot.name} / {selectedTimeSlot?.name || "未命名时段"} /{" "}
+                    {selectedParentEvent.name}
+                    {eventSelection?.isSubEvent
+                      ? ` / 子事件：${selectedEvent.name}`
+                      : " / 父事件"}
+                  </strong>
+                  <p>
+                    下方新增的参考、图片和视频只会进入这个位置；切换表格单元后，关联位置会同步更新。
+                  </p>
+                </section>
                 <section className={styles.context}>
                   <header>
                     <Layers3 size={19} />
@@ -2064,11 +2381,13 @@ export function WorldflowClient({
                       canUpload={productionEditable}
                       eventId={selectedEvent.id}
                       mediaKind="image"
+                      onDeleted={removeAssetFromState}
                       onUploaded={(asset) =>
                         setAssets((items) => [asset, ...items])
                       }
                       shotId={activeShot.id}
                       step={6}
+                      targetLabel={`${activeShot.name} / ${selectedTimeSlot?.name || "未命名时段"} / ${selectedParentEvent.name}${eventSelection?.isSubEvent ? ` / ${selectedEvent.name}` : ""}`}
                       title={`${eventSelection?.isSubEvent ? "子事件" : "父事件"}图片版本`}
                       worldId={selectedSource.id}
                     />
@@ -2100,11 +2419,13 @@ export function WorldflowClient({
                       canUpload={productionEditable}
                       eventId={selectedEvent.id}
                       mediaKind="video"
+                      onDeleted={removeAssetFromState}
                       onUploaded={(asset) =>
                         setAssets((items) => [asset, ...items])
                       }
                       shotId={activeShot.id}
                       step={7}
+                      targetLabel={`${activeShot.name} / ${selectedTimeSlot?.name || "未命名时段"} / ${selectedParentEvent.name}${eventSelection?.isSubEvent ? ` / ${selectedEvent.name}` : ""}`}
                       title={`${eventSelection?.isSubEvent ? "子事件" : "父事件"}视频版本`}
                       worldId={selectedSource.id}
                     />
@@ -2155,10 +2476,10 @@ export function WorldflowClient({
                           </small>
                           <strong>{item.eventName}</strong>
                           <p>
-                            {item.isSubEvent
-                              ? `子事件 · 继承自 ${item.parentEventName}`
-                              : "父事件"}{" "}
-                            · V{item.asset.version}
+                            完整位置：{item.shotName} / {item.timeSlotName} /{" "}
+                            {item.parentEventName}
+                            {item.isSubEvent ? ` / ${item.eventName}` : ""} · V
+                            {item.asset.version}
                           </p>
                           <p>
                             {item.asset.source_type === "cloud"
@@ -2166,6 +2487,21 @@ export function WorldflowClient({
                               : "本地上传"}{" "}
                             · {item.asset.file_name}
                           </p>
+                          {isOwner ? (
+                            <button
+                              className={styles.removeSequenceAsset}
+                              disabled={removingAssetId === item.asset.id}
+                              onClick={() =>
+                                void removeLinkedAsset(item.asset.id)
+                              }
+                              type="button"
+                            >
+                              <Trash2 size={15} />
+                              {removingAssetId === item.asset.id
+                                ? "移除中…"
+                                : "从编排移除"}
+                            </button>
+                          ) : null}
                         </div>
                       </li>
                     ))}
@@ -2192,6 +2528,17 @@ export function WorldflowClient({
               : "当前内容为只读。")}
         </span>
         <div>
+          {isOwner && editable && undoSnapshot ? (
+            <button
+              className={styles.secondary}
+              disabled={pending}
+              onClick={undoStructureChange}
+              type="button"
+            >
+              <Undo2 size={16} />
+              撤回：{undoSnapshot.label}
+            </button>
+          ) : null}
           {isOwner && stepStatus === "approved" && activeStep >= 5 ? (
             <button
               className={styles.secondary}

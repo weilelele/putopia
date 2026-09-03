@@ -64,7 +64,8 @@ export async function POST(request: Request) {
     >
     stepStatuses?: Record<string, string>
   }
-  if (step < 5 && ['review', 'approved'].includes(state.stepStatuses?.[String(step)] ?? '')) {
+  const continuingShotEdit = step === 3 && world.current_step >= 5
+  if (step < 5 && !continuingShotEdit && ['review', 'approved'].includes(state.stepStatuses?.[String(step)] ?? '')) {
     return NextResponse.json({ error: '当前步骤为只读状态，不能添加素材。' }, { status: 409 })
   }
   if (step === 6 && media.mediaType !== 'image') {
