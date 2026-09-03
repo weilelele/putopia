@@ -5,9 +5,12 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
 import { sendPushToUser } from '@/lib/push/apns'
 import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types/database'
+import { isPublishedChatRoom, readDreamcatcherChat } from '@/lib/dreamcatcher-chat'
+import { CHAT_COOLDOWN_MS, validateChatMessage } from '@/lib/dreamcatcher-chat-model'
 
 // Path to revalidate when a thread changes (only device threads have a route today)
 function subjectPath(type: CommentSubjectType, id: string): string | null {
+  if (type === 'dreamcatcher') return '/worlds/live'
   if (type === 'device') return '/devices'
   if (type === 'device_batch') return `/devices/batches/${id}/discussion`
   if (type === 'intel')  return `/intel/${id}`
@@ -22,6 +25,7 @@ const SUBJECT_LABEL: Record<CommentSubjectType, string> = {
   device_batch: 'Device Batch',
   intel:  'intel report',
   world:  'world',
+  dreamcatcher: 'Dreamcatcher',
 }
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
@@ -30,6 +34,8 @@ export async function getComments(
   subjectType: CommentSubjectType,
   subjectId: string,
 ): Promise<Comment[]> {
+  // Preserve this legacy reader's oldest-first contract; the room GET API is newest-first.
+  if (subjectType === 'dreamcatcher') return ((await readDreamcatcherChat(subjectId, null))?.messages ?? []).toReversed()
   const admin = createAdminClient()
   const { data } = await (admin.from('comments' as never) as ReturnType<typeof admin.from>)
     .select('id, created_at, subject_type, subject_id, author_id, author_name, author_avatar_url, body, is_visible, parent_id, image_paths')
@@ -99,6 +105,11 @@ export async function getCommentCountsBulk(
   subjectIds: string[],
 ): Promise<Record<string, number>> {
   if (!subjectIds.length) return {}
+  if (subjectType === 'dreamcatcher') {
+    const visible = await Promise.all(subjectIds.slice(0, 100).map(async (id) => await isPublishedChatRoom(id) ? id : null))
+    subjectIds = visible.filter((id): id is string => id !== null)
+    if (!subjectIds.length) return {}
+  }
   const admin = createAdminClient()
   const { data } = await (admin.from('comments' as never) as ReturnType<typeof admin.from>)
     .select('subject_id')
@@ -120,6 +131,13 @@ export async function postComment(
   body: string,
   opts?: { parentId?: string | null; asProfileId?: string | null; subjectTitle?: string; imagePaths?: string[] },
 ): Promise<{ error: string | null; data: Comment | null }> {
+  if (subjectType === 'dreamcatcher') {
+    const invalid = validateChatMessage(body)
+    if (invalid) return { error: invalid, data: null }
+    if (opts?.asProfileId || opts?.parentId || opts?.imagePaths?.length) {
+      return { error: 'Room chat supports messages posted as yourself.', data: null }
+    }
+  }
   const text = body.trim()
   if (!text) return { error: 'Empty comment', data: null }
 
@@ -143,6 +161,22 @@ export async function postComment(
   let postedById: string | null = null
 
   const admin = createAdminClient()
+
+  if (subjectType === 'dreamcatcher') {
+    if (!caller) return { error: 'Complete your profile before posting.', data: null }
+    try {
+      if (!await isPublishedChatRoom(subjectId)) return { error: 'This Dreamcatcher is no longer public.', data: null }
+      // Basic per-user/per-room flood protection using persisted messages.
+      // This is a best-effort cooldown, not an atomic distributed rate limiter.
+      const { data: recent, error: recentError } = await admin.from('comments' as never)
+        .select('id').eq('subject_type', 'dreamcatcher').eq('subject_id', subjectId)
+        .eq('author_id', user.id).gte('created_at', new Date(Date.now() - CHAT_COOLDOWN_MS).toISOString()).limit(1)
+      if (recentError) return { error: 'Could not send the message. Please try again.', data: null }
+      if (recent?.length) return { error: 'Please wait a few seconds before sending another message.', data: null }
+    } catch {
+      return { error: 'Could not check this Dreamcatcher. Please try again.', data: null }
+    }
+  }
 
   if (opts?.asProfileId && opts.asProfileId !== user.id) {
     if (caller?.role !== 'architect') {

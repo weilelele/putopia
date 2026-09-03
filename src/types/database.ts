@@ -45,7 +45,7 @@ export type VoyagerProfileUpdate = Partial<Pick<
 
 // ---------- comments ----------
 // Persistent comment threads. Generic: one table backs device / intel / world threads.
-export type CommentSubjectType = 'device' | 'device_batch' | 'intel' | 'world'
+export type CommentSubjectType = 'device' | 'device_batch' | 'intel' | 'world' | 'dreamcatcher'
 
 export type Comment = {
   id: string

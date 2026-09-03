@@ -1,0 +1,34 @@
+.controls {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+  z-index: 3;
+  background: var(--color-deep);
+}
+
+.unavailable {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--s-4);
+  color: var(--color-star);
+  background: var(--color-deep);
+  font-size: var(--fs-caption);
+}
+
+.metadata {
+  background: var(--color-deep);
+}
+
+.paused, .paused *, .paused::before, .paused::after {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Override the old, more-specific reconnection animation selectors too. */
+  .frame *, .frame *::before, .frame *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
