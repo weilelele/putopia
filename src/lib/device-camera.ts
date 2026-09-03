@@ -52,3 +52,8 @@ export function isCameraStatusMessage(value: unknown, binding: DeviceCameraBindi
     && message.channelId === binding.channelId && message.bandId === binding.bandId
     && typeof message.muted === 'boolean' && states.has(message.state as CameraPlaybackState)
 }
+
+/** A normal clip handoff may buffer briefly without ending the live session. */
+export function shouldShowCameraLive(state: CameraPlaybackState, hasPlayed: boolean) {
+  return state === 'playing' || (state === 'buffering' && hasPlayed)
+}

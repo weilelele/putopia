@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isDeviceCameraBinding, parseCameraOrigin, buildCameraEmbedUrl, isCameraStatusMessage, type DeviceCameraBinding } from './device-camera'
+import { isDeviceCameraBinding, parseCameraOrigin, buildCameraEmbedUrl, isCameraStatusMessage, shouldShowCameraLive, type DeviceCameraBinding } from './device-camera'
 import { createBatchConfigDraft, normalizeBatchConfigDraft, parseBatchConfigDrafts, validateBatchConfigDraft } from './device-batch-config-drafts'
 import { getDeviceBatch } from './__fixtures__/device-batches'
 import { rowToBatch } from './device-batch-records'
@@ -29,6 +29,14 @@ describe('Device camera embedding', () => {
     const message = { type: 'cosmo.embed.status', version: 1, channelId: camera.channelId, bandId: camera.bandId, state: 'playing', muted: true }
     expect(isCameraStatusMessage(message, camera)).toBe(true)
     for (const patch of [{ version: 2 }, { bandId: 'other' }, { state: 'live' }, { muted: 'true' }]) expect(isCameraStatusMessage({ ...message, ...patch }, camera)).toBe(false)
+  })
+  it('keeps LIVE visible through a normal post-start buffering handoff', () => {
+    expect(shouldShowCameraLive('playing', false)).toBe(true)
+    expect(shouldShowCameraLive('buffering', true)).toBe(true)
+    expect(shouldShowCameraLive('buffering', false)).toBe(false)
+    for (const state of ['ready', 'autoplay-blocked', 'unavailable', 'error', 'paused'] as const) {
+      expect(shouldShowCameraLive(state, true)).toBe(false)
+    }
   })
   it('round-trips the optional binding through draft validation and normalization', () => {
     const batch = { ...getDeviceBatch('cairo-batch-01')!, liveCamera: camera }

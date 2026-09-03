@@ -96,6 +96,15 @@ The visible clock comes from that timeline, never an independent Putopia clock.
 This is approximate realtime schedule alignment (0.5-second correction threshold),
 not frame-accurate synchronization or a captured OBS video stream.
 
+The camera also reuses the existing observation-room `signalFeed` presentation:
+continuous low-level analog jitter/flutter plus a 920ms reacquisition burst at a
+random 45–90 second interval. This is a CSS-only layer over the iframe. Unlike the
+old Dreamcatcher implementation, it never changes the active asset; all clip changes
+remain controlled by Cosmo's synchronized schedule. A short `buffering` state during
+an A/B clip handoff keeps LIVE visible after playback has started. Error, paused,
+unavailable and autoplay-blocked states still remove LIVE. Reduced-motion preference
+disables the glitch animations.
+
 ## Verification
 
 `npm run design:check`, `npx tsc --noEmit`, `npm run lint`, `npm test` and
