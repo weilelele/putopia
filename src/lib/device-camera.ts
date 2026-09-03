@@ -41,7 +41,7 @@ export function parseCameraOrigin(value: string | undefined, allowLocal: boolean
 
 export function buildCameraEmbedUrl(source: DeviceCameraSource, parentOrigin: string) {
   const url = new URL(`/embed/${source.binding.channelId}/${source.binding.bandId}`, source.embedOrigin)
-  url.search = new URLSearchParams({ autoplay: '1', muted: '1', clock: '0', fit: source.binding.fit, parentOrigin }).toString()
+  url.search = new URLSearchParams({ autoplay: '1', muted: '1', clock: '1', controls: '0', fit: source.binding.fit, parentOrigin }).toString()
   return url.href
 }
 

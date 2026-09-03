@@ -129,10 +129,7 @@ export function DeviceLiveRoom({
         </button>
       </nav>
 
-      {camera ? <CosmoCameraEmbed source={camera}>
-        <span>{batch.name.toUpperCase()}</span>
-        <span>{DEVICE_BATCH_STATUS[batch.status].label}</span>
-      </CosmoCameraEmbed> : <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}>
+      {camera ? <CosmoCameraEmbed source={camera} location={batch.location} /> : <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}>
         <span>{batch.name.toUpperCase()}</span>
         <span className={styles.liveMetaItem}><span className={styles.dot} style={{ background: statusDotColor(batch.status) }} />{DEVICE_BATCH_STATUS[batch.status].label}</span>
       </LiveFeedPlaceholder>}
