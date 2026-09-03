@@ -54,7 +54,8 @@ export async function POST(request: Request) {
     >
     stepStatuses?: Record<string, string>
   }
-  if (step < 5 && ['review', 'approved'].includes(state.stepStatuses?.[String(step)] ?? '')) {
+  const continuingShotEdit = step === 3 && world.current_step >= 5
+  if (step < 5 && !continuingShotEdit && ['review', 'approved'].includes(state.stepStatuses?.[String(step)] ?? '')) {
     return NextResponse.json({ error: '当前步骤为只读状态，不能关联素材。' }, { status: 409 })
   }
   if (shotId && !state.shots?.some((shot) => shot.id === shotId)) return NextResponse.json({ error: '镜头无效。' }, { status: 400 })
@@ -66,6 +67,28 @@ export async function POST(request: Request) {
       : false
   if ((step >= 6 && (!shotId || !eventId)) || (eventId && !eventExists)) {
     return NextResponse.json({ error: '请选择有效的镜头和事件。' }, { status: 400 })
+  }
+
+  let duplicateQuery = admin
+    .from('worldflow_assets')
+    .select('id')
+    .eq('world_id', worldId)
+    .eq('step', step)
+    .eq('source_type', 'cloud')
+    .eq('source_provider', body.provider)
+    .eq('source_asset_id', body.sourceAssetId)
+  duplicateQuery = shotId ? duplicateQuery.eq('shot_id', shotId) : duplicateQuery.is('shot_id', null)
+  duplicateQuery = eventId ? duplicateQuery.eq('event_id', eventId) : duplicateQuery.is('event_id', null)
+  duplicateQuery = characterId ? duplicateQuery.eq('character_id', characterId) : duplicateQuery.is('character_id', null)
+  const { data: duplicate, error: duplicateError } = await duplicateQuery.limit(1).maybeSingle()
+  if (duplicateError) {
+    return NextResponse.json({ error: duplicateError.message }, { status: 500 })
+  }
+  if (duplicate) {
+    return NextResponse.json(
+      { error: '这个素材已经关联到当前位置。', existingAssetId: duplicate.id },
+      { status: 409 },
+    )
   }
 
   let mediaType: 'image' | 'video'
