@@ -1,3 +1,5 @@
+import type { DeviceCameraBinding } from './device-camera'
+
 export type DeviceBatchStatus = 'survey' | 'claim_open' | 'distribution' | 'active'
 export type DistributionStageStatus = 'completed' | 'current' | 'upcoming'
 
@@ -55,6 +57,7 @@ export type BatchInventory = {
 }
 
 export type DeviceBatch = {
+  liveCamera?: DeviceCameraBinding
   slug: string
   code: string
   name: string

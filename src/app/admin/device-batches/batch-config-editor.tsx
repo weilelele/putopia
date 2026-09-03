@@ -16,6 +16,7 @@ import {
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveTabs } from '@/components/archive-tabs'
+import { BatchCameraFields } from './batch-camera-fields'
 import {
   saveDeviceBatchRecord,
 } from '@/lib/actions/device-batch-admin'
@@ -513,6 +514,7 @@ export function BatchConfigEditor({
               <p>Update the Batch state and the short information visible across the archive.</p>
             </div>
           </div>
+          <BatchCameraFields value={draft.liveCamera} onChange={(liveCamera) => updateDraft({ liveCamera })} />
           <div className={styles.formCard}>
             <div className={styles.threeColumnGrid}>
               <ArchiveField htmlFor="batch-name" label="BATCH NAME">

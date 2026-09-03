@@ -18,6 +18,8 @@ import { BatchDiscussionBoard } from '../_components/batch-discussion-board'
 import { FollowBatchButton } from '../_components/batch-actions'
 import { useFollowedBatchSlugs } from '../_components/use-followed-batches'
 import { LiveFeedPlaceholder } from '@/components/live-feed-placeholder'
+import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
+import type { DeviceCameraSource } from '@/lib/device-camera'
 import {
   DEVICE_BATCH_STATUS,
   formatBatchPrice,
@@ -59,12 +61,14 @@ export function DeviceLiveRoom({
   canPost,
   discussionPosts,
   ownedConsole,
+  camera,
 }: {
   batch: DeviceBatch
   batches: DeviceBatch[]
   canPost: boolean
   discussionPosts: DeviceBatchDiscussionPost[]
   ownedConsole: DeviceConsoleRecord | null
+  camera?: DeviceCameraSource | null
 }) {
   const router = useRouter()
   const followedBatchSlugs = useFollowedBatchSlugs()
@@ -125,10 +129,13 @@ export function DeviceLiveRoom({
         </button>
       </nav>
 
-      <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}>
+      {camera ? <CosmoCameraEmbed source={camera}>
+        <span>{batch.name.toUpperCase()}</span>
+        <span>{DEVICE_BATCH_STATUS[batch.status].label}</span>
+      </CosmoCameraEmbed> : <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}>
         <span>{batch.name.toUpperCase()}</span>
         <span className={styles.liveMetaItem}><span className={styles.dot} style={{ background: statusDotColor(batch.status) }} />{DEVICE_BATCH_STATUS[batch.status].label}</span>
-      </LiveFeedPlaceholder>
+      </LiveFeedPlaceholder>}
 
       {(batch.status === 'claim_open' && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
         <div className={styles.paymentHeader}>

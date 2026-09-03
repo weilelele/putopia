@@ -1,0 +1,9 @@
+.camera { border: 1px solid var(--bd-faint); background: var(--color-deep); overflow: hidden; flex-shrink: 0; }
+.viewport { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--color-deep); }
+.frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.status, .details, .actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2); padding: var(--s-2) var(--s-3); font-size: var(--fs-caption); color: var(--color-star-dim); border-top: 1px solid var(--bd-faint); }
+.state { color: var(--color-star); }
+.state[data-playing='true'] { color: var(--color-nucleus); }
+.demo { margin: 0; padding: var(--s-3); font-size: var(--fs-caption); line-height: 1.5; color: var(--color-star); background: var(--color-void); }
+.actions button { min-height: 44px; min-width: 44px; font-size: var(--fs-caption); }
+.details > *, .actions > span { overflow-wrap: anywhere; min-width: 0; }
