@@ -27,26 +27,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   )
 
   // Try to fetch the profile
-  let { data: profile } = await admin
+  const { data: profile } = await admin
     .from('voyager_profiles')
     .select('role, display_name, can_edit_onboarding')
     .eq('id', user.id)
     .single()
 
-  // Profile missing → auto-create as architect (first-time admin setup)
+  // Missing profiles must never gain administrator privileges by visiting a page.
   if (!profile) {
-    const displayName = user.user_metadata?.display_name
-      ?? user.email?.split('@')[0]
-      ?? 'Admin'
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (admin.from('voyager_profiles') as any).insert({
-      id: user.id,
-      display_name: displayName,
-      role: 'architect',
-    })
-
-    profile = { role: 'architect', display_name: displayName, can_edit_onboarding: true }
+    return <ArchiveCard className="p-6">Administrator access is required. Please contact an existing administrator.</ArchiveCard>
   }
 
   const isArchitect       = profile.role === 'architect'
@@ -82,6 +71,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: '/admin/device-batches/blueprints', label: 'STORY LAB' },
         { href: '/admin/intel',       label: 'INTEL'    },
         { href: '/admin/worlds',      label: 'WORLDS'   },
+        { href: '/admin/dreamcatchers', label: 'DREAMCATCHERS' },
         { href: '/admin/voyagers',    label: 'VOYAGERS' },
         { href: '/admin/orders',      label: 'ORDERS'   },
         { href: '/admin/mc-config',   label: 'MC CONFIG' },

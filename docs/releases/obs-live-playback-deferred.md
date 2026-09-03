@@ -1,6 +1,12 @@
 # OBS 直播播放：独立范围，暂不提交上线
 
-## 已确认的产品方向
+## 最新决定（2026-09-02，Worlds 单独恢复）
+
+用户确认：**Worlds 不使用 OBS**，恢复原 Console channel 的状态循环视频和原有画面效果。Device 的 OBS 方案继续暂缓，Device 顶部仍不请求直播素材。
+
+当前恢复范围和验收记录见 [Worlds 状态视频恢复](worlds-state-video-restore.md)。以下内容是之前同时暂缓两个模块的历史记录，不再代表 Worlds 的当前方向。
+
+## 之前确认的产品方向（历史）
 
 - Worlds 和 Device 顶部应播放 Cosmo OBS 输出的连续直播流。
 - 内容编排、设备状态对应场景、片段切换由 Cosmo OBS 侧实现；网站不再用逐条视频 URL 轮播模拟直播。

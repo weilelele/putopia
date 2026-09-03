@@ -14,6 +14,7 @@ const SUBJECT_BASE: Record<CommentSubjectType, string> = {
   device_batch: '/devices/batches',
   intel:  '/intel',
   world:  '/worlds',
+  dreamcatcher: '/worlds/live',
 }
 
 const MAX_IMAGES = 3
@@ -217,7 +218,7 @@ export function CommentThread({
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
               TRANSMISSIONS ARE MEMBERS-ONLY
             </div>
-            <Link href={`/login?redirect=${SUBJECT_BASE[subjectType]}/${subjectId}`} className="btn-primary" style={{ display: 'inline-flex', padding: '0.5rem 1.25rem', fontSize: 'var(--fs-caption)' }}>
+            <Link href={`/login?redirect=${subjectType === 'dreamcatcher' ? '/worlds/live' : `${SUBJECT_BASE[subjectType]}/${subjectId}`}`} className="btn-primary" style={{ display: 'inline-flex', padding: '0.5rem 1.25rem', fontSize: 'var(--fs-caption)' }}>
               LOG IN TO TRANSMIT
             </Link>
           </div>

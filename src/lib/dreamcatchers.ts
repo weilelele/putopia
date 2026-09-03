@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
+import { publicDreamcatchers } from '@/lib/dreamcatcher-publication'
 
 export type DreamcatcherStatus = 'processing' | 'paused' | 'idle' | 'offline' | 'awaiting_signal'
 export type DreamcatcherJobStatus = 'queued' | 'processing' | 'awaiting_dispatch' | 'awaiting_vote' | 'returning' | 'completed' | 'withdrawn' | 'failed'
@@ -29,35 +30,27 @@ export type DreamcatcherRoom = {
   observedAt: number
 }
 
-const FALLBACK_ROOMS: Array<Omit<DreamcatcherRoom, 'observedAt'>> = [
-  { id: 'fallback-kyoto', slug: 'kyoto-02', code: 'DC-KYO-02', name: 'Kyoto Dreamcatcher', city: 'Kyoto', location: 'Kyoto, Japan', timeZone: 'Asia/Tokyo', status: 'processing', roundDurationMinutes: 8, queueCapacity: 50, cameraImagePath: '/assets/concepts/dreamcatcher-live-feed.png', queue: [] },
-  { id: 'fallback-tokyo', slug: 'tokyo-01', code: 'DC-TYO-01', name: 'Tokyo Dreamcatcher', city: 'Tokyo', location: 'Tokyo, Japan', timeZone: 'Asia/Tokyo', status: 'idle', roundDurationMinutes: 9, queueCapacity: 50, cameraImagePath: '/assets/concepts/dreamcatcher-live-feed.png', queue: [] },
-  { id: 'fallback-london', slug: 'london-01', code: 'DC-LON-01', name: 'London Dreamcatcher', city: 'London', location: 'London, United Kingdom', timeZone: 'Europe/London', status: 'paused', roundDurationMinutes: 10, queueCapacity: 50, cameraImagePath: '/assets/concepts/dreamcatcher-live-feed.png', queue: [] },
-]
-
 const ROOM_PRIORITY = ['kyoto-02', 'tokyo-01', 'london-01', 'mexico-city-03']
 
 export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
   const observedAt = Date.now()
-  // New migration may not be applied in every preview yet, so this read degrades
-  // to the same rooms without making preview environments write production data.
+  const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const admin = createAdminClient() as any
-  const { data: rooms, error } = await admin
-    .from('dreamcatchers')
-    .select('id, slug, code, name, city, location, time_zone, status, round_duration_minutes, queue_capacity, camera_image_path')
+  const { data, error } = await (admin.from('dreamcatchers') as any)
+    .select('id, slug, code, name, city, location, time_zone, status, round_duration_minutes, queue_capacity, camera_image_path, is_public')
     .eq('is_public', true)
     .order('created_at', { ascending: true })
-  if (error || !rooms?.length) {
-    return FALLBACK_ROOMS.map((room) => ({ ...room, observedAt }))
-  }
+  if (error) throw new Error('The Dreamcatcher registry is temporarily unavailable.')
+  const rooms = publicDreamcatchers((data ?? []) as Array<Record<string, unknown> & { id: string; is_public: boolean }>)
+  if (!rooms.length) return []
 
-  const { data: jobs } = await admin
-    .from('dreamcatcher_jobs')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: jobs, error: jobsError } = await (admin.from('dreamcatcher_jobs') as any)
     .select('id, dreamcatcher_id, world_id, submitted_by, status, round_number, queued_at, worlds(name, description, discoverer_name)')
     .in('dreamcatcher_id', rooms.map((room: { id: string }) => room.id))
     .in('status', ['queued', 'processing', 'awaiting_dispatch', 'awaiting_vote', 'returning'])
     .order('queued_at', { ascending: true })
+  if (jobsError) throw new Error('The Dreamcatcher queue is temporarily unavailable.')
 
   const mappedRooms: DreamcatcherRoom[] = rooms.map((room: Record<string, unknown>) => ({
     id: room.id as string,
