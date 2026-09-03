@@ -6,12 +6,13 @@ import { ArchiveField } from '@/components/archive-field'
 import { buildCameraEmbedUrl, type DeviceCameraSource } from '@/lib/device-camera'
 import styles from './camera-glitch-lab.module.css'
 
-type EffectId = 'clean' | 'analog' | 'tracking' | 'dropout' | 'hard-tear'
+type EffectId = 'clean' | 'signal-decay' | 'chromatic' | 'glitch-art' | 'static-noise'
 type Settings = {
   strength: number
   jitter: number
   noise: number
   scanlines: number
+  colorShift: number
   flutter: number
   interval: number
   duration: number
@@ -21,17 +22,18 @@ const subscribe = () => () => {}
 const originSnapshot = () => window.location.origin
 const serverOriginSnapshot = () => ''
 const presets: Record<EffectId, { label: string; note: string; settings: Settings }> = {
-  clean: { label: 'CLEAN', note: 'No treatment; use as the visual reference.', settings: { strength: 0, jitter: 0, noise: 0, scanlines: 0, flutter: 0, interval: 60, duration: 920 } },
-  analog: { label: 'ANALOG', note: 'The existing low-level jitter and signal flutter.', settings: { strength: 36, jitter: 5, noise: 14, scanlines: 12, flutter: 8, interval: 68, duration: 920 } },
-  tracking: { label: 'TRACKING', note: 'A rolling horizontal tracking band with light displacement.', settings: { strength: 48, jitter: 4, noise: 18, scanlines: 20, flutter: 10, interval: 24, duration: 760 } },
-  dropout: { label: 'DROPOUT', note: 'Brief desaturation, contrast loss and horizontal signal jump.', settings: { strength: 70, jitter: 8, noise: 28, scanlines: 22, flutter: 20, interval: 54, duration: 920 } },
-  'hard-tear': { label: 'HARD TEAR', note: 'A stronger stepped displacement for rare reacquisition moments.', settings: { strength: 92, jitter: 12, noise: 36, scanlines: 32, flutter: 28, interval: 82, duration: 1180 } },
+  clean: { label: 'CLEAN', note: 'Untreated reference frame.', settings: { strength: 0, jitter: 0, noise: 0, scanlines: 0, colorShift: 0, flutter: 0, interval: 60, duration: 920 } },
+  'signal-decay': { label: 'SIGNAL DECAY', note: 'Full-frame grain, scan loss and unstable contrast.', settings: { strength: 58, jitter: 4, noise: 34, scanlines: 30, colorShift: 10, flutter: 12, interval: 42, duration: 980 } },
+  chromatic: { label: 'CHROMATIC', note: 'Offset colour ghosting with a saturated signal wash.', settings: { strength: 64, jitter: 7, noise: 16, scanlines: 10, colorShift: 62, flutter: 9, interval: 36, duration: 760 } },
+  'glitch-art': { label: 'GLITCH ART', note: 'Horizontal frame tearing, colour ghosting and hard jumps.', settings: { strength: 82, jitter: 14, noise: 28, scanlines: 16, colorShift: 48, flutter: 20, interval: 48, duration: 1120 } },
+  'static-noise': { label: 'STATIC NOISE', note: 'Heavy full-frame static over a drained signal.', settings: { strength: 74, jitter: 3, noise: 56, scanlines: 38, colorShift: 6, flutter: 18, interval: 28, duration: 880 } },
 }
 const controls: { key: keyof Settings; label: string; min: number; max: number; step: number; suffix: string }[] = [
   { key: 'strength', label: 'EFFECT STRENGTH', min: 0, max: 100, step: 1, suffix: '%' },
   { key: 'jitter', label: 'FRAME JITTER', min: 0, max: 16, step: 1, suffix: 'px' },
   { key: 'noise', label: 'NOISE', min: 0, max: 60, step: 1, suffix: '%' },
   { key: 'scanlines', label: 'SCANLINES', min: 0, max: 60, step: 1, suffix: '%' },
+  { key: 'colorShift', label: 'COLOUR SHIFT', min: 0, max: 100, step: 1, suffix: '%' },
   { key: 'flutter', label: 'FLUTTER', min: 0, max: 40, step: 1, suffix: '%' },
   { key: 'interval', label: 'BURST INTERVAL', min: 5, max: 120, step: 1, suffix: 's' },
   { key: 'duration', label: 'BURST DURATION', min: 200, max: 2000, step: 20, suffix: 'ms' },
@@ -39,8 +41,8 @@ const controls: { key: keyof Settings; label: string; min: number; max: number; 
 
 export function CameraGlitchLab({ source }: { source: DeviceCameraSource }) {
   const parentOrigin = useSyncExternalStore(subscribe, originSnapshot, serverOriginSnapshot)
-  const [effect, setEffect] = useState<EffectId>('analog')
-  const [settings, setSettings] = useState<Settings>(presets.analog.settings)
+  const [effect, setEffect] = useState<EffectId>('signal-decay')
+  const [settings, setSettings] = useState<Settings>(presets['signal-decay'].settings)
   const [burst, setBurst] = useState(false)
   const [automatic, setAutomatic] = useState(true)
   const previewStart = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -70,6 +72,8 @@ export function CameraGlitchLab({ source }: { source: DeviceCameraSource }) {
     '--glitch-jitter': `${settings.jitter}px`,
     '--glitch-noise': settings.noise / 100,
     '--glitch-scanlines': settings.scanlines / 100,
+    '--glitch-color': settings.colorShift / 100,
+    '--glitch-hue': `${Math.round(settings.colorShift * 1.4)}deg`,
     '--glitch-flutter': settings.flutter / 100,
     '--glitch-duration': `${settings.duration}ms`,
   } as CSSProperties), [settings])
@@ -101,9 +105,16 @@ export function CameraGlitchLab({ source }: { source: DeviceCameraSource }) {
     <section className={styles.stage} data-burst={burst} data-effect={effect} style={variables}>
       {iframeUrl ? <iframe allow="autoplay" className={styles.embed} referrerPolicy="no-referrer"
         sandbox="allow-scripts allow-same-origin" src={iframeUrl} title="Cosmo glitch preview" /> : null}
+      {iframeUrl ? <iframe aria-hidden allow="autoplay"
+        className={styles.ghostEmbed} referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin"
+        src={iframeUrl} tabIndex={-1} title="Cosmo colour ghost layer" /> : null}
       <span className={styles.noise} aria-hidden />
       <span className={styles.scanlines} aria-hidden />
-      <span className={styles.tracking} aria-hidden />
+      <span className={styles.colorWash} aria-hidden />
+      <span className={`${styles.tear} ${styles.tearOne}`} aria-hidden />
+      <span className={`${styles.tear} ${styles.tearTwo}`} aria-hidden />
+      <span className={`${styles.tear} ${styles.tearThree}`} aria-hidden />
+      <span className={styles.framePulse} aria-hidden />
       <span className={styles.badge}>PREVIEW · {presets[effect].label}</span>
     </section>
 

@@ -118,9 +118,12 @@ No live draft/publish test, physical iOS test or production deployment was perfo
 ## Local glitch lab
 
 With both local services running, open `/dev/camera-glitch-lab`. It uses the same
-real Cosmo Embed but never changes its queue, timing or media. The lab compares
-Clean, Analog, Tracking, Dropout and Hard Tear presets, then exposes strength,
-jitter, noise, scanlines, flutter, automatic-burst interval and burst duration.
+real Cosmo Embed but never changes its queue, timing or media. The lab mirrors
+Signal Dispatch's Clean, Signal Decay, Chromatic, Glitch Art and Static Noise
+families with live CSS approximations, then exposes strength, jitter, noise,
+scanlines, colour shift, flutter, automatic-burst interval and burst duration.
+Noise, scanlines, colour wash and dropout cover the full camera frame; a second
+time-aligned Embed is used only as a visual ghost layer for colour/slice effects.
 `TRIGGER BURST` previews the transient state immediately. The selected values are
 shown as JSON for design review, but are not persisted or applied to Device.
 The route returns 404 in production and is not a configuration/admin surface.
