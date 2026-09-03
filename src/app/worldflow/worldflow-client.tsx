@@ -76,6 +76,16 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function assetMediaUrl(asset: WorldflowAsset) {
+  if (
+    asset.source_type === "cloud" &&
+    asset.source_url?.startsWith("https://")
+  ) {
+    return asset.source_url;
+  }
+  return asset.public_url;
+}
+
 function scrollHorizontal(
   ref: RefObject<HTMLDivElement | null>,
   direction: -1 | 1,
@@ -635,12 +645,16 @@ function MaterialUploader({
               <Image
                 alt={asset.file_name}
                 height={540}
-                src={asset.public_url}
+                src={assetMediaUrl(asset)}
                 unoptimized
                 width={960}
               />
             ) : (
-              <video controls preload="metadata" src={asset.public_url} />
+              <video
+                controls
+                preload="metadata"
+                src={assetMediaUrl(asset)}
+              />
             )}
             <div>
               <strong>{asset.file_name}</strong>
@@ -708,7 +722,7 @@ function ContextAssetRefs({
           alt={asset.file_name}
           height={90}
           key={asset.id}
-          src={asset.public_url}
+          src={assetMediaUrl(asset)}
           unoptimized
           width={160}
         />
@@ -2468,7 +2482,7 @@ export function WorldflowClient({
                         <video
                           controls
                           preload="metadata"
-                          src={item.asset.public_url}
+                          src={assetMediaUrl(item.asset)}
                         />
                         <div>
                           <small>
