@@ -114,3 +114,13 @@ Browser checks cover actual video progress, clip transitions, silent autoplay,
 automatic recovery, read-only admin field display and 390×844 layout. The minimal
 view removes the initially tested sound/reconnect controls.
 No live draft/publish test, physical iOS test or production deployment was performed.
+
+## Local glitch lab
+
+With both local services running, open `/dev/camera-glitch-lab`. It uses the same
+real Cosmo Embed but never changes its queue, timing or media. The lab compares
+Clean, Analog, Tracking, Dropout and Hard Tear presets, then exposes strength,
+jitter, noise, scanlines, flutter, automatic-burst interval and burst duration.
+`TRIGGER BURST` previews the transient state immediately. The selected values are
+shown as JSON for design review, but are not persisted or applied to Device.
+The route returns 404 in production and is not a configuration/admin surface.

@@ -1,0 +1,47 @@
+.page { min-height: 100vh; padding: var(--s-4); background: var(--color-deep); color: var(--color-star); }
+.header { display: flex; justify-content: space-between; gap: var(--s-4); align-items: end; max-width: 1120px; margin: 0 auto var(--s-4); }
+.header span, .header p, .badge, .sectionHead span, .output p { color: var(--color-star-dim); font-size: var(--fs-caption); letter-spacing: .08em; }
+.header h1 { margin: var(--s-1) 0 0; font-size: var(--fs-h3); }
+.header p { max-width: 28rem; margin: 0; text-align: right; }
+.stage { --glitch-strength: .36; --glitch-jitter: 5px; --glitch-noise: .14; --glitch-scanlines: .12; --glitch-flutter: .08; --glitch-duration: 920ms; position: relative; width: min(100%, 1120px); margin: 0 auto; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--bd-orange); background: var(--color-void); }
+.embed { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; transform: scale(calc(1 + var(--glitch-strength) * .02)); transform-origin: center; }
+.noise, .scanlines, .tracking { position: absolute; inset: 0; pointer-events: none; }
+.noise { z-index: 1; opacity: var(--glitch-noise); background: url('/assets/glitch-noise.svg') center / 180px 180px; mix-blend-mode: screen; animation: noiseShift 180ms steps(2, end) infinite; }
+.scanlines { z-index: 1; opacity: var(--glitch-scanlines); background: url('/assets/glitch-scanlines.svg') center / 4px 4px; mix-blend-mode: overlay; }
+.tracking { z-index: 2; top: -20%; bottom: auto; height: 16%; opacity: 0; background: var(--color-star); mix-blend-mode: overlay; }
+.badge { position: absolute; right: var(--s-3); bottom: var(--s-3); z-index: 3; padding: var(--s-1) var(--s-2); background: var(--color-deep); color: var(--color-star); }
+.stage[data-effect='clean'] .embed { filter: none; transform: none; }
+.stage[data-effect='clean'] .noise, .stage[data-effect='clean'] .scanlines { display: none; }
+.stage[data-effect='analog'] .embed { filter: saturate(calc(1 - var(--glitch-strength) * .35)) contrast(calc(1 + var(--glitch-strength) * .22)) brightness(calc(1 - var(--glitch-strength) * .12)); animation: analogJitter 6.4s steps(1, end) infinite, flutter 3.7s ease-in-out infinite; }
+.stage[data-effect='tracking'] .embed { filter: saturate(calc(1 - var(--glitch-strength) * .45)) contrast(calc(1 + var(--glitch-strength) * .3)); animation: trackingJitter 4.6s steps(1, end) infinite, flutter 2.9s ease-in-out infinite; }
+.stage[data-effect='tracking'] .tracking { opacity: calc(var(--glitch-strength) * .16); animation: trackingRoll 4.2s linear infinite; }
+.stage[data-effect='dropout'] .embed { filter: saturate(calc(1 - var(--glitch-strength) * .65)) contrast(calc(1 + var(--glitch-strength) * .4)) brightness(calc(1 - var(--glitch-strength) * .24)); animation: analogJitter 4.8s steps(1, end) infinite, flutter 2.6s ease-in-out infinite; }
+.stage[data-effect='hard-tear'] .embed { filter: saturate(calc(1 - var(--glitch-strength) * .75)) contrast(calc(1 + var(--glitch-strength) * .5)); animation: hardTear 5.8s steps(1, end) infinite, flutter 2.2s ease-in-out infinite; }
+.stage[data-burst='true'] .embed { animation: dropout var(--glitch-duration) steps(1, end) both; }
+.stage[data-burst='true'] .tracking { opacity: calc(var(--glitch-strength) * .38); animation: burstBand var(--glitch-duration) steps(5, end) both; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(18rem, .85fr); gap: var(--s-4); width: min(100%, 1120px); margin: var(--s-4) auto 0; }
+.presets, .parameters, .output { border: 1px solid var(--bd-faint); background: var(--color-void); padding: var(--s-4); }
+.presets h2, .parameters h2, .output h2 { margin: 0; font-size: var(--fs-label); letter-spacing: .1em; }
+.presetGrid { display: grid; gap: var(--s-2); margin-top: var(--s-3); }
+.preset { min-height: 64px; padding: var(--s-3); border: 1px solid var(--bd-faint); background: var(--color-deep); color: var(--color-star); text-align: left; font: inherit; cursor: pointer; }
+.preset[aria-pressed='true'] { border-color: var(--color-nucleus); color: var(--color-nucleus); }
+.preset span { display: block; margin-top: var(--s-1); color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.4; }
+.sectionHead { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.controlGrid { display: grid; gap: var(--s-3); margin-top: var(--s-3); }
+.rangeRow { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem; gap: var(--s-3); align-items: center; }
+.rangeRow input { width: 100%; accent-color: var(--color-nucleus); }
+.rangeRow output { text-align: right; color: var(--color-star); font-size: var(--fs-caption); font-variant-numeric: tabular-nums; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-4); }
+.output { grid-column: 1 / -1; }
+.output pre { overflow-x: auto; margin: var(--s-3) 0; padding: var(--s-3); border: 1px solid var(--bd-faint); background: var(--color-deep); color: var(--color-star); font: var(--fs-caption)/1.6 var(--font-mono); }
+.output p { margin: 0; line-height: 1.5; }
+@keyframes analogJitter { 0%, 89%, 94%, 100% { transform: scale(calc(1 + var(--glitch-strength) * .02)) translate(0); } 90% { transform: scale(calc(1 + var(--glitch-strength) * .025)) translate(calc(var(--glitch-jitter) * -1), 1px); } 91% { transform: scale(calc(1 + var(--glitch-strength) * .02)) translate(var(--glitch-jitter), -1px); } 92% { transform: scale(calc(1 + var(--glitch-strength) * .024)) translate(-2px, 0); } }
+@keyframes trackingJitter { 0%, 72%, 76%, 100% { transform: scale(calc(1 + var(--glitch-strength) * .02)) translateY(0); } 73% { transform: scale(1.025) translateY(calc(var(--glitch-jitter) * -1)); } 74% { transform: scale(1.02) translateY(var(--glitch-jitter)); } }
+@keyframes hardTear { 0%, 81%, 87%, 100% { transform: scale(calc(1 + var(--glitch-strength) * .02)) translateX(0); } 82% { transform: scale(1.035) translateX(calc(var(--glitch-jitter) * -1)); } 84% { transform: scale(1.045) translateX(calc(var(--glitch-jitter) * 1.4)); } 86% { transform: scale(1.025) translateX(calc(var(--glitch-jitter) * -.4)); } }
+@keyframes flutter { 0%, 100% { opacity: 1; } 38% { opacity: calc(1 - var(--glitch-flutter)); } 39% { opacity: 1; } 72% { opacity: calc(1 - var(--glitch-flutter) * .45); } }
+@keyframes noiseShift { 0% { transform: translate(0); } 25% { transform: translate(-2%, 1%); } 50% { transform: translate(1%, -2%); } 75% { transform: translate(2%, 2%); } 100% { transform: translate(-1%, -1%); } }
+@keyframes trackingRoll { from { transform: translateY(0); } to { transform: translateY(750%); } }
+@keyframes dropout { 0%, 100% { opacity: 1; transform: scale(1.02); } 24% { opacity: .68; transform: scale(1.045) translateX(calc(var(--glitch-jitter) * -1)); } 46% { opacity: .36; transform: scale(1.06) translateX(var(--glitch-jitter)); filter: saturate(.08) contrast(1.7) brightness(.44); } 66% { opacity: .78; transform: scale(1.035) translateX(-3px); } }
+@keyframes burstBand { 0% { transform: translateY(0); } 35% { transform: translateY(180%); } 65% { transform: translateY(430%); } 100% { transform: translateY(750%); } }
+@media (max-width: 760px) { .page { padding: var(--s-3); } .header { display: block; } .header p { margin-top: var(--s-2); text-align: left; } .workspace { grid-template-columns: 1fr; } .output { grid-column: auto; } }
+@media (prefers-reduced-motion: reduce) { .stage *, .stage *::before, .stage *::after { animation: none !important; transition: none !important; } }
