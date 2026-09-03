@@ -39,9 +39,14 @@ export function parseCameraOrigin(value: string | undefined, allowLocal: boolean
   } catch { return null }
 }
 
-export function buildCameraEmbedUrl(source: DeviceCameraSource, parentOrigin: string) {
+export function buildCameraEmbedUrl(
+  source: DeviceCameraSource,
+  parentOrigin: string,
+  options: { effects?: boolean } = {},
+) {
   const url = new URL(`/embed/${source.binding.channelId}/${source.binding.bandId}`, source.embedOrigin)
   url.search = new URLSearchParams({ autoplay: '1', muted: '1', clock: '1', controls: '0', fit: source.binding.fit, parentOrigin }).toString()
+  if (options.effects) url.searchParams.set('effects', '1')
   return url.href
 }
 

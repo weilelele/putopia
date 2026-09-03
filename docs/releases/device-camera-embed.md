@@ -96,14 +96,10 @@ The visible clock comes from that timeline, never an independent Putopia clock.
 This is approximate realtime schedule alignment (0.5-second correction threshold),
 not frame-accurate synchronization or a captured OBS video stream.
 
-The camera also reuses the existing observation-room `signalFeed` presentation:
-continuous low-level analog jitter/flutter plus a 920ms reacquisition burst at a
-random 45–90 second interval. This is a CSS-only layer over the iframe. Unlike the
-old Dreamcatcher implementation, it never changes the active asset; all clip changes
-remain controlled by Cosmo's synchronized schedule. A short `buffering` state during
-an A/B clip handoff keeps LIVE visible after playback has started. Error, paused,
-unavailable and autoplay-blocked states still remove LIVE. Reduced-motion preference
-disables the glitch animations.
+A short `buffering` state during an A/B clip handoff keeps LIVE visible after playback
+has started. Error, paused, unavailable and autoplay-blocked states still remove LIVE.
+The optional effects pipeline runs inside Cosmo Embed and never changes the active
+asset; all clip changes remain controlled by Cosmo's synchronized schedule.
 
 ## Verification
 
@@ -120,10 +116,18 @@ No live draft/publish test, physical iOS test or production deployment was perfo
 With both local services running, open `/dev/camera-glitch-lab`. It uses the same
 real Cosmo Embed but never changes its queue, timing or media. The lab mirrors
 Signal Dispatch's Clean, Signal Decay, Chromatic, Glitch Art and Static Noise
-families with live CSS approximations, then exposes strength, jitter, noise,
-scanlines, colour shift, flutter, automatic-burst interval and burst duration.
-Noise, scanlines, colour wash and dropout cover the full camera frame; a second
-time-aligned Embed is used only as a visual ghost layer for colour/slice effects.
+families, then exposes strength, jitter, noise, scanlines, colour shift, flutter,
+automatic-burst interval and burst duration. The current implementation uses one
+iframe and one Cosmo player. Cosmo samples only the active playing frame into a WebGL shader
+for full-frame noise, scanlines, colour split, slice displacement and dropout. Noise
+is generated per output pixel, so it never moves or scales a finite texture and
+cannot reveal uncovered edges.
+
+Rendering is selected client-side: high (up to 1280px/30fps), balanced (960px/24fps)
+or economy (640px/15fps). CPU count, device memory, viewport, Save-Data, network type,
+low battery, reduced-motion and sustained missed frames can only lower the tier.
+WebGL/CORS/context failures fall back to a fixed full-frame CSS texture; reduced-motion
+turns effects off. The preview badge reports the active tier.
 `TRIGGER BURST` previews the transient state immediately. The selected values are
 shown as JSON for design review, but are not persisted or applied to Device.
 The route returns 404 in production and is not a configuration/admin surface.

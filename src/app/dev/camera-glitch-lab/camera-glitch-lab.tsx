@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { buildCameraEmbedUrl, type DeviceCameraSource } from '@/lib/device-camera'
@@ -45,6 +45,8 @@ export function CameraGlitchLab({ source }: { source: DeviceCameraSource }) {
   const [settings, setSettings] = useState<Settings>(presets['signal-decay'].settings)
   const [burst, setBurst] = useState(false)
   const [automatic, setAutomatic] = useState(true)
+  const [rendererQuality, setRendererQuality] = useState('starting')
+  const iframe = useRef<HTMLIFrameElement>(null)
   const previewStart = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const previewFinish = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -67,18 +69,39 @@ export function CameraGlitchLab({ source }: { source: DeviceCameraSource }) {
     return () => { clearTimeout(trigger); clearTimeout(finish) }
   }, [automatic, effect, settings.duration, settings.interval])
 
-  const variables = useMemo(() => ({
-    '--glitch-strength': settings.strength / 100,
-    '--glitch-jitter': `${settings.jitter}px`,
-    '--glitch-noise': settings.noise / 100,
-    '--glitch-scanlines': settings.scanlines / 100,
-    '--glitch-color': settings.colorShift / 100,
-    '--glitch-hue': `${Math.round(settings.colorShift * 1.4)}deg`,
-    '--glitch-flutter': settings.flutter / 100,
-    '--glitch-duration': `${settings.duration}ms`,
-  } as CSSProperties), [settings])
-  const iframeUrl = parentOrigin ? buildCameraEmbedUrl(source, parentOrigin) : ''
-  const output = JSON.stringify({ effect, ...settings }, null, 2)
+  const iframeUrl = useMemo(() => (parentOrigin ? buildCameraEmbedUrl(source, parentOrigin, { effects: true }) : ''), [parentOrigin, source])
+  const effectMessage = useMemo(
+    () => ({
+      type: 'cosmo.embed.effects',
+      version: 1,
+      channelId: source.binding.channelId,
+      bandId: source.binding.bandId,
+      effect,
+      strength: settings.strength,
+      jitter: settings.jitter,
+      noise: settings.noise,
+      scanlines: settings.scanlines,
+      colorShift: settings.colorShift,
+      flutter: settings.flutter,
+      burst,
+    }),
+    [burst, effect, settings, source.binding.bandId, source.binding.channelId],
+  )
+  const sendEffects = useCallback(() => {
+    iframe.current?.contentWindow?.postMessage(effectMessage, source.embedOrigin)
+  }, [effectMessage, source.embedOrigin])
+  useEffect(sendEffects, [sendEffects])
+  useEffect(() => {
+    const receive = (event: MessageEvent) => {
+      if (event.origin !== source.embedOrigin || event.source !== iframe.current?.contentWindow) return
+      const message = event.data as Record<string, unknown> | null
+      if (message?.type === 'cosmo.embed.effects-status' && message.version === 1 && message.channelId === source.binding.channelId && message.bandId === source.binding.bandId && typeof message.quality === 'string') setRendererQuality(message.quality)
+      if (message?.type === 'cosmo.embed.status' && message.version === 1) sendEffects()
+    }
+    window.addEventListener('message', receive)
+    return () => window.removeEventListener('message', receive)
+  }, [sendEffects, source.binding.bandId, source.binding.channelId, source.embedOrigin])
+  const output = JSON.stringify({ renderer: 'webgl-auto', effect, ...settings }, null, 2)
 
   function chooseEffect(id: EffectId) {
     setEffect(id)
@@ -102,20 +125,11 @@ export function CameraGlitchLab({ source }: { source: DeviceCameraSource }) {
       <p>REAL COSMO EMBED · 宇宙飞船舱 · SETTINGS ARE NOT SAVED</p>
     </header>
 
-    <section className={styles.stage} data-burst={burst} data-effect={effect} style={variables}>
+    <section className={styles.stage}>
       {iframeUrl ? <iframe allow="autoplay" className={styles.embed} referrerPolicy="no-referrer"
-        sandbox="allow-scripts allow-same-origin" src={iframeUrl} title="Cosmo glitch preview" /> : null}
-      {iframeUrl ? <iframe aria-hidden allow="autoplay"
-        className={styles.ghostEmbed} referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin"
-        src={iframeUrl} tabIndex={-1} title="Cosmo colour ghost layer" /> : null}
-      <span className={styles.noise} aria-hidden />
-      <span className={styles.scanlines} aria-hidden />
-      <span className={styles.colorWash} aria-hidden />
-      <span className={`${styles.tear} ${styles.tearOne}`} aria-hidden />
-      <span className={`${styles.tear} ${styles.tearTwo}`} aria-hidden />
-      <span className={`${styles.tear} ${styles.tearThree}`} aria-hidden />
-      <span className={styles.framePulse} aria-hidden />
-      <span className={styles.badge}>PREVIEW · {presets[effect].label}</span>
+        onLoad={sendEffects} ref={iframe} sandbox="allow-scripts allow-same-origin" src={iframeUrl}
+        title="Cosmo WebGL glitch preview" /> : null}
+      <span className={styles.badge}>PREVIEW · {presets[effect].label} · {rendererQuality.toUpperCase()}</span>
     </section>
 
     <section className={styles.workspace}>

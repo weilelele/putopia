@@ -17,13 +17,16 @@ describe('Device camera embedding', () => {
     for (const origin of ['http://localhost:8082', 'http://example.com', 'https://user:pass@example.com', 'https://example.com/path', 'javascript:alert(1)', 'https://example.com?token=secret']) expect(parseCameraOrigin(origin, false)).toBeNull()
   })
   it('only builds the published route with silent autoplay and explicit parent origin', () => {
-    const url = new URL(buildCameraEmbedUrl({ binding: camera, embedOrigin: 'https://camera.example.com', demo: false }, 'https://multiverseco.org'))
+    const source = { binding: camera, embedOrigin: 'https://camera.example.com', demo: false }
+    const url = new URL(buildCameraEmbedUrl(source, 'https://multiverseco.org'))
     expect(url.pathname).toBe(`/embed/${camera.channelId}/${camera.bandId}`)
     expect(url.searchParams.get('muted')).toBe('1')
     expect(url.searchParams.get('clock')).toBe('1')
     expect(url.searchParams.get('controls')).toBe('0')
     expect(url.searchParams.get('parentOrigin')).toBe('https://multiverseco.org')
     expect(url.searchParams.has('t')).toBe(false)
+    expect(url.searchParams.has('effects')).toBe(false)
+    expect(new URL(buildCameraEmbedUrl(source, 'https://multiverseco.org', { effects: true })).searchParams.get('effects')).toBe('1')
   })
   it('rejects messages for other cameras, protocol versions and invented states', () => {
     const message = { type: 'cosmo.embed.status', version: 1, channelId: camera.channelId, bandId: camera.bandId, state: 'playing', muted: true }
