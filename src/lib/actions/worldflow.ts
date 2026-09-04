@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { asWorldflowAdmin } from '@/lib/worldflow-database'
 import { validateWorldflowSubmission } from '@/lib/worldflow-validation'
+import { worldflowProgressAfterSave } from '@/lib/worldflow-progress'
 
 export type WorldflowStepStatus = 'draft' | 'review' | 'changes' | 'approved' | 'optional' | 'skipped'
 
@@ -202,12 +203,18 @@ export async function saveWorldflowState(input: { worldId: string; state: Worldf
   const serialized = JSON.stringify(input.state)
   if (serialized.length > 1_000_000) return { error: '工作流内容过大，请精简后再保存。' }
   const status = input.state.stepStatuses[String(input.currentStep)] ?? 'draft'
+  const progress = worldflowProgressAfterSave({
+    currentStatus: access.world.current_status,
+    currentStep: access.world.current_step,
+    editedStatus: status,
+    editedStep: input.currentStep,
+  })
   const { error } = await access.admin
     .from('worldflow_worlds')
     .update({
       workflow_state: input.state,
-      current_step: input.currentStep,
-      current_status: status,
+      current_step: progress.currentStep,
+      current_status: progress.currentStatus,
       updated_at: new Date().toISOString(),
     })
     .eq('id', input.worldId)

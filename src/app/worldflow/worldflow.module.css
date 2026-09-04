@@ -471,6 +471,77 @@ button.worldCard {
   background: var(--color-void);
 }
 
+.shotFoundation {
+  max-width: 1440px;
+  margin: 0 auto var(--s-4);
+  padding: var(--s-4);
+  border: 1px solid var(--bd-orange);
+  background: var(--color-void);
+}
+
+.shotFoundation > header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.shotFoundation > header > div {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.shotFoundation > header span,
+.shotFoundation > header small {
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.shotFoundation > header span {
+  color: var(--color-nucleus);
+  letter-spacing: 0.08em;
+}
+
+.shotFoundation > header small[data-required="true"] {
+  color: var(--color-warn);
+}
+
+.shotFoundation > div {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--bd-faint);
+}
+
+.shotFoundation label {
+  display: grid;
+  gap: var(--s-2);
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
+}
+
+.shotFoundation input,
+.shotFoundation textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: var(--s-3);
+  border: 1px solid var(--color-star-deep);
+  border-radius: var(--radius);
+  outline: none;
+  background: var(--bg-panel);
+  color: var(--color-star);
+}
+
+.shotFoundation textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.shotFoundation input:focus,
+.shotFoundation textarea:focus {
+  border-color: var(--color-nucleus);
+}
+
 .shotSelector > div,
 .eventChooser {
   display: flex;
@@ -535,7 +606,7 @@ button.worldCard {
   margin-bottom: var(--s-3);
 }
 
-.recordList article {
+.recordList > article {
   display: grid;
   gap: var(--s-3);
   align-items: start;
@@ -610,7 +681,7 @@ button.worldCard {
   border-color: var(--color-nucleus);
 }
 
-.recordList article > button,
+.recordList > article > button,
 .timeLane header > button,
 .eventRow > button:last-child {
   display: grid;
@@ -1047,9 +1118,29 @@ button.worldCard {
 }
 
 .materialSection {
+  min-width: 0;
   margin-top: var(--s-5);
   padding-top: var(--s-4);
   border-top: 1px solid var(--bd-faint);
+}
+
+.materialTarget {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin: var(--s-2) 0 0;
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.materialSection .materialTarget span {
+  color: var(--color-nucleus);
+  letter-spacing: 0.04em;
+}
+
+.materialTarget strong {
+  color: var(--color-star);
 }
 
 .materialActions {
@@ -1059,10 +1150,56 @@ button.worldCard {
 }
 
 .cloudLibrary {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: var(--s-4);
   padding: var(--s-3);
   border: 1px solid var(--bd-orange);
   background: var(--color-deep);
+}
+
+.scrollRegionHeader,
+.scrollMeta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.scrollRegionHeader {
+  margin: var(--s-2) 0;
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.materialSection .scrollRegionHeader > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scrollMeta {
+  flex-wrap: wrap;
+}
+
+.scrollControls {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--s-1);
+}
+
+.scrollControls button {
+  display: grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--bd-faint);
+  background: var(--bg-panel);
+  color: var(--color-star);
+  cursor: pointer;
 }
 
 .cloudLibrary > header {
@@ -1120,6 +1257,8 @@ button.worldCard {
 }
 
 .cosmoChannelList {
+  width: 100%;
+  min-width: 0;
   display: grid;
   grid-auto-columns: minmax(210px, 76vw);
   grid-auto-flow: column;
@@ -1128,10 +1267,14 @@ button.worldCard {
   margin-bottom: var(--s-3);
   padding-bottom: var(--s-1);
   scroll-snap-type: x proximity;
+  scrollbar-color: var(--color-nucleus) var(--color-deep);
+  scrollbar-width: thin;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
 }
 
-.cosmoChannelList button,
-.cosmoBands button {
+.cosmoChannelList > button,
+.cosmoBands > div > button {
   display: grid;
   min-height: 76px;
   gap: var(--s-1);
@@ -1144,8 +1287,8 @@ button.worldCard {
   scroll-snap-align: start;
 }
 
-.cosmoChannelList button[data-active="true"],
-.cosmoBands button[data-active="true"] {
+.cosmoChannelList > button[data-active="true"],
+.cosmoBands > div > button[data-active="true"] {
   border-color: var(--color-nucleus);
   border-left: 3px solid var(--color-nucleus);
 }
@@ -1162,6 +1305,7 @@ button.worldCard {
 }
 
 .cosmoBands {
+  min-width: 0;
   margin-bottom: var(--s-3);
   padding: var(--s-3);
   border: 1px solid var(--bd-faint);
@@ -1175,26 +1319,35 @@ button.worldCard {
   margin-bottom: var(--s-2);
 }
 
-.cosmoBands > header > div {
+.cosmoBands > header > div:first-child {
   display: grid;
   gap: var(--s-1);
 }
 
 .cosmoBands > div {
+  width: 100%;
+  min-width: 0;
   display: grid;
-  grid-auto-columns: minmax(180px, 1fr);
+  grid-auto-columns: minmax(180px, 240px);
   grid-auto-flow: column;
   gap: var(--s-2);
   overflow-x: auto;
   padding-bottom: var(--s-1);
+  scroll-snap-type: x proximity;
+  scrollbar-color: var(--color-nucleus) var(--color-deep);
+  scrollbar-width: thin;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
 }
 
-.cosmoBands button:disabled {
+.cosmoBands > div > button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
 
 .cloudAssetGrid {
+  width: 100%;
+  min-width: 0;
   display: grid;
   grid-auto-columns: minmax(190px, 72vw);
   grid-auto-flow: column;
@@ -1202,6 +1355,10 @@ button.worldCard {
   overflow-x: auto;
   padding-bottom: var(--s-2);
   scroll-snap-type: x proximity;
+  scrollbar-color: var(--color-nucleus) var(--color-deep);
+  scrollbar-width: thin;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
 }
 
 .cloudAssetCard {
@@ -1218,6 +1375,11 @@ button.worldCard {
   text-align: left;
   cursor: pointer;
   scroll-snap-align: start;
+}
+
+.cloudAssetCard:disabled {
+  cursor: default;
+  opacity: 0.58;
 }
 
 .cloudAssetCard img,
@@ -1355,6 +1517,54 @@ button.worldCard {
   padding: var(--s-3);
 }
 
+.removeAsset,
+.removeSequenceAsset {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  justify-self: start;
+  margin-top: var(--s-2);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--color-star-deep);
+  background: transparent;
+  color: var(--color-star-dim);
+  cursor: pointer;
+}
+
+.removeAsset:disabled,
+.removeSequenceAsset:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.selectionSummary {
+  display: grid;
+  gap: var(--s-1);
+  margin-bottom: var(--s-4);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-orange);
+  border-left: 3px solid var(--color-nucleus);
+  background: var(--bg-panel);
+}
+
+.selectionSummary span,
+.selectionSummary p {
+  margin: 0;
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.selectionSummary span {
+  color: var(--color-nucleus);
+  letter-spacing: 0.08em;
+}
+
+.selectionSummary strong {
+  overflow-wrap: anywhere;
+}
+
 .assetCard strong {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1441,8 +1651,13 @@ button.emptyAsset {
   }
 
   .worldList,
-  .assetGrid {
+  .worldList {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .assetGrid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 320px));
+    align-items: start;
   }
 
   .worldCard footer,
@@ -1456,7 +1671,7 @@ button.emptyAsset {
     place-items: center;
   }
 
-  .recordList article {
+  .recordList > article {
     grid-template-columns: auto minmax(160px, 0.6fr) minmax(240px, 1fr) auto;
   }
 
@@ -1477,12 +1692,21 @@ button.emptyAsset {
   }
 
   .structureEditor > header,
+  .shotFoundation > header,
   .cloudLibrary > header,
   .context > header,
   .videoSequence > header {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .shotFoundation > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shotFoundation .materialSection {
+    grid-column: 1 / -1;
   }
 
   .cloudAssetGrid {
@@ -1538,7 +1762,4 @@ button.emptyAsset {
     font-size: var(--fs-caption);
   }
 
-  .assetGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
