@@ -4,6 +4,7 @@ import { DeviceLiveRoom } from '../../live/device-live-room'
 import { getPublicDeviceBatch, listPublicDeviceBatches } from '@/lib/device-batch-repository'
 import { getDeviceBatchDiscussion } from '@/lib/actions/device-batch-community'
 import { getMyDeviceConsoles } from '@/lib/actions/orders'
+import { getDeviceCameraSource } from '@/lib/device-camera-source'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,6 +40,7 @@ export default async function BatchDetailPage({ params }: BatchDetailPageProps) 
   return (
     <DeviceLiveRoom
       batch={batch}
+      camera={getDeviceCameraSource(batch)}
       batches={batches}
       canPost={discussion.canPost}
       discussionPosts={discussion.posts}

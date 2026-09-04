@@ -1,3 +1,4 @@
+import { isDeviceCameraBinding, type DeviceCameraBinding } from './device-camera'
 import type {
   BatchInventory,
   BatchPrice,
@@ -9,6 +10,7 @@ import type {
 } from './device-batches'
 
 export type BatchConfigDraft = {
+  liveCamera?: DeviceCameraBinding
   code: string
   claimPrice?: BatchPrice
   distributionStages: DistributionStage[]
@@ -152,6 +154,7 @@ function isBatchConfigDraft(value: unknown): value is BatchConfigDraft {
     typeof draft.image === 'string' &&
     typeof draft.imageAlt === 'string' &&
     typeof draft.heroCaption === 'string' &&
+    (draft.liveCamera === undefined || isDeviceCameraBinding(draft.liveCamera)) &&
     (draft.heroMedia === undefined || isMedia(draft.heroMedia)) &&
     isLead(draft.lead) &&
     isLatestUpdate(draft.latestUpdate) &&
@@ -164,6 +167,7 @@ function isBatchConfigDraft(value: unknown): value is BatchConfigDraft {
 
 export function createBatchConfigDraft(batch: DeviceBatch): BatchConfigDraft {
   return {
+    liveCamera: batch.liveCamera ? { ...batch.liveCamera } : undefined,
     code: batch.code,
     claimPrice: batch.claimPrice ? { ...batch.claimPrice } : undefined,
     distributionStages: batch.distributionStages.map((stage) => ({
@@ -195,6 +199,9 @@ export function createBatchConfigDraft(batch: DeviceBatch): BatchConfigDraft {
 
 export function validateBatchConfigDraft(draft: BatchConfigDraft) {
   const errors: string[] = []
+  if (draft.liveCamera !== undefined && !isDeviceCameraBinding(draft.liveCamera)) {
+    errors.push('Camera requires a title, valid Cosmo channel and Band IDs, and a valid frame fit.')
+  }
   const price = draft.claimPrice
   const currentStageCount = draft.distributionStages.filter(
     (stage) => stage.status === 'current',
@@ -287,6 +294,7 @@ export function normalizeBatchConfigDraft(draft: BatchConfigDraft): BatchConfigD
       window: stage.window.trim(),
     })),
     estimatedCompletion: draft.estimatedCompletion.trim(),
+    liveCamera: draft.liveCamera ? { ...draft.liveCamera, title: draft.liveCamera.title.trim() } : undefined,
     heroCaption: draft.heroCaption.trim(),
     heroMedia: draft.heroMedia?.map((item) => ({
       ...item,

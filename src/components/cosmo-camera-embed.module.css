@@ -1,0 +1,11 @@
+.camera { position: relative; aspect-ratio: 16 / 9; border: 1px solid var(--bd-faint); background: var(--color-deep); overflow: hidden; flex-shrink: 0; }
+.frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.live, .location { position: absolute; left: var(--s-3); z-index: 2; padding: var(--s-1) var(--s-2); background: var(--color-deep); color: var(--color-star); font-size: var(--fs-caption); line-height: 1.5; letter-spacing: 0.08em; pointer-events: none; }
+.live { top: var(--s-3); display: inline-flex; align-items: center; gap: var(--s-2); visibility: hidden; }
+.live[data-playing='true'] { visibility: visible; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-nucleus); animation: liveBlink 1.8s ease-in-out infinite; }
+.location { bottom: var(--s-3); max-width: calc(100% - 2 * var(--s-3)); overflow-wrap: anywhere; }
+@keyframes liveBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) {
+  .camera *, .camera *::before, .camera *::after { animation: none !important; transition: none !important; }
+}
