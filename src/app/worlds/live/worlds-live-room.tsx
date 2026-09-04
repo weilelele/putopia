@@ -67,8 +67,6 @@ export function WorldsLiveRoom({
   const currentJob = selected?.queue.find((job) => job.status === 'processing')
   const working = isDreamcatcherWorking(selected?.status ?? 'idle', selected?.queue ?? [])
   const clock = localTime(selected?.timeZone ?? 'UTC', now)
-  const statusAgeSeconds = Math.max(0, Math.floor((now - (selected?.observedAt ?? now)) / 1000))
-  const statusFreshness = statusAgeSeconds < 5 ? 'CHECKED NOW' : `CHECKED ${statusAgeSeconds}S AGO`
   const roomInvestigations = useMemo(() => {
     const worldIds = new Set(selected?.queue.map((job) => job.worldId) ?? [])
     return investigations.filter((item) => item.worldId && worldIds.has(item.worldId))
@@ -163,11 +161,9 @@ export function WorldsLiveRoom({
             label={`${selected.name} operating at ${selected.location}`}
             library={selected.slug === liveVideoRoomSlug ? liveVideoLibrary : null}
             working={working} />
-          <div className={`${styles.liveMeta} ${playerStyles.metadata}`}>
-            <span className={styles.liveMetaItem}><span className={`${styles.dot} ${styles.livePulse}`} data-status={selected.status} />{STATUS_LABEL[selected.status]}</span>
-            <span>{statusFreshness}</span>
-            <span>{selected.location.toUpperCase()}</span>
-            <span className={styles.liveMetaItem}><Clock3 aria-hidden size={14} />{clock}</span>
+          <div className={playerStyles.metadata}>
+            <span className={playerStyles.location}>{selected.location.toUpperCase()}</span>
+            <span className={playerStyles.clock} aria-label={`Local time in ${selected.city}: ${clock}`}><Clock3 aria-hidden size={14} />{clock}</span>
           </div>
         </div>
       </section>

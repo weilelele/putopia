@@ -32,6 +32,7 @@ import {
 } from '@/lib/device-batch-config-drafts'
 import {
   DEVICE_BATCH_STATUS,
+  DEVICE_BATCH_TIME_ZONE_OPTIONS,
   formatBatchPrice,
   type BatchInventory,
   type BatchPrice,
@@ -408,7 +409,7 @@ export function BatchConfigEditor({
           <div className={styles.batchIdentity}>
             <span>{selectedBatch.code}</span>
             <strong>{selectedBatch.name}</strong>
-            <small>{selectedBatch.location}</small>
+            <small>{selectedBatch.location} · {draft.timeZone}</small>
           </div>
           <div>
             <span>PUBLICATION</span>
@@ -557,6 +558,19 @@ export function BatchConfigEditor({
                   ))}
                 </select>
               </ArchiveField>
+              <ArchiveField htmlFor="batch-time-zone" label="TIME ZONE">
+                <input
+                  id="batch-time-zone"
+                  list="batch-time-zone-options"
+                  onChange={(event) => updateDraft({ timeZone: event.target.value })}
+                  value={draft.timeZone}
+                />
+                <datalist id="batch-time-zone-options">
+                  {DEVICE_BATCH_TIME_ZONE_OPTIONS.map((timeZone) => (
+                    <option key={timeZone} value={timeZone} />
+                  ))}
+                </datalist>
+              </ArchiveField>
               <ArchiveField htmlFor="batch-updated-at" label="LAST UPDATED">
                 <input
                   id="batch-updated-at"
@@ -565,16 +579,16 @@ export function BatchConfigEditor({
                   value={draft.updatedAt}
                 />
               </ArchiveField>
-              <ArchiveField htmlFor="batch-completion" label="FINAL COMPLETION">
-                <input
-                  id="batch-completion"
-                  onChange={(event) =>
-                    updateDraft({ estimatedCompletion: event.target.value })
-                  }
-                  value={draft.estimatedCompletion}
-                />
-              </ArchiveField>
             </div>
+            <ArchiveField htmlFor="batch-completion" label="FINAL COMPLETION">
+              <input
+                id="batch-completion"
+                onChange={(event) =>
+                  updateDraft({ estimatedCompletion: event.target.value })
+                }
+                value={draft.estimatedCompletion}
+              />
+            </ArchiveField>
             <ArchiveField htmlFor="batch-status-line" label="CURRENT STATUS LINE">
               <input
                 id="batch-status-line"

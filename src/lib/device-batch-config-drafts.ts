@@ -1,12 +1,14 @@
 import { isDeviceCameraBinding, type DeviceCameraBinding } from './device-camera'
-import type {
-  BatchInventory,
-  BatchPrice,
-  DeviceBatch,
-  DeviceBatchLead,
-  DeviceBatchMedia,
-  DeviceBatchStatus,
-  DistributionStage,
+import {
+  getDeviceBatchTimeZone,
+  isValidDeviceBatchTimeZone,
+  type BatchInventory,
+  type BatchPrice,
+  type DeviceBatch,
+  type DeviceBatchLead,
+  type DeviceBatchMedia,
+  type DeviceBatchStatus,
+  type DistributionStage,
 } from './device-batches'
 
 export type BatchConfigDraft = {
@@ -29,6 +31,7 @@ export type BatchConfigDraft = {
   status: DeviceBatchStatus
   statusLine: string
   summary: string
+  timeZone: string
   updatedAt: string
 }
 
@@ -151,6 +154,7 @@ function isBatchConfigDraft(value: unknown): value is BatchConfigDraft {
     typeof draft.code === 'string' &&
     typeof draft.name === 'string' &&
     typeof draft.location === 'string' &&
+    (draft.timeZone === undefined || typeof draft.timeZone === 'string') &&
     typeof draft.image === 'string' &&
     typeof draft.imageAlt === 'string' &&
     typeof draft.heroCaption === 'string' &&
@@ -193,6 +197,7 @@ export function createBatchConfigDraft(batch: DeviceBatch): BatchConfigDraft {
     status: batch.status,
     statusLine: batch.statusLine,
     summary: batch.summary,
+    timeZone: getDeviceBatchTimeZone(batch),
     updatedAt: batch.updatedAt,
   }
 }
@@ -211,6 +216,7 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
     draft.code.trim().length === 0 ||
     draft.name.trim().length === 0 ||
     draft.location.trim().length === 0 ||
+    draft.timeZone.trim().length === 0 ||
     draft.image.trim().length === 0 ||
     draft.imageAlt.trim().length === 0 ||
     draft.heroCaption.trim().length === 0 ||
@@ -221,6 +227,9 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
     draft.updatedAt.trim().length === 0
   ) {
     errors.push('Overview fields are required.')
+  }
+  if (!isValidDeviceBatchTimeZone(draft.timeZone)) {
+    errors.push('Use a valid time zone such as Asia/Tokyo or Europe/London.')
   }
   if (draft.status === 'claim_open' && !price) {
     errors.push('A claim-open Batch requires a price.')
@@ -331,6 +340,7 @@ export function normalizeBatchConfigDraft(draft: BatchConfigDraft): BatchConfigD
     name: draft.name.trim(),
     statusLine: draft.statusLine.trim(),
     summary: draft.summary.trim(),
+    timeZone: draft.timeZone.trim(),
     updatedAt: draft.updatedAt.trim(),
   }
 }
@@ -343,7 +353,16 @@ export function parseBatchConfigDrafts(snapshot: string | null): BatchConfigDraf
     return Object.fromEntries(
       Object.entries(parsed)
         .filter(([, draft]) => isBatchConfigDraft(draft))
-        .map(([slug, draft]) => [slug, draft as BatchConfigDraft]),
+        .map(([slug, draft]) => [
+          slug,
+          {
+            ...(draft as BatchConfigDraft),
+            timeZone: getDeviceBatchTimeZone({
+              slug,
+              timeZone: (draft as Partial<BatchConfigDraft>).timeZone,
+            }),
+          },
+        ]),
     )
   } catch {
     return {}

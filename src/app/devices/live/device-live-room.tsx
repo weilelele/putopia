@@ -3,11 +3,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
   ChevronRight,
   CirclePlay,
+  Clock3,
   ListFilter,
   MessageSquare,
   Radio,
@@ -22,6 +23,7 @@ import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
 import type { DeviceCameraSource } from '@/lib/device-camera'
 import {
   DEVICE_BATCH_STATUS,
+  formatDeviceBatchLocalTime,
   formatBatchPrice,
   getBatchClaimHref,
   getBatchRemainingQuantity,
@@ -77,6 +79,7 @@ export function DeviceLiveRoom({
   const [filter, setFilter] = useState<BatchFilter>('all')
   const [openShipment, setOpenShipment] = useState<string | null>(null)
   const [progressOpen, setProgressOpen] = useState(false)
+  const [now, setNow] = useState<number | null>(null)
   const progress = batchProgress(batch)
   const remaining = getBatchRemainingQuantity(batch)
   const claimHref = getBatchClaimHref(batch)
@@ -88,6 +91,17 @@ export function DeviceLiveRoom({
     () => [batch, ...batches.filter((item) => item.slug !== batch.slug)].slice(0, 3),
     [batch, batches],
   )
+
+  useEffect(() => {
+    const tick = () => setNow(Date.now())
+    tick()
+    const interval = window.setInterval(tick, 1_000)
+    return () => window.clearInterval(interval)
+  }, [])
+
+  const localClock = now === null
+    ? '--:--:--'
+    : formatDeviceBatchLocalTime(batch.timeZone, now)
 
   const filteredBatches = useMemo(() => {
     if (filter === 'all') return batches
@@ -129,10 +143,28 @@ export function DeviceLiveRoom({
         </button>
       </nav>
 
-      {camera ? <CosmoCameraEmbed source={camera} location={batch.location} /> : <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}>
-        <span>{batch.name.toUpperCase()}</span>
-        <span className={styles.liveMetaItem}><span className={styles.dot} style={{ background: statusDotColor(batch.status) }} />{DEVICE_BATCH_STATUS[batch.status].label}</span>
-      </LiveFeedPlaceholder>}
+      {camera ? (
+        <CosmoCameraEmbed source={camera} location={batch.location} />
+      ) : (
+        <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}>
+          <span>{batch.name.toUpperCase()}</span>
+          <span className={styles.liveMetaItem}>
+            <span
+              className={styles.dot}
+              style={{ background: statusDotColor(batch.status) }}
+            />
+            {DEVICE_BATCH_STATUS[batch.status].label}
+          </span>
+          <span>{batch.location.toUpperCase()}</span>
+          <time
+            aria-label={`Local time in ${cityLabel(batch)}: ${localClock}`}
+            className={styles.liveMetaItem}
+            dateTime={now === null ? undefined : new Date(now).toISOString()}
+          >
+            <Clock3 aria-hidden size={16} /> {localClock}
+          </time>
+        </LiveFeedPlaceholder>
+      )}
 
       {(batch.status === 'claim_open' && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
         <div className={styles.paymentHeader}>

@@ -14,6 +14,7 @@ const seed: LocalBatchSeed = {
   name: 'Lisbon Echo Array',
   slug: 'lisbon-echo-03',
   summary: 'A small receiver group is being documented near the river archive.',
+  timeZone: 'Europe/Lisbon',
   updatedAt: 'Jul 30, 2026',
 }
 
@@ -25,8 +26,13 @@ describe('device batch draft seeds', () => {
   it('normalizes and validates a new Batch identity', () => {
     expect(validateLocalBatchSeed(seed)).toEqual([])
     expect(normalizeLocalBatchSeed(seed).code).toBe('LISBON-ECHO-03')
+    expect(normalizeLocalBatchSeed({ ...seed, timeZone: ' Europe/Lisbon ' }).timeZone)
+      .toBe('Europe/Lisbon')
     expect(validateLocalBatchSeed({ ...seed, slug: 'Invalid Slug' })).toContain(
       'Slug must use at least three lowercase letters, numbers, or hyphens.',
+    )
+    expect(validateLocalBatchSeed({ ...seed, timeZone: 'Lisbon time' })).toContain(
+      'Use a valid time zone such as Asia/Tokyo or Europe/London.',
     )
   })
 
@@ -37,5 +43,6 @@ describe('device batch draft seeds', () => {
     expect(batch.distributionStages).toHaveLength(1)
     expect(batch.distributionStages[0].contents).toEqual(['Multiverse Console'])
     expect(batch.lead.initials).toBe('IV')
+    expect(batch.timeZone).toBe('Europe/Lisbon')
   })
 })

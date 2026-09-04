@@ -39,6 +39,13 @@ describe('production-only Device Library', () => {
     expect(rowToBatch(row)?.name).toBe('Private draft')
   })
 
+  it('restores a safe local time zone for legacy snapshots', () => {
+    const legacyPublished = { ...published, timeZone: undefined }
+    const legacyBatch = rowToBatch({ ...row, published_content: legacyPublished }, true)
+
+    expect(legacyBatch?.timeZone).toBe('Africa/Cairo')
+  })
+
   it('sends downstream readers to the Batch page without inventing an owner', () => {
     const entry = toDeviceLibraryEntry(published)
     expect(entry.href).toBe('/devices/batches/cairo-batch-01')

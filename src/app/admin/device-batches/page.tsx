@@ -16,8 +16,13 @@ export default async function DeviceBatchAdminPage({
   searchParams: Promise<{ batch?: string | string[] }>
 }) {
   const { batch } = await searchParams
-  const initialSlug = typeof batch === 'string' ? batch : undefined
-  const records = await listAdminDeviceBatchRecords()
+  const records = (await listAdminDeviceBatchRecords()).filter(
+    (record) => record.publicationStatus !== 'archived',
+  )
+  const requestedSlug = typeof batch === 'string' ? batch : undefined
+  const initialSlug = records.some((record) => record.batch.slug === requestedSlug)
+    ? requestedSlug
+    : undefined
 
   return (
     <div className={styles.page}>

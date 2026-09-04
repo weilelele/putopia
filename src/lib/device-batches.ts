@@ -62,6 +62,7 @@ export type DeviceBatch = {
   code: string
   name: string
   location: string
+  timeZone: string
   status: DeviceBatchStatus
   statusLine: string
   updatedAt: string
@@ -101,6 +102,60 @@ export const DEVICE_BATCH_STATUS: Record<
   active: { label: 'ACTIVE IN FIELD', shortLabel: 'ACTIVE' },
 }
 
+export const DEVICE_BATCH_TIME_ZONE_OPTIONS = [
+  'UTC',
+  'Africa/Cairo',
+  'America/Los_Angeles',
+  'America/New_York',
+  'Asia/Shanghai',
+  'Asia/Tokyo',
+  'Asia/Ulaanbaatar',
+  'Europe/Berlin',
+  'Europe/Lisbon',
+  'Europe/London',
+] as const
+
+const LEGACY_BATCH_TIME_ZONES: Record<string, string> = {
+  'berlin-origin-01': 'Europe/Berlin',
+  'cairo-batch-01': 'Africa/Cairo',
+  'gobi-array-07': 'Asia/Ulaanbaatar',
+  'kyoto-relay-02': 'Asia/Tokyo',
+}
+
+export function isValidDeviceBatchTimeZone(value: string) {
+  const timeZone = value.trim()
+  if (timeZone !== 'UTC' && !timeZone.includes('/')) return false
+
+  try {
+    new Intl.DateTimeFormat('en-GB', { timeZone }).format(0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function getDeviceBatchTimeZone(
+  batch: Pick<DeviceBatch, 'slug'> & { timeZone?: unknown },
+) {
+  if (
+    typeof batch.timeZone === 'string'
+    && isValidDeviceBatchTimeZone(batch.timeZone)
+  ) {
+    return batch.timeZone.trim()
+  }
+
+  return LEGACY_BATCH_TIME_ZONES[batch.slug] ?? 'UTC'
+}
+
+export function formatDeviceBatchLocalTime(timeZone: string, now: number) {
+  return new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    hour12: false,
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone,
+  }).format(now)
+}
 
 export function formatBatchPrice(price: BatchPrice) {
   const currency = price.currency.toUpperCase()
