@@ -39,8 +39,10 @@ and `NODE_ENV=production` disables this flag even if someone sets it accidentall
 2. Explicitly approve the relevant Channel/Band pair and its scheduling timezone
    in Cosmo's config. Allow the exact Putopia parent origin in `allowedParents`.
    Preview origins need their own explicit approval; do not use a wildcard.
-3. Set server-side `COSMO_EMBED_ORIGIN` to the exact HTTPS Embed origin. It is
-   operator-controlled, not an arbitrary URL supplied in a Batch record.
+3. Production defaults to the operator-owned
+   `https://cosmo-device-embed.vercel.app` origin. `COSMO_EMBED_ORIGIN` can
+   override it with another exact HTTPS origin; an invalid value disables embeds
+   during rollback. It is never an arbitrary URL supplied in a Batch record.
 4. In `/admin/device-batches`, select the Batch → Overview → Scheduled camera.
    Select Cosmo Embed and enter title, Channel ID, Band ID and frame fit.
 5. Save a draft, preview the overall Batch, then use the existing explicit publish
@@ -52,8 +54,8 @@ and `NODE_ENV=production` disables this flag even if someone sets it accidentall
 The optional `liveCamera` field lives in the existing JSON Batch content and
 published snapshot; no database migration is required or was applied. Old Batches
 without a binding keep their existing placeholder. Removing the binding through
-normal draft/publish disables that Batch's camera; clearing the environment setting
-disables all camera embeds without changing records.
+normal draft/publish disables that Batch's camera; setting
+`COSMO_EMBED_ORIGIN=disabled` disables all camera embeds without changing records.
 
 Example value:
 

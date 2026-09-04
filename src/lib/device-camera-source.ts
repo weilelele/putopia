@@ -2,10 +2,13 @@ import 'server-only'
 import type { DeviceBatch } from './device-batches'
 import { isDeviceCameraBinding, parseCameraOrigin, type DeviceCameraSource } from './device-camera'
 
+const productionEmbedOrigin = 'https://cosmo-device-embed.vercel.app'
+
 /** Reads config only. Never persists the temporary demo binding into a Batch. */
 export function getDeviceCameraSource(batch: DeviceBatch): DeviceCameraSource | null {
   const local = process.env.NODE_ENV !== 'production'
-  const embedOrigin = parseCameraOrigin(process.env.COSMO_EMBED_ORIGIN, local)
+  const configuredOrigin = process.env.COSMO_EMBED_ORIGIN
+  const embedOrigin = parseCameraOrigin(configuredOrigin === undefined && !local ? productionEmbedOrigin : configuredOrigin, local)
   if (!embedOrigin) return null
   if (isDeviceCameraBinding(batch.liveCamera)) return { binding: batch.liveCamera, embedOrigin, demo: false }
   if (local && process.env.DEVICE_CAMERA_DEMO === '1') {
