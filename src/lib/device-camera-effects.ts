@@ -1,4 +1,5 @@
 export type DeviceCameraEffectId = 'signal-decay' | 'chromatic' | 'glitch-art'
+export type DeviceCameraBaseEffectId = Exclude<DeviceCameraEffectId, 'glitch-art'>
 
 export type DeviceCameraEffectSettings = {
   effect: DeviceCameraEffectId
@@ -17,15 +18,21 @@ export const DEVICE_CAMERA_EFFECTS: Record<DeviceCameraEffectId, DeviceCameraEff
   'glitch-art': { effect: 'glitch-art', strength: 82, jitter: 14, noise: 28, scanlines: 16, colorShift: 48, flutter: 20, burst: false },
 }
 
-const effectIds = Object.keys(DEVICE_CAMERA_EFFECTS) as DeviceCameraEffectId[]
-
-/** Selects one of the other two modes, so a random tick always causes a visible change. */
-export function nextDeviceCameraEffect(current: DeviceCameraEffectId, random: number) {
-  const alternatives = effectIds.filter((effect) => effect !== current)
-  return alternatives[Math.min(alternatives.length - 1, Math.floor(Math.max(0, random) * alternatives.length))]
+/**
+ * Glitch Art is a short bridge between the two persistent treatments instead
+ * of a third persistent mode: Signal Decay -> Glitch Art -> Chromatic -> …
+ */
+export function nextDeviceCameraEffect(
+  current: DeviceCameraEffectId,
+  lastBase: DeviceCameraBaseEffectId,
+): DeviceCameraEffectId {
+  if (current !== 'glitch-art') return 'glitch-art'
+  return lastBase === 'signal-decay' ? 'chromatic' : 'signal-decay'
 }
 
-/** Keep each complete treatment visible long enough to read before switching. */
-export function deviceCameraEffectDelay(random: number) {
-  return 12000 + Math.floor(Math.max(0, Math.min(random, 0.999999)) * 10000)
+/** Keep base treatments readable, while the transition only flashes for 2–3s. */
+export function deviceCameraEffectDelay(effect: DeviceCameraEffectId, random: number) {
+  const bounded = Math.max(0, Math.min(random, 1))
+  if (effect === 'glitch-art') return 2000 + Math.round(bounded * 1000)
+  return 12000 + Math.floor(Math.min(bounded, 0.999999) * 10000)
 }
