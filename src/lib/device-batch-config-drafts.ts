@@ -239,11 +239,18 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
   }
   if (
     draft.inventory !== undefined &&
-    (draft.inventory.listingQuantity <= 0 ||
+    (draft.inventory.listingQuantity < 0 ||
       draft.inventory.claimedQuantity < 0 ||
       draft.inventory.claimedQuantity > draft.inventory.listingQuantity)
   ) {
     errors.push('Claimed units must stay between zero and the listing quantity.')
+  }
+  if (
+    draft.status === 'claim_open' &&
+    draft.inventory !== undefined &&
+    draft.inventory.listingQuantity === 0
+  ) {
+    errors.push('A claim-open Batch requires at least one listed unit.')
   }
   if (
     price !== undefined &&
