@@ -761,7 +761,9 @@ function EventStructureEditor({
       <header>
         <div>
           <strong>镜头事件结构</strong>
-          <span>时段依次横向排列；这里的调整会立即继承到图片和视频表格。</span>
+          <span>
+            时段依次横向排列；选择事件后，下方编辑、参考素材、图片与视频会同步到该位置。
+          </span>
         </div>
         {editable ? (
           <button
@@ -2121,6 +2123,24 @@ export function WorldflowClient({
               slots={eventSystem.timeSlots}
             />
             {selectedEvent && selectedParentEvent ? (
+              <section
+                aria-live="polite"
+                className={styles.selectionSummary}
+              >
+                <span>当前编辑与素材关联位置</span>
+                <strong>
+                  {activeShot.name} / {selectedTimeSlot?.name || "未命名时段"} /{" "}
+                  {selectedParentEvent.name}
+                  {eventSelection?.isSubEvent
+                    ? ` / 子事件：${selectedEvent.name}`
+                    : " / 父事件"}
+                </strong>
+                <p>
+                  本页的事件编辑、参考素材、图片和视频都会使用这个位置；如需切换，请在上方事件结构中选择。
+                </p>
+              </section>
+            ) : null}
+            {selectedEvent && selectedParentEvent ? (
               <div className={styles.eventDetail}>
                 <div className={styles.eventType}>
                   <span>
@@ -2215,62 +2235,8 @@ export function WorldflowClient({
         ) : null}
         {activeStep >= 5 && activeShot && eventSystem ? (
           <div>
-            <div className={styles.subjectTable}>
-              <div className={styles.subjectTableIntro}>
-                <strong>选择素材单元</strong>
-                <span>
-                  父事件与子事件都会继承到这张表中；点击单元后查看完整生成背景。
-                </span>
-              </div>
-              <div className={styles.subjectColumns}>
-                {eventSystem.timeSlots.map((slot) => (
-                  <section className={styles.subjectColumn} key={slot.id}>
-                    <header>
-                      <Clock3 size={15} />
-                      <strong>{slot.name}</strong>
-                    </header>
-                    {slot.events.map((event) => (
-                      <div className={styles.subjectGroup} key={event.id}>
-                        <button
-                          data-active={selectedEventId === event.id}
-                          onClick={() => selectEvent(event.id)}
-                          type="button"
-                        >
-                          <small>父事件</small>
-                          <strong>{event.name}</strong>
-                        </button>
-                        {event.subEvents.map((subEvent) => (
-                          <button
-                            data-active={selectedEventId === subEvent.id}
-                            key={subEvent.id}
-                            onClick={() => selectEvent(subEvent.id)}
-                            type="button"
-                          >
-                            <small>↳ 子事件</small>
-                            <strong>{subEvent.name}</strong>
-                          </button>
-                        ))}
-                      </div>
-                    ))}
-                  </section>
-                ))}
-              </div>
-            </div>
             {selectedEvent && selectedParentEvent ? (
               <>
-                <section className={styles.selectionSummary}>
-                  <span>当前素材关联位置</span>
-                  <strong>
-                    {activeShot.name} / {selectedTimeSlot?.name || "未命名时段"} /{" "}
-                    {selectedParentEvent.name}
-                    {eventSelection?.isSubEvent
-                      ? ` / 子事件：${selectedEvent.name}`
-                      : " / 父事件"}
-                  </strong>
-                  <p>
-                    下方新增的参考、图片和视频只会进入这个位置；切换表格单元后，关联位置会同步更新。
-                  </p>
-                </section>
                 <section className={styles.context}>
                   <header>
                     <Layers3 size={19} />
@@ -2457,8 +2423,10 @@ export function WorldflowClient({
             ) : (
               <div className={styles.noSelection}>
                 <LockKeyhole size={22} />
-                <strong>请选择一个父事件或子事件</strong>
-                <span>素材会绑定到当前镜头和事件主体，不会混入其他镜头。</span>
+                <strong>请在上方选择一个父事件或子事件</strong>
+                <span>
+                  选择后，事件编辑和素材关联会自动同步到当前镜头与事件主体。
+                </span>
               </div>
             )}
             {selectedSource.current_step >= 7 ? (
