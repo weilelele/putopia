@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { buildCameraEmbedUrl, isCameraStatusMessage, shouldShowCameraLive, type CameraPlaybackState, type DeviceCameraSource } from '@/lib/device-camera'
-import { DEVICE_CAMERA_EFFECTS, deviceCameraEffectDelay, nextDeviceCameraEffect, type DeviceCameraEffectId } from '@/lib/device-camera-effects'
+import { DEVICE_CAMERA_EFFECTS, deviceCameraEffectDelay, nextDeviceCameraEffect, type DeviceCameraBaseEffectId, type DeviceCameraEffectId } from '@/lib/device-camera-effects'
 import styles from './cosmo-camera-embed.module.css'
 
 const subscribe = () => () => {}
@@ -53,12 +53,17 @@ function CameraFrame({ source, parentOrigin, location }: { source: DeviceCameraS
 
   useEffect(() => {
     let trigger: ReturnType<typeof setTimeout>
+    let currentEffect: DeviceCameraEffectId = 'signal-decay'
+    let lastBase: DeviceCameraBaseEffectId = 'signal-decay'
     function schedule() {
       trigger = setTimeout(() => {
         if (document.visibilityState !== 'visible') { schedule(); return }
-        setEffect((current) => nextDeviceCameraEffect(current, Math.random()))
+        const next = nextDeviceCameraEffect(currentEffect, lastBase)
+        currentEffect = next
+        if (next !== 'glitch-art') lastBase = next
+        setEffect(next)
         schedule()
-      }, deviceCameraEffectDelay(Math.random()))
+      }, deviceCameraEffectDelay(currentEffect, Math.random()))
     }
     schedule()
     return () => clearTimeout(trigger)
