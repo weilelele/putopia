@@ -80,6 +80,26 @@ describe('batch configuration drafts', () => {
     expect(validateBatchConfigDraft({ ...draft, inventory: undefined })).toContain(
       'A claim-open Batch requires listing inventory.',
     )
+    expect(
+      validateBatchConfigDraft({
+        ...draft,
+        inventory: { claimedQuantity: 0, listingQuantity: 0 },
+      }),
+    ).toContain('A claim-open Batch requires at least one listed unit.')
+  })
+
+  it('allows zero inventory before claims open', () => {
+    const batch = getDeviceBatch('cairo-batch-01')!
+    const draft = createBatchConfigDraft(batch)
+
+    expect(
+      validateBatchConfigDraft({
+        ...draft,
+        claimPrice: undefined,
+        inventory: { claimedQuantity: 0, listingQuantity: 0 },
+        status: 'survey',
+      }),
+    ).toEqual([])
   })
 
   it('requires a valid IANA time zone', () => {

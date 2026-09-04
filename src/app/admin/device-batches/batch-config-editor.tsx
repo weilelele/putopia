@@ -361,6 +361,37 @@ export function BatchConfigEditor({
     { count: draft.distributionStages.length, id: 'packs', label: 'PACKS' },
     { id: 'update', label: 'LATEST UPDATE' },
   ]
+  const savedDraft = !hasUnsavedChanges && selectedRecord.hasUnpublishedChanges
+  const saveSucceeded = message.startsWith('Revision ')
+  const saveFeedback = message
+    ? {
+        label: saveSucceeded
+          ? selectedRecord.hasUnpublishedChanges
+            ? 'DRAFT SAVED'
+            : 'PUBLISHED LIVE'
+          : 'SAVE FAILED',
+        state: saveSucceeded ? 'success' : 'error',
+        text: message,
+      }
+    : validationErrors.length > 0
+      ? {
+          label: 'ACTION REQUIRED',
+          state: 'error',
+          text: validationErrors.join(' '),
+        }
+      : hasUnsavedChanges
+        ? {
+            label: 'UNSAVED CHANGES',
+            state: 'pending',
+            text: 'Save a private draft before leaving this page.',
+          }
+        : savedDraft
+          ? {
+              label: 'SAVED DRAFT',
+              state: 'pending',
+              text: 'This revision is stored in the shared backend but is not public until you choose PUBLISH LIVE.',
+            }
+          : null
 
   return (
     <div className={styles.editor}>
@@ -396,7 +427,9 @@ export function BatchConfigEditor({
             <Eye aria-hidden size={15} /> {previewOpen ? 'CLOSE PREVIEW' : 'PREVIEW'}
           </ArchiveButton>
           <ArchiveButton
-            disabled={!hasUnsavedChanges || Boolean(saveBusy)}
+            disabled={
+              !hasUnsavedChanges || validationErrors.length > 0 || Boolean(saveBusy)
+            }
             onClick={() => void persistBatch(false)}
             variant="secondary"
           >
@@ -404,6 +437,18 @@ export function BatchConfigEditor({
             {saveBusy === 'draft' ? 'SAVING…' : 'SAVE DRAFT'}
           </ArchiveButton>
         </div>
+
+        {saveFeedback ? (
+          <div
+            aria-live="polite"
+            className={styles.saveFeedback}
+            data-state={saveFeedback.state}
+            role="status"
+          >
+            <strong>{saveFeedback.label}</strong>
+            <p>{saveFeedback.text}</p>
+          </div>
+        ) : null}
 
         <section className={styles.batchSummary} aria-label="Selected Batch summary">
           <div className={styles.batchIdentity}>
@@ -428,10 +473,14 @@ export function BatchConfigEditor({
           </div>
           <div>
             <span>CHANGES</span>
-            <strong className={hasUnsavedChanges ? styles.pending : styles.ready}>
+            <strong
+              className={hasUnsavedChanges || savedDraft ? styles.pending : styles.ready}
+            >
               {hasUnsavedChanges
                 ? 'UNSAVED'
-                : `REV ${selectedRecord.revision || 'SOURCE'}`}
+                : savedDraft
+                  ? 'SAVED DRAFT'
+                  : `REV ${selectedRecord.revision || 'SOURCE'}`}
             </strong>
           </div>
         </section>
@@ -1068,12 +1117,12 @@ export function BatchConfigEditor({
           </span>
           <p>
             {validationErrors.length === 0
-              ? selectedRecord.hasUnpublishedChanges
+              ? savedDraft
                 ? 'A saved revision is waiting to be published.'
-                : 'Configuration is complete and ready to publish.'
-              : `${validationErrors.length} issue${
-                  validationErrors.length === 1 ? '' : 's'
-                } must be resolved before publishing.`}
+                : hasUnsavedChanges
+                  ? 'Unsaved changes are ready to store as a private draft.'
+                  : 'Configuration is complete and ready to publish.'
+              : validationErrors.join(' ')}
           </p>
           <div className={styles.secondaryActions}>
             <ArchiveButton
@@ -1087,7 +1136,9 @@ export function BatchConfigEditor({
         </div>
         <div className={styles.workspaceActions}>
           <ArchiveButton
-            disabled={!hasUnsavedChanges || Boolean(saveBusy)}
+            disabled={
+              !hasUnsavedChanges || validationErrors.length > 0 || Boolean(saveBusy)
+            }
             onClick={() => void persistBatch(false)}
             variant="secondary"
           >
@@ -1104,11 +1155,6 @@ export function BatchConfigEditor({
         </div>
       </section>
 
-      {message ? (
-        <div className={styles.message} role="status">
-          {message}
-        </div>
-      ) : null}
       {notificationMessage ? (
         <div className={styles.message} role="status">
           {notificationMessage}

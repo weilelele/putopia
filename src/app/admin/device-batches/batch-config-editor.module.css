@@ -89,6 +89,44 @@
   background: transparent;
 }
 
+.saveFeedback {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: var(--s-1);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-faint);
+  background: var(--bg-panel);
+}
+
+.saveFeedback strong,
+.saveFeedback p {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 1.55;
+}
+
+.saveFeedback strong {
+  color: var(--color-nucleus);
+  letter-spacing: 0.1em;
+}
+
+.saveFeedback p {
+  color: var(--color-star-dim);
+}
+
+.saveFeedback[data-state='error'] strong {
+  color: var(--color-fault);
+}
+
+.saveFeedback[data-state='pending'] strong {
+  color: var(--color-warn);
+}
+
+.saveFeedback[data-state='success'] strong {
+  color: var(--color-ok);
+}
+
 .workspaceActions,
 .secondaryActions {
   display: flex;
