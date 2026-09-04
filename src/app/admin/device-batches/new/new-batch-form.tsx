@@ -7,6 +7,7 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { createDeviceBatchDraft } from '@/lib/actions/device-batch-admin'
+import { DEVICE_BATCH_TIME_ZONE_OPTIONS } from '@/lib/device-batches'
 import {
   toBatchSlug,
   validateLocalBatchSeed,
@@ -21,6 +22,7 @@ const EMPTY_SEED: LocalBatchSeed = {
   name: '',
   slug: '',
   summary: '',
+  timeZone: 'UTC',
   updatedAt: '',
 }
 
@@ -134,15 +136,30 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
               value={form.leadName}
             />
           </ArchiveField>
-          <ArchiveField htmlFor="new-batch-date" label="FIRST RECORD DATE">
+          <ArchiveField htmlFor="new-batch-time-zone" label="TIME ZONE">
             <input
-              id="new-batch-date"
-              onChange={(event) => updateField('updatedAt', event.target.value)}
-              placeholder="Jul 30, 2026"
-              value={form.updatedAt}
+              id="new-batch-time-zone"
+              list="device-batch-time-zones"
+              onChange={(event) => updateField('timeZone', event.target.value)}
+              placeholder="Asia/Tokyo"
+              value={form.timeZone}
             />
+            <datalist id="device-batch-time-zones">
+              {DEVICE_BATCH_TIME_ZONE_OPTIONS.map((timeZone) => (
+                <option key={timeZone} value={timeZone} />
+              ))}
+            </datalist>
           </ArchiveField>
         </div>
+
+        <ArchiveField htmlFor="new-batch-date" label="FIRST RECORD DATE">
+          <input
+            id="new-batch-date"
+            onChange={(event) => updateField('updatedAt', event.target.value)}
+            placeholder="Jul 30, 2026"
+            value={form.updatedAt}
+          />
+        </ArchiveField>
 
         <ArchiveField htmlFor="new-batch-summary" label="INITIAL FIELD SUMMARY">
           <textarea

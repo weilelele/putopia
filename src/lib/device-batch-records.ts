@@ -1,4 +1,7 @@
-import type { DeviceBatch } from '@/lib/device-batches'
+import {
+  getDeviceBatchTimeZone,
+  type DeviceBatch,
+} from '@/lib/device-batches'
 
 export type BatchPublicationStatus = 'draft' | 'published' | 'archived'
 
@@ -35,6 +38,7 @@ export function rowToBatch(row: DeviceBatchRow, published = false): DeviceBatch 
 
   return {
     ...content,
+    timeZone: getDeviceBatchTimeZone(content),
     claimPrice: published && row.price_amount !== null && row.price_currency
         ? {
             amount: Number(row.price_amount),

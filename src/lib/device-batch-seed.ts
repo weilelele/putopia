@@ -1,4 +1,7 @@
-import type { DeviceBatch } from './device-batches'
+import {
+  isValidDeviceBatchTimeZone,
+  type DeviceBatch,
+} from './device-batches'
 
 export type LocalBatchSeed = {
   code: string
@@ -7,6 +10,7 @@ export type LocalBatchSeed = {
   name: string
   slug: string
   summary: string
+  timeZone: string
   updatedAt: string
 }
 
@@ -27,12 +31,16 @@ export function validateLocalBatchSeed(seed: LocalBatchSeed) {
     seed.location.trim().length === 0 ||
     seed.name.trim().length === 0 ||
     seed.summary.trim().length === 0 ||
+    seed.timeZone.trim().length === 0 ||
     seed.updatedAt.trim().length === 0
   ) {
     errors.push('Complete every Batch identity field.')
   }
   if (seed.slug !== toBatchSlug(seed.slug) || seed.slug.length < 3) {
     errors.push('Slug must use at least three lowercase letters, numbers, or hyphens.')
+  }
+  if (!isValidDeviceBatchTimeZone(seed.timeZone)) {
+    errors.push('Use a valid time zone such as Asia/Tokyo or Europe/London.')
   }
 
   return errors
@@ -46,6 +54,7 @@ export function normalizeLocalBatchSeed(seed: LocalBatchSeed): LocalBatchSeed {
     name: seed.name.trim(),
     slug: toBatchSlug(seed.slug),
     summary: seed.summary.trim(),
+    timeZone: seed.timeZone.trim(),
     updatedAt: seed.updatedAt.trim(),
   }
 }
@@ -102,6 +111,7 @@ export function createDeviceBatchFromSeed(seed: LocalBatchSeed): DeviceBatch {
     status: 'survey',
     statusLine: 'Initial field record pending',
     summary: normalized.summary,
+    timeZone: normalized.timeZone,
     updatedAt: normalized.updatedAt,
     heroCaption: 'Primary Batch image pending.',
   }

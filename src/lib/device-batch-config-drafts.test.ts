@@ -13,6 +13,7 @@ describe('batch configuration drafts', () => {
     const draft = createBatchConfigDraft(batch)
 
     expect(draft.status).toBe('claim_open')
+    expect(draft.timeZone).toBe('Africa/Cairo')
     expect(draft.distributionStages).toHaveLength(3)
     expect(draft.distributionStages).not.toBe(batch.distributionStages)
     expect(draft.distributionStages[0].contents).not.toBe(
@@ -81,6 +82,15 @@ describe('batch configuration drafts', () => {
     )
   })
 
+  it('requires a valid IANA time zone', () => {
+    const batch = getDeviceBatch('cairo-batch-01')!
+    const draft = createBatchConfigDraft(batch)
+
+    expect(validateBatchConfigDraft({ ...draft, timeZone: 'Cairo time' })).toContain(
+      'Use a valid time zone such as Asia/Tokyo or Europe/London.',
+    )
+  })
+
   it('normalizes text, currency, and Pack contents for a stable saved draft', () => {
     const batch = getDeviceBatch('cairo-batch-01')!
     const draft = createBatchConfigDraft(batch)
@@ -98,6 +108,7 @@ describe('batch configuration drafts', () => {
           label: ' First signal pack ',
         },
       ],
+      timeZone: ' Africa/Cairo ',
     })
 
     expect(normalized.claimPrice).toEqual({
@@ -107,5 +118,6 @@ describe('batch configuration drafts', () => {
     })
     expect(normalized.distributionStages[0].label).toBe('First signal pack')
     expect(normalized.distributionStages[0].contents).toEqual(['Antenna fragment'])
+    expect(normalized.timeZone).toBe('Africa/Cairo')
   })
 })

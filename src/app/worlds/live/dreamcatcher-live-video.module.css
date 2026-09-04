@@ -18,11 +18,63 @@
 }
 
 .metadata {
+  position: absolute;
+  right: var(--s-2);
+  bottom: var(--s-2);
+  left: var(--s-2);
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--s-2);
+  color: var(--color-star);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+.location,
+.clock,
+.liveBadge {
+  padding: var(--s-1) var(--s-2);
   background: var(--color-deep);
 }
 
-.paused, .paused *, .paused::before, .paused::after {
-  animation: none !important;
+.location {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.clock,
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  white-space: nowrap;
+}
+
+.clock {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.liveBadge {
+  position: absolute;
+  top: var(--s-2);
+  left: var(--s-2);
+  z-index: 3;
+  color: var(--color-star);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+}
+
+.liveDot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-nucleus);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -30,7 +30,6 @@ export const DreamcatcherLiveVideo = memo(function DreamcatcherLiveVideo({
     phase: working ? 'working' : 'resting', index: 0, sequence: 0,
   })
   const [reconnectingPhase, setReconnectingPhase] = useState<DreamcatcherLivePhase | null>(null)
-  const [paused, setPaused] = useState(false)
   const libraryRef = useRef(library)
   useEffect(() => { libraryRef.current = library }, [library])
 
@@ -38,7 +37,7 @@ export const DreamcatcherLiveVideo = memo(function DreamcatcherLiveVideo({
   // in-flight transition when status changes again or a reconnect timer runs.
   const synced = syncDreamcatcherPlaybackToState(cursor, working, library)
   if (synced !== cursor) setCursor(synced)
-  if (reconnectingPhase && (reconnectingPhase !== synced.phase || paused)) setReconnectingPhase(null)
+  if (reconnectingPhase && reconnectingPhase !== synced.phase) setReconnectingPhase(null)
 
   const { phase } = synced
   const pool = library?.[phase] ?? []
@@ -58,7 +57,7 @@ export const DreamcatcherLiveVideo = memo(function DreamcatcherLiveVideo({
   }, [nextUrl])
 
   useEffect(() => {
-    if (!steady || pool.length < 2 || paused) return
+    if (!steady || pool.length < 2) return
     let timer: ReturnType<typeof setTimeout>
     let swap: ReturnType<typeof setTimeout> | undefined
     let finish: ReturnType<typeof setTimeout> | undefined
@@ -74,15 +73,15 @@ export const DreamcatcherLiveVideo = memo(function DreamcatcherLiveVideo({
     }
     schedule()
     return () => { clearTimeout(timer); clearTimeout(swap); clearTimeout(finish) }
-  }, [phase, steady, pool.length, poolSignature, paused])
+  }, [phase, steady, pool.length, poolSignature])
 
   return (
-    <div className={`${styles.signalFeed} ${paused ? playerStyles.paused : ''}`} data-asset-id={asset?.assetId}
+    <div className={styles.signalFeed} data-asset-id={asset?.assetId}
       data-reconnecting={reconnectingPhase === phase ? 'true' : 'false'}
       data-signal-filter="analog-interference" data-signal-phase={phase}>
       {asset ? (
         <StateClip key={`${phase}:${asset.assetId}:${synced.sequence}`} url={asset.url}
-          label={label} loop={steady} fallbackImage={fallbackImage} paused={paused} onPauseChange={setPaused}
+          label={label} loop={steady} fallbackImage={fallbackImage}
           onEnded={() => setCursor((current) => advanceDreamcatcherPlayback(current, working, library))} />
       ) : (
         <>
@@ -97,9 +96,8 @@ export const DreamcatcherLiveVideo = memo(function DreamcatcherLiveVideo({
   )
 })
 
-function StateClip({ url, label, loop, fallbackImage, onEnded, paused, onPauseChange }: {
+function StateClip({ url, label, loop, fallbackImage, onEnded }: {
   url: string; label: string; loop: boolean; fallbackImage: string; onEnded: () => void
-  paused: boolean; onPauseChange: (paused: boolean) => void
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [failed, setFailed] = useState(false)
@@ -111,7 +109,7 @@ function StateClip({ url, label, loop, fallbackImage, onEnded, paused, onPauseCh
     if (!video || failed) return
     let disposed = false
     function updatePlayback() {
-      if (document.visibilityState !== 'visible' || paused) { video!.pause(); return }
+      if (document.visibilityState !== 'visible') { video!.pause(); return }
       void video!.play().catch((error: unknown) => {
         if (!disposed && error instanceof DOMException && error.name === 'NotAllowedError') setBlocked(true)
       })
@@ -119,10 +117,9 @@ function StateClip({ url, label, loop, fallbackImage, onEnded, paused, onPauseCh
     updatePlayback()
     document.addEventListener('visibilitychange', updatePlayback)
     return () => { disposed = true; document.removeEventListener('visibilitychange', updatePlayback) }
-  }, [paused, failed, attempt])
+  }, [failed, attempt])
 
   function resume() {
-    onPauseChange(false)
     void videoRef.current?.play().then(() => setBlocked(false)).catch(() => setBlocked(true))
   }
 
@@ -134,23 +131,19 @@ function StateClip({ url, label, loop, fallbackImage, onEnded, paused, onPauseCh
           <span className={playerStyles.unavailable} role="status">VIDEO COULD NOT LOAD</span>
         </>
       ) : (
-        <video key={attempt} ref={videoRef} aria-label={label} autoPlay={!paused} className={styles.liveVideo}
+        <video key={attempt} ref={videoRef} aria-label={label} autoPlay className={styles.liveVideo}
           loop={loop} muted playsInline preload="auto" src={url}
           onEnded={loop ? undefined : onEnded} onError={() => setFailed(true)}
           onPlaying={() => setBlocked(false)}>
           Your browser does not support this video.
         </video>
       )}
-      <div className={playerStyles.controls}>
-        {failed ? (
-          <ArchiveButton variant="secondary" onClick={() => { setFailed(false); setAttempt((value) => value + 1) }}>RETRY VIDEO</ArchiveButton>
-        ) : (
-          <ArchiveButton variant="secondary" aria-label={paused || blocked ? 'Play device video' : 'Pause device video'}
-            onClick={paused || blocked ? resume : () => { videoRef.current?.pause(); onPauseChange(true) }}>
-            {paused || blocked ? 'PLAY' : 'PAUSE'}
-          </ArchiveButton>
-        )}
-      </div>
+      {!failed && !blocked ? <span className={playerStyles.liveBadge}><span aria-hidden className={playerStyles.liveDot} />LIVE</span> : null}
+      {failed || blocked ? <div className={playerStyles.controls}>
+        <ArchiveButton variant="secondary" onClick={failed
+          ? () => { setFailed(false); setAttempt((value) => value + 1) }
+          : resume}>RETRY VIDEO</ArchiveButton>
+      </div> : null}
     </>
   )
 }
