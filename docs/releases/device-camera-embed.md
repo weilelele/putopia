@@ -25,7 +25,9 @@ COSMO_EMBED_ORIGIN=http://localhost:8082 DEVICE_CAMERA_DEMO=1 npm run dev -- --w
 ```
 
 Open `http://localhost:3000/devices`. The non-persistent demo fallback uses the
-existing 宇宙飞船舱 Band (23 clips). This is test footage unrelated to the selected
+requested `直播 - 白天 / 白天` Band (`6a8ecbc041b16262cb634785` /
+`6a8ecbcf41b16262cb634790`). Its scheduled programs are 海浪蜡烛 before 18:00 and
+晚上海浪蜡烛 afterward in Asia/Shanghai. This is test footage unrelated to the selected
 Batch's physical location; the minimal public view has no extra demo banner.
 It only applies to unbound Batches,
 and `NODE_ENV=production` disables this flag even if someone sets it accidentally.
@@ -100,6 +102,11 @@ A short `buffering` state during an A/B clip handoff keeps LIVE visible after pl
 has started. Error, paused, unavailable and autoplay-blocked states still remove LIVE.
 The optional effects pipeline runs inside Cosmo Embed and never changes the active
 asset; all clip changes remain controlled by Cosmo's synchronized schedule.
+Device enables exactly one complete WebGL preset at a time. It starts with Signal
+Decay, then switches every 12–22 seconds to a different randomly selected Chromatic
+or Glitch Art preset (and back among all three). The previous CSS signal layer and
+reacquisition burst are not mounted, so presets never overlap or stack. Hidden pages
+do not advance the rotation.
 
 ## Verification
 

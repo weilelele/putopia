@@ -11,7 +11,7 @@ export function getDeviceCameraSource(batch: DeviceBatch): DeviceCameraSource | 
   if (local && process.env.DEVICE_CAMERA_DEMO === '1') {
     return {
       embedOrigin, demo: true,
-      binding: { provider: 'cosmo', channelId: '6a0419e515e35a5f46396a85', bandId: '6a0419f615e35a5f46396a8f', title: '宇宙飞船舱 · Cosmo test camera', fit: 'contain' },
+      binding: { provider: 'cosmo', channelId: '6a8ecbc041b16262cb634785', bandId: '6a8ecbcf41b16262cb634790', title: '白天 · 海浪蜡烛', fit: 'contain' },
     }
   }
   return null
