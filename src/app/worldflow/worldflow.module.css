@@ -1062,6 +1062,39 @@ button.worldCard {
   gap: var(--s-2);
 }
 
+.forgeBindingSummary,
+.bindForgePool {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: var(--s-3) 0;
+  padding: var(--s-3);
+  border: 1px solid var(--bd-orange);
+  background: var(--bg-panel);
+}
+
+.forgeBindingSummary > div,
+.bindForgePool > div {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.forgeBindingSummary span,
+.bindForgePool span {
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.forgeBindingSummary button {
+  min-height: 44px;
+  align-self: flex-start;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--bd-faint);
+  background: transparent;
+  color: var(--color-nucleus);
+  cursor: pointer;
+}
+
 .cloudLibrary {
   width: 100%;
   min-width: 0;
@@ -1070,6 +1103,10 @@ button.worldCard {
   padding: var(--s-3);
   border: 1px solid var(--bd-orange);
   background: var(--color-deep);
+  max-height: min(82vh, 840px);
+  overflow-y: auto;
+  scrollbar-color: var(--color-nucleus) var(--color-deep);
+  scrollbar-width: thin;
 }
 
 .scrollRegionHeader,
@@ -1225,6 +1262,57 @@ button.worldCard {
   background: var(--color-void);
 }
 
+.cosmoPrograms {
+  min-width: 0;
+  margin-bottom: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-faint);
+  background: var(--color-void);
+}
+
+.cosmoPrograms > header {
+  display: grid;
+  gap: var(--s-1);
+  margin-bottom: var(--s-2);
+}
+
+.cosmoPrograms > header span {
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.cosmoPrograms > div {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  padding-bottom: var(--s-1);
+  scrollbar-color: var(--color-nucleus) var(--color-deep);
+  scrollbar-width: thin;
+}
+
+.cosmoPrograms button {
+  display: grid;
+  min-width: 180px;
+  min-height: 68px;
+  gap: var(--s-1);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-faint);
+  background: var(--bg-panel);
+  color: var(--color-star);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cosmoPrograms button[data-active="true"] {
+  border-color: var(--color-nucleus);
+  border-left: 3px solid var(--color-nucleus);
+}
+
+.cosmoPrograms button span {
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
 .cosmoBands > header {
   display: flex;
   flex-direction: column;
@@ -1262,15 +1350,14 @@ button.worldCard {
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-auto-columns: minmax(190px, 72vw);
-  grid-auto-flow: column;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-2);
-  overflow-x: auto;
-  padding-bottom: var(--s-2);
-  scroll-snap-type: x proximity;
+  max-height: min(70vh, 720px);
+  overflow-y: auto;
+  padding: 0 var(--s-1) var(--s-2) 0;
   scrollbar-color: var(--color-nucleus) var(--color-deep);
   scrollbar-width: thin;
-  touch-action: pan-x;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1287,7 +1374,6 @@ button.worldCard {
   color: var(--color-star);
   text-align: left;
   cursor: pointer;
-  scroll-snap-align: start;
 }
 
 .cloudAssetCard:disabled {
@@ -1614,6 +1700,13 @@ button.emptyAsset {
     justify-content: space-between;
   }
 
+  .forgeBindingSummary,
+  .bindForgePool {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .shotFoundation > div {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1623,7 +1716,7 @@ button.emptyAsset {
   }
 
   .cloudAssetGrid {
-    grid-auto-columns: minmax(210px, 280px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .cosmoSearch {

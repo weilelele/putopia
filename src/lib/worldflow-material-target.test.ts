@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { WorldflowState } from '@/lib/actions/worldflow'
-import { isWorldflowMaterialTargetPersisted } from '@/lib/worldflow-material-target'
+import {
+  isWorldflowMaterialTargetPersisted,
+  shouldSaveWorldflowBeforeMaterialChange,
+} from '@/lib/worldflow-material-target'
 
 const state = {
   characters: [
@@ -77,6 +80,26 @@ describe('isWorldflowMaterialTargetPersisted', () => {
     expect(
       isWorldflowMaterialTargetPersisted(state, {
         eventId: 'event-new',
+        shotId: 'shot-1',
+      }),
+    ).toBe(false)
+  })
+})
+
+describe('shouldSaveWorldflowBeforeMaterialChange', () => {
+  it('saves edited text even when the target id already exists', () => {
+    expect(
+      shouldSaveWorldflowBeforeMaterialChange(true, state, {
+        eventId: 'event-1',
+        shotId: 'shot-1',
+      }),
+    ).toBe(true)
+  })
+
+  it('skips the server write only for an unchanged persisted target', () => {
+    expect(
+      shouldSaveWorldflowBeforeMaterialChange(false, state, {
+        eventId: 'event-1',
         shotId: 'shot-1',
       }),
     ).toBe(false)

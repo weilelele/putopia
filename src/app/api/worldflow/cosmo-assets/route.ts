@@ -19,6 +19,11 @@ function serializeChannel(channel: Awaited<ReturnType<typeof listFrequencies>>[n
         name: band.name,
         image_count: band.imageCount,
         video_count: band.videoCount,
+        programs: band.programs.map((program) => ({
+          id: program.programId,
+          name: program.name,
+          video_count: program.videoCount,
+        })),
       })),
   }
 }
@@ -34,6 +39,7 @@ export async function GET(request: Request) {
   const query = (params.get('q') ?? '').trim().slice(0, 120)
   const channelId = params.get('channelId') ?? ''
   const bandId = params.get('bandId') ?? ''
+  const programId = params.get('programId') ?? ''
   const media = params.get('media')
   if (media !== 'image' && media !== 'video' && media !== 'mixed') {
     return NextResponse.json({ error: '素材类型无效。' }, { status: 400 })
@@ -53,7 +59,9 @@ export async function GET(request: Request) {
     }
 
     const mediaTypes: CosmoMedia[] = media === 'mixed' ? ['image', 'video'] : [media]
-    const groups = await Promise.all(mediaTypes.map((kind) => getBandAssets(channelId, bandId, kind)))
+    const groups = await Promise.all(
+      mediaTypes.map((kind) => getBandAssets(channelId, bandId, kind, programId || null)),
+    )
     const assets: WorldflowCloudAsset[] = groups
       .flat()
       .slice(0, 160)

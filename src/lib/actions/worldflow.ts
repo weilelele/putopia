@@ -1,4 +1,4 @@
-'use server'
+import 'server-only'
 
 import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
@@ -28,10 +28,21 @@ export type WorldflowTimeSlot = {
   events: WorldflowEvent[]
 }
 
+export type WorldflowForgeBinding = {
+  channelId: string
+  channelName: string
+  channelNumber: number | null
+  bandId: string
+  bandName: string
+  programId?: string | null
+  programName?: string | null
+}
+
 export type WorldflowShot = {
   id: string
   name: string
   description: string
+  forgeBinding?: WorldflowForgeBinding | null
 }
 
 export type WorldflowState = {
@@ -39,6 +50,7 @@ export type WorldflowState = {
   worldRules: string
   coreConflict: string
   visualDirection: string
+  worldForgeBinding?: WorldflowForgeBinding | null
   characters: Array<{
     id: string
     name: string
@@ -110,6 +122,11 @@ export type WorldflowCosmoChannel = {
     name: string
     image_count: number
     video_count: number
+    programs: Array<{
+      id: string
+      name: string
+      video_count: number
+    }>
   }>
 }
 

@@ -37,3 +37,11 @@ export function isWorldflowMaterialTargetPersisted(
 
   return true
 }
+
+export function shouldSaveWorldflowBeforeMaterialChange(
+  dirty: boolean,
+  persistedState: WorldflowState | null,
+  target: WorldflowMaterialTarget,
+): boolean {
+  return dirty || !isWorldflowMaterialTargetPersisted(persistedState, target)
+}

@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
   let duplicateQuery = admin
     .from('worldflow_assets')
-    .select('id')
+    .select('*')
     .eq('world_id', worldId)
     .eq('step', step)
     .eq('source_type', 'cloud')
@@ -85,10 +85,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: duplicateError.message }, { status: 500 })
   }
   if (duplicate) {
-    return NextResponse.json(
-      { error: '这个素材已经关联到当前位置。', existingAssetId: duplicate.id },
-      { status: 409 },
-    )
+    return NextResponse.json(duplicate, { status: 200 })
   }
 
   let mediaType: 'image' | 'video'
