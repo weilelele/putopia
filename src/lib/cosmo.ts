@@ -28,6 +28,13 @@ export interface CosmoBand {
   enabled: boolean
   imageCount: number
   videoCount: number
+  programs: CosmoProgram[]
+}
+
+export interface CosmoProgram {
+  programId: string
+  name: string
+  videoCount: number
 }
 
 export interface CosmoFrequency {
@@ -91,6 +98,15 @@ function toObjectIds(ids: unknown): ObjectId[] {
 }
 
 function mapBand(band: Document): CosmoBand {
+  const programs = Array.isArray(band.programs)
+    ? band.programs.map((program: Document) => ({
+        programId: String(program._id),
+        name: program.name ?? '',
+        videoCount:
+          (Array.isArray(program.videoIds) ? program.videoIds.length : 0) +
+          (Array.isArray(program.specVideoIds) ? program.specVideoIds.length : 0),
+      }))
+    : []
   return {
     bandId: String(band._id),
     name: band.name ?? '',
@@ -98,6 +114,7 @@ function mapBand(band: Document): CosmoBand {
     enabled: band.enabled !== false,
     imageCount: Array.isArray(band.imagePoolIds) ? band.imagePoolIds.length : 0,
     videoCount: Array.isArray(band.videoPoolIds) ? band.videoPoolIds.length : 0,
+    programs,
   }
 }
 
@@ -211,6 +228,7 @@ export async function getBandAssets(
   channelId: string,
   bandId: string,
   media: CosmoMedia,
+  programId?: string | null,
 ): Promise<CosmoAsset[]> {
   const d = await db()
   let _id: ObjectId
@@ -224,7 +242,18 @@ export async function getBandAssets(
   const band = findBand(ch, bandId)
   if (!band) return []
 
-  const poolIds = toObjectIds(media === 'image' ? band.imagePoolIds : band.videoPoolIds)
+  const program =
+    programId && Array.isArray(band.programs)
+      ? band.programs.find((item: Document) => String(item._id) === programId)
+      : null
+  if (programId && !program) return []
+  const poolIds = toObjectIds(
+    media === 'image'
+      ? band.imagePoolIds
+      : program
+        ? [...(program.videoIds ?? []), ...(program.specVideoIds ?? [])]
+        : band.videoPoolIds,
+  )
   if (poolIds.length === 0) return []
 
   const coll = media === 'image' ? COLL_IMAGE : COLL_VIDEO

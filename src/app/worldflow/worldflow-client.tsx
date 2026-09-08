@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, useTransition, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type RefObject,
+} from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -25,21 +31,24 @@ import {
   UserRound,
 } from "lucide-react";
 import {
-  createWorldflowWorld,
-  reviewWorldflowStep,
-  saveWorldflowState,
-  submitWorldflowStep,
   type WorldflowAsset,
   type WorldflowCloudAsset,
   type WorldflowCosmoChannel,
   type WorldflowEvent,
+  type WorldflowForgeBinding,
   type WorldflowState,
   type WorldflowStepStatus,
   type WorldflowWorld,
 } from "@/lib/actions/worldflow";
+import {
+  createWorldflowWorld,
+  reviewWorldflowStep,
+  saveWorldflowState,
+  submitWorldflowStep,
+} from "@/lib/worldflow-client-api";
 import { buildWorldflowVideoSequence } from "@/lib/worldflow-production";
 import {
-  isWorldflowMaterialTargetPersisted,
+  shouldSaveWorldflowBeforeMaterialChange,
   type WorldflowMaterialTarget,
 } from "@/lib/worldflow-material-target";
 import styles from "./worldflow.module.css";
@@ -73,6 +82,7 @@ function formatDate(value: string) {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Shanghai",
   }).format(new Date(value));
 }
 
@@ -109,6 +119,11 @@ async function deleteWorldflowAsset(assetId: string) {
 function normalizeState(state: WorldflowState): WorldflowState {
   return {
     ...state,
+    worldForgeBinding: state.worldForgeBinding ?? null,
+    shots: state.shots.map((shot) => ({
+      ...shot,
+      forgeBinding: shot.forgeBinding ?? null,
+    })),
     characters: state.characters.map((character) => ({
       ...character,
       description: character.description ?? "",
@@ -131,6 +146,16 @@ function normalizeState(state: WorldflowState): WorldflowState {
   };
 }
 
+type LocalWorldflowDraft = {
+  savedAt: string;
+  serverUpdatedAt: string;
+  state: WorldflowState;
+};
+
+function draftStorageKey(worldId: string) {
+  return `worldflow:draft:${worldId}`;
+}
+
 function findEventSelection(
   timeSlots: WorldflowState["eventSystems"][string]["timeSlots"],
   selectedId: string | null,
@@ -151,11 +176,14 @@ function findEventSelection(
 function MaterialUploader({
   assets,
   beforeUpload,
+  bindingScope,
   canUpload,
   characterId,
   eventId,
   mediaKind = "mixed",
+  forgeBinding,
   onDeleted,
+  onForgeBindingChange,
   onUploaded,
   shotId,
   step,
@@ -167,11 +195,14 @@ function MaterialUploader({
   beforeUpload: (
     target: WorldflowMaterialTarget,
   ) => Promise<string | null>;
+  bindingScope?: "shot" | "world";
   canUpload: boolean;
   characterId?: string | null;
   eventId?: string | null;
   mediaKind?: "image" | "mixed" | "video";
+  forgeBinding?: WorldflowForgeBinding | null;
   onDeleted: (assetId: string) => void;
+  onForgeBindingChange?: (binding: WorldflowForgeBinding | null) => void;
   onUploaded: (asset: WorldflowAsset) => void;
   shotId?: string | null;
   step: number;
@@ -182,7 +213,6 @@ function MaterialUploader({
   const inputRef = useRef<HTMLInputElement>(null);
   const channelListRef = useRef<HTMLDivElement>(null);
   const bandListRef = useRef<HTMLDivElement>(null);
-  const cloudAssetListRef = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
   const [cloudOpen, setCloudOpen] = useState(false);
   const [cloudAssets, setCloudAssets] = useState<WorldflowCloudAsset[]>([]);
@@ -192,6 +222,7 @@ function MaterialUploader({
   const [channelQuery, setChannelQuery] = useState("");
   const [selectedCosmoChannelId, setSelectedCosmoChannelId] = useState("");
   const [selectedCosmoBandId, setSelectedCosmoBandId] = useState("");
+  const [selectedCosmoProgramId, setSelectedCosmoProgramId] = useState("");
   const [cloudLoading, setCloudLoading] = useState(false);
   const [linkingId, setLinkingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -247,6 +278,7 @@ function MaterialUploader({
     setCloudAssets([]);
     setSelectedCosmoChannelId("");
     setSelectedCosmoBandId("");
+    setSelectedCosmoProgramId("");
     try {
       const response = await fetch(
         `/api/worldflow/cosmo-assets?media=${mediaKind}&q=${encodeURIComponent(query.trim())}`,
@@ -267,22 +299,35 @@ function MaterialUploader({
     }
   }
 
-  async function loadCosmoAssets(channelId: string, bandId: string) {
+  async function loadCosmoAssets(
+    channelId: string,
+    bandId: string,
+    programId = "",
+  ) {
+    setSelectedCosmoChannelId(channelId);
     setSelectedCosmoBandId(bandId);
+    setSelectedCosmoProgramId(programId);
     setCloudLoading(true);
     setError("");
     setCloudAssets([]);
     try {
       const response = await fetch(
-        `/api/worldflow/cosmo-assets?media=${mediaKind}&channelId=${encodeURIComponent(channelId)}&bandId=${encodeURIComponent(bandId)}`,
+        `/api/worldflow/cosmo-assets?media=${mediaKind}&channelId=${encodeURIComponent(channelId)}&bandId=${encodeURIComponent(bandId)}${programId ? `&programId=${encodeURIComponent(programId)}` : ""}`,
       );
       const result = (await response.json()) as {
         assets?: WorldflowCloudAsset[];
+        channel?: WorldflowCosmoChannel;
         error?: string;
       };
       if (!response.ok) {
         setError(result.error ?? "Cosmo 素材读取失败。");
         return;
+      }
+      if (result.channel) {
+        setCosmoChannels((channels) => [
+          result.channel!,
+          ...channels.filter((channel) => channel.id !== result.channel!.id),
+        ]);
       }
       setCloudAssets(result.assets ?? []);
     } catch {
@@ -296,6 +341,14 @@ function MaterialUploader({
     const nextOpen = !cloudOpen;
     setCloudOpen(nextOpen);
     if (!nextOpen || cosmoChannels.length) return;
+    if (forgeBinding) {
+      await loadCosmoAssets(
+        forgeBinding.channelId,
+        forgeBinding.bandId,
+        forgeBinding.programId ?? "",
+      );
+      return;
+    }
     await loadCosmoChannels("");
   }
 
@@ -340,11 +393,33 @@ function MaterialUploader({
         return;
       }
       onUploaded(result as WorldflowAsset);
+      setCloudOpen(false);
     } catch {
       setError("自动保存或云端关联失败，请重试。");
     } finally {
       setLinkingId(null);
     }
+  }
+
+  const selectedCosmoBand = selectedCosmoChannel?.bands.find(
+    (band) => band.id === selectedCosmoBandId,
+  );
+  const selectedCosmoProgram = selectedCosmoBand?.programs.find(
+    (program) => program.id === selectedCosmoProgramId,
+  );
+
+  function bindCurrentForgePool() {
+    if (!selectedCosmoChannel || !selectedCosmoBand || !bindingScope) return;
+    onForgeBindingChange?.({
+      bandId: selectedCosmoBand.id,
+      bandName: selectedCosmoBand.name,
+      channelId: selectedCosmoChannel.id,
+      channelName: selectedCosmoChannel.name,
+      channelNumber: selectedCosmoChannel.number,
+      programId: bindingScope === "shot" ? (selectedCosmoProgram?.id ?? null) : null,
+      programName:
+        bindingScope === "shot" ? (selectedCosmoProgram?.name ?? null) : null,
+    });
   }
 
   async function removeAsset(asset: WorldflowAsset) {
@@ -415,6 +490,28 @@ function MaterialUploader({
         type="file"
       />
       {error ? <p className={styles.error}>{error}</p> : null}
+      {forgeBinding ? (
+        <div className={styles.forgeBindingSummary}>
+          <div>
+            <span>
+              {bindingScope === "world" ? "世界默认素材池" : "镜头默认素材池"}
+            </span>
+            <strong>
+              {forgeBinding.channelName} / {forgeBinding.bandName}
+              {forgeBinding.programName ? ` / ${forgeBinding.programName}` : ""}
+            </strong>
+          </div>
+          {canUpload && onForgeBindingChange ? (
+            <button
+              aria-label="解除 Forge 素材池绑定"
+              onClick={() => onForgeBindingChange(null)}
+              type="button"
+            >
+              解除绑定
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       {cloudOpen ? (
         <div className={styles.cloudLibrary}>
           <header>
@@ -493,6 +590,7 @@ function MaterialUploader({
                     onClick={() => {
                       setSelectedCosmoChannelId(channel.id);
                       setSelectedCosmoBandId("");
+                      setSelectedCosmoProgramId("");
                       setCloudAssets([]);
                     }}
                     type="button"
@@ -564,31 +662,76 @@ function MaterialUploader({
               </div>
             </section>
           ) : null}
+          {bindingScope !== "world" && selectedCosmoBand?.programs.length ? (
+            <section className={styles.cosmoPrograms}>
+              <header>
+                <strong>Program</strong>
+                <span>选择 Program 后，仅收窄视频；起始图片仍来自所属 Band。</span>
+              </header>
+              <div>
+                <button
+                  data-active={!selectedCosmoProgramId}
+                  onClick={() =>
+                    void loadCosmoAssets(
+                      selectedCosmoChannel!.id,
+                      selectedCosmoBand.id,
+                    )
+                  }
+                  type="button"
+                >
+                  <strong>整个 Band</strong>
+                  <span>{selectedCosmoBand.video_count} 视频</span>
+                </button>
+                {selectedCosmoBand.programs.map((program) => (
+                  <button
+                    data-active={selectedCosmoProgramId === program.id}
+                    key={program.id}
+                    onClick={() =>
+                      void loadCosmoAssets(
+                        selectedCosmoChannel!.id,
+                        selectedCosmoBand.id,
+                        program.id,
+                      )
+                    }
+                    type="button"
+                  >
+                    <strong>{program.name || "未命名 Program"}</strong>
+                    <span>{program.video_count} 视频</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
+          {bindingScope && selectedCosmoChannel && selectedCosmoBand ? (
+            <div className={styles.bindForgePool}>
+              <div>
+                <strong>
+                  {bindingScope === "world" ? "绑定为世界默认 Band" : "绑定为镜头默认素材池"}
+                </strong>
+                <span>下次打开素材库会直接进入这里，无需重新搜索。</span>
+              </div>
+              <button
+                className={styles.secondary}
+                onClick={bindCurrentForgePool}
+                type="button"
+              >
+                <Check size={16} />
+                {bindingScope === "shot" && selectedCosmoProgram
+                  ? "绑定此 Program"
+                  : "绑定此 Band"}
+              </button>
+            </div>
+          ) : null}
           {!cloudLoading && selectedCosmoBandId && !cloudAssets.length ? (
             <p className={styles.cloudStatus}>这个波段暂无适用素材。</p>
           ) : null}
           {cloudAssets.length ? (
             <div className={styles.scrollRegionHeader}>
               <span>波段素材 · 将关联到 {targetLabel}</span>
-              <div className={styles.scrollControls}>
-                <button
-                  aria-label="向左浏览素材"
-                  onClick={() => scrollHorizontal(cloudAssetListRef, -1)}
-                  type="button"
-                >
-                  <ArrowLeft size={16} />
-                </button>
-                <button
-                  aria-label="向右浏览素材"
-                  onClick={() => scrollHorizontal(cloudAssetListRef, 1)}
-                  type="button"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+              <span>{cloudAssets.length} 份 · 上下滚动查看全部</span>
             </div>
           ) : null}
-          <div className={styles.cloudAssetGrid} ref={cloudAssetListRef}>
+          <div className={styles.cloudAssetGrid}>
             {cloudAssets.map((asset) => {
               const alreadyLinked = assets.some(
                 (linkedAsset) =>
@@ -1010,9 +1153,14 @@ export function WorldflowClient({
   const [state, setState] = useState<WorldflowState | null>(
     selectedSource ? normalizeState(selectedSource.workflow_state) : null,
   );
+  const stateRef = useRef<WorldflowState | null>(
+    selectedSource ? normalizeState(selectedSource.workflow_state) : null,
+  );
   const persistedStateRef = useRef<WorldflowState | null>(
     selectedSource ? normalizeState(selectedSource.workflow_state) : null,
   );
+  const [dirty, setDirty] = useState(false);
+  const dirtyRef = useRef(false);
   const [activeStep, setActiveStep] = useState(
     selectedSource?.current_step ?? 1,
   );
@@ -1032,6 +1180,60 @@ export function WorldflowClient({
   const [pending, startTransition] = useTransition();
   const isArchitect = user.role === "architect";
   const isOwner = selectedSource?.owner_id === user.id;
+
+  useEffect(() => {
+    if (!selectedSource || !isOwner) return;
+    const timer = window.setTimeout(() => {
+      const rawDraft = window.localStorage.getItem(
+        draftStorageKey(selectedSource.id),
+      );
+      if (!rawDraft) return;
+      try {
+        const draft = JSON.parse(rawDraft) as LocalWorldflowDraft;
+        if (
+          draft.serverUpdatedAt !== selectedSource.updated_at ||
+          !draft.state
+        ) {
+          window.localStorage.removeItem(draftStorageKey(selectedSource.id));
+          return;
+        }
+        const nextState = normalizeState(draft.state);
+        stateRef.current = nextState;
+        setState(nextState);
+        setDirty(true);
+        dirtyRef.current = true;
+        setMessage(`已恢复 ${formatDate(draft.savedAt)} 的本机草稿`);
+      } catch {
+        window.localStorage.removeItem(draftStorageKey(selectedSource.id));
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [isOwner, selectedSource]);
+
+  useEffect(() => {
+    if (!selectedSource || !state || !dirty || !isOwner) return;
+    const timer = window.setTimeout(() => {
+      const draft: LocalWorldflowDraft = {
+        savedAt: new Date().toISOString(),
+        serverUpdatedAt: selectedSource.updated_at,
+        state,
+      };
+      window.localStorage.setItem(
+        draftStorageKey(selectedSource.id),
+        JSON.stringify(draft),
+      );
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [dirty, isOwner, selectedSource, state]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [dirty]);
 
   const activeShot =
     state?.shots.find((shot) => shot.id === activeShotId) ?? state?.shots[0];
@@ -1073,11 +1275,18 @@ export function WorldflowClient({
     setAssets((items) => items.filter((item) => item.id !== assetId));
   }
 
+  function addAssetToState(asset: WorldflowAsset) {
+    setAssets((items) => [asset, ...items.filter((item) => item.id !== asset.id)]);
+  }
+
   function openWorld(world: WorldflowWorld) {
     const nextState = normalizeState(world.workflow_state);
     setSelectedId(world.id);
     setState(nextState);
+    stateRef.current = nextState;
     persistedStateRef.current = nextState;
+    setDirty(false);
+    dirtyRef.current = false;
     setActiveStep(world.current_step);
     setActiveShotId(world.workflow_state.shots[0]?.id ?? "");
     selectEvent(null);
@@ -1088,8 +1297,15 @@ export function WorldflowClient({
   }
 
   function updateState(update: (current: WorldflowState) => WorldflowState) {
-    if (!state || !isOwner) return;
-    setState(update(state));
+    if (!stateRef.current || !isOwner) return;
+    setState((current) => {
+      if (!current) return current;
+      const nextState = update(current);
+      stateRef.current = nextState;
+      return nextState;
+    });
+    setDirty(true);
+    dirtyRef.current = true;
     setMessage("尚未保存");
   }
 
@@ -1110,6 +1326,9 @@ export function WorldflowClient({
   function undoStructureChange() {
     if (!undoSnapshot) return;
     setState(undoSnapshot.state);
+    stateRef.current = undoSnapshot.state;
+    setDirty(true);
+    dirtyRef.current = true;
     setActiveShotId(undoSnapshot.activeShotId);
     setSelectedEventId(undoSnapshot.selectedEventId);
     setUndoSnapshot(null);
@@ -1134,72 +1353,104 @@ export function WorldflowClient({
   }
 
   function save() {
-    if (!state || !selectedSource) return;
+    const snapshot = stateRef.current;
+    if (!snapshot || !selectedSource) return;
     startTransition(async () => {
       const result = await saveWorldflowState({
         worldId: selectedSource.id,
-        state,
+        state: snapshot,
         currentStep: activeStep >= 5 ? selectedSource.current_step : activeStep,
       });
       setMessage(result.error ?? "已保存");
       if (!result.error) {
-        persistedStateRef.current = state;
+        persistedStateRef.current = snapshot;
+        if (stateRef.current === snapshot) {
+          setDirty(false);
+          dirtyRef.current = false;
+          window.localStorage.removeItem(draftStorageKey(selectedSource.id));
+        }
         router.refresh();
       }
     });
   }
 
   async function saveBeforeMaterialUpload(target: WorldflowMaterialTarget) {
-    if (!state || !selectedSource) return "当前世界尚未准备好。";
-    if (isWorldflowMaterialTargetPersisted(persistedStateRef.current, target)) {
+    const snapshot = stateRef.current;
+    if (!snapshot || !selectedSource) return "当前世界尚未准备好。";
+    if (
+      !shouldSaveWorldflowBeforeMaterialChange(
+        dirtyRef.current,
+        persistedStateRef.current,
+        target,
+      )
+    ) {
       return null;
     }
     const result = await saveWorldflowState({
       worldId: selectedSource.id,
-      state,
+      state: snapshot,
       currentStep: activeStep >= 5 ? selectedSource.current_step : activeStep,
     });
     if (result.error) return result.error;
-    persistedStateRef.current = state;
+    persistedStateRef.current = snapshot;
+    if (stateRef.current === snapshot) {
+      setDirty(false);
+      dirtyRef.current = false;
+      window.localStorage.removeItem(draftStorageKey(selectedSource.id));
+    }
     setMessage("已自动保存当前草稿");
     return null;
   }
 
   function submit() {
-    if (!state || !selectedSource) return;
+    const snapshot = stateRef.current;
+    if (!snapshot || !selectedSource) return;
     startTransition(async () => {
       const result = await submitWorldflowStep({
         worldId: selectedSource.id,
-        state,
+        state: snapshot,
         step: activeStep,
       });
       if (result.state) {
         setState(result.state);
+        stateRef.current = result.state;
         persistedStateRef.current = result.state;
       }
       setMessage(result.error ?? "已提交 architect 审核");
-      if (!result.error) router.refresh();
+      if (!result.error) {
+        setDirty(false);
+        dirtyRef.current = false;
+        window.localStorage.removeItem(draftStorageKey(selectedSource.id));
+        router.refresh();
+      }
     });
   }
 
   function review(decision: "approve" | "changes") {
-    if (!state || !selectedSource) return;
+    const snapshot = stateRef.current;
+    if (!snapshot || !selectedSource) return;
     startTransition(async () => {
       const result = await reviewWorldflowStep({
         worldId: selectedSource.id,
-        state,
+        state: snapshot,
         step: activeStep,
         decision,
       });
       if (result.state) {
         setState(result.state);
+        stateRef.current = result.state;
         persistedStateRef.current = result.state;
       }
       if (result.nextStep) setActiveStep(result.nextStep);
       setMessage(
         result.error ?? (decision === "approve" ? "审核通过" : "已退回修改"),
       );
-      if (!result.error) router.refresh();
+      if (!result.error) {
+        setDirty(false);
+        dirtyRef.current = false;
+        window.localStorage.removeItem(draftStorageKey(selectedSource.id));
+        router.refresh();
+      }
     });
   }
 
@@ -1751,12 +2002,24 @@ export function WorldflowClient({
               <MaterialUploader
                 assets={assetsForScope(3, { shotId: activeShot.id })}
                 beforeUpload={saveBeforeMaterialUpload}
+                bindingScope="shot"
                 canUpload={productionEditable}
+                forgeBinding={
+                  activeShot.forgeBinding ?? state.worldForgeBinding
+                }
                 mediaKind="image"
                 onDeleted={removeAssetFromState}
-                onUploaded={(asset) =>
-                  setAssets((items) => [asset, ...items])
+                onForgeBindingChange={(binding) =>
+                  updateState((current) => ({
+                    ...current,
+                    shots: current.shots.map((shot) =>
+                      shot.id === activeShot.id
+                        ? { ...shot, forgeBinding: binding }
+                        : shot,
+                    ),
+                  }))
                 }
+                onUploaded={addAssetToState}
                 shotId={activeShot.id}
                 step={3}
                 targetLabel={`镜头 / ${activeShot.name || "未命名镜头"}`}
@@ -1813,9 +2076,17 @@ export function WorldflowClient({
             <MaterialUploader
               beforeUpload={saveBeforeMaterialUpload}
               assets={assetsForScope(1)}
+              bindingScope="world"
               canUpload={editable}
+              forgeBinding={state.worldForgeBinding}
               onDeleted={removeAssetFromState}
-              onUploaded={(asset) => setAssets((items) => [asset, ...items])}
+              onForgeBindingChange={(binding) =>
+                updateState((current) => ({
+                  ...current,
+                  worldForgeBinding: binding,
+                }))
+              }
+              onUploaded={addAssetToState}
               step={1}
               targetLabel={`${selectedSource.name} / 世界设定`}
               title="世界参考素材"
@@ -1842,8 +2113,9 @@ export function WorldflowClient({
               beforeUpload={saveBeforeMaterialUpload}
               assets={assetsForScope(2)}
               canUpload={editable}
+              forgeBinding={state.worldForgeBinding}
               onDeleted={removeAssetFromState}
-              onUploaded={(asset) => setAssets((items) => [asset, ...items])}
+              onUploaded={addAssetToState}
               step={2}
               targetLabel={`${selectedSource.name} / 风格基准`}
               title="风格基准候选"
@@ -1899,12 +2171,22 @@ export function WorldflowClient({
                   <MaterialUploader
                     beforeUpload={saveBeforeMaterialUpload}
                     assets={assetsForScope(3, { shotId: shot.id })}
+                    bindingScope="shot"
                     canUpload={editable}
+                    forgeBinding={shot.forgeBinding ?? state.worldForgeBinding}
                     mediaKind="mixed"
                     onDeleted={removeAssetFromState}
-                    onUploaded={(asset) =>
-                      setAssets((items) => [asset, ...items])
+                    onForgeBindingChange={(binding) =>
+                      updateState((current) => ({
+                        ...current,
+                        shots: current.shots.map((item) =>
+                          item.id === shot.id
+                            ? { ...item, forgeBinding: binding }
+                            : item,
+                        ),
+                      }))
                     }
+                    onUploaded={addAssetToState}
                     shotId={shot.id}
                     step={3}
                     targetLabel={`镜头 / ${shot.name || "未命名镜头"}`}
@@ -2072,11 +2354,10 @@ export function WorldflowClient({
                         })}
                         canUpload={editable}
                         characterId={character.id}
+                        forgeBinding={state.worldForgeBinding}
                         mediaKind="image"
                         onDeleted={removeAssetFromState}
-                        onUploaded={(asset) =>
-                          setAssets((items) => [asset, ...items])
-                        }
+                        onUploaded={addAssetToState}
                         step={4}
                         targetLabel={`角色 / ${character.name || "未命名角色"}`}
                         title={`${character.name || "未命名角色"}的形象图片`}
@@ -2215,10 +2496,11 @@ export function WorldflowClient({
                   })}
                   canUpload={editable}
                   eventId={selectedEvent.id}
-                  onDeleted={removeAssetFromState}
-                  onUploaded={(asset) =>
-                    setAssets((items) => [asset, ...items])
+                  forgeBinding={
+                    activeShot.forgeBinding ?? state.worldForgeBinding
                   }
+                  onDeleted={removeAssetFromState}
+                  onUploaded={addAssetToState}
                   shotId={activeShot.id}
                   step={5}
                   targetLabel={`${activeShot.name} / ${selectedTimeSlot?.name || "未命名时段"} / ${selectedParentEvent.name}${eventSelection?.isSubEvent ? ` / ${selectedEvent.name}` : ""}`}
@@ -2360,11 +2642,12 @@ export function WorldflowClient({
                       })}
                       canUpload={productionEditable}
                       eventId={selectedEvent.id}
+                      forgeBinding={
+                        activeShot.forgeBinding ?? state.worldForgeBinding
+                      }
                       mediaKind="image"
                       onDeleted={removeAssetFromState}
-                      onUploaded={(asset) =>
-                        setAssets((items) => [asset, ...items])
-                      }
+                      onUploaded={addAssetToState}
                       shotId={activeShot.id}
                       step={6}
                       targetLabel={`${activeShot.name} / ${selectedTimeSlot?.name || "未命名时段"} / ${selectedParentEvent.name}${eventSelection?.isSubEvent ? ` / ${selectedEvent.name}` : ""}`}
@@ -2398,11 +2681,12 @@ export function WorldflowClient({
                       })}
                       canUpload={productionEditable}
                       eventId={selectedEvent.id}
+                      forgeBinding={
+                        activeShot.forgeBinding ?? state.worldForgeBinding
+                      }
                       mediaKind="video"
                       onDeleted={removeAssetFromState}
-                      onUploaded={(asset) =>
-                        setAssets((items) => [asset, ...items])
-                      }
+                      onUploaded={addAssetToState}
                       shotId={activeShot.id}
                       step={7}
                       targetLabel={`${activeShot.name} / ${selectedTimeSlot?.name || "未命名时段"} / ${selectedParentEvent.name}${eventSelection?.isSubEvent ? ` / ${selectedEvent.name}` : ""}`}
