@@ -84,7 +84,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
   }
 
   return (
-    <div className="main pilot-archive-page archive-collection-page archive-vote-page">
+    <div className="main pilot-archive-page archive-collection-page archive-vote-page" data-route-scroll>
       <SectionTracker section="vote" />
       <ArchiveBrandHeader />
       <div className="top-bar">

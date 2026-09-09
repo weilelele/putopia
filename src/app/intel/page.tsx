@@ -3,7 +3,7 @@
 import { MessageSquare, Plus, Vote, ArrowRight } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { IntelWithAvatar } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
@@ -16,6 +16,8 @@ import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkCard } from '@/components/archive-link-card'
 import { ArchivePageHeader } from '@/components/archive-page-header'
+import { createClientDataCache } from '@/lib/client-data-cache'
+import { useRememberedState } from '@/lib/remembered-state'
 
 const TAG_COLOR: Record<string, string> = {
   NOTICE: 'var(--color-star-dim)',
@@ -24,6 +26,13 @@ const TAG_COLOR: Record<string, string> = {
 }
 
 type FilterTab = 'all' | 'public' | 'classified'
+
+type IntelPageData = {
+  intel: IntelWithAvatar[]
+  commentCounts: Record<string, number>
+}
+
+const intelPageCache = createClientDataCache<IntelPageData>(5 * 60_000)
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -196,28 +205,34 @@ export default function IntelPage() {
 
 function IntelPageContent() {
   const { isAtLeast } = useAuth()
-  const [intel, setIntel] = useState<IntelWithAvatar[]>([])
-  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const cached = intelPageCache.peek()
+  const [intel, setIntel] = useState<IntelWithAvatar[]>(() => cached?.intel ?? [])
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>(
+    () => cached?.commentCounts ?? {},
+  )
   const [showCreate, setShowCreate] = useState(false)
   // Deep-link support: /intel?tab=classified opens the Classified tab directly
   // (used by the Voyager-pack confirmation email).
   const tabParam = useSearchParams().get('tab')
-  const [activeFilter, setActiveFilter] = useState<FilterTab>(
-    tabParam === 'classified' || tabParam === 'public' ? tabParam : 'all',
+  const [activeFilter, setActiveFilter] = useRememberedState<FilterTab>(
+    'primary-tab:intel:filter',
+    () => tabParam === 'classified' || tabParam === 'public' ? tabParam : 'all',
   )
 
-  const loadIntel = async () => {
-    const data = await getAllIntel()
-    const items = data as IntelWithAvatar[]
-    setIntel(items)
-    if (items.length > 0) {
-      const counts = await getCommentCountsBulk('intel', items.map(e => e.id))
-      setCommentCounts(counts)
-    }
-  }
+  const loadIntel = useCallback(async (force = false) => {
+    const next = await intelPageCache.load(async () => {
+      const data = await getAllIntel()
+      const items = data as IntelWithAvatar[]
+      const counts = items.length > 0
+        ? await getCommentCountsBulk('intel', items.map((entry) => entry.id))
+        : {}
+      return { intel: items, commentCounts: counts }
+    }, force)
+    setIntel(next.intel)
+    setCommentCounts(next.commentCounts)
+  }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount; loadIntel() is the shared refetch reused after actions
-  useEffect(() => { loadIntel() }, [])
+  useEffect(() => { void Promise.resolve().then(() => loadIntel()) }, [loadIntel])
 
   // Derive displayed list based on filter
   const visibleIntel =
@@ -228,7 +243,7 @@ function IntelPageContent() {
   const showClassifiedWall = activeFilter === 'classified' && !isAtLeast('voyager')
 
   return (
-    <div className="main pilot-archive-page archive-collection-page archive-intel-page">
+    <div className="main pilot-archive-page archive-collection-page archive-intel-page" data-route-scroll>
       <SectionTracker section="intel" />
       <ArchiveBrandHeader />
       <div className="top-bar">
@@ -297,7 +312,7 @@ function IntelPageContent() {
       {showCreate && (
         <CreateIntelModal
           onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); loadIntel() }}
+          onCreated={() => { setShowCreate(false); void loadIntel(true) }}
           existingItems={intel}
         />
       )}

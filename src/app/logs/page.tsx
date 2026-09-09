@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getPublishedStories } from '@/lib/actions/stories'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
@@ -12,6 +12,9 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkCard } from '@/components/archive-link-card'
 import { ArchivePageHeader } from '@/components/archive-page-header'
+import { createClientDataCache } from '@/lib/client-data-cache'
+
+const logsPageCache = createClientDataCache<StoryWithAvatar[]>(5 * 60_000)
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -30,12 +33,16 @@ function getInitials(name: string) {
 
 export default function LogsPage() {
   const { isAtLeast } = useAuth()
-  const [stories, setStories] = useState<StoryWithAvatar[]>([])
+  const [stories, setStories] = useState<StoryWithAvatar[]>(() => logsPageCache.peek() ?? [])
 
-  useEffect(() => { getPublishedStories().then(setStories) }, [])
+  const loadStories = useCallback(async () => {
+    setStories(await logsPageCache.load(getPublishedStories))
+  }, [])
+
+  useEffect(() => { void Promise.resolve().then(() => loadStories()) }, [loadStories])
 
   return (
-    <main className="main pilot-archive-page archive-collection-page archive-logs-page">
+    <main className="main pilot-archive-page archive-collection-page archive-logs-page" data-route-scroll>
       <SectionTracker section="logs" />
       <ArchiveBrandHeader />
       <div className="top-bar">

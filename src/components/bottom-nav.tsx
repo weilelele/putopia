@@ -123,8 +123,14 @@ export function BottomNav() {
           <Link
             key={href}
             href={href}
+            scroll={false}
             className={`bottom-nav__item${isActive ? ' bottom-nav__item--active' : ''}`}
             aria-current={isActive ? 'page' : undefined}
+            onClick={(event) => {
+              // A repeated tap on the current primary destination is a no-op:
+              // it must not refresh data or reset the user's position.
+              if (pathname === href) event.preventDefault()
+            }}
           >
             {icon}
             <span>{label}</span>

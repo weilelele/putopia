@@ -15,6 +15,7 @@ import { DreamcatcherChat } from './dreamcatcher-chat'
 import roomStyles from './worlds-room.module.css'
 import playerStyles from './dreamcatcher-live-video.module.css'
 import styles from '../../live-observation-room.module.css'
+import { useRememberedState } from '@/lib/remembered-state'
 
 type RoomTab = 'queue' | 'dispatch' | 'chat'
 type Detail = { kind: 'dispatch'; investigation: PublicInvestigation }
@@ -52,8 +53,11 @@ export function WorldsLiveRoom({
   loggedIn: boolean
 }) {
   const router = useRouter()
-  const [selectedSlug, setSelectedSlug] = useState(rooms[0]?.slug ?? '')
-  const [activeTab, setActiveTab] = useState<RoomTab>('queue')
+  const [selectedSlug, setSelectedSlug] = useRememberedState(
+    'primary-tab:worlds:room',
+    rooms[0]?.slug ?? '',
+  )
+  const [activeTab, setActiveTab] = useRememberedState<RoomTab>('primary-tab:worlds:panel', 'queue')
   const [infoOpen, setInfoOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
   const [detail, setDetail] = useState<Detail | null>(null)
@@ -85,7 +89,7 @@ export function WorldsLiveRoom({
   }, [router])
 
   if (!selected) return (
-    <main className={`main ${styles.page}`}>
+    <main className={`main ${styles.page}`} data-route-scroll>
       <header className={styles.roomHeader}><h1>WORLDS</h1><Link className={styles.archiveLink} href="/worlds">ARCHIVE</Link></header>
       <section className={styles.sectionPanel}><div className={styles.emptyRoom}>NO DREAMCATCHERS PUBLISHED<br />Please check back later. Existing worlds remain in the archive.</div></section>
     </main>
@@ -138,7 +142,7 @@ export function WorldsLiveRoom({
   }
 
   return (
-    <main className={`main ${styles.page}`}>
+    <main className={`main ${styles.page}`} data-route-scroll>
       <header className={styles.roomHeader}>
         <h1>WORLDS</h1>
       </header>
