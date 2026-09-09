@@ -10,7 +10,7 @@ export const readDashboardUpdates = unstable_cache(async (canSeeClassified: bool
     db.from('intel').select('id,title,content,images,classified,timestamp').order('timestamp', { ascending:false }).limit(10),
     db.from('signal_threads').select('id,created_at,world_id').not('world_id','is',null).order('created_at',{ascending:false}).limit(10),
     db.from('activity_events').select('id,created_at,target_id,target_title,target_image,target_href').eq('event_type','world_established').eq('is_visible',true).order('created_at',{ascending:false}).limit(10),
-    db.from('activity_events').select('id,created_at,actor_name,actor_id,target_href').eq('event_type','voyager_activated').eq('is_visible',true).order('created_at',{ascending:false}).limit(10),
+    db.from('activity_events').select('id,created_at,actor_name,actor_id,target_href').eq('event_type','voyager_activated').or('actor_role.is.null,actor_role.neq.architect').eq('is_visible',true).order('created_at',{ascending:false}).limit(10),
     listDeviceLibraryEntries(),
   ])
   if (intel.error || tuning.error || established.error || members.error) throw new Error('Some update sources could not be loaded')

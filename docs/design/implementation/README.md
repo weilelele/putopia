@@ -17,6 +17,12 @@ Dashboard 的 World Established 新事件写入已有 `activity_events` 表，�
 
 分类内容和离线快照在服务端去除受限正文/媒体。离线媒体只渲染已缓存本地文件，缺失记录明确提示联网加载。Events 的可用性独立于 Updates 的历史记录。
 
+## 预览入口
+
+[播放启动动画](https://putopia-git-codex-ui-v23-weileleles-projects.vercel.app/welcome) · [可交互 UI Kit](https://putopia-git-codex-ui-v23-weileleles-projects.vercel.app/ui-kit) · [Dashboard](https://putopia-git-codex-ui-v23-weileleles-projects.vercel.app/console) · [改版 PR](https://github.com/weilelele/putopia/pull/142)
+
+Vercel 预览沿用项目现有登录保护，需要有权限的 Vercel 账号。产品页面仍遵循原来的产品登录权限。此分支未合并生产。
+
 ## 验证与发布
 
 本地记录：Dashboard 在 320px/390px 无横向溢出，Updates 为 10 条；启动页点击退出及自动约 3 秒退出均通过；UI Kit 的弹层焦点、背景锁定和草稿确认已实测。Worlds、Web 离线页在 390px 渲染正常；Intel、Devices、Voyagers、Logs 受现有登录保护而跳转登录页，登录后界面仍待验收。
