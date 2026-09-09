@@ -1,320 +1,294 @@
-# Multiverse Collective — Design System (Single Source of Truth)
+# Multiverse Collective / Multiverse Console UI 规范
 
-> **This file is authoritative.** When you need the design spec — colors, fonts,
-> tokens, component conventions — read THIS, not scattered notes or guesses.
-> All canonical values below are defined once in `src/app/globals.css` and are
-> consumed by shared components. Page files must not redefine brand tokens.
+版本：2.3 · 2026-09-09 · 全站改版的权威入口。
+
+> **本文件是唯一权威设计规范。** 配套文档属于同一套规范。本次交付定义目标设计，没有同步实现全站 UI；组件存在不代表已符合新版。
 >
-> **Canonical token system = `--color-*` + `--bd-*` + `--font-mono` + `--fs-*` + `--s-*`.**
-> New code MUST use these. Several parallel/legacy token sets also exist in
-> `:root` and resolve to the same values — they are **DEPRECATED** (see bottom).
-> Do not introduce new usages of them.
->
-> The Style A visual system is implemented in `src/app/visual-refresh.css`, which
-> is imported after `globals.css`. It owns presentation only: it must not redefine
-> canonical tokens, route structure, business logic, component content, or data
-> contracts.
+> 视觉冲突优先级：用户最新明确决定 → 本规范及配套文档 → 已选图的构图 → 旧示例。原始品牌资产始终受保护。权限、价格、库存、审核、支付与服务端结果遵守真实业务契约，不参与视觉优先级排序；设计规范不能改写业务事实。页面不得通过局部覆盖另造一套标准。
 
----
+## 阅读与交付索引
 
-## 1. Brand palette (from VI guidelines)
+| 文档 | 用途 |
+| --- | --- |
+| 本文 | 品牌、变量、排版、布局、视觉语言与全局行为 |
+| [UI 组件完整说明](design/ui-components.md) | 组件结构、尺寸、变体、交互、状态、现有实现与待补能力 |
+| [导航与交互合同](design/interaction-contracts.md) | 页面层级、返回、底栏与键盘、草稿、退出、连续状态与样板验收 |
+| [页面与内容模板](design/page-patterns.md) | 五个主 tab、详情、参与、身份、后台等页面的内容组织 |
+| [迁移与验收手册](design/migration-playbook.md) | 路由清单、改版顺序、UI Kit、验证与交接 |
+| [已选视觉参考](design/reference/README.md) | 每张图的适用范围与已作废的细节 |
 
-The brand is **orange + deep space blue + off-white. No grey.** Secondary text =
-white at reduced opacity, never a grey-blue.
+业务规则仍由产品文档和数据契约决定；视觉改版不改变权限、订单、审核、队列或发货逻辑。
 
-| Role | Hex | Canonical token |
-|------|-----|-----------------|
-| Pantone 1665 C screen orange — primary / logo / active / CTA | `#E35205` | `--color-nucleus` |
-| Burnt Orange — hover / border / divider / accent | `#C84406` | `--color-burnt` (alias `--color-nebula`) |
-| Deep Orange — pressed / emphasis | `#A92F06` | `--color-nucleus-3` |
-| Deep Space Blue — **page background** | `#080C20` | `--color-deep` |
-| Off White — **body text** | `#F5F5F5` | `--color-star` |
+## 1. 设计方向与品牌
 
-Rule of thumb: Pantone 1665 C orange for logo/key/CTA · deep-space-blue background · white text
-with orange accents · keep high contrast.
+### 1.1 已确认的方向
 
-### Protected brand and product assets
+沿用已选 Devices 效果图的档案式界面：深空蓝底、原品牌橙、灰白文字、Courier Prime、真实媒体、明确的文字层级、克制的细线和留白。层次来自内容组织，不依赖增加边框与装饰。
 
-- `public/assets/vi-icon.png` is the canonical graphic logo.
-- `public/assets/vi-wordmark.png` is the canonical wordmark.
-- `public/assets/device-console.jpg` is the canonical device photograph.
-- `src/components/flip-wordmark.tsx` owns the wordmark presentation animation.
-- `src/components/archive-brand-header.tsx` is the shared static brand masthead.
+| 已确认决定 | 执行规则 |
+| --- | --- |
+| 原始第二款 Devices 的整体风格 | 作为密度、媒体与文字关系的参考；一级品牌区可参考；二级页头及尺寸以 2.3 分层规则为准 |
+| 第一款 Quiet Rail 底栏 | 无围框、无竖分隔、无底边；轻顶线与短橙色选中标记 |
+| 五个主入口 | **DASHBOARD / INTEL / DEVICES / WORLDS / VOYAGERS**，顺序固定 |
+| Dashboard 不是 Home | 页面和首入口使用 Dashboard，不能为了排版缩成 HOME |
+| Updates | 最近 10 条动态，按发生时间倒序的纵向时间轴 |
+| Events | 可参与活动的横向滑动卡片，露出下一张；不采用双列操作网格 |
+| My Profile | 放在 Voyagers；Dashboard 不出现个人资料入口、头像捷径或资料管理面板 |
+| 应用内页头 | 一级 Tab 可以保留 Logo，五页统一使用克制的品牌区；二级及更深页面不显示 Logo，使用紧凑标题栏；浏览器、PWA、原生壳一致 |
+| 品牌保护 | 主配色、文字 logo、图形 logo 保持不变；调整出现位置与频率，不改变资产 |
 
-Do not redraw, recolor, crop, filter, regenerate, or replace these assets. New
-visual treatments belong on their surrounding frame, caption, or layout—not on
-the image pixels or animation sequence.
+本文补齐的具体尺寸、宽度、时长是**实施默认值**，不是声称用户逐项确认过的像素值。按这些值统一构建后，在真实 390×844 视口校准；调整共享规范与组件，不各页分叉。
 
-`src/components/brand-logo.tsx` is a legacy code-drawn approximation. Do not use
-it for new Style A surfaces; migrate callers to the canonical image assets.
+### 1.2 原始资产
 
----
+| 资产 | 使用约束 |
+| --- | --- |
+| [vi-icon.png](../public/assets/vi-icon.png) | 唯一图形 logo，完整显示原比例 |
+| [vi-wordmark.png](../public/assets/vi-wordmark.png) | 唯一文字 logo，保留原字形、纹理、两行构造，不用字体重打 |
+| [device-console.jpg](../public/assets/device-console.jpg) | 保留既有设备原图，不用生成图覆盖 |
+| [FlipWordmark](../src/components/flip-wordmark.tsx) | 保留既有品牌动画序列 |
+| [ArchiveBrandHeader](../src/components/archive-brand-header.tsx) | 一级入口及明确品牌展示场景的共享入口；二级页不使用 |
+| [最新设备素材库](device-reference/README.md) | 新设备展示按型号选原始素材；AI 辅助图不定义硬件结构 |
 
-## 2. Canonical tokens (use these)
+禁止重绘、重着色、滤镜、裁切 logo 或以 AI 近似图替换原图。设备新旧素材按型号使用，不把旧照片误称为最新款，也不覆盖受保护的旧资产。`brand-logo.tsx` 是旧代码近似图形，不用于新界面。
 
-### Color — brand & text
-```
---color-nucleus    #E35205   primary / CTA / active / logo
---color-nucleus-2  #F2783E   lighter highlight
---color-nucleus-3  #A92F06   deep orange (pressed / emphasis)
---color-burnt      #C84406   burnt orange (hover / border / accent)
---color-nebula     #C84406   = --color-burnt (kept as alias; prefer --color-burnt)
---color-star       #F5F5F5   primary text (off-white)
---color-star-dim   rgba(245,245,245,0.55)   secondary text  (NOT grey)
---color-star-deep  rgba(245,245,245,0.35)   faint text / faint border
-```
+一级入口与下述品牌展示场景可使用组合 logo：等比缩放、四周至少 8px 净空。一级页尺寸按 §1.3；欢迎/宣传等品牌展示可从图形宽 48px、字标宽 184px、间距 12px 起校准。所有尺寸是容纳原图的范围，不能拉伸、裁切或改画资产。
 
-### Color — surfaces
-```
---color-deep   #080C20   page background (deep space blue)
---color-void   #10162D   panel / card surface
-```
-Note: two more surface shades appear frequently **inline** (no clean `--color-*`):
-`#0C1228` (elevated panel / input fill) and `#121A35` (card above panel). If you
-need them, the surface tokens `--bg-panel` (#0C1228) and `--bg-card` (#121A35)
-exist and are the **one acceptable exception** to "avoid the semantic layer",
-because `--color-*` has no equivalent. Prefer them over hardcoding the hex.
+### 1.3 页面层级、品牌区与紧凑标题栏（2.3）
 
-### Color — signal (status only, NOT brand/structure/text)
-```
---color-ok     #20D890   active / success
---color-warn   #FFB020   warning
---color-fault  #E83030   error
-```
+**五个主 Tab 的一级页面可以保留 Logo；Voyager Logs、My Profile、档案列表、正文详情等二级及更深页面不显示 Logo。** 为避免五页各自解释，本轮实施默认五个一级入口共同保留一处克制的品牌区；以后如整体改为无品牌模式，应统一更新共享壳。品牌使用位置可以变化，原始图形、字标和主配色不变。
 
-### Borders
-```
---bd-orange  rgba(227,82,5,0.62)   strong orange border
---bd-cyan    rgba(227,82,5,0.48)   medium orange border  ⚠ name says "cyan" but it is ORANGE (legacy)
---bd-cyan-2  rgba(227,82,5,0.24)   subtle orange border  ⚠ also ORANGE
---bd-faint   rgba(245,245,245,0.10) faint white hairline
-```
+层级由产品入口定义，不由 URL 深度判断：`/worlds/live` 是一级，`/logs` 是二级。Web、PWA、原生壳沿用同一结构；只由平台适配安全区。详细路由见 [导航与交互合同](design/interaction-contracts.md)。
 
-### Typography
-```
---font-mono     Courier Prime  (next/font/google, weights 400/700; fallback 'Courier New')
---font-display  = var(--font-mono)
---font-body     = var(--font-mono)
-```
-**The whole site is Courier Prime.** (It was briefly Space Mono early on — that is
-outdated; do not write "Space Mono".)
+| 场景 | 顶部结构 | 品牌标识策略 |
+| --- | --- | --- |
+| Dashboard / Intel / Devices / Worlds / Voyagers 一级 | 克制品牌区 → 一次页面标题 + 必要动作 → 内容 | 可保留，五页统一；无返回按钮 |
+| 二级列表 / My Profile / Voyager Logs | 返回 + 页面名称 → 内容 | 不显示 logo，包括不带多层 URL 的二级入口 |
+| 正文 / 对象详情 | 返回来源上下文 → 正文完整内容标题 | 不显示 logo；不重复完整长标题 |
+| 编辑 / 提交 / 参与 / 领取 | 返回或关闭 + 任务名称 → 进度/内容 | 不显示 logo，不在步骤之间重复品牌 |
+| Dialog / BottomSheet | 弹层标题 + 关闭 → 正文与动作 | 弹层不显示；背景按原页层级处理 |
+| Studio / Worldflow / Admin | 工作区或任务名称 + 必要工具 | 不重复品牌页头；不默认另加品牌侧栏 |
+| 欢迎 / 登录 / 注册 / 关于 | 可选品牌展示 + 当前任务 | 入口按识别需求使用；回跳/过期及后续步骤不强制展示 |
+| 公共介绍 / 投资资料 / 产品宣传 | 品牌与产品叙事 | 可保留完整原始品牌 |
+| 设计规范阅读站 / 组件评审板 | 文档标题与目录 | 可保留一次文档级标识，不作为二级产品页模板 |
 
-Type scale: `--fs-display` `--fs-h1`(48) `--fs-h2`(32) `--fs-h3`(24) `--fs-title`(20)
-`--fs-body`(16) `--fs-label`(13) `--fs-caption`(12, floor).
+**一级品牌区实施默认值：**左右 16px、顶部/底部各 8px，图形宽 40px、字标宽 160px、二者间距 12px，高度按原图比例自然计算，内容区最小 64px（不含顶部安全区）。不与页面操作争同一行，不加专属分隔线；页面标题行紧随其后，仅显示一次 24px/700 的 h1，最小高 44px，再间隔 16px 进入正文。一级品牌区不套用下述 56px 紧凑标题栏高度。Logo 默认静态、非链接，避免无意切走当前 Tab；入口品牌动画按减少动态偏好降级。
 
-### Spacing · geometry
-```
---s-1..--s-8   0.25rem → 4rem  (4/8/12/16/24/32/48/64px)
---radius       2px             (global corner radius)
---archive-notch 10px          (single top-right clipped corner)
-```
+**二级/任务紧凑标题栏实施默认值：**内容高最小 56px（不含顶部安全区），左右 16px；二级页面/任务标题 24px/700（`--fs-h3`），正文详情的返回上下文 20px/700（`--fs-title`）；图标动作命中至少 44×44px。正文间隔 16px 开始。长标题和 200% 文字放大允许栏高增长，不能剪裁或缩字。
 
-Legacy glow tokens remain for unmigrated pages only. Style A components never
-consume them.
+主页面不叠加「品牌区 + 页面标题 + 同名大标题」。详情完整标题作为正文 h1，顶部只放实际返回上下文；其他页面的 h1 放在页面标题行。一页一个 h1，Logo 不充当标题。默认页头随正文滚动，不把品牌区吸顶。
 
----
+根页面不为对称补菜单、头像、通知或占位按钮。右侧默认最多一个必要动作，次要元信息放不下时移至内容；多个真实操作才使用明确菜单。My Profile 仅归 Voyagers，Dashboard 不增加头像入口。
 
-## 3. Layout & viewport — portrait-first (DEFAULT)
+二级及更深页面移除旧品牌块时，一并移除其专属留白、占位、分隔线和高度补偿；不能只隐藏图片保留空容器。一级页保留品牌区时按本节压缩间距，不能沿用旧的大块留白。
 
-> **~90% of users arrive on a phone in portrait.** Portrait mobile is the
-> default design target, not an afterthought. Design, build, and verify every
-> page at a narrow viewport FIRST; widescreen/landscape is progressive
-> enhancement layered on top.
+## 2. 设计变量与排版
 
-- **Mobile-first Tailwind.** Base (unprefixed) classes = portrait phone. Add
-  `sm:`/`md:`/`lg:` only to *enhance* for wider screens — never the reverse. A
-  page must be complete and usable with zero responsive prefixes.
-- **Single column by default.** Multi-column / side-by-side layouts go behind
-  `sm:`/`md:`. Wide tables and grids need a portrait plan (stack, horizontal
-  scroll, or card view) — don't ship a desktop grid that overflows a phone.
-- **Don't hide essential content on small screens.** The `hidden sm:block`
-  pattern is fine for *decorative/secondary* extras (e.g. a card's side image),
-  never for primary information or actions.
-- **Touch, not hover.** Touch has no hover state — never make hover the *only*
-  way to reveal info or an action. Keep interactive targets ≥ 44×44px.
-- **Mind the mobile chrome.** Account for the address bar, the on-screen
-  keyboard, and safe-area insets; avoid fixed elements that cover content or
-  inputs.
-- **The type floor matters most here.** `--fs-caption` (12px) is the floor on
-  mobile too — enforced by `design-tokens/min-font-size` (see §2 type scale).
-- **Verify in portrait first.** Check at ~390×844 before desktop — the branch
-  preview URL opened on an actual phone is the gold standard.
+### 2.1 唯一变量体系
 
----
+运行时定义在 [globals.css](../src/app/globals.css)：`--color-*`、`--bd-*`、`--font-mono`、`--fs-*`、`--s-*`。页面不得重定义品牌变量。`visual-refresh.css` 只负责呈现，不改变量、路由、内容或数据契约。
 
-## 4. Style A — Minimal Archive component conventions
+以下为运行时基础值；实现与规范使用同一组变量。
 
-- **Flat color only.** Components do not use color gradients, glass blur, bloom,
-  bevel highlights, or decorative HUD tick rails. Depth comes from spacing,
-  separators, and restrained surface contrast.
-- **Buttons** (`.btn-primary` filled, `.btn-secondary` outline, `.btn-orange`/`.btn-amber`
-  aliases of primary, `.btn-ghost` small/link): primary is solid Pantone 1665 C;
-  secondary uses a warm off-white hairline; ghost is borderless unless it belongs
-  to a bounded toolbar. Prominent controls use one 10px top-right clipped corner.
-  Pressed state moves down 1px. Disabled primary retains its orange fill at 48%
-  opacity; it never becomes grey.
-- **Inputs** use a 1px warm off-white outline, dark fill, one 10px top-right clipped
-  corner, and an orange focus outline. Labels sit above the field. Do not add ID/KY
-  cells, faux encryption states, legends on the border, or glow.
-- **Cards, dialogs, and `.hud-frame`** use a thin warm outline, dark flat surface,
-  clean section separators, and at most one 10px top-right clipped corner.
-- **Status and progress** use neutral outlined containers; orange/green/red is
-  reserved for the status dot or active fill instead of coloring the whole frame.
-- **Bottom navigation** is one outlined dock with thin vertical separators. Active
-  icon and label turn orange; inactive items remain warm off-white at reduced opacity.
-- Reusable classes live in `globals.css`: `.hud-frame`, `.label-tag`, `.card-void`,
-  `.input-dark`, `.hud-field`, `.btn-*`, `.progress-track`/`.progress-fill`,
-  `.status-pill`, `.hr-cyan` (orange), etc.
+| 用途 | 当前变量 | 值 | 边界 |
+| --- | --- | --- | --- |
+| 页面背景 | `--color-deep` | `#080C20` | 默认整页底色 |
+| 面板 | `--color-void` | `#10162D` | 有分组必要才使用，普通列表不必铺底 |
+| 输入/抬升面板 | `--bg-panel` | `#0C1228` | 已存在的表面变量例外 |
+| 面板上的卡片 | `--bg-card` | `#121A35` | 避免过多表面层级 |
+| 品牌橙 | `--color-nucleus` | `#E35205` | logo、主动作、选中、重点文字 |
+| 浅橙 | `--color-nucleus-2` | `#F2783E` | 少量强调，不形成渐变 |
+| 深橙 | `--color-nucleus-3` | `#A92F06` | 少量强调，不能假设适合按钮文字配色 |
+| 焦橙 | `--color-burnt` | `#C84406` | 次级橙线或强调 |
+| 正文 | `--color-star` | `#F5F5F5` | 主要内容 |
+| 次级文字 | `--color-star-dim` | 白色 55% | 时间、短说明、元信息 |
+| 极弱层 | `--color-star-deep` | 白色 35% | 非必要装饰，不用于必要小字 |
+| 成功 | `--color-ok` | `#20D890` | 真实成功的小点/图标/局部进度 |
+| 警告 | `--color-warn` | `#FFB020` | 仅警告语义 |
+| 错误 | `--color-fault` | `#E83030` | 仅错误语义 |
+| 普通细线 | `--bd-faint` | 白色 10% | 内容分隔；不能作为可交互边界的唯一提示 |
+| 橙色边线 | `--bd-orange` | 橙色 62% | 少量强调 |
+| 兼容橙线 | `--bd-cyan` / `--bd-cyan-2` | 橙色 48% / 24% | 名称虽含 cyan，实际为橙色 |
 
-### Shared component source map
+其他现有表面色优先收敛到上表。照片、世界视频可包含自然色；UI 结构不因此新增青色、灰色或其他品牌色。
 
-| Pattern | Canonical component |
-|---|---|
-| Static brand masthead | `ArchiveBrandHeader` |
-| Button and link actions | `ArchiveButton`, `ArchiveLinkButton` |
-| Labelled form control | `ArchiveField` |
-| Page title with action/identity slots | `ArchivePageHeader` |
-| Three-part metrics | `ArchiveStatStrip` |
-| Horizontal selection | `ArchiveTabs` |
-| Section heading | `ArchiveSectionLabel` |
-| Flat content container | `ArchiveCard` |
-| Navigable content card | `ArchiveLinkCard` |
-| Administration navigation | `AdminNav` |
+### 2.2 配色与可读性
 
-Legacy `.btn-*`, `.input-dark`, `.hud-field`, and `.card-*` classes remain as a
-migration bridge. New or migrated pages should render the shared components.
+实施目标：普通文字对背景至少 4.5:1；必要图标、边界、焦点和大字至少 3:1。透明色按实际底色合成后检查；不是用了变量就自动合格。
 
-### Golden page examples
+| sRGB 实测组合（约值） | 对比度 | 结论 |
+| --- | --- | --- |
+| 灰白字 / `#10162D` | 17.77:1 | 正文适用 |
+| 品牌橙字 / `#10162D` | 5.05:1 | 普通强调文字适用 |
+| 深蓝 `#10162D` 字 / 品牌橙底 | 5.05:1 | 主按钮默认配对 |
+| 灰白字 / 品牌橙底 | 3.52:1 | 不用于普通小字号按钮 |
+| 白 55% / `#10162D` | 5.80:1 | 次级小字适用 |
+| 白 35% / `#10162D` | 2.99:1 | 不用于必要小字 |
 
-`/ui-kit` contains three portrait-first, code-rendered page references under
-**GOLDEN PAGE EXAMPLES**. They use the real Courier Prime font, canonical tokens,
-production interaction states, and 390×844 reference frames. Treat them as
-composition guidance, not page templates to copy wholesale:
+主按钮用橙底、深蓝字。hover/pressed 默认保留这组配色，用边线或轻微位移反馈；不要直接压暗底色造成对比度下降。语义色不铺满成功卡、角色卡、进度面板；错误说明用可读正文配错误图标。状态不能只靠颜色。
 
-| Example | Use it to guide | Structural lesson |
-|---|---|---|
-| Content discovery | World, device, log, and editorial indexes | One featured object, then lightweight rows; media establishes atmosphere while controls stay flat. |
-| Focused participation | Signal, quiz, voting, application, and claim steps | One question or decision per view; progress, evidence, choice, then one primary action. |
-| Identity and progress | Profile, onboarding status, membership, and path views | One current identity and next action; milestones share a sequence instead of becoming metric cards. |
+### 2.3 字体与字号角色
 
-Rendered portrait references used during review:
+全站拉丁字母与数字使用 **Courier Prime 400 / 700**，沿用既有字体加载。不能混入 Space Mono，标题不能另配字体，不使用未提供的 800/900 合成粗体。中文字形使用系统中文回退并保持行高；不声称 Courier Prime 自带中文。
 
-- `docs/design/golden-screen-01-world-records.png`
-- `docs/design/golden-screen-02-signal-check.png`
-- `docs/design/golden-screen-03-voyager-record.png`
+| 角色 | 当前变量 / 目标 | 字重 | 行高 | 用法 |
+| --- | --- | --- | --- | --- |
+| 宣传大标题 | `--fs-display`：40–72px | 700 | 1.1 | 仅宣传页 |
+| 宽屏大标题 | `--fs-h1`：48px | 700 | 1.15 | 不作为手机默认 |
+| 较大标题 | `--fs-h2`：32px | 700 | 1.2 | 当前已存在 |
+| 主 tab / 任务标题栏 | `--fs-h3`：24px | 700 | 1.2 | 默认紧凑标题；不新增独立 28px 页头字号 |
+| 详情上下文标题 | `--fs-title`：20px | 700 | 1.3 | 导航上下文；完整长标题可放正文 |
+| 次级大标题 | `--fs-h3`：24px | 700 | 1.25 | 详情重要区块 |
+| 区块/卡片标题 | `--fs-title`：20px | 700 | 1.3 | Updates、Events、主卡 |
+| 正文/输入 | `--fs-body`：16px | 400 | 1.5 | 输入优先保持 16px |
+| 紧凑列表标题 | **拟新增** `--fs-compact`：14px / .875rem | 700 | 1.4 | 时间轴等紧凑列表 |
+| 标签/短说明 | `--fs-label`：13px | 400/700 | 1.4 | 不承载长文 |
+| 元信息/导航 | `--fs-caption`：12px / .75rem | 400/700 | 1.4 | 全站下限 |
 
-All three examples intentionally share the same color, type, geometry, and
-interaction grammar while using different information hierarchies. New work
-should vary hierarchy and composition for the task before inventing new visual
-decoration. The implementation lives in
-`src/app/ui-kit/golden-screens.tsx` and its colocated CSS Module.
+2.1 中拟新增的 `--fs-page: 28px` 提案已撤回，紧凑标题栏复用现有 24/20px 角色。`--fs-compact: 14px` 已加入 `globals.css`，用于紧凑内容。HTML h1/h2/h3 表示内容层级，与变量名不必相同；一页一个 h1。
 
-### New-interface delivery workflow
+主导航和短分类可大写，正文用自然句式。正文字距 0，短标签 0–.04em；禁用通篇宽字距。姓名、世界名、标题允许换行；列表摘要最多两行，详情提供全文。不能通过缩字或省略号隐藏必要内容。
 
-Every new or materially redesigned interface follows the same delivery path:
+### 2.4 间距与几何
 
-1. Start from one of the three golden-example information hierarchies and make
-   the portrait 390×844 view complete before adding wider layouts.
-2. Use shared archive components and canonical tokens. Do not copy a golden
-   screen wholesale or create a route-local palette, font stack, button system,
-   corner language, or decorative visual layer.
-3. Verify default, loading, empty, error, disabled, focus, and completed states.
-   One page has one primary action; touch targets are at least 44×44px.
-4. Run `npm run design:check` before requesting review. The CI design gate checks
-   only UI lines added by the PR, so legacy debt does not excuse new gradients,
-   glow/shadows, blur, cyan, obsolete palette values, or non-Courier typography.
-5. Attach a 390×844 screenshot to the PR and complete the Design review checklist.
+| 变量 | px | 用途 |
+| --- | --- | --- |
+| `--s-1` | 4 | 标签内部、微间距 |
+| `--s-2` | 8 | 元信息、label 到控件 |
+| `--s-3` | 12 | 图文、行内间距 |
+| `--s-4` | 16 | 手机页边距、卡片内距 |
+| `--s-5` | 24 | 模块/表单组间距 |
+| `--s-6` | 32 | 主要区块间距 |
+| `--s-7` / `--s-8` | 48 / 64 | 宽屏章节或宣传留白 |
 
-Human review remains responsible for hierarchy, clarity, content, image choice,
-and whether the single clipped corner is used with restraint; these qualities
-cannot be decided reliably by a text scanner.
+通常 1px 边框，`--radius: 2px`。突出主动作可使用 `--archive-notch: 10px` 的**单个右上切角**；普通输入、列表、页签、头像、底栏默认无切角。每个突出容器最多一个，避免容器、媒体、按钮层层重复。焦点轮廓不能被切角裁掉。
 
-### Current Style A route coverage
+不用渐变、投影、光晕、模糊玻璃、CRT/扫描线、装饰网格、假坐标、HUD 仪表和伪系统编号。原始 logo 的既有纹理属于资产，不等于允许给 UI 添加纹理。
 
-The following user-facing routes consume the canonical archive primitives and
-`visual-refresh.css`. Keep new work on these routes inside the shared system;
-do not reintroduce route-local palettes, gradients, glow, or decorative HUD copy.
+## 3. 布局与视口：竖屏优先
 
-- Access and identity: `/login`, `/register`, `/auth/expired`, `/profile`
-- Core archive: `/console`, `/voyagers`, `/worlds`, `/worlds/[id]`,
-  `/devices`, `/devices/[id]`, `/logs`, `/logs/[id]`
-- Participation: `/intel`, `/intel/[id]`, `/vote`, `/apply`, `/quiz`,
-  `/voyager-path`, `/worlds/submit`, `/devices/claim`, `/signal`,
-  `/voyager-pack`
-- Conversion and creation: `/new`, `/join/success`, `/studio`
-- Internal operations: `/admin/*`, `/newsletter/direct`,
-  `/newsletter/task-gated`, `/newsletter/unregistered`
-- Reference surface: `/ui-kit`
+约 90% 用户来自手机竖屏。以 **390×844 CSS px** 为首要设计和验证视口，不把生成图像素当 CSS 尺寸。
 
-The shared desktop `Sidebar` and portrait `BottomNav` are also part of Style A.
-They keep only destination, access, and identity information; decorative group
-labels and simulated system-status copy are intentionally excluded.
+| 场景 | 实施默认值 |
+| --- | --- |
+| 手机内容 | 单列，左右各 16px，模块间 24–32px |
+| 320–359px | 保留字号下限与触控尺寸，按组件规则调整图文比例，不整体缩放 |
+| ≥768px | 使用共享 Sidebar；不同时出现 BottomNav；内容左右至少 24px |
+| 内容最大宽度 | 应用 1120px，阅读列 720px，表单 560px；宽屏居中 |
+| 宽屏增强 | 可加辅助列或卡片数量，保留内容顺序和完整功能 |
+| 底栏 | 内容区高 72px + `env(safe-area-inset-bottom)` |
+| 内容尾部 | 底栏实际高度 + 24px 补白，确保最后操作可见 |
+| 滚动 | 一个主要纵向滚动容器；Events 横滚；模态锁背景 |
 
-Administration routes inherit their shell, responsive navigation, control
-geometry, and table/form normalization from the `/admin` layout. New admin pages
-must be added to `AdminNav` through that layout rather than introducing a second
-page-local navigation system.
+这些布局尺寸尚未新增为 CSS token；实施时集中于共享 shell/组件，不每页复制计算。移动高度需适配地址栏与键盘，不固定为 844px。检查顶部、横屏安全区。
 
-### Content discipline
+一级页通常为「克制品牌区 → 页面标题 → 主要内容」；二级及更深页面为「紧凑标题栏 → 主要内容」，不含品牌块。标题栏自然参与纵向滚动；手机默认只固定底栏。如任务确需标题栏吸顶，须明确记录并纳入滚动/锚点遮挡验证，不能默认增加双重固定栏。浏览/任务的导航显示、键盘和层级规则见导航与交互合同 §3，不能照搬旧调用方的隐藏策略。顶部采用安全区适配，原生壳已提供 inset 时避免重复补白。模态打开时底栏不能浮在遮罩上。必须固定的页面操作条放在底栏之上，并共同计入补白。
 
-- Interface copy describes a real action, destination, field, status, or value.
-- Do not add decorative codes such as `EXEC 01`, `REQ 02`, `LOG 01`, `RECORD /`,
-  fake coordinates, fake security notices, or `//` prefixes.
-- A page may have one primary action. Secondary actions use outline or text styles.
-- Keep existing business content, names, assets, and data. Remove only ornamental copy.
-- Empty, loading, error, and disabled states use plain language and preserve layout.
+Tailwind 基础类表达手机布局，响应式前缀仅增强。宽表格优先移动卡片模式；必须对比时用有提示的局部横滚。整页不横溢，不在手机隐藏必要信息或主操作。
 
----
+正常字号下底栏五项完整显示。320px 时先移除多余外侧留白、收紧少量字距，再实测真实字体。200% 文字放大可让标签换行、栏高增长，不能截字、重叠、缩写或降低字号。触控区域至少 44×44px。
 
-## 5. DEPRECATED tokens — DO NOT USE (map to canonical)
+## 4. 共享视觉与交互语法
 
-These exist in `:root` and resolve to the same colors, so existing usages still
-work — but they fragment the system and caused a bad "design spec" readout. **Do
-not add new usages.** Map to the canonical token instead:
+### 4.1 组件组合
 
-| Deprecated | = Canonical | Value |
-|------------|-------------|-------|
-| `--or-retro` | `--color-nucleus` | #E35205 |
-| `--or-burnt` | `--color-burnt` | #C84406 |
-| `--or-deep` | `--color-nucleus-3` | #A92F06 |
-| `--tx-primary` | `--color-star` | #F5F5F5 |
-| `--tx-muted` | `--color-star-dim` | rgba(245,245,245,.55) |
-| `--tx-faint` | `--color-star-deep` | rgba(245,245,245,.35) |
-| `--bg-base` | `--color-deep` | #080C20 |
-| `--sig-ok` | `--color-ok` | #20D890 |
-| `--sig-warn` | `--color-warn` (note value #E8A020 vs #FFB020 — see debts) | ~ |
-| `--sig-fault` | `--color-fault` | #E83030 |
-| `--nucleus-orange` | `--color-nucleus` | #E35205 |
-| `--nebula-cyan` | `--color-burnt` | #C84406 |
-| `--star-white` | `--color-star` | #F5F5F5 |
-| `--void-grey` | `--color-void` | #10162D |
-| `--deep-space` | `--color-deep` | #080C20 |
-| `--border-subtle` | `--bd-faint` | rgba(245,245,245,.08) |
-| `--text-muted` | `--color-star-dim` | (≈; value rgba .45 vs .55 — see debts) |
-| `--text-dim` | `--color-star-deep` | (≈; value rgba .25 vs .35 — see debts) |
-| `--color-cream` | `--color-star` | #F5F5F5 |
+完整规则见 [组件说明](design/ui-components.md)。动态用轻列表，活动用行动卡，状态用短标签，身份放 Voyagers；不能把所有内容都变成框中框。
 
-(`--bg-panel` #0C1228 / `--bg-card` #121A35 are the exception — keep for surfaces.)
+同一个决策区域只有一个主动作。Events 是独立活动集合，每张卡可以有自己的主动作，这是有意的集合例外。取消、返回用次要样式。
 
----
+| 元素 | 语法 |
+| --- | --- |
+| 主按钮 | 橙底、深蓝字，可选一个右上切角 |
+| 次按钮 | 平面深底/透明底，可辨识灰白边线 |
+| 文字动作 | 无框，明确动词，hover/focus 下划线，触控仍达标 |
+| 普通卡 | 平面深蓝、细线、16px 内距；并非每项必加框 |
+| 列表 | 行间细线，标题优先、元信息退一级 |
+| 页内页签 | 无围框，橙字与短下划线；不复制主导航图标栏 |
+| 状态 | 小点/图标 + 文字，颜色辅助 |
+| 进度 | 中性轨道、真实完成段与当前节点 |
+| 媒体 | 来源明确、比例稳定；logo 使用 contain |
 
-## 6. Known naming debts (don't "fix" silently — they're load-bearing)
+### 4.2 全组件状态合同
 
-- `--bd-cyan` / `--bd-cyan-2` / `--glow-cyan` / `.hr-cyan` are **orange**, not cyan
-  (the brand dropped cyan; names were kept to avoid a mass rename). Treat them as
-  orange-border / orange-glow tokens.
-- Duplicates of the same value: `--color-burnt` == `--color-nebula`,
-  `--color-star` == `--color-cream`. Prefer the first of each pair.
-- Slight value drift in some deprecated tokens (`--sig-warn` #E8A020 vs `--color-warn`
-  #FFB020; `--text-muted` .45 vs `--color-star-dim` .55). Use the canonical value.
+| 状态 | 表现与行为 |
+| --- | --- |
+| 默认 | 数据、说明和下一步明确，语义元素正确 |
+| hover | 克制的文字/边线反馈，不是内容的唯一入口 |
+| focus-visible | 2px 橙色轮廓，3px offset，不被切角或滚动层裁掉 |
+| pressed | 可选下移 1px，不跳布局、不降低对比度 |
+| selected/current | 颜色 + 标记 + 语义属性；页签 selected、路由 current |
+| disabled | 原配色弱化并解释原因；真实禁止触发，不能仅降低 opacity |
+| loading | 骨架或按钮内进度；保留标签、输入和布局，防重复提交 |
+| empty | 原因与适用下一步，不补假数据，不冒充错误 |
+| error | 描述失败范围、提供重试；局部失败不抹掉成功内容 |
+| success | 显示实际结果与下一步，不能只用短暂 toast |
 
----
+禁用主按钮可保留橙底并弱化至约 48%，仅用于真正不可用。登录后可操作通常提供可点击登录引导。鉴权未完成时不先显示访客锁定状态。
 
-## 7. Why this doc exists
+状态不是孤立的样式集合：超时/断网可能属于“结果未知”，不直接等于失败；退出不等于取消服务端操作。提交、上传、投票和队列的转换、草稿与退出保护统一遵守 [导航与交互合同](design/interaction-contracts.md)。
 
-A "research the design spec" pass returned a Frankenstein list (`--or-retro`,
-`--tx-primary`, `--bg-panel`, mixed with `--bd-faint`/`--font-mono`) because the
-**memory documented the minority semantic layer (41 usages) as the spec**, while
-components actually use `--color-*` (249 usages). This file is the reconciliation:
-**`--color-*` is canonical; the rest is deprecated alias noise.** Keep this file in
-sync with `globals.css` when tokens change.
+### 4.3 动效、辅助技术与数据
+
+一般反馈 120–180ms，抽屉/对话框 180–240ms。不循环呼吸、扫描、自动轮播。遵循减少动态偏好：取消位移和无必要过渡；既有品牌动画保留原序列，提供静态降级。
+
+导航用链接，操作用按钮；不能让只有 hover 的 div 冒充按钮。输入 label 常驻，错误关联输入。Tabs 支持方向键；模态管理焦点、Esc 和关闭后焦点返回。图标按钮需可访问名称。图片使用有意义 alt，装饰图片空 alt，避免重复播报同一链接内容。
+
+时间保存完整时间戳，相对时间附可访问绝对时间和时区。排序按发生时间。价格、库存、名额、在线、开放、发货、倒计时必须有真实来源。缺失值省略或说明暂不可用，不能当 0，不能展示假的 LIVE。
+
+### 4.4 文案与内容清理
+
+每段文字服务于目的、对象、状态、证据或下一步。清除装饰性 `EXEC 01`、`REQ 02`、`//`、假权限级别和重复状态；保留真正的设备编号、产品名、叙事内容。
+
+Multiverse Collective 是产品/社群，Multiverse Console 是硬件。Dashboard 是总览；Updates 是近期动态；Events 是参与入口集合；My Profile 是 Voyagers 内的个人资料。不能为视觉风格把世界、批次、成员全部改名成同一种 Record。
+
+界面文案按产品语言一致呈现，不在同一控件重复中英双标签。按钮用动词和对象，如 View details、Identify signal、Submit dream。空态不只写 No data，错误不直接输出技术异常。
+
+## 5. 实现状态与历史兼容
+
+Archive 系列组件和 `/ui-kit` 已按 2.3 更新。原 Golden examples 已退役，不能作为新界面的开发依据。具体实现、检查结果与待验证项见 [实施记录](design/implementation/README.md)。
+
+`globals.css`、`visual-refresh.css` 有多轮兼容规则。迁移时检查最终计算样式与真实页面，不能仅搜索到一个旧选择器就断言正在生效。避免继续在文件尾部叠一套新主题。
+
+### 5.1 废弃变量映射
+
+不新增旧名。现有调用逐页迁移，避免未经验证的全仓替换。
+
+| 废弃名 | 规范名 / 处理 |
+| --- | --- |
+| `--or-retro` / `--nucleus-orange` | `--color-nucleus` |
+| `--or-burnt` / `--nebula-cyan` / `--color-nebula` | `--color-burnt` |
+| `--or-deep` | `--color-nucleus-3` |
+| `--tx-primary` / `--star-white` / `--color-cream` | `--color-star` |
+| `--tx-muted` / `--text-muted` | `--color-star-dim`；旧 .45 与新 .55 有值差 |
+| `--tx-faint` / `--text-dim` | `--color-star-deep`；不能用于必要小字 |
+| `--bg-base` / `--deep-space` | `--color-deep` |
+| `--void-grey` | `--color-void` |
+| `--sig-ok` / `--sig-fault` | `--color-ok` / `--color-fault` |
+| `--sig-warn` | `--color-warn`；旧 #E8A020 与新 #FFB020 有值差 |
+| `--border-subtle` | `--bd-faint`；旧透明度有值差 |
+| `--archive-paper` | `--color-star`；旧米白与灰白有值差 |
+| `--archive-surface` / `--archive-surface-raised` | `--bg-panel` / `--bg-card` |
+| `--archive-line` / `--archive-line-soft` | 分隔线用 `--bd-faint`；交互边界不能机械换成极淡线 |
+| `--archive-shadow` / `--glow-*` / `--archive-grid` | 新系统不消费，不新增替代装饰 |
+
+`--bg-panel`、`--bg-card` 保留为表面例外，`--archive-notch` 保留为几何变量。`.hr-cyan` 和 `--bd-cyan*` 实际是橙色，不恢复青色。
+
+## 6. 交付与治理
+
+每次改版检查视觉一致、内容清楚、行为保留。先更新共享组件，再迁移页面。新变量、全局变体与规则同时登记本文和 UI Kit；页面一次性排版不必升格为全局变量。
+
+最终验收包括手机真实渲染、键盘/放大/安全区、加载与失败状态、权限/数据和 `npm run design:check`。发布前按仓库要求完成类型、lint、测试与构建。详见迁移手册。
+
+本版继续取代旧版「底栏围框和竖分隔」「所有输入默认切角」「橙底小白字可直接使用」等规则。2.3 纠正 2.2 过度扩大的无 Logo 范围：一级可以保留，二级及更深不显示。旧图按参考目录逐项使用，不一律否定一级品牌区。
+
+### 6.1 批准与实现状态
+
+每条规范分别标记已确认方向、实施默认值或待确认提案，同时登记待实现、已实现待验证或已验证。批准设计不等于已经发布产品组件。各模块状态与可执行样板合同见 [导航与交互合同 §7](design/interaction-contracts.md)；产品样板继续在现有 `/ui-kit` 实施，不在说明站另造第二套组件库。
+
+### 6.2 版本记录
+
+- **2.3 · 2026-09-09**：用户确认一级可保留 Logo、二级及更深不显示；通过返回/底栏/退出/状态/治理与样板建议。补充统一默认值及导航与交互合同。Dashboard 仍为 Updates → Events，不添加顶部 Events 跳转。
+- **2.2（已被 2.3 修正）· 2026-09-09**：用户确认应用内减少重复品牌露出。根页面、详情、任务、弹层与工作台默认不展示 logo；新增场景矩阵与紧凑标题栏尺寸，撤回 28px 页头字号提案，更新全部页面模板、迁移清单与参考图适用范围。
+- **2.1 · 2026-09-09**：确立档案式视觉、Quiet Rail、Updates + Events 和 My Profile 归属。
+
+2.3 是当前产品 UI、组件 API 与可执行 UI Kit 的唯一规范。实现与发布状态单独记录；三组图中符合已批准交互合同的行为有正式依据，具体画面仍为视觉提案，不能推断全部像素和业务状态已获批。

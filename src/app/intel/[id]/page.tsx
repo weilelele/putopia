@@ -1,4 +1,5 @@
 'use client'
+import { BackLink } from '@/components/back-link'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
@@ -8,7 +9,6 @@ import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
 import { markIntelRead } from '@/lib/actions/tasks'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
@@ -98,22 +98,12 @@ export default function IntelDetailPage() {
 
   return (
     <div className="main pilot-archive-page archive-detail-page archive-intel-detail-page" ref={scrollRef} onScroll={handleScroll} style={{ overflowY: 'auto' }}>
-      <ArchiveBrandHeader />
-      <div className="top-bar">
-        <div className="crumbs">
-          {isGuest
-            ? <>PC://WORKSPACE <span>/</span> DISPATCH</>
-            : <>PC://CONSOLE <span>/</span> INTEL FEED <span>/</span> DISPATCH</>
-          }
-        </div>
-        <div className="right">
-          <div className="item">ID <span className="val">{id.slice(0, 8).toUpperCase()}</span></div>
-        </div>
-      </div>
+
+
 
       <div className="archive-detail-shell">
         <div className="archive-detail-back">
-          <ArchiveLinkButton href={backHref} variant="ghost">{backLabel}</ArchiveLinkButton>
+          <BackLink href={backHref} label={backLabel} />
         </div>
 
         <ArchiveCard className="archive-detail-card archive-intel-dispatch">

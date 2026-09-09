@@ -133,7 +133,7 @@ export function Nav() {
             style={{ width: '100%', maxWidth: '176px', height: 'auto', display: 'block' }}
           />
         </Link>
-        <div className="mt-3 h-px w-full" style={{ background: 'linear-gradient(to right, rgba(200,68,6,0.5), transparent)' }} />
+        <div className="mt-3 h-px w-full" style={{ background: 'var(--bg-panel)' }} />
       </div>
 
       {/* Nav label */}
@@ -229,7 +229,7 @@ export function Nav() {
               display: 'block', textAlign: 'center',
               fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
               color: '#F5F5F5',
-              background: 'linear-gradient(135deg, #C84406, #C04000)',
+              background: 'var(--bg-panel)',
               padding: '8px 0', fontWeight: 700,
               textDecoration: 'none', fontFamily: 'inherit',
               border: '1px solid rgba(200,68,6,0.5)',

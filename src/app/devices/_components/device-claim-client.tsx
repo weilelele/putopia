@@ -5,7 +5,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -119,7 +118,7 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
 
   return (
     <div className="main archive-flow-main device-claim-page">
-      <ArchiveBrandHeader />
+
       <div className="archive-flow-content archive-flow-content--wide">
         <div className="archive-flow-back">
           <ArchiveLinkButton href={`/devices/batches/${batch.slug}`} variant="ghost">

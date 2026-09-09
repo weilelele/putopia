@@ -428,7 +428,7 @@ export default function FeedDemoPage() {
           padding: '1.25rem 1rem 0.75rem',
           borderBottom: '1px solid var(--bd-faint)',
           position: 'sticky', top: 0, zIndex: 10,
-          background: 'rgba(10,14,39,0.92)', backdropFilter: 'blur(12px)',
+          background: 'rgba(10,14,39,0.92)', backdropFilter: 'none',
         }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.3rem' }}>
             PC://CONSOLE / DASHBOARD
@@ -438,7 +438,7 @@ export default function FeedDemoPage() {
               LIVE FEED
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#20D890', boxShadow: '0 0 7px #20D890', display: 'inline-block' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#20D890', boxShadow: 'none', display: 'inline-block' }} />
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em' }}>
                 {new Date().toISOString().slice(0, 10).replace(/-/g, '.')}
               </span>

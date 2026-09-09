@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import posthog from 'posthog-js'
 import { getPendingEmail } from '@/lib/access-window'
 import { getEmailProvider } from '@/lib/email-providers'
@@ -61,39 +62,8 @@ function ActivateModal({
   onClose: () => void
 }) {
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Activate your account"
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        background: 'rgba(8,11,26,0.72)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          maxWidth: 320,
-          width: '100%',
-          background: 'var(--bg-panel)',
-          border: '1px solid var(--bd-orange)',
-          borderRadius: 'var(--radius)',
-          padding: '1.5rem 1.25rem',
-          textAlign: 'center',
-          fontFamily: 'var(--font-mono)',
-        }}
-      >
+    <ArchiveSheet open title="Activate your account" onClose={onClose}>
         <MailGlyph />
-        <p style={{ fontSize: 'var(--fs-title)', color: 'var(--color-star)', margin: '0.6rem 0 0' }}>
-          Activate your account
-        </p>
         <p style={{ fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', margin: '0.5rem 0 0' }}>
           We sent a link to
         </p>
@@ -103,8 +73,8 @@ function ActivateModal({
           </p>
         )}
 
-        <a
-          href={providerUrl ?? '#'}
+        {providerUrl ? <a
+          href={providerUrl}
           target={providerUrl ? '_blank' : undefined}
           rel={providerUrl ? 'noopener noreferrer' : undefined}
           className="btn-primary"
@@ -112,7 +82,7 @@ function ActivateModal({
           onClick={() => posthog.capture('activate_open_inbox_clicked', { provider: providerName ?? 'unknown' })}
         >
           {providerName ? `Open ${providerName} →` : 'Open your email →'}
-        </a>
+        </a> : <p>Open your email app to find your activation link.</p>}
 
         <div style={{ borderTop: '1px solid var(--bd-faint)', margin: '1rem 0 0.85rem' }} />
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', fontSize: 'var(--fs-caption)' }}>
@@ -124,8 +94,7 @@ function ActivateModal({
             Log in
           </Link>
         </div>
-      </div>
-    </div>
+      </ArchiveSheet>
   )
 }
 

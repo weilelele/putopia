@@ -86,7 +86,7 @@ export function ArchiveReelView({ world }: { world: World }) {
             // eslint-disable-next-line @next/next/no-img-element
             : <img src={s.url} alt="Final form" style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} />
         )}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'none', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: 10, left: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', background: 'rgba(7,9,18,0.72)', padding: '3px 8px', color: tagColor }}>
           {s.kind === 'final' ? '● FINAL FORM' : `◉ DAY ${s.dayIndex + 1}`}
         </div>
@@ -128,11 +128,11 @@ function PosterHero({ world, displayName, loading }: { world: World; displayName
         // eslint-disable-next-line @next/next/no-img-element
         <img src={world.image_path} alt={displayName} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       ) : (
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'transparent' }} />
       )}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(160,45,4,0.42) 60%, rgba(12,5,1,0.93) 100%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'transparent', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem 1.25rem' }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}>{displayName}</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: 'none' }}>{displayName}</div>
       </div>
     </div>
   )

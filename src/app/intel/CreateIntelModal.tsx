@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { X } from 'lucide-react'
 import { createIntel } from '@/lib/actions/intel'
 import { createClient } from '@/lib/supabase/client'
 import type { Intel, IntelTag } from '@/types/database'
 import { MemberPicker, type MemberValue } from '@/components/member-picker'
 import { ArchiveButton } from '@/components/archive-button'
-import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveField } from '@/components/archive-field'
 
 type Props = {
@@ -44,6 +43,7 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
   })
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [previews, setPreviews]         = useState<string[]>([])
+  const [uncertain, setUncertain] = useState(false)
   const [saving, setSaving]             = useState(false)
   const [uploading, setUploading]       = useState(false)
   const [error, setError]               = useState<string | null>(null)
@@ -73,6 +73,7 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
       const ext = file.name.split('.').pop() ?? 'jpg'
       const path = `${intelId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { error: uploadErr } = await supabase.storage.from('intel-images').upload(path, file)
+      if (uploadErr) throw new Error('Image upload failed')
       if (!uploadErr) {
         const { data: { publicUrl } } = supabase.storage.from('intel-images').getPublicUrl(path)
         urls.push(publicUrl)
@@ -82,13 +83,17 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
   }
 
   const handleSave = async () => {
+    if (saving || uncertain) return
     if (!form.title.trim()) { setError('Title is required.'); return }
     const id = form.id.trim() || autoId
     setSaving(true); setUploading(pendingFiles.length > 0); setError(null)
 
+    let submitted = false
+    try {
     const newUrls = await uploadPendingFiles(id)
     setUploading(false)
 
+    submitted = true
     const result = await createIntel({
       id,
       title:          form.title.trim(),
@@ -105,29 +110,16 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
     setSaving(false)
     if (result?.error) { setError(result.error); return }
     onCreated()
+    } catch {
+      setUncertain(submitted)
+      setError(submitted ? 'Result unconfirmed. Check the Intel archive before submitting again.' : 'Images could not be uploaded. Your draft is still here; retry the upload.')
+    } finally { setSaving(false); setUploading(false) }
   }
 
   return (
-    <div
-      className="archive-modal-backdrop"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <ArchiveCard
-        aria-labelledby="create-intel-title"
-        aria-modal="true"
-        className="archive-modal archive-intel-modal"
-        role="dialog"
-      >
+    <ArchiveSheet open title="Publish Intel" onClose={onClose} busy={saving} dirty={!uncertain && (!!form.title || !!form.content || !!form.publisher_name || pendingFiles.length > 0)}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <div>
-            <div className="archive-modal__eyebrow">NEW INTEL · AUTO ID {autoId}</div>
-            <h2 id="create-intel-title">PUBLISH INTEL</h2>
-          </div>
-          <ArchiveButton aria-label="Close dialog" onClick={onClose} variant="ghost">
-            <X size={18} />
-          </ArchiveButton>
-        </div>
+
 
         {/* Row 1: ID / Type / Timestamp */}
         <div className="archive-modal-grid archive-modal-grid--three">
@@ -185,7 +177,7 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
                     onClick={() => removePending(idx)}
                     style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >×</button>
-                  <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(200,68,6,0.85)', color: '#fff', fontSize: 'var(--fs-caption)', padding: '1px 3px', fontFamily: 'monospace' }}>PENDING</div>
+                  <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(200,68,6,0.85)', color: '#fff', fontSize: 'var(--fs-caption)', padding: '1px 3px', fontFamily: 'var(--font-mono)' }}>PENDING</div>
                 </div>
               ))}
             </div>
@@ -216,21 +208,13 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
           )}
           <ArchiveButton
             type="button"
-            variant="ghost"
-            onClick={onClose}
-          >
-            CANCEL
-          </ArchiveButton>
-          <ArchiveButton
-            type="button"
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || uncertain}
             variant="primary"
           >
             {uploading ? 'UPLOADING...' : saving ? 'SAVING...' : 'PUBLISH'}
           </ArchiveButton>
         </div>
-      </ArchiveCard>
-    </div>
+      </ArchiveSheet>
   )
 }

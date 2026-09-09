@@ -1,9 +1,11 @@
 'use client'
+import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { getAllVoyagers, updateProfile, uploadAvatar } from '@/lib/actions/profile'
 import { useAuth } from '@/lib/auth-context'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
@@ -15,7 +17,7 @@ import { ArchiveStatStrip, type ArchiveStatItem } from '@/components/archive-sta
 import { ArchiveTabs } from '@/components/archive-tabs'
 import { SectionTracker } from '@/components/section-tracker'
 import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
-import { Camera, X as XClose, FileText, ArrowRight } from 'lucide-react'
+import { Camera, FileText, ArrowRight } from 'lucide-react'
 import type { VoyagerProfile, UserRole } from '@/types/database'
 
 // ── Platform icons ─────────────────────────────────────────────────────────
@@ -94,11 +96,12 @@ export default function VoyagersPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [profileUnknown, setProfileUnknown] = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const modalFileRef = useRef<HTMLInputElement>(null)
 
   // ── Batch selector state ────────────────────────────────────────────────
-  const [activeBatch, setActiveBatch] = useState<string | null>(null)
+  const [activeBatch, setActiveBatch] = useSessionPreference<string | null>('mc:view:voyagers:batch', null)
   const [batchExpanded, setBatchExpanded] = useState(false)
   const batchRailRef = useRef<HTMLDivElement>(null)
   const selectBatch = (label: string) => { setActiveBatch(label); setBatchExpanded(false) }
@@ -128,6 +131,7 @@ export default function VoyagersPage() {
 
   const openEdit = (v: VoyagerProfile) => {
     setEditing(v)
+    setProfileUnknown(false)
     setForm(profileToForm(v))
     setAvatarFile(null)
     setAvatarPreview(null)
@@ -144,9 +148,10 @@ export default function VoyagersPage() {
   }
 
   const handleSave = async () => {
-    if (!form || !editing) return
+    if (!form || !editing || saving || profileUnknown) return
     setSaving(true); setSaveMsg(null)
 
+    try {
     // 1. Upload avatar if changed
     if (avatarFile) {
       const fd = new FormData()
@@ -175,6 +180,7 @@ export default function VoyagersPage() {
       await refresh()
       setTimeout(() => { closeEdit() }, 600)
     }
+    } catch { setProfileUnknown(true); setSaveMsg({ text: 'Result unconfirmed. Review your profile before saving again.', ok: false }) } finally { setSaving(false) }
   }
 
   const setF = (k: keyof EditForm, v: string) =>
@@ -320,26 +326,9 @@ export default function VoyagersPage() {
 
       {/* ── Edit Modal ── */}
       {editing && form && (
-        <div
-          className="voyagers-modal-backdrop"
-          style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(5,8,18,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
-          onClick={closeEdit}
-        >
-          <div
-            className="voyagers-modal-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="voyagers-edit-title"
-            onClick={e => e.stopPropagation()}
-            style={{ background: '#0F1430', border: '1px solid #C84406', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', fontFamily: 'var(--font-mono)' }}
-          >
+        <ArchiveSheet open title="Edit profile" onClose={closeEdit} busy={saving} dirty={!profileUnknown && !saveMsg?.ok && (!!avatarFile || JSON.stringify(form) !== JSON.stringify(profileToForm(editing)))}>
             {/* Header */}
-            <div className="voyagers-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div id="voyagers-edit-title" style={{ color: '#C84406', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>EDIT PROFILE</div>
-              <button onClick={closeEdit} className="voyagers-modal-close" aria-label="Close edit profile" style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
-                <XClose size={16} />
-              </button>
-            </div>
+
 
             {/* Avatar */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
@@ -422,19 +411,16 @@ export default function VoyagersPage() {
               </div>
             )}
 
+            {profileUnknown && <ArchiveButton variant="secondary" onClick={() => window.location.reload()}>Reload and review profile</ArchiveButton>}
             <div className="voyagers-modal-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
-              <ArchiveButton onClick={closeEdit} variant="ghost">
-                CANCEL
-              </ArchiveButton>
               <ArchiveButton
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || profileUnknown}
               >
                 {saving ? 'SAVING...' : 'SAVE'}
               </ArchiveButton>
             </div>
-          </div>
-        </div>
+          </ArchiveSheet>
       )}
     </main>
   )

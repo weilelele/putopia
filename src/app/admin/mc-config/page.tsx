@@ -74,8 +74,8 @@ export default function McConfigPage() {
 
         {/* Function list */}
         <div className="hud-frame" style={{ marginBottom: '1.5rem' }}>
-          <div className="hud-tick-rail hud-tick-left" />
-          <div className="hud-tick-rail hud-tick-right" />
+
+
           <div style={{ padding: '0 0.5rem' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
               CONFIRMED FUNCTIONS
@@ -147,8 +147,8 @@ export default function McConfigPage() {
 
         {/* Add new */}
         <div className="hud-frame">
-          <div className="hud-tick-rail hud-tick-left" />
-          <div className="hud-tick-rail hud-tick-right" />
+
+
           <div style={{ padding: '0 0.5rem' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
               ADD FUNCTION

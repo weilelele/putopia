@@ -13,8 +13,8 @@ const S = {
   th:      { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(227,82,5,0.16)', whiteSpace: 'nowrap' as const },
   td:      { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'top' as const, fontSize: '13px' },
   label:   { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:    { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  input:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:    { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
   row:     { display: 'grid', gap: '12px', marginBottom: '12px' } as const,
 }
 
@@ -120,7 +120,7 @@ export default function StoriesAdmin() {
             航行日志管理
           </div>
         </div>
-        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
+        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
           + 新增故事
         </button>
       </div>
@@ -163,11 +163,11 @@ export default function StoriesAdmin() {
                     </span>
                   </td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
-                    <button onClick={() => openEdit(s)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>编辑</button>
-                    <button onClick={() => handleTogglePublish(s)} style={{ marginRight: '8px', background: 'none', border: 'none', color: s.is_published ? 'rgba(245,245,245,0.35)' : '#20D890', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>
+                    <button onClick={() => openEdit(s)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>编辑</button>
+                    <button onClick={() => handleTogglePublish(s)} style={{ marginRight: '8px', background: 'none', border: 'none', color: s.is_published ? 'rgba(245,245,245,0.35)' : '#20D890', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
                       {s.is_published ? '撤稿' : '发布'}
                     </button>
-                    <button onClick={() => handleDelete(s.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>删除</button>
+                    <button onClick={() => handleDelete(s.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>删除</button>
                   </td>
                 </tr>
               ))}
@@ -197,7 +197,7 @@ export default function StoriesAdmin() {
                 disabled={!!editId}
               />
               {!editId && form.title && (
-                <button onClick={() => set('id', toSlug(form.title))} style={{ marginTop: '4px', background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', padding: 0 }}>
+                <button onClick={() => set('id', toSlug(form.title))} style={{ marginTop: '4px', background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', padding: 0 }}>
                   ↻ 从标题生成: {toSlug(form.title)}
                 </button>
               )}
@@ -249,11 +249,11 @@ export default function StoriesAdmin() {
             <button
               onClick={handleSave}
               disabled={saving}
-              style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}
+              style={{ padding: '8px 24px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}
             >
               {saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'var(--font-mono)', fontSize: '12px', cursor: 'pointer' }}>取消</button>
           </div>
         </div>
       )}

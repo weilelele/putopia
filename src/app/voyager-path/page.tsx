@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { getVoyagerPathStatus } from '@/lib/actions/tasks'
 import type { VoyagerPathStatus } from '@/lib/actions/tasks'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -780,7 +779,7 @@ export default function VoyagerPathPage() {
       <Modal kind={modal} onClose={() => setModal(null)} />
       {detailItem && <BenefitDetailModal item={detailItem} onClose={() => setDetailItem(null)} />}
 
-      <ArchiveBrandHeader />
+
       <div className="archive-path-shell">
 
         {/* ── YOUR PATH ── */}

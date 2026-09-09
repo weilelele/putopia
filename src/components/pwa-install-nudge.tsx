@@ -113,7 +113,7 @@ export function PwaInstallNudge({
   return (
     <aside
       aria-label="Install Multiverse on Android"
-      role="dialog"
+      role="region"
       style={{
         position: 'fixed',
         zIndex: 55,
@@ -125,7 +125,7 @@ export function PwaInstallNudge({
         padding: '0.9rem 1rem',
         border: '1px solid var(--bd-cyan-2)',
         background: 'rgba(15, 20, 48, 0.98)',
-        boxShadow: '0 0 32px rgba(227,82,5,0.2)',
+        boxShadow: 'none',
         clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)',
       }}
     >

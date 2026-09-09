@@ -10,8 +10,8 @@ const S = {
   th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(227,82,5,0.16)', whiteSpace: 'nowrap' as const },
   td:    { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'middle' as const, fontSize: '13px' },
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
 }
 
 type F = {
@@ -112,7 +112,7 @@ export default function WorldsAdmin() {
         <div>
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>平行世界管理</div>
         </div>
-        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
+        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
           + 新增世界
         </button>
       </div>
@@ -142,7 +142,7 @@ export default function WorldsAdmin() {
               {items.map(w => (
                 <tr key={w.id}>
                   <td style={S.td}>
-                    <div style={{ width: '50px', height: '28px', background: `linear-gradient(135deg, ${w.gradient_from}, ${w.gradient_to})`, borderRadius: '2px' }} />
+                    <div style={{ width: '50px', height: '28px', background: 'var(--bg-panel)', borderRadius: '2px' }} />
                   </td>
                   <td style={{ ...S.td, color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)' }}>{w.id}</td>
                   <td style={{ ...S.td, color: '#F5F5F5' }}>{w.name}</td>
@@ -154,8 +154,8 @@ export default function WorldsAdmin() {
                     </span>
                   </td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
-                    <button onClick={() => openEdit(w)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>编辑</button>
-                    <button onClick={() => handleDelete(w.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>删除</button>
+                    <button onClick={() => openEdit(w)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>编辑</button>
+                    <button onClick={() => handleDelete(w.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>删除</button>
                   </td>
                 </tr>
               ))}
@@ -208,7 +208,7 @@ export default function WorldsAdmin() {
           {/* gradient preview */}
           <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>渐变预览（无图片时显示）</label>
-            <div style={{ height: '48px', background: `linear-gradient(135deg, ${form.gradient_from}, ${form.gradient_to})`, border: '1px solid rgba(227,82,5,0.16)' }} />
+            <div style={{ height: '48px', background: 'var(--bg-panel)', border: '1px solid rgba(227,82,5,0.16)' }} />
           </div>
 
           {/* image URL */}
@@ -227,10 +227,10 @@ export default function WorldsAdmin() {
               <input type="checkbox" checked={form.is_verified} onChange={e => set('is_verified', e.target.checked)} />
               已认证
             </label>
-            <button onClick={handleSave} disabled={saving} style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}>
+            <button onClick={handleSave} disabled={saving} style={{ padding: '8px 24px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}>
               {saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'var(--font-mono)', fontSize: '12px', cursor: 'pointer' }}>取消</button>
           </div>
         </div>
       )}

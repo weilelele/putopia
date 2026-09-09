@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import SmartImage from './smart-image'
 
 type Cell = { i: number; ch: string; file: string; x: number; y: number; w: number; h: number }
@@ -70,7 +70,7 @@ function buildGeom(m: Manifest): Geom {
   }
 }
 
-function FlipCell({ cell, pool, spread, runId, scale }: { cell: Placed; pool: string[]; spread: boolean; runId: number; scale: number }) {
+function FlipCell({ cell, pool, spread, runId, scale, playbackRate }: { playbackRate: number; cell: Placed; pool: string[]; spread: boolean; runId: number; scale: number }) {
   const [src, setSrc] = useState(cell.file)
   const [tickKey, setTickKey] = useState(0)
   const [settled, setSettled] = useState(false)
@@ -81,18 +81,18 @@ function FlipCell({ cell, pool, spread, runId, scale }: { cell: Placed; pool: st
     const iv = setInterval(() => {
       setSrc(pool[Math.floor(Math.random() * pool.length)])
       setTickKey((k) => k + 1)
-    }, TICK)
+    }, TICK / playbackRate)
     const stop = setTimeout(() => {
       clearInterval(iv)
       setSrc(cell.file)
       setTickKey((k) => k + 1)
       setSettled(true)
-    }, cell.settleDelay)
+    }, cell.settleDelay / playbackRate)
     return () => {
       clearInterval(iv)
       clearTimeout(stop)
     }
-  }, [pool, cell.file, cell.settleDelay, runId])
+  }, [pool, cell.file, cell.settleDelay, runId, playbackRate])
 
   const left = (spread ? cell.offX : cell.cmpX) * scale
   const top = (spread ? cell.offY : cell.cmpY) * scale
@@ -110,15 +110,20 @@ function FlipCell({ cell, pool, spread, runId, scale }: { cell: Placed; pool: st
 
 export function FlipWordmark({
   maxWidth = 600,
+  playbackRate = 1,
+  replayable = true,
   fill = 0.92,
   className,
   ariaLabel = 'Multiverse Collective',
 }: {
+  playbackRate?: number
+  replayable?: boolean
   maxWidth?: number
   fill?: number
   className?: string
   ariaLabel?: string
 }) {
+  const reduceMotion = useSyncExternalStore(subscribeMotion, () => matchMedia('(prefers-reduced-motion: reduce)').matches, () => false)
   const [m, setM] = useState<Manifest | null>(null)
   const [runId, setRunId] = useState(0)
   const [spread, setSpread] = useState(false)
@@ -152,9 +157,9 @@ export function FlipWordmark({
     if (!geom) return
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the spread animation before replaying it on geom/run change
     setSpread(false)
-    const t = setTimeout(() => setSpread(true), geom.lastSettle + PAUSE)
+    const t = setTimeout(() => setSpread(true), (geom.lastSettle + PAUSE) / playbackRate)
     return () => clearTimeout(t)
-  }, [geom, runId])
+  }, [geom, runId, playbackRate])
 
   const replay = useCallback(() => setRunId((r) => r + 1), [])
 
@@ -166,23 +171,23 @@ export function FlipWordmark({
       <style>{`
         .fw-stage { position:relative; }
         .fw-cell { position:absolute; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; perspective:820px;
-          transition: left ${SPREAD}ms cubic-bezier(.16,.84,.34,1), top ${SPREAD}ms cubic-bezier(.16,.84,.34,1); }
+          transition: left ${SPREAD / playbackRate}ms cubic-bezier(.16,.84,.34,1), top ${SPREAD / playbackRate}ms cubic-bezier(.16,.84,.34,1); }
         .fw-glyph { height:100%; width:auto; display:block; transform-origin:center center; backface-visibility:hidden;
           animation: fwFlip ${TICK + 18}ms cubic-bezier(.2,.7,.3,1); }
         .fw-cell[data-settled="1"] .fw-glyph { animation: fwLock ${LOCK}ms cubic-bezier(.2,.9,.25,1); }
         @keyframes fwFlip { 0%{transform:rotateX(88deg);opacity:.15} 100%{transform:rotateX(0);opacity:1} }
         @keyframes fwLock { 0%{transform:rotateX(72deg) scale(1.02);opacity:.4} 60%{transform:rotateX(-8deg);opacity:1} 100%{transform:rotateX(0)} }
       `}</style>
-      {geom ? (
+      {geom && !reduceMotion ? (
         <div
           className="fw-stage"
           role="img"
           aria-label={ariaLabel}
-          onClick={replay}
-          style={{ width: stageW, height: stageH, cursor: 'pointer' }}
+          onClick={replayable ? replay : undefined}
+          style={{ width: stageW, height: stageH, cursor: replayable ? 'pointer' : 'inherit' }}
         >
           {geom.cells.map((cell) => (
-            <FlipCell key={cell.row * 100 + cell.i} cell={cell} pool={geom.poolByRow[cell.row]} spread={spread} runId={runId} scale={scale} />
+            <FlipCell key={cell.row * 100 + cell.i} cell={cell} pool={geom.poolByRow[cell.row]} spread={spread} runId={runId} scale={scale} playbackRate={playbackRate} />
           ))}
         </div>
       ) : (
@@ -192,3 +197,5 @@ export function FlipWordmark({
     </div>
   )
 }
+
+function subscribeMotion(notify: () => void) { const media = matchMedia('(prefers-reduced-motion: reduce)'); media.addEventListener('change', notify); return () => media.removeEventListener('change', notify) }

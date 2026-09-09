@@ -236,7 +236,6 @@ function UrgencySlider({ value, onChange }: { value: number; onChange: (v: numbe
   }, [onChange, valueFromX])
 
   const glowPx   = value > 0 ? 8 + value * 5 : 0
-  const glowAlph = value > 0 ? 0.28 + value * 0.08 : 0
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -250,8 +249,8 @@ function UrgencySlider({ value, onChange }: { value: number; onChange: (v: numbe
         <div ref={trackRef} style={{ position: 'relative', height: 10, background: 'rgba(26,31,43,0.9)' }}>
           <div style={{
             position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`,
-            background: 'linear-gradient(90deg, #6B1200, #C8401A, #E35205, #FF8C20, #FFB830)',
-            boxShadow: `0 0 ${glowPx}px rgba(255,90,31,${glowAlph}), 0 0 ${glowPx * 2}px rgba(255,90,31,${glowAlph * 0.4})`,
+            background: 'transparent',
+            boxShadow: 'none',
             transition: 'width 0.08s ease, box-shadow 0.15s ease',
             pointerEvents: 'none',
           }} />
@@ -259,13 +258,9 @@ function UrgencySlider({ value, onChange }: { value: number; onChange: (v: numbe
             position: 'absolute', top: '50%', left: `${pct}%`,
             transform: 'translate(-50%, -50%)',
             width: 22, height: 22, borderRadius: '50%',
-            background: value > 0
-              ? 'radial-gradient(circle at 38% 38%, #FFE0A0, #FF8C20, #E35205)'
-              : 'rgba(36,41,56,0.95)',
+            background: 'transparent',
             border: `1.5px solid ${value > 0 ? 'rgba(255,180,60,0.75)' : 'rgba(242,240,230,0.18)'}`,
-            boxShadow: value > 0
-              ? `0 0 ${6 + value * 3}px rgba(255,140,32,${0.4 + value * 0.08}), 0 0 ${12 + value * 5}px rgba(255,90,31,${0.2 + value * 0.05})`
-              : 'none',
+            boxShadow: 'none',
             transition: 'all 0.1s ease',
             pointerEvents: 'none', zIndex: 2,
           }} />
@@ -455,17 +450,17 @@ function VideoSection({ src }: { src: string }) {
       {/* CRT scanlines */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
-        background: 'repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,0,0,0.10) 3px, rgba(0,0,0,0.10) 4px)',
+        background: 'transparent',
       }} />
       {/* Vignette */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
-        background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(5,8,22,0.72) 100%)',
+        background: 'transparent',
       }} />
       {/* Edge glow */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
-        boxShadow: 'inset 0 0 35px rgba(200,68,6,0.07), inset 0 0 70px rgba(200,68,6,0.03)',
+        boxShadow: 'none',
       }} />
     </div>
   )

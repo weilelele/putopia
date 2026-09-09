@@ -17,7 +17,7 @@ export default function Error({
   return (
     <ArchiveRouteError
       title="ARCHIVE TEMPORARILY UNAVAILABLE"
-      description="This section did not finish loading. Your existing data has not been changed."
+      description="This section did not finish loading. Try opening it again."
       onRetry={unstable_retry}
       returnHref="/console"
       returnLabel="DASHBOARD"

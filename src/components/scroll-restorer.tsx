@@ -1,70 +1,58 @@
 'use client'
+import { useEffect } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { safeAppPath } from '@/lib/ui-navigation'
 
-import { useEffect, useRef } from 'react'
-import { usePathname } from 'next/navigation'
-
-const KEY = (path: string) => `putopia-scroll:${path}`
-
-// Pages that load content asynchronously need a longer settle delay so the
-// DOM has time to expand before we try to scroll into it.
-const ASYNC_PAGES = ['/console', '/intel', '/devices', '/voyagers', '/vote', '/worlds', '/logs']
-const SETTLE_MS = 200
-
+function read(key: string) { try { return sessionStorage.getItem(key) } catch { return null } }
+function save(key: string, value: string) { try { sessionStorage.setItem(key, value) } catch { /* Private storage may be unavailable. */ } }
+function scroller() {
+  return [...document.querySelectorAll<HTMLElement>('main, .main')].find(el => /auto|scroll/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight) ?? document.scrollingElement
+}
+/** Save the actual scrolling surface before navigation; restore tab/query context. */
 export function ScrollRestorer() {
   const pathname = usePathname()
-  const lastPath = useRef<string | null>(null)
-
+  const search = useSearchParams().toString()
   useEffect(() => {
-    // Tell the browser not to manage scroll — we handle it ourselves.
-    if (typeof window !== 'undefined') {
-      history.scrollRestoration = 'manual'
+    const route = pathname + (search ? `?${search}` : '')
+    const key = `mc:scroll:${route}`
+    const previousMode = history.scrollRestoration
+    history.scrollRestoration = 'manual'
+    let restoring = true
+    const y = Number(read(key) ?? 0)
+    const restore = () => {
+      if (!restoring) return
+      const element = scroller()
+      if (!element) return
+      element.scrollTo({ top: y, behavior: 'instant' })
+      if (element.scrollHeight - element.clientHeight >= y && Math.abs(element.scrollTop - y) < 2) restoring = false
     }
-  }, [])
-
-  useEffect(() => {
-    // ── Save scroll position for the page we just LEFT ──────────────────
-    const previous = lastPath.current
-    if (previous && previous !== pathname) {
-      // The scroll position at the moment of navigation is still valid here
-      // because this effect fires synchronously before the new page renders.
-      sessionStorage.setItem(KEY(previous), String(window.scrollY))
+    const observer = new MutationObserver(restore)
+    observer.observe(document.querySelector('.app-shell') ?? document.body, { childList: true, subtree: true })
+    const timers = [0, 100, 300, 700].map(delay => setTimeout(restore, delay))
+    const stop = () => { restoring = false }
+    const record = () => { if (!restoring) save(key, String(scroller()?.scrollTop ?? 0)) }
+    const done = setTimeout(() => { restoring = false }, 8000)
+    const navigate = (event: MouseEvent) => {
+      const anchor = (event.target as Element)?.closest?.('a[href]') as HTMLAnchorElement | null
+      if (!anchor || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || anchor.target === '_blank') return
+      const target = safeAppPath(anchor.href, location.origin)
+      if (!target || target === route || target.startsWith(`${route}#`)) return
+      save(key, String(scroller()?.scrollTop ?? 0))
+      const path = new URL(target, location.origin).pathname
+      save(`mc:from:${path}`, route)
     }
-    lastPath.current = pathname
-
-    // ── Restore scroll position for the page we just ARRIVED at ─────────
-    const saved = sessionStorage.getItem(KEY(pathname))
-    if (!saved) return   // first visit — start at top
-
-    const y = parseInt(saved, 10)
-    if (!y) return
-
-    const isAsync = ASYNC_PAGES.some(p => pathname === p || pathname.startsWith(p + '/'))
-    const delay = isAsync ? SETTLE_MS : 0
-
-    const timer = setTimeout(() => {
-      window.scrollTo({ top: y, behavior: 'instant' })
-    }, delay)
-
-    return () => clearTimeout(timer)
-  }, [pathname])
-
-  // ── Continuously save scroll while the user scrolls ───────────────────
-  useEffect(() => {
-    let debounce: ReturnType<typeof setTimeout>
-
-    const onScroll = () => {
-      clearTimeout(debounce)
-      debounce = setTimeout(() => {
-        sessionStorage.setItem(KEY(pathname), String(window.scrollY))
-      }, 120)
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true })
+    document.addEventListener('click', navigate, true)
+    document.addEventListener('scroll', record, { capture: true, passive: true })
+    window.addEventListener('wheel', stop, { passive: true })
+    window.addEventListener('touchstart', stop, { passive: true })
+    window.addEventListener('keydown', stop)
     return () => {
-      window.removeEventListener('scroll', onScroll)
-      clearTimeout(debounce)
+      observer.disconnect(); timers.forEach(clearTimeout); clearTimeout(done)
+      document.removeEventListener('click', navigate, true)
+      document.removeEventListener('scroll', record, true)
+      window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop)
+      history.scrollRestoration = previousMode
     }
-  }, [pathname])
-
+  }, [pathname, search])
   return null
 }

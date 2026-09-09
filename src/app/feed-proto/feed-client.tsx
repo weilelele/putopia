@@ -133,7 +133,7 @@ function Avatar({ p, size = 20 }: { p: Person; size?: number }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: BURNT, color: '#0A0E27', fontWeight: 700, fontSize: Math.max(12, Math.round(size * 0.42)), fontFamily: 'var(--font-mono)',
+      background: BURNT, color: '#080C20', fontWeight: 700, fontSize: Math.max(12, Math.round(size * 0.42)), fontFamily: 'var(--font-mono)',
     }}>{p.initial}</span>
   )
 }
@@ -195,7 +195,7 @@ function VoyagerOnlyCover({ minHeight = 54 }: { minHeight?: number }) {
     <div style={{
       marginTop: 8, minHeight, borderRadius: 3,
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-      background: 'repeating-linear-gradient(45deg, rgba(227,82,5,0.12) 0 9px, rgba(227,82,5,0.03) 9px 18px)',
+      background: 'var(--bg-panel)',
       border: '1px solid rgba(227,82,5,0.22)',
     }}>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.2em', color: ORANGE }}>VOYAGER ONLY</span>
@@ -386,7 +386,7 @@ function VoteTofu({ vote, onVote, onLocked, onSignIn, canVote = true }: { vote: 
       )}
 
       {!canVote ? (
-        <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', whiteSpace: 'nowrap', padding: '11px 0', borderRadius: 2 }}>
+        <div style={{ marginTop: 11, background: ORANGE, color: '#080C20', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', whiteSpace: 'nowrap', padding: '11px 0', borderRadius: 2 }}>
           SIGN IN TO VOTE
         </div>
       ) : voted ? (
@@ -394,7 +394,7 @@ function VoteTofu({ vote, onVote, onLocked, onSignIn, canVote = true }: { vote: 
           ✓ YOU VOTED
         </div>
       ) : (
-        <div style={{ marginTop: 11, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', whiteSpace: 'nowrap', padding: '11px 0', borderRadius: 2 }}>
+        <div style={{ marginTop: 11, background: ORANGE, color: '#080C20', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', whiteSpace: 'nowrap', padding: '11px 0', borderRadius: 2 }}>
           MAKE A DECISION
         </div>
       )}
@@ -494,7 +494,7 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
           <div
             onClick={submit}
             aria-disabled={!selected.length || submitting}
-            style={{ marginTop: 14, background: ORANGE, color: '#0A0E27', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_CAPTION, letterSpacing: '0.15em', padding: 11, borderRadius: 3, cursor: selected.length && !submitting ? 'pointer' : 'not-allowed', opacity: selected.length && !submitting ? 1 : 0.55 }}
+            style={{ marginTop: 14, background: ORANGE, color: '#080C20', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: FS_CAPTION, letterSpacing: '0.15em', padding: 11, borderRadius: 3, cursor: selected.length && !submitting ? 'pointer' : 'not-allowed', opacity: selected.length && !submitting ? 1 : 0.55 }}
           >{submitting ? 'SUBMITTING…' : 'MAKE A DECISION'}</div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', marginTop: 10 }}>
@@ -539,7 +539,7 @@ function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () =>
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(5,8,18,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(5,8,18,0.82)', backdropFilter: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
     >
       <div style={{ background: '#0F1430', border: `1px solid ${accent}59`, borderRadius: 6, width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', fontFamily: 'var(--font-mono)' }}>
         {/* Header */}
@@ -575,12 +575,12 @@ function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () =>
         {/* Stats */}
         <div style={{ display: 'flex', borderTop: '1px solid rgba(227,82,5,0.1)', borderBottom: '1px solid rgba(227,82,5,0.1)', margin: '0 18px' }}>
           <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#C84406', textShadow: '0 0 10px rgba(200,68,6,0.35)' }}>{profile?.observation_days ?? '—'}</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#C84406', textShadow: 'none' }}>{profile?.observation_days ?? '—'}</div>
             <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: 2 }}>OBS DAYS</div>
           </div>
           <div style={{ width: 1, background: 'rgba(227,82,5,0.1)' }} />
           <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: GREEN, textShadow: '0 0 10px rgba(32,216,144,0.25)' }}>{profile?.worlds_discovered ?? '—'}</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: GREEN, textShadow: 'none' }}>{profile?.worlds_discovered ?? '—'}</div>
             <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: 2 }}>WORLDS</div>
           </div>
         </div>
@@ -619,7 +619,7 @@ function VoyagerGateModal({ kind, title, packHref, onClose }: { kind: 'intel' | 
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
-      style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(5,8,20,0.78)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(5,8,20,0.78)', backdropFilter: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}
     >
       <div style={{ background: 'var(--color-void)', border: `1px solid ${ORANGE}`, borderRadius: 6, padding: 20, width: '100%', maxWidth: 360, textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
@@ -627,7 +627,7 @@ function VoyagerGateModal({ kind, title, packHref, onClose }: { kind: 'intel' | 
         </div>
         <div style={{ fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.4, color: 'var(--color-star)', marginBottom: 8 }}>{title}</div>
         <div style={{ fontSize: FS_CAPTION, lineHeight: 1.55, color: 'rgba(245,245,245,0.6)', marginBottom: 18 }}>{body}</div>
-        <Link href={packHref} style={{ display: 'block', background: ORANGE, color: '#0A0E27', textDecoration: 'none', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', padding: '12px 0', borderRadius: 3 }}>
+        <Link href={packHref} style={{ display: 'block', background: ORANGE, color: '#080C20', textDecoration: 'none', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', padding: '12px 0', borderRadius: 3 }}>
           BECOME A VOYAGER
         </Link>
       </div>
@@ -640,7 +640,7 @@ function SignInGateModal({ title, signInHref, onClose }: { title: string; signIn
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
-      style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(5,8,20,0.78)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'rgba(5,8,20,0.78)', backdropFilter: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}
     >
       <div style={{ background: 'var(--color-void)', border: `1px solid ${ORANGE}`, borderRadius: 6, padding: 20, width: '100%', maxWidth: 360, textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
@@ -648,7 +648,7 @@ function SignInGateModal({ title, signInHref, onClose }: { title: string; signIn
         </div>
         <div style={{ fontSize: FS_LABEL, fontWeight: 700, lineHeight: 1.4, color: 'var(--color-star)', marginBottom: 8 }}>{title}</div>
         <div style={{ fontSize: FS_CAPTION, lineHeight: 1.55, color: 'rgba(245,245,245,0.6)', marginBottom: 18 }}>Sign in to cast your vote — every decision is tied to your identity.</div>
-        <Link href={signInHref} style={{ display: 'block', background: ORANGE, color: '#0A0E27', textDecoration: 'none', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', padding: '12px 0', borderRadius: 3 }}>
+        <Link href={signInHref} style={{ display: 'block', background: ORANGE, color: '#080C20', textDecoration: 'none', fontWeight: 700, fontSize: FS_LABEL, letterSpacing: '0.08em', padding: '12px 0', borderRadius: 3 }}>
           SIGN IN
         </Link>
       </div>
@@ -683,7 +683,7 @@ export function FeedProtoClient({ entries, embedded = false, hideHeader = false,
       {/* Skeleton shimmer for image placeholders — inlined so it ships without
           depending on globals.css (which the dev server's CSS HMR misses). */}
       <style>{`
-        .feed-skel { background-image: linear-gradient(100deg, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.02) 70%); background-size: 200% 100%; animation: feed-skel-shimmer 1.4s ease-in-out infinite; }
+        .feed-skel { background: var(--bg-panel); background-size: 200% 100%; animation: feed-skel-shimmer 1.4s ease-in-out infinite; }
         .feed-entry-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-items: start; }
         .feed-entry-grid__item { min-width: 0; }
         .feed-entry-grid__item > * { margin-bottom: 0 !important; }
@@ -701,7 +701,7 @@ export function FeedProtoClient({ entries, embedded = false, hideHeader = false,
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px',
             borderBottom: '1px solid #161c30', position: 'sticky', top: 0, zIndex: 10,
-            background: 'rgba(10,14,39,0.92)', backdropFilter: 'blur(12px)',
+            background: 'rgba(10,14,39,0.92)', backdropFilter: 'none',
           }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: FS_CAPTION, fontWeight: 700, letterSpacing: '0.24em', color: ORANGE }}>INTERNAL UPDATES</span>
             <span style={{ color: 'rgba(245,245,245,0.35)', fontSize: FS_LABEL }}>⌖</span>

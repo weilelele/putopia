@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { BatchDiscussionBoard } from '../../../_components/batch-discussion-board'
 import { getPublicDeviceBatch } from '@/lib/device-batch-repository'
@@ -29,7 +28,7 @@ export default async function DiscussionPage({ params }: DiscussionPageProps) {
 
   return (
     <main className={`main pilot-archive-page archive-detail-page ${styles.detailPage}`}>
-      <ArchiveBrandHeader />
+
       <div className={styles.discussionPageShell}>
         <ArchiveLinkButton href={`/devices/batches/${batch.slug}`} variant="ghost">
           ← {batch.code}

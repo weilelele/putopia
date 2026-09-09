@@ -14,9 +14,9 @@ const S = {
   th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(227,82,5,0.16)', whiteSpace: 'nowrap' as const },
   td:    { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'top' as const, fontSize: '13px' },
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
-  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none' },
 }
 
 const TAG_COLOR: Record<IntelTag, string> = { NOTICE: 'rgba(245,245,245,0.55)', DEVICE: '#C84406', ORG: '#E8A020' }
@@ -193,7 +193,7 @@ export default function IntelAdmin() {
         <div>
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>情报管理</div>
         </div>
-        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
+        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
           + 新增情报
         </button>
       </div>
@@ -241,8 +241,8 @@ export default function IntelAdmin() {
                   </td>
                   <td style={{ ...S.td, fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap' }}>{formatTs(i.timestamp)}</td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
-                    <button onClick={() => openEdit(i)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>编辑</button>
-                    <button onClick={() => handleDelete(i.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>删除</button>
+                    <button onClick={() => openEdit(i)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>编辑</button>
+                    <button onClick={() => handleDelete(i.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>删除</button>
                   </td>
                 </tr>
               ))}
@@ -340,7 +340,7 @@ export default function IntelAdmin() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              style={{ padding: '6px 14px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.55)', background: '#0F1430' }}
+              style={{ padding: '6px 14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.55)', background: '#0F1430' }}
             >
               + 选择图片
             </button>
@@ -358,11 +358,11 @@ export default function IntelAdmin() {
             <button
               onClick={handleSave}
               disabled={saving}
-              style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}
+              style={{ padding: '8px 24px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}
             >
               {uploading ? '上传图片中...' : saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'var(--font-mono)', fontSize: '12px', cursor: 'pointer' }}>取消</button>
           </div>
         </div>
       )}
@@ -372,7 +372,7 @@ export default function IntelAdmin() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: '4px' }}>DASHBOARD FEED</div>
-            <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: '12px', fontFamily: 'monospace' }}>
+            <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
               {feedLastGenerated
                 ? `Last generated: ${new Date(feedLastGenerated).toLocaleString()}`
                 : 'No feed generated yet'}
@@ -392,13 +392,13 @@ export default function IntelAdmin() {
               }
             }}
             disabled={feedGenerating}
-            style={{ padding: '8px 20px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', cursor: feedGenerating ? 'not-allowed' : 'pointer', border: '1px solid #E35205', color: '#E35205', background: 'rgba(200,68,6,0.06)', opacity: feedGenerating ? 0.5 : 1 }}
+            style={{ padding: '8px 20px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', cursor: feedGenerating ? 'not-allowed' : 'pointer', border: '1px solid #E35205', color: '#E35205', background: 'rgba(200,68,6,0.06)', opacity: feedGenerating ? 0.5 : 1 }}
           >
             {feedGenerating ? 'GENERATING...' : 'REGENERATE FEED'}
           </button>
         </div>
         {feedMsg && (
-          <div style={{ marginTop: '10px', padding: '6px 10px', background: feedMsg.ok ? 'rgba(32,216,144,0.08)' : 'rgba(232,48,48,0.08)', border: `1px solid ${feedMsg.ok ? '#20D890' : '#E83030'}`, color: feedMsg.ok ? '#20D890' : '#E83030', fontSize: '12px', fontFamily: 'monospace' }}>
+          <div style={{ marginTop: '10px', padding: '6px 10px', background: feedMsg.ok ? 'rgba(32,216,144,0.08)' : 'rgba(232,48,48,0.08)', border: `1px solid ${feedMsg.ok ? '#20D890' : '#E83030'}`, color: feedMsg.ok ? '#20D890' : '#E83030', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
             {feedMsg.text}
           </div>
         )}

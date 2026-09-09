@@ -1,4 +1,5 @@
 'use client'
+import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { MessageSquare, Plus, Vote, ArrowRight } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
@@ -202,7 +203,7 @@ function IntelPageContent() {
   // Deep-link support: /intel?tab=classified opens the Classified tab directly
   // (used by the Voyager-pack confirmation email).
   const tabParam = useSearchParams().get('tab')
-  const [activeFilter, setActiveFilter] = useState<FilterTab>(
+  const [activeFilter, setActiveFilter] = useSessionPreference<FilterTab>(`mc:view:intel:${tabParam ?? ''}`,
     tabParam === 'classified' || tabParam === 'public' ? tabParam : 'all',
   )
 
@@ -231,13 +232,7 @@ function IntelPageContent() {
     <div className="main pilot-archive-page archive-collection-page archive-intel-page">
       <SectionTracker section="intel" />
       <ArchiveBrandHeader />
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> INTEL FEED</div>
-        <div className="right">
-          <div className="item">ENTRIES <span className="val">{intel.length}</span></div>
-          <div className="item">UTC <span className="val">{new Date().toISOString().slice(11, 19)}</span></div>
-        </div>
-      </div>
+
 
       <ArchivePageHeader
         title="INTEL"

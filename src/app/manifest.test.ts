@@ -7,7 +7,7 @@ describe('PWA manifest', () => {
       id: '/',
       name: 'Multiverse Collective',
       short_name: 'Multiverse',
-      start_url: '/console?source=pwa',
+      start_url: '/welcome?source=pwa',
       scope: '/',
       display: 'standalone',
       orientation: 'portrait-primary',

@@ -15,9 +15,9 @@ const S = {
   card: { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '18px', marginBottom: '14px' } as React.CSSProperties,
   input: { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 9px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box' } as React.CSSProperties,
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', marginBottom: '4px' } as React.CSSProperties,
-  btn: { background: '#C84406', border: 'none', color: '#0A0E27', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', padding: '8px 16px', cursor: 'pointer', borderRadius: '2px' } as React.CSSProperties,
+  btn: { background: '#C84406', border: 'none', color: '#080C20', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', padding: '8px 16px', cursor: 'pointer', borderRadius: '2px' } as React.CSSProperties,
   filterBtn: (on: boolean): React.CSSProperties => ({
-    background: on ? '#E35205' : 'transparent', color: on ? '#0A0E27' : 'rgba(245,245,245,0.55)',
+    background: on ? '#E35205' : 'transparent', color: on ? '#080C20' : 'rgba(245,245,245,0.55)',
     border: '1px solid rgba(227,82,5,0.3)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
     letterSpacing: '0.1em', padding: '7px 12px', cursor: 'pointer', borderRadius: '2px',
   }),
@@ -134,7 +134,7 @@ export default function OrdersAdmin() {
           <button style={S.filterBtn(filter === 'toship')} onClick={() => setFilter('toship')}>TO SHIP ({counts.toship})</button>
           <button style={S.filterBtn(filter === 'shipped')} onClick={() => setFilter('shipped')}>SHIPPED ({counts.shipped})</button>
           <button style={S.filterBtn(filter === 'all')} onClick={() => setFilter('all')}>ALL ({counts.all})</button>
-          <button style={{ ...S.btn, background: showNew ? 'rgba(227,82,5,0.2)' : '#E35205', color: showNew ? '#E35205' : '#0A0E27', border: '1px solid #E35205', marginLeft: '8px' }}
+          <button style={{ ...S.btn, background: showNew ? 'rgba(227,82,5,0.2)' : '#E35205', color: showNew ? '#E35205' : '#080C20', border: '1px solid #E35205', marginLeft: '8px' }}
             onClick={() => { setShowNew((v) => !v); setCreateMsg(null) }}>
             {showNew ? '✕ CANCEL' : '+ NEW ORDER'}
           </button>

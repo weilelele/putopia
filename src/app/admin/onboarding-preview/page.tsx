@@ -51,9 +51,9 @@ const MUTED  = 'rgba(245,245,245,0.55)'
 const FAINT  = 'rgba(245,245,245,0.35)'
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', background: '#0A0E27', color: '#F5F5F5',
+  width: '100%', background: '#080C20', color: '#F5F5F5',
   border: `1px solid ${BORDER}`, padding: '8px 10px',
-  fontFamily: 'monospace', fontSize: 12, lineHeight: 1.6, resize: 'vertical',
+  fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.6, resize: 'vertical',
 }
 
 export default function OnboardingEditorPage() {
@@ -173,10 +173,10 @@ export default function OnboardingEditorPage() {
     return `/new?${sp.toString()}`
   }
 
-  if (loading) return <div style={{ fontFamily: 'monospace', color: MUTED, fontSize: 12 }}>加载中…</div>
+  if (loading) return <div style={{ fontFamily: 'var(--font-mono)', color: MUTED, fontSize: 12 }}>加载中…</div>
 
   return (
-    <div style={{ fontFamily: 'monospace', color: '#F5F5F5' }}>
+    <div style={{ fontFamily: 'var(--font-mono)', color: '#F5F5F5' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 18 }}>
@@ -297,7 +297,7 @@ export default function OnboardingEditorPage() {
                 {/* Live preview */}
                 <div style={{ flex: '0 0 auto' }}>
                   <div style={{ fontSize: 'var(--fs-caption)', color: FAINT, marginBottom: 6 }}>实时预览 · {step.toUpperCase()}</div>
-                  <div style={{ width: frameW, height: frameH, border: `1px solid ${BORDER}`, background: '#0A0E27', overflow: 'hidden' }}>
+                  <div style={{ width: frameW, height: frameH, border: `1px solid ${BORDER}`, background: '#080C20', overflow: 'hidden' }}>
                     <iframe
                       key={`${row.id}-${step}-${nonces[row.id] ?? 0}`}
                       src={srcFor(row.match_key, row.id)}
@@ -319,7 +319,7 @@ export default function OnboardingEditorPage() {
 /* ── Small UI helpers ── */
 const btnStyle: React.CSSProperties = {
   padding: '8px 14px', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
-  fontFamily: 'monospace', cursor: 'pointer',
+  fontFamily: 'var(--font-mono)', cursor: 'pointer',
   background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`,
 }
 
@@ -335,7 +335,7 @@ function Toggle({ label, value, options, onChange }: {
             key={o.v}
             onClick={() => onChange(o.v)}
             style={{
-              padding: '8px 14px', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', fontFamily: 'monospace', cursor: 'pointer',
+              padding: '8px 14px', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', cursor: 'pointer',
               background: value === o.v ? 'rgba(227,82,5,0.14)' : 'transparent',
               color: value === o.v ? '#F5F5F5' : MUTED,
               border: 'none', borderRight: i < options.length - 1 ? `1px solid ${BORDER}` : 'none',

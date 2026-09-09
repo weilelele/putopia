@@ -30,7 +30,7 @@ export function DaySelector({ days, selected }: { days: string[]; selected: stri
     border: `1px solid ${BORDER}`,
     color: enabled ? STAR : '#2A3A5A',
     cursor: enabled ? 'pointer' : 'default',
-    fontFamily: 'monospace',
+    fontFamily: 'var(--font-mono)',
     fontSize: 'var(--fs-caption)',
     padding: '4px 10px',
     borderRadius: 2,
@@ -48,7 +48,7 @@ export function DaySelector({ days, selected }: { days: string[]; selected: stri
           background: '#070c1a',
           border: `1px solid ${ACCENT}`,
           color: ACCENT,
-          fontFamily: 'monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 12,
           letterSpacing: '0.1em',
           padding: '4px 8px',
@@ -64,7 +64,7 @@ export function DaySelector({ days, selected }: { days: string[]; selected: stri
       <button type="button" style={btn(!!newer)} disabled={!newer} onClick={() => newer && go(newer)}>
         ▶
       </button>
-      <span style={{ fontFamily: 'monospace', fontSize: 'var(--fs-caption)', color: MUTED, marginLeft: '0.25rem' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: MUTED, marginLeft: '0.25rem' }}>
         单日 · {fmt(selected)}
       </span>
     </div>

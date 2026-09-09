@@ -39,7 +39,6 @@ export function WorldPoster({
   minHeight = 190,
   badge,
   hoverBorder = 'rgba(255,255,255,0.28)',
-  orangeMask = false,
   eyebrowStyle,
   hideDescription = false,
   noBorder = false,
@@ -60,8 +59,6 @@ export function WorldPoster({
 }) {
   const displayName = world.name_en || world.name
   const bg = cover ?? world.image_path ?? null
-  const from = world.gradient_from ?? '#13182E'
-  const to = world.gradient_to ?? '#0A0E27'
 
   return (
     <Link
@@ -71,33 +68,28 @@ export function WorldPoster({
         display: 'block', textDecoration: 'none', position: 'relative',
         minHeight, overflow: 'hidden',
         border: noBorder ? 'none' : '1px solid rgba(255,255,255,0.08)',
-        background: `linear-gradient(155deg, ${from}, ${to})`,
+        background: 'var(--bg-panel)',
         ['--poster-hover' as string]: hoverBorder,
       }}
     >
       {bg && (
-        // Gradient (parent background) shows until the cover lazy-loads + fades in.
+        // Cover and caption occupy separate flat surfaces for consistent contrast.
         <LazyImage
           src={bg}
           className="world-poster-img"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }}
         />
       )}
-      {/* Legibility fade — orange variant for Established cards, plain dark for others */}
-      <div style={{ position: 'absolute', inset: 0, background: orangeMask
-        ? 'linear-gradient(to bottom, transparent 15%, rgba(160,45,4,0.45) 45%, rgba(10,4,1,0.96) 65%, rgba(10,4,1,0.98) 100%)'
-        : 'linear-gradient(to bottom, transparent 38%, rgba(0,0,0,0.6) 100%)'
-      }} />
       {badge && <div style={{ position: 'absolute', top: 8, right: 8 }}>{badge}</div>}
 
-      <div style={{ position: 'relative', padding: '13px 13px 12px', display: 'flex', flexDirection: 'column', minHeight, boxSizing: 'border-box' }}>
+      <div style={{ position: 'relative', padding: '16px', display: 'flex', flexDirection: 'column', minHeight, boxSizing: 'border-box' }}>
         {eyebrow && (
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: eyebrowColor, ...eyebrowStyle }}>
             {eyebrow}
           </div>
         )}
         <div style={{ flex: 1 }} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, color: '#FFFFFF', letterSpacing: '0.02em', marginBottom: 6, lineHeight: 1.25 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', fontWeight: 700, color: 'var(--color-star)', letterSpacing: '0.02em', marginBottom: 6, lineHeight: 1.25 }}>
           {displayName}
         </div>
         {!hideDescription && world.description && (

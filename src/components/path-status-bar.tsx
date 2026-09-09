@@ -77,7 +77,7 @@ export function PathStatusBar({
               </span>
             )}
             {showNudge && (
-              <span style={{ position: 'absolute', top: -2, right: -2, width: 9, height: 9, borderRadius: '50%', background: '#E83030', border: '1.5px solid var(--color-void)', boxShadow: '0 0 6px rgba(232,48,48,0.8)', animation: 'pathbar-pulse 1.8s ease-in-out infinite' }} />
+              <span style={{ position: 'absolute', top: -2, right: -2, width: 9, height: 9, borderRadius: '50%', background: '#E83030', border: '1.5px solid var(--color-void)', boxShadow: 'none', animation: 'pathbar-pulse 1.8s ease-in-out infinite' }} />
             )}
           </span>
         </Link>
@@ -87,7 +87,7 @@ export function PathStatusBar({
         <Link href="/voyager-path" title="View your path" style={{ ...cell, flex: 1, minWidth: 0 }} {...hov}
           onClick={() => posthog.capture('pathbar_view_path_clicked', { role: user.role })}
         >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: 'none', flexShrink: 0 }} />
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.25 }}>
             <span style={{ fontSize: 'var(--fs-label)', color: idColor, letterSpacing: '0.14em', fontWeight: 700, whiteSpace: 'nowrap' }}>{idLabel}</span>
             <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em', marginTop: 3, whiteSpace: 'nowrap' }}>VIEW YOUR PATH</span>

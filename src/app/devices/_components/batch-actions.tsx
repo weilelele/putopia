@@ -1,4 +1,5 @@
 'use client'
+import { ArchiveSheet } from '@/components/archive-sheet'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -97,28 +98,5 @@ export function ArchiveModal({
   onClose: () => void
   title: string
 }) {
-  return (
-    <div
-      aria-labelledby="device-batch-modal-title"
-      aria-modal="true"
-      className={styles.modalBackdrop}
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target) onClose()
-      }}
-      role="dialog"
-    >
-      <div className={styles.modalPanel}>
-        <div className={styles.modalHeader}>
-          <div>
-            <div className={styles.eyebrow}>{eyebrow}</div>
-            <h2 id="device-batch-modal-title">{title}</h2>
-          </div>
-          <button aria-label="Close dialog" className={styles.modalClose} onClick={onClose} type="button">
-            <X aria-hidden size={20} />
-          </button>
-        </div>
-        <div className={styles.modalBody}>{children}</div>
-      </div>
-    </div>
-  )
+  return <ArchiveSheet open title={title} onClose={onClose}><p>{eyebrow}</p>{children}</ArchiveSheet>
 }

@@ -59,9 +59,7 @@ export default function ApplyPage() {
     return (
       <div className="main pilot-archive-page archive-collection-page archive-apply-page archive-apply-success">
         <ArchiveBrandHeader />
-        <div className="top-bar">
-          <div className="crumbs">PC://CONSOLE <span>/</span> APPLICATION <span>/</span> TRANSMITTED</div>
-        </div>
+
         <div className="archive-apply-shell">
           <ArchiveCard className="archive-apply-confirmation">
             <div>
@@ -90,9 +88,7 @@ export default function ApplyPage() {
   return (
     <div className="main pilot-archive-page archive-collection-page archive-apply-page">
       <ArchiveBrandHeader />
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> APPLICATION</div>
-      </div>
+
 
       <div className="archive-apply-shell">
         <ArchivePageHeader title="JOIN THE" accent="COLLECTIVE" />

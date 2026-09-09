@@ -1,3 +1,5 @@
+> **RETIRED — 历史记录，不再作为产品 UI 规范。** 当前唯一规范为 [UI 2.3](../design-system.md)，交互示例为 `/ui-kit`。历史图片和验收结果不能覆盖现行规范。
+
 # Golden Page Examples — Design QA
 
 ## Comparison target

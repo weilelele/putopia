@@ -9,7 +9,6 @@ import { Plus } from 'lucide-react'
 import { VoteCard } from '@/components/VoteCard'
 import { CreateVoteModal } from './CreateVoteModal'
 import type { Vote } from '@/types/database'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -86,14 +85,8 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
   return (
     <div className="main pilot-archive-page archive-collection-page archive-vote-page">
       <SectionTracker section="vote" />
-      <ArchiveBrandHeader />
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> VOTING HUB</div>
-        <div className="right">
-          <div className="item">ACTIVE <span className="val">{votes.filter(v => v.is_active).length}</span></div>
-          <div className="item">CLOSED <span className="val">{votes.filter(v => !v.is_active).length}</span></div>
-        </div>
-      </div>
+
+
 
       <ArchivePageHeader
         title="VOTING"

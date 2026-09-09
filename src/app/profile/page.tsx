@@ -234,14 +234,12 @@ export default function ProfilePage() {
 
   return (
     <div className="main">
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> PROFILE</div>
-      </div>
+
 
       <div className="page-head">
         <div>
           <BackLink href="/voyagers" label="VOYAGERS" />
-          <h1><span className="accent">PROFILE</span></h1>
+          <h1><span className="accent">MY PROFILE</span></h1>
         </div>
         <ArchiveButton
           onClick={() => logout()}

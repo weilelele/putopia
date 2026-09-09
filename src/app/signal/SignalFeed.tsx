@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -18,37 +18,11 @@ import type {
 import { scanSecondsLeft } from '@/lib/signal/scan'
 
 function AboutModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      onClick={onClose}
-      className="signal-modal-backdrop"
-      style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="signal-modal-panel"
-      >
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute', top: 14, right: 16,
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: 'rgba(245,245,245,0.4)', fontSize: 18, lineHeight: 1, padding: 4,
-          }}
-        >✕</button>
-        <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', marginBottom: 12 }}>SIGNAL DISPATCH</div>
-        <p style={{ fontSize: 14, color: 'rgba(245,245,245,0.85)', lineHeight: 1.9, margin: 0 }}>
-          We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
-          Your intuition is the only instrument that can make sense of them —
-          help us decipher the noise, and connect to more parallel worlds.
-        </p>
-      </div>
-    </div>
-  )
+  return <ArchiveSheet open title="Signal Dispatch" onClose={onClose}>
+    <p>We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
+      Your intuition is the only instrument that can make sense of them —
+      help us decipher the noise, and connect to more parallel worlds.</p>
+  </ArchiveSheet>
 }
 
 export function InvestigationFeed({ initial }: { initial: InvestigationFeedData }) {
@@ -61,7 +35,7 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
       {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
       <div style={{ maxWidth: 880, margin: '0 auto' }}>
         {/* header */}
-        <ArchiveBrandHeader />
+
         <div className="signal-feed-header">
           <ArchiveLinkButton href="/worlds" variant="ghost">← WORLD RECORDS</ArchiveLinkButton>
           <div className="signal-feed-title-row">
@@ -141,7 +115,7 @@ export function InvestigationCard({
             disabled={!canGoBack}
             style={{
               background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
-              width: 28, height: 28, cursor: canGoBack ? 'pointer' : 'default', fontFamily: 'monospace', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, cursor: canGoBack ? 'pointer' : 'default', fontFamily: 'var(--font-mono)', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >◀</button>
           <span style={{ fontSize: 12, color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', minWidth: 48, textAlign: 'center' }}>
@@ -152,7 +126,7 @@ export function InvestigationCard({
             disabled={!canGoForward}
             style={{
               background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoForward ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
-              width: 28, height: 28, cursor: canGoForward ? 'pointer' : 'default', fontFamily: 'monospace', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 28, height: 28, cursor: canGoForward ? 'pointer' : 'default', fontFamily: 'var(--font-mono)', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >▶</button>
         </div>

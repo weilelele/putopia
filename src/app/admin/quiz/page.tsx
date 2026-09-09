@@ -14,13 +14,13 @@ import type { QuizQuestionAdmin, QuizOption } from '@/lib/actions/quiz'
 const S = {
   card:   { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '20px', marginBottom: '12px' },
   label:  { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 72 },
-  btn:    { padding: '6px 14px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
+  input:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 72 },
+  btn:    { padding: '6px 14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
   btnOk:  { background: '#E35205', color: '#070912' },
   btnGhost: { background: 'transparent', border: '1px solid rgba(227,82,5,0.3)', color: 'rgba(245,245,245,0.55)' },
   btnDanger: { background: 'transparent', border: '1px solid rgba(232,48,48,0.4)', color: '#E83030' },
-  sel:    { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
+  sel:    { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none' },
 }
 
 const QUIZ_ID   = 'applicant-baseline-v1'
@@ -88,7 +88,7 @@ function QuestionEditor({
                   onChange={() => setAnswer(opt.key)}
                   style={{ accentColor: '#E35205', width: 14, height: 14 }}
                 />
-                <span style={{ fontFamily: 'monospace', fontSize: '12px', color: draft.answer_key === opt.key ? '#E35205' : 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', fontWeight: draft.answer_key === opt.key ? 700 : 400 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: draft.answer_key === opt.key ? '#E35205' : 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', fontWeight: draft.answer_key === opt.key ? 700 : 400 }}>
                   {opt.key.toUpperCase()}
                 </span>
               </label>
@@ -279,7 +279,7 @@ export default function QuizAdminPage() {
                     flexShrink: 0, width: 28, height: 28,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: 'rgba(227,82,5,0.1)', border: '1px solid rgba(227,82,5,0.25)',
-                    color: '#E35205', fontSize: '12px', letterSpacing: '0.08em', fontFamily: 'monospace',
+                    color: '#E35205', fontSize: '12px', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)',
                   }}>
                     {q.sort_order}
                   </div>
@@ -352,7 +352,7 @@ export default function QuizAdminPage() {
                       >
                         <span style={{
                           width: 20, textAlign: 'center', flexShrink: 0,
-                          fontFamily: 'monospace', fontSize: '12px',
+                          fontFamily: 'var(--font-mono)', fontSize: '12px',
                           color: isCorrect ? '#20D890' : 'rgba(245,245,245,0.35)',
                           fontWeight: isCorrect ? 700 : 400,
                           letterSpacing: '0.05em',
@@ -360,7 +360,7 @@ export default function QuizAdminPage() {
                           {isCorrect ? '✓' : opt.key.toUpperCase()}
                         </span>
                         <span style={{
-                          fontFamily: 'monospace', fontSize: '12px',
+                          fontFamily: 'var(--font-mono)', fontSize: '12px',
                           color: isCorrect ? 'rgba(32,216,144,0.8)' : 'rgba(245,245,245,0.55)',
                         }}>
                           {opt.label}

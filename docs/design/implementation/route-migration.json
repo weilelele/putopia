@@ -1,0 +1,82 @@
+[
+  {
+    "file": "src/app/admin/layout.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/console/console-client.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/logs/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/offline/page.tsx",
+    "changes": 2
+  },
+  {
+    "file": "src/app/quiz/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/signal/SignalFeed.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/studio/StudioForm.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/vote/VotingHub.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/voyager-path/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/worlds/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/admin/mc-config/page.tsx",
+    "changes": 4
+  },
+  {
+    "file": "src/app/auth/expired/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/devices/_components/device-claim-client.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/devices/my-consoles/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/intel/[id]/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/join/success/page.tsx",
+    "changes": 2
+  },
+  {
+    "file": "src/app/logs/[id]/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/worlds/[id]/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/devices/claim/success/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/devices/batches/[slug]/discussion/page.tsx",
+    "changes": 1
+  }
+]

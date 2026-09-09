@@ -83,9 +83,9 @@ export function AccessGate({
               bottom: 0,
               height: '45%',
               background:
-                'linear-gradient(to bottom, rgba(10,14,39,0) 0%, rgba(10,14,39,0.55) 40%, rgba(10,14,39,0.96) 100%)',
-              backdropFilter: 'blur(6px)',
-              WebkitBackdropFilter: 'blur(6px)',
+                'transparent',
+              backdropFilter: 'none',
+              WebkitBackdropFilter: 'none',
               display: 'flex',
               alignItems: 'flex-end',
               justifyContent: 'center',
@@ -105,7 +105,7 @@ export function AccessGate({
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'linear-gradient(to bottom, rgba(10,14,39,0) 0, rgba(10,14,39,0.45) 64px, rgba(10,14,39,0.45) calc(100% - 56px), rgba(10,14,39,0) 100%)',
+              background: 'transparent',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'flex-start',
@@ -117,8 +117,8 @@ export function AccessGate({
                 maxWidth: 380,
                 width: '100%',
                 background: 'rgba(14,18,40,0.82)',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
+                backdropFilter: 'none',
+                WebkitBackdropFilter: 'none',
                 borderRadius: 'var(--radius)',
                 padding: '1.6rem 1.5rem',
                 textAlign: 'center',
@@ -188,7 +188,7 @@ function RevealOverlay({ durationMs }: { durationMs: number }) {
         <rect width="100%" height="100%" filter="url(#gate-rev-noise)" />
       </svg>
 
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 2, background: 'var(--color-nucleus)', boxShadow: '0 0 14px 2px rgba(227,82,5,0.65)', animation: `gateScan ${durationMs}ms ease-in-out forwards` }} />
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 2, background: 'var(--color-nucleus)', boxShadow: 'none', animation: `gateScan ${durationMs}ms ease-in-out forwards` }} />
 
       <div
         style={{
@@ -201,7 +201,7 @@ function RevealOverlay({ durationMs }: { durationMs: number }) {
           fontSize: 'var(--fs-label)',
           letterSpacing: '0.22em',
           color: 'var(--color-nucleus)',
-          textShadow: '0 0 10px rgba(227,82,5,0.5)',
+          textShadow: 'none',
         }}
       >
         {locked ? '● SIGNAL LOCKED' : `ACQUIRING SIGNAL ${pct}%`}

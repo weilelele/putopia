@@ -4,7 +4,6 @@ import { getTuningCovers, getTuningActivity } from '@/lib/actions/signal-tasks'
 import { SectionTracker } from '@/components/section-tracker'
 import { WorldPoster } from '@/components/world-poster'
 import { CollapsibleWorldGrid } from '@/components/collapsible-world-grid'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchivePageHeader } from '@/components/archive-page-header'
@@ -92,17 +91,6 @@ function SectionSkeleton({
 
 // ─── Streamed sections ──────────────────────────────────────────────────────────
 
-async function TopBarCounts() {
-  const [worlds, pipeline] = await Promise.all([loadWorlds(), loadPipeline()])
-  return (
-    <div className="right">
-      <div className="item">CONFIRMED <span className="val">{worlds.length}</span></div>
-      {pipeline.length > 0 && (
-        <div className="item">PIPELINE <span className="val">{pipeline.length}</span></div>
-      )}
-    </div>
-  )
-}
 
 async function StatsBar() {
   const [worlds, pipeline] = await Promise.all([loadWorlds(), loadPipeline()])
@@ -199,16 +187,11 @@ export default async function WorldsPage({
   return (
     <main className="main pilot-archive-page archive-collection-page">
       <SectionTracker section="worlds" />
-      <ArchiveBrandHeader />
+
       <style>{`@keyframes wrPulse{0%,100%{opacity:.45}50%{opacity:.85}}.wr-skeleton{animation:wrPulse 1.2s ease-in-out infinite}`}</style>
 
       {/* ── Top bar ── */}
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> WORLD RECORDS</div>
-        <Suspense fallback={<div className="right" />}>
-          <TopBarCounts />
-        </Suspense>
-      </div>
+
 
       {/* ── Success banner ── */}
       {submittedName && (

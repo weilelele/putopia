@@ -47,7 +47,7 @@ export default function WikiSyncButton() {
           padding:       '5px 12px',
           cursor:        state === 'syncing' ? 'default' : 'pointer',
           opacity,
-          fontFamily:    'monospace',
+          fontFamily:    'var(--font-mono)',
           transition:    'all 0.2s',
         }}
       >

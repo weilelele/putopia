@@ -87,7 +87,7 @@ export async function proxy(request: NextRequest) {
   // existing campaign URLs never need to change.
   if (pathname === '/') {
     if (user) {
-      return NextResponse.redirect(new URL('/console', request.url))
+      return NextResponse.redirect(new URL('/welcome', request.url))
     }
     const qs = request.nextUrl.searchParams.toString()
     if (qs) {
@@ -98,7 +98,7 @@ export async function proxy(request: NextRequest) {
       // Preserve UTM/preview params for onboarding
       return NextResponse.redirect(new URL('/new?' + qs, request.url))
     }
-    return NextResponse.redirect(new URL('/console', request.url))
+    return NextResponse.redirect(new URL('/welcome', request.url))
   }
 
   // Category listing pages require a logged-in user.

@@ -174,7 +174,7 @@ export default function VotesAdmin() {
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
                     <button
                       onClick={() => handleDelete(v)}
-                      style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}
+                      style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}
                     >
                       {v.device_batch_slug ? '关闭' : '删除'}
                     </button>

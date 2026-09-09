@@ -10,11 +10,11 @@ import type { GeneratedNews } from '@/lib/actions/news-gen'
 const S = {
   card:  { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '24px', marginBottom: '16px' } as React.CSSProperties,
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '6px' } as React.CSSProperties,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
-  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as React.CSSProperties,
-  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' } as React.CSSProperties,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as React.CSSProperties,
+  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none' } as React.CSSProperties,
   btn:   (color: string, dim?: boolean) => ({
-    padding: '9px 22px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em',
+    padding: '9px 22px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em',
     cursor: dim ? 'not-allowed' : 'pointer', border: `1px solid ${color}`, color,
     background: dim ? 'transparent' : `${color}14`, opacity: dim ? 0.5 : 1,
   }) as React.CSSProperties,
@@ -171,7 +171,7 @@ export default function CreateNewsPage() {
           <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: 'var(--fs-caption)', fontFamily: 'monospace',
+              justifyContent: 'center', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)',
               background: phase === p ? '#C84406' : ((['input','review','done'].indexOf(phase) > i) ? '#151B3A' : '#0F1430'),
               border: `1px solid ${phase === p ? '#C84406' : 'rgba(227,82,5,0.16)'}`,
               color: phase === p ? '#fff' : 'rgba(245,245,245,0.35)',
@@ -270,7 +270,7 @@ export default function CreateNewsPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={selectedPersona.avatar_url} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(227,82,5,0.16)' }} />
               ) : (
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#151B3A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E35205', fontSize: '14px', fontFamily: 'monospace' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#151B3A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E35205', fontSize: '14px', fontFamily: 'var(--font-mono)' }}>
                   {selectedPersona.display_name[0]}
                 </div>
               )}
@@ -347,11 +347,11 @@ export default function CreateNewsPage() {
 
                   {/* 已选标记 */}
                   {selectedImg === url && (
-                    <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#E35205', color: '#0F1430', fontSize: 'var(--fs-caption)', padding: '2px 6px', fontFamily: 'monospace' }}>✓ 已选</div>
+                    <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#E35205', color: '#0F1430', fontSize: 'var(--fs-caption)', padding: '2px 6px', fontFamily: 'var(--font-mono)' }}>✓ 已选</div>
                   )}
 
                   {/* 图片序号 */}
-                  <div style={{ position: 'absolute', bottom: '5px', left: '6px', background: 'rgba(0,0,0,0.7)', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', padding: '1px 5px', fontFamily: 'monospace' }}>
+                  <div style={{ position: 'absolute', bottom: '5px', left: '6px', background: 'rgba(0,0,0,0.7)', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', padding: '1px 5px', fontFamily: 'var(--font-mono)' }}>
                     {imgLoaded[i] && !imgErrors[i] ? `图 ${i + 1}` : '...'}
                   </div>
                 </div>

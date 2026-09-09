@@ -14,9 +14,7 @@ export default function Loading() {
     <div className="main" aria-busy="true">
       <style>{`@keyframes wrPulse{0%,100%{opacity:.45}50%{opacity:.85}}.wr-skeleton{animation:wrPulse 1.2s ease-in-out infinite}`}</style>
 
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> WORLD RECORDS</div>
-      </div>
+
 
       <div className="page-head">
         <h1>WORLD <span className="accent">RECORDS</span></h1>

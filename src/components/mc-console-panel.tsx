@@ -86,7 +86,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
                       <span style={{
                         width: 6, height: 6, borderRadius: '50%',
                         background: visible ? meta.color : 'rgba(227,82,5,0.28)',
-                        boxShadow: visible ? `0 0 7px ${meta.color}` : 'none',
+                        boxShadow: 'none',
                         flexShrink: 0, display: 'inline-block',
                         transition: 'background 0.3s, box-shadow 0.3s',
                       }} />

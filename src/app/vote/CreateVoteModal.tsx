@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { createVote } from '@/lib/actions/votes'
 import type { VoteType, UserRole } from '@/types/database'
 import { ArchiveButton } from '@/components/archive-button'
-import { ArchiveCard } from '@/components/archive-card'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveTabs } from '@/components/archive-tabs'
 
@@ -27,6 +27,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
   const [scope, setScope]     = useState<UserRole[]>(['applicant', 'voyager', 'architect'])
   const [options, setOptions] = useState(['', ''])
   const [endsAt, setEndsAt]   = useState('')
+  const [uncertain, setUncertain] = useState(false)
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState<string | null>(null)
 
@@ -48,6 +49,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (saving || uncertain) return
     if (!title.trim()) { setError('Title is required.'); return }
     if (scope.length === 0) { setError('Select at least one participation scope.'); return }
     const validOptions = options.map((o) => o.trim()).filter(Boolean)
@@ -56,6 +58,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
     setSaving(true)
     setError(null)
 
+    try {
     const result = await createVote({
       title: title.trim(),
       description: description.trim() || null,
@@ -74,29 +77,13 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
     }
 
     onCreated()
+    } catch { setUncertain(true); setError('Result unconfirmed. Check the voting hub before submitting again.') } finally { setSaving(false) }
   }
 
   return (
-    <div
-      className="archive-modal-backdrop"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <ArchiveCard
-        aria-labelledby="create-vote-title"
-        aria-modal="true"
-        className="archive-modal archive-vote-modal"
-        role="dialog"
-      >
+    <ArchiveSheet open title="Create vote" onClose={onClose} busy={saving} dirty={!uncertain && (!!title || !!description || options.some(option => !!option.trim()) || !!endsAt)}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="archive-modal__eyebrow">NEW VOTE</div>
-            <h2 id="create-vote-title">CREATE VOTE</h2>
-          </div>
-          <ArchiveButton aria-label="Close dialog" onClick={onClose} variant="ghost">
-            <X size={18} />
-          </ArchiveButton>
-        </div>
+
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Title */}
@@ -211,28 +198,20 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
           </div>
 
           {error && (
-            <div className="text-xs font-mono" style={{ color: '#C84406' }}>✗ {error}</div>
+            <div role="alert" className="text-xs font-mono" style={{ color: '#C84406' }}>✗ {error}</div>
           )}
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2 border-t" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
             <ArchiveButton
-              type="button"
-              onClick={onClose}
-              variant="ghost"
-            >
-              CANCEL
-            </ArchiveButton>
-            <ArchiveButton
               type="submit"
-              disabled={saving}
+              disabled={saving || uncertain}
               variant="primary"
             >
               {saving ? 'CREATING...' : 'CREATE VOTE'}
             </ArchiveButton>
           </div>
         </form>
-      </ArchiveCard>
-    </div>
+      </ArchiveSheet>
   )
 }

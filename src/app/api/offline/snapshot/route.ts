@@ -1,3 +1,5 @@
+import { readDashboardUpdates } from '@/lib/dashboard-updates'
+import { latestUpdates } from '@/lib/dashboard-model'
 import { NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { listDeviceLibraryEntries } from '@/lib/device-library-repository'
@@ -31,6 +33,7 @@ export async function GET() {
   const authenticated = Boolean(user)
   const role = profile?.role ?? 'guest'
 
+  const updatesPromise = readDashboardUpdates(false).catch(() => null)
   const [worldsResult, devicesResult, intelResult, voyagersResult, storiesResult, votesResult, functionsResult] = await Promise.all([
     admin
       .from('worlds')
@@ -121,7 +124,10 @@ export async function GET() {
     console.warn('[offline/snapshot] Optional sections were omitted.', warningErrors)
   }
 
+  const dashboardSource = await updatesPromise
+  const dashboardUpdates = dashboardSource ? latestUpdates(dashboardSource.filter(item => !item.locked), votes) : undefined
   const response = NextResponse.json({
+    dashboardUpdates,
     version: 2,
     syncedAt: new Date().toISOString(),
     viewer: {

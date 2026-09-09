@@ -5,12 +5,12 @@ export const PWA_MANIFEST: MetadataRoute.Manifest = {
   name: 'Multiverse Collective',
   short_name: 'Multiverse',
   description: 'Access the Multiverse Collective Console.',
-  start_url: '/console?source=pwa',
+  start_url: '/welcome?source=pwa',
   scope: '/',
   display: 'standalone',
   orientation: 'portrait-primary',
-  background_color: '#0A0E27',
-  theme_color: '#0A0E27',
+  background_color: '#080C20',
+  theme_color: '#080C20',
   icons: [
     {
       src: '/icons/icon-192.png',

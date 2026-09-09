@@ -1,8 +1,12 @@
 'use client'
+import { useSessionPreference } from '@/lib/use-session-preference'
 
+import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { BackLink } from '@/components/back-link'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
@@ -12,7 +16,6 @@ import {
   ListFilter,
   MessageSquare,
   Radio,
-  X,
 } from 'lucide-react'
 import styles from '../../live-observation-room.module.css'
 import { BatchDiscussionBoard } from '../_components/batch-discussion-board'
@@ -73,10 +76,11 @@ export function DeviceLiveRoom({
   camera?: DeviceCameraSource | null
 }) {
   const router = useRouter()
+  const isRoot = usePathname() === '/devices'
   const followedBatchSlugs = useFollowedBatchSlugs()
-  const [activeTab, setActiveTab] = useState<ContentTab>('info')
+  const [activeTab, setActiveTab] = useSessionPreference<ContentTab>(`mc:view:devices:${batch.slug}:tab`, 'info')
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [filter, setFilter] = useState<BatchFilter>('all')
+  const [filter, setFilter] = useSessionPreference<BatchFilter>('mc:view:devices:filter', 'all')
   const [openShipment, setOpenShipment] = useState<string | null>(null)
   const [progressOpen, setProgressOpen] = useState(false)
   const [now, setNow] = useState<number | null>(null)
@@ -116,9 +120,9 @@ export function DeviceLiveRoom({
   }
 
   return (
-    <main className={`main ${styles.page}`}>
+    <main className={`main ${styles.page}`}>{isRoot ? <ArchiveBrandHeader /> : <BackLink href="/devices" label="Devices" />}
       <header className={styles.roomHeader}>
-        <h1>DEVICE</h1>
+        <h1>DEVICES</h1>
         <Link className={styles.archiveLink} href="/devices">
           LIBRARY <ChevronRight aria-hidden size={16} />
         </Link>
@@ -297,12 +301,8 @@ export function DeviceLiveRoom({
       </section>
 
       {sheetOpen ? (
-        <div className={styles.sheetBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSheetOpen(false) }}>
-          <section aria-label="All device batches" aria-modal="true" className={styles.sheet} role="dialog">
-            <header className={styles.sheetHeader}>
-              <h2>ALL DEVICE BATCHES</h2>
-              <button aria-label="Close batch list" className={styles.iconButton} onClick={() => setSheetOpen(false)} type="button"><X aria-hidden size={22} /></button>
-            </header>
+        <ArchiveSheet open onClose={() => setSheetOpen(false)} title="All device batches" dirty={false} busy={false}>
+
             <div className={styles.filterRow}>
               {(['all', 'following', 'survey', 'claim', 'distributing', 'active'] as BatchFilter[]).map((item) => (
                 <button aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => setFilter(item)} type="button">{item.toUpperCase()}</button>
@@ -318,17 +318,12 @@ export function DeviceLiveRoom({
                 </button>
               ))}
             </div>
-          </section>
-        </div>
+          </ArchiveSheet>
       ) : null}
 
       {progressOpen && ownedConsole ? (
-        <div className={styles.sheetBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setProgressOpen(false) }}>
-          <section aria-label="My Console progress" aria-modal="true" className={styles.sheet} role="dialog">
-            <header className={styles.sheetHeader}>
-              <div><div className={styles.eyebrow}>MY ASSIGNED UNIT</div><h2>{ownedConsole.unitCode}</h2></div>
-              <button aria-label="Close my progress" className={styles.iconButton} onClick={() => setProgressOpen(false)} type="button"><X aria-hidden size={22} /></button>
-            </header>
+        <ArchiveSheet open onClose={() => setProgressOpen(false)} title="My Console progress" dirty={false} busy={false}>
+
             <div className={styles.dialogBody}>
               <div className={styles.facts}>
                 <div className={styles.fact}><span>UNIT STATUS</span><strong>{ownedConsole.unitStatus.toUpperCase()}</strong></div>
@@ -346,8 +341,7 @@ export function DeviceLiveRoom({
               </div>
               <Link className={styles.primaryButton} href="/devices/my-consoles">OPEN FULL UNIT RECORD</Link>
             </div>
-          </section>
-        </div>
+          </ArchiveSheet>
       ) : null}
     </main>
   )

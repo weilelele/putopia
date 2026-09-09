@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchivePageHeader } from '@/components/archive-page-header'
 
@@ -90,7 +89,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
   return (
     <div className="studio-archive">
       <div className="studio-archive-heading">
-        <ArchiveBrandHeader />
+
         <ArchivePageHeader title="CONTENT" accent="STUDIO" />
       </div>
       <div className="studio-archive-layout" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
@@ -613,7 +612,7 @@ function ScanLine({ small }: { small?: boolean }) {
     }}>
       <div style={{
         position: 'absolute', left: 0, right: 0, height: 1,
-        background: 'linear-gradient(90deg, transparent, rgba(200,68,6,0.8), transparent)',
+        background: 'transparent',
         animation: 'studioScan 1.4s linear infinite',
       }} />
       <style>{`

@@ -106,7 +106,10 @@ export interface OfflineFunction {
   sort_order: number
 }
 
+export interface OfflineDashboardUpdate { id: string; occurredAt: string; category: string; title: string; description?: string; image?: string | null; href: string }
+
 export interface OfflineSnapshot {
+  dashboardUpdates?: OfflineDashboardUpdate[]
   version: 2
   syncedAt: string
   viewer: OfflineViewer
@@ -148,6 +151,7 @@ export function parseOfflineSnapshot(value: unknown): OfflineSnapshot | null {
   const sections = ['worlds', 'devices', 'intel', 'voyagers', 'stories', 'votes', 'functions'] as const
   if (!sections.every((section) => isRecordArray(parsed[section]))) return null
 
+  if (parsed.dashboardUpdates !== undefined && (!isRecordArray(parsed.dashboardUpdates) || !parsed.dashboardUpdates.every(item => typeof item.id === 'string' && isIsoDate(item.occurredAt) && typeof item.title === 'string' && typeof item.category === 'string' && typeof item.href === 'string' && /^\/(intel|worlds|devices|voyagers|vote)(\/|$)/.test(item.href)))) return null
   return parsed as unknown as OfflineSnapshot
 }
 
@@ -167,8 +171,13 @@ export function parseOfflineMediaMap(value: string | null): OfflineMediaMap {
   }
 }
 
+export function absoluteOfflineMediaUrl(value: string): string {
+  return value.startsWith('/') && !value.startsWith('//') ? `https://www.multiverseco.org${value}` : value
+}
+
 export function collectOfflineMediaUrls(snapshot: OfflineSnapshot): string[] {
   const urls = [
+    ...(snapshot.dashboardUpdates ?? []).map(item => item.image),
     ...snapshot.worlds.map((item) => item.image_path),
     ...snapshot.devices.map((item) => item.image_path),
     ...snapshot.intel.flatMap((item) => item.images.slice(0, 1)),
@@ -177,7 +186,7 @@ export function collectOfflineMediaUrls(snapshot: OfflineSnapshot): string[] {
       ? `https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg`
       : null),
   ]
-  return [...new Set(urls.filter((url): url is string => typeof url === 'string' && /^https:\/\//.test(url)))].slice(0, 80)
+  return [...new Set(urls.filter((url): url is string => typeof url === 'string').map(absoluteOfflineMediaUrl).filter(url => /^https:\/\//.test(url)))].slice(0, 80)
 }
 
 export function offlineSnapshotScript(force = false): string {

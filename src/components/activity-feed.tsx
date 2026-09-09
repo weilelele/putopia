@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import type { ActivityEvent } from '@/lib/actions/activity-events'
 import { getVoyagerById } from '@/lib/actions/profile'
 import type { VoyagerProfile } from '@/types/database'
@@ -27,7 +28,7 @@ function formatDate(iso: string) {
 function Avatar({ name, role, avatarUrl, size = 36 }: { name: string; role: string; avatarUrl?: string | null; size?: number }) {
   const initials = name.slice(0, 2).toUpperCase()
   const isArch   = role === 'architect'
-  const color    = isArch ? '#E35205' : '#FF8A5C'
+  const color    = isArch ? '#E35205' : '#E35205'
   const border   = isArch ? 'rgba(227,82,5,0.55)' : 'rgba(255,138,92,0.4)'
 
   if (avatarUrl) {
@@ -90,6 +91,7 @@ function FeedRow({ event, onProfileOpen }: { event: ActivityEvent; onProfileOpen
     event.event_type === 'intel_published'   ? 'published'           :
     event.event_type === 'intel_updated'     ? 'updated'             :
     event.event_type === 'device_updated'    ? 'updated'             :
+    event.event_type === 'world_established' ? 'established' :
     event.event_type === 'world_added'       ? 'logged'              :
     event.event_type === 'vote_opened'       ? 'opened a vote'       :
     event.event_type === 'vote_cast'         ? 'voted'               :
@@ -234,7 +236,7 @@ function VoteGroup({ casts }: { casts: ActivityEvent[] }) {
         <AvatarStack events={casts} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            <span style={{ color: '#20D890', fontWeight: 700 }}>{nameList}</span>
+            <span style={{ color: '#E35205', fontWeight: 700 }}>{nameList}</span>
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {casts[0]?.target_title ?? 'voted'}
@@ -316,19 +318,9 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
   ].filter(Boolean) as { label: string; href: string }[]
 
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(5,8,18,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
-      onClick={onClose}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.35)', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', fontFamily: 'var(--font-mono)' }}
-      >
+    <ArchiveSheet open title="Voyager profile" onClose={onClose}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid rgba(227,82,5,0.14)', background: '#090D1A' }}>
-          <span style={{ color: 'rgba(245,245,245,0.55)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em' }}>VOYAGER PROFILE</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '2px 6px' }}>✕</button>
-        </div>
+
 
         {/* Identity block */}
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '20px 18px 16px' }}>
@@ -354,16 +346,16 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
               </span>
             </div>
             {profile.batch_label && (
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', letterSpacing: '0.1em', marginBottom: '2px' }}>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', marginBottom: '2px' }}>
                 {profile.batch_label}
               </div>
             )}
             {profile.location && (
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
+              <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)' }}>
                 {profile.location}
               </div>
             )}
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.25)', marginTop: '2px' }}>
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', marginTop: '2px' }}>
               joined {formatDate(profile.joined_at)}
             </div>
           </div>
@@ -372,17 +364,17 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
         {/* Stats */}
         <div style={{ display: 'flex', borderTop: '1px solid rgba(227,82,5,0.1)', borderBottom: '1px solid rgba(227,82,5,0.1)', margin: '0 18px' }}>
           <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#C84406', textShadow: '0 0 10px rgba(200,68,6,0.35)' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#E35205', textShadow: 'none' }}>
               {profile.observation_days}
             </div>
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>OBS DAYS</div>
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', marginTop: '2px' }}>OBS DAYS</div>
           </div>
           <div style={{ width: 1, background: 'rgba(227,82,5,0.1)' }} />
           <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#20D890', textShadow: '0 0 10px rgba(32,216,144,0.25)' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#20D890', textShadow: 'none' }}>
               {profile.worlds_discovered}
             </div>
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: '2px' }}>WORLDS</div>
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', marginTop: '2px' }}>WORLDS</div>
           </div>
         </div>
 
@@ -403,7 +395,7 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'rgba(245,245,245,0.35)',
+                  fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'rgba(245,245,245,0.55)',
                   border: '1px solid rgba(227,82,5,0.2)', padding: '3px 8px', textDecoration: 'none',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'rgba(245,245,245,0.65)')}
@@ -427,24 +419,14 @@ function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null
             SEE ALL →
           </Link>
         </div>
-      </div>
-    </div>
+      </ArchiveSheet>
   )
 }
 
 // ─── Loading modal placeholder ────────────────────────────────────────────────
 
 function ProfileLoadingModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(5,8,18,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
-      onClick={onClose}
-    >
-      <div style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.35)', width: '100%', maxWidth: '480px', padding: '48px 18px', textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'rgba(245,245,245,0.25)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em' }}>
-        LOADING...
-      </div>
-    </div>
-  )
+  return <ArchiveSheet open title="Voyager profile" onClose={onClose}><p role="status">Loading profile…</p></ArchiveSheet>
 }
 
 // ─── Build display list ───────────────────────────────────────────────────────
@@ -525,7 +507,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
           background: '#090D1A',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#20D890', boxShadow: '0 0 6px #20D890', display: 'inline-block' }} />
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#20D890', boxShadow: 'none', display: 'inline-block' }} />
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-dim)' }}>
               STATUS UPDATES
             </span>

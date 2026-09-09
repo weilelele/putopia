@@ -16,8 +16,6 @@ function fmt(total: number): string {
 
 export function WorldScanHero({
   displayName,
-  gradientFrom,
-  gradientTo,
   scanUntil,
   variant,
   onComplete,
@@ -52,14 +50,12 @@ export function WorldScanHero({
 
   return (
     <div style={{ width: '100%', height: '280px', position: 'relative', overflow: 'hidden', marginBottom: '1.5rem', border: `1px solid ${accent}40` }}>
-      <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`, filter: failed ? 'grayscale(0.6) brightness(0.6)' : undefined }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'transparent', filter: failed ? 'grayscale(0.6) brightness(0.6)' : undefined }} />
       {/* scanlines */}
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.10) 2px, rgba(0,0,0,0.10) 4px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'none', pointerEvents: 'none' }} />
       {!failed && <div className="scan-hero-sweep" style={{ position: 'absolute', left: 0, right: 0, height: 2, background: 'rgba(255,176,32,0.6)' }} />}
       {/* legibility fade */}
-      <div style={{ position: 'absolute', inset: 0, background: failed
-        ? 'linear-gradient(to bottom, rgba(20,8,8,0.25) 25%, rgba(40,12,12,0.5) 60%, rgba(10,5,5,0.92) 100%)'
-        : 'linear-gradient(to bottom, transparent 25%, rgba(160,90,4,0.30) 60%, rgba(10,7,2,0.9) 100%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'transparent', pointerEvents: 'none' }} />
 
       {/* status badge — scanning only; the failed hero's center text says enough */}
       {!failed && (
@@ -89,7 +85,7 @@ export function WorldScanHero({
         ) : (
           <>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'rgba(245,245,245,0.6)' }}>SIGNALS RETURN IN</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '2.4rem', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--color-star)', fontVariantNumeric: 'tabular-nums', textShadow: '0 2px 14px rgba(0,0,0,0.7)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '2.4rem', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--color-star)', fontVariantNumeric: 'tabular-nums', textShadow: 'none' }}>
               {fmt(left)}
             </span>
           </>
@@ -98,7 +94,7 @@ export function WorldScanHero({
 
       {/* title */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem 1.25rem' }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: 'none' }}>
           {displayName}
         </div>
       </div>

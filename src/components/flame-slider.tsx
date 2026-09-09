@@ -121,7 +121,7 @@ export function FlameSlider({
           {/* Flame fill */}
           <div className="archive-range__fill" style={{
             position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`,
-            background: 'linear-gradient(90deg, #6B1200, #C8401A, #E35205, #FF8C20, #FFB830)',
+            background: 'transparent',
             transition: 'width 0.08s ease',
             pointerEvents: 'none',
           }} />
@@ -130,9 +130,7 @@ export function FlameSlider({
             position: 'absolute', top: '50%', left: `${pct}%`,
             transform: 'translate(-50%, -50%)',
             width: 22, height: 22, borderRadius: '50%',
-            background: value > 0
-              ? 'radial-gradient(circle at 38% 38%, #FFE0A0, #FF8C20, #E35205)'
-              : 'rgba(36,41,56,0.95)',
+            background: 'transparent',
             border: `1.5px solid ${value > 0 ? 'rgba(255,180,60,0.75)' : 'rgba(242,240,230,0.18)'}`,
             transition: 'all 0.1s ease',
             pointerEvents: 'none', zIndex: 2,

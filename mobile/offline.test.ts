@@ -70,3 +70,12 @@ describe('iOS full offline snapshot', () => {
     })
   })
 })
+
+describe('Dashboard update snapshot compatibility', () => {
+  it('accepts older snapshots and validates optional timestamped updates', () => {
+    expect(parseOfflineSnapshot(snapshot)).not.toBeNull()
+    expect(parseOfflineSnapshot({ ...snapshot, dashboardUpdates: [{ id:'intel-1', occurredAt:'2026-09-09T00:00:00Z', category:'Intel', title:'One', href:'/intel/1' }] })).not.toBeNull()
+    expect(parseOfflineSnapshot({ ...snapshot, dashboardUpdates: [{ id:'1', occurredAt:'not-a-date', category:'Intel', title:'One', href:'/intel/1' }] })).toBeNull()
+    expect(parseOfflineSnapshot({ ...snapshot, dashboardUpdates: [{ id:'1', occurredAt:'2026-09-09T00:00:00Z', category:'Intel', title:'One', href:'https://other.test' }] })).toBeNull()
+  })
+})

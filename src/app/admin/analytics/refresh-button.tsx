@@ -22,7 +22,7 @@ export function RefreshButton() {
       onClick={handleRefresh}
       disabled={loading}
       style={{
-        fontFamily: 'monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: 'var(--fs-caption)',
         letterSpacing: '0.2em',
         color: loading ? 'rgba(245,245,245,0.35)' : '#C84406',
