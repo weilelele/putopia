@@ -1,38 +1,38 @@
 [
   {
-    "question": "What is Kyoto One?",
-    "answer": "Kyoto One is the first Kyoto batch of Multiverse Consoles. It has a charcoal-gray housing, a pale front panel, silver side controls and orange details. This allocation is limited to 50 Consoles."
+    "question": "What is Q1?",
+    "answer": "Q1 is the 50-Console claim allocation for the Kyoto One Batch. Each Multiverse Console has a charcoal-gray housing, a pale front panel, silver side controls and orange details."
   },
   {
-    "question": "Is this a preorder, and what does $520 cover?",
-    "answer": "Yes. US$520 is the full batch preorder price for one assigned Kyoto One Console and the three shipments described below. The full amount is collected when you claim; it is not a deposit or a recurring subscription. The Console arrives in the third shipment."
+    "answer": "Yes. US$520 is the full batch preorder price for one assigned Multiverse Console (Kyoto One Batch) and the three shipments described below. The full amount is collected when you claim; it is not a deposit or a recurring subscription. The Console arrives in the third shipment.",
+    "question": "Is this a preorder, and what does $520 cover?"
   },
   {
-    "question": "What is in each shipment?",
-    "answer": "Package 1: Initial Voyager Pack, containing a badge and welcome letter. Package 2: gadgets, widgets and small components; the exact selection is still being finalized. An antenna is a possibility, not a confirmed inclusion. Package 3: your Kyoto One Console."
+    "answer": "Package 1: Initial Voyager Pack, containing a badge and welcome letter. Package 2: Mysterious Widgets, with small widgets and components; the exact selection is still being finalized. An antenna is a possibility, not a confirmed inclusion. Package 3: Multiverse Console (Kyoto One Batch).",
+    "question": "What is in each shipment?"
   },
   {
-    "question": "When will the packages ship?",
-    "answer": "The packages will be dispatched separately, in that order. Dispatch dates for all three packages are not yet confirmed. This is a preorder, not an offer of immediate delivery. Timing updates will be posted in this batch record."
+    "answer": "The packages will be dispatched separately, in that order. Dispatch dates for all three packages are not yet confirmed. This is a preorder, not an offer of immediate delivery. Timing updates will be posted in this batch record.",
+    "question": "When will the packages ship?"
   },
   {
-    "question": "What about shipping destinations, shipping costs and taxes?",
-    "answer": "The destinations currently supported are shown in checkout. Shipping charges and tax treatment have not yet been finalized; their inclusion in the $520 batch price has not been confirmed. These terms remain pending."
+    "answer": "The destinations currently supported are shown in checkout. Shipping charges and tax treatment have not yet been finalized; their inclusion in the $520 batch price has not been confirmed. These terms remain pending.",
+    "question": "What about shipping destinations, shipping costs and taxes?"
   },
   {
-    "question": "Are the images photographs of my assigned unit?",
-    "answer": "No. The gallery includes original device design references and an AI-generated warehouse visualization based on those references. They show the design and setting, not the condition or serial number of an individual unit."
+    "answer": "No. The gallery includes an original device design reference and AI-generated warehouse visualizations based on the device design. They show the design and setting, not the condition or serial number of an individual unit.",
+    "question": "Are the images photographs of my assigned unit?"
   },
   {
-    "question": "Are the unusual routes exclusive to this batch?",
-    "answer": "We have not established whether other Consoles can reach the same routes. Exclusive access is not a confirmed part of this claim."
+    "answer": "We have not established whether other Consoles can reach the same routes. Exclusive access is not a confirmed part of this claim.",
+    "question": "Are the unusual routes exclusive to this batch?"
   },
   {
-    "question": "Does my earlier $12 Initial Pack include this Console?",
-    "answer": "The earlier Initial Pack order and this $520 Kyoto One claim are separate. Your earlier order remains due for delivery without a new purchase. No upgrade credit has been announced."
+    "answer": "The earlier Initial Pack order and this $520 Q1 claim are separate. Your earlier order remains due for delivery without a new purchase. No upgrade credit has been announced.",
+    "question": "Does my earlier $12 Initial Pack include this Console?"
   },
   {
-    "question": "What are the cancellation, return and support terms?",
-    "answer": "Batch-specific cancellation, return and support terms have not yet been published. They remain an outstanding release detail."
+    "answer": "Batch-specific cancellation, return and support terms have not yet been published. They remain an outstanding release detail.",
+    "question": "What are the cancellation, return and support terms?"
   }
 ]

@@ -1,10 +1,10 @@
-# Kyoto One preorder release
+# Q1 preorder release — Kyoto One Batch
 
 Confirmed scope: 50 gray-shell Consoles, US$520 paid in full, three separate shipments. Lead: Ryo Tanaka (interpreting the user's “Real” as the Kyoto architect recommended immediately before selection).
 
 1. Initial Voyager Pack: badge and welcome letter.
-2. Gadgets, widgets and small components; exact selection pending. An antenna is possible, not guaranteed.
-3. Kyoto One Console.
+2. Mysterious Widgets: small widgets and components; exact selection pending. An antenna is possible, not guaranteed.
+3. Multiverse Console (Kyoto One Batch).
 
 Dispatch dates, shipping charges, tax treatment, and batch-specific cancellation/return/support terms remain unconfirmed. The public FAQ states these gaps explicitly. Earlier $12 Initial Pack orders remain separate obligations.
 
@@ -21,3 +21,9 @@ Source gallery: https://e2pp07sl0j.feishu.cn/docx/VSYjd4COQoN9frxAOHvcmkVfnRo
 Team content: https://e2pp07sl0j.feishu.cn/docx/MtRQdmbByoCRRVxxTiBcSjgdn7b
 
 No database schema migration is required. Old batch records and their versions must be snapshotted before removal. Existing Voyager orders, including the canceled Cairo claim, retain their historical values.
+
+## Q1 refinement — 10 September 2026
+
+The display name is Q1; the stable `kyoto-one` URL, internal KYOTO-ONE code and unit identifiers remain unchanged. The device series remains Kyoto One. Price, allocation and customer records are unchanged.
+
+The main warehouse hero is retained: its material rendering is more restrained than the older world composites. The lower gallery now uses the robot-library and shepherd scenes selected from the source Feishu gallery, retouched to remove location labels, plus the original rear reference. The two scenes prioritize a more engaging view of the screen worlds; they are visualizations, not documentary photographs. Some stylized surface rendering remains. Retouches are in `public/assets/q1-20260910/`, with provenance in `q1-media.json`.

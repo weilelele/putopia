@@ -1,0 +1,16 @@
+[
+  {
+    "file": "01-robot-library.png",
+    "sourceGallery": "https://e2pp07sl0j.feishu.cn/docx/VSYjd4COQoN9frxAOHvcmkVfnRo",
+    "sourceImage": "01-night-left-robot.png",
+    "edit": "Remove background place labels and reduce artificial texture while preserving the existing device, world, angle and dark warehouse composition.",
+    "sha256": "bba5d271ec5e9e0f5a265ca3a9521c0df1a6d0132ca53906022e32d3db5bff02"
+  },
+  {
+    "file": "02-shepherd.png",
+    "sourceGallery": "https://e2pp07sl0j.feishu.cn/docx/VSYjd4COQoN9frxAOHvcmkVfnRo",
+    "sourceImage": "02-night-right-shepherd.png",
+    "edit": "Remove background place labels and reduce artificial texture while preserving the existing device, world, angle and dark warehouse composition.",
+    "sha256": "02060b3efb682f3d49e3150017797492a967de730ed7076106cc0b13e7052a4c"
+  }
+]
