@@ -145,6 +145,7 @@ export function DeviceLiveRoom({
         </ArchiveButton>
       </nav>
 
+      <div className={styles.workspace}><div className={styles.workspaceMedia}>
       {camera ? (
         <CosmoCameraEmbed source={camera} location={batch.location} />
       ) : (
@@ -168,6 +169,7 @@ export function DeviceLiveRoom({
         </LiveFeedPlaceholder>
       )}
 
+      </div><div className={styles.workspaceDetails}>
       {(batch.status === 'claim_open' && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
         <div className={styles.paymentHeader}>
           <div>
@@ -283,6 +285,7 @@ export function DeviceLiveRoom({
         ) : null}
       </section>
 
+      </div></div>
       {sheetOpen ? (
         <ArchiveSheet open onClose={() => setSheetOpen(false)} title="All device batches" dirty={false} busy={false}>
 

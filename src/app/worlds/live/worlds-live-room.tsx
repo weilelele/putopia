@@ -158,6 +158,7 @@ export function WorldsLiveRoom({
 
       </nav>
 
+      <div className={styles.workspace}><div className={styles.workspaceMedia}>
       <section className={`${styles.liveFrame} ${playerStyles.frame}`} aria-label={`${selected.city} Dreamcatcher state video`}>
         <div className={styles.liveImage}>
           <DreamcatcherLiveVideo key={selected.id}
@@ -172,7 +173,7 @@ export function WorldsLiveRoom({
         </div>
       </section>
 
-      <div className={styles.desktopSplit}>
+      </div><div className={`${styles.desktopSplit} ${styles.workspaceDetails}`}>
         <section className={styles.sectionPanel} aria-labelledby="device-status">
           <header className={styles.queueHeader}>
             <div><div className={styles.eyebrow}>CURRENT DEVICE STATE</div><h2 id="device-status">{STATUS_LABEL[selected.status]}</h2></div>
@@ -213,6 +214,7 @@ export function WorldsLiveRoom({
       </div>
 
 
+      </div>
       {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Dreamcatcher works" dirty={false} busy={false}><div className={styles.dialogBody}><p>This Dreamcatcher processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. The duration is predictable, but the room does not show a countdown.</p><p>A completed round returns three or four video signals for community selection. After the choice closes, the world returns to this same Dreamcatcher for its next round.</p><p>The waiting queue has a fixed capacity. If this device stops accepting dreams, choose another location.</p></div></ArchiveSheet> : null}
 
       {submitOpen ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Describe a dream" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}>{loggedIn ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT SHOULD THIS DEVICE SEARCH FOR?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe a dream or world…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form> : <div className={styles.dialogBody}><p>Applicant access or above is required to submit to a Dreamcatcher.</p><Link className={styles.primaryButton} href="/login">LOG IN TO CONTINUE</Link></div>}</ArchiveSheet> : null}

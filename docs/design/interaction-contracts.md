@@ -1,6 +1,7 @@
 # 导航与交互合同
 
-> 最新更正（2026-09-10）：应用内容页一律不放 Logo，不预留品牌栏；一级不重复 Tab 名称。Voting Hub / My Profile / Archive 是右上轻量入口，Voyager Logs 是成员列表底部主按钮。Dashboard 原数字看板保留，Events 未登录也直接展示，参与仍按原权限。下文及原图中的旧品牌区规则由本条取代。
+> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后显示 Voyager/Applicant 欢迎与个人身份状态；两块不叠加。内容区不重复放品牌 Logo；恢复桌面/横屏统一侧栏中的原品牌、导航和账号区域。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 的类型/有效期暂不改变，当前口径见实现说明。
+
 
 
 版本 2.3 · 2026-09-09 · 从属于 [权威 UI 规范](../design-system.md)。
@@ -15,7 +16,7 @@
 
 | 页面模式 | 路由或场景 | Logo | 默认全局导航 | 直接打开时的返回兜底 |
 | --- | --- | --- | --- | --- |
-| 一级入口 | `/console`、`/intel`、`/devices`、`/worlds/live`、`/voyagers` | 可保留；本轮统一默认保留克制的品牌区 | 手机底栏 / 宽屏 Sidebar | 无返回按钮 |
+| 一级入口 | `/console`、`/intel`、`/devices`、`/worlds/live`、`/voyagers` | 内容页顶部无品牌区；桌面/横屏共享侧栏保留原品牌 | 手机底栏 / 宽屏 Sidebar | 无返回按钮 |
 | 二级浏览 | `/logs`、`/profile`、`/voyager-path` | 无 | 保留，归 Voyagers | `/voyagers` |
 | 日志正文 | `/logs/[id]` | 无 | 保留，归 Voyagers | `/logs` |
 | 情报正文 | `/intel/[id]` | 无 | 保留，归 Intel | `/intel` |

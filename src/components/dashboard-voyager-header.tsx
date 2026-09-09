@@ -10,11 +10,11 @@ export interface DashboardVoyager { role: string; name: string; avatarUrl: strin
 export function DashboardVoyagerHeader({ voyager }: { voyager: DashboardVoyager }) {
   const [deviceOpen, setDeviceOpen] = useState(false)
   return <section className="dashboard-voyager" aria-label="Your Voyager status">
-    {voyager.role !== 'applicant' && <div className="dashboard-voyager-welcome"><p>WELCOME,</p><h2>VOYAGER</h2><p className="dashboard-voyager-intro">YOU HAVE BEEN SELECTED TO EXPLORE<br />THE MYSTERIES OF PARALLEL WORLDS.</p></div>}
+    <div className="dashboard-voyager-welcome"><p>WELCOME,</p><h2>{voyager.role === 'applicant' ? 'APPLICANT' : 'VOYAGER'}</h2>{voyager.role !== 'applicant' && <p className="dashboard-voyager-intro">YOU HAVE BEEN SELECTED TO EXPLORE<br />THE MYSTERIES OF PARALLEL WORLDS.</p>}</div>
     <div className="dashboard-voyager-board">
       <div className="dashboard-voyager-identity">
         <span className="dashboard-voyager-avatar">{voyager.avatarUrl ? <SmartImage src={voyager.avatarUrl} alt={voyager.name} width={44} height={44} sizes="44px" /> : <span aria-label={voyager.name}>{voyager.name.slice(0,2).toUpperCase()}</span>}</span>
-        <ArchiveLinkButton href="/voyager-path" variant="ghost"><span><strong>{voyager.role.toUpperCase()}</strong><span>VIEW YOUR PATH</span></span><ArrowRight aria-hidden size={18} /></ArchiveLinkButton>
+        <span className="dashboard-voyager-name">{voyager.name}</span><ArchiveLinkButton href="/voyager-path" variant="ghost"><span><strong>{voyager.role.toUpperCase()}</strong><span>VIEW YOUR PATH</span></span><ArrowRight aria-hidden size={18} /></ArchiveLinkButton>
       </div>
       <div className="dashboard-voyager-metrics">
         <ArchiveLinkButton href="/signal" variant="ghost" className="dashboard-voyager-dispatch"><span>SIGNAL DISPATCH</span><span><strong>{voyager.awaitingYou ?? '—'}</strong> awaiting you</span></ArchiveLinkButton>

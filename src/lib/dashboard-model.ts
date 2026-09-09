@@ -1,9 +1,9 @@
 import type { Vote } from '@/types/database'
-export type DashboardUpdate = { id: string; occurredAt: string; category: string; title: string; description?: string; image?: string | null; href: string; locked?: boolean }
+export type DashboardUpdate = { id: string; occurredAt: string; category: string; title: string; description?: string; image?: string | null; href: string; locked?: boolean; images?: string[]; authorName?: string; authorAvatar?: string | null }
 export type DashboardEvent = { id: string; kind: string; title: string; description: string; href: string; action: string; image?: string; endsAt?: string | null }
 /** The two collections intentionally do not deduplicate against each other. */
 export function latestUpdates(updates: DashboardUpdate[], votes: Pick<Vote, 'id' | 'title' | 'created_at'>[]): DashboardUpdate[] {
-  const content = updates.map(item => ({ ...item, description: item.locked ? undefined : item.description, image: item.locked ? null : item.image }))
+  const content = updates.map(item => ({ ...item, description: item.locked ? undefined : item.description, image: item.locked ? null : item.image, images: item.locked ? undefined : item.images, authorName: item.locked ? undefined : item.authorName, authorAvatar: item.locked ? null : item.authorAvatar }))
   const opened = votes.map(v => ({ id: `vote-${v.id}`, occurredAt: v.created_at, category: 'Vote opened', title: v.title, href: '/vote' }))
   return [...new Map([...content, ...opened].map(item => [item.id, item])).values()]
     .filter(item => Number.isFinite(Date.parse(item.occurredAt)))

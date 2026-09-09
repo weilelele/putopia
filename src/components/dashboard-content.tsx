@@ -1,4 +1,5 @@
 'use client'
+import { PublisherIdentity, NewsMedia } from './news-content'
 import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
@@ -9,9 +10,10 @@ import type { DashboardUpdate, DashboardEvent } from '@/lib/dashboard-model'
 export function UpdateTimeline({ updates }: { updates: DashboardUpdate[] }) {
   return <ol className="update-timeline">{updates.map(item => <li key={item.id} className="update-row">
     <div className="update-time"><span aria-hidden className="update-node" /><time dateTime={item.occurredAt} title={new Date(item.occurredAt).toISOString()}>{new Date(item.occurredAt).toISOString().slice(5,10).replace('-','/')}</time></div>
-    <Link className={`update-content${item.image ? ' update-content--media' : ''}`} href={item.href} scroll={false}>
-      {item.image && <SmartImage src={item.image} alt="" width={120} height={64} sizes="120px" className="update-image" />}
-      <div><span className="update-category">{item.category}</span><h3>{item.title}</h3>{item.locked ? <p>Restricted · sign in with eligible access</p> : item.description && <p>{item.description}</p>}</div>
+    <Link className={`update-content${item.category === 'Intel' ? ' update-content--intel' : item.image ? ' update-content--media' : ''}`} href={item.href} scroll={false}>
+      {item.category !== 'Intel' && item.image && <SmartImage src={item.image} alt="" width={120} height={64} sizes="120px" className="update-image" />}
+      <div><span className="update-category">{item.category}</span><h3>{item.title}</h3>{item.authorName && <PublisherIdentity name={item.authorName} avatar={item.authorAvatar} />}{item.locked ? <p>Restricted · sign in with eligible access</p> : item.description && <p>{item.description}</p>}</div>
+      {item.category === 'Intel' && !item.locked && <NewsMedia images={item.images ?? (item.image ? [item.image] : [])} title={item.title} />}
     </Link>
   </li>)}</ol>
 }

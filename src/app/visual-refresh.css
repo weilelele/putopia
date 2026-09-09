@@ -4051,3 +4051,131 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .dashboard-voyager-days strong { font-size: var(--fs-title); font-weight: 400; }
 
 .dashboard-voyager-days img { width: 40px; height: auto; }
+
+/* Guest totals and the signed-in identity are two mutually exclusive headers. */
+.dashboard-stats { max-width: 760px; margin: 24px auto 32px; padding-block: 16px; }
+.dashboard-stats .archive-stat-strip { border: 0; background: transparent; }
+.dashboard-stats .archive-stat-strip__item { border: 0; border-right: 1px solid var(--bd-faint); background: transparent; padding: 12px 6px; min-height: 120px; gap: 12px; }
+.dashboard-stats .archive-stat-strip__item:last-child { border-right: 0; }
+.dashboard-stats .archive-stat-strip__value { font-size: clamp(32px, 10vw, 48px); font-weight: 400; line-height: 1; }
+.dashboard-stats .archive-stat-strip__label { font-size: var(--fs-caption); color: var(--color-star-dim); font-weight: 400; letter-spacing: .02em; }
+.dashboard-stats__description { border: 0; border-top: 1px solid var(--bd-faint); margin-top: 16px; }
+.dashboard-voyager { width: 100%; max-width: 640px; margin: 8px auto 32px; }
+.dashboard-voyager-welcome { padding: 16px 0 24px; }
+.dashboard-voyager-welcome h2 { font-size: clamp(40px, 12vw, 56px); font-weight: 700; letter-spacing: .02em; }
+.dashboard-voyager-welcome > p:first-child { font-weight: 700; font-size: var(--fs-title); letter-spacing: .22em; }
+.dashboard-voyager-intro { color: var(--color-star-dim); }
+.dashboard-voyager-board { border: 0; }
+.dashboard-voyager-avatar { border-radius: 50%; }
+.dashboard-voyager-identity { gap: 12px; padding: 16px; }
+.dashboard-voyager-name { min-width: 0; flex: 1; color: var(--color-star); font-size: var(--fs-body); overflow-wrap: anywhere; }
+.dashboard-voyager-identity > .archive-button { flex: 0 1 auto; gap: 12px; text-align: left; }
+.dashboard-voyager-identity .archive-button span span { color: var(--color-star-dim); }
+.dashboard-voyager-identity .archive-button > svg { color: var(--color-star-dim); flex-shrink: 0; }
+.dashboard-voyager-dispatch.archive-button { padding: 20px 16px; gap: 12px; color: var(--color-star); }
+.dashboard-voyager-dispatch > span:last-child { font-size: var(--fs-label); color: var(--color-star); }
+.dashboard-voyager-dispatch strong { font-size: 40px; }
+.dashboard-voyager-days.archive-button { color: var(--color-star-dim); gap: 12px; }
+.dashboard-voyager-days strong { font-size: var(--fs-h3); color: var(--color-star-dim); }
+.dashboard-content-grid { min-width: 0; }
+.dashboard-content-grid > section { min-width: 0; }
+.archive-console-page, .archive-intel-page, .pilot-voyagers-page { width: 100%; max-width: 1120px; justify-self: center; }
+
+/* News keeps the author's identity and visual attachments in the feed. */
+.news-publisher { display: inline-flex; align-items: center; gap: 10px; min-height: 32px; color: var(--color-star); font-size: var(--fs-label); font-weight: 400; line-height: 1.4; }
+.news-publisher-avatar { display: inline-flex; flex: 0 0 32px; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: var(--bg-panel); color: var(--color-nucleus); font-size: var(--fs-caption); }
+.news-publisher-avatar img { width: 32px; height: 32px; object-fit: cover; }
+.news-media { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin: 16px 0; }
+.news-media--single { grid-template-columns: minmax(0,1fr); }
+.news-media-item { position: relative; min-width: 0; aspect-ratio: 16/10; overflow: hidden; background: var(--bg-panel); }
+.news-media-item > :is(img,.smart-image-fallback) { width: 100%; height: 100%; object-fit: cover; }
+.news-media-more { position: absolute; right: 8px; bottom: 8px; background: var(--color-deep); color: var(--color-star); padding: 4px 8px; font-size: var(--fs-label); }
+.intel-story-media { display: block; }
+.intel-lead > .news-publisher { margin-bottom: 16px; }
+.intel-recent-story { border-bottom: 1px solid var(--bd-faint); padding: 8px 0 24px; }
+.intel-recent-story .intel-recent-row { border: 0; padding-bottom: 12px; }
+.intel-recent-story > .intel-comments { display: flex; width: fit-content; min-height: 44px; }
+.intel-lead > .intel-comments { min-height: 44px; }
+.update-content--intel { display: block; }
+.update-content--intel h3 { font-size: var(--fs-body); }
+.update-content h3 { -webkit-line-clamp: 2; }
+.update-content .news-publisher { margin: 8px 0 4px; font-size: var(--fs-caption); }
+.update-content .news-publisher-avatar, .update-content .news-publisher-avatar img { width: 24px; height: 24px; flex-basis: 24px; }
+.update-content .news-media { margin: 12px 0 4px; }
+
+/* Restore the persistent desktop workspace sidebar and readable wide compositions. */
+@media (min-width: 768px) {
+  .app-shell { grid-template-columns: 248px minmax(0,1fr); }
+  .sidebar { background: var(--color-deep); padding: 24px 16px 16px; gap: 24px; border-right: 1px solid var(--bd-faint); }
+  .sidebar-logo { display: flex; align-items: center; gap: 12px; padding: 12px 0 24px; margin: 0; border-bottom: 1px solid var(--bd-faint); }
+  .sidebar-logo > img:first-child { width: 56px; height: auto; }
+  .sidebar-logo > .sidebar-wordmark { width: 128px; height: auto; }
+  .sidebar-nav { border: 0; background: transparent; gap: 8px; }
+  .sidebar .nav-item { font-family: var(--font-mono); letter-spacing: .02em; font-size: var(--fs-label); font-weight: 400; min-height: 52px; padding: 12px; gap: 14px; background: transparent; border-left: 2px solid transparent; }
+  .sidebar .nav-item.active { color: var(--color-nucleus); border-left-color: var(--color-nucleus); }
+  .sidebar .nav-item.active::after { display: none; }
+  .sidebar .nav-item:hover { background: var(--bg-panel); }
+  .sidebar-auth { margin-top: auto; border-top: 1px solid var(--bd-faint); padding-top: 20px; }
+  .sidebar-identity { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .sidebar-identity > div { min-width: 0; }
+  .sidebar-avatar { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 50%; overflow: hidden; color: var(--color-nucleus); background: var(--bg-panel); }
+  .sidebar-avatar img { width: 36px; height: 36px; object-fit: cover; }
+  .sidebar-auth-name { display: block; font-size: var(--fs-label); color: var(--color-star); letter-spacing: 0; overflow-wrap: anywhere; }
+  .sidebar-auth-role { display: block; font-size: var(--fs-caption); margin-top: 4px; color: var(--color-star-dim); }
+  .sidebar-account-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .sidebar-account-actions .sidebar-auth-btn, .sidebar-account-actions .archive-button { min-height: 44px; border: 0; padding: 8px 0; font-size: var(--fs-caption); font-weight: 400; color: var(--color-star-dim); text-decoration: none; }
+  .sidebar-apply { font-weight: 400; font-size: var(--fs-caption); }
+  .archive-intel-page { max-width: 960px; }
+  .news-media--single .news-media-item { max-height: 420px; }
+}
+@media (min-width: 1100px) {
+  .dashboard-content-grid { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(300px,1fr); gap: 32px; }
+  .dashboard-content-grid .event-card { flex-basis: 88%; }
+  .dashboard-voyager { max-width: none; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.2fr); align-items: center; gap: 32px; padding-block: 16px; }
+  .dashboard-voyager-welcome { text-align: left; padding: 0; }
+  .dashboard-voyager-welcome h2 { font-size: 48px; }
+  .archive-console-page .dashboard-stats { margin-block: 32px; }
+}
+@media (orientation: landscape) and (min-width: 600px) and (max-height: 500px) {
+  .app-shell { grid-template-columns: 180px minmax(0,1fr); }
+  .sidebar { display: flex; padding: 8px; gap: 8px; background: var(--color-deep); border-right: 1px solid var(--bd-faint); }
+  .bottom-nav { display: none; }
+  .sidebar-logo { display: flex; gap: 8px; align-items: center; padding: 8px 0; margin: 0; border-bottom: 1px solid var(--bd-faint); }
+  .sidebar-logo > img:first-child { width: 40px; height: auto; }
+  .sidebar-logo > .sidebar-wordmark { width: 108px; height: auto; }
+  .sidebar-nav { display: grid; gap: 0; border: 0; background: transparent; }
+  .sidebar .nav-item { min-height: 44px; padding: 8px; gap: 12px; font-size: var(--fs-caption); font-weight: 400; letter-spacing: 0; background: transparent; }
+  .sidebar .nav-item.active { border-left: 2px solid var(--color-nucleus); color: var(--color-nucleus); }
+  .sidebar .nav-item.active::after { display: none; }
+  .sidebar-auth { padding: 8px 0 0; margin: auto 0 0; border-top: 1px solid var(--bd-faint); }
+  .sidebar-identity { display: none; }
+  .sidebar-account-actions { display: flex; gap: 16px; }
+  .sidebar-account-actions .sidebar-auth-btn, .sidebar-account-actions .archive-button { display: inline-flex; align-items: center; min-height: 44px; border: 0; padding: 4px; font-size: var(--fs-caption); text-decoration: none; }
+  .sidebar-apply { display: none; }
+  .main { padding: 16px max(16px,env(safe-area-inset-right)) 24px max(16px,env(safe-area-inset-left)); }
+  .dashboard-voyager { display: grid; grid-template-columns: minmax(0,.9fr) minmax(0,1.2fr); align-items: center; gap: 16px; max-width: none; }
+  .dashboard-voyager-welcome { text-align: left; padding: 8px 0; }
+  .dashboard-voyager-welcome h2 { font-size: 32px; }
+  .dashboard-voyager-welcome > p:first-child { font-size: var(--fs-label); }
+  .dashboard-voyager-intro { display: none; }
+  .dashboard-voyager-name { display: none; }
+  .dashboard-voyager-identity { padding: 12px; }
+  .dashboard-voyager-dispatch.archive-button { padding: 12px; }
+}
+@media (orientation: landscape) and (min-width: 600px) and (max-height: 500px) {
+  .dashboard-voyager { display: grid; grid-template-columns: minmax(0,.8fr) minmax(260px,1.2fr); align-items: center; gap: 16px; max-width: none; }
+  .dashboard-voyager-welcome { display: block; text-align: left; padding: 8px 0; }
+  .dashboard-voyager-welcome h2 { margin: 8px 0 12px; font-size: clamp(24px,4vw,32px); }
+  .dashboard-voyager-welcome > p:first-child { margin: 0; }
+  .dashboard-voyager-intro { display: block; text-align: left; }
+  .dashboard-voyager-name { display: block; }
+  .sidebar-apply { display: flex; }
+}
+
+.dashboard-header-loading { min-height: 168px; }
+@media (orientation: landscape) and (min-width: 600px) and (max-width: 720px) and (max-height: 500px) {
+  .dashboard-voyager-identity { display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 8px 12px; }
+  .dashboard-voyager-avatar { grid-row: 1 / 3; }
+  .dashboard-voyager-name { grid-column: 2; }
+  .dashboard-voyager-identity > .archive-button { grid-column: 2; }
+}

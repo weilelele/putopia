@@ -1,10 +1,11 @@
 'use client'
+import { PublisherIdentity } from '@/components/news-content'
 import { BackLink } from '@/components/back-link'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { getIntelById } from '@/lib/actions/intel'
-import type { Intel } from '@/types/database'
+import type { IntelWithAvatar } from '@/types/database'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { CommentThread } from '@/components/comment-thread'
@@ -32,7 +33,7 @@ export default function IntelDetailPage() {
   const backHref = isGuest ? '/console' : '/intel'
   const backLabel = isGuest ? '← DASHBOARD' : '← INTEL'
 
-  const [entry, setEntry] = useState<Intel | null | undefined>(undefined)
+  const [entry, setEntry] = useState<IntelWithAvatar | null | undefined>(undefined)
   const [loadError, setLoadError] = useState(false)
   const scrollRef  = useRef<HTMLDivElement>(null)
   const markedRef  = useRef(false)   // fire once per page load
@@ -112,17 +113,12 @@ export default function IntelDetailPage() {
               <span className="label-tag" style={{ color }}>{entry.tag}</span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.18em' }}>{formatDate(entry.timestamp)}</span>
             </div>
-            <h1 style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 'var(--fs-h3)', color: 'var(--color-star)', marginBottom: '1rem', lineHeight: 1.3 }}>
+            <h1 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-h3)', color: 'var(--color-star)', marginBottom: '1rem', lineHeight: 1.3 }}>
               {entry.title}
             </h1>
 
             {/* Publisher */}
-            {entry.publisher_name && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-muted)' }}>PUBLISHED BY</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: 'var(--color-star-dim)', fontWeight: 600 }}>{entry.publisher_name}</span>
-              </div>
-            )}
+            <PublisherIdentity name={entry.publisher_name ?? 'Multiverse Collective'} avatar={entry.publisher_avatar_url} />
 
             <div className="archive-divider" />
             <article style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.8, whiteSpace: 'pre-wrap', marginTop: '1rem' }}>

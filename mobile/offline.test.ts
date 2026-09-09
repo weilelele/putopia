@@ -103,3 +103,8 @@ it('preserves public event cards and cached media without enabling offline parti
    expect(parseOfflineSnapshot({...snapshot,dashboardVoyager})?.dashboardVoyager).toEqual(dashboardVoyager)
    expect(parseOfflineSnapshot({...snapshot,dashboardVoyager:{...dashboardVoyager,awaitingYou:-1}})).toBeNull()
  })
+
+it('includes news author portraits and all attachments in the offline media cache', () => {
+  const intel=[{...snapshot.intel[0],publisher_avatar_url:'https://cdn.example/avatar.webp',images:['https://cdn.example/one.webp','https://cdn.example/two.webp']}]
+  expect(collectOfflineMediaUrls({...snapshot,intel})).toEqual(expect.arrayContaining([intel[0].publisher_avatar_url,...intel[0].images]))
+})

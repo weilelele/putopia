@@ -11,7 +11,7 @@ describe('Dashboard content contract', () => {
   it('omits missing media and strips locked content', () => {
     const item = {id:'intel-one',occurredAt:'2026-09-09T00:00:00Z',category:'Intel',title:'One',description:'Private body',href:'/intel/one'}
     expect(latestUpdates([item], [])[0].image).toBeUndefined()
-    expect(latestUpdates([{...item,locked:true,image:'/private.png'}], [])[0]).toMatchObject({image:null,description:undefined,locked:true})
+    expect(latestUpdates([{...item,locked:true,image:'/private.png',images:['/private.png'],authorName:'Private publisher',authorAvatar:'/avatar.png'}], [])[0]).toMatchObject({image:null,images:undefined,authorName:undefined,authorAvatar:null,description:undefined,locked:true})
   })
   it('excludes closed, expired, completed and ineligible votes only from Events', () => {
     const votes = [vote('open'),vote('closed',{is_active:false}),vote('expired',{ends_at:'2026-09-08T00:00:00Z'}),vote('done'),vote('private',{scope:['architect']})]
@@ -33,4 +33,9 @@ it('keeps every event while placing different action types at the start of the r
   const events = ['Signal Dispatch','Signal Dispatch','Collective vote','Dreamcatcher'].map((kind,index)=>({id:String(index),kind,title:'Event',description:'',href:'/signal',action:'View'}))
   expect(orderDashboardEvents(events).map(event=>event.id)).toEqual(['0','2','3','1'])
   expect(orderDashboardEvents([])).toEqual([])
+})
+
+it('keeps news bylines and every attachment available to visible Updates', () => {
+  const item={id:'intel-1',occurredAt:'2026-09-10T00:00:00Z',category:'Intel',title:'News',href:'/intel/1',authorName:'Mira',authorAvatar:'/mira.png',images:['/one.png','/two.png']}
+  expect(latestUpdates([item],[])[0]).toMatchObject(item)
 })

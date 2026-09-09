@@ -79,7 +79,9 @@ export async function getIntelById(id: string) {
     .eq('id', id)
     .single()
 
-  return data
+  if (!data) return null
+  const publisher = data.publisher_id ? await supabase.from('voyager_profiles').select('avatar_url').eq('id',data.publisher_id).maybeSingle() : {data:null}
+  return {...data,publisher_avatar_url:publisher.data?.avatar_url ?? null}
 }
 
 export async function createIntel(entry: IntelInsert) {

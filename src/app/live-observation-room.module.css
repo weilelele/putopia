@@ -1569,3 +1569,21 @@
     margin-top: var(--s-4);
   }
 }
+
+/* Keep live media and its controls visible together on wide screens. */
+.workspace, .workspaceMedia, .workspaceDetails { min-width: 0; }
+@media (min-width: 1100px) {
+  .workspace { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(320px,1fr); gap: 24px; align-items: start; }
+  .workspaceDetails.desktopSplit { display: block; }
+  .workspaceDetails > .sectionPanel:first-child { margin-top: 0; }
+  .workspaceMedia .liveImage { aspect-ratio: 16 / 10; }
+}
+@media (orientation: landscape) and (min-width: 600px) and (max-height: 500px) {
+  .workspace { display: grid; grid-template-columns: minmax(0,1fr) minmax(240px,1fr); gap: 16px; align-items: start; }
+  .workspaceDetails.desktopSplit { display: block; }
+  .workspaceDetails > .sectionPanel:first-child { margin-top: 0; }
+  .workspaceMedia .liveImage { aspect-ratio: 16 / 10; }
+}
+.workspaceDetails .queueItem { grid-template-columns: 24px minmax(0,1fr); }
+.workspaceDetails .queueStatus { grid-column: 2; text-align: left; }
+.workspaceMedia .liveImage { min-height: 0; }

@@ -170,7 +170,7 @@ function DashboardStats({ stats }: { stats?: OfflineSnapshot['dashboardStats'] }
     <View style={styles.statGrid}>
       {items.map((item, index) => <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={`${item.value} ${item.label}`} accessibilityState={{ expanded: active === item.key }}
         onPress={() => setActive(current => current === item.key ? null : item.key)} style={[styles.stat, index === items.length - 1 && { borderRightWidth: 0 }, active === item.key && styles.statSelected]}>
-        <Text style={styles.statValue}>{item.value}</Text><Text style={styles.statLabel}>{item.label}</Text>
+        <Text style={[styles.statValue,{fontSize:40,lineHeight:44,fontFamily:'CourierPrime'}]}>{item.value}</Text><Text style={styles.statLabel}>{item.label}</Text>
       </Pressable>)}
     </View>
     {active && <View style={styles.statDescription}><Text style={styles.statDescriptionText}>{items.find(item => item.key === active)?.description}</Text></View>}
@@ -198,29 +198,39 @@ function DashboardView({ snapshot, media, select }: {
   }) : fallbackUpdates
   return <View>
     {snapshot.viewer.authenticated && <View style={styles.voyagerWelcome}>
-      {snapshot.viewer.role !== 'applicant' && <><Text style={styles.welcomeEyebrow}>WELCOME,</Text><Text style={styles.welcomeTitle}>VOYAGER</Text><Text style={styles.welcomeIntro}>YOU HAVE BEEN SELECTED TO EXPLORE{'\n'}THE MYSTERIES OF PARALLEL WORLDS.</Text></>}
+      <Text style={styles.welcomeEyebrow}>WELCOME,</Text><Text style={styles.welcomeTitle}>{snapshot.viewer.role === 'applicant' ? 'APPLICANT' : 'VOYAGER'}</Text>{snapshot.viewer.role !== 'applicant' && <Text style={styles.welcomeIntro}>YOU HAVE BEEN SELECTED TO EXPLORE{'\n'}THE MYSTERIES OF PARALLEL WORLDS.</Text>}
       <View style={styles.welcomeBoard}>
-        <View style={styles.welcomeIdentity}><CachedImage uri={snapshot.dashboardVoyager?.avatarUrl} media={media} style={{width:44,height:44}} /><View><Text style={styles.meta}>{snapshot.viewer.role.toUpperCase()}</Text><Text style={styles.directoryMeta}>VIEW YOUR PATH · OFFLINE</Text></View></View>
+        <View style={styles.welcomeIdentity}><CachedImage uri={snapshot.dashboardVoyager?.avatarUrl} media={media} style={{width:44,height:44,borderRadius:22}} /><View><Text style={styles.directoryName}>{snapshot.viewer.displayName ?? 'Voyager'}</Text><Text style={styles.meta}>{snapshot.viewer.role.toUpperCase()}</Text><Text style={styles.directoryMeta}>VIEW YOUR PATH · OFFLINE</Text></View></View>
         <View style={styles.statGrid}><View style={styles.stat}><Text style={styles.statLabel}>SIGNAL DISPATCH</Text><Text style={styles.statValue}>{snapshot.dashboardVoyager?.awaitingYou ?? '—'}</Text><Text style={styles.directoryMeta}>awaiting you · saved</Text></View><View style={[styles.stat,{borderRightWidth:0}]}><Text style={styles.statValue}>{snapshot.dashboardVoyager?.deviceDays ?? '—'}</Text><Text style={styles.statLabel}>CONSOLE DAYS</Text></View></View>
       </View>
       <Text style={styles.directoryMeta}>Reconnect to view your path and current status.</Text>
     </View>}
-    <DashboardStats stats={snapshot.dashboardStats} />
+    {!snapshot.viewer.authenticated && <DashboardStats stats={snapshot.dashboardStats} />}
     <SectionTitle>UPDATES</SectionTitle>
     <Text style={styles.meta}>Latest {updates.length} saved updates</Text>
-    {updates.length ? updates.map(item => <View key={item.id} style={styles.updateRow}>
-      <View style={styles.updateTime}><View style={styles.updateNode} /><Text style={styles.updateDate}>{item.date.slice(5, 10).replace('-', '/')}</Text></View>
-      <Pressable accessibilityRole="button" accessibilityLabel={item.title} onPress={() => select(item.tab, item.detail)} style={styles.updateContent}>
-        <CachedImage uri={item.image} media={media} style={thumbnail} />
-        <View style={{ flex: 1 }}><Text style={styles.meta}>{item.category}</Text><Text style={styles.cardTitle}>{item.title}</Text></View>
+    {updates.length ? updates.map(item => {
+      const news = snapshot.intel.find(entry => item.id === `intel-${entry.id}`)
+      return <View key={item.id} style={styles.updateRow}>
+      <View style={styles.updateTime}><View style={styles.updateNode} /><Text style={styles.updateDate}>{item.date.slice(5,10).replace('-', '/')}</Text></View>
+      <Pressable accessibilityRole="button" accessibilityLabel={item.title} onPress={() => select(item.tab,item.detail)} style={[styles.updateContent,news && {flexDirection:'column'}]}>
+        {!news && <CachedImage uri={item.image} media={media} style={thumbnail} />}
+        <View style={{flex:1}}><Text style={styles.meta}>{item.category}</Text><Text style={styles.cardTitle}>{item.title}</Text>{news && <><NativePublisher item={news} media={media} /><NativeNewsMedia images={news.images} media={media} /></>}</View>
       </Pressable>
-    </View>) : <EmptyState>No updates were saved. Reconnect to load the latest activity.</EmptyState>}
+    </View>}) : <EmptyState>No updates were saved. Reconnect to load the latest activity.</EmptyState>}
     <SectionTitle>EVENTS</SectionTitle>
     {!!snapshot.dashboardEvents?.length && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:12}}>{snapshot.dashboardEvents.map(event => <View key={event.id} style={styles.savedEvent}>
       <CachedImage uri={event.image} media={media} style={styles.savedEventImage} /><Text style={styles.meta}>{event.kind.toUpperCase()}</Text><Text style={styles.directoryName}>{event.title}</Text><Text style={styles.directoryMeta}>{event.description}</Text><Text style={styles.directoryMeta}>Saved event · reconnect to participate</Text>
     </View>)}</ScrollView>}
     <EmptyState>Reconnect to confirm current event availability and participate.</EmptyState>
   </View>
+}
+
+function NativePublisher({item,media}: {item: OfflineIntel; media: OfflineMediaMap}) {
+  const name = item.publisher_name ?? 'Multiverse Collective'
+  return <View style={styles.nativePublisher}>{item.publisher_avatar_url ? <CachedImage uri={item.publisher_avatar_url} media={media} style={styles.nativeAvatar} /> : <View style={styles.nativeAvatar}><Text style={styles.meta}>{name.slice(0,2).toUpperCase()}</Text></View>}<Text style={styles.directoryMeta}>{name}</Text></View>
+}
+function NativeNewsMedia({images,media}: {images:string[];media:OfflineMediaMap}) {
+  return <View style={styles.nativeNewsGallery}>{images.slice(0,4).map((uri,index)=><CachedImage key={`${uri}-${index}`} uri={uri} media={media} style={[styles.nativeNewsImage,images.length === 1 && {width:'100%'}]} />)}</View>
 }
 
 function IntelView({ snapshot, media, detail, setDetail }: {
@@ -244,9 +254,10 @@ function IntelView({ snapshot, media, detail, setDetail }: {
         onSelect={(value) => setMode(value as IntelMode)}
       />
       {mode === 'intel' ? snapshot.intel.map((entry) => (
-        <ListCard key={entry.id} title={entry.title} meta={`${entry.tag} · ${formatDate(entry.timestamp)}`}
-          body={entry.content} image={entry.images[0]} media={media}
-          onPress={() => setDetail({ kind: 'intel', id: entry.id })} />
+        <Pressable key={entry.id} accessibilityRole="button" onPress={() => setDetail({kind:'intel',id:entry.id})} style={styles.nativeNews}>
+          <Text style={styles.meta}>{entry.tag} · {formatDate(entry.timestamp)}</Text><Text style={styles.directoryName}>{entry.title}</Text>
+          <NativePublisher item={entry} media={media} /><Text numberOfLines={3} style={styles.directoryMeta}>{entry.content}</Text><NativeNewsMedia images={entry.images} media={media} />
+        </Pressable>
       )) : snapshot.votes.map((vote) => (
         <ListCard key={vote.id} title={vote.title}
           meta={`${vote.is_active ? 'ACTIVE' : 'CLOSED'} · ${formatDate(vote.created_at)}`}
@@ -262,7 +273,7 @@ function IntelDetail({ item, media, onBack }: { item: OfflineIntel; media: Offli
     <View>
       <DetailHeader title={item.title} meta={`${item.tag} · ${formatDate(item.timestamp)}`} onBack={onBack} />
       {item.images.map((image) => <CachedImage key={image} uri={image} media={media} style={styles.detailImage} />)}
-      <Text style={styles.byline}>PUBLISHED BY {item.publisher_name?.toUpperCase() ?? 'MULTIVERSE COLLECTIVE'}</Text>
+      <NativePublisher item={item} media={media} />
       <Text style={styles.articleBody}>{item.content}</Text>
       <OfflineActionNotice label="Comments and read tracking require a connection." />
     </View>
@@ -443,6 +454,8 @@ function OfflineActionNotice({ label }: { label: string }) {
 }
 
 export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry }: OfflineHomeProps) {
+  const {width: screenWidth,height: screenHeight} = useWindowDimensions()
+  const landscape = screenWidth > screenHeight && screenWidth >= 600
   const [activeTab, setActiveTab] = useState<OfflineTab>('dashboard')
   const [voyagerMode, setVoyagerMode] = useState<VoyagerMode>('voyagers')
   const isLogs = activeTab === 'voyagers' && voyagerMode === 'logs'
@@ -472,7 +485,7 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
 
   return (
     <View accessibilityRole="summary" style={styles.root}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea,landscape && {paddingLeft:140}]}>
         <View style={styles.topBar}>
           <View>
             {!detail && isLogs && <Pressable accessibilityRole="button" accessibilityLabel="Back to Voyagers" style={styles.backButton} onPress={() => setVoyagerMode('voyagers')}><Text style={styles.backText}>← VOYAGERS</Text></Pressable>}
@@ -514,7 +527,7 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
             </Pressable>
           </View>
         )}
-            <View style={styles.bottomNav}>
+            <View style={[styles.bottomNav,landscape && styles.offlineSidebar]}>
               {TABS.map((tab) => (
                 <Pressable key={tab.key} accessibilityRole="button" accessibilityLabel={tab.label} accessibilityState={{ selected: activeTab === tab.key }}
                   onPress={() => changeTab(tab.key)} style={styles.navItem}>
@@ -539,11 +552,17 @@ const DEEP_TEXT = 'rgba(245,245,245,0.65)'
 const BORDER = 'rgba(245,245,245,0.10)'
 
 const styles = StyleSheet.create({
+  offlineSidebar: {position:'absolute',left:0,top:0,bottom:0,width:140,flexDirection:'column',borderTopWidth:0,borderRightWidth:1,borderRightColor:BORDER},
+  nativeNews: {paddingVertical:20,borderBottomWidth:1,borderBottomColor:BORDER},
+  nativePublisher: {flexDirection:'row',alignItems:'center',gap:10,marginVertical:12},
+  nativeAvatar: {width:32,height:32,borderRadius:16,backgroundColor:PANEL,alignItems:'center',justifyContent:'center'},
+  nativeNewsGallery: {flexDirection:'row',flexWrap:'wrap',gap:8,marginVertical:12},
+  nativeNewsImage: {width:'48%',aspectRatio:1.6},
   voyagerWelcome: { marginBottom: 24 },
   welcomeEyebrow: { color: ORANGE, fontFamily: 'CourierPrime', fontSize: 20, letterSpacing: 5, textAlign: 'center', marginTop: 16 },
-  welcomeTitle: { color: ORANGE, fontFamily: 'CourierPrime-Bold', fontSize: 40, lineHeight: 44, textAlign: 'center', marginVertical: 8 },
+  welcomeTitle: { color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 40, lineHeight: 44, textAlign: 'center', marginVertical: 8 },
   welcomeIntro: { color: DIM, fontFamily: 'CourierPrime', fontSize: 12, lineHeight: 21, textAlign: 'center', marginBottom: 24 },
-  welcomeBoard: { backgroundColor: PANEL, borderWidth: 1, borderColor: BORDER, marginBottom: 8 },
+  welcomeBoard: { backgroundColor: PANEL, borderWidth: 0, borderColor: BORDER, marginBottom: 8 },
   welcomeIdentity: { flexDirection: 'row', gap: 16, alignItems: 'center', padding: 16, borderBottomWidth: 1, borderColor: BORDER },
   savedEvent: { width: 260, padding: 8, borderWidth: 1, borderColor: BORDER },
   savedEventImage: { width: 242, height: 136, marginBottom: 10 },
@@ -581,7 +600,7 @@ const styles = StyleSheet.create({
   heroTitle: { marginTop: 14, color: WHITE, fontFamily: 'CourierPrimeBold', fontSize: 24, lineHeight: 29, fontWeight: '700' },
   heroBody: { marginTop: 12, color: DIM, fontFamily: 'CourierPrime', fontSize: 14, lineHeight: 21 },
   statBoard: { alignSelf: 'stretch', marginTop: 8, marginBottom: 16 },
-  statGrid: { flexDirection: 'row', borderWidth: 1, borderColor: BORDER, backgroundColor: DEEP },
+  statGrid: { flexDirection: 'row', borderWidth: 0, borderColor: BORDER, backgroundColor: DEEP },
   statSelected: { backgroundColor: PANEL },
   statDescription: { padding: 16, borderWidth: 1, borderTopWidth: 0, borderColor: BORDER },
   statDescriptionText: { color: DIM, fontFamily: 'CourierPrime', fontSize: 12, lineHeight: 21 },

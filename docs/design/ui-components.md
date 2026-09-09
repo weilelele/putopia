@@ -1,8 +1,8 @@
 # UI 组件完整说明
 
-> **最新补充：保留 Dashboard 的 Voyager 欢迎与身份状态头部。** 已登录用户的顺序是欢迎/身份卡 → 原数字看板 → Updates → Events；保留头像、身份、View your path、个人 Signal Dispatch 待参与数和 Console 天数。头像仅展示，My Profile 管理入口仍在 Voyagers。游客不伪造个人状态，Events 仍公开。原天数口径为预留的 0，不改成观察天数或推算持有时间。iOS 离线显示上次同步值并注明已保存。此规则优先于下文旧的“Dashboard 不出现头像”等表述。
+> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后显示 Voyager/Applicant 欢迎与个人身份状态；两块不叠加。内容区不重复放品牌 Logo；恢复桌面/横屏统一侧栏中的原品牌、导航和账号区域。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 的类型/有效期暂不改变，当前口径见实现说明。
 
-> 最新更正（2026-09-10）：应用内容页一律不放 Logo，不预留品牌栏；一级不重复 Tab 名称。Voting Hub / My Profile / Archive 是右上轻量入口，Voyager Logs 是成员列表底部主按钮。Dashboard 原数字看板保留，Events 未登录也直接展示，参与仍按原权限。下文及原图中的旧品牌区规则由本条取代。
+
 
 
 版本 2.3 · 2026-09-09 · 从属于 [权威 UI 规范](../design-system.md)。
@@ -366,3 +366,11 @@ ArchiveSectionLabel、BackLink、媒体封装和 AdminNav 延续共享入口，�
 Dashboard 顶部数字看板使用 ArchiveStatStrip，保留原统计口径与展开说明交互，采用新版平面三列样式。ArchiveStatItem 的 controls 对应说明容器 id，expanded 对应展开状态；规则见页面模板的“顶部数字看板”。
 
 主 CTA 使用 Courier Prime 16px / 400、至少 48px 高、橙底深蓝字和一个右上切角；轻量右上入口使用 12–14px / 400、44px 命中、不铺满整行。不得用旧版小号粗体按钮或重复卡片边框代替参考图层级。
+
+## 新闻媒体与两种 Dashboard 头部
+
+- `DashboardStats` 只用于游客：无外框，细分隔线，32–48px 数值，12px 指标，保留点击指标查看原口径的交互。
+- `DashboardVoyagerHeader` 只用于登录用户：欢迎 → 圆形头像/昵称/身份/Path → 待参与数/设备天数；正文与次级文字用灰白色，橙色用于角色和关键数字，不能整卡都染成橙色。设备天数保留原口径。
+- `PublisherIdentity` 在昵称左侧显示 32px 圆形头像；紧凑 Updates 为 24px；没有头像时显示昵称首字母，占位不改变行高。
+- `NewsMedia` 在列表直接显示最多四张附件；一张为单列，多张为两列；保留自然色，点击进入原详情。超过四张显示数量提示，详情保留全部图片。
+- 新闻图片和作者身份是内容，不得为模仿生成图而移除。数据权限仍由原接口控制，锁定新闻不泄露正文、附件或作者信息。

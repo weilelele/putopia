@@ -1,6 +1,7 @@
 # UI 2.3 实现与验收记录
 
-> **最新补充：保留 Dashboard 的 Voyager 欢迎与身份状态头部。** 已登录用户的顺序是欢迎/身份卡 → 原数字看板 → Updates → Events；保留头像、身份、View your path、个人 Signal Dispatch 待参与数和 Console 天数。头像仅展示，My Profile 管理入口仍在 Voyagers。游客不伪造个人状态，Events 仍公开。原天数口径为预留的 0，不改成观察天数或推算持有时间。iOS 离线显示上次同步值并注明已保存。此规则优先于下文旧的“Dashboard 不出现头像”等表述。
+> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后显示 Voyager/Applicant 欢迎与个人身份状态；两块不叠加。内容区不重复放品牌 Logo；恢复桌面/横屏统一侧栏中的原品牌、导航和账号区域。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 的类型/有效期暂不改变，当前口径见实现说明。
+
 
 2026-09-09。设计批准、代码实现、验证和正式发布分别记录。当前权威入口是 [design-system.md](../../design-system.md)，产品内 `/ui-kit` 使用真实共享组件。旧版 golden screens 和海报哲学文档保留历史记录并标记废弃，不再指导开发。
 
@@ -45,7 +46,7 @@ Vercel 预览沿用项目现有登录保护，需要有权限的 Vercel 账号�
 
 | 页面 | 本次实际改动 | 验收状态 |
 | --- | --- | --- |
-| Dashboard `/console` | 重写 Updates 时间轴与 Events 行动卡；公开活动展示；独立空/失败状态；原数字看板 | 320px/390px 访客实测；登录后 Events 已只读实测，实际参与写入待验收 |
+| Dashboard `/console` | 重写 Updates 时间轴与 Events 行动卡；公开活动展示；独立空/失败状态；游客数字概览与登录后身份状态分离 | 320px/390px 访客实测；登录后 Events 已只读实测，实际参与写入待验收 |
 | Worlds `/worlds/live`、World Archive `/worlds`、World 详情 | 一级/二级页头、队列与分类切换、说明/提交/Signal 弹层、草稿退出与未知结果处理、详情返回 | Live 页 390px 只读实测；提交等写入流程待验收 |
 | Devices `/devices`、批次详情、My Consoles、认领/讨论相关页 | 品牌区与返回层级、内容切换、批次列表及 Console 进度弹层、共享按钮和容器 | 共享控件与一级页已只读实测；提交/付款等写入流程待验收 |
 | Intel `/intel`、详情、Votes | 筛选与位置记忆、详情返回、创建 Intel/Vote 弹层、上传/提交状态、基础视觉 | 共享控件与一级页已只读实测；提交/付款等写入流程待验收 |
@@ -55,3 +56,23 @@ Vercel 预览沿用项目现有登录保护，需要有权限的 Vercel 账号�
 | 管理、认证、申请、Quiz、认领结果及加载/错误页 | 共享字体/字号/颜色/容器/按钮、清理重复品牌与装饰 | 基础样式迁移，尚未逐页完整验收 |
 
 “已修改”只表示改动已进入预览分支；不表示生产站已上线、所有业务流程已验证或每个细节已完成设计验收。
+
+## Updates 当前内容类型与有效时长（待用户确认筛选规则）
+
+这是现有实现的实际口径，不是新提案。本轮只恢复作者/媒体展示，未改下面的内容筛选规则。
+
+| 展示类型 | 实际进入条件与来源 | 用于排序的时间 | 当前有效时长 / 移出条件 |
+| --- | --- | --- | --- |
+| Intel 新闻（NOTICE / DEVICE / ORG） | Intel 记录；公开新闻可读，未授权的 classified 新闻为锁定提示 | 新闻 `timestamp` | 无天数上限；被更新内容挤出全局最新 10 条。删除后不再读出 |
+| Signal tuning | 有关联世界的 Signal thread；当前没有按调谐是否结束筛选 | Thread `created_at` | 无天数上限；调谐结束不会自动移出；受最新 10 条限制 |
+| Established world · 建立事件 | 可见的 `world_established` 活动记录 | 活动 `created_at` | 无天数上限；隐藏/删除该活动或被挤出最新 10 条后不显示 |
+| Established world · Final form | 当前世界为 stable 的 Final assets | Asset `created_at` | 无天数上限；世界不再 stable、资产删除或被挤出最新 10 条后不显示 |
+| Voyager activated | 可见的 `voyager_activated` 活动；排除明确标为 architect 的 actor，role 为 null 的记录仍纳入 | 活动 `created_at` | 无天数上限；隐藏/删除该活动或被挤出最新 10 条后不显示 |
+| Device update | 可见的 `device_updated` 活动，以及已发布设备批次的资料更新 | 活动 `created_at` / 批次发布内容中的 `updatedAt` | 无天数上限；活动隐藏或批次不再发布则相应来源消失，其余受最新 10 条限制 |
+| Vote opened | 投票记录，目前包括已关闭/已到期的投票 | Vote `created_at` | 无天数上限；不会因 `ends_at` 或关闭自动从 Updates 移出；受最新 10 条限制 |
+
+所有来源合并后按发生时间倒序取 10 条；多数来源先各取最新 10 条。没有各类型保留配额，也没有按类型轮换。因此某一类新信息较多时，可以占满整个 Updates。
+
+**30 秒是服务端缓存刷新间隔，不是信息有效期。** 页面也没有每 30 秒自动轮询，通常在重新请求/刷新时取数。
+
+两个已知口径需下一步确认：同一世界可能同时有“建立事件”和“Final form 资产”，同一设备可能同时有活动记录与批次更新，它们使用不同 ID，当前不会按世界/设备合并；投票与 Signal 结束并不使历史 Updates 自动过期。Events 使用另外的开放/有效性条件，不能用 Events 的截止时间解释 Updates。

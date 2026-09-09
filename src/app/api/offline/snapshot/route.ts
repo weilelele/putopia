@@ -52,7 +52,7 @@ export async function GET() {
       : Promise.resolve({ data: [], error: null }),
     admin
       .from('intel')
-      .select('id, title, content, timestamp, tag, images, publisher_name, created_at')
+      .select('id, title, content, timestamp, tag, images, publisher_id, publisher_name, created_at')
       .eq('classified', false)
       .order('timestamp', { ascending: false })
       .limit(LIMITS.intel),
@@ -112,7 +112,10 @@ export async function GET() {
     // Older native clients understand only unit statuses, not Batch stages.
     status: 'unknown',
   }))
-  const intel = intelResult.data ?? []
+  const publisherIds = [...new Set((intelResult.data ?? []).flatMap(item => item.publisher_id ? [item.publisher_id] : []))]
+  const publishers = publisherIds.length ? await admin.from('voyager_profiles').select('id,avatar_url').in('id',publisherIds) : {data:[]}
+  const avatars = new Map((publishers.data ?? []).map(item => [item.id,item.avatar_url]))
+  const intel = (intelResult.data ?? []).map(item => ({...item,publisher_avatar_url:avatars.get(item.publisher_id ?? '') ?? null}))
   const voyagers = voyagersResult.data ?? []
   const stories = storiesResult.data ?? []
   const votes = votesResult.data ?? []

@@ -17,16 +17,15 @@ export default function ConsoleClient({ initial }: { initial: Awaited<ReturnType
   const eventsIncomplete = data.errors.some(error => error !== 'Updates' && error !== 'Statistics')
   return <main className="main archive-console-page" ref={scrollContainer}>
     <PwaInstallNudge eligibleUser={!data.guest} scrollContainer={scrollContainer} /><SectionTracker section="dashboard" /><ArchivePageHeader hideTitle title="Dashboard" />
-    {data.voyager && <DashboardVoyagerHeader voyager={data.voyager} />}
-    <DashboardStats stats={data.stats} />
-    {data.errors.includes('Statistics') && <div className="archive-inline-notice" role="status"><p>The latest counts could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry counts</ArchiveButton></div>}
-    <section aria-labelledby="updates-heading"><div className="dashboard-section-heading"><h2 id="updates-heading">Updates</h2><span>Latest {data.updates.length}</span></div>
+    {data.voyager ? <DashboardVoyagerHeader voyager={data.voyager} /> : <DashboardStats stats={data.stats} />}
+    {!data.voyager && data.errors.includes('Statistics') && <div className="archive-inline-notice" role="status"><p>The latest counts could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry counts</ArchiveButton></div>}
+    <div className="dashboard-content-grid"><section aria-labelledby="updates-heading"><div className="dashboard-section-heading"><h2 id="updates-heading">Updates</h2><span>Latest {data.updates.length}</span></div>
       {updatesIncomplete && <div className="archive-inline-notice" role="status"><p>Some updates could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry updates</ArchiveButton></div>}
       {data.updates.length ? <UpdateTimeline updates={data.updates} /> : !updatesIncomplete && <p>No updates have been published yet.</p>}
     </section>
     <section aria-labelledby="events-heading"><div className="dashboard-section-heading"><h2 id="events-heading">Events</h2></div>
       {data.events.length ? <EventRail events={data.events} /> : !eventsIncomplete && <p>There are no open events right now.</p>}
       {eventsIncomplete && <div className="archive-inline-notice" role="status"><p>Some participation options are unavailable. Your other content is still here.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry events</ArchiveButton></div>}
-    </section>
+    </section></div>
   </main>
 }
