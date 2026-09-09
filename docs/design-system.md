@@ -1,5 +1,7 @@
 # Multiverse Collective — Design System (Single Source of Truth)
 
+**影像设计第一原则：照片级真实感。** 设备效果图、场景背景、世界画面与宣传帧首先必须像真实相机拍摄的画面，真实感优先于氛围、风格、构图与制作速度。明显重复纹理、伪文字、不成立的光影／几何或渲染感均须返工或替换，不得作为正式素材发布。执行[图片生成规范与逐图准入检查](device-reference/image-generation-spec.zh.md)。本原则约束影像素材；原始产品结构、UI 母版及界面设计规则分别保持其依据。
+
 > **This file is authoritative.** When you need the design spec — colors, fonts,
 > tokens, component conventions — read THIS, not scattered notes or guesses.
 > All canonical values below are defined once in `src/app/globals.css` and are
