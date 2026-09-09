@@ -251,11 +251,23 @@ export function DeviceLiveRoom({
               <div className={styles.fact}><span>NEXT MILESTONE</span><strong>{batch.nextMilestone}</strong></div>
             </div>
 
+            {batch.faq?.length ? (
+              <section className={styles.progressBlock} aria-label="Batch FAQ">
+                <div className={styles.eyebrow}>BEFORE YOU CLAIM</div>
+                {batch.faq.map((item) => (
+                  <details key={item.question} className="mt-4 text-sm">
+                    <summary>{item.question}</summary>
+                    <p className="mt-2 leading-relaxed">{item.answer}</p>
+                  </details>
+                ))}
+              </section>
+            ) : null}
+
             <div className={styles.mediaSection}>
               <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3><span>{materialRecords.length} ITEM{materialRecords.length === 1 ? '' : 'S'}</span></div>
               <div className={styles.mediaList}>
                 {materialRecords.map((item) => (
-                  <button className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button">
+                  <a className={styles.mediaRow} href={item.src} key={`${item.src}-${item.caption}`} rel="noreferrer" target="_blank">
                     <span className={styles.mediaThumb}>
                       <Image alt="" fill sizes="100px" src={item.poster ?? item.src} />
                       {item.kind === 'video' ? <span className={styles.videoBadge}><CirclePlay aria-hidden size={16} /></span> : null}
@@ -264,7 +276,7 @@ export function DeviceLiveRoom({
                       <strong>{item.caption}</strong>
                     </span>
                     <ChevronRight aria-hidden size={18} />
-                  </button>
+                  </a>
                 ))}
               </div>
             </div>
