@@ -1,3 +1,4 @@
+import { getDashboardStats } from '@/lib/actions/dashboard-stats'
 import { readDashboardUpdates } from '@/lib/dashboard-updates'
 import { latestUpdates } from '@/lib/dashboard-model'
 import { NextResponse } from 'next/server'
@@ -33,6 +34,7 @@ export async function GET() {
   const authenticated = Boolean(user)
   const role = profile?.role ?? 'guest'
 
+  const statsPromise = getDashboardStats().catch(() => undefined)
   const updatesPromise = readDashboardUpdates(false).catch(() => null)
   const [worldsResult, devicesResult, intelResult, voyagersResult, storiesResult, votesResult, functionsResult] = await Promise.all([
     admin
@@ -128,6 +130,7 @@ export async function GET() {
   const dashboardUpdates = dashboardSource ? latestUpdates(dashboardSource.updates.filter(item => !item.locked), votes) : undefined
   const response = NextResponse.json({
     dashboardUpdates,
+    dashboardStats: await statsPromise,
     version: 2,
     syncedAt: new Date().toISOString(),
     viewer: {

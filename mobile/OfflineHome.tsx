@@ -159,6 +159,24 @@ function DetailHeader({ title, meta, onBack }: { title: string; meta: string; on
   )
 }
 
+function DashboardStats({ stats }: { stats?: OfflineSnapshot['dashboardStats'] }) {
+  const [active, setActive] = useState<string | null>(null)
+  const items = [
+    { key: 'worlds', label: 'PARALLEL WORLDS', value: stats?.worlds ?? '—', description: 'The parallel worlds recorded by the Collective, including those imagined by its members, as well as those now being stably observed via the Multiverse Console.' },
+    { key: 'devices', label: 'DEVICES', value: '?', description: 'The number of Multiverse Consoles currently collected, deployed, or undergoing repairs by the Collective. It is expected to continue growing steadily.' },
+    { key: 'voyagers', label: 'VOYAGERS', value: stats?.voyagers ?? '—', description: 'Official voyagers and architects of the Collective, plus the applicants currently in line for a Multiverse Console.' },
+  ]
+  return <View style={styles.statBoard}>
+    <View style={styles.statGrid}>
+      {items.map((item, index) => <Pressable key={item.key} accessibilityRole="button" accessibilityLabel={`${item.value} ${item.label}`} accessibilityState={{ expanded: active === item.key }}
+        onPress={() => setActive(current => current === item.key ? null : item.key)} style={[styles.stat, index === items.length - 1 && { borderRightWidth: 0 }, active === item.key && styles.statSelected]}>
+        <Text style={styles.statValue}>{item.value}</Text><Text style={styles.statLabel}>{item.label}</Text>
+      </Pressable>)}
+    </View>
+    {active && <View style={styles.statDescription}><Text style={styles.statDescriptionText}>{items.find(item => item.key === active)?.description}</Text></View>}
+  </View>
+}
+
 function DashboardView({ snapshot, media, select }: {
   snapshot: OfflineSnapshot
   media: OfflineMediaMap
@@ -179,6 +197,7 @@ function DashboardView({ snapshot, media, select }: {
     return { ...item, date:item.occurredAt, tab, detail }
   }) : fallbackUpdates
   return <View>
+    <DashboardStats stats={snapshot.dashboardStats} />
     <SectionTitle>UPDATES</SectionTitle>
     <Text style={styles.meta}>Latest {updates.length} saved updates</Text>
     {updates.length ? updates.map(item => <View key={item.id} style={styles.updateRow}>
@@ -479,6 +498,7 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
           </>
         ) : (
           <View style={styles.noSnapshot}>
+            {activeTab === 'dashboard' && <DashboardStats />}
             <Text style={styles.noSnapshotTitle}>NO OFFLINE COPY YET</Text>
             <Text style={styles.noSnapshotBody}>Connect once to save the Multiverse Console and its latest content on this device.</Text>
             <Pressable accessibilityRole="button" disabled={reconnecting} onPress={onRetry}
@@ -540,10 +560,14 @@ const styles = StyleSheet.create({
   eyebrow: { color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 12, fontWeight: '700', letterSpacing: 1.4 },
   heroTitle: { marginTop: 14, color: WHITE, fontFamily: 'CourierPrimeBold', fontSize: 24, lineHeight: 29, fontWeight: '700' },
   heroBody: { marginTop: 12, color: DIM, fontFamily: 'CourierPrime', fontSize: 14, lineHeight: 21 },
-  statGrid: { flexDirection: 'row', marginTop: 12, borderWidth: 1, borderColor: BORDER, backgroundColor: CARD },
-  stat: { flex: 1, minHeight: 74, alignItems: 'center', justifyContent: 'center', borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: BORDER },
-  statValue: { color: WHITE, fontFamily: 'CourierPrimeBold', fontSize: 22, fontWeight: '700' },
-  statLabel: { marginTop: 4, color: DEEP_TEXT, fontFamily: 'CourierPrime', fontSize: 12 },
+  statBoard: { alignSelf: 'stretch', marginTop: 8, marginBottom: 16 },
+  statGrid: { flexDirection: 'row', borderWidth: 1, borderColor: BORDER, backgroundColor: DEEP },
+  statSelected: { backgroundColor: PANEL },
+  statDescription: { padding: 16, borderWidth: 1, borderTopWidth: 0, borderColor: BORDER },
+  statDescriptionText: { color: DIM, fontFamily: 'CourierPrime', fontSize: 12, lineHeight: 21 },
+  stat: { flex: 1, minHeight: 96, paddingHorizontal: 8, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: BORDER },
+  statValue: { color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 22, fontWeight: '700' },
+  statLabel: { minHeight: 34, marginTop: 6, color: DIM, fontFamily: 'CourierPrime', fontSize: 12, lineHeight: 17, textAlign: 'center' },
   sectionHeader: { minHeight: 48, marginTop: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: 'rgba(227,82,5,0.24)' },
   sectionTitle: { color: WHITE, fontFamily: 'CourierPrimeBold', fontSize: 20, fontWeight: '700', letterSpacing: 1.2 },
   sectionCount: { color: DEEP_TEXT, fontFamily: 'CourierPrime', fontSize: 12 },

@@ -45,6 +45,15 @@ describe('iOS full offline snapshot', () => {
     expect(parseOfflineSnapshot({ ...snapshot, intel: 'not-an-array' })).toBeNull()
   })
 
+  it('accepts cached headline counts without requiring them in older snapshots', () => {
+    expect(parseOfflineSnapshot(snapshot)).not.toBeNull()
+    const withStats = { ...snapshot, dashboardStats: { worlds: 128, voyagers: 640 } }
+    expect(parseOfflineSnapshot(withStats)?.dashboardStats).toEqual(withStats.dashboardStats)
+    for (const value of [-1, Infinity, 1.5, '640', null]) {
+      expect(parseOfflineSnapshot({ ...snapshot, dashboardStats: { worlds: 128, voyagers: value } })).toBeNull()
+    }
+  })
+
   it('collects and deduplicates only HTTPS media URLs', () => {
     const withDuplicates: OfflineSnapshot = {
       ...snapshot,

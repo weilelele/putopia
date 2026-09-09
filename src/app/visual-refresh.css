@@ -3951,3 +3951,12 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 
 .profile-field-group { display: grid; grid-template-columns: minmax(0,1fr); gap: 12px; margin-bottom: 12px; }
 @media (min-width:640px) { .profile-field-group { grid-template-columns: repeat(var(--field-columns,1),minmax(0,1fr)); } }
+
+/* The original headline board remains content, separate from the hidden Tab title. */
+.dashboard-stats { margin: 8px 0 16px; }
+.dashboard-stats .archive-stat-strip { margin: 0; background: var(--color-deep); }
+.dashboard-stats .archive-stat-strip__item { min-height: 96px; clip-path: none; padding: 16px 8px; }
+.dashboard-stats .archive-stat-strip__item[aria-expanded='true'] { background: var(--bg-panel); }
+.dashboard-stats .archive-stat-strip__label { display: flex; align-items: center; min-height: 2.8em; overflow-wrap: anywhere; line-height: 1.4; letter-spacing: 0.04em; }
+.dashboard-stats__description { padding: 12px 16px; border: 1px solid var(--archive-line-soft); border-top: 0; }
+.dashboard-stats__description p { margin: 0; color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.75; }

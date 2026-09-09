@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 
 export interface ArchiveStatItem {
+  controls?: string
   expanded?: boolean
   href?: string
   label: string
@@ -17,7 +18,7 @@ interface ArchiveStatStripProps {
 export function ArchiveStatStrip({ items }: ArchiveStatStripProps) {
   return (
     <div className="archive-stat-strip">
-      {items.map(({ expanded, href, label, onSelect, value }) => {
+      {items.map(({ controls, expanded, href, label, onSelect, value }) => {
         const content = (
           <>
             <span className="archive-stat-strip__value">{value}</span>
@@ -34,7 +35,7 @@ export function ArchiveStatStrip({ items }: ArchiveStatStripProps) {
         }
 
         return onSelect ? (
-          <ArchiveButton variant="secondary" aria-expanded={expanded} className="archive-stat-strip__item" key={label} onClick={onSelect} type="button">
+          <ArchiveButton variant="secondary" aria-expanded={expanded} aria-controls={controls} className="archive-stat-strip__item" key={label} onClick={onSelect} type="button">
             {content}
           </ArchiveButton>
         ) : (

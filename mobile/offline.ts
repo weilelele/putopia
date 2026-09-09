@@ -109,6 +109,7 @@ export interface OfflineFunction {
 export interface OfflineDashboardUpdate { id: string; occurredAt: string; category: string; title: string; description?: string; image?: string | null; href: string }
 
 export interface OfflineSnapshot {
+  dashboardStats?: { worlds: number; voyagers: number }
   dashboardUpdates?: OfflineDashboardUpdate[]
   version: 2
   syncedAt: string
@@ -152,6 +153,10 @@ export function parseOfflineSnapshot(value: unknown): OfflineSnapshot | null {
   if (!sections.every((section) => isRecordArray(parsed[section]))) return null
 
   if (parsed.dashboardUpdates !== undefined && (!isRecordArray(parsed.dashboardUpdates) || !parsed.dashboardUpdates.every(item => typeof item.id === 'string' && isIsoDate(item.occurredAt) && typeof item.title === 'string' && typeof item.category === 'string' && typeof item.href === 'string' && /^\/(intel|worlds|devices|voyagers|vote)(\/|$)/.test(item.href)))) return null
+  if (parsed.dashboardStats !== undefined) {
+    const stats = parsed.dashboardStats
+    if (!isRecord(stats) || !['worlds', 'voyagers'].every(key => typeof stats[key] === 'number' && Number.isSafeInteger(stats[key]) && stats[key] >= 0)) return null
+  }
   return parsed as unknown as OfflineSnapshot
 }
 

@@ -26,7 +26,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 阅读顺序
 
-1. 一级品牌区 → Updates；Dashboard 名称仅作为 sr-only h1，不显示标题行或其留白。尺寸按主规范 §1.3；真实日期可放内容区。
+1. 一级品牌区 → 三项数字看板 → Updates；Dashboard 名称仅作为 sr-only h1，不显示标题行或其留白。尺寸按主规范 §1.3；真实日期可放内容区。
 2. 标题栏下 16px 进入 **Updates** 标题 + 最近 10 条提示 → 纵向时间轴。
 3. **Events** 标题 → 横向可参与活动卡片。
 4. 固定在视口底部的 Quiet Rail，Dashboard 选中。
@@ -50,9 +50,17 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 - 活动可以对应已出现在 Updates 的事件：Updates 告诉发生了什么，Events 提供当前参与途径；标题和说明避免机械重复。
 - 刷新、网络错误、无活动、权限不足、卡片媒体失败独立处理。一个轨道失败不隐藏另一个区块。
 
+### 顶部数字看板
+
+保留原有 Parallel Worlds / Devices / Voyagers 三项数字及点击展开／再次点击收起说明的交互。数字看板是产品内容，不属于被移除的重复 Tab 标题。顺序固定为 Logo → 数字看板 → Updates → Events；不恢复 Dashboard 大标题或个人资料入口。
+
+使用新版 ArchiveStatStrip：三等分、品牌橙数字、Courier Prime、深蓝平面底、细边框；标签至少 12px，可换行，点击目标至少 44px。不得恢复旧光效、装饰框或旧版表单样式。统计失败显示“—”和独立重试，不显示假的 0，也不阻断 Updates / Events。
+
+统计口径不变：世界数沿用原世界记录计数，Voyagers 沿用原已注册 Voyager / Applicant / Architect 计数 × 1.7 向上取整的展示规则，Devices 保留“?”，不改成设备批次数。展示数量不能替代成员列表的实际人数。iOS 缓存服务端已计算的看板值，离线沿用同步时间；旧缓存或未缓存时保留看板和未知值，不将离线列表长度当作全量统计。
+
 ### 首屏与验收
 
-390×844 首屏应看见克制的一级品牌区、Updates 起始内容和底栏，不显示重复 Dashboard 标题；不要求 Events 同时出现。本轮不增加顶部 Events 跳转，Updates → Events 顺序不变。图中长图只画一次底栏，实际固定于视口，而不是作为长列表尾部普通行。验证所有 10 条可读，最后一张活动的按钮不被固定底栏遮挡。
+390×844 首屏应看见克制的一级品牌区、数字看板、Updates 起始内容和底栏，不显示重复 Dashboard 标题；不要求 Events 同时出现。本轮不增加顶部 Events 跳转，Updates → Events 顺序不变。图中长图只画一次底栏，实际固定于视口，而不是作为长列表尾部普通行。验证所有 10 条可读，最后一张活动的按钮不被固定底栏遮挡。
 
 ## 3. Intel：清楚的内容层级与阅读
 

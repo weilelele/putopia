@@ -1,4 +1,5 @@
 'use server'
+import { getDashboardStats } from './dashboard-stats'
 import { readDashboardCovers } from '@/lib/dashboard-covers'
 import { readDashboardUpdates } from '@/lib/dashboard-updates'
 import { getAllVotes, getMyVoteResponses } from './votes'
@@ -17,11 +18,12 @@ export async function getDashboard() {
   const role = profile?.role ?? 'guest'
   const errors: string[] = []
   async function read<T>(name: string, task: () => Promise<T>): Promise<T | null> { try { return await task() } catch { errors.push(name); return null } }
-  const [feed, votes, responses, dispatch, rooms, batches, owned, tasks] = await Promise.all([
+  const [feed, votes, responses, dispatch, rooms, batches, owned, tasks, stats] = await Promise.all([
     read('Updates', () => readDashboardUpdates(role === 'voyager' || role === 'architect')), read('Votes', getAllVotes), user ? read('Vote participation', getMyVoteResponses) : null,
     user ? read('Signal Dispatch', getDispatchDashboard) : null, user ? read('Dreamcatchers', listDreamcatcherRooms) : null,
     user ? read('Console claims', listPublicDeviceBatches) : null, user ? read('Owned Consoles', getMyDeviceConsoles) : null,
     role === 'applicant' ? read('Applicant tasks', getApplicantTaskStatus) : null,
+    read('Statistics', getDashboardStats),
   ])
   if (feed?.incomplete) errors.push('Updates')
   const covers = dispatch?.awaitingYou ? await read('Event images', readDashboardCovers) : null
@@ -35,5 +37,5 @@ export async function getDashboard() {
   if (batch) events.push({id:`claim-${batch.slug}`,kind:'Console claim',title:batch.name,description:batch.statusLine,href:getBatchClaimHref(batch)!,action:'View claim',image:batch.image})
   if (events.length < 5 && tasks && !tasks.sighting) events.push({id:'world-submission',kind:'World submission',title:'Share a world',description:'Submit your first world for review.',href:'/worlds/submit',action:'Submit world'})
   if (events.length < 5 && tasks && !tasks.quiz) events.push({id:'quiz',kind:'Voyager quiz',title:'Find your signal',description:'Continue your entry assessment.',href:'/quiz',action:'Take quiz'})
-  return { updates: latestUpdates(feed?.updates ?? [], votes ?? []), events, errors, guest: !user, fetchedAt: new Date().toISOString() }
+  return { stats, updates: latestUpdates(feed?.updates ?? [], votes ?? []), events, errors, guest: !user, fetchedAt: new Date().toISOString() }
 }

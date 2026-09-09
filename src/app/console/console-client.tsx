@@ -1,5 +1,6 @@
 'use client'
 import { useRef, useState, useTransition } from 'react'
+import { DashboardStats } from '@/components/dashboard-stats'
 import { getDashboard } from '@/lib/actions/dashboard'
 import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchivePageHeader } from '@/components/archive-page-header'
@@ -14,9 +15,11 @@ export default function ConsoleClient({ initial }: { initial: Awaited<ReturnType
   const [pending,startTransition] = useTransition()
   const retry = () => startTransition(async()=> { try {setData(await getDashboard())} catch {setData(current => ({...current, errors: [...new Set([...current.errors, 'Updates', 'Events'])]}))} })
   const updatesIncomplete = data.errors.includes('Updates') || data.errors.includes('Votes')
-  const eventsIncomplete = data.errors.some(error => error !== 'Updates')
+  const eventsIncomplete = data.errors.some(error => error !== 'Updates' && error !== 'Statistics')
   return <main className="main archive-console-page" ref={scrollContainer}>
     <PwaInstallNudge eligibleUser={!data.guest} scrollContainer={scrollContainer} /><SectionTracker section="dashboard" /><ArchiveBrandHeader /><ArchivePageHeader hideTitle title="Dashboard" />
+    <DashboardStats stats={data.stats} />
+    {data.errors.includes('Statistics') && <div className="archive-inline-notice" role="status"><p>The latest counts could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry counts</ArchiveButton></div>}
     <section aria-labelledby="updates-heading"><div className="dashboard-section-heading"><h2 id="updates-heading">Updates</h2><span>Latest {data.updates.length}</span></div>
       {updatesIncomplete && <div className="archive-inline-notice" role="status"><p>Some updates could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry updates</ArchiveButton></div>}
       {data.updates.length ? <UpdateTimeline updates={data.updates} /> : !updatesIncomplete && <p>No updates have been published yet.</p>}

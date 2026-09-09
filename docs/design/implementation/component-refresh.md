@@ -42,3 +42,9 @@ Updates 仍然全局时间倒序取十条。当前数据中较旧的 Intel 和 V
 - 原表单属性静态比对：迁移清单中的 name/value/checked/disabled/required/ref/accept/处理器均保留；人工重组仅限房间 Tabs 和范围控件，已沿用相同状态更新函数。
 
 付款、上传提交、审核、资料保存等生产写入未执行。此次不是所有角色、所有数据状态、所有深层业务流程的端到端验收。iOS 仍需真机网络切换、键盘与安全区复核；未发布 TestFlight 或合并 main。
+
+## 顶部数字看板恢复
+
+恢复 Logo 下方的 Parallel Worlds / Devices / Voyagers 三项看板与点击展开说明。使用新版 ArchiveStatStrip、颜色、字号和点击状态；统计沿用原来源与 Voyager 展示倍率，Devices 继续为“?”。独立处理统计失败与重试。UI Kit 增加同组件样板；iOS 快照新增可选 dashboardStats，保留旧缓存兼容，缓存不足时展示未知值，不使用局部离线列表长度推算全量。
+
+本次看板复核：390px / 320px 无横向溢出，三项数字基线对齐；展开／收起说明通过。离线快照可选统计字段及非法值校验测试通过。真机运行验收仍待完成。

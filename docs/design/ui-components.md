@@ -357,3 +357,5 @@ ArchiveSectionLabel、BackLink、媒体封装和 AdminNav 延续共享入口，�
 - `EventRail`：`events` 横向排列，前后按钮与触摸滚动共用当前位置，使用减少动态偏好。参与资格由服务端计算，不能从卡片显示推断写入权限。
 - `useSessionPreference` 只保存当前会话中的页面筛选，不保存私人内容、草稿、权限或提交结果。
 - `LaunchScreen` 是 iOS 离线启动层；Web `/welcome` 使用原 FlipWordmark。进入时播放一次，点击随时跳过；动画完成后再停留 3 秒自动进入，跳转只发生一次。
+
+Dashboard 顶部数字看板使用 ArchiveStatStrip，保留原统计口径与展开说明交互，采用新版平面三列样式。ArchiveStatItem 的 controls 对应说明容器 id，expanded 对应展开状态；规则见页面模板的“顶部数字看板”。
