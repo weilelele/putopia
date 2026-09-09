@@ -3879,7 +3879,10 @@ body:has(.uk-root) .sidebar {
 .archive-field__help { color: var(--color-star-dim); font-size: var(--fs-label); margin: 0; }
 .archive-button--compact { min-height: 44px; }
 .archive-button.archive-button--destructive { color: var(--color-star); background: var(--color-deep); border-color: var(--color-fault); }
-.archive-brand-header + .archive-page-header { min-height: 44px; }
+.archive-page-header.archive-page-header--actions { display: flex; flex-wrap: wrap; min-height: 0; padding: 0; gap: 12px; }
+.archive-page-header--actions .archive-page-header__identity { flex: 0 0 auto; }
+.archive-page-header--actions .archive-page-header__action { flex: 1 1 180px; min-width: 0; margin: 0; }
+.archive-page-header--actions .archive-page-header__wide-action { width: 100%; }
 .archive-page-header__accent::before { content: ' '; white-space: pre; }
 .archive-tabs__tab { min-height: 44px; border-radius: 0; clip-path: none; }
 .archive-tabs__tab:focus-visible, .archive-button:focus-visible, .archive-back-link:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }

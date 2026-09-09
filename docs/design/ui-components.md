@@ -47,17 +47,17 @@
 
 ### C03 · CompactPageHeader / PageHeader / SectionHeading
 
-CompactPageHeader 是目标模式，优先由现有 ArchivePageHeader 扩展实现，不另造独立样式系统；紧凑标题已由共享样式实现。二级及更深默认替代品牌栏和重复页标题；一级与克制品牌区组合，标题仅出现一次。
+CompactPageHeader 是目标模式，优先由现有 ArchivePageHeader 扩展实现，不另造独立样式系统；紧凑标题已由共享样式实现。二级及更深默认替代品牌栏和重复页标题；一级保留克制品牌区，页面名称仅辅助技术可见，不显示重复 Tab 标题，也不预留标题占位。
 
 | 模式 | 左侧 | 标题与语义 | 右侧 |
 | --- | --- | --- | --- |
-| 一级 tab 标题行 | 无返回，不预留空图标位 | 品牌区下方 24px/700 页面名称，h1 | 最多一个必要动作；日期可放不挤占标题的位置 |
+| 一级 Tab 必要操作行 | 无返回，不预留空图标位 | 页面名称为 sr-only h1，不占布局空间 | 保留 Voting Hub / Logs / Profile / Archive 等既有入口；无操作时整行省略 |
 | 二级列表 | 返回实际来源，无来源用稳定父级 | 24px/700 页面名称，h1 | 最多一个必要动作 |
 | 详情 | 返回实际来源，无来源用稳定父级 | 20px/700 简短上下文；正文完整长标题为 h1 | 有真实需求才出现的操作 |
 | 编辑/提交/参与 | 返回或关闭，两者按任务选一 | 24px/700 任务名称，h1 | 必要保存动作；不与正文主提交按钮重复 |
 | 弹层 | 直接显示标题 | 20–24px/700，按页面层级使用 h2 或关联标题 | 44px 关闭按钮 |
 
-- 实施默认值：二级/任务内容最小高 56px，一级标题行最小高 44px（另有最小 64px 品牌区）；左右 16px、图标 20–22px、图标命中 44×44px、相邻内容间距 8px，正文紧随其下 16px。高度不包含顶部安全区；放大与长标题可自然增高。
+- 实施默认值：二级/任务内容最小高 56px，一级无可见标题行（品牌区最小 64px，必要动作命中至少 44px）；左右 16px、图标 20–22px、图标命中 44×44px、相邻内容间距 8px，正文紧随其下 16px。高度不包含顶部安全区；放大与长标题可自然增高。
 - 根标题左对齐，不用左右空白按钮硬凑居中；标题优先，动作无法容纳时次要内容移到正文。禁止靠省略、缩字隐藏必需任务名称。
 - 一页一个 h1。详情栏只放返回/上下文，完整文章或对象标题保留在正文；同一标题不在栏内和正文重复。
 - 日期是元信息，不是装饰。没有真实操作时右侧留空，不新增菜单、头像或通知。Voyagers 可放 My Profile，Dashboard 不可放。
@@ -320,7 +320,7 @@ Search：输入 + 清除 + 结果区；清除命中 44px，查询中不删除已
 | [ArchiveButton](../../src/components/archive-button.tsx) | 原生 button 属性；fullWidth、primary/secondary/ghost | 对比度、完整状态；loading/size 等需正式扩展 |
 | [ArchiveLinkButton](../../src/components/archive-link-button.tsx) | href、原生 anchor 属性、fullWidth、三个变体 | 链接禁用策略、状态与按钮一致 |
 | [ArchiveField](../../src/components/archive-field.tsx) | children、label、htmlFor、error、className | 帮助/错误 id、aria 关联、统一控件状态 |
-| [ArchivePageHeader](../../src/components/archive-page-header.tsx) | title、accent、action、identity、className | 扩展紧凑标题栏模式，一级 44px 标题行 + 品牌区、二级 56px 最小高度、24/20px 标题、返回/关闭语义；identity 不放 Dashboard |
+| [ArchivePageHeader](../../src/components/archive-page-header.tsx) | title、accent、action、identity、hideTitle、className | 扩展紧凑标题栏模式，一级 hideTitle 保留 sr-only h1 与必要操作，无标题占位 + 品牌区、二级 56px 最小高度、24/20px 标题、返回/关闭语义；identity 不放 Dashboard |
 | [ArchiveTabs](../../src/components/archive-tabs.tsx) | activeId、ariaLabel、items(id/label/count)、onChange、containerRef | 键盘、id/面板关联、禁用与 focus |
 | [FilterBar](../../src/components/filter-bar.tsx) | 复用 ArchiveTabs 的选择外观 | 按筛选语义修正，不一律 tablist |
 | [ArchiveCard](../../src/components/archive-card.tsx) | div 属性、actionable CSS | 不将 CSS 可点击态当真实交互 |

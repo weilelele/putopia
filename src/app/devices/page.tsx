@@ -18,7 +18,7 @@ export default async function DevicesPage() {
   const batch = batches[0]
   if (!batch) return (
     <main className="main">
-      <ArchiveBrandHeader /><h1 className="text-2xl">DEVICES</h1>
+      <ArchiveBrandHeader /><h1 className="sr-only">Devices</h1>
       <p className="mt-4">No device batches have been published yet. Check back for recovery updates.</p>
     </main>
   )

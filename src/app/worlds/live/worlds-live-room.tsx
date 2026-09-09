@@ -93,7 +93,7 @@ export function WorldsLiveRoom({
 
   if (!selected) return (
     <main className={`main ${styles.page}`}><ArchiveBrandHeader />
-      <header className={styles.roomHeader}><h1>WORLDS</h1><Link className={styles.archiveLink} href="/worlds">ARCHIVE</Link></header>
+      <header className={`${styles.roomHeader} ${styles.rootActions}`}><h1 className="sr-only">Worlds</h1><Link className={styles.archiveLink} href="/worlds">ARCHIVE</Link></header>
       <section className={styles.sectionPanel}><div className={styles.emptyRoom}>NO DREAMCATCHERS PUBLISHED<br />Please check back later. Existing worlds remain in the archive.</div></section>
     </main>
   )
@@ -150,9 +150,7 @@ export function WorldsLiveRoom({
 
   return (
     <main className={`main ${styles.page}`}><ArchiveBrandHeader />
-      <header className={styles.roomHeader}>
-        <h1>WORLDS</h1>
-      </header>
+      <h1 className="sr-only">Worlds</h1>
 
       <nav className={`${styles.objectNav} ${roomStyles.navigation}`} aria-label="Dreamcatcher locations">
         <ArchiveTabs mode="filter" ariaLabel="Dreamcatcher location" activeId={selected.slug}

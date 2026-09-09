@@ -235,8 +235,8 @@ function IntelPageContent() {
 
 
       <ArchivePageHeader
-        title="INTEL"
-        accent="FEED"
+        hideTitle
+        title="Intel"
         identity={
           <div className="archive-intel-legend" aria-label="Intel types">
             {(['NOTICE', 'DEVICE', 'ORG'] as const).map((tag) => (

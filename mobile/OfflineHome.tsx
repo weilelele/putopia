@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Image,
   Pressable,
@@ -426,7 +426,6 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
   const setDetail = (next: DetailSelection) => { if (!next && returnTab.current) { setActiveTab(returnTab.current); returnTab.current = null }; updateDetail(next) }
   const scrollKey = detail ? `${activeTab}:${detail.kind}:${detail.id}` : isLogs ? 'logs' : activeTab
   useEffect(() => { const timer = setTimeout(() => scrollView.current?.scrollTo({ y: positions.current[scrollKey] ?? 0, animated: false }), 0); return () => clearTimeout(timer) }, [scrollKey])
-  const activeLabel = useMemo(() => TABS.find((tab) => tab.key === activeTab)?.label ?? 'DASHBOARD', [activeTab])
   const detailCollections = snapshot ? { intel: snapshot.intel, device: snapshot.devices, world: snapshot.worlds, voyager: snapshot.voyagers, story: snapshot.stories, vote: snapshot.votes } : null
   const missingDetail = !!detail && !!detailCollections && !detailCollections[detail.kind].some(item => item.id === detail.id)
 
@@ -451,7 +450,7 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
           <View>
             {!detail && !isLogs && <View style={styles.brandRow}><Image source={require('./assets/vi-icon.png')} resizeMode="contain" style={{ width: 40, height: 40 }} /><Image source={require('./assets/vi-wordmark.png')} resizeMode="contain" style={{ width: 160, height: 44 }} /></View>}
             {!detail && isLogs && <Pressable accessibilityRole="button" accessibilityLabel="Back to Voyagers" style={styles.backButton} onPress={() => setVoyagerMode('voyagers')}><Text style={styles.backText}>← VOYAGERS</Text></Pressable>}
-            {!detail && <Text style={styles.pageTitle}>{isLogs ? 'VOYAGER LOGS' : activeLabel}</Text>}
+            {!detail && isLogs && <Text accessibilityRole="header" style={styles.pageTitle}>VOYAGER LOGS</Text>}
           </View>
           <View style={styles.signalGroup}>
             <View style={[styles.statusDot, connected && styles.statusDotOnline]} />

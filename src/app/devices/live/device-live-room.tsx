@@ -123,8 +123,8 @@ export function DeviceLiveRoom({
 
   return (
     <main className={`main ${styles.page}`}>{isRoot ? <ArchiveBrandHeader /> : <BackLink href="/devices" label="Devices" />}
-      <header className={styles.roomHeader}>
-        <h1>DEVICES</h1>
+      <header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
+        <h1 className={isRoot ? 'sr-only' : undefined}>DEVICES</h1>
         <Link className={styles.archiveLink} href="/devices">
           LIBRARY <ChevronRight aria-hidden size={16} />
         </Link>

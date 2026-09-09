@@ -244,7 +244,7 @@ export default function VoyagersPage() {
       <ArchiveBrandHeader />
 
       <ArchivePageHeader
-        accent="VOYAGERS"
+        hideTitle
         action={(
           <ArchiveLinkButton className="archive-page-header__wide-action" fullWidth href="/logs">
             <FileText size={15} />
@@ -253,7 +253,7 @@ export default function VoyagersPage() {
           </ArchiveLinkButton>
         )}
         identity={profileControl}
-        title="ACTIVE"
+        title="Voyagers"
       />
 
       {/* ── Stat board — Architect Council / new Voyagers / total Voyagers ── */}

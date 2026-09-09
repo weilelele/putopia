@@ -16,7 +16,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 | Worlds | `/worlds/live` | 世界观察、队列、投递与交流 | `/worlds` 档案、详情、提交、Signal |
 | Voyagers | `/voyagers` | 成员与身份 | My Profile `/profile`、Logs、Voyager Path |
 
-五个一级入口可以保留 Logo，本轮默认统一呈现克制品牌区 → 页面标题 → 内容；二级列表、详情和任务页不显示 Logo，直接使用紧凑返回/任务栏。该规则在浏览器、PWA、未来 App 中相同。具体尺寸见主规范 §1.3；路由层级、底栏显示、来源返回和退出规则见 [导航与交互合同](interaction-contracts.md)。
+五个一级入口可以保留 Logo，本轮默认统一呈现克制品牌区 → 必要操作（若有）→ 内容；不再显示重复 Tab 名称；二级列表、详情和任务页不显示 Logo，直接使用紧凑返回/任务栏。该规则在浏览器、PWA、未来 App 中相同。具体尺寸见主规范 §1.3；路由层级、底栏显示、来源返回和退出规则见 [导航与交互合同](interaction-contracts.md)。
 
 以上是目标导航归属，需在共享映射中实现；现有前缀判断未必覆盖所有次级路径。根 tab 激活不意味着改变地址或合并数据。独立获客、支付回跳、认证、后台有自己的流程壳；不要为了统一在所有页面机械显示五项底栏。
 
@@ -26,7 +26,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 阅读顺序
 
-1. 一级品牌区 → Dashboard 标题行（仅一次 h1）；尺寸按主规范 §1.3。可放真实日期，空间不足时移到内容区。
+1. 一级品牌区 → Updates；Dashboard 名称仅作为 sr-only h1，不显示标题行或其留白。尺寸按主规范 §1.3；真实日期可放内容区。
 2. 标题栏下 16px 进入 **Updates** 标题 + 最近 10 条提示 → 纵向时间轴。
 3. **Events** 标题 → 横向可参与活动卡片。
 4. 固定在视口底部的 Quiet Rail，Dashboard 选中。
@@ -52,7 +52,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 首屏与验收
 
-390×844 首屏应看见克制的一级品牌区、Dashboard 标题、Updates 起始内容和底栏，不重复页面标题；不要求 Events 同时出现。本轮不增加顶部 Events 跳转，Updates → Events 顺序不变。图中长图只画一次底栏，实际固定于视口，而不是作为长列表尾部普通行。验证所有 10 条可读，最后一张活动的按钮不被固定底栏遮挡。
+390×844 首屏应看见克制的一级品牌区、Updates 起始内容和底栏，不显示重复 Dashboard 标题；不要求 Events 同时出现。本轮不增加顶部 Events 跳转，Updates → Events 顺序不变。图中长图只画一次底栏，实际固定于视口，而不是作为长列表尾部普通行。验证所有 10 条可读，最后一张活动的按钮不被固定底栏遮挡。
 
 ## 3. Intel：清楚的内容层级与阅读
 
@@ -60,7 +60,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 页面顺序
 
-一级品牌区 → Intel 标题行 + 次级 Voting Hub 入口 → ALL / PUBLIC / CLASSIFIED 筛选 → 重点文章（若真实存在）→ 最近文章轻列表 → 加载更多/分页。
+一级品牌区 → 类型图例 + 次级 Voting Hub 入口（无重复 Intel 标题） → ALL / PUBLIC / CLASSIFIED 筛选 → 重点文章（若真实存在）→ 最近文章轻列表 → 加载更多/分页。
 
 - 重点内容可用较大标题或媒体区，但不额外复制成下面第一条重复文章。没有策划重点时直接列近期内容。
 - 分类、标题、简短摘要、发布时间/作者为主要字段；评论数量只有在数据真实且有助浏览时出现。
@@ -79,7 +79,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 页面顺序
 
-一级品牌区 → Devices 标题行 + 真实档案入口（不再叠加 Device Archive 大标题） → 批次选择 → 观察媒体 → 来源/抓帧时间/真实状态 → 与当前设备有关的单个行动区 → INFO / UPDATES / DISCUSSION → 对应内容。
+一级品牌区 → 既有档案入口（无重复 Devices / Device Archive 标题） → 批次选择 → 观察媒体 → 来源/抓帧时间/真实状态 → 与当前设备有关的单个行动区 → INFO / UPDATES / DISCUSSION → 对应内容。
 
 - 当前实现的三个内页签是 **INFO / UPDATES / DISCUSSION**；不要被旧说明或 Worlds 模式改成 Live Chat。默认 Info。
 - 批次切换同步该批次媒体、信息、进展、讨论上下文；不能只改标题而保留另一批的价格或图。
@@ -106,7 +106,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 默认观察页
 
-一级品牌区 → Worlds 标题行 + 世界档案入口 → 当前观察媒体 → 世界名、来源与真实状态 → **QUEUE / DISPATCH / LIVE CHAT** → 当前面板。默认 Queue。
+一级品牌区 → 世界档案入口（无重复 Worlds 标题） → 当前观察媒体 → 世界名、来源与真实状态 → **QUEUE / DISPATCH / LIVE CHAT** → 当前面板。默认 Queue。
 
 - 观察区清楚区分视频、直播、最近抓帧、离线；不能永远亮绿点写 LIVE。
 - Queue 表达真实排队和处理状态。等待用户选择与已提交排队不同，处理中不等于队列中所有条目都在执行。
@@ -126,7 +126,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 页面顺序
 
-一级品牌区 → Voyagers 标题行 + **My Profile** 次级入口 → 有真实编辑依据的重点成员/Architect 内容 → 批次或成员筛选 → 成员列表 → Voyager Logs 入口。
+一级品牌区 → **My Profile** / Voyager Logs 次级入口（无重复 Voyagers 标题） → 有真实编辑依据的重点成员/Architect 内容 → 批次或成员筛选 → 成员列表 → Voyager Logs 入口。
 
 - My Profile 在 Voyagers 明确可发现；未登录显示与鉴权一致的登录/申请引导，不能让用户误以为存在资料。
 - 重点 Architect 是内容策划位置，不必永远有一张同一人物卡。无重点时正常列表即可。
