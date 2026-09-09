@@ -626,7 +626,7 @@ export default function ConsoleClient({
     : <FeedSkeleton />
 
   return (
-    <main className="landing-main archive-console-page" ref={scrollRef}>
+    <main className="landing-main archive-console-page" data-route-scroll ref={scrollRef}>
       <SectionTracker section="dashboard" />
       <div className="nebula-bg" />
 
