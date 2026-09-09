@@ -10,7 +10,7 @@ export interface DashboardVoyager { role: string; name: string; avatarUrl: strin
 export function DashboardVoyagerHeader({ voyager }: { voyager: DashboardVoyager }) {
   const [deviceOpen, setDeviceOpen] = useState(false)
   return <section className="dashboard-voyager" aria-label="Your Voyager status">
-    <div className="dashboard-voyager-welcome"><p>WELCOME,</p><h2>{voyager.role === 'applicant' ? 'APPLICANT' : 'VOYAGER'}</h2>{voyager.role !== 'applicant' && <p className="dashboard-voyager-intro">YOU HAVE BEEN SELECTED TO EXPLORE<br />THE MYSTERIES OF PARALLEL WORLDS.</p>}</div>
+    <div className="dashboard-voyager-welcome"><p>WELCOME,</p><h2>BROKER</h2>{voyager.role !== 'applicant' && <p className="dashboard-voyager-intro">YOU HAVE BEEN SELECTED TO EXPLORE<br />THE MYSTERIES OF PARALLEL WORLDS.</p>}</div>
     <div className="dashboard-voyager-board">
       <div className="dashboard-voyager-identity">
         <span className="dashboard-voyager-avatar">{voyager.avatarUrl ? <SmartImage src={voyager.avatarUrl} alt={voyager.name} width={44} height={44} sizes="44px" /> : <span aria-label={voyager.name}>{voyager.name.slice(0,2).toUpperCase()}</span>}</span>

@@ -11,7 +11,7 @@ import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { ArchiveStatStrip, type ArchiveStatItem } from '@/components/archive-stat-strip'
-import { ArchiveTabs } from '@/components/archive-tabs'
+import { BatchTabs } from '@/components/batch-tabs'
 import { SectionTracker } from '@/components/section-tracker'
 import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 import { Camera, ArrowRight } from 'lucide-react'
@@ -100,9 +100,7 @@ export default function VoyagersPage() {
   // ── Batch selector state ────────────────────────────────────────────────
   const [activeBatch, setActiveBatch] = useSessionPreference<string | null>('mc:view:voyagers:batch', null)
   const [batchExpanded, setBatchExpanded] = useState(false)
-  const batchRailRef = useRef<HTMLDivElement>(null)
   const selectBatch = (label: string) => { setActiveBatch(label); setBatchExpanded(false) }
-  const scrollRail = (dir: number) => batchRailRef.current?.scrollBy({ left: dir * 240, behavior: 'smooth' })
 
   const refresh = useCallback(async () => {
     const data = await getAllVoyagers()
@@ -257,21 +255,7 @@ export default function VoyagersPage() {
               {/* Batch selector — horizontal scroll rail */}
               <ArchiveSectionLabel>VOYAGER BATCHES</ArchiveSectionLabel>
 
-              <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
-                {batches.length > 1 && (
-                  <>
-                    <ArchiveButton type="submit" variant="ghost" onClick={() => scrollRail(-1)} aria-label="scroll left" className="hidden md:flex" style={railArrow('left')}>‹</ArchiveButton>
-                    <ArchiveButton type="submit" variant="ghost" onClick={() => scrollRail(1)} aria-label="scroll right" className="hidden md:flex" style={railArrow('right')}>›</ArchiveButton>
-                  </>
-                )}
-                <ArchiveTabs
-                  activeId={currentLabel ?? ''}
-                  ariaLabel="Voyager batches"
-                  containerRef={batchRailRef}
-                  items={batches.map(({ label, members }) => ({ id: label, label, count: members.length }))}
-                  onChange={selectBatch}
-                />
-              </div>
+              <BatchTabs activeId={currentLabel ?? ''} items={batches.map(({label,members}) => ({id:label,label,count:members.length}))} onChange={selectBatch} />
 
               {/* Selected batch members — full cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -406,14 +390,6 @@ function FieldGroup({ cols = 1, children }: { cols?: number; children: React.Rea
 }
 
 // ── Batch rail helpers ─────────────────────────────────────────────────────
-function railArrow(side: 'left' | 'right'): React.CSSProperties {
-  return {
-    position: 'absolute', top: '50%', transform: 'translateY(-50%)', [side]: '-4px', zIndex: 3,
-    width: 28, height: 28, borderRadius: '50%', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(15,20,48,0.92)', border: '1px solid rgba(227,82,5,0.3)',
-    color: '#C84406', fontFamily: 'var(--font-mono)', fontSize: '1rem', lineHeight: 1, cursor: 'pointer',
-  }
-}
 // ── Card component ─────────────────────────────────────────────────────────
 function VoyagerCard({
   voyager, user, isAtLeast, onEditClick, isArchitect = false,

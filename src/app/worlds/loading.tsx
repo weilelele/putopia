@@ -16,8 +16,8 @@ export default function Loading() {
 
 
 
-      <div className="page-head">
-        <h1>WORLD <span className="accent">RECORDS</span></h1>
+      <div>
+        <h1 className="sr-only">Worlds</h1>
       </div>
 
       <div

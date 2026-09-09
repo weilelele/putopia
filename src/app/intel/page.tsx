@@ -47,10 +47,10 @@ function ClassifiedWall() {
 function IntelCard({ entry, commentCount = 0, lead = false }: { entry: IntelWithAvatar; commentCount?: number; lead?: boolean }) {
   const href = `/intel/${entry.id}`
   const metadata = <span className="intel-entry-meta">{entry.tag} · <time dateTime={entry.timestamp}>{formatDate(entry.timestamp)}</time></span>
-  if (!lead) return <article className="intel-recent-story">
+  if (!lead) return <article className={`intel-recent-story${entry.images?.length ? " intel-recent-story--media" : ""}`}>
     <Link href={href} className="intel-recent-row"><div>{metadata}<h3>{entry.title}</h3></div><ArrowRight aria-hidden size={22} /></Link>
     <PublisherIdentity name={entry.publisher_name ?? 'Multiverse Collective'} avatar={entry.publisher_avatar_url} />
-    {!!entry.images?.length && <Link href={href} className="intel-story-media" aria-label={`Open images: ${entry.title}`}><NewsMedia images={entry.images} title={entry.title} /></Link>}
+    {!!entry.images?.length && <Link href={href} className="intel-story-media" aria-label={`Open images: ${entry.title}`}><NewsMedia images={entry.images.slice(0,1)} title={entry.title} /></Link>}
     <Link href={href} className="intel-comments"><MessageSquare aria-hidden size={14} />{commentCount} comments</Link>
   </article>
   return <article className="intel-lead">

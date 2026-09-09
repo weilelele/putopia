@@ -2,7 +2,7 @@
 export const PRIMARY_NAV = [
   { href: '/console', label: 'DASHBOARD', title: 'Dashboard', icon: 'LayoutDashboard' },
   { href: '/intel', label: 'INTEL', title: 'Intel', icon: 'FileText' },
-  { href: '/devices', label: 'DEVICES', title: 'Devices', icon: 'Gamepad2' },
+  { href: '/devices', label: 'DEVICES', title: 'Devices', icon: 'DeviceMark' },
   { href: '/worlds/live', label: 'WORLDS', title: 'Worlds', icon: 'Globe' },
   { href: '/voyagers', label: 'VOYAGERS', title: 'Voyagers', icon: 'Users' },
 ] as const

@@ -38,7 +38,7 @@ type VoyagerMode = 'voyagers' | 'logs'
 const TABS: { key: OfflineTab; label: string; icon: number }[] = [
   { key: 'dashboard', label: 'DASHBOARD', icon: require('./assets/navigation/LayoutDashboard.png') },
   { key: 'intel', label: 'INTEL', icon: require('./assets/navigation/FileText.png') },
-  { key: 'devices', label: 'DEVICES', icon: require('./assets/navigation/Gamepad2.png') },
+  { key: 'devices', label: 'DEVICES', icon: require('./assets/vi-icon.png') },
   { key: 'worlds', label: 'WORLDS', icon: require('./assets/navigation/Globe.png') },
   { key: 'voyagers', label: 'VOYAGERS', icon: require('./assets/navigation/Users.png') },
 ]
@@ -198,7 +198,7 @@ function DashboardView({ snapshot, media, select }: {
   }) : fallbackUpdates
   return <View>
     {snapshot.viewer.authenticated && <View style={styles.voyagerWelcome}>
-      <Text style={styles.welcomeEyebrow}>WELCOME,</Text><Text style={styles.welcomeTitle}>{snapshot.viewer.role === 'applicant' ? 'APPLICANT' : 'VOYAGER'}</Text>{snapshot.viewer.role !== 'applicant' && <Text style={styles.welcomeIntro}>YOU HAVE BEEN SELECTED TO EXPLORE{'\n'}THE MYSTERIES OF PARALLEL WORLDS.</Text>}
+      <Text style={styles.welcomeEyebrow}>WELCOME,</Text><Text style={styles.welcomeTitle}>BROKER</Text>{snapshot.viewer.role !== 'applicant' && <Text style={styles.welcomeIntro}>YOU HAVE BEEN SELECTED TO EXPLORE{'\n'}THE MYSTERIES OF PARALLEL WORLDS.</Text>}
       <View style={styles.welcomeBoard}>
         <View style={styles.welcomeIdentity}><CachedImage uri={snapshot.dashboardVoyager?.avatarUrl} media={media} style={{width:44,height:44,borderRadius:22}} /><View><Text style={styles.directoryName}>{snapshot.viewer.displayName ?? 'Voyager'}</Text><Text style={styles.meta}>{snapshot.viewer.role.toUpperCase()}</Text><Text style={styles.directoryMeta}>VIEW YOUR PATH · OFFLINE</Text></View></View>
         <View style={styles.statGrid}><View style={styles.stat}><Text style={styles.statLabel}>SIGNAL DISPATCH</Text><Text style={styles.statValue}>{snapshot.dashboardVoyager?.awaitingYou ?? '—'}</Text><Text style={styles.directoryMeta}>awaiting you · saved</Text></View><View style={[styles.stat,{borderRightWidth:0}]}><Text style={styles.statValue}>{snapshot.dashboardVoyager?.deviceDays ?? '—'}</Text><Text style={styles.statLabel}>CONSOLE DAYS</Text></View></View>
@@ -253,10 +253,10 @@ function IntelView({ snapshot, media, detail, setDetail }: {
         selected={mode}
         onSelect={(value) => setMode(value as IntelMode)}
       />
-      {mode === 'intel' ? snapshot.intel.map((entry) => (
-        <Pressable key={entry.id} accessibilityRole="button" onPress={() => setDetail({kind:'intel',id:entry.id})} style={styles.nativeNews}>
-          <Text style={styles.meta}>{entry.tag} · {formatDate(entry.timestamp)}</Text><Text style={styles.directoryName}>{entry.title}</Text>
-          <NativePublisher item={entry} media={media} /><Text numberOfLines={3} style={styles.directoryMeta}>{entry.content}</Text><NativeNewsMedia images={entry.images} media={media} />
+      {mode === 'intel' ? snapshot.intel.map((entry,index) => (
+        <Pressable key={entry.id} accessibilityRole="button" onPress={() => setDetail({kind:'intel',id:entry.id})} style={[styles.nativeNews,index > 0 && {flexDirection:'row',gap:12}]}>
+          <View style={{flex:1}}><Text style={styles.meta}>{entry.tag} · {formatDate(entry.timestamp)}</Text><Text style={styles.directoryName}>{entry.title}</Text>
+          <NativePublisher item={entry} media={media} />{index === 0 && <><Text numberOfLines={3} style={styles.directoryMeta}>{entry.content}</Text><NativeNewsMedia images={entry.images} media={media} /></>}</View>{index > 0 && entry.images[0] && <CachedImage uri={entry.images[0]} media={media} style={{width:96,height:80}} />}
         </Pressable>
       )) : snapshot.votes.map((vote) => (
         <ListCard key={vote.id} title={vote.title}
@@ -531,7 +531,7 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
               {TABS.map((tab) => (
                 <Pressable key={tab.key} accessibilityRole="button" accessibilityLabel={tab.label} accessibilityState={{ selected: activeTab === tab.key }}
                   onPress={() => changeTab(tab.key)} style={styles.navItem}>
-                  <View style={[styles.navMarker, activeTab !== tab.key && { opacity: 0 }]} /><Image source={tab.icon} style={{ width: 22, height: 22, tintColor: activeTab === tab.key ? ORANGE : DIM }} />
+                  <View style={[styles.navMarker, activeTab !== tab.key && { opacity: 0 }]} /><Image source={tab.icon} resizeMode="contain" style={tab.key === 'devices' ? {width:28,height:22} : { width: 22, height: 22, tintColor: activeTab === tab.key ? ORANGE : DIM }} />
                   <Text style={[styles.navLabel, activeTab === tab.key && styles.navActive]}>{tab.label}</Text>
                 </Pressable>
               ))}
@@ -553,15 +553,15 @@ const BORDER = 'rgba(245,245,245,0.10)'
 
 const styles = StyleSheet.create({
   offlineSidebar: {position:'absolute',left:0,top:0,bottom:0,width:140,flexDirection:'column',borderTopWidth:0,borderRightWidth:1,borderRightColor:BORDER},
-  nativeNews: {paddingVertical:20,borderBottomWidth:1,borderBottomColor:BORDER},
+  nativeNews: {paddingVertical:16,borderBottomWidth:1,borderBottomColor:BORDER},
   nativePublisher: {flexDirection:'row',alignItems:'center',gap:10,marginVertical:12},
   nativeAvatar: {width:32,height:32,borderRadius:16,backgroundColor:PANEL,alignItems:'center',justifyContent:'center'},
   nativeNewsGallery: {flexDirection:'row',flexWrap:'wrap',gap:8,marginVertical:12},
   nativeNewsImage: {width:'48%',aspectRatio:1.6},
   voyagerWelcome: { marginBottom: 24 },
-  welcomeEyebrow: { color: ORANGE, fontFamily: 'CourierPrime', fontSize: 20, letterSpacing: 5, textAlign: 'center', marginTop: 16 },
+  welcomeEyebrow: { color: ORANGE, fontFamily: 'CourierPrime', fontSize: 20, letterSpacing: 5, textAlign: 'center', marginTop: 8 },
   welcomeTitle: { color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 40, lineHeight: 44, textAlign: 'center', marginVertical: 8 },
-  welcomeIntro: { color: DIM, fontFamily: 'CourierPrime', fontSize: 12, lineHeight: 21, textAlign: 'center', marginBottom: 24 },
+  welcomeIntro: { color: DIM, fontFamily: 'CourierPrime', fontSize: 12, lineHeight: 21, textAlign: 'center', marginBottom: 16 },
   welcomeBoard: { backgroundColor: PANEL, borderWidth: 0, borderColor: BORDER, marginBottom: 8 },
   welcomeIdentity: { flexDirection: 'row', gap: 16, alignItems: 'center', padding: 16, borderBottomWidth: 1, borderColor: BORDER },
   savedEvent: { width: 260, padding: 8, borderWidth: 1, borderColor: BORDER },

@@ -1,9 +1,11 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, Gamepad2, Globe, Users } from 'lucide-react'
+import { LayoutDashboard, FileText, Globe, Users } from 'lucide-react'
 import { PRIMARY_NAV, ownerTab } from '@/lib/ui-navigation'
-const icons = { LayoutDashboard, FileText, Gamepad2, Globe, Users }
+import SmartImage from './smart-image'
+const DeviceMark = () => <SmartImage className="navigation-device-mark" src="/assets/vi-icon.png" alt="" width={28} height={22} sizes="28px" />
+const icons = { LayoutDashboard, FileText, DeviceMark, Globe, Users }
 export function PrimaryNavigation({ variant, activePath, onNavigate }: { variant: 'bottom' | 'sidebar'; activePath?: string; onNavigate?: (href: string) => void }) {
   const currentPath = usePathname()
   const path = activePath ?? currentPath
