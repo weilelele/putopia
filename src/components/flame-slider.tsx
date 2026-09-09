@@ -1,6 +1,7 @@
 'use client'
 
-import { useRef, useEffect, useCallback } from 'react'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput } from '@/components/archive-input'
 
 /* ── Shared constants used by the onboarding flow (and the legacy /demo) ── */
 
@@ -73,118 +74,14 @@ export function FlameSlider({
   readings?: readonly string[]
   endLabels?: Record<number, string>
 }) {
-  const trackRef = useRef<HTMLDivElement>(null)
-  const dragging = useRef(false)
-  const pct      = (value / 5) * 100
-
-  const valueFromX = useCallback((clientX: number) => {
-    const rect = trackRef.current?.getBoundingClientRect()
-    if (!rect) return 0
-    return Math.round(Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * 5)
-  }, [])
-
-  useEffect(() => {
-    const move = (e: MouseEvent) => { if (dragging.current) onChange(valueFromX(e.clientX)) }
-    const up   = () => { dragging.current = false }
-    window.addEventListener('mousemove', move)
-    window.addEventListener('mouseup',   up)
-    return () => {
-      window.removeEventListener('mousemove', move)
-      window.removeEventListener('mouseup',   up)
-    }
-  }, [onChange, valueFromX])
-
-  return (
-    <div className="archive-range" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-      {/* Track — outer wrapper has generous vertical padding for easy clicking */}
-      <div
-        className="archive-range__control"
-        role="slider"
-        tabIndex={0}
-        aria-label="Join urgency"
-        aria-valuemin={0}
-        aria-valuemax={5}
-        aria-valuenow={value}
-        onMouseDown={e => { dragging.current = true; onChange(valueFromX(e.clientX)) }}
-        onTouchStart={e => { e.preventDefault(); onChange(valueFromX(e.touches[0].clientX)) }}
-        onTouchMove={e  => { e.preventDefault(); onChange(valueFromX(e.touches[0].clientX)) }}
-        onKeyDown={e => {
-          if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') onChange(Math.max(0, value - 1))
-          if (e.key === 'ArrowRight' || e.key === 'ArrowUp') onChange(Math.min(5, value + 1))
-          if (e.key === 'Home') onChange(0)
-          if (e.key === 'End') onChange(5)
-        }}
-        style={{ padding: '10px 0', cursor: 'pointer', userSelect: 'none', touchAction: 'none' }}
-      >
-        <div ref={trackRef} className="archive-range__track" style={{ position: 'relative', height: 10, background: 'rgba(26,31,43,0.9)' }}>
-          {/* Flame fill */}
-          <div className="archive-range__fill" style={{
-            position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`,
-            background: 'transparent',
-            transition: 'width 0.08s ease',
-            pointerEvents: 'none',
-          }} />
-          {/* Thumb */}
-          <div className="archive-range__thumb" style={{
-            position: 'absolute', top: '50%', left: `${pct}%`,
-            transform: 'translate(-50%, -50%)',
-            width: 22, height: 22, borderRadius: '50%',
-            background: 'transparent',
-            border: `1.5px solid ${value > 0 ? 'rgba(255,180,60,0.75)' : 'rgba(242,240,230,0.18)'}`,
-            transition: 'all 0.1s ease',
-            pointerEvents: 'none', zIndex: 2,
-          }} />
-        </div>
-
-        {/* Tick marks — absolutely positioned at value/5 so they align with the thumb */}
-        <div style={{ position: 'relative', height: 4, marginTop: '0.55rem' }}>
-          {[0, 1, 2, 3, 4, 5].map(i => (
-            <div key={i} onClick={() => onChange(i)} style={{
-              position: 'absolute', left: `${(i / 5) * 100}%`, transform: 'translateX(-50%)',
-              width: 1, height: 4,
-              background: i <= value && value > 0
-                ? `rgba(255,${140 - i * 8},32,0.75)`
-                : 'rgba(242,240,230,0.12)',
-              transition: 'background 0.12s', cursor: 'pointer',
-            }} />
-          ))}
-        </div>
-      </div>
-
-      {/* End labels — pinned to the true extremes */}
-      <div style={{ position: 'relative', height: '1.1rem' }}>
-        <span style={{
-          position: 'absolute', left: 0,
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.05em',
-          color: value === 0 ? 'rgba(242,240,230,0.6)' : 'rgba(242,240,230,0.3)',
-          transition: 'color 0.12s',
-        }}>
-          {endLabels[0]}
-        </span>
-        <span style={{
-          position: 'absolute', right: 0,
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.05em',
-          color: value === 5 ? 'rgba(255,135,32,0.85)' : 'rgba(242,240,230,0.3)',
-          transition: 'color 0.12s',
-        }}>
-          {endLabels[5]}
-        </span>
-      </div>
-
-      {/* Live reading */}
-      <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
-        color: 'rgba(255,140,32,0.65)',
-        minHeight: '1.2rem',
-        transition: 'opacity 0.25s ease',
-        opacity: value > 0 ? 1 : 0,
-      }}>
-        {value > 0 && `${value} / 5 — ${readings[value]}`}
-      </div>
-
-    </div>
-  )
+  return <div className="archive-range">
+    <ArchiveInput type="range" min={0} max={5} step={1} value={value}
+      aria-label={readings === URGENCY_READINGS ? 'Join urgency' : 'Signal belief'}
+      aria-valuetext={`${value} / 5${readings[value] ? ` — ${readings[value]}` : ''}`}
+      onChange={event => onChange(Number(event.target.value))} />
+    <div className="archive-range__labels"><span>{endLabels[0]}</span><span>{endLabels[5]}</span></div>
+    <p className="archive-range__reading" aria-live="polite">{value > 0 ? `${value} / 5 — ${readings[value]}` : '\u00a0'}</p>
+  </div>
 }
 
 /* ── ChoiceCards — shared card-style single-choice widget ── */
@@ -199,38 +96,15 @@ export function ChoiceCards({ options, selected, onSelect }: {
       {options.map(opt => {
         const isSelected = selected === opt.id
         return (
-          <button
+          <ArchiveButton variant="secondary"
             type="button"
             key={opt.id}
             onClick={() => onSelect(opt.id)}
             className={`archive-choice${isSelected ? ' is-selected' : ''}`}
-            style={{
-              background:  isSelected ? 'rgba(200,68,6,0.07)' : 'transparent',
-              border:      `1px solid ${isSelected ? 'rgba(200,68,6,0.4)' : 'rgba(242,240,230,0.08)'}`,
-              borderLeft:  `3px solid ${isSelected ? 'var(--color-nebula)' : 'transparent'}`,
-              color:       isSelected ? 'var(--color-star)' : 'var(--color-star-dim)',
-              fontFamily:  'var(--font-body)', fontSize: 'var(--fs-body)', fontWeight: 500,
-              textAlign:   'left', padding: '1rem 1.1rem',
-              cursor:      'pointer', lineHeight: 1.45,
-              transition:  'all 0.15s ease',
-            }}
-            onMouseEnter={e => {
-              if (isSelected) return
-              const el = e.currentTarget as HTMLButtonElement
-              el.style.background  = 'rgba(242,240,230,0.03)'
-              el.style.borderColor = 'rgba(242,240,230,0.2)'
-              el.style.color       = 'var(--color-star)'
-            }}
-            onMouseLeave={e => {
-              if (isSelected) return
-              const el = e.currentTarget as HTMLButtonElement
-              el.style.background  = 'transparent'
-              el.style.borderColor = 'rgba(242,240,230,0.08)'
-              el.style.color       = 'var(--color-star-dim)'
-            }}
+            aria-pressed={isSelected}
           >
             {opt.text}
-          </button>
+          </ArchiveButton>
         )
       })}
     </div>

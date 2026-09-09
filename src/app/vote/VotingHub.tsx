@@ -104,7 +104,7 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
       />
 
       <ArchiveStatStrip items={[
-        { label: 'ACTIVE', value: votes.filter(v => v.is_active).length, color: 'var(--color-ok)' },
+        { label: 'ACTIVE', value: votes.filter(v => v.is_active).length },
         { label: 'CLOSED', value: votes.filter(v => !v.is_active).length },
         { label: 'TOTAL', value: votes.length },
       ]} />

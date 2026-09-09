@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -129,7 +130,7 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="archive-auth-form">
           <ArchiveField htmlFor="register-display-name" label="DISPLAY NAME">
-            <input
+            <ArchiveInput
               id="register-display-name"
               type="text"
               value={displayName}
@@ -140,7 +141,7 @@ export default function RegisterPage() {
           </ArchiveField>
 
           <ArchiveField htmlFor="register-password" label="ACCESS CODE">
-            <input
+            <ArchiveInput
               id="register-password"
               type="password"
               value={password}
@@ -150,7 +151,7 @@ export default function RegisterPage() {
           </ArchiveField>
 
           <ArchiveField htmlFor="register-password-confirm" label="CONFIRM ACCESS CODE">
-            <input
+            <ArchiveInput
               id="register-password-confirm"
               type="password"
               value={confirmPassword}

@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
@@ -9,7 +10,7 @@ import { resolveVariant, type ResolvedVariant } from '@/lib/onboarding-variants'
 import type { OnboardingVariantRow } from '@/types/database'
 import { FlameSlider, WorldChoiceCards, ConsoleChoiceCards, WORLD_OPTIONS, URGENCY_READINGS, URGENCY_END_LABELS, urgencyToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
-import { HudField } from '@/components/hud-field'
+import { ArchiveField } from '@/components/archive-field'
 import { ArchiveButton } from '@/components/archive-button'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 
@@ -618,14 +619,8 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
         <form className="onboarding-email-form" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-            <label style={{
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-              letterSpacing: '0.3em', color: 'var(--color-star-deep)',
-            }}>
-              YOUR EMAIL
-            </label>
-            <HudField style={{ width: '100%' }}>
-              <input
+            <ArchiveField htmlFor="join-email" label="YOUR EMAIL">
+              <ArchiveInput
                 ref={inputRef}
                 type="email"
                 required
@@ -635,7 +630,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
                 className="input-dark"
                 style={{ width: '100%' }}
               />
-            </HudField>
+            </ArchiveField>
           </div>
 
           {submitError && (

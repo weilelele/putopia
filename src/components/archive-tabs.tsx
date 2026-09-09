@@ -7,7 +7,7 @@ export function ArchiveTabs({ activeId, ariaLabel, containerRef, items, onChange
   return <div className="archive-tabs" aria-label={ariaLabel} ref={containerRef} role={mode === 'tabs' ? 'tablist' : 'group'}>
     {items.map(({ count, id, label, disabled, panelId }) => {
       const active = id === activeId
-      return <button key={id} id={`${prefix}-${id}`} type="button" disabled={disabled} role={mode === 'tabs' ? 'tab' : undefined}
+      return <button key={id} id={panelId ? `${panelId}-tab` : `${prefix}-${id}`} type="button" disabled={disabled} role={mode === 'tabs' ? 'tab' : undefined}
         aria-selected={mode === 'tabs' ? active : undefined} aria-pressed={mode === 'filter' ? active : undefined} aria-controls={panelId}
         tabIndex={mode === 'tabs' ? (active ? 0 : -1) : 0} className={`archive-tabs__tab${active ? ' is-active' : ''}`}
         onClick={() => onChange(id)} onKeyDown={event => {

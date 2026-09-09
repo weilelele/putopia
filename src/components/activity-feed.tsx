@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArchiveSheet } from '@/components/archive-sheet'
@@ -222,14 +223,9 @@ function VoteGroup({ casts }: { casts: ActivityEvent[] }) {
   return (
     <div>
       {/* Header is always visible — click anywhere to toggle expand/collapse */}
-      <button
+      <ArchiveButton type="submit" variant="secondary"
         onClick={() => setExpanded(v => !v)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-          padding: '0.75rem 1rem', background: expanded ? 'rgba(255,255,255,0.02)' : 'transparent',
-          border: 'none', borderBottom: '1px solid var(--bd-faint)', borderTop: 'none',
-          cursor: 'pointer', textAlign: 'left', outline: 'none',
-        }}
+        style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem 1rem', background: expanded ? 'rgba(255,255,255,0.02)' : 'transparent', borderBottom: '1px solid var(--bd-faint)', borderTop: 'none', cursor: 'pointer', textAlign: 'left', outline: 'none' }}
         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
         onMouseLeave={e => (e.currentTarget.style.background = expanded ? 'rgba(255,255,255,0.02)' : 'transparent')}
       >
@@ -250,7 +246,7 @@ function VoteGroup({ casts }: { casts: ActivityEvent[] }) {
             {expanded ? 'COLLAPSE ▴' : 'EXPAND ▾'}
           </span>
         </div>
-      </button>
+      </ArchiveButton>
 
       {expanded && casts.map(e => <FeedRow key={e.id} event={e} />)}
     </div>
@@ -267,14 +263,9 @@ function CollapseGroup({ events, accent, summary }: { events: ActivityEvent[]; a
   return (
     <div>
       {/* Header is always visible — click anywhere to toggle expand/collapse */}
-      <button
+      <ArchiveButton type="submit" variant="secondary"
         onClick={() => setExpanded(v => !v)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-          padding: '0.75rem 1rem', background: expanded ? 'rgba(227,82,5,0.03)' : 'transparent',
-          border: 'none', borderBottom: '1px solid var(--bd-faint)', borderTop: 'none',
-          cursor: 'pointer', textAlign: 'left', outline: 'none',
-        }}
+        style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem 1rem', background: expanded ? 'rgba(227,82,5,0.03)' : 'transparent', borderBottom: '1px solid var(--bd-faint)', borderTop: 'none', cursor: 'pointer', textAlign: 'left', outline: 'none' }}
         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(227,82,5,0.04)')}
         onMouseLeave={e => (e.currentTarget.style.background = expanded ? 'rgba(227,82,5,0.03)' : 'transparent')}
       >
@@ -295,7 +286,7 @@ function CollapseGroup({ events, accent, summary }: { events: ActivityEvent[]; a
             {expanded ? 'COLLAPSE ▴' : 'EXPAND ▾'}
           </span>
         </div>
-      </button>
+      </ArchiveButton>
 
       {expanded && events.map(e => <FeedRow key={e.id} event={e} />)}
     </div>

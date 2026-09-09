@@ -1,5 +1,7 @@
 "use client";
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import {
   useEffect,
   useRef,
@@ -452,7 +454,7 @@ function MaterialUploader({
         </div>
         {canUpload ? (
           <div className={styles.materialActions}>
-            <button
+            <ArchiveButton variant="ghost"
               aria-label={`为${title}添加本地素材`}
               className={styles.addMaterial}
               disabled={uploading || Boolean(linkingId)}
@@ -461,8 +463,8 @@ function MaterialUploader({
             >
               <Plus size={20} />
               {uploading ? "保存并上传中…" : "本地上传"}
-            </button>
-            <button
+            </ArchiveButton>
+            <ArchiveButton variant="secondary"
               aria-expanded={cloudOpen}
               className={styles.secondary}
               disabled={uploading || Boolean(linkingId)}
@@ -472,13 +474,13 @@ function MaterialUploader({
               <Cloud size={18} />
               Forge / Cosmo
               {cloudOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
+            </ArchiveButton>
           </div>
         ) : (
           <span className={styles.readOnly}>只读</span>
         )}
       </header>
-      <input
+      <ArchiveInput
         ref={inputRef}
         accept={accept}
         hidden
@@ -502,13 +504,13 @@ function MaterialUploader({
             </strong>
           </div>
           {canUpload && onForgeBindingChange ? (
-            <button
+            <ArchiveButton variant="ghost"
               aria-label="解除 Forge 素材池绑定"
               onClick={() => onForgeBindingChange(null)}
               type="button"
             >
               解除绑定
-            </button>
+            </ArchiveButton>
           ) : null}
         </div>
       ) : null}
@@ -534,20 +536,20 @@ function MaterialUploader({
           >
             <label>
               <span>搜索 Cosmo 频道</span>
-              <input
+              <ArchiveInput
                 onChange={(event) => setChannelQuery(event.target.value)}
                 placeholder="频道名称、频率或频道 ID"
                 value={channelQuery}
               />
             </label>
-            <button
+            <ArchiveButton variant="primary"
               className={styles.secondary}
               disabled={cloudLoading}
               type="submit"
             >
               <Search size={17} />
               搜索
-            </button>
+            </ArchiveButton>
           </form>
           {cloudLoading ? (
             <p className={styles.cloudStatus}>正在读取 Forge / Cosmo…</p>
@@ -562,20 +564,20 @@ function MaterialUploader({
               <div className={styles.scrollRegionHeader}>
                 <span>频道结果</span>
                 <div className={styles.scrollControls}>
-                  <button
+                  <ArchiveButton variant="ghost"
                     aria-label="向左浏览频道"
                     onClick={() => scrollHorizontal(channelListRef, -1)}
                     type="button"
                   >
                     <ArrowLeft size={16} />
-                  </button>
-                  <button
+                  </ArchiveButton>
+                  <ArchiveButton variant="ghost"
                     aria-label="向右浏览频道"
                     onClick={() => scrollHorizontal(channelListRef, 1)}
                     type="button"
                   >
                     <ChevronRight size={16} />
-                  </button>
+                  </ArchiveButton>
                 </div>
               </div>
               <div
@@ -584,7 +586,7 @@ function MaterialUploader({
                 ref={channelListRef}
               >
                 {cosmoChannels.map((channel) => (
-                  <button
+                  <ArchiveButton variant="secondary"
                     data-active={selectedCosmoChannelId === channel.id}
                     key={channel.id}
                     onClick={() => {
@@ -602,7 +604,7 @@ function MaterialUploader({
                     </span>
                     <strong>{channel.name || "未命名频道"}</strong>
                     <small>{channel.id}</small>
-                  </button>
+                  </ArchiveButton>
                 ))}
               </div>
             </>
@@ -617,20 +619,20 @@ function MaterialUploader({
                 <div className={styles.scrollMeta}>
                   <small>{selectedCosmoChannel.id}</small>
                   <div className={styles.scrollControls}>
-                    <button
+                    <ArchiveButton variant="ghost"
                       aria-label="向左浏览波段"
                       onClick={() => scrollHorizontal(bandListRef, -1)}
                       type="button"
                     >
                       <ArrowLeft size={16} />
-                    </button>
-                    <button
+                    </ArchiveButton>
+                    <ArchiveButton variant="ghost"
                       aria-label="向右浏览波段"
                       onClick={() => scrollHorizontal(bandListRef, 1)}
                       type="button"
                     >
                       <ChevronRight size={16} />
-                    </button>
+                    </ArchiveButton>
                   </div>
                 </div>
               </header>
@@ -643,7 +645,7 @@ function MaterialUploader({
                         ? band.video_count
                         : band.image_count + band.video_count;
                   return (
-                    <button
+                    <ArchiveButton variant="secondary"
                       data-active={selectedCosmoBandId === band.id}
                       disabled={!availableCount || cloudLoading}
                       key={band.id}
@@ -656,7 +658,7 @@ function MaterialUploader({
                       <span>
                         {band.image_count} 图片 · {band.video_count} 视频
                       </span>
-                    </button>
+                    </ArchiveButton>
                   );
                 })}
               </div>
@@ -669,7 +671,7 @@ function MaterialUploader({
                 <span>选择 Program 后，仅收窄视频；起始图片仍来自所属 Band。</span>
               </header>
               <div>
-                <button
+                <ArchiveButton variant="secondary"
                   data-active={!selectedCosmoProgramId}
                   onClick={() =>
                     void loadCosmoAssets(
@@ -681,9 +683,9 @@ function MaterialUploader({
                 >
                   <strong>整个 Band</strong>
                   <span>{selectedCosmoBand.video_count} 视频</span>
-                </button>
+                </ArchiveButton>
                 {selectedCosmoBand.programs.map((program) => (
-                  <button
+                  <ArchiveButton variant="secondary"
                     data-active={selectedCosmoProgramId === program.id}
                     key={program.id}
                     onClick={() =>
@@ -697,7 +699,7 @@ function MaterialUploader({
                   >
                     <strong>{program.name || "未命名 Program"}</strong>
                     <span>{program.video_count} 视频</span>
-                  </button>
+                  </ArchiveButton>
                 ))}
               </div>
             </section>
@@ -710,7 +712,7 @@ function MaterialUploader({
                 </strong>
                 <span>下次打开素材库会直接进入这里，无需重新搜索。</span>
               </div>
-              <button
+              <ArchiveButton variant="secondary"
                 className={styles.secondary}
                 onClick={bindCurrentForgePool}
                 type="button"
@@ -719,7 +721,7 @@ function MaterialUploader({
                 {bindingScope === "shot" && selectedCosmoProgram
                   ? "绑定此 Program"
                   : "绑定此 Band"}
-              </button>
+              </ArchiveButton>
             </div>
           ) : null}
           {!cloudLoading && selectedCosmoBandId && !cloudAssets.length ? (
@@ -740,7 +742,7 @@ function MaterialUploader({
                   linkedAsset.source_asset_id === asset.id,
               );
               return (
-                <button
+                <ArchiveButton variant="secondary"
                   className={styles.cloudAssetCard}
                   disabled={Boolean(linkingId) || alreadyLinked}
                   key={`${asset.provider}:${asset.band_id}:${asset.id}`}
@@ -775,7 +777,7 @@ function MaterialUploader({
                         ? "关联中…"
                         : `关联到：${targetLabel}`}
                   </small>
-                </button>
+                </ArchiveButton>
               );
             })}
           </div>
@@ -808,7 +810,7 @@ function MaterialUploader({
                 {formatDate(asset.created_at)}
               </span>
               {canUpload ? (
-                <button
+                <ArchiveButton variant="ghost"
                   aria-label={`${asset.source_type === "cloud" ? "移除关联" : "删除素材"} ${asset.file_name}`}
                   className={styles.removeAsset}
                   disabled={deletingId === asset.id}
@@ -821,13 +823,13 @@ function MaterialUploader({
                     : asset.source_type === "cloud"
                       ? "移除关联"
                       : "删除素材"}
-                </button>
+                </ArchiveButton>
               ) : null}
             </div>
           </article>
         ))}
         {!assets.length && canUpload ? (
-          <button
+          <ArchiveButton variant="secondary"
             className={styles.emptyAsset}
             onClick={() => inputRef.current?.click()}
             type="button"
@@ -835,7 +837,7 @@ function MaterialUploader({
             <Plus size={24} />
             <strong>添加第一份素材</strong>
             <span>优先从 Forge / Cosmo 关联，也可以从本地上传。</span>
-          </button>
+          </ArchiveButton>
         ) : null}
         {!assets.length && !canUpload ? (
           <div className={styles.emptyAsset}>
@@ -909,7 +911,7 @@ function EventStructureEditor({
           </span>
         </div>
         {editable ? (
-          <button
+          <ArchiveButton variant="secondary"
             className={styles.secondary}
             onClick={() =>
               onChange((current) => [
@@ -921,7 +923,7 @@ function EventStructureEditor({
           >
             <Plus size={16} />
             添加时段
-          </button>
+          </ArchiveButton>
         ) : null}
       </header>
       <div aria-label="时段列表，可左右滑动浏览" className={styles.eventBoard}>
@@ -929,7 +931,7 @@ function EventStructureEditor({
           <article className={styles.timeLane} key={slot.id}>
             <header>
               <Clock3 size={16} />
-              <input
+              <ArchiveInput
                 disabled={!editable}
                 onChange={(change) =>
                   onChange((current) =>
@@ -943,7 +945,7 @@ function EventStructureEditor({
                 value={slot.name}
               />
               {editable ? (
-                <button
+                <ArchiveButton variant="ghost"
                   aria-label={`删除时段 ${slot.name}`}
                   onClick={() => {
                     const removedIds = slot.events.flatMap((event) => [
@@ -961,13 +963,13 @@ function EventStructureEditor({
                   type="button"
                 >
                   <Trash2 size={15} />
-                </button>
+                </ArchiveButton>
               ) : null}
             </header>
             {slot.events.map((event) => (
               <div className={styles.eventGroup} key={event.id}>
                 <div className={styles.eventRow}>
-                  <button
+                  <ArchiveButton variant="secondary"
                     data-active={selectedEventId === event.id}
                     onClick={() => onSelect(event.id)}
                     type="button"
@@ -977,9 +979,9 @@ function EventStructureEditor({
                       {event.description || "尚未填写事件说明"} ·{" "}
                       {event.subEvents.length} 个子事件
                     </span>
-                  </button>
+                  </ArchiveButton>
                   {editable ? (
-                    <button
+                    <ArchiveButton variant="ghost"
                       aria-label={`删除事件 ${event.name}`}
                       onClick={() => {
                         onChange(
@@ -1007,23 +1009,23 @@ function EventStructureEditor({
                       type="button"
                     >
                       <Trash2 size={15} />
-                    </button>
+                    </ArchiveButton>
                   ) : null}
                 </div>
                 {event.subEvents.length ? (
                   <div className={styles.subEventList}>
                     {event.subEvents.map((subEvent) => (
                       <div className={styles.subEventRow} key={subEvent.id}>
-                        <button
+                        <ArchiveButton variant="secondary"
                           data-active={selectedEventId === subEvent.id}
                           onClick={() => onSelect(subEvent.id)}
                           type="button"
                         >
                           <span>子事件</span>
                           <strong>{subEvent.name}</strong>
-                        </button>
+                        </ArchiveButton>
                         {editable ? (
-                          <button
+                          <ArchiveButton variant="ghost"
                             aria-label={`删除子事件 ${subEvent.name}`}
                             onClick={() => {
                               onChange(
@@ -1049,14 +1051,14 @@ function EventStructureEditor({
                             type="button"
                           >
                             <Trash2 size={14} />
-                          </button>
+                          </ArchiveButton>
                         ) : null}
                       </div>
                     ))}
                   </div>
                 ) : null}
                 {editable ? (
-                  <button
+                  <ArchiveButton variant="secondary"
                     className={styles.addSubEvent}
                     onClick={() => {
                       const id = crypto.randomUUID();
@@ -1084,12 +1086,12 @@ function EventStructureEditor({
                   >
                     <Plus size={14} />
                     添加子事件
-                  </button>
+                  </ArchiveButton>
                 ) : null}
               </div>
             ))}
             {editable ? (
-              <button
+              <ArchiveButton variant="secondary"
                 className={styles.addEvent}
                 onClick={() =>
                   onChange(
@@ -1117,7 +1119,7 @@ function EventStructureEditor({
               >
                 <Plus size={15} />
                 添加父事件
-              </button>
+              </ArchiveButton>
             ) : null}
           </article>
         ))}
@@ -1465,14 +1467,14 @@ export function WorldflowClient({
               每个人都可以从世界设定开始创建；architect 同时拥有创作和审核能力。
             </p>
           </div>
-          <button
+          <ArchiveButton variant="primary"
             className={styles.primary}
             onClick={() => setCreating(true)}
             type="button"
           >
             <Plus size={18} />
             创建世界
-          </button>
+          </ArchiveButton>
         </header>
         <section className={styles.lifecycle}>
           <div>
@@ -1487,7 +1489,7 @@ export function WorldflowClient({
         </section>
         <section className={styles.worldList}>
           {worlds.map((world) => (
-            <button
+            <ArchiveButton variant="secondary"
               className={styles.worldCard}
               key={world.id}
               onClick={() => openWorld(world)}
@@ -1507,21 +1509,21 @@ export function WorldflowClient({
                   {formatDate(world.updated_at)} <ChevronRight size={15} />
                 </span>
               </footer>
-            </button>
+            </ArchiveButton>
           ))}
           {!worlds.length ? (
             <div className={styles.emptyWorld}>
               <Layers3 size={28} />
               <strong>还没有世界</strong>
               <span>创建第一个世界，从 Step 1 开始完整跑通工作流。</span>
-              <button
+              <ArchiveButton variant="primary"
                 className={styles.primary}
                 onClick={() => setCreating(true)}
                 type="button"
               >
                 <Plus size={18} />
                 创建世界
-              </button>
+              </ArchiveButton>
             </div>
           ) : null}
         </section>
@@ -1547,13 +1549,13 @@ export function WorldflowClient({
                   <span>NEW WORLD</span>
                   <h2>创建一个世界</h2>
                 </div>
-                <button onClick={() => setCreating(false)} type="button">
+                <ArchiveButton variant="secondary" onClick={() => setCreating(false)} type="button">
                   关闭
-                </button>
+                </ArchiveButton>
               </header>
               <label>
                 世界名称
-                <input
+                <ArchiveInput
                   autoFocus
                   maxLength={120}
                   onChange={(event) => setNewName(event.target.value)}
@@ -1563,20 +1565,20 @@ export function WorldflowClient({
               </label>
               <label>
                 一句话描述
-                <textarea
+                <ArchiveTextarea
                   maxLength={2000}
                   onChange={(event) => setNewDescription(event.target.value)}
                   value={newDescription}
                 />
               </label>
               {message ? <p className={styles.error}>{message}</p> : null}
-              <button
+              <ArchiveButton variant="primary"
                 className={styles.primary}
                 disabled={pending}
                 type="submit"
               >
                 {pending ? "创建中…" : "创建并进入 Step 1"}
-              </button>
+              </ArchiveButton>
             </form>
           </div>
         ) : null}
@@ -1704,7 +1706,7 @@ export function WorldflowClient({
   return (
     <main className={styles.page}>
       <header className={styles.workspaceHeader}>
-        <button
+        <ArchiveButton variant="ghost"
           className={styles.back}
           onClick={() => {
             setSelectedId(null);
@@ -1714,7 +1716,7 @@ export function WorldflowClient({
         >
           <ArrowLeft size={18} />
           所有世界
-        </button>
+        </ArchiveButton>
         <div>
           <span>WORLD / {selectedSource.id.slice(0, 8).toUpperCase()}</span>
           <h1>{selectedSource.name}</h1>
@@ -1728,7 +1730,7 @@ export function WorldflowClient({
             {STATUS[stepStatus]}
           </span>
           {isOwner ? (
-            <button
+            <ArchiveButton variant="secondary"
               className={styles.secondary}
               disabled={pending}
               onClick={save}
@@ -1736,7 +1738,7 @@ export function WorldflowClient({
             >
               <Save size={16} />
               保存
-            </button>
+            </ArchiveButton>
           ) : null}
         </div>
       </header>
@@ -1747,7 +1749,7 @@ export function WorldflowClient({
             基础构建 <span>通常一次确认</span>
           </header>
           {STEPS.slice(0, 3).map((step, index) => (
-            <button
+            <ArchiveButton variant="secondary"
               data-active={activeStep === index + 1}
               key={step[0]}
               onClick={() => {
@@ -1759,7 +1761,7 @@ export function WorldflowClient({
               <span>0{index + 1}</span>
               <strong>{step[0]}</strong>
               <small>{STATUS[statusOf(state, index + 1)]}</small>
-            </button>
+            </ArchiveButton>
           ))}
         </div>
         <div>
@@ -1767,7 +1769,7 @@ export function WorldflowClient({
             持续生产 <span>统一工作台</span>
           </header>
           {STEPS.slice(3, 4).map((step, index) => (
-            <button
+            <ArchiveButton variant="secondary"
               data-active={activeStep === index + 4}
               key={step[0]}
               onClick={() => {
@@ -1779,9 +1781,9 @@ export function WorldflowClient({
               <span>0{index + 4}</span>
               <strong>{step[0]}</strong>
               <small>{STATUS[statusOf(state, index + 4)]}</small>
-            </button>
+            </ArchiveButton>
           ))}
-          <button
+          <ArchiveButton variant="secondary"
             data-active={activeStep >= 5}
             disabled={selectedSource.current_step < 5}
             onClick={() => {
@@ -1797,7 +1799,7 @@ export function WorldflowClient({
                 ? "完成角色设定后解锁"
                 : `已解锁至 STEP ${selectedSource.current_step}`}
             </small>
-          </button>
+          </ArchiveButton>
         </div>
       </nav>
 
@@ -1823,7 +1825,7 @@ export function WorldflowClient({
             </span>
           </p>
         </div>
-        <button
+        <ArchiveButton variant="secondary"
           className={styles.secondary}
           onClick={() => {
             setSelectedId(null);
@@ -1834,7 +1836,7 @@ export function WorldflowClient({
         >
           <Plus size={16} />
           创建我的世界
-        </button>
+        </ArchiveButton>
       </section>
 
       <div className={styles.stepTitle}>
@@ -1861,7 +1863,7 @@ export function WorldflowClient({
           {[5, 6, 7].map((step) => {
             const unlocked = selectedSource.current_step >= step;
             return (
-              <button
+              <ArchiveButton variant="secondary"
                 data-active={activeStep === step}
                 data-unlocked={unlocked}
                 disabled={!unlocked}
@@ -1879,7 +1881,7 @@ export function WorldflowClient({
                     ? STATUS[statusOf(state, step)]
                     : "完成前一里程碑审核后解锁"}
                 </small>
-              </button>
+              </ArchiveButton>
             );
           })}
         </section>
@@ -1893,20 +1895,20 @@ export function WorldflowClient({
               <h3>选择镜头</h3>
             </div>
             {editable ? (
-              <button
+              <ArchiveButton variant="secondary"
                 className={styles.secondary}
                 onClick={addShot}
                 type="button"
               >
                 <Plus size={16} />
                 添加镜头
-              </button>
+              </ArchiveButton>
             ) : null}
           </header>
           <div>
             {state.shots.map((shot) => (
               <article className={styles.shotOption} key={shot.id}>
-                <button
+                <ArchiveButton variant="secondary"
                   data-active={activeShot?.id === shot.id}
                   onClick={() => {
                     setActiveShotId(shot.id);
@@ -1920,16 +1922,16 @@ export function WorldflowClient({
                     {state.eventSystems[shot.id]?.timeSlots.length ?? 0} 个时段
                     · V{state.eventSystems[shot.id]?.version ?? 1}
                   </span>
-                </button>
+                </ArchiveButton>
                 {editable && state.shots.length > 1 ? (
-                  <button
+                  <ArchiveButton variant="ghost"
                     aria-label={`删除镜头 ${shot.name}`}
                     className={styles.deleteShot}
                     onClick={() => deleteShot(shot.id)}
                     type="button"
                   >
                     <Trash2 size={15} />
-                  </button>
+                  </ArchiveButton>
                 ) : null}
               </article>
             ))}
@@ -1949,7 +1951,7 @@ export function WorldflowClient({
                   : "需要至少 1 张起始图片"}
               </small>
             </div>
-            <button
+            <ArchiveButton variant="secondary"
               aria-expanded={shotSetupExpanded}
               className={styles.secondary}
               onClick={() => setShotSetupExpanded((expanded) => !expanded)}
@@ -1961,13 +1963,13 @@ export function WorldflowClient({
                 <ChevronDown size={16} />
               )}
               {shotSetupExpanded ? "收起镜头基础" : "编辑镜头基础"}
-            </button>
+            </ArchiveButton>
           </header>
           {shotSetupExpanded ? (
             <div>
               <label>
                 镜头名称
-                <input
+                <ArchiveInput
                   disabled={!productionEditable}
                   onChange={(event) =>
                     updateState((current) => ({
@@ -1984,7 +1986,7 @@ export function WorldflowClient({
               </label>
               <label>
                 镜头描述
-                <textarea
+                <ArchiveTextarea
                   disabled={!productionEditable}
                   onChange={(event) =>
                     updateState((current) => ({
@@ -2036,7 +2038,7 @@ export function WorldflowClient({
           <div className={styles.fields}>
             <label>
               世界设定
-              <textarea
+              <ArchiveTextarea
                 disabled={!editable}
                 onChange={(event) =>
                   updateState((current) => ({
@@ -2049,7 +2051,7 @@ export function WorldflowClient({
             </label>
             <label>
               世界运行规律
-              <textarea
+              <ArchiveTextarea
                 disabled={!editable}
                 onChange={(event) =>
                   updateState((current) => ({
@@ -2062,7 +2064,7 @@ export function WorldflowClient({
             </label>
             <label>
               核心冲突
-              <textarea
+              <ArchiveTextarea
                 disabled={!editable}
                 onChange={(event) =>
                   updateState((current) => ({
@@ -2098,7 +2100,7 @@ export function WorldflowClient({
           <div className={styles.fields}>
             <label>
               风格方向说明
-              <textarea
+              <ArchiveTextarea
                 disabled={!editable}
                 onChange={(event) =>
                   updateState((current) => ({
@@ -2130,7 +2132,7 @@ export function WorldflowClient({
                 <article className={styles.assetRecord} key={shot.id}>
                   <div className={styles.recordFields}>
                     <ImageIcon size={18} />
-                    <input
+                    <ArchiveInput
                       disabled={!editable}
                       onChange={(event) =>
                         updateState((current) => ({
@@ -2144,7 +2146,7 @@ export function WorldflowClient({
                       }
                       value={shot.name}
                     />
-                    <textarea
+                    <ArchiveTextarea
                       disabled={!editable}
                       onChange={(event) =>
                         updateState((current) => ({
@@ -2159,13 +2161,13 @@ export function WorldflowClient({
                       value={shot.description}
                     />
                     {editable && state.shots.length > 1 ? (
-                      <button
+                      <ArchiveButton variant="ghost"
                         aria-label="删除镜头"
                         onClick={() => deleteShot(shot.id)}
                         type="button"
                       >
                         <Trash2 size={16} />
-                      </button>
+                      </ArchiveButton>
                     ) : null}
                   </div>
                   <MaterialUploader
@@ -2197,14 +2199,14 @@ export function WorldflowClient({
               ))}
             </div>
             {editable ? (
-              <button
+              <ArchiveButton variant="secondary"
                 className={styles.dashed}
                 onClick={addShot}
                 type="button"
               >
                 <Plus size={18} />
                 添加镜头
-              </button>
+              </ArchiveButton>
             ) : null}
           </div>
         ) : null}
@@ -2219,7 +2221,7 @@ export function WorldflowClient({
                 </span>
               </p>
               {editable ? (
-                <button
+                <ArchiveButton variant="secondary"
                   className={styles.secondary}
                   onClick={() =>
                     updateState((current) => ({
@@ -2236,7 +2238,7 @@ export function WorldflowClient({
                   type="button"
                 >
                   {stepStatus === "skipped" ? "恢复角色设定" : "跳过角色设定"}
-                </button>
+                </ArchiveButton>
               ) : null}
             </div>
             {stepStatus !== "skipped" ? (
@@ -2248,7 +2250,7 @@ export function WorldflowClient({
                         <UserRound size={18} />
                         <strong>{character.name || "未命名角色"}</strong>
                         {editable ? (
-                          <button
+                          <ArchiveButton variant="ghost"
                             aria-label={`删除角色 ${character.name || "未命名角色"}`}
                             onClick={() =>
                               updateState((current) => ({
@@ -2261,13 +2263,13 @@ export function WorldflowClient({
                             type="button"
                           >
                             <Trash2 size={16} />
-                          </button>
+                          </ArchiveButton>
                         ) : null}
                       </div>
                       <div className={styles.characterFields}>
                         <label>
                           角色名称
-                          <input
+                          <ArchiveInput
                             disabled={!editable}
                             onChange={(event) =>
                               updateState((current) => ({
@@ -2285,7 +2287,7 @@ export function WorldflowClient({
                         </label>
                         <label>
                           角色描述
-                          <textarea
+                          <ArchiveTextarea
                             disabled={!editable}
                             onChange={(event) =>
                               updateState((current) => ({
@@ -2306,7 +2308,7 @@ export function WorldflowClient({
                         </label>
                         <label>
                           出现环境
-                          <textarea
+                          <ArchiveTextarea
                             disabled={!editable}
                             onChange={(event) =>
                               updateState((current) => ({
@@ -2327,7 +2329,7 @@ export function WorldflowClient({
                         </label>
                         <label>
                           行为动机
-                          <textarea
+                          <ArchiveTextarea
                             disabled={!editable}
                             onChange={(event) =>
                               updateState((current) => ({
@@ -2367,7 +2369,7 @@ export function WorldflowClient({
                   ))}
                 </div>
                 {editable ? (
-                  <button
+                  <ArchiveButton variant="secondary"
                     className={styles.dashed}
                     onClick={() =>
                       updateState((current) => ({
@@ -2388,7 +2390,7 @@ export function WorldflowClient({
                   >
                     <Plus size={18} />
                     添加角色
-                  </button>
+                  </ArchiveButton>
                 ) : null}
               </>
             ) : null}
@@ -2435,7 +2437,7 @@ export function WorldflowClient({
                 </div>
                 <label>
                   {eventSelection?.isSubEvent ? "子事件名称" : "父事件名称"}
-                  <input
+                  <ArchiveInput
                     disabled={!editable}
                     onChange={(change) =>
                       updateEventSubject(selectedEvent.id, {
@@ -2447,7 +2449,7 @@ export function WorldflowClient({
                 </label>
                 <label>
                   {eventSelection?.isSubEvent ? "子事件说明" : "父事件说明"}
-                  <textarea
+                  <ArchiveTextarea
                     disabled={!editable}
                     onChange={(change) =>
                       updateEventSubject(selectedEvent.id, {
@@ -2458,7 +2460,7 @@ export function WorldflowClient({
                   />
                 </label>
                 {editable && !eventSelection?.isSubEvent ? (
-                  <button
+                  <ArchiveButton variant="secondary"
                     className={styles.dashed}
                     onClick={() => {
                       const id = crypto.randomUUID();
@@ -2486,7 +2488,7 @@ export function WorldflowClient({
                   >
                     <Plus size={16} />
                     在“{selectedParentEvent.name}”内添加子事件
-                  </button>
+                  </ArchiveButton>
                 ) : null}
                 <MaterialUploader
                   beforeUpload={saveBeforeMaterialUpload}
@@ -2530,7 +2532,7 @@ export function WorldflowClient({
                           : `已准备 ${3 + (state.characters.length ? 1 : 0) + 1 + (eventSelection?.isSubEvent ? 1 : 0)} 层生成信息，默认保持收起。`}
                       </span>
                     </div>
-                    <button
+                    <ArchiveButton variant="secondary"
                       aria-expanded={contextExpanded}
                       className={styles.secondary}
                       onClick={() =>
@@ -2544,7 +2546,7 @@ export function WorldflowClient({
                         <ChevronDown size={16} />
                       )}
                       {contextExpanded ? "收起背景" : "查看生成背景"}
-                    </button>
+                    </ArchiveButton>
                   </header>
                   {contextExpanded ? (
                     <div className={styles.contextLayers}>
@@ -2754,7 +2756,7 @@ export function WorldflowClient({
                             · {item.asset.file_name}
                           </p>
                           {isOwner ? (
-                            <button
+                            <ArchiveButton variant="ghost"
                               className={styles.removeSequenceAsset}
                               disabled={removingAssetId === item.asset.id}
                               onClick={() =>
@@ -2766,7 +2768,7 @@ export function WorldflowClient({
                               {removingAssetId === item.asset.id
                                 ? "移除中…"
                                 : "从编排移除"}
-                            </button>
+                            </ArchiveButton>
                           ) : null}
                         </div>
                       </li>
@@ -2795,7 +2797,7 @@ export function WorldflowClient({
         </span>
         <div>
           {isOwner && editable && undoSnapshot ? (
-            <button
+            <ArchiveButton variant="secondary"
               className={styles.secondary}
               disabled={pending}
               onClick={undoStructureChange}
@@ -2803,20 +2805,20 @@ export function WorldflowClient({
             >
               <Undo2 size={16} />
               撤回：{undoSnapshot.label}
-            </button>
+            </ArchiveButton>
           ) : null}
           {isOwner && stepStatus === "approved" && activeStep >= 5 ? (
-            <button
+            <ArchiveButton variant="secondary"
               className={styles.secondary}
               onClick={beginNewIteration}
               type="button"
             >
               重新提交本里程碑
-            </button>
+            </ArchiveButton>
           ) : null}
           {isOwner && editable ? (
             <>
-              <button
+              <ArchiveButton variant="secondary"
                 className={styles.secondary}
                 disabled={pending}
                 onClick={save}
@@ -2824,9 +2826,9 @@ export function WorldflowClient({
               >
                 <Save size={16} />
                 保存草稿
-              </button>
+              </ArchiveButton>
               {canSubmitMilestone ? (
-                <button
+                <ArchiveButton variant="primary"
                   className={styles.primary}
                   disabled={pending}
                   onClick={submit}
@@ -2834,21 +2836,21 @@ export function WorldflowClient({
                 >
                   <Upload size={16} />
                   提交 STEP {activeStep} 审核
-                </button>
+                </ArchiveButton>
               ) : null}
             </>
           ) : null}
           {isArchitect && stepStatus === "review" ? (
             <>
-              <button
+              <ArchiveButton variant="secondary"
                 className={styles.secondary}
                 disabled={pending}
                 onClick={() => review("changes")}
                 type="button"
               >
                 退回修改
-              </button>
-              <button
+              </ArchiveButton>
+              <ArchiveButton variant="primary"
                 className={styles.primary}
                 disabled={pending}
                 onClick={() => review("approve")}
@@ -2856,7 +2858,7 @@ export function WorldflowClient({
               >
                 <Check size={16} />
                 审核通过
-              </button>
+              </ArchiveButton>
             </>
           ) : null}
         </div>

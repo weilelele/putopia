@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
+import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { Camera, LogOut } from 'lucide-react'
 import { getMyProfile, updateProfile, uploadAvatar } from '@/lib/actions/profile'
@@ -31,7 +32,7 @@ function getInitials(name: string): string {
 const BIO_LIMIT = 240
 function FieldGroup({ children, cols = 1 }: { children: React.ReactNode; cols?: number }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '12px', marginBottom: '12px' }}>
+    <div className="profile-field-group" style={{ '--field-columns': cols } as CSSProperties}>
       {children}
     </div>
   )
@@ -269,11 +270,11 @@ export default function ProfilePage() {
           </div>
           {canEdit && (
             <>
-              <div onClick={() => fileRef.current?.click()}
-                   style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '24px', height: '24px', borderRadius: '50%', background: '#151B3A', border: '1px solid #C84406', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C84406' }}>
-                <Camera size={11} />
-              </div>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
+              <ArchiveButton variant="secondary" aria-label="Change profile photo" onClick={() => fileRef.current?.click()}
+                   style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '44px', height: '44px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#C84406' }}>
+                <Camera size={20} />
+              </ArchiveButton>
+              <ArchiveInput ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
             </>
           )}
         </div>
@@ -333,15 +334,15 @@ export default function ProfilePage() {
 
         <FieldGroup cols={2}>
           <ArchiveField htmlFor="profile-display-name" label="DISPLAY NAME">
-            <input id="profile-display-name" value={form.display_name} onChange={(e) => setF('display_name', e.target.value)} />
+            <ArchiveInput id="profile-display-name" value={form.display_name} onChange={(e) => setF('display_name', e.target.value)} />
           </ArchiveField>
           <ArchiveField htmlFor="profile-location" label="LOCATION">
-            <input id="profile-location" value={form.location} onChange={(e) => setF('location', e.target.value)} placeholder="City, Country" />
+            <ArchiveInput id="profile-location" value={form.location} onChange={(e) => setF('location', e.target.value)} placeholder="City, Country" />
           </ArchiveField>
         </FieldGroup>
 
         <ArchiveField htmlFor="profile-bio" label={`BIO (${form.bio.length} / ${BIO_LIMIT})`}>
-          <textarea
+          <ArchiveTextarea
             id="profile-bio"
             value={form.bio}
             maxLength={BIO_LIMIT}
@@ -353,13 +354,13 @@ export default function ProfilePage() {
         <ArchiveSectionLabel className="profile-social-label">SOCIAL LINKS</ArchiveSectionLabel>
         <FieldGroup>
           <ArchiveField htmlFor="profile-x" label="X / TWITTER (FULL URL)">
-            <input id="profile-x" value={form.social_x} onChange={(e) => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
+            <ArchiveInput id="profile-x" value={form.social_x} onChange={(e) => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
           </ArchiveField>
           <ArchiveField htmlFor="profile-instagram" label="INSTAGRAM (FULL URL)">
-            <input id="profile-instagram" value={form.social_instagram} onChange={(e) => setF('social_instagram', e.target.value)} placeholder="https://instagram.com/yourhandle" />
+            <ArchiveInput id="profile-instagram" value={form.social_instagram} onChange={(e) => setF('social_instagram', e.target.value)} placeholder="https://instagram.com/yourhandle" />
           </ArchiveField>
           <ArchiveField htmlFor="profile-linkedin" label="LINKEDIN (FULL URL)">
-            <input id="profile-linkedin" value={form.social_linkedin} onChange={(e) => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
+            <ArchiveInput id="profile-linkedin" value={form.social_linkedin} onChange={(e) => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
           </ArchiveField>
         </FieldGroup>
 

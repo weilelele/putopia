@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native'
 import { absoluteOfflineMediaUrl } from './offline'
 import type {
@@ -163,6 +164,8 @@ function DashboardView({ snapshot, media, select }: {
   media: OfflineMediaMap
   select: (tab: OfflineTab, detail: DetailSelection) => void
 }) {
+  const { width } = useWindowDimensions()
+  const thumbnail = width < 360 ? styles.updateImageSmall : styles.updateImage
   const fallbackUpdates = [
     ...snapshot.intel.map(item => ({ id: `intel-${item.id}`, title: item.title, date: item.timestamp, category: 'Intel', image: item.images[0], tab: 'intel' as const, detail: { kind: 'intel' as const, id: item.id } })),
     ...snapshot.devices.map(item => ({ id: `device-${item.id}`, title: item.name, date: item.updated_at, category: 'Device update', image: item.image_path, tab: 'devices' as const, detail: { kind: 'device' as const, id: item.id } })),
@@ -179,9 +182,9 @@ function DashboardView({ snapshot, media, select }: {
     <SectionTitle>UPDATES</SectionTitle>
     <Text style={styles.meta}>Latest {updates.length} saved updates</Text>
     {updates.length ? updates.map(item => <View key={item.id} style={styles.updateRow}>
-      <Text style={styles.updateDate}>{item.date.slice(5, 10).replace('-', '/')}</Text>
+      <View style={styles.updateTime}><View style={styles.updateNode} /><Text style={styles.updateDate}>{item.date.slice(5, 10).replace('-', '/')}</Text></View>
       <Pressable accessibilityRole="button" accessibilityLabel={item.title} onPress={() => select(item.tab, item.detail)} style={styles.updateContent}>
-        <CachedImage uri={item.image} media={media} style={styles.updateImage} />
+        <CachedImage uri={item.image} media={media} style={thumbnail} />
         <View style={{ flex: 1 }}><Text style={styles.meta}>{item.category}</Text><Text style={styles.cardTitle}>{item.title}</Text></View>
       </Pressable>
     </View>) : <EmptyState>No updates were saved. Reconnect to load the latest activity.</EmptyState>}
@@ -514,9 +517,12 @@ const styles = StyleSheet.create({
   pageTitle: { minHeight: 44, color: WHITE, fontFamily: 'CourierPrimeBold', fontSize: 24, fontWeight: '700' },
   navMarker: { position: 'absolute', top: 0, width: 24, height: 2, backgroundColor: ORANGE },
   updateRow: { flexDirection: 'row', gap: 12, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: BORDER },
+  updateTime: { width: 36, borderLeftWidth: 1, borderLeftColor: 'rgba(227,82,5,0.62)' },
+  updateNode: { width: 7, height: 7, borderRadius: 4, backgroundColor: ORANGE, marginLeft: -4, marginBottom: 8 },
   updateDate: { width: 36, color: DIM, fontFamily: 'CourierPrime', fontSize: 12 },
   updateContent: { flex: 1, flexDirection: 'row', gap: 12 },
-  updateImage: { width: 96, height: 64 },
+  updateImage: { width: 120, height: 80 },
+  updateImageSmall: { width: 96, height: 64 },
   root: { ...StyleSheet.absoluteFillObject, backgroundColor: DEEP },
   safeArea: { flex: 1, backgroundColor: DEEP },
   topBar: { minHeight: 62, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: BORDER },
@@ -547,7 +553,7 @@ const styles = StyleSheet.create({
   cardImage: { width: 92, minHeight: 94, backgroundColor: PANEL },
   imagePlaceholder: { borderRightWidth: 1, borderRightColor: BORDER },
   meta: { color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 12, fontWeight: '700' },
-  cardTitle: { marginTop: 6, color: WHITE, fontFamily: 'CourierPrimeBold', fontSize: 15, lineHeight: 19, fontWeight: '700' },
+  cardTitle: { marginTop: 6, color: WHITE, fontFamily: 'CourierPrimeBold', fontSize: 14, lineHeight: 20, fontWeight: '700' },
   cardBody: { marginTop: 7, color: DIM, fontFamily: 'CourierPrime', fontSize: 13, lineHeight: 18 },
   chevron: { alignSelf: 'center', paddingRight: 12, color: ORANGE, fontFamily: 'CourierPrime', fontSize: 28 },
   emptyState: { marginTop: 10, padding: 18, borderWidth: 1, borderColor: BORDER, backgroundColor: PANEL },
@@ -557,11 +563,11 @@ const styles = StyleSheet.create({
   functionRow: { minHeight: 50, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: BORDER },
   functionName: { flex: 1, color: WHITE, fontFamily: 'CourierPrime', fontSize: 13 },
   functionStatus: { color: DEEP_TEXT, fontFamily: 'CourierPrime', fontSize: 12 },
-  segmented: { flexDirection: 'row', marginBottom: 8, borderWidth: 1, borderColor: BORDER, backgroundColor: PANEL },
+  segmented: { flexDirection: 'row', marginBottom: 8, borderBottomWidth: 1, borderBottomColor: BORDER },
   segment: { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
-  segmentActive: { backgroundColor: ORANGE },
+  segmentActive: { borderBottomWidth: 2, borderBottomColor: ORANGE },
   segmentText: { color: DIM, fontFamily: 'CourierPrimeBold', fontSize: 13, fontWeight: '700' },
-  segmentTextActive: { color: DEEP },
+  segmentTextActive: { color: ORANGE },
   backButton: { minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', paddingRight: 20 },
   backText: { color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 13, fontWeight: '700' },
   detailMeta: { marginTop: 8, color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 12, fontWeight: '700' },

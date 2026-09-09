@@ -1,4 +1,5 @@
 'use client'
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -213,9 +214,9 @@ export default function VoyagersPage() {
   }
 
   const statItems: ArchiveStatItem[] = [
-    { value: loading ? '—' : architects.length, label: 'ARCHITECTS', color: 'var(--color-nucleus)', onSelect: () => jumpTo('section-architects') },
-    { value: loading ? '—' : latestBatch?.members.length ?? 0, label: 'NEW BATCH', color: 'var(--color-ok)', onSelect: () => jumpTo('section-voyagers', latestBatch?.label) },
-    { value: loading ? '—' : voyagers.length, label: 'ALL VOYAGERS', color: 'var(--color-warn)', onSelect: () => jumpTo('section-voyagers') },
+    { value: loading ? '—' : architects.length, label: 'ARCHITECTS', onSelect: () => jumpTo('section-architects') },
+    { value: loading ? '—' : latestBatch?.members.length ?? 0, label: 'NEW BATCH', onSelect: () => jumpTo('section-voyagers', latestBatch?.label) },
+    { value: loading ? '—' : voyagers.length, label: 'ALL VOYAGERS', onSelect: () => jumpTo('section-voyagers') },
   ]
 
   const profileControl = user.role === 'guest' ? undefined : (() => {
@@ -291,8 +292,8 @@ export default function VoyagersPage() {
               <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
                 {batches.length > 1 && (
                   <>
-                    <button onClick={() => scrollRail(-1)} aria-label="scroll left" className="hidden md:flex" style={railArrow('left')}>‹</button>
-                    <button onClick={() => scrollRail(1)} aria-label="scroll right" className="hidden md:flex" style={railArrow('right')}>›</button>
+                    <ArchiveButton type="submit" variant="ghost" onClick={() => scrollRail(-1)} aria-label="scroll left" className="hidden md:flex" style={railArrow('left')}>‹</ArchiveButton>
+                    <ArchiveButton type="submit" variant="ghost" onClick={() => scrollRail(1)} aria-label="scroll right" className="hidden md:flex" style={railArrow('right')}>›</ArchiveButton>
                   </>
                 )}
                 <ArchiveTabs
@@ -355,16 +356,16 @@ export default function VoyagersPage() {
                   <Camera size={11} />
                 </div>
               </div>
-              <input ref={modalFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
+              <ArchiveInput ref={modalFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
             </div>
 
             {/* Fields */}
             <FieldGroup>
               <ArchiveField htmlFor="voyager-display-name" label="DISPLAY NAME">
-                <input id="voyager-display-name" value={form.display_name} onChange={e => setF('display_name', e.target.value)} />
+                <ArchiveInput id="voyager-display-name" value={form.display_name} onChange={e => setF('display_name', e.target.value)} />
               </ArchiveField>
               <ArchiveField htmlFor="voyager-location" label="LOCATION">
-                <input id="voyager-location" value={form.location} onChange={e => setF('location', e.target.value)} placeholder="City, Country" />
+                <ArchiveInput id="voyager-location" value={form.location} onChange={e => setF('location', e.target.value)} placeholder="City, Country" />
               </ArchiveField>
             </FieldGroup>
 
@@ -373,7 +374,7 @@ export default function VoyagersPage() {
               htmlFor="voyager-bio"
               label={`BIO (${form.bio.length} / ${BIO_LIMIT})`}
             >
-              <textarea
+              <ArchiveTextarea
                 id="voyager-bio"
                 value={form.bio}
                 maxLength={BIO_LIMIT}
@@ -385,23 +386,23 @@ export default function VoyagersPage() {
             <ArchiveSectionLabel className="voyagers-modal-section-label">SOCIAL LINKS</ArchiveSectionLabel>
             <FieldGroup>
               <ArchiveField htmlFor="voyager-x" label="X / TWITTER (FULL URL)">
-                <input id="voyager-x" value={form.social_x} onChange={e => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
+                <ArchiveInput id="voyager-x" value={form.social_x} onChange={e => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
               </ArchiveField>
               <ArchiveField htmlFor="voyager-instagram" label="INSTAGRAM (FULL URL)">
-                <input id="voyager-instagram" value={form.social_instagram} onChange={e => setF('social_instagram', e.target.value)} placeholder="https://instagram.com/yourhandle" />
+                <ArchiveInput id="voyager-instagram" value={form.social_instagram} onChange={e => setF('social_instagram', e.target.value)} placeholder="https://instagram.com/yourhandle" />
               </ArchiveField>
               <ArchiveField htmlFor="voyager-linkedin" label="LINKEDIN (FULL URL)">
-                <input id="voyager-linkedin" value={form.social_linkedin} onChange={e => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
+                <ArchiveInput id="voyager-linkedin" value={form.social_linkedin} onChange={e => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
               </ArchiveField>
             </FieldGroup>
 
             <ArchiveSectionLabel className="voyagers-modal-section-label">FIELD DATA</ArchiveSectionLabel>
             <FieldGroup cols={2}>
               <ArchiveField htmlFor="voyager-observation-days" label="OBSERVATION DAYS">
-                <input id="voyager-observation-days" type="number" min="0" value={form.observation_days} onChange={e => setF('observation_days', e.target.value)} />
+                <ArchiveInput id="voyager-observation-days" type="number" min="0" value={form.observation_days} onChange={e => setF('observation_days', e.target.value)} />
               </ArchiveField>
               <ArchiveField htmlFor="voyager-worlds" label="WORLDS DISCOVERED">
-                <input id="voyager-worlds" type="number" min="0" value={form.worlds_discovered} onChange={e => setF('worlds_discovered', e.target.value)} />
+                <ArchiveInput id="voyager-worlds" type="number" min="0" value={form.worlds_discovered} onChange={e => setF('worlds_discovered', e.target.value)} />
               </ArchiveField>
             </FieldGroup>
 
@@ -523,14 +524,14 @@ function VoyagerCard({
       {/* Stats */}
       <div className="flex gap-4 mb-3 py-2 border-y" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
         <div className="text-center flex-1">
-          <div className="text-xl font-mono font-bold" style={{ color: '#C84406' }}>
+          <div className="text-xl font-mono font-bold" style={{ color: 'var(--color-nucleus)' }}>
             {voyager.observation_days}
           </div>
           <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>OBS DAYS</div>
         </div>
         <div className="w-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
         <div className="text-center flex-1">
-          <div className="text-xl font-mono font-bold" style={{ color: '#20D890' }}>
+          <div className="text-xl font-mono font-bold" style={{ color: 'var(--color-nucleus)' }}>
             {voyager.worlds_discovered}
           </div>
           <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>WORLDS</div>

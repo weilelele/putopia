@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveSelect, ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState, useEffect } from 'react'
 import { getAllVotes, deleteVote } from '@/lib/actions/votes'
 import {
@@ -95,12 +97,12 @@ export default function VotesAdmin() {
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>投票管理</div>
-          <button
+          <ArchiveButton type="submit" variant="primary"
             onClick={() => setShowDecision((visible) => !visible)}
-            style={{ background: '#E35205', border: 0, color: 'var(--color-deep)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, padding: '9px 14px' }}
+            style={{ cursor: 'pointer', padding: '9px 14px' }}
           >
             {showDecision ? '取消' : '+ 新建 Batch Holder 决策'}
-          </button>
+          </ArchiveButton>
         </div>
       </div>
 
@@ -114,19 +116,19 @@ export default function VotesAdmin() {
         <div style={S.card}>
           <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', marginBottom: '14px' }}>BATCH HOLDER DECISION</div>
           <div style={{ display: 'grid', gap: '12px' }}>
-            <select value={batchSlug} onChange={(event) => setBatchSlug(event.target.value)} style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.3)', color: '#F5F5F5', fontSize: '13px', padding: '9px' }}>
+            <ArchiveSelect value={batchSlug} onChange={(event) => setBatchSlug(event.target.value)} style={{ padding: '9px' }}>
               {batches.map((batch) => <option key={batch.slug} value={batch.slug}>{batch.code} · {batch.name}</option>)}
-            </select>
-            <input value={decisionTitle} onChange={(event) => setDecisionTitle(event.target.value)} placeholder="决策问题" style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.3)', color: '#F5F5F5', fontSize: '13px', padding: '9px' }} />
-            <textarea value={decisionSummary} onChange={(event) => setDecisionSummary(event.target.value)} placeholder="为什么需要 Holder 决策" rows={3} style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.3)', color: '#F5F5F5', fontSize: '13px', padding: '9px' }} />
-            <textarea value={decisionOptions} onChange={(event) => setDecisionOptions(event.target.value)} placeholder={'每行一个选项\n选项 A\n选项 B'} rows={4} style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.3)', color: '#F5F5F5', fontSize: '13px', padding: '9px' }} />
+            </ArchiveSelect>
+            <ArchiveInput value={decisionTitle} onChange={(event) => setDecisionTitle(event.target.value)} placeholder="决策问题" style={{ padding: '9px' }} />
+            <ArchiveTextarea value={decisionSummary} onChange={(event) => setDecisionSummary(event.target.value)} placeholder="为什么需要 Holder 决策" rows={3} style={{ padding: '9px' }} />
+            <ArchiveTextarea value={decisionOptions} onChange={(event) => setDecisionOptions(event.target.value)} placeholder={'每行一个选项\n选项 A\n选项 B'} rows={4} style={{ padding: '9px' }} />
             <label style={{ color: 'rgba(245,245,245,0.55)', fontSize: 'var(--fs-caption)' }}>
               截止时间
-              <input type="datetime-local" value={decisionClosesAt} onChange={(event) => setDecisionClosesAt(event.target.value)} style={{ background: '#0F1430', border: '1px solid rgba(227,82,5,0.3)', color: '#F5F5F5', display: 'block', fontSize: '13px', marginTop: '5px', padding: '9px', width: '100%' }} />
+              <ArchiveInput type="datetime-local" value={decisionClosesAt} onChange={(event) => setDecisionClosesAt(event.target.value)} style={{ display: 'block', marginTop: '5px', padding: '9px', width: '100%' }} />
             </label>
-            <button disabled={creating || !batchSlug} onClick={handleCreateDecision} style={{ background: '#E35205', border: 0, color: 'var(--color-deep)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, justifySelf: 'start', padding: '9px 16px' }}>
+            <ArchiveButton type="submit" variant="primary" disabled={creating || !batchSlug} onClick={handleCreateDecision} style={{ cursor: 'pointer', justifySelf: 'start', padding: '9px 16px' }}>
               {creating ? '上线中…' : '上线 Holder 决策'}
-            </button>
+            </ArchiveButton>
           </div>
         </div>
       )}
@@ -172,12 +174,12 @@ export default function VotesAdmin() {
                   </td>
                   <td style={{ ...S.td, fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap' }}>{formatTs(v.created_at)}</td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
-                    <button
+                    <ArchiveButton type="submit" variant="secondary"
                       onClick={() => handleDelete(v)}
-                      style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+                      style={{ cursor: 'pointer' }}
                     >
                       {v.device_batch_slug ? '关闭' : '删除'}
-                    </button>
+                    </ArchiveButton>
                   </td>
                 </tr>
               ))}

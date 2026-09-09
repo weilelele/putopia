@@ -1,4 +1,6 @@
 'use client'
+import { ArchiveTabs } from '@/components/archive-tabs'
+import { ArchiveButton } from '@/components/archive-button'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { ArchiveBrandHeader } from '@/components/archive-brand-header'
@@ -129,22 +131,21 @@ export function DeviceLiveRoom({
       </header>
 
       <nav className={styles.objectNav} aria-label="Device batches">
-        <div className={styles.objectTabs} role="tablist">
+        <div className={styles.objectTabs}>
           {topBatches.map((item) => (
             <Link
-              aria-selected={batch.slug === item.slug}
+              aria-current={batch.slug === item.slug ? 'page' : undefined}
               className={styles.objectTab}
               href={`/devices/batches/${item.slug}`}
               key={item.slug}
-              role="tab"
             >
               {cityLabel(item)}
             </Link>
           ))}
         </div>
-        <button aria-label="Open all device batches" className={styles.listButton} onClick={() => setSheetOpen(true)} type="button">
+        <ArchiveButton variant="ghost" aria-label="Open all device batches" className={styles.listButton} onClick={() => setSheetOpen(true)} type="button">
           <ListFilter aria-hidden size={20} />
-        </button>
+        </ArchiveButton>
       </nav>
 
       {camera ? (
@@ -185,49 +186,34 @@ export function DeviceLiveRoom({
         <div className={styles.shipments}>
           {batch.distributionStages.map((shipment, index) => (
             <div className={styles.shipmentGroup} key={shipment.id}>
-              <button aria-expanded={openShipment === shipment.id} className={styles.shipment} onClick={() => setOpenShipment((current) => current === shipment.id ? null : shipment.id)} type="button">
+              <ArchiveButton variant="secondary" aria-expanded={openShipment === shipment.id} className={styles.shipment} onClick={() => setOpenShipment((current) => current === shipment.id ? null : shipment.id)} type="button">
                 <span className={styles.shipmentIndex}>{String(index + 1).padStart(2, '0')}</span>
                 <strong>{shipment.label}</strong>
                 <span className={`${styles.stageState} ${shipment.status === 'current' ? styles.stageCurrent : shipment.status === 'completed' ? styles.stageCompleted : ''}`}>{shipment.status.toUpperCase()}</span>
                 <ChevronDown aria-hidden className={styles.shipmentChevron} size={18} />
-              </button>
+              </ArchiveButton>
               {openShipment === shipment.id ? <p className={styles.shipmentDetail}>{shipment.summary}</p> : null}
             </div>
           ))}
         </div>
         <div className={styles.claimRow}>
           {ownedConsole ? (
-            <button className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => setProgressOpen(true)} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></button>
+            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => setProgressOpen(true)} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></ArchiveButton>
           ) : claimHref && remaining !== 0 ? (
             <Link className={`${styles.primaryButton} ${styles.claimButton}`} href={claimHref}><span>CLAIM A CONSOLE</span><strong>{remaining} REMAIN</strong></Link>
           ) : (
-            <button className={`${styles.primaryButton} ${styles.claimButton}`} disabled type="button"><span>CLAIMS CLOSED</span><strong>{remaining ?? 0} REMAIN</strong></button>
+            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} disabled type="button"><span>CLAIMS CLOSED</span><strong>{remaining ?? 0} REMAIN</strong></ArchiveButton>
           )}
         </div>
       </section> : null}
 
       <section className={styles.sectionPanel}>
-        <div className={styles.contentTabs} role="tablist" aria-label="Device room content">
-          {([
-            ['info', 'INFO'],
-            ['updates', 'UPDATES'],
-            ['discussion', 'DISCUSSION'],
-          ] as const).map(([id, label]) => (
-            <button
-              aria-selected={activeTab === id}
-              className={styles.contentTab}
-              key={id}
-              onClick={() => setActiveTab(id)}
-              role="tab"
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <ArchiveTabs ariaLabel="Device room content" activeId={activeTab}
+          items={[{id:'info',label:'INFO'},{id:'updates',label:'UPDATES'},{id:'discussion',label:'DISCUSSION'}].map(item=>({...item,panelId:`device-room-${item.id}`}))}
+          onChange={id => setActiveTab(id as typeof activeTab)} />
 
         {activeTab === 'info' ? (
-          <div className={styles.panelBody} role="tabpanel">
+          <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
             <div className={styles.eyebrow}>{batch.code} · BATCH DOSSIER</div>
             <h2 className={styles.infoTitle}>{batch.name}</h2>
             <p className={styles.intro}>{batch.summary}</p>
@@ -258,7 +244,7 @@ export function DeviceLiveRoom({
               <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3><span>{materialRecords.length} ITEM{materialRecords.length === 1 ? '' : 'S'}</span></div>
               <div className={styles.mediaList}>
                 {materialRecords.map((item) => (
-                  <button className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button">
+                  <ArchiveButton variant="secondary" className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button">
                     <span className={styles.mediaThumb}>
                       <Image alt="" fill sizes="100px" src={item.poster ?? item.src} />
                       {item.kind === 'video' ? <span className={styles.videoBadge}><CirclePlay aria-hidden size={16} /></span> : null}
@@ -267,7 +253,7 @@ export function DeviceLiveRoom({
                       <strong>{item.caption}</strong>
                     </span>
                     <ChevronRight aria-hidden size={18} />
-                  </button>
+                  </ArchiveButton>
                 ))}
               </div>
             </div>
@@ -275,14 +261,14 @@ export function DeviceLiveRoom({
         ) : null}
 
         {activeTab === 'discussion' ? (
-          <div className={styles.panelBody} role="tabpanel">
+          <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
             <div className={styles.eyebrow}><MessageSquare aria-hidden size={14} /> BATCH DISCUSSION</div>
             <BatchDiscussionBoard batch={batch} canPost={canPost} initialPosts={discussionPosts} />
           </div>
         ) : null}
 
         {activeTab === 'updates' ? (
-          <div className={styles.panelBody} role="tabpanel">
+          <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
             <div className={styles.eyebrow}><Radio aria-hidden size={14} /> VERIFIED FIELD EVENTS</div>
             <div className={styles.updateList}>
               <div className={styles.updateRow}>
@@ -305,17 +291,17 @@ export function DeviceLiveRoom({
 
             <div className={styles.filterRow}>
               {(['all', 'following', 'survey', 'claim', 'distributing', 'active'] as BatchFilter[]).map((item) => (
-                <button aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => setFilter(item)} type="button">{item.toUpperCase()}</button>
+                <ArchiveButton variant="secondary" aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => setFilter(item)} type="button">{item.toUpperCase()}</ArchiveButton>
               ))}
             </div>
             <div className={styles.sheetList}>
               {filteredBatches.map((item) => (
-                <button className={styles.sheetRow} key={item.code} onClick={() => chooseBatch(item.slug)} type="button">
+                <ArchiveButton variant="secondary" className={styles.sheetRow} key={item.code} onClick={() => chooseBatch(item.slug)} type="button">
                   <span className={styles.dot} style={{ background: statusDotColor(item.status) }} />
                   <span><strong>{item.name.toUpperCase()}</strong><small>{item.location}</small></span>
                   <span className={styles.sheetStatus}>{item.slug === batch.slug ? 'CURRENT · ' : ''}{DEVICE_BATCH_STATUS[item.status].shortLabel}</span>
                   <ChevronRight aria-hidden size={18} />
-                </button>
+                </ArchiveButton>
               ))}
             </div>
           </ArchiveSheet>

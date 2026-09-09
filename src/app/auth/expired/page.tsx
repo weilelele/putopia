@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveInput } from '@/components/archive-input'
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ArchiveButton } from '@/components/archive-button'
@@ -46,7 +47,7 @@ function ExpiredInner() {
         ) : (
           <form onSubmit={handleResend} className="archive-auth-form">
             <ArchiveField htmlFor="expired-email" label="EMAIL ADDRESS">
-              <input
+              <ArchiveInput
                 id="expired-email"
                 type="email"
                 value={email}

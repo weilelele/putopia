@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveInput } from '@/components/archive-input'
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -62,7 +63,7 @@ function LoginPageContent() {
 
         <form onSubmit={handleSubmit} className="pilot-login-form">
           <ArchiveField htmlFor="login-email" label="EMAIL ADDRESS">
-            <input
+            <ArchiveInput
               id="login-email"
               type="email"
               autoComplete="email"
@@ -72,7 +73,7 @@ function LoginPageContent() {
           </ArchiveField>
 
           <ArchiveField htmlFor="login-password" label="ACCESS CODE">
-            <input
+            <ArchiveInput
               id="login-password"
               type="password"
               autoComplete="current-password"

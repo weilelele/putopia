@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState, useEffect, useRef } from 'react'
 import { getAllWorlds, createWorld, updateWorld, deleteWorld } from '@/lib/actions/worlds'
 import type { World } from '@/types/database'
@@ -43,13 +45,13 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
     <div>
       <label style={{ display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' }}>{label}</label>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <input
+        <ArchiveInput
           type="color"
           value={value}
           onChange={e => onChange(e.target.value)}
-          style={{ width: '40px', height: '34px', padding: '2px', border: '1px solid rgba(227,82,5,0.16)', background: '#0F1430', cursor: 'pointer' }}
+          style={{ width: '40px', height: '34px', padding: '2px', cursor: 'pointer' }}
         />
-        <input
+        <ArchiveInput
           style={{ ...S.input, flex: 1 }}
           value={value}
           onChange={e => onChange(e.target.value)}
@@ -112,9 +114,9 @@ export default function WorldsAdmin() {
         <div>
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>平行世界管理</div>
         </div>
-        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
+        <ArchiveButton type="submit" variant="primary" className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', cursor: 'pointer' }}>
           + 新增世界
-        </button>
+        </ArchiveButton>
       </div>
 
       {msg && (
@@ -154,8 +156,8 @@ export default function WorldsAdmin() {
                     </span>
                   </td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
-                    <button onClick={() => openEdit(w)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>编辑</button>
-                    <button onClick={() => handleDelete(w.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>删除</button>
+                    <ArchiveButton type="submit" variant="secondary" onClick={() => openEdit(w)} style={{ marginRight: '8px', cursor: 'pointer' }}>编辑</ArchiveButton>
+                    <ArchiveButton type="submit" variant="secondary" onClick={() => handleDelete(w.id)} style={{ cursor: 'pointer' }}>删除</ArchiveButton>
                   </td>
                 </tr>
               ))}
@@ -168,13 +170,13 @@ export default function WorldsAdmin() {
         <div ref={formRef} style={{ ...S.card, border: '1px solid #C84406' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div style={{ color: '#C84406', fontSize: '12px', letterSpacing: '0.2em' }}>{editId ? `编辑: ${editId}` : `新增世界 (自动 ID: ${nextWorldId(items)})`}</div>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '18px' }}>×</button>
+            <ArchiveButton type="submit" variant="secondary" onClick={() => setShowForm(false)} style={{ cursor: 'pointer' }}>×</ArchiveButton>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={S.label}>ID（留空则自动生成）</label>
-              <input style={S.input} value={form.id} onChange={e => set('id', e.target.value)} placeholder={nextWorldId(items)} disabled={!!editId} />
+              <ArchiveInput style={S.input} value={form.id} onChange={e => set('id', e.target.value)} placeholder={nextWorldId(items)} disabled={!!editId} />
             </div>
             <div>
               <MemberPicker
@@ -185,18 +187,18 @@ export default function WorldsAdmin() {
             </div>
             <div>
               <label style={S.label}>发现日期</label>
-              <input style={S.input} type="date" value={form.discovery_date} onChange={e => set('discovery_date', e.target.value)} />
+              <ArchiveInput style={S.input} type="date" value={form.discovery_date} onChange={e => set('discovery_date', e.target.value)} />
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={S.label}>中文名称 *</label>
-              <input style={S.input} value={form.name} onChange={e => set('name', e.target.value)} placeholder="琥珀天顶" />
+              <ArchiveInput style={S.input} value={form.name} onChange={e => set('name', e.target.value)} placeholder="琥珀天顶" />
             </div>
             <div>
               <label style={S.label}>英文名称（为空则同中文）</label>
-              <input style={S.input} value={form.name_en} onChange={e => set('name_en', e.target.value)} placeholder="Amber Zenith" />
+              <ArchiveInput style={S.input} value={form.name_en} onChange={e => set('name_en', e.target.value)} placeholder="Amber Zenith" />
             </div>
           </div>
 
@@ -214,23 +216,23 @@ export default function WorldsAdmin() {
           {/* image URL */}
           <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>封面图片 URL（优先于渐变色）</label>
-            <input style={S.input} value={form.image_path} onChange={e => set('image_path', e.target.value)} placeholder="https://..." />
+            <ArchiveInput style={S.input} value={form.image_path} onChange={e => set('image_path', e.target.value)} placeholder="https://..." />
           </div>
 
           <div style={{ marginBottom: '16px' }}>
             <label style={S.label}>世界描述</label>
-            <textarea style={{ ...S.area, minHeight: '80px' }} value={form.description} onChange={e => set('description', e.target.value)} placeholder="简要描述这个平行世界的特征..." />
+            <ArchiveTextarea style={{ ...S.area, minHeight: '80px' }} value={form.description} onChange={e => set('description', e.target.value)} placeholder="简要描述这个平行世界的特征..." />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#20D890', fontSize: '13px' }}>
-              <input type="checkbox" checked={form.is_verified} onChange={e => set('is_verified', e.target.checked)} />
+              <ArchiveInput type="checkbox" checked={form.is_verified} onChange={e => set('is_verified', e.target.checked)} />
               已认证
             </label>
-            <button onClick={handleSave} disabled={saving} style={{ padding: '8px 24px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}>
+            <ArchiveButton type="submit" variant="secondary" onClick={handleSave} disabled={saving} style={{ padding: '8px 24px', cursor: saving ? 'not-allowed' : 'pointer', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}>
               {saving ? '保存中...' : '保存'}
-            </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'var(--font-mono)', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            </ArchiveButton>
+            <ArchiveButton type="submit" variant="secondary" onClick={() => setShowForm(false)} style={{ padding: '8px 16px', cursor: 'pointer' }}>取消</ArchiveButton>
           </div>
         </div>
       )}

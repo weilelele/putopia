@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useEffect, useState } from 'react'
 import { scanSecondsLeft } from '@/lib/signal/scan'
 
@@ -74,12 +75,12 @@ export function WorldScanHero({
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-dim)' }}>SCAN COMPLETE</span>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', letterSpacing: '0.04em' }}>NO READING RETURNED</span>
             {onRetry && (
-              <button
+              <ArchiveButton type="submit" variant="secondary"
                 onClick={onRetry}
-                style={{ marginTop: 12, padding: '0.5rem 1rem', background: 'rgba(200,68,6,0.12)', border: '1px solid var(--color-nucleus)', color: 'var(--color-nucleus)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                style={{ marginTop: 12, padding: '0.5rem 1rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
                 ✎ DESCRIBE MORE · RE-SCAN
-              </button>
+              </ArchiveButton>
             )}
           </>
         ) : (

@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
@@ -205,14 +206,14 @@ export function Nav() {
               LOGIN
             </Link>
           ) : (
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               onClick={() => logout()}
               className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono border transition-colors shrink-0"
-              style={{ borderColor: 'rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)' }}
+              style={{  }}
             >
               <LogOutIcon />
               LOGOUT
-            </button>
+            </ArchiveButton>
           )}
         </div>
       </div>

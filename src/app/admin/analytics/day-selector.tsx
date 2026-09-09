@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveSelect } from '@/components/archive-input'
 import { useRouter, usePathname } from 'next/navigation'
 
 const ACCENT = '#C84406'
@@ -38,32 +40,23 @@ export function DaySelector({ days, selected }: { days: string[]; selected: stri
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <button type="button" style={btn(!!older)} disabled={!older} onClick={() => older && go(older)}>
+      <ArchiveButton variant="secondary" type="button" style={btn(!!older)} disabled={!older} onClick={() => older && go(older)}>
         ◀
-      </button>
-      <select
+      </ArchiveButton>
+      <ArchiveSelect
         value={selected}
         onChange={e => go(e.target.value)}
-        style={{
-          background: '#070c1a',
-          border: `1px solid ${ACCENT}`,
-          color: ACCENT,
-          fontFamily: 'var(--font-mono)',
-          fontSize: 12,
-          letterSpacing: '0.1em',
-          padding: '4px 8px',
-          borderRadius: 2,
-        }}
+        style={{ border: `1px solid ${ACCENT}`, color: ACCENT, padding: '4px 8px' }}
       >
         {days.map((day, i) => (
           <option key={day} value={day} style={{ background: '#070c1a', color: STAR }}>
             {day}{i === 0 ? ' (最新)' : ''}
           </option>
         ))}
-      </select>
-      <button type="button" style={btn(!!newer)} disabled={!newer} onClick={() => newer && go(newer)}>
+      </ArchiveSelect>
+      <ArchiveButton variant="secondary" type="button" style={btn(!!newer)} disabled={!newer} onClick={() => newer && go(newer)}>
         ▶
-      </button>
+      </ArchiveButton>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: MUTED, marginLeft: '0.25rem' }}>
         单日 · {fmt(selected)}
       </span>

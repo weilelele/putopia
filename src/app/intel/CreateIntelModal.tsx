@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveInput, ArchiveSelect, ArchiveTextarea } from '@/components/archive-input'
 import { useState, useRef } from 'react'
 import { createIntel } from '@/lib/actions/intel'
 import { createClient } from '@/lib/supabase/client'
@@ -124,28 +125,28 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
         {/* Row 1: ID / Type / Timestamp */}
         <div className="archive-modal-grid archive-modal-grid--three">
           <ArchiveField htmlFor="intel-id" label="ID · OPTIONAL">
-            <input id="intel-id" value={form.id} onChange={e => set('id', e.target.value)} placeholder={autoId} />
+            <ArchiveInput id="intel-id" value={form.id} onChange={e => set('id', e.target.value)} placeholder={autoId} />
           </ArchiveField>
           <ArchiveField htmlFor="intel-type" label="TYPE">
-            <select id="intel-type" value={form.tag} onChange={e => set('tag', e.target.value as IntelTag)}>
+            <ArchiveSelect id="intel-type" value={form.tag} onChange={e => set('tag', e.target.value as IntelTag)}>
               <option value="NOTICE">NOTICE — Notice</option>
               <option value="DEVICE">DEVICE — Device</option>
               <option value="ORG">ORG — Organization</option>
-            </select>
+            </ArchiveSelect>
           </ArchiveField>
           <ArchiveField htmlFor="intel-timestamp" label="TIMESTAMP">
-            <input id="intel-timestamp" type="datetime-local" value={form.timestamp} onChange={e => set('timestamp', e.target.value)} />
+            <ArchiveInput id="intel-timestamp" type="datetime-local" value={form.timestamp} onChange={e => set('timestamp', e.target.value)} />
           </ArchiveField>
         </div>
 
         {/* Title */}
         <ArchiveField htmlFor="intel-title" label="TITLE *">
-          <input id="intel-title" value={form.title} onChange={e => set('title', e.target.value)} placeholder="Intelligence title" />
+          <ArchiveInput id="intel-title" value={form.title} onChange={e => set('title', e.target.value)} placeholder="Intelligence title" />
         </ArchiveField>
 
         {/* Content */}
         <ArchiveField htmlFor="intel-content" label="CONTENT">
-          <textarea
+          <ArchiveTextarea
             id="intel-content"
             value={form.content}
             onChange={e => set('content', e.target.value)}
@@ -172,18 +173,18 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
                 <div key={idx} style={{ position: 'relative' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #C84406', opacity: 0.8 }} />
-                  <button
+                  <ArchiveButton type="submit" variant="ghost"
                     aria-label={`Remove image ${idx + 1}`}
                     onClick={() => removePending(idx)}
-                    style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >×</button>
+                    style={{ position: 'absolute', top: '2px', right: '2px', width: '18px', height: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >×</ArchiveButton>
                   <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(200,68,6,0.85)', color: '#fff', fontSize: 'var(--fs-caption)', padding: '1px 3px', fontFamily: 'var(--font-mono)' }}>PENDING</div>
                 </div>
               ))}
             </div>
           )}
 
-          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} style={{ display: 'none' }} />
+          <ArchiveInput ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} style={{ display: 'none' }} />
           <ArchiveButton
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -199,7 +200,7 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
         {/* Footer */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', paddingTop: '16px', borderTop: '1px solid rgba(227,82,5,0.16)' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#E83030', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
-            <input type="checkbox" checked={form.classified} onChange={e => set('classified', e.target.checked)} />
+            <ArchiveInput type="checkbox" checked={form.classified} onChange={e => set('classified', e.target.checked)} />
             CLASSIFIED (Voyager+ only)
           </label>
           <div style={{ flex: 1 }} />

@@ -40,11 +40,11 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
           <ArchiveLinkButton href="/worlds" variant="ghost">← WORLD RECORDS</ArchiveLinkButton>
           <div className="signal-feed-title-row">
             <ArchivePageHeader title="SIGNAL" accent="DISPATCH" />
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               onClick={() => setAboutOpen(true)}
               title="What is this?"
               className="signal-about-button"
-            >?</button>
+            >?</ArchiveButton>
           </div>
           {!feed.loggedIn && (
             <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', marginTop: 8, letterSpacing: '0.1em' }}>
@@ -110,25 +110,19 @@ export function InvestigationCard({
         )}
         {/* day navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             onClick={() => canGoBack && setSelectedSlot((d) => d - 1)}
             disabled={!canGoBack}
-            style={{
-              background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
-              width: 28, height: 28, cursor: canGoBack ? 'pointer' : 'default', fontFamily: 'var(--font-mono)', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >◀</button>
+            style={{ color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)', width: 28, height: 28, cursor: canGoBack ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >◀</ArchiveButton>
           <span style={{ fontSize: 12, color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', minWidth: 48, textAlign: 'center' }}>
             {onSearching ? 'SEARCHING' : `DAY ${current!.dayIndex + 1}`}
           </span>
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             onClick={() => canGoForward && setSelectedSlot((d) => d + 1)}
             disabled={!canGoForward}
-            style={{
-              background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoForward ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
-              width: 28, height: 28, cursor: canGoForward ? 'pointer' : 'default', fontFamily: 'var(--font-mono)', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >▶</button>
+            style={{ color: canGoForward ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)', width: 28, height: 28, cursor: canGoForward ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >▶</ArchiveButton>
         </div>
       </div>
 
@@ -299,16 +293,13 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
           const pct = total > 0 ? Math.round((count / total) * 100) : 0
           const selectable = canParticipate && !responded && !closed
           return (
-            <button
+            <ArchiveButton variant="secondary"
               type="button"
               key={a.id}
               onClick={() => selectable && setPick(a.id)}
               disabled={!selectable}
               className="signal-option"
-              style={{
-                border: isMine ? '2px solid #20D890' : isPicked ? '2px solid #E35205' : isLeader ? '1px solid rgba(200,68,6,0.5)' : '1px solid rgba(227,82,5,0.16)',
-                background: '#070912', cursor: selectable ? 'pointer' : 'default', position: 'relative',
-              }}
+              style={{ border: isMine ? '2px solid #20D890' : isPicked ? '2px solid #E35205' : isLeader ? '1px solid rgba(200,68,6,0.5)' : '1px solid rgba(227,82,5,0.16)', cursor: selectable ? 'pointer' : 'default', position: 'relative' }}
             >
               {isMine && <div style={{ position: 'absolute', top: 6, right: 7, zIndex: 2, color: '#20D890', fontSize: 14, lineHeight: 1 }}>✓</div>}
               <AssetView asset={a} />
@@ -318,7 +309,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
                   <span style={{ fontSize: 'var(--fs-caption)', fontWeight: isLeader ? 600 : 400, color: isLeader ? '#FF8A3D' : 'rgba(245,245,245,0.82)' }}>{pct}%</span>
                 </span>
               )}
-            </button>
+            </ArchiveButton>
           )
         })}
       </div>

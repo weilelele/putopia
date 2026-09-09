@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useEffect, useState } from 'react'
 import { getArchiveReel } from '@/lib/actions/signal-tasks'
 import type { ArchiveReel } from '@/lib/actions/signal-tasks'
@@ -94,18 +95,18 @@ export function ArchiveReelView({ world }: { world: World }) {
 
       {/* Nav */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, maxWidth: 480, margin: '12px auto 0' }}>
-        <button onClick={() => setI((v) => Math.max(0, v - 1))} disabled={i <= 0} aria-label="Earlier" style={navBtn(i <= 0)}>◀</button>
+        <ArchiveButton type="submit" variant="ghost" onClick={() => setI((v) => Math.max(0, v - 1))} disabled={i <= 0} aria-label="Earlier" style={navBtn(i <= 0)}>◀</ArchiveButton>
         <div style={{ flex: 1, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, letterSpacing: '0.16em', color: 'var(--color-star)' }}>{label}</div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)', marginTop: 3, minHeight: 14 }}>{sub ?? ' '}</div>
         </div>
-        <button onClick={() => setI((v) => Math.min(slides.length - 1, v + 1))} disabled={i >= slides.length - 1} aria-label="Later" style={navBtn(i >= slides.length - 1)}>▶</button>
+        <ArchiveButton type="submit" variant="ghost" onClick={() => setI((v) => Math.min(slides.length - 1, v + 1))} disabled={i >= slides.length - 1} aria-label="Later" style={navBtn(i >= slides.length - 1)}>▶</ArchiveButton>
       </div>
 
       {/* Dots */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 11 }}>
         {slides.map((_, k) => (
-          <span key={k} onClick={() => setI(k)} style={{ width: 7, height: 7, borderRadius: '50%', cursor: 'pointer', background: k === i ? '#E35205' : 'rgba(245,245,245,0.22)' }} />
+          <ArchiveButton key={k} variant="ghost" aria-label={`Show frame ${k + 1}`} aria-pressed={k === i} onClick={() => setI(k)} className="archive-page-dot"><span aria-hidden /></ArchiveButton>
         ))}
       </div>
     </div>

@@ -11,6 +11,8 @@
    Flow:  Q1 Console curiosity → Q2 World choice → Q3 Urgency slider → email
 ───────────────────────────────────────────────────── */
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { WorldChoiceCards } from '@/components/flame-slider'
 import { HudField } from '@/components/hud-field'
@@ -173,19 +175,10 @@ function ChoiceCards({ options, selected, onSelect }: {
       {options.map(opt => {
         const isSelected = selected === opt.id
         return (
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             key={opt.id}
             onClick={() => onSelect(opt.id)}
-            style={{
-              background:  isSelected ? 'rgba(200,68,6,0.07)' : 'transparent',
-              border:      `1px solid ${isSelected ? 'rgba(200,68,6,0.4)' : 'rgba(242,240,230,0.08)'}`,
-              borderLeft:  `3px solid ${isSelected ? 'var(--color-nebula)' : 'transparent'}`,
-              color:       isSelected ? 'var(--color-star)' : 'var(--color-star-dim)',
-              fontFamily:  'var(--font-body)', fontSize: 'var(--fs-body)', fontWeight: 500,
-              textAlign:   'left', padding: '1rem 1.1rem',
-              cursor:      'pointer', lineHeight: 1.45,
-              transition:  'all 0.15s ease',
-            }}
+            style={{ background:  isSelected ? 'rgba(200,68,6,0.07)' : 'transparent', border:      `1px solid ${isSelected ? 'rgba(200,68,6,0.4)' : 'rgba(242,240,230,0.08)'}`, borderLeft:  `3px solid ${isSelected ? 'var(--color-nebula)' : 'transparent'}`, color:       isSelected ? 'var(--color-star)' : 'var(--color-star-dim)', textAlign:   'left', padding: '1rem 1.1rem', cursor:      'pointer', lineHeight: 1.45, transition:  'all 0.15s ease' }}
             onMouseEnter={e => {
               if (isSelected) return
               const el = e.currentTarget as HTMLButtonElement
@@ -202,7 +195,7 @@ function ChoiceCards({ options, selected, onSelect }: {
             }}
           >
             {opt.text}
-          </button>
+          </ArchiveButton>
         )
       })}
     </div>
@@ -317,20 +310,12 @@ function ContinueButton({ touched, onClick }: { touched: boolean; onClick: () =>
       transition: 'opacity 0.35s ease',
       pointerEvents: touched ? 'auto' : 'none',
     }}>
-      <button
+      <ArchiveButton type="submit" variant="secondary"
         onClick={onClick}
-        style={{
-          background: touched ? 'rgba(255,90,31,0.08)' : 'transparent',
-          border: `1px solid ${touched ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
-          color: touched ? 'var(--color-star)' : 'var(--color-star-dim)',
-          fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em',
-          padding: '0.75rem 1.5rem', cursor: touched ? 'pointer' : 'default',
-          transition: 'all 0.2s ease',
-          display: 'flex', alignItems: 'center', gap: '0.5rem',
-        }}
+        style={{ background: touched ? 'rgba(255,90,31,0.08)' : 'transparent', border: `1px solid ${touched ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`, color: touched ? 'var(--color-star)' : 'var(--color-star-dim)', padding: '0.75rem 1.5rem', cursor: touched ? 'pointer' : 'default', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
       >
         CONTINUE <span style={{ opacity: 0.6 }}>→</span>
-      </button>
+      </ArchiveButton>
     </div>
   )
 }
@@ -365,7 +350,7 @@ function CtaStub({ email, setEmail, onSubmit }: {
               YOUR EMAIL
             </label>
             <HudField style={{ width: '100%' }}>
-              <input
+              <ArchiveInput
                 ref={inputRef}
                 type="email"
                 required
@@ -378,21 +363,13 @@ function CtaStub({ email, setEmail, onSubmit }: {
             </HudField>
           </div>
 
-          <button
+          <ArchiveButton variant="primary"
             type="submit"
             disabled={!email}
-            style={{
-              width: '100%', padding: '1rem 1.5rem',
-              background:  email ? 'rgba(255,90,31,0.1)' : 'transparent',
-              border:      `1px solid ${email ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
-              color:       email ? 'var(--color-star)' : 'rgba(242,240,230,0.35)',
-              fontFamily:  'var(--font-display)', fontSize: 'var(--fs-label)', letterSpacing: '0.15em',
-              cursor:      email ? 'pointer' : 'default',
-              transition:  'all 0.2s ease',
-            }}
+            style={{ width: '100%', padding: '1rem 1.5rem', background:  email ? 'rgba(255,90,31,0.1)' : 'transparent', border:      `1px solid ${email ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`, color:       email ? 'var(--color-star)' : 'rgba(242,240,230,0.35)', cursor:      email ? 'pointer' : 'default', transition:  'all 0.2s ease' }}
           >
             CONFIRM MY VOYAGER IDENTITY
-          </button>
+          </ArchiveButton>
         </form>
       </div>
     </div>

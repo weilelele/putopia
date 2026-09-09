@@ -75,17 +75,18 @@
   position: relative;
   flex: 1 0 7.5rem;
   padding: 0.85rem var(--s-3);
-  border-right: 1px solid var(--bd-faint);
+  border-right: 0;
   font-size: var(--fs-label);
   letter-spacing: 0.12em;
   text-align: center;
   text-decoration: none;
 }
 
-.objectTab[aria-selected='true'] {
-  color: var(--color-deep);
-  background: var(--color-nucleus);
+.objectTab[aria-selected='true'], .objectTab[aria-current='page'] {
+  color: var(--color-nucleus);
+  background: transparent;
 }
+.objectTab[aria-selected='true']::after, .objectTab[aria-current='page']::after { content: ''; position: absolute; bottom: 0; left: 25%; right: 25%; height: 2px; background: var(--color-nucleus); }
 
 .listButton {
   display: grid;

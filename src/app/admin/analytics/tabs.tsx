@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useState } from 'react'
 
 const ACCENT = '#C84406'
@@ -32,25 +33,14 @@ export function FunnelTabs({
         {TABS.map(t => {
           const active = tab === t.key
           return (
-            <button
+            <ArchiveButton variant="secondary"
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '0.6rem 1rem',
-                marginBottom: '-1px',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 'var(--fs-caption)',
-                letterSpacing: '0.15em',
-                color: active ? STAR : MUTED,
-                borderBottom: `2px solid ${active ? ACCENT : 'transparent'}`,
-              }}
+              style={{ cursor: 'pointer', padding: '0.6rem 1rem', marginBottom: '-1px', color: active ? STAR : MUTED, borderBottom: `2px solid ${active ? ACCENT : 'transparent'}` }}
             >
               {t.label}
-            </button>
+            </ArchiveButton>
           )
         })}
       </div>

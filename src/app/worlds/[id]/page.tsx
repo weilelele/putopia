@@ -1,4 +1,5 @@
 'use client'
+import { ArchiveSelect, ArchiveTextarea } from '@/components/archive-input'
 import { BackLink } from '@/components/back-link'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -171,11 +172,11 @@ export default function WorldDetailPage() {
             {isOwner && (
               <ArchiveCard className="archive-inline-panel">
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>WHO CAN VOTE</span>
-                <select value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', background: 'var(--bg-card)', color: 'var(--color-star)', border: '1px solid rgba(227,82,5,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
+                <ArchiveSelect value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
                   <option value="all">Open to everyone</option>
                   <option value="voters">Voyagers only</option>
                   <option value="self">Just me (private)</option>
-                </select>
+                </ArchiveSelect>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', color: 'var(--color-star-deep)' }}>
                   {scopeSaving ? 'Saving…' : 'You can change this anytime.'}
                 </span>
@@ -229,7 +230,7 @@ export default function WorldDetailPage() {
         {scanFailed && isOwner && retryOpen && (
           <ArchiveCard className="archive-rescan-card">
             <ArchiveField htmlFor="world-rescan-notes" label="REVISE FIELD NOTES — THEN RE-SCAN">
-              <textarea
+              <ArchiveTextarea
                 id="world-rescan-notes"
                 value={retryDesc}
                 onChange={(e) => setRetryDesc(e.target.value)}

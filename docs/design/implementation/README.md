@@ -11,6 +11,10 @@
 - iOS 启动动画和原品牌字形随包打包，计时不依赖网络；结束后显示 Dashboard 或原生离线 Dashboard。WebView 和离线页使用统一五 Tab、颜色、字体及层级。未缓存状态仍显示导航；不伪造离线可参与活动。
 - 编辑与创建弹层共用原生 HTML dialog 的焦点约束、背景隔离、关闭和草稿确认。提交结果未知时先检查记录，禁止无条件重复提交。
 
+## 本轮：保留功能的组件替换
+
+已开始全产品控件替换并修复 Dashboard 媒体来源，详见 [本轮实施与验收记录](component-refresh.md)。这里的逐页检查是只读视觉/交互检查，不等同于生产写入流程验收。
+
 ## 数据边界
 
 Dashboard 的 World Established 新事件写入已有 `activity_events` 表，仅在实际阶段转换时记录；重复更新海报不重复记录。没有真实转换时间的历史世界不使用创建日期伪造迁移事件。Signal Tuning 使用实际 Signal Thread 时间。无需数据库结构迁移，本次未执行生产数据回填。
@@ -25,7 +29,7 @@ Vercel 预览沿用项目现有登录保护，需要有权限的 Vercel 账号�
 
 ## 验证与发布
 
-本地记录：Dashboard 在 320px/390px 无横向溢出，Updates 为 10 条；启动页已按新规则实测：动画完成后约 3.08 秒自动进入，动画中点击约 45ms 跳过；UI Kit 的弹层焦点、背景锁定和草稿确认已实测。Worlds、Web 离线页在 390px 渲染正常；Intel、Devices、Voyagers、Logs 受现有登录保护而跳转登录页，登录后界面仍待验收。
+本地记录：Dashboard 在 320px/390px 无横向溢出，Updates 为 10 条；启动页已按新规则实测：动画完成后约 3.08 秒自动进入，动画中点击约 45ms 跳过；UI Kit 的弹层焦点、背景锁定和草稿确认已实测。Worlds、Web 离线页在 390px 渲染正常；本轮已使用正常登录会话检查 Intel、Devices、Voyagers、Profile 和 Worldflow；Logs 深层状态仍待进一步验收。
 
 代码检查包括设计增量检查、Web TypeScript、ESLint、Vitest、生产构建；iOS 包括 TypeScript、Expo 配置、JS/资源导出以及启动 Storyboard 编译。结果以提交与 PR 中最终日志为准。
 
@@ -39,11 +43,11 @@ Vercel 预览沿用项目现有登录保护，需要有权限的 Vercel 账号�
 
 | 页面 | 本次实际改动 | 验收状态 |
 | --- | --- | --- |
-| Dashboard `/console` | 重写 Updates 时间轴与 Events 行动卡；真实资格筛选；独立空/失败状态；紧凑品牌区 | 320px/390px 访客实测；登录后的个性化 Events 待验收 |
+| Dashboard `/console` | 重写 Updates 时间轴与 Events 行动卡；真实资格筛选；独立空/失败状态；紧凑品牌区 | 320px/390px 访客实测；登录后 Events 已只读实测，实际参与写入待验收 |
 | Worlds `/worlds/live`、World Archive `/worlds`、World 详情 | 一级/二级页头、队列与分类切换、说明/提交/Signal 弹层、草稿退出与未知结果处理、详情返回 | Live 页 390px 只读实测；提交等写入流程待验收 |
-| Devices `/devices`、批次详情、My Consoles、认领/讨论相关页 | 品牌区与返回层级、内容切换、批次列表及 Console 进度弹层、共享按钮和容器 | 已改代码；登录后流程待验收 |
-| Intel `/intel`、详情、Votes | 筛选与位置记忆、详情返回、创建 Intel/Vote 弹层、上传/提交状态、基础视觉 | 已改代码；登录后流程待验收 |
-| Voyagers `/voyagers`、My Profile `/profile`、Logs `/logs` 与详情 | Profile 归属、批次筛选、编辑与草稿保护、二级去 Logo、实际来源返回、Logs 加载/错误/空状态 | 已改代码；登录后流程待验收 |
+| Devices `/devices`、批次详情、My Consoles、认领/讨论相关页 | 品牌区与返回层级、内容切换、批次列表及 Console 进度弹层、共享按钮和容器 | 共享控件与一级页已只读实测；提交/付款等写入流程待验收 |
+| Intel `/intel`、详情、Votes | 筛选与位置记忆、详情返回、创建 Intel/Vote 弹层、上传/提交状态、基础视觉 | 共享控件与一级页已只读实测；提交/付款等写入流程待验收 |
+| Voyagers `/voyagers`、My Profile `/profile`、Logs `/logs` 与详情 | Profile 归属、批次筛选、编辑与草稿保护、二级去 Logo、实际来源返回、Logs 加载/错误/空状态 | 共享控件与一级页已只读实测；提交/付款等写入流程待验收 |
 | 启动 `/welcome` 与 UI Kit `/ui-kit` | 新增独立启动入口；用真实共享组件重建可操作样板 | 移动端本地实测；计时规则以最新交互合同为准 |
 | Web 离线页与 iOS 离线默认页 | 五 Tab、原品牌素材、字体、缓存时间与缺失内容提示、只读 Dashboard、详情返回 | Web 离线页已实测；iOS 完整 Release 模拟器目标编译通过，真机运行待验收 |
 | 管理、认证、申请、Quiz、认领结果及加载/错误页 | 共享字体/字号/颜色/容器/按钮、清理重复品牌与装饰 | 基础样式迁移，尚未逐页完整重设计与验收 |

@@ -147,7 +147,7 @@ function QuestionScreen({
         {question.options.map((opt) => {
           const isSelected = selected === opt.key
           return (
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               key={opt.key}
               onClick={() => onSelect(opt.key)}
               aria-pressed={isSelected}
@@ -158,7 +158,7 @@ function QuestionScreen({
                 {opt.key.toUpperCase()}
               </span>
               {opt.label}
-            </button>
+            </ArchiveButton>
           )
         })}
       </div>

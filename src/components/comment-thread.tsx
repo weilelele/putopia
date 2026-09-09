@@ -1,12 +1,15 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveSelect, ArchiveTextarea, ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { Send, CornerDownRight, ImagePlus, X } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { getComments, postComment, deleteComment, listImpersonatableProfiles } from '@/lib/actions/comments'
-import { HudField } from '@/components/hud-field'
+import { ArchiveField } from '@/components/archive-field'
+import { useId } from 'react'
 import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types/database'
 
 const SUBJECT_BASE: Record<CommentSubjectType, string> = {
@@ -153,18 +156,18 @@ export function CommentThread({
               {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
             {canDelete && (
-              <button onClick={() => handleDelete(c.id)} title="Delete" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-star-deep)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', padding: '0 0.25rem' }}>✕</button>
+              <ArchiveButton type="submit" variant="secondary" onClick={() => handleDelete(c.id)} title="Delete" style={{ cursor: 'pointer', padding: '0 0.25rem' }}>✕</ArchiveButton>
             )}
           </div>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0 }}>{c.body}</p>
           <CommentImages paths={c.image_paths ?? []} />
           {!isGuest && (
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}
-              style={{ marginTop: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-star-deep)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: 0 }}
+              style={{ marginTop: '0.5rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: 0 }}
             >
               <CornerDownRight size={11} /> {replyTo === c.id ? 'CANCEL' : 'REPLY'}
-            </button>
+            </ArchiveButton>
           )}
         </div>
 
@@ -264,6 +267,7 @@ function Composer({
   compact?: boolean
   allowImages?: boolean
 }) {
+  const commentFieldId = useId()
   const [text, setText] = useState('')
   const [asProfileId, setAsProfileId] = useState<string>('')
   const [sending, setSending] = useState(false)
@@ -339,11 +343,11 @@ function Composer({
       {identities.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
           <label style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: 'var(--color-star-deep)' }}>POST AS</label>
-          <select
+          <ArchiveSelect
             value={asProfileId}
             onChange={(e) => setAsProfileId(e.target.value)}
             className="input-dark"
-            style={{ padding: '0.25rem 0.5rem', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)', flex: compact ? 1 : 'unset', maxWidth: 280 }}
+            style={{ padding: '0.25rem 0.5rem', flex: compact ? 1 : 'unset', maxWidth: 280 }}
           >
             <option value="">Yourself</option>
             {identities.map((p) => (
@@ -351,12 +355,12 @@ function Composer({
                 {p.display_name} ({p.role})
               </option>
             ))}
-          </select>
+          </ArchiveSelect>
         </div>
       )}
 
-      <HudField>
-        <textarea
+      <ArchiveField htmlFor={commentFieldId} label="COMMENT">
+        <ArchiveTextarea
           rows={compact ? 2 : 3}
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -364,7 +368,7 @@ function Composer({
           className="input-dark"
           style={{ resize: 'none' }}
         />
-      </HudField>
+      </ArchiveField>
 
       {/* Staged image thumbnails */}
       {staged.length > 0 && (
@@ -381,20 +385,13 @@ function Composer({
                   border: '1px solid rgba(227,82,5,0.3)',
                 }}
               />
-              <button
+              <ArchiveButton variant="secondary"
                 type="button"
                 onClick={() => removeImage(i)}
-                style={{
-                  position: 'absolute', top: 2, right: 2,
-                  background: 'rgba(10,14,39,0.85)',
-                  border: '1px solid rgba(227,82,5,0.3)',
-                  borderRadius: 0, cursor: 'pointer', color: '#F5F5F5',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: 18, height: 18, padding: 0,
-                }}
+                style={{ position: 'absolute', top: 2, right: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, padding: 0 }}
               >
                 <X size={10} />
-              </button>
+              </ArchiveButton>
             </div>
           ))}
         </div>
@@ -410,7 +407,7 @@ function Composer({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {allowImages && (
             <>
-              <input
+              <ArchiveInput
                 ref={fileRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -418,32 +415,25 @@ function Composer({
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
               />
-              <button
+              <ArchiveButton variant="secondary"
                 type="button"
                 onClick={() => canAddMore && fileRef.current?.click()}
                 disabled={!canAddMore}
                 title={canAddMore ? `Add image (${staged.length}/${MAX_IMAGES})` : `Maximum ${MAX_IMAGES} images reached`}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'none',
-                  border: '1px solid rgba(227,82,5,0.2)',
-                  color: canAddMore ? 'rgba(245,245,245,0.4)' : 'rgba(245,245,245,0.15)',
-                  fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
-                  padding: '4px 8px', cursor: canAddMore ? 'pointer' : 'not-allowed',
-                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: canAddMore ? 'rgba(245,245,245,0.4)' : 'rgba(245,245,245,0.15)', padding: '4px 8px', cursor: canAddMore ? 'pointer' : 'not-allowed' }}
               >
                 <ImagePlus size={11} />
                 {staged.length}/{MAX_IMAGES}
-              </button>
+              </ArchiveButton>
             </>
           )}
           {transmitted && (
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-ok)' }}>✓ TRANSMISSION SENT</span>
           )}
         </div>
-        <button type="submit" disabled={!text.trim() || sending} className="btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: 'var(--fs-caption)' }}>
+        <ArchiveButton variant="primary" type="submit" disabled={!text.trim() || sending} className="btn-primary" style={{ padding: '0.5rem 1.25rem' }}>
           <Send size={10} /> {sending ? (staged.length > 0 ? 'UPLOADING...' : 'SENDING...') : 'TRANSMIT'}
-        </button>
+        </ArchiveButton>
       </div>
     </form>
   )

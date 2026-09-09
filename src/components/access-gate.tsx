@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useEffect, useState, type ReactNode } from 'react'
 import posthog from 'posthog-js'
 import { isWindowActive, startAccessWindow } from '@/lib/access-window'
@@ -129,23 +130,23 @@ export function AccessGate({
                 MEMBERS ONLY.<br />5 MINUTES OF UNRESOLVED ACCESS ALLOWED.<br />ENTER THE COLLECTIVE?
               </p>
 
-              <button
+              <ArchiveButton variant="primary"
                 type="button"
                 className="btn-primary"
                 style={{ width: '100%', justifyContent: 'center', marginTop: '1.4rem' }}
                 onClick={startPeek}
               >
                 CONFIRM
-              </button>
+              </ArchiveButton>
 
-              <button
+              <ArchiveButton variant="secondary"
                 type="button"
                 className="btn-secondary"
                 style={{ width: '100%', justifyContent: 'center', marginTop: '0.7rem' }}
                 onClick={() => getFullAccess('gate')}
               >
                 GET FULL ACCESS
-              </button>
+              </ArchiveButton>
             </div>
           </div>
         )}

@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { createVote } from '@/lib/actions/votes'
@@ -88,7 +89,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Title */}
           <ArchiveField htmlFor="vote-title" label="TITLE *">
-            <input
+            <ArchiveInput
               id="vote-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -99,7 +100,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
 
           {/* Description */}
           <ArchiveField htmlFor="vote-description" label="DESCRIPTION">
-            <textarea
+            <ArchiveTextarea
               id="vote-description"
               value={description}
               onChange={(e) => setDesc(e.target.value)}
@@ -121,7 +122,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
             </div>
 
             <ArchiveField htmlFor="vote-ends-at" label="ENDS AT">
-              <input
+              <ArchiveInput
                 id="vote-ends-at"
                 type="date"
                 value={endsAt}
@@ -137,14 +138,14 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
               {SCOPE_OPTIONS.map(({ value, label }) => {
                 const active = scope.includes(value)
                 return (
-                  <button
+                  <ArchiveButton variant="secondary"
                     key={value}
                     type="button"
                     onClick={() => toggleScope(value)}
                     className={`archive-scope-option${active ? ' is-active' : ''}`}
                   >
                     {label}
-                  </button>
+                  </ArchiveButton>
                 )
               })}
             </div>
@@ -166,7 +167,7 @@ export function CreateVoteModal({ onClose, onCreated }: Props) {
                   <span className="text-xs font-mono w-6 text-right shrink-0" style={{ color: 'rgba(245,245,245,0.35)' }}>
                     {String.fromCharCode(65 + i)}.
                   </span>
-                  <input
+                  <ArchiveInput
                     className="archive-inline-input"
                     value={opt}
                     onChange={(e) => setOption(i, e.target.value)}

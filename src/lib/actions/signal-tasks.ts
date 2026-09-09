@@ -1749,6 +1749,7 @@ export async function getArchiveReel(worldId: string): Promise<ArchiveReel> {
 // ─── Console dashboard board (doc 4.1) ────────────────────────────────────────
 
 export interface DispatchDashboard {
+  awaitingWorldIds: string[]
   awaitingYou: number   // revealed (currently-open) days this viewer may vote on and hasn't
   inTuning: number      // currently-revealed signals across worlds in tuning
   yourWorlds: { id: string; name: string; stage: WorldStage }[]
@@ -1795,6 +1796,7 @@ export async function getDispatchDashboard(): Promise<DispatchDashboard | null> 
 
   const now = new Date(); const nowMs = now.getTime()
   let inTuning = 0   // surfaced (opened) signals across worlds in tuning
+  const awaitingWorldIds: string[] = []
   let awaitingYou = 0
   for (const [threadId, rows] of tasksByThread) {
     const sg = threadGap.get(threadId)
@@ -1811,6 +1813,7 @@ export async function getDispatchDashboard(): Promise<DispatchDashboard | null> 
       const openTask = rows.find((r) => (r.day_index ?? 0) === phase.index)
       if (openTask && !responded.has(openTask.id) && eligibleToVote(me.role, me.id, wm?.vote_scope ?? 'all', wm?.discoverer_id ?? null)) {
         awaitingYou++
+        if (wid) awaitingWorldIds.push(wid)
       }
     }
   }
@@ -1823,5 +1826,5 @@ export async function getDispatchDashboard(): Promise<DispatchDashboard | null> 
   const yourWorlds = ((mine ?? []) as { id: string; name: string; lifecycle_state: WorldLifecycle }[])
     .map((w) => ({ id: w.id, name: w.name, stage: worldStage(w.lifecycle_state) }))
 
-  return { awaitingYou, inTuning, yourWorlds }
+  return { awaitingYou, awaitingWorldIds, inTuning, yourWorlds }
 }

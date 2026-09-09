@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
@@ -285,17 +287,9 @@ function Q1Card({ value, onChange, touched, onContinue }: {
         transition: 'opacity 0.35s ease',
         pointerEvents: touched ? 'auto' : 'none',
       }}>
-        <button
+        <ArchiveButton type="submit" variant="secondary"
           onClick={onContinue}
-          style={{
-            background: touched ? 'rgba(255,90,31,0.08)' : 'transparent',
-            border: `1px solid ${touched ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
-            color: touched ? 'var(--color-star)' : 'var(--color-star-dim)',
-            fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em',
-            padding: '0.75rem 1.5rem', cursor: touched ? 'pointer' : 'default',
-            transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-          }}
+          style={{ background: touched ? 'rgba(255,90,31,0.08)' : 'transparent', border: `1px solid ${touched ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`, color: touched ? 'var(--color-star)' : 'var(--color-star-dim)', padding: '0.75rem 1.5rem', cursor: touched ? 'pointer' : 'default', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           onMouseEnter={e => {
             if (!touched) return
             const el = e.currentTarget as HTMLElement
@@ -309,7 +303,7 @@ function Q1Card({ value, onChange, touched, onContinue }: {
           }}
         >
           CONTINUE <span style={{ opacity: 0.6 }}>→</span>
-        </button>
+        </ArchiveButton>
       </div>
 
     </div>
@@ -414,7 +408,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
             }}>
               YOUR EMAIL
             </label>
-            <input
+            <ArchiveInput
               ref={inputRef}
               type="email"
               required
@@ -427,21 +421,10 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
           </div>
 
           {/* CTA button */}
-          <button
+          <ArchiveButton variant="primary"
             type="submit"
             disabled={!email || submitting}
-            style={{
-              width: '100%',
-              padding: '1rem 1.5rem',
-              background:  email && !submitting ? 'rgba(255,90,31,0.1)' : 'transparent',
-              border:      `1px solid ${email && !submitting ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`,
-              color:       email && !submitting ? 'var(--color-star)' : 'rgba(242,240,230,0.35)',
-              fontFamily:  'var(--font-display)', fontSize: 'var(--fs-label)', letterSpacing: '0.15em',
-              cursor:      email && !submitting ? 'pointer' : 'default',
-              transition:  'all 0.2s ease',
-              boxShadow:   'none',
-              opacity:     submitting ? 0.55 : 1,
-            }}
+            style={{ width: '100%', padding: '1rem 1.5rem', background:  email && !submitting ? 'rgba(255,90,31,0.1)' : 'transparent', border:      `1px solid ${email && !submitting ? 'rgba(255,90,31,0.5)' : 'rgba(242,240,230,0.12)'}`, color:       email && !submitting ? 'var(--color-star)' : 'rgba(242,240,230,0.35)', cursor:      email && !submitting ? 'pointer' : 'default', transition:  'all 0.2s ease', opacity:     submitting ? 0.55 : 1 }}
             onMouseEnter={e => {
               if (!email || submitting) return
               const el = e.currentTarget as HTMLElement
@@ -456,7 +439,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit }: {
             }}
           >
             {submitting ? '> TRANSMITTING...' : 'CONFIRM MY VOYAGER IDENTITY'}
-          </button>
+          </ArchiveButton>
 
         </form>
       </div>

@@ -98,9 +98,9 @@ async function StatsBar() {
   const tuning = pipeline.filter((w) => w.lifecycle_state === 'picked' || w.lifecycle_state === 'syncing').length
   return (
     <ArchiveStatStrip items={[
-      { value: initial, label: 'INITIAL', color: 'var(--color-warn)', href: '#section-initial-vision' },
-      { value: tuning, label: 'TUNING', color: 'var(--color-ok)', href: '#section-signal-tuning' },
-      { value: worlds.length, label: 'ESTABLISHED', color: 'var(--color-nucleus)', href: '#section-established' },
+      { value: initial, label: 'INITIAL', href: '#section-initial-vision' },
+      { value: tuning, label: 'TUNING', href: '#section-signal-tuning' },
+      { value: worlds.length, label: 'ESTABLISHED', href: '#section-established' },
     ]} />
   )
 }

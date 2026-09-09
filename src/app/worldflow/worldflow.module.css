@@ -43,7 +43,7 @@
 .overviewHeader h1,
 .workspaceHeader h1 {
   margin: var(--s-2) 0;
-  font-size: clamp(var(--fs-h2), 9vw, var(--fs-h1));
+  font-size: var(--fs-h3);
   line-height: 1;
 }
 
@@ -364,7 +364,8 @@ button.worldCard {
 }
 
 .stepNav button[data-active="true"] {
-  background: var(--color-nucleus);
+  background: var(--bg-panel);
+  border-bottom: 2px solid var(--color-nucleus);
 }
 
 .stepNav button[data-active="true"] > span,

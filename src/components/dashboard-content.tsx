@@ -28,7 +28,7 @@ export function EventRail({ events }: { events: DashboardEvent[] }) {
     <ul className="event-rail" ref={rail} onScroll={() => { const el=rail.current; if(!el) return; const cards=[...el.children] as HTMLElement[]; let nearest=0; cards.forEach((card,i)=>{if(Math.abs(card.offsetLeft-cards[0].offsetLeft-el.scrollLeft)<Math.abs(cards[nearest].offsetLeft-cards[0].offsetLeft-el.scrollLeft)) nearest=i});setPosition(nearest) }}>
       {events.map(event => <li className="event-card" key={event.id}>
         {event.image && <SmartImage src={event.image} alt="" width={480} height={270} sizes="(min-width:768px) 340px, 85vw" />}
-        <div className="event-copy"><span className="update-category">{event.kind}</span><h3>{event.title}</h3><p>{event.description}</p>{event.endsAt && <time dateTime={event.endsAt}>Closes {new Date(event.endsAt).toISOString().slice(0,16).replace('T',' ')} UTC</time>}<ArchiveLinkButton href={event.href} fullWidth>{event.action}</ArchiveLinkButton></div>
+        <div className="event-copy"><span className="update-category">{event.kind}</span><h3>{event.title}</h3><p>{event.description}</p>{event.endsAt && <time dateTime={event.endsAt}>Closes {new Date(event.endsAt).toISOString().slice(0,16).replace('T',' ')} UTC</time>}<ArchiveLinkButton href={event.href} variant="primary" fullWidth>{event.action}</ArchiveLinkButton></div>
       </li>)}
     </ul>
   </div>

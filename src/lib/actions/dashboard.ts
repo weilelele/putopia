@@ -1,4 +1,5 @@
 'use server'
+import { readDashboardCovers } from '@/lib/dashboard-covers'
 import { readDashboardUpdates } from '@/lib/dashboard-updates'
 import { getAllVotes, getMyVoteResponses } from './votes'
 import { getDispatchDashboard } from './signal-tasks'
@@ -22,8 +23,10 @@ export async function getDashboard() {
     user ? read('Console claims', listPublicDeviceBatches) : null, user ? read('Owned Consoles', getMyDeviceConsoles) : null,
     role === 'applicant' ? read('Applicant tasks', getApplicantTaskStatus) : null,
   ])
+  if (feed?.incomplete) errors.push('Updates')
+  const covers = dispatch?.awaitingYou ? await read('Event images', readDashboardCovers) : null
   const events: DashboardEvent[] = []
-  if (dispatch && dispatch.awaitingYou > 0) events.push({ id:'dispatch',kind:'Signal Dispatch',title:'A signal is waiting for you',description:`${dispatch.awaitingYou} open question${dispatch.awaitingYou === 1 ? '' : 's'} you can answer.`,href:'/signal',action:'Identify signal' })
+  if (dispatch && dispatch.awaitingYou > 0) events.push({ id:'dispatch',kind:'Signal Dispatch',title:'A signal is waiting for you',description:`${dispatch.awaitingYou} open question${dispatch.awaitingYou === 1 ? '' : 's'} you can answer.`,href:'/signal',action:'Identify signal',image:dispatch.awaitingWorldIds.map(id=>covers?.[id]).find(Boolean) })
   const vote = votes && responses ? availableVotes(votes, role, responses, Date.now())[0] : null
   if (vote) events.push({id:`vote-${vote.id}`,kind:'Collective vote',title:vote.title,description:vote.description ?? 'Make your choice in this open vote.',href:'/vote',action:'View and vote',endsAt:vote.ends_at})
   const room = rooms?.find(room => room.status !== 'offline' && room.status !== 'paused' && room.queue.length < room.queueCapacity)
@@ -32,5 +35,5 @@ export async function getDashboard() {
   if (batch) events.push({id:`claim-${batch.slug}`,kind:'Console claim',title:batch.name,description:batch.statusLine,href:getBatchClaimHref(batch)!,action:'View claim',image:batch.image})
   if (events.length < 5 && tasks && !tasks.sighting) events.push({id:'world-submission',kind:'World submission',title:'Share a world',description:'Submit your first world for review.',href:'/worlds/submit',action:'Submit world'})
   if (events.length < 5 && tasks && !tasks.quiz) events.push({id:'quiz',kind:'Voyager quiz',title:'Find your signal',description:'Continue your entry assessment.',href:'/quiz',action:'Take quiz'})
-  return { updates: latestUpdates(feed ?? [], votes ?? []), events, errors, guest: !user, fetchedAt: new Date().toISOString() }
+  return { updates: latestUpdates(feed?.updates ?? [], votes ?? []), events, errors, guest: !user, fetchedAt: new Date().toISOString() }
 }

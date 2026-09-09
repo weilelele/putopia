@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveTextarea, ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect } from 'react'
 import {
   adminGetQuizQuestions,
@@ -63,7 +65,7 @@ function QuestionEditor({
       {/* Prompt */}
       <div>
         <label style={S.label}>QUESTION PROMPT</label>
-        <textarea
+        <ArchiveTextarea
           style={S.area}
           value={draft.prompt}
           onChange={e => setPrompt(e.target.value)}
@@ -80,7 +82,7 @@ function QuestionEditor({
             <div key={opt.key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {/* Radio: mark as correct answer */}
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flexShrink: 0, width: 36 }}>
-                <input
+                <ArchiveInput
                   type="radio"
                   // eslint-disable-next-line react-hooks/purity -- name is cosmetic; the radio is fully controlled via checked/onChange
                   name={`answer-${Math.random()}`}
@@ -92,7 +94,7 @@ function QuestionEditor({
                   {opt.key.toUpperCase()}
                 </span>
               </label>
-              <input
+              <ArchiveInput
                 style={{ ...S.input, flex: 1, border: draft.answer_key === opt.key ? '1px solid rgba(227,82,5,0.45)' : '1px solid rgba(227,82,5,0.16)' }}
                 value={opt.label}
                 onChange={e => setOption(opt.key, e.target.value)}
@@ -108,16 +110,16 @@ function QuestionEditor({
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-        <button style={{ ...S.btn, ...S.btnGhost }} onClick={onCancel} disabled={saving}>
+        <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, ...S.btnGhost }} onClick={onCancel} disabled={saving}>
           CANCEL
-        </button>
-        <button
+        </ArchiveButton>
+        <ArchiveButton type="submit" variant="secondary"
           style={{ ...S.btn, ...S.btnOk, opacity: (!valid || saving) ? 0.5 : 1 }}
           onClick={() => valid && onSave(draft)}
           disabled={!valid || saving}
         >
           {saving ? 'SAVING…' : 'SAVE QUESTION'}
-        </button>
+        </ArchiveButton>
       </div>
     </div>
   )
@@ -209,12 +211,12 @@ export default function QuizAdminPage() {
           </div>
         </div>
         {editingId !== 'new' && (
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             style={{ ...S.btn, ...S.btnOk }}
             onClick={() => setEditingId('new')}
           >
             + ADD QUESTION
-          </button>
+          </ArchiveButton>
         )}
       </div>
 
@@ -291,47 +293,47 @@ export default function QuizAdminPage() {
 
                   {/* Action buttons */}
                   <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                    <button
-                      style={{ ...S.btn, ...S.btnGhost, padding: '4px 8px', fontSize: '13px' }}
+                    <ArchiveButton type="submit" variant="secondary"
+                      style={{ ...S.btn, ...S.btnGhost, padding: '4px 8px' }}
                       onClick={() => handleMove(q.id, -1)}
                       disabled={idx === 0 || saving}
                       title="Move up"
-                    >↑</button>
-                    <button
-                      style={{ ...S.btn, ...S.btnGhost, padding: '4px 8px', fontSize: '13px' }}
+                    >↑</ArchiveButton>
+                    <ArchiveButton type="submit" variant="secondary"
+                      style={{ ...S.btn, ...S.btnGhost, padding: '4px 8px' }}
                       onClick={() => handleMove(q.id, 1)}
                       disabled={idx === questions.length - 1 || saving}
                       title="Move down"
-                    >↓</button>
-                    <button
+                    >↓</ArchiveButton>
+                    <ArchiveButton type="submit" variant="secondary"
                       style={{ ...S.btn, ...S.btnGhost }}
                       onClick={() => setEditingId(q.id)}
                     >
                       EDIT
-                    </button>
+                    </ArchiveButton>
                     {confirmDelete === q.id ? (
                       <>
-                        <button
+                        <ArchiveButton type="submit" variant="secondary"
                           style={{ ...S.btn, ...S.btnDanger }}
                           onClick={() => handleDelete(q.id)}
                           disabled={saving}
                         >
                           CONFIRM
-                        </button>
-                        <button
+                        </ArchiveButton>
+                        <ArchiveButton type="submit" variant="secondary"
                           style={{ ...S.btn, ...S.btnGhost }}
                           onClick={() => setConfirmDelete(null)}
                         >
                           ✕
-                        </button>
+                        </ArchiveButton>
                       </>
                     ) : (
-                      <button
+                      <ArchiveButton type="submit" variant="secondary"
                         style={{ ...S.btn, ...S.btnDanger }}
                         onClick={() => setConfirmDelete(q.id)}
                       >
                         DEL
-                      </button>
+                      </ArchiveButton>
                     )}
                   </div>
                 </div>

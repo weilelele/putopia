@@ -1,4 +1,5 @@
 'use client'
+import { ArchiveTextarea } from '@/components/archive-input'
 import { BackLink } from '@/components/back-link'
 
 import { useState, useEffect } from 'react'
@@ -220,7 +221,7 @@ export default function StoryPage() {
       <form onSubmit={handleTransmit}>
         <ArchiveCard>
           <ArchiveField htmlFor="log-message" label="TRANSMIT A MESSAGE">
-            <textarea
+            <ArchiveTextarea
               id="log-message"
               rows={3}
               value={commentText}

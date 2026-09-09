@@ -73,14 +73,14 @@ export function FollowBatchButton({
           <span>
             <strong>{batchName}</strong> · {message}
           </span>
-          <button
+          <ArchiveButton variant="ghost"
             aria-label="Dismiss follow confirmation"
             className={styles.iconButton}
             onClick={() => setShowConfirmation(false)}
             type="button"
           >
             <X aria-hidden size={16} />
-          </button>
+          </ArchiveButton>
         </div>
       )}
     </div>

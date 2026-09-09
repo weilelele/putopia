@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
@@ -312,7 +313,7 @@ function PathRail({
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px 28px' }}>
 
         {/* ── APPLICANT ── */}
-        <button
+        <ArchiveButton variant="secondary"
           type="button"
           disabled={isVoyager}
           onClick={() => !isVoyager && onStageClick('applicant')}
@@ -341,7 +342,7 @@ function PathRail({
           <div style={{ fontSize: 'var(--fs-caption)', color: `${applicantHex}80`, letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
             {applicantDone ? 'COMPLETE' : 'CURRENT'}
           </div>
-        </button>
+        </ArchiveButton>
 
         {/* ── A → V connector ── */}
         <div style={{ flex: 1, paddingTop: 21, display: 'flex', alignItems: 'center' }}>
@@ -354,7 +355,7 @@ function PathRail({
         </div>
 
         {/* ── VOYAGER ── */}
-        <button
+        <ArchiveButton variant="secondary"
           type="button"
           disabled={isVoyager}
           onClick={() => !isVoyager && onStageClick('voyager')}
@@ -382,7 +383,7 @@ function PathRail({
               CURRENT
             </div>
           )}
-        </button>
+        </ArchiveButton>
 
         {/* ── V → C connector ── */}
         <div style={{ flex: 1, paddingTop: 21, display: 'flex', alignItems: 'center' }}>
@@ -395,7 +396,7 @@ function PathRail({
         </div>
 
         {/* ── CONSOLE HOLDER ── */}
-        <button
+        <ArchiveButton variant="secondary"
           type="button"
           onClick={onConsoleClick}
           className="archive-path-node-button"
@@ -415,7 +416,7 @@ function PathRail({
           <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(227,82,5,0.28)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
             HOLDER
           </div>
-        </button>
+        </ArchiveButton>
 
       </div>
 
@@ -715,9 +716,9 @@ function VoyagerWelcomeBlock({ onConsoleClick, onSignalClick }: { onConsoleClick
 
           // Locked → modal on click
           return (
-            <button key={label} onClick={onClickLocked} style={baseStyle}>
+            <ArchiveButton type="submit" variant="secondary" key={label} onClick={onClickLocked} style={baseStyle}>
               {inner}
-            </button>
+            </ArchiveButton>
           )
         })}
       </div>

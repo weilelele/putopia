@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveSelect, ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -340,7 +341,7 @@ export function StoryBlueprintBrowser({
       <section className={styles.workspaceBar}>
         {workflows.length > 0 ? (
           <ArchiveField htmlFor="story-workspace" label="STORY WORKSPACE">
-            <select
+            <ArchiveSelect
               id="story-workspace"
               onChange={(event) => {
                 setSelectedId(event.target.value)
@@ -355,7 +356,7 @@ export function StoryBlueprintBrowser({
                   {item.batchName} · {STORY_REVIEW_LABELS[item.adaptationStatus]}
                 </option>
               ))}
-            </select>
+            </ArchiveSelect>
           </ArchiveField>
         ) : <p>No story workspace exists yet.</p>}
         <ArchiveButton onClick={() => setShowCreate((current) => !current)} variant="secondary">
@@ -374,7 +375,7 @@ export function StoryBlueprintBrowser({
           </div>
           <div className={styles.twoColumnGrid}>
             <ArchiveField htmlFor="new-story-name" label="BATCH / STORY NAME">
-              <input
+              <ArchiveInput
                 id="new-story-name"
                 onChange={(event) => setNewWorkspace((current) => ({
                   ...current,
@@ -387,7 +388,7 @@ export function StoryBlueprintBrowser({
               />
             </ArchiveField>
             <ArchiveField htmlFor="new-story-location" label="LOCATION">
-              <input
+              <ArchiveInput
                 id="new-story-location"
                 onChange={(event) => setNewWorkspace((current) => ({ ...current, location: event.target.value }))}
                 value={newWorkspace.location}
@@ -395,7 +396,7 @@ export function StoryBlueprintBrowser({
             </ArchiveField>
           </div>
           <ArchiveField htmlFor="new-story-slug" label="WORKSPACE SLUG">
-            <input
+            <ArchiveInput
               id="new-story-slug"
               onChange={(event) => {
                 setNewSlugTouched(true)
@@ -408,7 +409,7 @@ export function StoryBlueprintBrowser({
             />
           </ArchiveField>
           <ArchiveField htmlFor="new-source-story" label="COMPLETE SOURCE STORY">
-            <textarea
+            <ArchiveTextarea
               id="new-source-story"
               maxLength={20_000}
               onChange={(event) => setNewWorkspace((current) => ({ ...current, sourceStory: event.target.value }))}
@@ -473,14 +474,14 @@ export function StoryBlueprintBrowser({
                 </div>
                 <div className={styles.twoColumnGrid}>
                   <ArchiveField htmlFor="source-batch-name" label="BATCH / STORY NAME">
-                    <input
+                    <ArchiveInput
                       id="source-batch-name"
                       onChange={(event) => updateSource({ batchName: event.target.value })}
                       value={sourceDraft.batchName}
                     />
                   </ArchiveField>
                   <ArchiveField htmlFor="source-location" label="LOCATION">
-                    <input
+                    <ArchiveInput
                       id="source-location"
                       onChange={(event) => updateSource({ location: event.target.value })}
                       value={sourceDraft.location}
@@ -488,7 +489,7 @@ export function StoryBlueprintBrowser({
                   </ArchiveField>
                 </div>
                 <ArchiveField htmlFor="source-story" label="COMPLETE SOURCE STORY">
-                  <textarea
+                  <ArchiveTextarea
                     id="source-story"
                     maxLength={20_000}
                     onChange={(event) => updateSource({ sourceStory: event.target.value })}
@@ -654,7 +655,7 @@ function AdaptationEditor({
         {adaptation.core.map((item, index) => (
           <div className={styles.fieldGroup} key={`${item.label}-${index}`}>
             <ArchiveField htmlFor={`core-label-${index}`} label={`CORE FIELD ${index + 1}`}>
-              <input
+              <ArchiveInput
                 id={`core-label-${index}`}
                 onChange={(event) => onChange({
                   ...adaptation,
@@ -666,7 +667,7 @@ function AdaptationEditor({
               />
             </ArchiveField>
             <ArchiveField htmlFor={`core-value-${index}`} label="STRUCTURED VALUE">
-              <textarea
+              <ArchiveTextarea
                 id={`core-value-${index}`}
                 onChange={(event) => onChange({
                   ...adaptation,
@@ -683,7 +684,7 @@ function AdaptationEditor({
       </div>
 
       <ArchiveField htmlFor="story-engine" label="STORY ENGINE">
-        <textarea
+        <ArchiveTextarea
           id="story-engine"
           onChange={(event) => onChange({ ...adaptation, storyEngine: event.target.value })}
           rows={5}
@@ -698,7 +699,7 @@ function AdaptationEditor({
           ['unresolved', 'INTENTIONALLY UNRESOLVED'],
         ] as const).map(([field, label]) => (
           <ArchiveField htmlFor={`adaptation-${field}`} key={field} label={label}>
-            <textarea
+            <ArchiveTextarea
               id={`adaptation-${field}`}
               onChange={(event) => onChange({ ...adaptation, [field]: splitLines(event.target.value) })}
               rows={10}
@@ -717,7 +718,7 @@ function AdaptationEditor({
             </div>
             <div className={styles.twoColumnGrid}>
               <ArchiveField htmlFor={`phase-label-${index}`} label="PHASE LABEL">
-                <input
+                <ArchiveInput
                   id={`phase-label-${index}`}
                   onChange={(event) => onChange({
                     ...adaptation,
@@ -729,7 +730,7 @@ function AdaptationEditor({
                 />
               </ArchiveField>
               <ArchiveField htmlFor={`phase-purpose-${index}`} label="PURPOSE">
-                <input
+                <ArchiveInput
                   id={`phase-purpose-${index}`}
                   onChange={(event) => onChange({
                     ...adaptation,
@@ -742,7 +743,7 @@ function AdaptationEditor({
               </ArchiveField>
             </div>
             <ArchiveField htmlFor={`phase-beats-${index}`} label="ESSENTIAL BEATS · ONE PER LINE · MAX 3">
-              <textarea
+              <ArchiveTextarea
                 id={`phase-beats-${index}`}
                 onChange={(event) => onChange({
                   ...adaptation,
@@ -755,7 +756,7 @@ function AdaptationEditor({
               />
             </ArchiveField>
             <ArchiveField htmlFor={`phase-gate-${index}`} label="EXPLICIT GATE">
-              <textarea
+              <ArchiveTextarea
                 id={`phase-gate-${index}`}
                 onChange={(event) => onChange({
                   ...adaptation,
@@ -778,7 +779,7 @@ function AdaptationEditor({
           ['nextQuestions', 'AUTHOR QUESTIONS'],
         ] as const).map(([field, label]) => (
           <ArchiveField htmlFor={`adaptation-${field}`} key={field} label={label}>
-            <textarea
+            <ArchiveTextarea
               id={`adaptation-${field}`}
               onChange={(event) => onChange({ ...adaptation, [field]: splitLines(event.target.value) })}
               rows={9}
@@ -791,7 +792,7 @@ function AdaptationEditor({
       {adaptation.votes.map((vote, index) => (
         <div className={styles.voteEditor} key={`${vote.question}-${index}`}>
           <ArchiveField htmlFor={`vote-question-${index}`} label="OPTIONAL INVESTIGATION VOTE">
-            <input
+            <ArchiveInput
               id={`vote-question-${index}`}
               onChange={(event) => onChange({
                 ...adaptation,
@@ -804,7 +805,7 @@ function AdaptationEditor({
           </ArchiveField>
           <div className={styles.twoColumnGrid}>
             <ArchiveField htmlFor={`vote-why-${index}`} label="WHY NOW">
-              <textarea
+              <ArchiveTextarea
                 id={`vote-why-${index}`}
                 onChange={(event) => onChange({
                   ...adaptation,
@@ -817,7 +818,7 @@ function AdaptationEditor({
               />
             </ArchiveField>
             <ArchiveField htmlFor={`vote-options-${index}`} label="OPTIONS · ONE PER LINE">
-              <textarea
+              <ArchiveTextarea
                 id={`vote-options-${index}`}
                 onChange={(event) => onChange({
                   ...adaptation,
@@ -834,7 +835,7 @@ function AdaptationEditor({
       ))}
 
       <ArchiveField htmlFor="adaptation-review-note" label="REVIEW NOTE">
-        <textarea
+        <ArchiveTextarea
           id="adaptation-review-note"
           onChange={(event) => setReviewNote(event.target.value)}
           placeholder="Explain required changes or record the approval rationale."
@@ -916,7 +917,7 @@ function ContentEditor({
 
       <div className={styles.twoColumnGrid}>
         <ArchiveField htmlFor={`content-title-${item.id}`} label="TITLE">
-          <input
+          <ArchiveInput
             disabled={immutable}
             id={`content-title-${item.id}`}
             onChange={(event) => onChange({ ...draft, title: event.target.value })}
@@ -924,7 +925,7 @@ function ContentEditor({
           />
         </ArchiveField>
         <ArchiveField htmlFor={`content-position-${item.id}`} label="ORDER">
-          <input
+          <ArchiveInput
             disabled={immutable}
             id={`content-position-${item.id}`}
             min={1}
@@ -936,7 +937,7 @@ function ContentEditor({
       </div>
       <div className={styles.twoColumnGrid}>
         <ArchiveField htmlFor={`content-channel-${item.id}`} label="CHANNEL">
-          <input
+          <ArchiveInput
             disabled={immutable}
             id={`content-channel-${item.id}`}
             onChange={(event) => onChange({ ...draft, channel: event.target.value })}
@@ -944,7 +945,7 @@ function ContentEditor({
           />
         </ArchiveField>
         <ArchiveField htmlFor={`content-type-${item.id}`} label="CONTENT TYPE">
-          <input
+          <ArchiveInput
             disabled={immutable}
             id={`content-type-${item.id}`}
             onChange={(event) => onChange({ ...draft, contentType: event.target.value })}
@@ -953,7 +954,7 @@ function ContentEditor({
         </ArchiveField>
       </div>
       <ArchiveField htmlFor={`content-body-${item.id}`} label="ENGLISH PUBLISHABLE COPY">
-        <textarea
+        <ArchiveTextarea
           disabled={immutable}
           id={`content-body-${item.id}`}
           onChange={(event) => onChange({ ...draft, body: event.target.value })}
@@ -962,7 +963,7 @@ function ContentEditor({
         />
       </ArchiveField>
       <ArchiveField htmlFor={`content-purpose-${item.id}`} label="NARRATIVE PURPOSE">
-        <textarea
+        <ArchiveTextarea
           disabled={immutable}
           id={`content-purpose-${item.id}`}
           onChange={(event) => onChange({ ...draft, narrativePurpose: event.target.value })}
@@ -972,7 +973,7 @@ function ContentEditor({
       </ArchiveField>
       <div className={styles.threeColumnGrid}>
         <ArchiveField htmlFor={`content-facts-${item.id}`} label="FACTS USED · ONE PER LINE">
-          <textarea
+          <ArchiveTextarea
             disabled={immutable}
             id={`content-facts-${item.id}`}
             onChange={(event) => onChange({ ...draft, facts: splitLines(event.target.value) })}
@@ -981,7 +982,7 @@ function ContentEditor({
           />
         </ArchiveField>
         <ArchiveField htmlFor={`content-assets-${item.id}`} label="REQUIRED ASSETS · ONE PER LINE">
-          <textarea
+          <ArchiveTextarea
             disabled={immutable}
             id={`content-assets-${item.id}`}
             onChange={(event) => onChange({ ...draft, requiredAssets: splitLines(event.target.value) })}
@@ -990,7 +991,7 @@ function ContentEditor({
           />
         </ArchiveField>
         <ArchiveField htmlFor={`content-dependencies-${item.id}`} label="DEPENDENCIES · ONE PER LINE">
-          <textarea
+          <ArchiveTextarea
             disabled={immutable}
             id={`content-dependencies-${item.id}`}
             onChange={(event) => onChange({ ...draft, dependencies: splitLines(event.target.value) })}
@@ -1001,7 +1002,7 @@ function ContentEditor({
       </div>
       <div className={styles.twoColumnGrid}>
         <ArchiveField htmlFor={`content-recommended-${item.id}`} label="AI-RECOMMENDED TIME">
-          <input
+          <ArchiveInput
             disabled={immutable}
             id={`content-recommended-${item.id}`}
             onChange={(event) => onChange({
@@ -1013,7 +1014,7 @@ function ContentEditor({
           />
         </ArchiveField>
         <ArchiveField htmlFor={`content-follow-up-${item.id}`} label="FOLLOW-UP / PAYOFF">
-          <input
+          <ArchiveInput
             disabled={immutable}
             id={`content-follow-up-${item.id}`}
             onChange={(event) => onChange({ ...draft, followUp: event.target.value })}
@@ -1022,7 +1023,7 @@ function ContentEditor({
         </ArchiveField>
       </div>
       <ArchiveField htmlFor={`content-timing-${item.id}`} label="TIMING RATIONALE">
-        <textarea
+        <ArchiveTextarea
           disabled={immutable}
           id={`content-timing-${item.id}`}
           onChange={(event) => onChange({ ...draft, timingRationale: event.target.value })}
@@ -1031,7 +1032,7 @@ function ContentEditor({
         />
       </ArchiveField>
       <ArchiveField htmlFor={`content-note-${item.id}`} label="REVIEW NOTE">
-        <textarea
+        <ArchiveTextarea
           disabled={immutable}
           id={`content-note-${item.id}`}
           onChange={(event) => onNoteChange(event.target.value)}

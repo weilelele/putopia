@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useEffect, useRef, useState } from 'react'
 import {
   getOnboardingVariants,
@@ -193,8 +195,8 @@ export default function OnboardingEditorPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', marginBottom: 20 }}>
         <Toggle label="预览步骤" value={step} options={STEPS.map(s => ({ v: s.id, t: s.label }))} onChange={v => { setStep(v as StepId); reloadAll() }} />
         <Toggle label="尺寸" value={device} options={[{ v: 'mobile', t: 'MOBILE' }, { v: 'desktop', t: 'DESKTOP' }]} onChange={v => setDevice(v as 'mobile' | 'desktop')} />
-        <button onClick={reloadAll} style={btnStyle}>↻ 全部重载</button>
-        <button onClick={handleAdd} style={{ ...btnStyle, color: ORANGE, borderColor: 'rgba(227,82,5,0.4)' }}>+ 新增变体</button>
+        <ArchiveButton type="submit" variant="secondary" onClick={reloadAll} style={btnStyle}>↻ 全部重载</ArchiveButton>
+        <ArchiveButton type="submit" variant="secondary" onClick={handleAdd} style={{ ...btnStyle, color: ORANGE }}>+ 新增变体</ArchiveButton>
         {saving && <span style={{ fontSize: 'var(--fs-caption)', color: ORANGE }}>保存中…</span>}
         {error && <span style={{ fontSize: 'var(--fs-caption)', color: '#E83030' }}>{error}</span>}
       </div>
@@ -217,7 +219,7 @@ export default function OnboardingEditorPage() {
                 </code>
                 {!isDefault && (
                   <label style={{ fontSize: 'var(--fs-caption)', color: MUTED, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={row.enabled} onChange={e => saveToggle(row, e.target.checked)} />
+                    <ArchiveInput type="checkbox" checked={row.enabled} onChange={e => saveToggle(row, e.target.checked)} />
                     启用
                   </label>
                 )}
@@ -225,7 +227,7 @@ export default function OnboardingEditorPage() {
                   新标签打开 ↗
                 </a>
                 {!isDefault && (
-                  <button onClick={() => handleDelete(row)} style={{ ...btnStyle, color: '#E83030', borderColor: 'rgba(232,48,48,0.4)', padding: '4px 10px' }}>删除</button>
+                  <ArchiveButton type="submit" variant="secondary" onClick={() => handleDelete(row)} style={{ ...btnStyle, padding: '4px 10px' }}>删除</ArchiveButton>
                 )}
               </div>
 
@@ -241,7 +243,7 @@ export default function OnboardingEditorPage() {
                       <div key={String(f.col)} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <label style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color: FAINT }}>{f.label}</label>
                         {f.multiline ? (
-                          <textarea
+                          <ArchiveTextarea
                             rows={2}
                             value={val}
                             placeholder={placeholder}
@@ -250,7 +252,7 @@ export default function OnboardingEditorPage() {
                             style={inputStyle}
                           />
                         ) : (
-                          <input
+                          <ArchiveInput
                             type="text"
                             value={val}
                             placeholder={placeholder}
@@ -280,12 +282,12 @@ export default function OnboardingEditorPage() {
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <VideoUpload onPick={file => handleUpload(row, s.col, file)} />
                             {own && (
-                              <button
+                              <ArchiveButton type="submit" variant="secondary"
                                 onClick={() => clearVideo(row, s.col)}
                                 style={{ ...btnStyle, padding: '4px 10px' }}
                               >
                                 恢复{inheritLabel}
-                              </button>
+                              </ArchiveButton>
                             )}
                           </div>
                         </div>
@@ -331,18 +333,13 @@ function Toggle({ label, value, options, onChange }: {
       <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: FAINT }}>{label}</span>
       <div style={{ display: 'flex', border: `1px solid ${BORDER}` }}>
         {options.map((o, i) => (
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             key={o.v}
             onClick={() => onChange(o.v)}
-            style={{
-              padding: '8px 14px', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', cursor: 'pointer',
-              background: value === o.v ? 'rgba(227,82,5,0.14)' : 'transparent',
-              color: value === o.v ? '#F5F5F5' : MUTED,
-              border: 'none', borderRight: i < options.length - 1 ? `1px solid ${BORDER}` : 'none',
-            }}
+            style={{ padding: '8px 14px', cursor: 'pointer', background: value === o.v ? 'rgba(227,82,5,0.14)' : 'transparent', color: value === o.v ? '#F5F5F5' : MUTED, borderRight: i < options.length - 1 ? `1px solid ${BORDER}` : 'none' }}
           >
             {o.t}
-          </button>
+          </ArchiveButton>
         ))}
       </div>
     </div>
@@ -353,16 +350,16 @@ function VideoUpload({ onPick }: { onPick: (file: File) => void }) {
   const ref = useRef<HTMLInputElement>(null)
   return (
     <>
-      <input
+      <ArchiveInput
         ref={ref}
         type="file"
         accept="video/*"
         style={{ display: 'none' }}
         onChange={e => { const f = e.target.files?.[0]; if (f) onPick(f); if (ref.current) ref.current.value = '' }}
       />
-      <button onClick={() => ref.current?.click()} style={{ ...btnStyle, alignSelf: 'flex-start' }}>
+      <ArchiveButton type="submit" variant="secondary" onClick={() => ref.current?.click()} style={{ ...btnStyle, alignSelf: 'flex-start' }}>
         ↑ 上传新视频
-      </button>
+      </ArchiveButton>
     </>
   )
 }

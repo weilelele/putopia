@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
@@ -112,7 +113,7 @@ export function PathStatusBar({
         {diagBottom}
 
         {/* Right half — device days; clicking opens the device modal */}
-        <button onClick={() => { posthog.capture('pathbar_device_clicked', { role: user.role, has_device: hasDevice, device_days: deviceDays }); onDeviceClick() }} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1 1 0', minWidth: 0, gap: 11 }} {...hov}>
+        <ArchiveButton type="submit" variant="secondary" onClick={() => { posthog.capture('pathbar_device_clicked', { role: user.role, has_device: hasDevice, device_days: deviceDays }); onDeviceClick() }} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1 1 0', minWidth: 0, gap: 11 }} {...hov}>
           <span aria-label={hasDevice ? 'Device active' : 'No device'} style={{
             display: 'inline-block', width: 54, height: 32, flexShrink: 0,
             background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.4)',
@@ -126,7 +127,7 @@ export function PathStatusBar({
             <span style={{ fontSize: 20, fontWeight: 700, color: hasDevice ? '#20D890' : 'rgba(245,245,245,0.5)' }}>{deviceDays}</span>
             <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em' }}>{deviceDays === 1 ? 'DAY' : 'DAYS'}</span>
           </span>
-        </button>
+        </ArchiveButton>
       </div>
 
       <style>{`

@@ -26,7 +26,7 @@ export function ArchiveSheet({ open, onClose, title, dirty = false, busy = false
     return () => { window.removeEventListener('beforeunload', guard); bridge?.postMessage(JSON.stringify({ type: 'ui-modal', open: false })) }
   }, [open, dirty])
   return <dialog ref={dialog} className="archive-sheet" aria-label={title} onCancel={event => { event.preventDefault(); close() }} onClick={event => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) close() } }}>
-    <header><h2>{title}</h2><button aria-label="Close" disabled={busy} onClick={close} type="button"><X size={22} /></button></header>
+    <header><h2>{title}</h2><ArchiveButton variant="ghost" aria-label="Close" disabled={busy} onClick={close} type="button"><X size={22} /></ArchiveButton></header>
     {confirmExit ? <div className="archive-sheet__body"><h3>Discard your changes?</h3><p>Your unsaved edits will be lost.</p><ArchiveButton onClick={() => setConfirmExit(false)}>Keep editing</ArchiveButton><ArchiveButton variant="destructive" onClick={() => { setConfirmExit(false); onClose() }}>Discard changes</ArchiveButton></div> : <div className="archive-sheet__body">{children}</div>}
   </dialog>
 }

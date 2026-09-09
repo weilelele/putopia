@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveSelect, ArchiveTextarea, ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect } from 'react'
 import { generateNews, getArchitects } from '@/lib/actions/news-gen'
 import { createIntel } from '@/lib/actions/intel'
@@ -161,7 +163,7 @@ export default function CreateNewsPage() {
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>AI 情报生成</div>
         </div>
         {phase !== 'input' && (
-          <button onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>← 重新开始</button>
+          <ArchiveButton type="submit" variant="secondary" onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>← 重新开始</ArchiveButton>
         )}
       </div>
 
@@ -199,12 +201,12 @@ export default function CreateNewsPage() {
               {/* 发布者选择 */}
               <div>
                 <label style={S.label}>发布者 *</label>
-                <select style={S.sel} value={selectedId} onChange={e => setSelectedId(e.target.value)}>
+                <ArchiveSelect style={S.sel} value={selectedId} onChange={e => setSelectedId(e.target.value)}>
                   <option value="">— 选择 Architect —</option>
                   {architects.map(a => (
                     <option key={a.id} value={a.id}>{a.display_name}{a.location ? `  ·  ${a.location}` : ''}</option>
                   ))}
-                </select>
+                </ArchiveSelect>
                 {selectedPersona?.bio && (
                   <div style={{ marginTop: '8px', padding: '8px 10px', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', fontSize: '12px', lineHeight: 1.6 }}>
                     {selectedPersona.bio}
@@ -215,17 +217,17 @@ export default function CreateNewsPage() {
               {/* 情报类型 */}
               <div>
                 <label style={S.label}>情报类型</label>
-                <select style={S.sel} value={tag} onChange={e => setTag(e.target.value as IntelTag)}>
+                <ArchiveSelect style={S.sel} value={tag} onChange={e => setTag(e.target.value as IntelTag)}>
                   {(Object.entries(TAG_LABELS) as [IntelTag, string][]).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
                   ))}
-                </select>
+                </ArchiveSelect>
               </div>
 
               {/* Idea 输入 */}
               <div>
                 <label style={S.label}>核心 Idea *</label>
-                <textarea
+                <ArchiveTextarea
                   style={{ ...S.area, minHeight: '120px' }}
                   value={idea}
                   onChange={e => setIdea(e.target.value)}
@@ -241,13 +243,13 @@ export default function CreateNewsPage() {
               )}
 
               <div>
-                <button
+                <ArchiveButton type="submit" variant="secondary"
                   onClick={handleGenerate}
                   disabled={generating}
                   style={S.btn('#E35205', generating)}
                 >
                   {generating ? '✦ 生成中...' : '✦ AI 生成草稿'}
-                </button>
+                </ArchiveButton>
                 {generating && (
                   <span style={{ marginLeft: '12px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
                     正在调用 Claude，通常需要 5-10 秒...
@@ -287,13 +289,13 @@ export default function CreateNewsPage() {
           {/* 标题编辑 */}
           <div style={S.card}>
             <label style={S.label}>标题（可编辑）</label>
-            <input style={S.input} value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+            <ArchiveInput style={S.input} value={editTitle} onChange={e => setEditTitle(e.target.value)} />
           </div>
 
           {/* 正文编辑 */}
           <div style={S.card}>
             <label style={S.label}>正文（可编辑）</label>
-            <textarea style={{ ...S.area, minHeight: '160px' }} value={editContent} onChange={e => setEditContent(e.target.value)} />
+            <ArchiveTextarea style={{ ...S.area, minHeight: '160px' }} value={editContent} onChange={e => setEditContent(e.target.value)} />
             <div style={{ marginTop: '6px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
               {editContent.length} 字 · 配图提示词：<span style={{ color: 'rgba(245,245,245,0.35)', fontStyle: 'italic' }}>{generated.imagePrompt}</span>
             </div>
@@ -372,16 +374,16 @@ export default function CreateNewsPage() {
           )}
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               onClick={handlePublish}
               disabled={publishing || !editTitle.trim() || !editContent.trim()}
               style={S.btn('#C84406', publishing || !editTitle.trim() || !editContent.trim())}
             >
               {publishing ? '发布中...' : '▶ 发布情报'}
-            </button>
-            <button onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
+            </ArchiveButton>
+            <ArchiveButton type="submit" variant="secondary" onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
               ↺ 重新生成
-            </button>
+            </ArchiveButton>
             <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
               {!selectedImg ? '未选图片，将以无图发布' : '已选 1 张配图'}
             </span>
@@ -401,9 +403,9 @@ export default function CreateNewsPage() {
             <a href="/intel" target="_blank" style={{ ...S.btn('#E35205'), textDecoration: 'none', display: 'inline-block' }}>
               查看情报页 →
             </a>
-            <button onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
+            <ArchiveButton type="submit" variant="secondary" onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
               + 再创建一条
-            </button>
+            </ArchiveButton>
           </div>
         </div>
       )}

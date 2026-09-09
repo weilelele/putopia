@@ -105,7 +105,7 @@ BackLink 标签反映实际目的地：有可信应用来源时返回来源，�
 - Filter：互斥选项可用 radio 语义，或按钮配 aria-pressed；多选明确可同时启用。变化后保留焦点，播报更新结果数量，不把焦点跳到页首。
 - 标签多时允许该行横滚，选中项滚入可见区；不压缩字号。不同时用「下划线 + 大底色 + 厚边框」三重强调。
 - count 只显示真实值；没有计数就省略。切换不能丢掉讨论/提交草稿。
-- 现有 ArchiveTabs 有 tablist/aria-selected，但尚缺键盘漫游、面板关联与 disabled；FilterBar 当前复用它，迁移时修正语义。
+- ArchiveTabs 已支持方向键、Home/End 移焦、disabled、panelId；通过 Enter/Space 确认切换。房间面板使用稳定 panelId 关联标题；FilterBar 使用 mode="filter" 和 aria-pressed。
 
 ### C07 · Pagination / Menu
 
@@ -231,7 +231,7 @@ MemberRow：头像 → 姓名 + 角色/短简介 → 可选一个目标。点击
 - 默认、focus、filled、readonly、disabled、invalid、loading 均需样例。readonly 允许选中文本，不能弱化到看不见；disabled 说明原因。
 - 错误在提交或合适的失焦时出现，不每输入一个字符就打断；aria-invalid 和 aria-describedby 关联稳定 error id。多字段失败先显示摘要并定位首个错误，保留所有值。
 - 不用 color-star-deep 作为必要帮助文字。不把密码/邀请码装饰成伪终端，不把输入标签画在切角边框中。
-- 当前 ArchiveField 只包裹 children、label、error；尚无 helpText、error id 和输入关联的统一能力，不能声称已有完整表单控制器。
+- ArchiveField 已提供 label、helpText、error、稳定说明 id 与 aria-invalid/aria-describedby 关联。ArchiveInput / ArchiveTextarea / ArchiveSelect 透传原生字段属性、事件及 ref，覆盖文字、密码、数字、日期、文件、范围、复选和单选类型；不接管业务校验或提交。它们与 /ui-kit 的 FORM-02 共用实现。
 
 ### C19 · Select / Search / MemberPicker
 
