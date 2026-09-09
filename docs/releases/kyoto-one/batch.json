@@ -50,7 +50,7 @@
   },
   "availability": "50 Consoles allocated for preorder claims.",
   "estimatedCompletion": "All three dispatch dates are not yet confirmed.",
-  "claimHref": "/devices/claim?batch=kyoto-one",
+  "claimHref": "/devices/claim",
   "facts": [
     {
       "label": "BATCH",

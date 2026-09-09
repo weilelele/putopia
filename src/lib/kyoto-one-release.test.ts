@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import release from '../../docs/releases/kyoto-one/batch.json'
-import type { DeviceBatch } from './device-batches'
+import { getBatchClaimHref, type DeviceBatch } from './device-batches'
 import { createBatchConfigDraft, validateBatchConfigDraft } from './device-batch-config-drafts'
 import { getDeviceCheckoutDetailsForBatch } from './device-checkout'
 
@@ -11,6 +11,7 @@ describe('Kyoto One release contract', () => {
     expect(validateBatchConfigDraft(createBatchConfigDraft(batch))).toEqual([])
     const checkout = getDeviceCheckoutDetailsForBatch(batch)
     expect(checkout.ok).toBe(true)
+    expect(getBatchClaimHref(batch)).toBe('/devices/claim?batch=kyoto-one')
     if (checkout.ok) {
       expect(checkout.details.amount).toBe(52000)
       expect(checkout.details.currency).toBe('usd')
