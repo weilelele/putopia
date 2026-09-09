@@ -88,3 +88,18 @@ describe('Dashboard update snapshot compatibility', () => {
     expect(parseOfflineSnapshot({ ...snapshot, dashboardUpdates: [{ id:'1', occurredAt:'2026-09-09T00:00:00Z', category:'Intel', title:'One', href:'https://other.test' }] })).toBeNull()
   })
 })
+
+it('preserves public event cards and cached media without enabling offline participation', () => {
+  const event = {id:'signal-1',kind:'Signal Dispatch',title:'Mirror',description:'Open for identification.',href:'/signal',action:'Identify signal',image:'https://cdn.example/event.webp'}
+  const withEvents = {...snapshot, dashboardEvents:[event]}
+  expect(parseOfflineSnapshot(withEvents)?.dashboardEvents).toEqual([event])
+  expect(collectOfflineMediaUrls(withEvents)).toContain(event.image)
+  expect(parseOfflineSnapshot({...snapshot,dashboardEvents:[{...event,href:'https://untrusted.example'}]})).toBeNull()
+  expect(parseOfflineSnapshot({...snapshot,dashboardEvents:[{...event,image:12}]})).toBeNull()
+})
+
+ it('keeps saved Voyager status optional and validates its counters', () => {
+   const dashboardVoyager = {role:'voyager',name:'Mira',avatarUrl:null,awaitingYou:8,deviceDays:0}
+   expect(parseOfflineSnapshot({...snapshot,dashboardVoyager})?.dashboardVoyager).toEqual(dashboardVoyager)
+   expect(parseOfflineSnapshot({...snapshot,dashboardVoyager:{...dashboardVoyager,awaitingYou:-1}})).toBeNull()
+ })

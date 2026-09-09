@@ -1,5 +1,10 @@
 # 页面与内容模板
 
+> **最新补充：保留 Dashboard 的 Voyager 欢迎与身份状态头部。** 已登录用户的顺序是欢迎/身份卡 → 原数字看板 → Updates → Events；保留头像、身份、View your path、个人 Signal Dispatch 待参与数和 Console 天数。头像仅展示，My Profile 管理入口仍在 Voyagers。游客不伪造个人状态，Events 仍公开。原天数口径为预留的 0，不改成观察天数或推算持有时间。iOS 离线显示上次同步值并注明已保存。此规则优先于下文旧的“Dashboard 不出现头像”等表述。
+
+> 最新更正（2026-09-10）：应用内容页一律不放 Logo，不预留品牌栏；一级不重复 Tab 名称。Voting Hub / My Profile / Archive 是右上轻量入口，Voyager Logs 是成员列表底部主按钮。Dashboard 原数字看板保留，Events 未登录也直接展示，参与仍按原权限。下文及原图中的旧品牌区规则由本条取代。
+
+
 版本 2.3 · 2026-09-09 · 从属于 [权威 UI 规范](../design-system.md)，组件尺寸见 [组件说明](ui-components.md)。
 
 本文件定义改版目标，保留既有业务与路径。效果图中的姓名、日期、世界、活动、数字是示意数据，不得直接写入产品。
@@ -16,7 +21,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 | Worlds | `/worlds/live` | 世界观察、队列、投递与交流 | `/worlds` 档案、详情、提交、Signal |
 | Voyagers | `/voyagers` | 成员与身份 | My Profile `/profile`、Logs、Voyager Path |
 
-五个一级入口可以保留 Logo，本轮默认统一呈现克制品牌区 → 必要操作（若有）→ 内容；不再显示重复 Tab 名称；二级列表、详情和任务页不显示 Logo，直接使用紧凑返回/任务栏。该规则在浏览器、PWA、未来 App 中相同。具体尺寸见主规范 §1.3；路由层级、底栏显示、来源返回和退出规则见 [导航与交互合同](interaction-contracts.md)。
+五个一级入口可以保留 Logo，本轮默认统一呈现必要操作（若有）→ 内容；不再显示重复 Tab 名称；二级列表、详情和任务页不显示 Logo，直接使用紧凑返回/任务栏。该规则在浏览器、PWA、未来 App 中相同。具体尺寸见主规范 §1.3；路由层级、底栏显示、来源返回和退出规则见 [导航与交互合同](interaction-contracts.md)。
 
 以上是目标导航归属，需在共享映射中实现；现有前缀判断未必覆盖所有次级路径。根 tab 激活不意味着改变地址或合并数据。独立获客、支付回跳、认证、后台有自己的流程壳；不要为了统一在所有页面机械显示五项底栏。
 
@@ -26,7 +31,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 阅读顺序
 
-1. 一级品牌区 → 三项数字看板 → Updates；Dashboard 名称仅作为 sr-only h1，不显示标题行或其留白。尺寸按主规范 §1.3；真实日期可放内容区。
+1. 一级必要操作区 → 三项数字看板 → Updates；Dashboard 名称仅作为 sr-only h1，不显示标题行或其留白。尺寸按主规范 §1.3；真实日期可放内容区。
 2. 标题栏下 16px 进入 **Updates** 标题 + 最近 10 条提示 → 纵向时间轴。
 3. **Events** 标题 → 横向可参与活动卡片。
 4. 固定在视口底部的 Quiet Rail，Dashboard 选中。
@@ -38,7 +43,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 - 最近最多 10 条**用户有权看到的**动态，按发生时间由新到旧。数据不足时显示实际数量；LATEST 10 可改为真实数量说明，不能补假事件。
 - 类型可来自情报发布、世界建立、信号开放、投票开始、设备进展、成员动态等真实事件源。界面统一呈现，不强迫所有源共享业务模型。
 - 标题说清发生了什么；类型和时间辅助理解，说明不重复标题。来源链接指向真实详情，无目标时不假装可点击。
-- 时间轴独立一列；有图固定左图右文，无图正文占剩余宽度。390px 时缩略图 120×80，间距 12px，文字不能缩至 12px 以下。
+- 时间轴独立一列；有图固定左图右文，无图正文占剩余宽度。390px 时缩略图 120×64，间距 12px，文字不能缩至 12px 以下。
 - 「8 条图文 + 2 条纯文」只属于示例，不是数据配额。真实比例由事件决定。
 - 不展示评论计数与一排行内动作，不把每条动态做成厚重卡片。10 条通过页面纵滚阅读；不会全部塞进 844px。
 
@@ -46,13 +51,13 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 - 横向活动集合，完整主卡 + 下一张露出；保持横向轨道，宽屏可多显示几张但不改双列网格。
 - 卡片说清「活动是什么、目前是否能参与、点击将做什么」。可包括识别信号、集体投票、提交 Dream、提交世界、quiz 等实际开放入口。
-- 不要求固定 6 张，不把没有开放的功能为了凑数放进去。相同活动已结束/已参与时使用真实下一步。
+- 不要求固定数量；公开展示所有真实开放活动。未登录、角色不符或已参与都不能隐藏整个 Events 区域；目标流程再给出登录、资格或参与记录。已结束的限时活动不作为开放活动展示。
 - 活动可以对应已出现在 Updates 的事件：Updates 告诉发生了什么，Events 提供当前参与途径；标题和说明避免机械重复。
 - 刷新、网络错误、无活动、权限不足、卡片媒体失败独立处理。一个轨道失败不隐藏另一个区块。
 
 ### 顶部数字看板
 
-保留原有 Parallel Worlds / Devices / Voyagers 三项数字及点击展开／再次点击收起说明的交互。数字看板是产品内容，不属于被移除的重复 Tab 标题。顺序固定为 Logo → 数字看板 → Updates → Events；不恢复 Dashboard 大标题或个人资料入口。
+保留原有 Parallel Worlds / Devices / Voyagers 三项数字及点击展开／再次点击收起说明的交互。数字看板是产品内容，不属于被移除的重复 Tab 标题。顺序固定为 数字看板 → Updates → Events；不恢复 Dashboard 大标题或个人资料入口。
 
 使用新版 ArchiveStatStrip：三等分、品牌橙数字、Courier Prime、深蓝平面底、细边框；标签至少 12px，可换行，点击目标至少 44px。不得恢复旧光效、装饰框或旧版表单样式。统计失败显示“—”和独立重试，不显示假的 0，也不阻断 Updates / Events。
 
@@ -60,7 +65,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 首屏与验收
 
-390×844 首屏应看见克制的一级品牌区、数字看板、Updates 起始内容和底栏，不显示重复 Dashboard 标题；不要求 Events 同时出现。本轮不增加顶部 Events 跳转，Updates → Events 顺序不变。图中长图只画一次底栏，实际固定于视口，而不是作为长列表尾部普通行。验证所有 10 条可读，最后一张活动的按钮不被固定底栏遮挡。
+390×844 首屏应看见数字看板、Updates 起始内容和底栏，不显示重复 Dashboard 标题；不要求 Events 同时出现。本轮不增加顶部 Events 跳转，Updates → Events 顺序不变。图中长图只画一次底栏，实际固定于视口，而不是作为长列表尾部普通行。验证所有 10 条可读，最后一张活动的按钮不被固定底栏遮挡。
 
 ## 3. Intel：清楚的内容层级与阅读
 
@@ -68,7 +73,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 页面顺序
 
-一级品牌区 → 类型图例 + 次级 Voting Hub 入口（无重复 Intel 标题） → ALL / PUBLIC / CLASSIFIED 筛选 → 重点文章（若真实存在）→ 最近文章轻列表 → 加载更多/分页。
+一级必要操作区 → 类型图例 + 次级 Voting Hub 入口（无重复 Intel 标题） → ALL / PUBLIC / CLASSIFIED 筛选 → 重点文章（若真实存在）→ 最近文章轻列表 → 加载更多/分页。
 
 - 重点内容可用较大标题或媒体区，但不额外复制成下面第一条重复文章。没有策划重点时直接列近期内容。
 - 分类、标题、简短摘要、发布时间/作者为主要字段；评论数量只有在数据真实且有助浏览时出现。
@@ -87,7 +92,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 页面顺序
 
-一级品牌区 → 既有档案入口（无重复 Devices / Device Archive 标题） → 批次选择 → 观察媒体 → 来源/抓帧时间/真实状态 → 与当前设备有关的单个行动区 → INFO / UPDATES / DISCUSSION → 对应内容。
+一级必要操作区 → 既有档案入口（无重复 Devices / Device Archive 标题） → 批次选择 → 观察媒体 → 来源/抓帧时间/真实状态 → 与当前设备有关的单个行动区 → INFO / UPDATES / DISCUSSION → 对应内容。
 
 - 当前实现的三个内页签是 **INFO / UPDATES / DISCUSSION**；不要被旧说明或 Worlds 模式改成 Live Chat。默认 Info。
 - 批次切换同步该批次媒体、信息、进展、讨论上下文；不能只改标题而保留另一批的价格或图。
@@ -114,7 +119,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 默认观察页
 
-一级品牌区 → 世界档案入口（无重复 Worlds 标题） → 当前观察媒体 → 世界名、来源与真实状态 → **QUEUE / DISPATCH / LIVE CHAT** → 当前面板。默认 Queue。
+一级必要操作区 → 世界档案入口（无重复 Worlds 标题） → 当前观察媒体 → 世界名、来源与真实状态 → **QUEUE / DISPATCH / LIVE CHAT** → 当前面板。默认 Queue。
 
 - 观察区清楚区分视频、直播、最近抓帧、离线；不能永远亮绿点写 LIVE。
 - Queue 表达真实排队和处理状态。等待用户选择与已提交排队不同，处理中不等于队列中所有条目都在执行。
@@ -134,7 +139,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 页面顺序
 
-一级品牌区 → **My Profile** / Voyager Logs 次级入口（无重复 Voyagers 标题） → 有真实编辑依据的重点成员/Architect 内容 → 批次或成员筛选 → 成员列表 → Voyager Logs 入口。
+一级必要操作区 → **My Profile** / Voyager Logs 次级入口（无重复 Voyagers 标题） → 有真实编辑依据的重点成员/Architect 内容 → 批次或成员筛选 → 成员列表 → Voyager Logs 入口。
 
 - My Profile 在 Voyagers 明确可发现；未登录显示与鉴权一致的登录/申请引导，不能让用户误以为存在资料。
 - 重点 Architect 是内容策划位置，不必永远有一张同一人物卡。无重点时正常列表即可。

@@ -197,6 +197,14 @@ function DashboardView({ snapshot, media, select }: {
     return { ...item, date:item.occurredAt, tab, detail }
   }) : fallbackUpdates
   return <View>
+    {snapshot.viewer.authenticated && <View style={styles.voyagerWelcome}>
+      {snapshot.viewer.role !== 'applicant' && <><Text style={styles.welcomeEyebrow}>WELCOME,</Text><Text style={styles.welcomeTitle}>VOYAGER</Text><Text style={styles.welcomeIntro}>YOU HAVE BEEN SELECTED TO EXPLORE{'\n'}THE MYSTERIES OF PARALLEL WORLDS.</Text></>}
+      <View style={styles.welcomeBoard}>
+        <View style={styles.welcomeIdentity}><CachedImage uri={snapshot.dashboardVoyager?.avatarUrl} media={media} style={{width:44,height:44}} /><View><Text style={styles.meta}>{snapshot.viewer.role.toUpperCase()}</Text><Text style={styles.directoryMeta}>VIEW YOUR PATH · OFFLINE</Text></View></View>
+        <View style={styles.statGrid}><View style={styles.stat}><Text style={styles.statLabel}>SIGNAL DISPATCH</Text><Text style={styles.statValue}>{snapshot.dashboardVoyager?.awaitingYou ?? '—'}</Text><Text style={styles.directoryMeta}>awaiting you · saved</Text></View><View style={[styles.stat,{borderRightWidth:0}]}><Text style={styles.statValue}>{snapshot.dashboardVoyager?.deviceDays ?? '—'}</Text><Text style={styles.statLabel}>CONSOLE DAYS</Text></View></View>
+      </View>
+      <Text style={styles.directoryMeta}>Reconnect to view your path and current status.</Text>
+    </View>}
     <DashboardStats stats={snapshot.dashboardStats} />
     <SectionTitle>UPDATES</SectionTitle>
     <Text style={styles.meta}>Latest {updates.length} saved updates</Text>
@@ -208,7 +216,10 @@ function DashboardView({ snapshot, media, select }: {
       </Pressable>
     </View>) : <EmptyState>No updates were saved. Reconnect to load the latest activity.</EmptyState>}
     <SectionTitle>EVENTS</SectionTitle>
-    <EmptyState>Reconnect to see events you can participate in. Availability and participation cannot be confirmed offline.</EmptyState>
+    {!!snapshot.dashboardEvents?.length && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:12}}>{snapshot.dashboardEvents.map(event => <View key={event.id} style={styles.savedEvent}>
+      <CachedImage uri={event.image} media={media} style={styles.savedEventImage} /><Text style={styles.meta}>{event.kind.toUpperCase()}</Text><Text style={styles.directoryName}>{event.title}</Text><Text style={styles.directoryMeta}>{event.description}</Text><Text style={styles.directoryMeta}>Saved event · reconnect to participate</Text>
+    </View>)}</ScrollView>}
+    <EmptyState>Reconnect to confirm current event availability and participate.</EmptyState>
   </View>
 }
 
@@ -351,17 +362,14 @@ function VoyagersView({ snapshot, media, detail, setDetail, mode, setMode }: {
   if (story) return <StoryDetail item={story} media={media} onBack={() => setDetail(null)} />
   return (
     <View>
-      <SegmentedControl
-        options={[{ key: 'voyagers', label: 'VOYAGERS' }, { key: 'logs', label: 'LOGS' }]}
-        selected={mode}
-        onSelect={(value) => setMode(value as VoyagerMode)}
-      />
-      {mode === 'voyagers' ? snapshot.voyagers.map((item) => (
-        <ListCard key={item.id} title={item.display_name}
-          meta={`${item.role.toUpperCase()} · ${item.batch_label.toUpperCase()}`}
-          body={item.bio} image={item.avatar_url} media={media}
-          onPress={() => setDetail({ kind: 'voyager', id: item.id })} />
-      )) : snapshot.stories.map((item) => (
+      {mode === 'voyagers' ? <>
+        <SectionTitle>ARCHITECTS &amp; VOYAGERS</SectionTitle>
+        {snapshot.voyagers.map(item => <Pressable key={item.id} accessibilityRole="button" onPress={() => setDetail({ kind: 'voyager', id: item.id })} style={styles.directoryRow}>
+          <CachedImage uri={item.avatar_url} media={media} style={styles.directoryPortrait} />
+          <View style={{flex:1}}><Text style={styles.directoryName}>{item.display_name}</Text><Text style={styles.directoryMeta}>{item.role.toUpperCase()}</Text>{item.location && <Text style={styles.directoryMeta}>{item.location}</Text>}<Text style={styles.directoryMeta}>{item.observation_days} observation days</Text></View>
+        </Pressable>)}
+        <Pressable accessibilityRole="button" onPress={() => setMode('logs')} style={styles.referencePrimary}><Text style={styles.referencePrimaryText}>VOYAGER LOGS →</Text></Pressable>
+      </> : snapshot.stories.map((item) => (
         <ListCard key={item.id} title={item.title} meta={`${item.author_name.toUpperCase()} · ${formatDate(item.date)}`}
           body={item.excerpt} image={item.youtube_id ? `https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg` : undefined}
           media={media} onPress={() => setDetail({ kind: 'story', id: item.id })} />
@@ -467,7 +475,6 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.topBar}>
           <View>
-            {!detail && !isLogs && <View style={styles.brandRow}><Image source={require('./assets/vi-icon.png')} resizeMode="contain" style={{ width: 40, height: 40 }} /><Image source={require('./assets/vi-wordmark.png')} resizeMode="contain" style={{ width: 160, height: 44 }} /></View>}
             {!detail && isLogs && <Pressable accessibilityRole="button" accessibilityLabel="Back to Voyagers" style={styles.backButton} onPress={() => setVoyagerMode('voyagers')}><Text style={styles.backText}>← VOYAGERS</Text></Pressable>}
             {!detail && isLogs && <Text accessibilityRole="header" style={styles.pageTitle}>VOYAGER LOGS</Text>}
           </View>
@@ -532,19 +539,32 @@ const DEEP_TEXT = 'rgba(245,245,245,0.65)'
 const BORDER = 'rgba(245,245,245,0.10)'
 
 const styles = StyleSheet.create({
-  brandRow: { minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  voyagerWelcome: { marginBottom: 24 },
+  welcomeEyebrow: { color: ORANGE, fontFamily: 'CourierPrime', fontSize: 20, letterSpacing: 5, textAlign: 'center', marginTop: 16 },
+  welcomeTitle: { color: ORANGE, fontFamily: 'CourierPrime-Bold', fontSize: 40, lineHeight: 44, textAlign: 'center', marginVertical: 8 },
+  welcomeIntro: { color: DIM, fontFamily: 'CourierPrime', fontSize: 12, lineHeight: 21, textAlign: 'center', marginBottom: 24 },
+  welcomeBoard: { backgroundColor: PANEL, borderWidth: 1, borderColor: BORDER, marginBottom: 8 },
+  welcomeIdentity: { flexDirection: 'row', gap: 16, alignItems: 'center', padding: 16, borderBottomWidth: 1, borderColor: BORDER },
+  savedEvent: { width: 260, padding: 8, borderWidth: 1, borderColor: BORDER },
+  savedEventImage: { width: 242, height: 136, marginBottom: 10 },
+  directoryRow: { flexDirection: 'row', gap: 16, paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: BORDER },
+  directoryPortrait: { width: 96, height: 96 },
+  directoryName: { color: WHITE, fontFamily: 'CourierPrime', fontSize: 20, lineHeight: 26 },
+  directoryMeta: { color: DIM, fontFamily: 'CourierPrime', fontSize: 14, lineHeight: 21, marginTop: 6 },
+  referencePrimary: { minHeight: 48, padding: 12, marginVertical: 20, backgroundColor: ORANGE, alignItems: 'center', justifyContent: 'center' },
+  referencePrimaryText: { color: DEEP, fontFamily: 'CourierPrime', fontSize: 16 },
   pageTitle: { minHeight: 44, color: WHITE, fontFamily: 'CourierPrimeBold', fontSize: 24, fontWeight: '700' },
   navMarker: { position: 'absolute', top: 0, width: 24, height: 2, backgroundColor: ORANGE },
-  updateRow: { flexDirection: 'row', gap: 12, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: BORDER },
-  updateTime: { width: 36, borderLeftWidth: 1, borderLeftColor: 'rgba(227,82,5,0.62)' },
+  updateRow: { flexDirection: 'row', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: BORDER },
+  updateTime: { width: 48, borderLeftWidth: 1, borderLeftColor: 'rgba(227,82,5,0.62)' },
   updateNode: { width: 7, height: 7, borderRadius: 4, backgroundColor: ORANGE, marginLeft: -4, marginBottom: 8 },
   updateDate: { width: 36, color: DIM, fontFamily: 'CourierPrime', fontSize: 12 },
   updateContent: { flex: 1, flexDirection: 'row', gap: 12 },
-  updateImage: { width: 120, height: 80 },
-  updateImageSmall: { width: 96, height: 64 },
+  updateImage: { width: 120, height: 64 },
+  updateImageSmall: { width: 96, height: 56 },
   root: { ...StyleSheet.absoluteFillObject, backgroundColor: DEEP },
   safeArea: { flex: 1, backgroundColor: DEEP },
-  topBar: { minHeight: 62, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: BORDER },
+  topBar: { minHeight: 32, paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: BORDER },
   topBrand: { color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 14, fontWeight: '700', letterSpacing: 1 },
   topRoute: { marginTop: 4, color: DEEP_TEXT, fontFamily: 'CourierPrime', fontSize: 12 },
   signalGroup: { flexDirection: 'row', alignItems: 'center' },

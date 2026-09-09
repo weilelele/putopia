@@ -4,7 +4,6 @@ import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
 import { submitApplication } from '@/lib/actions/applications'
 import posthog from 'posthog-js'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
@@ -59,7 +58,7 @@ export default function ApplyPage() {
   if (submitted) {
     return (
       <div className="main pilot-archive-page archive-collection-page archive-apply-page archive-apply-success">
-        <ArchiveBrandHeader />
+
 
         <div className="archive-apply-shell">
           <ArchiveCard className="archive-apply-confirmation">
@@ -88,7 +87,7 @@ export default function ApplyPage() {
 
   return (
     <div className="main pilot-archive-page archive-collection-page archive-apply-page">
-      <ArchiveBrandHeader />
+
 
 
       <div className="archive-apply-shell">

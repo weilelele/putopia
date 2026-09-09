@@ -1,7 +1,7 @@
 'use client'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
-import { MessageSquare, Plus, Vote, ArrowRight } from 'lucide-react'
+import { MessageSquare, Plus, ArrowRight } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
 import { Suspense, useEffect, useState } from 'react'
@@ -11,18 +11,10 @@ import { SectionTracker } from '@/components/section-tracker'
 import { useAuth } from '@/lib/auth-context'
 import { CreateIntelModal } from './CreateIntelModal'
 import { FilterBar } from '@/components/filter-bar'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveCard } from '@/components/archive-card'
-import { ArchiveLinkCard } from '@/components/archive-link-card'
-import { ArchivePageHeader } from '@/components/archive-page-header'
-
-const TAG_COLOR: Record<string, string> = {
-  NOTICE: 'var(--color-star-dim)',
-  DEVICE: 'var(--color-nucleus)',
-  ORG:    'var(--color-nebula)',
-}
+import Link from 'next/link'
 
 type FilterTab = 'all' | 'public' | 'classified'
 
@@ -30,10 +22,6 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
-}
-
-function getInitials(name: string) {
-  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
 // ─── Classified wall — shown when non-Voyager selects the classified filter ───
@@ -55,129 +43,20 @@ function ClassifiedWall() {
 }
 
 // ─── Individual Intel card ────────────────────────────────────────────────────
-function IntelCard({ entry, commentCount = 0 }: { entry: IntelWithAvatar; commentCount?: number }) {
-  const color    = TAG_COLOR[entry.tag] ?? 'var(--color-star-dim)'
-  const hasImage = (entry.images?.length ?? 0) > 0
-  const extraImgs = (entry.images?.length ?? 0) - 1
-  const name     = entry.publisher_name ?? 'PUTOPIA COLLECTIVE'
-
-  return (
-    <ArchiveLinkCard
-      href={`/intel/${entry.id}`}
-      className="archive-intel-card"
-    >
-      <div>
-        {/* Publisher bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: '#0F1430', borderBottom: '1px solid rgba(227,82,5,0.16)' }}>
-
-          {/* Avatar */}
-          {entry.publisher_avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={entry.publisher_avatar_url}
-              alt={name}
-              style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(138,154,181,0.25)' }}
-            />
-          ) : (
-            <div style={{
-              width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-              background: `${color}18`, border: `1px solid ${color}50`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, color,
-            }}>
-              {getInitials(name)}
-            </div>
-          )}
-
-          {/* Name + date */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {name}
-            </div>
-            <div style={{ color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)' }}>
-              {formatDate(entry.timestamp)}
-            </div>
-          </div>
-
-          {/* Colored dot (replaces text tag badge) */}
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: color, flexShrink: 0,
-          }} />
-
-        </div>
-
-        {/* Content row: text left, image right */}
-        <div style={{ display: 'flex', alignItems: 'stretch' }}>
-
-          {/* Text */}
-          <div style={{ flex: 1, padding: '14px 16px', minWidth: 0 }}>
-            <h2 style={{ fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'var(--fs-body)', color: '#F5F5F5', marginBottom: '8px', lineHeight: 1.4 }}>
-              {entry.title}
-            </h2>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.7, margin: 0 }}>
-              {entry.content.length > 140 ? entry.content.slice(0, 140) + '…' : entry.content}
-            </p>
-            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
-                <MessageSquare size={12} />
-                {commentCount}
-              </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', color, opacity: 0.8 }}>
-                READ MORE →
-              </span>
-            </div>
-          </div>
-
-          {/* Image (desktop: right column, mobile: hidden to keep feed tight) */}
-          {hasImage && (
-            <div style={{ width: '140px', flexShrink: 0, borderLeft: '1px solid rgba(227,82,5,0.16)', position: 'relative' }} className="hidden sm:block">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={entry.images[0]}
-                alt=""
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              />
-              {extraImgs > 0 && (
-                <div style={{
-                  position: 'absolute', bottom: 6, right: 6,
-                  background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(227,82,5,0.16)',
-                  color: 'rgba(245,245,245,0.55)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-                  padding: '2px 6px', letterSpacing: '0.08em',
-                }}>
-                  +{extraImgs}
-                </div>
-              )}
-            </div>
-          )}
-
-        </div>
-
-        {/* Mobile image strip */}
-        {hasImage && (
-          <div className="block sm:hidden" style={{ borderTop: '1px solid rgba(227,82,5,0.16)', position: 'relative' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={entry.images[0]}
-              alt=""
-              style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '160px', objectFit: 'cover' }}
-            />
-            {extraImgs > 0 && (
-              <div style={{
-                position: 'absolute', bottom: 6, right: 6,
-                background: 'rgba(11,15,23,0.82)', border: '1px solid rgba(227,82,5,0.16)',
-                color: 'rgba(245,245,245,0.55)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-                padding: '2px 6px',
-              }}>
-                +{extraImgs}
-              </div>
-            )}
-          </div>
-        )}
-
-      </div>
-    </ArchiveLinkCard>
-  )
+function IntelCard({ entry, commentCount = 0, lead = false }: { entry: IntelWithAvatar; commentCount?: number; lead?: boolean }) {
+  const href = `/intel/${entry.id}`
+  const metadata = <span className="intel-entry-meta">{entry.tag} · <time dateTime={entry.timestamp}>{formatDate(entry.timestamp)}</time></span>
+  if (!lead) return <Link href={href} className="intel-recent-row">
+    <div>{metadata}<h3>{entry.title}</h3><span className="intel-comments"><MessageSquare aria-hidden size={14} />{commentCount}</span></div>
+    <ArrowRight aria-hidden size={22} />
+  </Link>
+  return <article className="intel-lead">
+    {metadata}<h2>{entry.title}</h2>
+    <p className="intel-author">{entry.publisher_name ?? 'Multiverse Collective'}</p>
+    <p className="intel-summary">{entry.content}</p>
+    <ArchiveLinkButton href={href} variant="primary" fullWidth>READ INTEL <ArrowRight aria-hidden size={20} /></ArchiveLinkButton>
+    <Link href={href} className="intel-comments" aria-label={`${commentCount} comments on ${entry.title}`}><MessageSquare aria-hidden size={14} />{commentCount} comments</Link>
+  </article>
 }
 
 const INTEL_FILTERS = [
@@ -199,6 +78,8 @@ function IntelPageContent() {
   const { isAtLeast } = useAuth()
   const [intel, setIntel] = useState<IntelWithAvatar[]>([])
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   // Deep-link support: /intel?tab=classified opens the Classified tab directly
   // (used by the Voyager-pack confirmation email).
@@ -208,13 +89,12 @@ function IntelPageContent() {
   )
 
   const loadIntel = async () => {
-    const data = await getAllIntel()
-    const items = data as IntelWithAvatar[]
-    setIntel(items)
-    if (items.length > 0) {
-      const counts = await getCommentCountsBulk('intel', items.map(e => e.id))
-      setCommentCounts(counts)
-    }
+    setLoading(true); setLoadError(false)
+    try {
+      const items = await getAllIntel() as IntelWithAvatar[]
+      setIntel(items)
+      if (items.length) setCommentCounts(await getCommentCountsBulk('intel', items.map(e => e.id)))
+    } catch { setLoadError(true) } finally { setLoading(false) }
   }
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount; loadIntel() is the shared refetch reused after actions
@@ -231,31 +111,11 @@ function IntelPageContent() {
   return (
     <div className="main pilot-archive-page archive-collection-page archive-intel-page">
       <SectionTracker section="intel" />
-      <ArchiveBrandHeader />
 
 
-      <ArchivePageHeader
-        hideTitle
-        title="Intel"
-        identity={
-          <div className="archive-intel-legend" aria-label="Intel types">
-            {(['NOTICE', 'DEVICE', 'ORG'] as const).map((tag) => (
-              <span key={tag}><i style={{ background: TAG_COLOR[tag] }} />{tag}</span>
-            ))}
-          </div>
-        }
-        action={
-          <ArchiveLinkButton
-          href="/vote"
-          variant="secondary"
-          className="archive-page-header__wide-action"
-          >
-            <Vote size={15} />
-            VOTING HUB
-            <ArrowRight size={14} />
-          </ArchiveLinkButton>
-        }
-      />
+
+      <h1 className="sr-only">Intel</h1>
+      <div className="archive-root-actions"><ArchiveLinkButton href="/vote" variant="ghost">VOTING HUB <ArrowRight aria-hidden size={18} /></ArchiveLinkButton></div>
 
       <FilterBar
         options={INTEL_FILTERS}
@@ -263,14 +123,14 @@ function IntelPageContent() {
         onChange={(k) => setActiveFilter(k as FilterTab)}
       />
 
-      {/* Feed */}
-      <div className="archive-feed-list">
-        {showClassifiedWall
-          ? <ClassifiedWall />
-          : visibleIntel.map(entry => (
-              <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />
-            ))
-        }
+      <div className="intel-editorial-feed">
+        {showClassifiedWall ? <ClassifiedWall /> : <>
+          {visibleIntel[0] && <IntelCard lead entry={visibleIntel[0]} commentCount={commentCounts[visibleIntel[0].id] ?? 0} />}
+          {visibleIntel.length > 1 && <section aria-labelledby="recent-intel"><h2 id="recent-intel" className="archive-list-heading">RECENT</h2>{visibleIntel.slice(1).map(entry => <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />)}</section>}
+          {loading && <p role="status">Loading intel…</p>}
+          {loadError && <div role="alert"><p>Intel could not be loaded.</p><ArchiveButton variant="secondary" onClick={loadIntel}>Retry</ArchiveButton></div>}
+          {!loading && !loadError && !visibleIntel.length && <p>No intel in this category yet.</p>}
+        </>}
       </div>
 
       <div className="footer-bar archive-footer-bar">
@@ -280,7 +140,7 @@ function IntelPageContent() {
 
       {isAtLeast('architect') && (
         <ArchiveButton
-          className="archive-floating-action"
+          className="intel-publish-action"
           variant="primary"
           onClick={() => setShowCreate(true)}
         >

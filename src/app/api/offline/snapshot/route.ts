@@ -1,3 +1,4 @@
+import { getDashboard } from '@/lib/actions/dashboard'
 import { getDashboardStats } from '@/lib/actions/dashboard-stats'
 import { readDashboardUpdates } from '@/lib/dashboard-updates'
 import { latestUpdates } from '@/lib/dashboard-model'
@@ -34,6 +35,7 @@ export async function GET() {
   const authenticated = Boolean(user)
   const role = profile?.role ?? 'guest'
 
+  const dashboardPromise = getDashboard().catch(() => null)
   const statsPromise = getDashboardStats().catch(() => undefined)
   const updatesPromise = readDashboardUpdates(false).catch(() => null)
   const [worldsResult, devicesResult, intelResult, voyagersResult, storiesResult, votesResult, functionsResult] = await Promise.all([
@@ -57,7 +59,7 @@ export async function GET() {
     authenticated
       ? admin
         .from('voyager_profiles')
-        .select('id, display_name, bio, avatar_url, role, observation_days, worlds_discovered, batch_label, joined_at')
+        .select('id, display_name, bio, avatar_url, location, role, observation_days, worlds_discovered, batch_label, joined_at')
         .in('role', ['voyager', 'architect'])
         .order('joined_at', { ascending: true })
         .limit(LIMITS.voyagers)
@@ -130,6 +132,8 @@ export async function GET() {
   const dashboardUpdates = dashboardSource ? latestUpdates(dashboardSource.updates.filter(item => !item.locked), votes) : undefined
   const response = NextResponse.json({
     dashboardUpdates,
+    dashboardEvents: (await dashboardPromise)?.events,
+    dashboardVoyager: (await dashboardPromise)?.voyager ?? undefined,
     dashboardStats: await statsPromise,
     version: 2,
     syncedAt: new Date().toISOString(),

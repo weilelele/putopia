@@ -1,21 +1,41 @@
-# UI 2.3 component refresh — design QA
+# UI 2.3 reference alignment — review record (2026-09-10)
 
-final result: passed for the scoped browser checks below; full product/state acceptance remains pending.
+final result: passed
 
-Target: `docs/design/reference/dashboard-updates-events.png`, governed by UI 2.3 dimensions and the user's latest instruction to preserve all content/functions and original brand assets. The reference is 809×1942, normalized to 390px wide; implementation captures are 390×844 CSS pixels. Real current records differ from the illustrative reference. Its reconstructed logo, compressed text and media sizes, navigation icons and sample category distribution are superseded by the authoritative spec. We do not claim literal pixel identity with the generated image.
+This result applies only to the corrected primary-page compositions listed below, compared at 390×844. It is not an acceptance of every product route, permission state, or native iOS runtime. Earlier broad acceptance language is superseded by this record.
 
-Combined comparison: `/private/tmp/ui24-shots/dashboard-comparison.png` (source left; implementation Updates centre; implementation Events right). Both source and current renders were viewed together, after corrections.
+## Sources and comparison method
 
-Initial findings and resolution:
+- Intel: `docs/design/reference/intel.png`.
+- Voyagers: `docs/design/reference/voyagers.png`, checked at both list start and the bottom Logs action.
+- Devices: `docs/design/reference/devices-selected-nav.png`.
+- Dashboard: `docs/design/reference/dashboard-updates-events.png`; latest user screenshot additionally restores the Voyager welcome/status module before the original counts.
+- Worlds uses the shared live-room composition; it has no separately approved exact reference in this pass.
 
-- P1 missing Signal media and established-world publication sources: connect existing visual/poster sources and real timestamps. Current 10/10 update thumbnails loaded; dispatch and Dreamcatcher card images loaded. Unillustrated votes remain truthful text cards.
-- P1 Intel action/filter overlap: prevent shared header flex shrinking; revisited actual mobile page and confirmed separation.
-- P2 boxed/filled content tabs: replace shared tab styles and room controls with underline tabs and panel associations; revisited Intel, Devices and Worlds.
-- P2 Events excessive copy height / weak CTA: compact summaries, cap title display at three lines, align rail controls with heading and use primary orange/deep-blue CTA. Revised Events capture compared with the source.
-- P2 secondary visual drift: remove noise texture and non-status colored statistics; normalize input borders, 16px text, 120px textarea, primary CTA contrast; make Profile fields single-column on narrow screens.
+Each source was scaled proportionally to 390px and placed beside the current 390×844 implementation. Combined boards were opened and inspected, including a second pass after typography and spacing corrections. Evidence remains local in `/private/tmp/ui27-shots/`: `intel-comparison.png`, `voyagers-comparison.png`, `devices-comparison.png`, `dashboard-comparison.png`, `voyagers-bottom.png`, `dashboard-voyager.png`, `worlds.png`, `logs.png`, `ui-kit-intel.png`, `ui-kit-voyagers.png`. Account screenshots are not published in the public repository.
 
-Post-fix evidence: `/private/tmp/ui24-shots/dashboard-final.png`, `events-final.png`, `intel.png`, `worlds.png`, `ui-kit-sheet.png`, `dashboard-desktop.png`. Screenshots remain local; authenticated account and workspace captures are not added to the public repository.
+## Findings and revisions
 
-Runtime checks: Dashboard 320/390px no document overflow, thumbnail 96/120px respectively; 1280px sidebar only and 340px event cards. UI Kit validation links error/help text and focuses the invalid field; modal focus and discard confirmation work; native range keyboard input works. Profile native fields preserve labels and values. Form attribute comparison preserves handlers and native contracts, except deliberate equivalent Tabs/range adapters.
+| Priority | Initial discrepancy | Correction and review |
+| --- | --- | --- |
+| P1 | Logo masthead remained on content pages | Removed active app mastheads and their reserved space, including root tabs and offline shell. The restored account-status device symbol is content, not a masthead. |
+| P1 | Voting Hub and Voyager Logs dominated the top of lists | Voting Hub and My Profile are light top-right links. Logs is the primary action after the member list. Reviewed top and bottom screenshots. |
+| P1 | Intel and member cards retained heavy legacy frames | Intel lead/Recent layout and square-portrait directory rows now follow the reference. Existing detail content, comments, member fields and editing remain accessible. |
+| P1 | Events hidden by login/participation eligibility | Public open events render before login; permission checks stay at their destinations. Guest read showed 12 cards across five available types. |
+| P1 | Voyager welcome/status removed with header cleanup | Restored Welcome Voyager, identity, Path, personal awaiting count and original day-count policy above collective counts. Reviewed account state (8 awaiting / 0 days) and the day-count sheet. |
+| P2 | Excessive timeline spacing and heavy action text | Tightened time/media layout, regular display weights, 16px primary actions with aligned rail CTA baselines. Reopened composite comparisons. |
+| P2 | Devices showed blank placeholder despite an available image | Actual batch media shown when camera is disconnected; Archive opens the existing sheet. Live camera and ownership-dependent controls remain truthful. |
+| P2 | UI Kit still illustrated the old Intel list and Logs placement | Updated fixtures to the same editorial/list layout, root actions and restored welcome component. Logs navigation exercised. |
 
-Limitations: not every route, permission, data or failure state has been opened. No real payments, submissions, uploads or profile saves were performed. Original content remains unchanged. iOS native runtime/real-device acceptance remains separate from the build check. See `docs/design/implementation/component-refresh.md` for exact scope.
+## Intentional differences from generated references
+
+- User decisions remove mastheads/repeated tab names and retain original counts plus the personal welcome/status block. These are not missing-image defects.
+- Real text, members, event dates and statuses replace fictional sample records. Six architects remain six; no eligible Console owner control is invented for an account without one. Votes without image data remain text cards.
+- Minimum readable text is 12px; primary actions are 16px and at least 48px high. The reference's compressed sub-12px text and undersized targets are not copied. This changes total page height.
+- Original brand assets and protected startup animation remain unchanged. Flat surfaces replace generated gradients/glows.
+
+## Verification scope and limitations
+
+390px browser inspection covered all five roots, UI Kit, Logs and Profile; 320px covered Dashboard/Events and Voyagers; 1280px Dashboard was checked for overflow. Header content, links and the Console sheet were exercised without business writes. Events advanced from 1/12 to 2/12 in the fully hydrated local product page; the alternate 127.0.0.1 dev preview did not hydrate reliably, so deployed guest behavior must be checked separately.
+
+Web/mobile type checks, lint, pure tests, design gate and production build are recorded with the implementation release. No payment, submission, profile save or production-data mutation was performed. Native iOS code and offline snapshot compatibility were updated; simulator/real-device screenshot acceptance remains pending. Other secondary routes and error/permission states must receive their own screenshot comparison before being marked complete.

@@ -1,4 +1,3 @@
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import type { Metadata } from 'next'
 import { DeviceLiveRoom } from './live/device-live-room'
 import { listPublicDeviceBatches } from '@/lib/device-batch-repository'
@@ -18,7 +17,7 @@ export default async function DevicesPage() {
   const batch = batches[0]
   if (!batch) return (
     <main className="main">
-      <ArchiveBrandHeader /><h1 className="sr-only">Devices</h1>
+      <h1 className="sr-only">Devices</h1>
       <p className="mt-4">No device batches have been published yet. Check back for recovery updates.</p>
     </main>
   )

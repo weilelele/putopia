@@ -4,7 +4,6 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveTextarea } from '@/components/archive-input'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -92,7 +91,7 @@ export function WorldsLiveRoom({
   }, [router])
 
   if (!selected) return (
-    <main className={`main ${styles.page}`}><ArchiveBrandHeader />
+    <main className={`main ${styles.page}`}>
       <header className={`${styles.roomHeader} ${styles.rootActions}`}><h1 className="sr-only">Worlds</h1><Link className={styles.archiveLink} href="/worlds">ARCHIVE</Link></header>
       <section className={styles.sectionPanel}><div className={styles.emptyRoom}>NO DREAMCATCHERS PUBLISHED<br />Please check back later. Existing worlds remain in the archive.</div></section>
     </main>
@@ -149,15 +148,14 @@ export function WorldsLiveRoom({
   }
 
   return (
-    <main className={`main ${styles.page}`}><ArchiveBrandHeader />
+    <main className={`main ${styles.page}`}>
       <h1 className="sr-only">Worlds</h1>
 
+      <div className="archive-root-actions"><ArchiveLinkButton href="/worlds" variant="ghost" aria-label="Archive — explore all Worlds">ARCHIVE <ChevronRight aria-hidden size={18} /></ArchiveLinkButton></div>
       <nav className={`${styles.objectNav} ${roomStyles.navigation}`} aria-label="Dreamcatcher locations">
         <ArchiveTabs mode="filter" ariaLabel="Dreamcatcher location" activeId={selected.slug}
           items={rooms.map(room=>({id:room.slug,label:room.city.toUpperCase()}))} onChange={chooseRoom} />
-        <ArchiveLinkButton className={roomStyles.archiveEntry} href="/worlds" variant="secondary" aria-label="Archive — explore all Worlds">
-          <span>ARCHIVE<small>ALL WORLDS</small></span><ChevronRight aria-hidden size={18} />
-        </ArchiveLinkButton>
+
       </nav>
 
       <section className={`${styles.liveFrame} ${playerStyles.frame}`} aria-label={`${selected.city} Dreamcatcher state video`}>

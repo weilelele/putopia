@@ -62,6 +62,7 @@ export interface OfflineVoyager {
   display_name: string
   bio: string | null
   avatar_url: string | null
+  location?: string | null
   role: 'voyager' | 'architect'
   observation_days: number
   worlds_discovered: number
@@ -109,6 +110,8 @@ export interface OfflineFunction {
 export interface OfflineDashboardUpdate { id: string; occurredAt: string; category: string; title: string; description?: string; image?: string | null; href: string }
 
 export interface OfflineSnapshot {
+  dashboardVoyager?: { role: string; name: string; avatarUrl: string | null; awaitingYou: number | null; deviceDays: number }
+  dashboardEvents?: { id: string; kind: string; title: string; description: string; href: string; action: string; image?: string; endsAt?: string | null }[]
   dashboardStats?: { worlds: number; voyagers: number }
   dashboardUpdates?: OfflineDashboardUpdate[]
   version: 2
@@ -152,7 +155,12 @@ export function parseOfflineSnapshot(value: unknown): OfflineSnapshot | null {
   const sections = ['worlds', 'devices', 'intel', 'voyagers', 'stories', 'votes', 'functions'] as const
   if (!sections.every((section) => isRecordArray(parsed[section]))) return null
 
+  if (parsed.dashboardVoyager !== undefined) {
+    const hero = parsed.dashboardVoyager
+    if (!isRecord(hero) || typeof hero.role !== 'string' || typeof hero.name !== 'string' || (hero.avatarUrl !== null && typeof hero.avatarUrl !== 'string') || (hero.awaitingYou !== null && (!Number.isSafeInteger(hero.awaitingYou) || Number(hero.awaitingYou) < 0)) || !Number.isSafeInteger(hero.deviceDays) || Number(hero.deviceDays) < 0) return null
+  }
   if (parsed.dashboardUpdates !== undefined && (!isRecordArray(parsed.dashboardUpdates) || !parsed.dashboardUpdates.every(item => typeof item.id === 'string' && isIsoDate(item.occurredAt) && typeof item.title === 'string' && typeof item.category === 'string' && typeof item.href === 'string' && /^\/(intel|worlds|devices|voyagers|vote)(\/|$)/.test(item.href)))) return null
+  if (parsed.dashboardEvents !== undefined && (!isRecordArray(parsed.dashboardEvents) || !parsed.dashboardEvents.every(item => ['id','kind','title','description','href','action'].every(key => typeof item[key] === 'string') && /^\/(signal|vote|worlds|devices|quiz|voyager-pack)([/?#]|$)/.test(String(item.href)) && (item.image === undefined || typeof item.image === 'string') && (item.endsAt == null || isIsoDate(item.endsAt))))) return null
   if (parsed.dashboardStats !== undefined) {
     const stats = parsed.dashboardStats
     if (!isRecord(stats) || !['worlds', 'voyagers'].every(key => typeof stats[key] === 'number' && Number.isSafeInteger(stats[key]) && stats[key] >= 0)) return null
@@ -182,7 +190,9 @@ export function absoluteOfflineMediaUrl(value: string): string {
 
 export function collectOfflineMediaUrls(snapshot: OfflineSnapshot): string[] {
   const urls = [
+    snapshot.dashboardVoyager?.avatarUrl,
     ...(snapshot.dashboardUpdates ?? []).map(item => item.image),
+    ...(snapshot.dashboardEvents ?? []).map(item => item.image),
     ...snapshot.worlds.map((item) => item.image_path),
     ...snapshot.devices.map((item) => item.image_path),
     ...snapshot.intel.flatMap((item) => item.images.slice(0, 1)),

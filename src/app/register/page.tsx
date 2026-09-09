@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
 import { getFirstTouch } from '@/lib/utm'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { syncLoopsRegistration } from '@/lib/actions/profile'
@@ -121,7 +120,7 @@ export default function RegisterPage() {
 
   return (
     <main className="main pilot-archive-page archive-auth-page">
-      <ArchiveBrandHeader />
+
       <div className="archive-auth-shell">
         <header className="archive-auth-heading">
           <p>INVITATION VERIFIED</p>

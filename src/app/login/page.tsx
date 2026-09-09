@@ -5,7 +5,6 @@ import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -52,7 +51,7 @@ function LoginPageContent() {
 
   return (
     <main className="main pilot-archive-page pilot-login-page">
-      <ArchiveBrandHeader />
+
 
       <div className="pilot-login-shell">
         <header className="pilot-login-heading">

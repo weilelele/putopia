@@ -3,22 +3,18 @@ import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import Link from 'next/link'
 import { getAllVoyagers, updateProfile, uploadAvatar } from '@/lib/actions/profile'
 import { useAuth } from '@/lib/auth-context'
 import { ArchiveSheet } from '@/components/archive-sheet'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
-import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
-import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { ArchiveStatStrip, type ArchiveStatItem } from '@/components/archive-stat-strip'
 import { ArchiveTabs } from '@/components/archive-tabs'
 import { SectionTracker } from '@/components/section-tracker'
 import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
-import { Camera, FileText, ArrowRight } from 'lucide-react'
+import { Camera, ArrowRight } from 'lucide-react'
 import type { VoyagerProfile, UserRole } from '@/types/database'
 
 // ── Platform icons ─────────────────────────────────────────────────────────
@@ -219,42 +215,14 @@ export default function VoyagersPage() {
     { value: loading ? '—' : voyagers.length, label: 'ALL VOYAGERS', onSelect: () => jumpTo('section-voyagers') },
   ]
 
-  const profileControl = user.role === 'guest' ? undefined : (() => {
-    const idColor = user.role === 'applicant' ? '#E8A020' : user.role === 'architect' ? '#E35205' : '#FFB07A'
-    const profileName = user.name || user.email?.split('@')[0] || 'Voyager'
-    const profileInitials = profileName.slice(0, 2).toUpperCase()
-
-    return (
-      <Link href="/profile" aria-label={`Open ${profileName}'s profile`} className="voyagers-profile-link">
-        {user.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.avatarUrl} alt={profileName} style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', display: 'block', border: `1.5px solid ${idColor}66` }} />
-        ) : (
-          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', border: `1.5px solid ${idColor}66`, background: '#0A0D1A', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: idColor }}>
-            {profileInitials}
-          </span>
-        )}
-      </Link>
-    )
-  })()
 
   return (
     <main className="main pilot-archive-page pilot-voyagers-page">
       <SectionTracker section="voyagers" />
-      <ArchiveBrandHeader />
 
-      <ArchivePageHeader
-        hideTitle
-        action={(
-          <ArchiveLinkButton className="archive-page-header__wide-action" fullWidth href="/logs">
-            <FileText size={15} />
-            VOYAGER LOGS
-            <ArrowRight size={14} />
-          </ArchiveLinkButton>
-        )}
-        identity={profileControl}
-        title="Voyagers"
-      />
+
+      <h1 className="sr-only">Voyagers</h1>
+      <div className="archive-root-actions"><ArchiveLinkButton variant="ghost" href={user.role === 'guest' ? '/login?redirect=%2Fprofile' : '/profile'}>MY PROFILE <ArrowRight aria-hidden size={18} /></ArchiveLinkButton></div>
 
       {/* ── Stat board — Architect Council / new Voyagers / total Voyagers ── */}
       <ArchiveStatStrip items={statItems} />
@@ -287,7 +255,7 @@ export default function VoyagersPage() {
               <style>{`.batch-rail::-webkit-scrollbar{display:none}.batch-rail{scrollbar-width:none}`}</style>
 
               {/* Batch selector — horizontal scroll rail */}
-              <ArchiveSectionLabel>BATCHES</ArchiveSectionLabel>
+              <ArchiveSectionLabel>VOYAGER BATCHES</ArchiveSectionLabel>
 
               <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
                 {batches.length > 1 && (
@@ -324,6 +292,8 @@ export default function VoyagersPage() {
           )}
         </>
       )}
+
+      <ArchiveLinkButton variant="primary" className="voyager-logs-entry" fullWidth href="/logs">VOYAGER LOGS <ArrowRight aria-hidden size={20} /></ArchiveLinkButton>
 
       {/* ── Edit Modal ── */}
       {editing && form && (
@@ -454,113 +424,24 @@ function VoyagerCard({
   onEditClick: (v: VoyagerProfile) => void
   isArchitect?: boolean
 }) {
-  const color    = accentColor(voyager.display_name)
-  const initStr  = getInitials(voyager.display_name)
-  const isOwn    = isAtLeast('voyager') && user?.id === voyager.id
-  const avatarSrc = voyager.avatar_url ?? null
-
+  const isOwn = isAtLeast('voyager') && user?.id === voyager.id
   const links = [
-    voyager.social_x         && { key: 'x',  icon: <XIcon />,         href: voyager.social_x },
-    voyager.social_instagram && { key: 'ig', icon: <InstagramIcon />,  href: voyager.social_instagram },
-    voyager.social_linkedin  && { key: 'li', icon: <LinkedInIcon />,   href: voyager.social_linkedin },
+    voyager.social_x && { key: 'X', icon: <XIcon />, href: voyager.social_x },
+    voyager.social_instagram && { key: 'Instagram', icon: <InstagramIcon />, href: voyager.social_instagram },
+    voyager.social_linkedin && { key: 'LinkedIn', icon: <LinkedInIcon />, href: voyager.social_linkedin },
   ].filter(Boolean) as { key: string; icon: React.ReactNode; href: string }[]
-
-  return (
-    <ArchiveCard
-      actionable={isOwn}
-      onClick={isOwn ? () => onEditClick(voyager) : undefined}
-      className="voyager-card transition-all duration-200"
-      style={{
-        borderColor: isOwn ? `${color}55` : isArchitect ? 'rgba(200,68,6,0.18)' : 'rgba(227,82,5,0.16)',
-      }}
-    >
-      {/* Avatar + name row */}
-      <div className="flex items-start gap-3 mb-3">
-        <div className="relative shrink-0">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-mono font-bold overflow-hidden"
-            style={{ background: avatarSrc ? 'transparent' : `${color}18`, color, border: `2px solid ${color}40` }}
-          >
-            {avatarSrc
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={avatarSrc} alt={voyager.display_name} className="w-full h-full object-cover" />
-              : initStr}
-          </div>
-          {isOwn && (
-            <div
-              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border"
-              style={{ background: '#151B3A', borderColor: '#C84406', color: '#C84406' }}
-            >
-              <Camera size={10} />
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-mono font-semibold" style={{ color: '#F5F5F5' }}>
-              {voyager.display_name}
-            </span>
-            {isOwn && (
-              <span className="voyager-card__tag text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#C84406', borderColor: 'rgba(200,68,6,0.4)', background: 'rgba(200,68,6,0.08)' }}>
-                YOU
-              </span>
-            )}
-            {isArchitect && (
-              <span className="voyager-card__tag text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#E8A020', borderColor: 'rgba(232,160,32,0.35)', background: 'rgba(232,160,32,0.06)' }}>
-                ARCHITECT
-              </span>
-            )}
-          </div>
-          {voyager.location && (
-            <div className="text-xs font-mono mt-0.5" style={{ color: 'rgba(245,245,245,0.35)' }}>{voyager.location}</div>
-          )}
-          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
-            joined {formatJoinDate(voyager.joined_at)}
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="flex gap-4 mb-3 py-2 border-y" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
-        <div className="text-center flex-1">
-          <div className="text-xl font-mono font-bold" style={{ color: 'var(--color-nucleus)' }}>
-            {voyager.observation_days}
-          </div>
-          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>OBS DAYS</div>
-        </div>
-        <div className="w-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
-        <div className="text-center flex-1">
-          <div className="text-xl font-mono font-bold" style={{ color: 'var(--color-nucleus)' }}>
-            {voyager.worlds_discovered}
-          </div>
-          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>WORLDS</div>
-        </div>
-      </div>
-
-      {/* Bio — display limit matches BIO_LIMIT */}
-      <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: 'rgba(245,245,245,0.55)' }}>
-        {voyager.bio
-          ? (voyager.bio.length > BIO_LIMIT ? voyager.bio.slice(0, BIO_LIMIT) + '…' : voyager.bio)
-          : '—'}
-      </p>
-
-      {/* Social links — stop card click from propagating */}
-      {links.length > 0 && (
-        <div className="flex gap-3 pt-2 border-t" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
-          {links.map(({ key, icon, href }) => (
-            <a key={key} href={href} target="_blank" rel="noopener noreferrer"
-              onClick={e => e.stopPropagation()}
-              className="voyager-card__social flex items-center justify-center w-7 h-7 border transition-colors"
-              style={{ borderColor: 'rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', borderRadius: '2px' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(242,240,230,0.2)'; (e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.55)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(227,82,5,0.16)'; (e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.35)' }}
-            >
-              {icon}
-            </a>
-          ))}
-        </div>
-      )}
-    </ArchiveCard>
-  )
+  return <article className={`voyager-directory-row${isArchitect ? ' voyager-directory-row--architect' : ''}`}>
+    <div className="voyager-directory-identity">
+      <div className="voyager-directory-portrait">{voyager.avatar_url
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img src={voyager.avatar_url} alt={voyager.display_name} />
+        : <span>{getInitials(voyager.display_name)}</span>}</div>
+      <div><h3>{voyager.display_name}</h3>{isArchitect && <p>ARCHITECT</p>}{voyager.location && <p>{voyager.location}</p>}<p>{voyager.observation_days} observation days</p>
+    <details className="voyager-directory-details"><summary>Worlds &amp; observations <ArrowRight aria-hidden size={16} /></summary>
+      <div><p>{voyager.worlds_discovered} worlds · Joined {formatJoinDate(voyager.joined_at)}</p>{voyager.bio && <p>{voyager.bio}</p>}
+      {links.length > 0 && <div className="voyager-directory-social">{links.map(({key,icon,href})=><a key={key} href={href} aria-label={`${voyager.display_name} on ${key}`} target="_blank" rel="noopener noreferrer">{icon}</a>)}</div>}
+      {isOwn && <ArchiveButton variant="secondary" onClick={() => onEditClick(voyager)}>Edit profile</ArchiveButton>}</div>
+    </details></div>
+    </div>
+  </article>
 }
