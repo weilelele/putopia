@@ -19,7 +19,6 @@ import { BatchDiscussionBoard } from '../_components/batch-discussion-board'
 import { FollowBatchButton } from '../_components/batch-actions'
 import { useFollowedBatchSlugs } from '../_components/use-followed-batches'
 import { useRememberedState } from '@/lib/remembered-state'
-import { LiveFeedPlaceholder } from '@/components/live-feed-placeholder'
 import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
 import type { DeviceCameraSource } from '@/lib/device-camera'
 import {
@@ -84,7 +83,8 @@ export function DeviceLiveRoom({
   const progress = batchProgress(batch)
   const remaining = getBatchRemainingQuantity(batch)
   const claimHref = getBatchClaimHref(batch)
-  const currentStage = progress.find((stage) => stage.status === 'current')?.label ?? 'COMPLETE'
+  const currentStage = progress.find((stage) => stage.status === 'current')?.label
+    ?? (progress.some((stage) => stage.status === 'upcoming') ? 'AWAITING DISPATCH' : 'COMPLETE')
   const materialRecords = batch.heroMedia?.length
     ? batch.heroMedia
     : [{ alt: batch.imageAlt, caption: batch.heroCaption, kind: 'image' as const, src: batch.image }]
@@ -147,7 +147,12 @@ export function DeviceLiveRoom({
       {camera ? (
         <CosmoCameraEmbed source={camera} location={batch.location} />
       ) : (
-        <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}>
+        <figure className="m-0">
+          <div className="relative aspect-[3/2]">
+            <Image alt={batch.imageAlt} fill priority sizes="(max-width: 767px) 100vw, 960px" src={batch.image} style={{ objectFit: batch.imageFit ?? 'cover' }} />
+          </div>
+          <figcaption className="flex flex-wrap gap-3 px-4 py-3 text-xs">
+          <span className="w-full">{batch.heroCaption}</span>
           <span>{batch.name.toUpperCase()}</span>
           <span className={styles.liveMetaItem}>
             <span
@@ -164,7 +169,8 @@ export function DeviceLiveRoom({
           >
             <Clock3 aria-hidden size={16} /> {localClock}
           </time>
-        </LiveFeedPlaceholder>
+        </figcaption>
+        </figure>
       )}
 
       {(batch.status === 'claim_open' && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
