@@ -98,7 +98,7 @@ export default function VoyagersPage() {
   const modalFileRef = useRef<HTMLInputElement>(null)
 
   // ── Batch selector state ────────────────────────────────────────────────
-  const [activeBatch, setActiveBatch] = useSessionPreference<string | null>('mc:view:voyagers:batch', null)
+  const [activeBatch, setActiveBatch] = useSessionPreference<string | null>('mc:view:voyagers:batch:s2-default', null)
   const [batchExpanded, setBatchExpanded] = useState(false)
   const selectBatch = (label: string) => { setActiveBatch(label); setBatchExpanded(false) }
 
@@ -192,7 +192,7 @@ export default function VoyagersPage() {
     batchMap.get(label)!.push(v)
   }
   const batches = [...batchMap.entries()].map(([label, members]) => ({ label, members }))
-  const currentLabel = batches.find(b => b.label === activeBatch)?.label ?? batches[0]?.label
+  const currentLabel = batches.find(b => b.label === activeBatch)?.label ?? batches.find(b => /\bS2\b/i.test(b.label))?.label ?? batches[0]?.label
   const currentBatch = batches.find(b => b.label === currentLabel)
   const currentMembers = currentBatch?.members ?? []
   const shownMembers = batchExpanded ? currentMembers : currentMembers.slice(0, BATCH_COLLAPSE)

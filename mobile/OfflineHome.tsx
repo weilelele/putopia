@@ -198,7 +198,7 @@ function DashboardView({ snapshot, media, select }: {
   }) : fallbackUpdates
   return <View>
     {snapshot.viewer.authenticated && <View style={styles.voyagerWelcome}>
-      <Text style={styles.welcomeEyebrow}>WELCOME,</Text><Text style={styles.welcomeTitle}>BROKER</Text>{snapshot.viewer.role !== 'applicant' && <Text style={styles.welcomeIntro}>YOU HAVE BEEN SELECTED TO EXPLORE{'\n'}THE MYSTERIES OF PARALLEL WORLDS.</Text>}
+      <Text style={styles.welcomeEyebrow}>WELCOME,</Text><Text style={styles.welcomeTitle}>VOYAGER</Text>{snapshot.viewer.role !== 'applicant' && <Text style={styles.welcomeIntro}>YOU HAVE BEEN SELECTED TO EXPLORE{'\n'}THE MYSTERIES OF PARALLEL WORLDS.</Text>}
       <View style={styles.welcomeBoard}>
         <View style={styles.welcomeIdentity}><CachedImage uri={snapshot.dashboardVoyager?.avatarUrl} media={media} style={{width:44,height:44,borderRadius:22}} /><View><Text style={styles.directoryName}>{snapshot.viewer.displayName ?? 'Voyager'}</Text><Text style={styles.meta}>{snapshot.viewer.role.toUpperCase()}</Text><Text style={styles.directoryMeta}>VIEW YOUR PATH · OFFLINE</Text></View></View>
         <View style={styles.statGrid}><View style={styles.stat}><Text style={styles.statLabel}>SIGNAL DISPATCH</Text><Text style={styles.statValue}>{snapshot.dashboardVoyager?.awaitingYou ?? '—'}</Text><Text style={styles.directoryMeta}>awaiting you · saved</Text></View><View style={[styles.stat,{borderRightWidth:0}]}><Text style={styles.statValue}>{snapshot.dashboardVoyager?.deviceDays ?? '—'}</Text><Text style={styles.statLabel}>CONSOLE DAYS</Text></View></View>
@@ -531,7 +531,7 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
               {TABS.map((tab) => (
                 <Pressable key={tab.key} accessibilityRole="button" accessibilityLabel={tab.label} accessibilityState={{ selected: activeTab === tab.key }}
                   onPress={() => changeTab(tab.key)} style={styles.navItem}>
-                  <View style={[styles.navMarker, activeTab !== tab.key && { opacity: 0 }]} /><Image source={tab.icon} resizeMode="contain" style={tab.key === 'devices' ? {width:28,height:22} : { width: 22, height: 22, tintColor: activeTab === tab.key ? ORANGE : DIM }} />
+                  <View style={[styles.navMarker, activeTab !== tab.key && { opacity: 0 }]} /><Image source={tab.icon} resizeMode="contain" style={tab.key === 'devices' ? {width:28,height:22,tintColor:activeTab === tab.key ? undefined : '#F5F5F5'} : { width: 22, height: 22, tintColor: activeTab === tab.key ? ORANGE : DIM }} />
                   <Text style={[styles.navLabel, activeTab === tab.key && styles.navActive]}>{tab.label}</Text>
                 </Pressable>
               ))}

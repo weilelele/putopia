@@ -4200,3 +4200,7 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .live-loading-details { min-height: 120px; padding: 16px; color: var(--color-star-dim); font-size: var(--fs-label); }
 
 .pilot-voyagers-page section { margin-bottom: 20px; }
+
+/* Device navigation states use the same protected shape: white idle, original orange active. */
+.bottom-nav__item:not(.bottom-nav__item--active) .navigation-device-mark,
+.nav-item:not(.active) .navigation-device-mark { filter: brightness(0) invert(1); }
