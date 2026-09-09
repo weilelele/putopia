@@ -66,7 +66,7 @@ function buildGeom(m: Manifest): Geom {
     spanW,
     spanH,
     poolByRow: { 1: m.rows['1'].pool, 2: m.rows['2'].pool },
-    lastSettle: BASE + 9 * STEP + LOCK,
+    lastSettle: Math.max(...cells.map(cell => cell.settleDelay)) + LOCK,
   }
 }
 
@@ -112,10 +112,12 @@ export function FlipWordmark({
   maxWidth = 600,
   playbackRate = 1,
   replayable = true,
+  onPlaybackComplete,
   fill = 0.92,
   className,
   ariaLabel = 'Multiverse Collective',
 }: {
+  onPlaybackComplete?: () => void
   playbackRate?: number
   replayable?: boolean
   maxWidth?: number
@@ -124,6 +126,12 @@ export function FlipWordmark({
   ariaLabel?: string
 }) {
   const reduceMotion = useSyncExternalStore(subscribeMotion, () => matchMedia('(prefers-reduced-motion: reduce)').matches, () => false)
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [fallbackReady, setFallbackReady] = useState(false)
+  const completed = useRef(false)
+  const completePlayback = useCallback(() => {
+    if (!completed.current) { completed.current = true; onPlaybackComplete?.() }
+  }, [onPlaybackComplete])
   const [m, setM] = useState<Manifest | null>(null)
   const [runId, setRunId] = useState(0)
   const [spread, setSpread] = useState(false)
@@ -134,7 +142,15 @@ export function FlipWordmark({
   // page); the glyph manifest is fetched on mount, with the static wordmark
   // as the pre-load fallback below.
   useEffect(() => {
-    fetch('/assets/letters/manifest.json').then((r) => r.json()).then(setM).catch(() => {})
+    const controller = new AbortController()
+    let active = true
+    const timeout = setTimeout(() => controller.abort(), 8000)
+    fetch('/assets/letters/manifest.json', { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error('Wordmark unavailable'); return r.json() })
+      .then(value => { if (active) setM(value) })
+      .catch(() => { if (active) setLoadFailed(true) })
+      .finally(() => clearTimeout(timeout))
+    return () => { active = false; clearTimeout(timeout); controller.abort() }
   }, [])
 
   const geom = useMemo(() => (m ? buildGeom(m) : null), [m])
@@ -161,7 +177,18 @@ export function FlipWordmark({
     return () => clearTimeout(t)
   }, [geom, runId, playbackRate])
 
-  const replay = useCallback(() => setRunId((r) => r + 1), [])
+  useEffect(() => {
+    if ((reduceMotion || loadFailed) && fallbackReady) completePlayback()
+  }, [reduceMotion, loadFailed, fallbackReady, completePlayback])
+
+  useEffect(() => {
+    if (!spread || reduceMotion) return
+    // transitionend is authoritative; this covers browsers suppressing the event.
+    const fallback = setTimeout(completePlayback, SPREAD / playbackRate + 200)
+    return () => clearTimeout(fallback)
+  }, [spread, reduceMotion, playbackRate, completePlayback])
+
+  const replay = useCallback(() => { completed.current = false; setRunId(r => r + 1) }, [])
 
   const stageW = geom ? geom.spanW * scale : 0
   const stageH = geom ? geom.spanH * scale : 0
@@ -181,6 +208,7 @@ export function FlipWordmark({
       {geom && !reduceMotion ? (
         <div
           className="fw-stage"
+          onTransitionEnd={event => { if (spread && (event.propertyName === 'left' || event.propertyName === 'top')) completePlayback() }}
           role="img"
           aria-label={ariaLabel}
           onClick={replayable ? replay : undefined}
@@ -192,7 +220,7 @@ export function FlipWordmark({
         </div>
       ) : (
         // graceful fallback before glyphs load: the original wordmark image
-        <SmartImage src="/assets/vi-wordmark.png" alt={ariaLabel} sizes="(max-width: 700px) 90vw, 616px" width={616} height={170} preload style={{ width: Math.min(maxWidth, containerW * fill), height: 'auto' }} />
+        <SmartImage src="/assets/vi-wordmark.png" alt={ariaLabel} sizes="(max-width: 700px) 90vw, 616px" width={616} height={170} onLoad={() => setFallbackReady(true)} onError={() => setFallbackReady(true)} preload style={{ width: Math.min(maxWidth, containerW * fill), height: 'auto' }} />
       )}
     </div>
   )
