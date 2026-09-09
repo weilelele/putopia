@@ -18,6 +18,7 @@ import styles from '../../live-observation-room.module.css'
 import { BatchDiscussionBoard } from '../_components/batch-discussion-board'
 import { FollowBatchButton } from '../_components/batch-actions'
 import { useFollowedBatchSlugs } from '../_components/use-followed-batches'
+import { useRememberedState } from '@/lib/remembered-state'
 import { LiveFeedPlaceholder } from '@/components/live-feed-placeholder'
 import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
 import type { DeviceCameraSource } from '@/lib/device-camera'
@@ -74,9 +75,9 @@ export function DeviceLiveRoom({
 }) {
   const router = useRouter()
   const followedBatchSlugs = useFollowedBatchSlugs()
-  const [activeTab, setActiveTab] = useState<ContentTab>('info')
+  const [activeTab, setActiveTab] = useRememberedState<ContentTab>('primary-tab:devices:panel', 'info')
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [filter, setFilter] = useState<BatchFilter>('all')
+  const [filter, setFilter] = useRememberedState<BatchFilter>('primary-tab:devices:filter', 'all')
   const [openShipment, setOpenShipment] = useState<string | null>(null)
   const [progressOpen, setProgressOpen] = useState(false)
   const [now, setNow] = useState<number | null>(null)
@@ -116,7 +117,7 @@ export function DeviceLiveRoom({
   }
 
   return (
-    <main className={`main ${styles.page}`}>
+    <main className={`main ${styles.page}`} data-route-scroll>
       <header className={styles.roomHeader}>
         <h1>DEVICE</h1>
         <Link className={styles.archiveLink} href="/devices">
