@@ -25,7 +25,8 @@
 | 世界档案 / 正文 | `/worlds`、`/worlds/[id]` | 无 | 保留，归 Worlds | 档案回 `/worlds/live`；正文回 `/worlds` |
 | 专注任务 | `/vote`、`/signal`、`/worlds/submit`、`/devices/claim` 及其步骤/结果 | 无 | 隐藏底栏及五项 Sidebar，保留任务退出路径 | 分别为 `/intel`、`/worlds/live`、`/worlds`、`/devices` |
 | 资料编辑模式 | `/profile` 内进入编辑；不要求新建路径 | 无 | 编辑期间隐藏，结束恢复 | 回资料浏览态，再按来源返回 |
-| 认证 / 独立获客 | login、register、apply、quiz、activate、new、voyager-pack 等 | 入口按识别需要可选；后续步骤无 | 不强加五项导航 | 合法原任务；缺失时使用对应流程配置的出口 |
+| 登录 | `/login` | 无 | 保留手机底栏 / 宽屏 Sidebar；键盘展开时按共享规则收起底栏 | 返回实际应用来源；无来源回 Dashboard；登录成功仍继续原任务 |
+| 认证 / 独立获客 | register、apply、quiz、activate、new、voyager-pack 等 | 入口按识别需要可选；后续步骤无 | 不强加五项导航 | 合法原任务；缺失时使用对应流程配置的出口 |
 | Studio / Worldflow | 独立工作台 | 不重复品牌 | 使用工作区工具；五项导航不占工作区 | 合法来源；无来源回 `/voyagers` |
 | Admin / newsletter / 公共介绍 | 独立页面壳 | 品牌展示场景可选 | Admin 用 AdminNav；其余不强加五项导航 | 保留各自真实业务出口 |
 | Sheet / Dialog | 任意页面上打开 | 弹层无；背景沿用原页 | 背景导航不可交互 | 关闭返回触发页与触发点 |

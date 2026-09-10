@@ -14,6 +14,11 @@ describe('UI navigation contract', () => {
     for (const path of ['/welcome', '/vote', '/signal', '/devices/claim', '/worlds/submit']) expect(hasGlobalNavigation(path)).toBe(false)
     expect(hasGlobalNavigation('/logs/42')).toBe(true)
   })
+  it('keeps login escapable through the shared navigation without assigning a tab', () => {
+    expect(hasGlobalNavigation('/login')).toBe(true)
+    expect(ownerTab('/login')).toBeNull()
+    expect(fallbackRoute('/login')).toBe('/console')
+  })
   it('gives deep links stable parents and rejects external return targets', () => {
     expect(fallbackRoute('/logs/42')).toBe('/logs')
     expect(fallbackRoute('/devices/batches/one/discussion')).toBe('/devices/batches/one')
