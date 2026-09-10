@@ -15,7 +15,7 @@ export default function ConsoleClient({ initial }: { initial: Awaited<ReturnType
   const retry = () => startTransition(async()=> { try {setData(await getDashboard())} catch {setData(current => ({...current, errors: [...new Set([...current.errors, 'Updates', 'Events'])]}))} })
   const updatesIncomplete = data.errors.includes('Updates') || data.errors.includes('Votes')
   const eventsIncomplete = data.errors.some(error => error !== 'Updates' && error !== 'Statistics')
-  return <main className="main archive-console-page" ref={scrollContainer}>
+  return <main className="main archive-console-page" data-route-scroll ref={scrollContainer}>
     <PwaInstallNudge eligibleUser={!data.guest} scrollContainer={scrollContainer} /><SectionTracker section="dashboard" /><ArchivePageHeader hideTitle title="Dashboard" />
     {data.voyager ? <DashboardVoyagerHeader voyager={data.voyager} /> : <DashboardStats stats={data.stats} />}
     {!data.voyager && data.errors.includes('Statistics') && <div className="archive-inline-notice" role="status"><p>The latest counts could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry counts</ArchiveButton></div>}

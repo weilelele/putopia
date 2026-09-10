@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getPublishedStories } from '@/lib/actions/stories'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
@@ -12,6 +12,9 @@ import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkCard } from '@/components/archive-link-card'
 import { ArchivePageHeader } from '@/components/archive-page-header'
+import { createClientDataCache } from '@/lib/client-data-cache'
+
+const logsPageCache = createClientDataCache<StoryWithAvatar[]>(5 * 60_000)
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -30,15 +33,23 @@ function getInitials(name: string) {
 
 export default function LogsPage() {
   const { isAtLeast } = useAuth()
-  const [stories, setStories] = useState<StoryWithAvatar[]>([])
+  const [stories, setStories] = useState<StoryWithAvatar[]>(() => logsPageCache.peek() ?? [])
 
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const load = async () => { setStatus('loading'); try { setStories(await getPublishedStories()); setStatus('ready') } catch { setStatus('error') } }
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- load initial records and expose a retryable load state
-  useEffect(() => { void load() }, [])
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(() => logsPageCache.peek() ? 'ready' : 'loading')
+  const loadStories = useCallback(async (force = false) => {
+    setStatus('loading')
+    try {
+      setStories(await logsPageCache.load(getPublishedStories, force))
+      setStatus('ready')
+    } catch {
+      setStatus('error')
+    }
+  }, [])
+
+  useEffect(() => { void Promise.resolve().then(() => loadStories()) }, [loadStories])
 
   return (
-    <main className="main pilot-archive-page archive-collection-page archive-logs-page">
+    <main className="main pilot-archive-page archive-collection-page archive-logs-page" data-route-scroll>
       <SectionTracker section="logs" />
 
 
@@ -58,7 +69,7 @@ export default function LogsPage() {
       {/* Stories Feed */}
       <div className="space-y-6 max-w-3xl">
         {status === 'loading' && <p role="status">Loading Voyager Logs…</p>}
-        {status === 'error' && <ArchiveCard><p>Voyager Logs could not be loaded.</p><ArchiveButton onClick={load}>Retry</ArchiveButton></ArchiveCard>}
+        {status === 'error' && <ArchiveCard><p>Voyager Logs could not be loaded.</p><ArchiveButton onClick={() => void loadStories(true)}>Retry</ArchiveButton></ArchiveCard>}
         {status === 'ready' && stories.length === 0 && (
           <ArchiveCard className="archive-empty-state">
             <h2>NO LOG ENTRIES YET</h2>

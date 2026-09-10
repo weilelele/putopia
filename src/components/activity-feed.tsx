@@ -522,7 +522,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
                 key={`group-${i}`}
                 events={item.events}
                 accent="#E35205"
-                summary={`${item.events.length} new Voyagers activated · Cairo Batch 01`}
+                summary={`${item.events.length} new Voyagers activated`}
               />
             )
           }

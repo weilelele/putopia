@@ -88,7 +88,8 @@ export function DeviceLiveRoom({
   const progress = batchProgress(batch)
   const remaining = getBatchRemainingQuantity(batch)
   const claimHref = getBatchClaimHref(batch)
-  const currentStage = progress.find((stage) => stage.status === 'current')?.label ?? 'COMPLETE'
+  const currentStage = progress.find((stage) => stage.status === 'current')?.label
+    ?? (progress.some((stage) => stage.status === 'upcoming') ? 'AWAITING DISPATCH' : 'COMPLETE')
   const materialRecords = batch.heroMedia?.length
     ? batch.heroMedia
     : [{ alt: batch.imageAlt, caption: batch.heroCaption, kind: 'image' as const, src: batch.image }]
@@ -121,11 +122,12 @@ export function DeviceLiveRoom({
   }
 
   return (
-    <main className={`main ${styles.page}`}>{!isRoot && <BackLink href="/devices" label="Devices" />}
+    <main className={`main ${styles.page}`} data-route-scroll>{!isRoot && <BackLink href="/devices" label="Devices" />}
       <header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
         <h1 className={isRoot ? 'sr-only' : undefined}>DEVICES</h1>
         <ArchiveButton variant="ghost" className={styles.archiveLink} onClick={() => setSheetOpen(true)}>ARCHIVE <ChevronRight aria-hidden size={16} /></ArchiveButton>
       </header>
+
 
       <nav className={styles.objectNav} aria-label="Device batches">
         <div className={styles.objectTabs}>
@@ -239,11 +241,23 @@ export function DeviceLiveRoom({
               <div className={styles.fact}><span>NEXT MILESTONE</span><strong>{batch.nextMilestone}</strong></div>
             </div>
 
+            {batch.faq?.length ? (
+              <section className={styles.progressBlock} aria-label="Batch FAQ">
+                <div className={styles.eyebrow}>BEFORE YOU CLAIM</div>
+                {batch.faq.map((item) => (
+                  <details key={item.question} className="mt-4 text-sm">
+                    <summary>{item.question}</summary>
+                    <p className="mt-2 leading-relaxed">{item.answer}</p>
+                  </details>
+                ))}
+              </section>
+            ) : null}
+
             <div className={styles.mediaSection}>
               <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3><span>{materialRecords.length} ITEM{materialRecords.length === 1 ? '' : 'S'}</span></div>
               <div className={styles.mediaList}>
                 {materialRecords.map((item) => (
-                  <ArchiveButton variant="secondary" className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button">
+                  <a className={styles.mediaRow} href={item.src} key={`${item.src}-${item.caption}`} rel="noreferrer" target="_blank">
                     <span className={styles.mediaThumb}>
                       <Image alt="" fill sizes="100px" src={item.poster ?? item.src} />
                       {item.kind === 'video' ? <span className={styles.videoBadge}><CirclePlay aria-hidden size={16} /></span> : null}
@@ -252,7 +266,7 @@ export function DeviceLiveRoom({
                       <strong>{item.caption}</strong>
                     </span>
                     <ChevronRight aria-hidden size={18} />
-                  </ArchiveButton>
+                  </a>
                 ))}
               </div>
             </div>

@@ -5,7 +5,7 @@ import { useSessionPreference } from '@/lib/use-session-preference'
 import { MessageSquare, Plus, ArrowRight } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { IntelWithAvatar } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
@@ -16,8 +16,16 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveCard } from '@/components/archive-card'
 import Link from 'next/link'
+import { createClientDataCache } from '@/lib/client-data-cache'
 
 type FilterTab = 'all' | 'public' | 'classified'
+
+type IntelPageData = {
+  intel: IntelWithAvatar[]
+  commentCounts: Record<string, number>
+}
+
+const intelPageCache = createClientDataCache<IntelPageData>(5 * 60_000)
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -80,9 +88,12 @@ export default function IntelPage() {
 
 function IntelPageContent() {
   const { isAtLeast } = useAuth()
-  const [intel, setIntel] = useState<IntelWithAvatar[]>([])
-  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
-  const [loading, setLoading] = useState(true)
+  const cached = intelPageCache.peek()
+  const [intel, setIntel] = useState<IntelWithAvatar[]>(() => cached?.intel ?? [])
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>(
+    () => cached?.commentCounts ?? {},
+  )
+  const [loading, setLoading] = useState(!cached)
   const [loadError, setLoadError] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   // Deep-link support: /intel?tab=classified opens the Classified tab directly
@@ -92,17 +103,27 @@ function IntelPageContent() {
     tabParam === 'classified' || tabParam === 'public' ? tabParam : 'all',
   )
 
-  const loadIntel = async () => {
-    setLoading(true); setLoadError(false)
+  const loadIntel = useCallback(async (force = false) => {
+    setLoading(true)
+    setLoadError(false)
     try {
-      const items = await getAllIntel() as IntelWithAvatar[]
-      setIntel(items)
-      if (items.length) setCommentCounts(await getCommentCountsBulk('intel', items.map(e => e.id)))
-    } catch { setLoadError(true) } finally { setLoading(false) }
-  }
+      const next = await intelPageCache.load(async () => {
+        const items = await getAllIntel() as IntelWithAvatar[]
+        const counts = items.length > 0
+          ? await getCommentCountsBulk('intel', items.map((entry) => entry.id))
+          : {}
+        return { intel: items, commentCounts: counts }
+      }, force)
+      setIntel(next.intel)
+      setCommentCounts(next.commentCounts)
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional fetch-on-mount; loadIntel() is the shared refetch reused after actions
-  useEffect(() => { loadIntel() }, [])
+  useEffect(() => { void Promise.resolve().then(() => loadIntel()) }, [loadIntel])
 
   // Derive displayed list based on filter
   const visibleIntel =
@@ -113,7 +134,7 @@ function IntelPageContent() {
   const showClassifiedWall = activeFilter === 'classified' && !isAtLeast('voyager')
 
   return (
-    <div className="main pilot-archive-page archive-collection-page archive-intel-page">
+    <div className="main pilot-archive-page archive-collection-page archive-intel-page" data-route-scroll>
       <SectionTracker section="intel" />
 
 
@@ -132,7 +153,7 @@ function IntelPageContent() {
           {visibleIntel[0] && <IntelCard lead entry={visibleIntel[0]} commentCount={commentCounts[visibleIntel[0].id] ?? 0} />}
           {visibleIntel.length > 1 && <section aria-labelledby="recent-intel"><h2 id="recent-intel" className="archive-list-heading">RECENT</h2>{visibleIntel.slice(1).map(entry => <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />)}</section>}
           {loading && <p role="status">Loading intel…</p>}
-          {loadError && <div role="alert"><p>Intel could not be loaded.</p><ArchiveButton variant="secondary" onClick={loadIntel}>Retry</ArchiveButton></div>}
+          {loadError && <div role="alert"><p>Intel could not be loaded.</p><ArchiveButton variant="secondary" onClick={() => void loadIntel(true)}>Retry</ArchiveButton></div>}
           {!loading && !loadError && !visibleIntel.length && <p>No intel in this category yet.</p>}
         </>}
       </div>
@@ -156,7 +177,7 @@ function IntelPageContent() {
       {showCreate && (
         <CreateIntelModal
           onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); loadIntel() }}
+          onCreated={() => { setShowCreate(false); void loadIntel(true) }}
           existingItems={intel}
         />
       )}

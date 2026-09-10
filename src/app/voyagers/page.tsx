@@ -16,6 +16,9 @@ import { SectionTracker } from '@/components/section-tracker'
 import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 import { Camera, ArrowRight } from 'lucide-react'
 import type { VoyagerProfile, UserRole } from '@/types/database'
+import { createClientDataCache } from '@/lib/client-data-cache'
+
+const voyagersPageCache = createClientDataCache<VoyagerProfile[]>(5 * 60_000)
 
 // ── Platform icons ─────────────────────────────────────────────────────────
 const XIcon = () => (
@@ -83,8 +86,9 @@ const BATCH_COLLAPSE = 6
 // ── Page ───────────────────────────────────────────────────────────────────
 export default function VoyagersPage() {
   const { user, isAtLeast } = useAuth()
-  const [voyagers, setVoyagers] = useState<VoyagerProfile[]>([])
-  const [loading, setLoading] = useState(true)
+  const cachedVoyagers = voyagersPageCache.peek()
+  const [voyagers, setVoyagers] = useState<VoyagerProfile[]>(() => cachedVoyagers ?? [])
+  const [loading, setLoading] = useState(cachedVoyagers === undefined)
   const [loadError, setLoadError] = useState(false)
 
   // ── Edit modal state ───────────────────────────────────────────────────
@@ -102,26 +106,26 @@ export default function VoyagersPage() {
   const [batchExpanded, setBatchExpanded] = useState(false)
   const selectBatch = (label: string) => { setActiveBatch(label); setBatchExpanded(false) }
 
-  const refresh = useCallback(async () => {
-    const data = await getAllVoyagers()
+  const refresh = useCallback(async (force = false) => {
+    const data = await voyagersPageCache.load(getAllVoyagers, force)
     setVoyagers(data)
   }, [])
 
-  const loadVoyagers = useCallback(async () => {
+  const loadVoyagers = useCallback(async (force = false) => {
     await Promise.resolve()
-    setLoading(true)
+    if (voyagersPageCache.peek() === undefined) setLoading(true)
     setLoadError(false)
     try {
-      await refresh()
+      await refresh(force)
     } catch {
-      setLoadError(true)
+      if (voyagersPageCache.peek() === undefined) setLoadError(true)
     } finally {
       setLoading(false)
     }
   }, [refresh])
 
   useEffect(() => {
-    void Promise.resolve().then(loadVoyagers)
+    void Promise.resolve().then(() => loadVoyagers())
   }, [loadVoyagers])
 
   const openEdit = (v: VoyagerProfile) => {
@@ -172,7 +176,7 @@ export default function VoyagersPage() {
       setSaveMsg({ text: result.error, ok: false })
     } else {
       setSaveMsg({ text: 'Saved ✓', ok: true })
-      await refresh()
+      await refresh(true)
       setTimeout(() => { closeEdit() }, 600)
     }
     } catch { setProfileUnknown(true); setSaveMsg({ text: 'Result unconfirmed. Review your profile before saving again.', ok: false }) } finally { setSaving(false) }
@@ -215,7 +219,7 @@ export default function VoyagersPage() {
 
 
   return (
-    <main className="main pilot-archive-page pilot-voyagers-page">
+    <main className="main pilot-archive-page pilot-voyagers-page" data-route-scroll>
       <SectionTracker section="voyagers" />
 
 
@@ -232,7 +236,7 @@ export default function VoyagersPage() {
           className="archive-state-page archive-route-state-section"
           title="REGISTRY UNAVAILABLE"
           description="The Voyager registry could not be retrieved."
-          onRetry={loadVoyagers}
+          onRetry={() => { void loadVoyagers(true) }}
         />
       ) : (
         <>
