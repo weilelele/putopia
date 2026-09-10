@@ -2,7 +2,7 @@
 import { RootBrandHeader } from '@/components/root-brand-header'
 import { useRef, useState, useTransition } from 'react'
 import { DashboardVoyagerHeader } from '@/components/dashboard-voyager-header'
-import { DashboardStats } from '@/components/dashboard-stats'
+import { DashboardGuestHeader } from '@/components/dashboard-guest-header'
 import { getDashboard } from '@/lib/actions/dashboard'
 import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveButton } from '@/components/archive-button'
@@ -17,8 +17,8 @@ export default function ConsoleClient({ initial }: { initial: Awaited<ReturnType
   const updatesIncomplete = data.errors.includes('Updates') || data.errors.includes('Votes')
   const eventsIncomplete = data.errors.some(error => error !== 'Updates' && error !== 'Statistics')
   return <main className="main archive-console-page" ref={scrollContainer}>
-    <PwaInstallNudge eligibleUser={!data.guest} scrollContainer={scrollContainer} /><SectionTracker section="dashboard" /><ArchivePageHeader hideTitle title="Dashboard" /><RootBrandHeader />
-    {data.voyager ? <DashboardVoyagerHeader voyager={data.voyager} /> : <DashboardStats stats={data.stats} />}
+    <PwaInstallNudge eligibleUser={!data.guest} scrollContainer={scrollContainer} /><SectionTracker section="dashboard" /><ArchivePageHeader hideTitle title="Dashboard" />
+    {data.voyager ? <><RootBrandHeader /><DashboardVoyagerHeader voyager={data.voyager} /></> : <DashboardGuestHeader stats={data.stats} />}
     {!data.voyager && data.errors.includes('Statistics') && <div className="archive-inline-notice" role="status"><p>The latest counts could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry counts</ArchiveButton></div>}
     <div className="dashboard-content-grid"><section aria-labelledby="updates-heading"><div className="dashboard-section-heading"><h2 id="updates-heading">Updates</h2><span>Latest {data.updates.length}</span></div>
       {updatesIncomplete && <div className="archive-inline-notice" role="status"><p>Some updates could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry updates</ArchiveButton></div>}

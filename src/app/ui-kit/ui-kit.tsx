@@ -3,7 +3,7 @@ import { RootBrandHeader } from '@/components/root-brand-header'
 import { BatchTabs } from '@/components/batch-tabs'
 import { PublisherIdentity, NewsMedia } from '@/components/news-content'
 import { DashboardVoyagerHeader } from '@/components/dashboard-voyager-header'
-import { DashboardStats } from '@/components/dashboard-stats'
+import { DashboardGuestHeader } from '@/components/dashboard-guest-header'
 import { ArchiveInput, ArchiveSelect, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -50,13 +50,13 @@ export function UiKit() {
         <ArchiveTabs ariaLabel="Page preview" activeId={['logs','profile'].includes(view) ? 'voyagers' : view} items={['dashboard','intel','devices','worlds','voyagers'].map(id => ({ id, label: id.toUpperCase() }))} onChange={setView} mode="filter" />
         <div className={`uk-phone ${view === 'intel' ? 'archive-intel-page' : ''}`}>
           {!['logs','profile'].includes(view) ? <>
-<h2 className="sr-only">{view.toUpperCase()}</h2>{['dashboard','devices','worlds'].includes(view) && <RootBrandHeader />}
+<h2 className="sr-only">{view.toUpperCase()}</h2>{['devices','worlds'].includes(view) && <RootBrandHeader />}
 </> : <>
 <ArchiveButton type="submit" variant="ghost" className="back-link" onClick={() => setView(source)}>← Back to {source}</ArchiveButton>
 <h2 className="uk-page-title">{view === 'logs' ? 'VOYAGER LOGS' : 'MY PROFILE'}</h2>
 </>}
           {view === 'dashboard' ? <>
-<ArchiveTabs mode="filter" ariaLabel="Dashboard viewer" activeId={viewer} items={[{id:'guest',label:'GUEST'},{id:'voyager',label:'SIGNED IN'},{id:'applicant',label:'APPLICANT'}]} onChange={setViewer} />{viewer === 'guest' ? <DashboardStats stats={{worlds:128,voyagers:640}} /> : <DashboardVoyagerHeader voyager={{role:viewer,name:'Mira',avatarUrl:null,awaitingYou:8,deviceDays:0}} />}<h3>UPDATES</h3>
+<ArchiveTabs mode="filter" ariaLabel="Dashboard viewer" activeId={viewer} items={[{id:'guest',label:'GUEST'},{id:'voyager',label:'SIGNED IN'},{id:'applicant',label:'APPLICANT'}]} onChange={setViewer} />{viewer === 'guest' ? <DashboardGuestHeader stats={{worlds:114,voyagers:2542}} /> : <><RootBrandHeader /><DashboardVoyagerHeader voyager={{role:viewer,name:'Mira',avatarUrl:null,awaitingYou:8,deviceDays:0}} /></>}<h3>UPDATES</h3>
 <UpdateTimeline updates={[{id:'fixture-intel',occurredAt:'2026-09-09T08:00:00Z',category:'Intel',authorName:'Mira · fixture',images:['/assets/ui-kit/signal-check-mineral-plain.png','/assets/ui-kit/world-records-antenna.png'],title:'A new signal has arrived',description:'A timestamped update using a reference asset.',image:'/assets/ui-kit/signal-check-mineral-plain.png',href:'#nav-02'}]} />
 <h3>EVENTS</h3>
 <EventRail events={[{id:'fixture-vote',kind:'Vote Open',title:'Choose the next signal',description:'Open votes remain visible before login.',href:'#submit-01',action:'View and vote'},{id:'fixture-tuning',kind:'Signal Tuning',image:'/assets/ui-kit/world-records-antenna.png',title:'Tune a new world',description:'The current signal is open for tuning.',href:'#shell-01',action:'Tune signal'}]} />

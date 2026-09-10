@@ -1,13 +1,13 @@
 # UI 2.3 实现与验收记录
 
-> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。五个一级 Tab 在移动端恢复紧凑原图形＋文字 Logo；二级及更深页面无 Logo；桌面/横屏统一侧栏保留品牌，内容区不重复。Dashboard 采用已确认的四类 Updates 与两类 Events 内容池。
+> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示完整品牌介绍、设备原图、View Device、Request Access / Login 和原三个数字指标，不再叠加左上角小 Logo；登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。五个一级 Tab 在移动端恢复紧凑原图形＋文字 Logo；二级及更深页面无 Logo；桌面/横屏统一侧栏保留品牌，内容区不重复。Dashboard 采用已确认的四类 Updates 与两类 Events 内容池。
 
 
 2026-09-09。设计批准、代码实现、验证和正式发布分别记录。当前权威入口是 [design-system.md](../../design-system.md)，产品内 `/ui-kit` 使用真实共享组件。旧版 golden screens 和海报哲学文档保留历史记录并标记废弃，不再指导开发。
 
 ## 实现范围
 
-- 全站共享颜色、字体、字号、平面容器、按钮、页头、五 Tab 导航和详情返回。应用内容页移除品牌区；一级 Tab 名称仅保留辅助技术可见的 h1，移除可见重复标题及占位；二级及深层页面移除重复 Logo。管理、认证、申请、付款结果和加载页同步基础样式。
+- 全站共享颜色、字体、字号、平面容器、按钮、页头、五 Tab 导航和详情返回。移动一级页保留紧凑品牌区，游客 Dashboard 使用完整品牌介绍并省略重复小 Logo；一级 Tab 名称仅保留辅助技术可见的 h1，移除可见重复标题及占位；二级及深层页面移除重复 Logo。管理、认证、申请、付款结果和加载页同步基础样式。
 - `/ui-kit` 替换旧静态样板，覆盖主导航、来源返回、按钮、输入、筛选、弹层、草稿退出、必填校验、提交中/成功/未知、加载/空/错误/离线；样例只使用本地数据。
 - Dashboard 使用独立 Updates 和 Events 数据模型。Updates 只含 Intel、Voyager Activated、Established World、Device Update，应用分类上限和实体去重后取全局最新 10 条。Events 只含最多 3 个开放 Vote 与最多 3 个当前 Signal Tuning。
 - `/welcome` 是独立启动页。普通根入口及 PWA 进入这里；点击任意处或键盘 Enter/Space 立即替换为 `/console`，未操作时在动画完整播放结束后再停留 3 秒替换。直接访问详情和活动入口保留原目的地，不被启动页打断。减少动态效果时显示原文字 Logo 静态图。
@@ -86,3 +86,14 @@ Devices 导航已用原品牌图形替换手柄；欢迎标题统一 WELCOME, VO
 五个一级 Tab 共用 RootBrandHeader：移动端左侧原品牌图形与字标、右侧原操作入口。Your Path、Logs、详情页不使用此组件。桌面及带侧栏的横屏只显示侧栏品牌。UI Kit 和 iOS 离线根页面同步；缓存详情不显示品牌页头。
 
 本轮品牌层级可在[一级品牌预览](https://putopia-git-codex-ui-primary-brand-weileleles-projects.vercel.app/console)与[对应 UI Kit](https://putopia-git-codex-ui-primary-brand-weileleles-projects.vercel.app/ui-kit)查看。此独立分支已完成视觉验证，等待并入正在整合的 ui-v23；原 ui-v23 入口在整合前可能仍显示上一版品牌规则。
+
+
+### 未登录 Dashboard 恢复 · 2026-09-10
+
+- 恢复原字标、图形标志、We own devices looking into parallel worlds.、受保护的设备原图与 View Device、Request Access / Login、原口径三项统计。生产统计继续读取真实服务端值，114 / ? / 2542 仅用于 UI Kit 对照。
+- Request Access 复用既有激活流程与邀请参数；Login 保留原登录入口；View Device 进入 Devices。
+- 游客完整品牌区与 RootBrandHeader 互斥；登录态仍为 Voyager 欢迎与身份状态；加载期间不预判登录态、不闪现小 Logo。
+- UI Kit 使用同一个 DashboardGuestHeader。宽屏品牌介绍和设备并排，手机依照参考图顺序展示。
+- iOS 离线默认页打包相同原图与访客展示；联网动作显示连接提示及重试入口。原生代码验证与设备视觉验收分别记录，不将 Web 预览视作原生安装包发布。
+
+访客 Dashboard 的完整品牌展示同时替代桌面/横屏侧栏顶部的小 Logo；侧栏导航和账户入口保留。离线默认页沿用这一例外，其他页面的品牌层级规则不变。

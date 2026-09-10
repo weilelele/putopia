@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  Alert,
   Image,
   Pressable,
   SafeAreaView,
@@ -177,7 +178,28 @@ function DashboardStats({ stats }: { stats?: OfflineSnapshot['dashboardStats'] }
   </View>
 }
 
-function DashboardView({ snapshot, media, select }: {
+function GuestIntroduction({ onRetry }: { onRetry: () => void }) {
+  const connect = (action: string) => Alert.alert('Connection required', `Reconnect to ${action}.`, [
+    { text: 'Cancel', style: 'cancel' }, { text: 'Retry connection', onPress: onRetry },
+  ])
+  return <View style={styles.guestHero}>
+    <Image source={require('./assets/vi-wordmark.png')} accessibilityLabel="Multiverse Collective" resizeMode="contain" style={styles.guestWordmark} />
+    <Image source={require('./assets/vi-icon.png')} accessible={false} resizeMode="contain" style={styles.guestEmblem} />
+    <Text style={styles.guestTagline}>We own devices looking into parallel worlds.</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel="View device · connection required" onPress={() => connect('view the device')} style={styles.guestDevice}>
+      <View style={styles.guestDeviceHeading}><Text style={styles.meta}>UNIT 01</Text><Text style={styles.guestDeviceLabel}>MULTIVERSE CONSOLE</Text></View>
+      <Image source={require('./assets/device-console.jpg')} accessibilityLabel="Multiverse Console with its channel controls and world display" resizeMode="contain" style={styles.guestDeviceImage} />
+      <Text style={styles.guestDeviceFooter}>VIEW DEVICE →</Text>
+    </Pressable>
+    <View style={styles.guestActions}>
+      <Pressable accessibilityRole="button" onPress={() => connect('request access')} style={[styles.guestButton,{backgroundColor:ORANGE}]}><Text style={[styles.guestButtonText,{color:DEEP}]}>REQUEST ACCESS</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => connect('log in')} style={styles.guestButton}><Text style={styles.guestButtonText}>LOGIN</Text></Pressable>
+    </View>
+  </View>
+}
+
+function DashboardView({ snapshot, media, select, onRetry }: {
+  onRetry: () => void
   snapshot: OfflineSnapshot
   media: OfflineMediaMap
   select: (tab: OfflineTab, detail: DetailSelection) => void
@@ -205,7 +227,7 @@ function DashboardView({ snapshot, media, select }: {
       </View>
       <Text style={styles.directoryMeta}>Reconnect to view your path and current status.</Text>
     </View>}
-    {!snapshot.viewer.authenticated && <DashboardStats stats={snapshot.dashboardStats} />}
+    {!snapshot.viewer.authenticated && <><GuestIntroduction onRetry={onRetry} /><DashboardStats stats={snapshot.dashboardStats} /></>}
     <SectionTitle>UPDATES</SectionTitle>
     <Text style={styles.meta}>Latest {updates.length} saved updates</Text>
     {updates.length ? updates.map(item => {
@@ -514,9 +536,9 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
               </Pressable>
             </View>
             <ScrollView ref={scrollView} onScroll={event => { positions.current[scrollKey] = event.nativeEvent.contentOffset.y }} scrollEventThrottle={100} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-              {!detail && !isLogs && !landscape && <OfflineBrand />}
+              {!detail && !isLogs && !landscape && (activeTab !== 'dashboard' || snapshot.viewer.authenticated) && <OfflineBrand />}
               {missingDetail && <View><DetailHeader title="Not saved on this device" meta="OFFLINE" onBack={() => setDetail(null)} /><EmptyState>Reconnect to load this record, or return to your saved list.</EmptyState></View>}
-              {!missingDetail && activeTab === 'dashboard' && <DashboardView snapshot={snapshot} media={media} select={select} />}
+              {!missingDetail && activeTab === 'dashboard' && <DashboardView snapshot={snapshot} media={media} select={select} onRetry={onRetry} />}
               {!missingDetail && activeTab === 'intel' && <IntelView snapshot={snapshot} media={media} detail={detail} setDetail={setDetail} />}
               {!missingDetail && activeTab === 'devices' && <DevicesView snapshot={snapshot} media={media} detail={detail} setDetail={setDetail} />}
               {!missingDetail && activeTab === 'worlds' && <WorldsView snapshot={snapshot} media={media} detail={detail} setDetail={setDetail} />}
@@ -525,17 +547,17 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
 
           </>
         ) : (
-          <View style={styles.noSnapshot}>{!landscape && <OfflineBrand />}
-            {activeTab === 'dashboard' && <DashboardStats />}
+          <ScrollView contentContainerStyle={styles.noSnapshot}>{!landscape && activeTab !== 'dashboard' && <OfflineBrand />}
+            {activeTab === 'dashboard' && <><GuestIntroduction onRetry={onRetry} /><DashboardStats /></>}
             <Text style={styles.noSnapshotTitle}>NO OFFLINE COPY YET</Text>
             <Text style={styles.noSnapshotBody}>Connect once to save the Multiverse Console and its latest content on this device.</Text>
             <Pressable accessibilityRole="button" disabled={reconnecting} onPress={onRetry}
               style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}>
               <Text style={styles.retryButtonText}>{reconnecting ? 'CONNECTING…' : 'RETRY CONNECTION'}</Text>
             </Pressable>
-          </View>
+          </ScrollView>
         )}
-            <View style={[styles.bottomNav,landscape && styles.offlineSidebar]}>{landscape && <OfflineBrand compact />}
+            <View style={[styles.bottomNav,landscape && styles.offlineSidebar]}>{landscape && (activeTab !== 'dashboard' || snapshot?.viewer.authenticated) && <OfflineBrand compact />}
               {TABS.map((tab) => (
                 <Pressable key={tab.key} accessibilityRole="button" accessibilityLabel={tab.label} accessibilityState={{ selected: activeTab === tab.key }}
                   onPress={() => changeTab(tab.key)} style={styles.navItem}>
@@ -562,6 +584,18 @@ const BORDER = 'rgba(245,245,245,0.10)'
 const styles = StyleSheet.create({
   offlineSidebar: {position:'absolute',left:0,top:0,bottom:0,width:140,flexDirection:'column',borderTopWidth:0,borderRightWidth:1,borderRightColor:BORDER},
   nativeNews: {paddingVertical:16,borderBottomWidth:1,borderBottomColor:BORDER},
+  guestHero: { width: '100%', maxWidth: 620, alignSelf: 'center', alignItems: 'center', gap: 24, paddingTop: 24, marginBottom: 24 },
+  guestWordmark: { width: '86%', aspectRatio: 3699 / 1020 },
+  guestEmblem: { width: 112, height: 63 },
+  guestTagline: { color: WHITE, fontFamily: 'CourierPrime', fontSize: 16, lineHeight: 26, textAlign: 'center' },
+  guestDevice: { width: '100%', borderWidth: 1, borderColor: BORDER },
+  guestDeviceHeading: { minHeight: 44, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  guestDeviceLabel: { color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 12 },
+  guestDeviceImage: { width: '100%', aspectRatio: 1280 / 1023 },
+  guestDeviceFooter: { color: ORANGE, fontFamily: 'CourierPrime', fontSize: 12, minHeight: 44, padding: 12, textAlign: 'right' },
+  guestActions: { width: '100%', flexDirection: 'row', gap: 12 },
+  guestButton: { flex: 1, minHeight: 48, padding: 8, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center' },
+  guestButtonText: { color: ORANGE, fontFamily: 'CourierPrimeBold', fontSize: 12, textAlign: 'center' },
   nativePublisher: {flexDirection:'row',alignItems:'center',gap:10,marginVertical:12},
   nativeAvatar: {width:32,height:32,borderRadius:16,backgroundColor:PANEL,alignItems:'center',justifyContent:'center'},
   nativeNewsGallery: {flexDirection:'row',flexWrap:'wrap',gap:8,marginVertical:12},
@@ -664,7 +698,7 @@ const styles = StyleSheet.create({
   navIcon: { color: DIM, fontFamily: 'CourierPrime', fontSize: 18 },
   navLabel: { marginTop: 4, color: DEEP_TEXT, fontFamily: 'CourierPrime', fontSize: 12, letterSpacing: -0.7 },
   navActive: { color: ORANGE },
-  noSnapshot: { flex: 1, padding: 28, alignItems: 'center', justifyContent: 'center' },
+  noSnapshot: { flexGrow: 1, padding: 16, paddingBottom: 32, alignItems: 'stretch' },
   noSnapshotTitle: { color: WHITE, fontFamily: 'CourierPrimeBold', fontSize: 24, fontWeight: '700', textAlign: 'center' },
   noSnapshotBody: { maxWidth: 340, marginTop: 16, color: DIM, fontFamily: 'CourierPrime', fontSize: 14, lineHeight: 21, textAlign: 'center' },
   retryButton: { minWidth: 220, minHeight: 52, marginTop: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: ORANGE },
