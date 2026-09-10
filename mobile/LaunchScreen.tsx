@@ -64,10 +64,12 @@ export function LaunchScreen({ onComplete }: { onComplete: () => void }) {
   }, [ready, finish])
   return <Pressable accessibilityRole="button" accessibilityLabel="Enter Dashboard" onPress={finish} style={styles.screen}>
     {reduceMotion !== false ? <Image source={require('./assets/vi-wordmark.png')} resizeMode="contain" onLoad={() => setStaticReady(true)} onError={() => setStaticReady(true)} style={{ width: width * scale, height: height * scale }} /> : <View accessible={false} style={{ width: width * scale, height: height * scale }}>{cells.map(cell => <Flap key={`${cell.row}-${cell.i}`} cell={cell} scale={scale} onSettled={onSettled} />)}</View>}
+    <Image source={require('./assets/vi-icon.png')} resizeMode="contain" accessibilityIgnoresInvertColors style={styles.symbol} />
     <Text style={styles.hint}>Tap anywhere to enter</Text>
   </Pressable>
 }
 const styles = StyleSheet.create({
   screen: { ...StyleSheet.absoluteFillObject, zIndex: 100, backgroundColor: '#080C20', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  symbol: { width: 88, height: 88 * 492 / 881, marginTop: 32 },
   hint: { position: 'absolute', bottom: 36, color: '#F5F5F5', fontFamily: 'CourierPrime', fontSize: 14 },
 })

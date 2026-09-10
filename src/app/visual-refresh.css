@@ -4233,3 +4233,6 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
   overflow-wrap: anywhere;
 }
 .pilot-login-page .pilot-login-form { gap: 24px; }
+
+.startup-symbol { width: 88px; height: auto; flex-shrink: 0; pointer-events: none; }
+.startup-screen > p { position: absolute; bottom: max(36px, env(safe-area-inset-bottom)); margin: 0; }

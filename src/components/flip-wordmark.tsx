@@ -183,7 +183,8 @@ export function FlipWordmark({
 
   useEffect(() => {
     if (!spread || reduceMotion) return
-    // transitionend is authoritative; this covers browsers suppressing the event.
+    // Wait the entire final spread. Individual cells can emit earlier transition
+    // events (for example during resizing), which must not start the launch hold.
     const fallback = setTimeout(completePlayback, SPREAD / playbackRate + 200)
     return () => clearTimeout(fallback)
   }, [spread, reduceMotion, playbackRate, completePlayback])
@@ -200,15 +201,14 @@ export function FlipWordmark({
         .fw-cell { position:absolute; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; perspective:820px;
           transition: left ${SPREAD / playbackRate}ms cubic-bezier(.16,.84,.34,1), top ${SPREAD / playbackRate}ms cubic-bezier(.16,.84,.34,1); }
         .fw-glyph { height:100%; width:auto; display:block; transform-origin:center center; backface-visibility:hidden;
-          animation: fwFlip ${TICK + 18}ms cubic-bezier(.2,.7,.3,1); }
-        .fw-cell[data-settled="1"] .fw-glyph { animation: fwLock ${LOCK}ms cubic-bezier(.2,.9,.25,1); }
+          animation: fwFlip ${(TICK + 18) / playbackRate}ms cubic-bezier(.2,.7,.3,1); }
+        .fw-cell[data-settled="1"] .fw-glyph { animation: fwLock ${LOCK / playbackRate}ms cubic-bezier(.2,.9,.25,1); }
         @keyframes fwFlip { 0%{transform:rotateX(88deg);opacity:.15} 100%{transform:rotateX(0);opacity:1} }
         @keyframes fwLock { 0%{transform:rotateX(72deg) scale(1.02);opacity:.4} 60%{transform:rotateX(-8deg);opacity:1} 100%{transform:rotateX(0)} }
       `}</style>
       {geom && !reduceMotion ? (
         <div
           className="fw-stage"
-          onTransitionEnd={event => { if (spread && (event.propertyName === 'left' || event.propertyName === 'top')) completePlayback() }}
           role="img"
           aria-label={ariaLabel}
           onClick={replayable ? replay : undefined}
