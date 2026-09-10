@@ -1,3 +1,20 @@
+## 2026-09-10 紧凑呈现修正
+
+已按用户截图对照 Voyagers 批次切换：44px 独立箭头不覆盖标签，移动端点击可切换，边界禁用；无页面横向溢出。390px Dashboard 欢迎标题为 VOYAGER、原角色标签仍显示实际身份。Intel 首条宽幅图片保留，Recent 使用右侧缩略图、16px 标题和作者头像。Devices 的 KYOTO 标签在手机及 1280px 桌面左对齐；导航使用原品牌图形。667px Worlds Live 无横向溢出，独立 loading 不再含归档标题。补齐现有 Kyoto One 数据引用的同名原始素材，未修改产品记录。
+
+本轮截图保存在本地验收目录，不向公开仓库上传账户截图。原生离线代码同步，但 iOS 真机视觉验收仍待完成。
+
+## 2026-09-10 修正验收（覆盖下方历史记录中的同项结论）
+
+- Dashboard：游客只显示原口径三项统计，登录后只显示身份、Path、Signal Dispatch、Days。加载时使用中性占位，避免短暂展示错误身份状态。
+- 浏览器只读实测：390px Intel 作者头像及媒体、Dashboard 游客/登录状态；667×375 Dashboard 与 Worlds 无横向溢出；844×390 Devices 媒体与操作双栏；1280px Devices、Intel、Voyagers 以及 1440px Dashboard 的完整品牌侧栏与宽屏布局。
+- 发现并修正：窄横屏昵称逐字换行；宽屏媒体占满首屏；Worlds 旧最小高度导致横屏媒体过高。新闻原始拼图保留；单图与多图使用不同响应式尺寸。
+- UI Kit 提供 Guest / Signed in / Applicant 互斥样板。新闻与 Updates 使用共享作者、媒体组件。Updates / Events 已同步用户确认的内容池与上限规则。
+- iOS 离线页同步条件展示、作者/图片及横屏导航；原生运行与真机验收仍待完成。静态检查不能替代原生视觉验收。
+- 本轮不宣称全部深层业务流程通过；未测试付款、资料保存、发帖等生产写入。后续以用户对视觉与信息口径的确认继续迭代。
+
+> **RETIRED — 历史记录，不再作为产品 UI 规范。** 当前唯一规范为 [UI 2.3](../design-system.md)，交互示例为 `/ui-kit`。历史图片和验收结果不能覆盖现行规范。
+
 # Golden Page Examples — Design QA
 
 ## Comparison target

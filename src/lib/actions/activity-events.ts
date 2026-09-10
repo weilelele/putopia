@@ -10,6 +10,7 @@ export type ActivityEventType =
   | 'intel_updated'
   | 'device_updated'
   | 'world_added'
+  | 'world_established'
   | 'vote_opened'
   | 'vote_cast'
   | 'member_joined'

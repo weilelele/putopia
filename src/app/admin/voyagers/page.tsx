@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useMemo } from 'react'
 import { getAllVoyagers, setVoyagerBatch } from '@/lib/actions/profile'
 import type { VoyagerProfile } from '@/types/database'
@@ -116,7 +118,7 @@ export default function VoyagersAdmin() {
                       {v.location && <div style={{ color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)' }}>{v.location}</div>}
                     </td>
                     <td style={S.td}>
-                      <input
+                      <ArchiveInput
                         list="batch-names"
                         style={S.input}
                         value={draft}
@@ -126,14 +128,14 @@ export default function VoyagersAdmin() {
                       />
                     </td>
                     <td style={S.td}>
-                      <button
+                      <ArchiveButton type="submit" variant="secondary"
                         onClick={() => handleSave(v)}
                         disabled={!dirty || savingId === v.id}
                         className="btn-secondary"
-                        style={{ padding: '0.4rem 0.9rem', fontSize: 'var(--fs-caption)', opacity: !dirty || savingId === v.id ? 0.4 : 1, cursor: !dirty ? 'default' : 'pointer' }}
+                        style={{ padding: '0.4rem 0.9rem', opacity: !dirty || savingId === v.id ? 0.4 : 1, cursor: !dirty ? 'default' : 'pointer' }}
                       >
                         {savingId === v.id ? '...' : 'SAVE'}
-                      </button>
+                      </ArchiveButton>
                     </td>
                   </tr>
                 )

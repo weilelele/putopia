@@ -9,5 +9,3 @@ dist/
 ios/.xcode.env.local
 ios/Pods/
 ios/build/
-assets/vi-icon.png
-assets/vi-wordmark.png

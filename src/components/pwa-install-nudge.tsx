@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import posthog from 'posthog-js'
 import { usePwaInstall } from '@/components/pwa-provider'
@@ -113,7 +114,7 @@ export function PwaInstallNudge({
   return (
     <aside
       aria-label="Install Multiverse on Android"
-      role="dialog"
+      role="region"
       style={{
         position: 'fixed',
         zIndex: 55,
@@ -125,18 +126,18 @@ export function PwaInstallNudge({
         padding: '0.9rem 1rem',
         border: '1px solid var(--bd-cyan-2)',
         background: 'rgba(15, 20, 48, 0.98)',
-        boxShadow: '0 0 32px rgba(227,82,5,0.2)',
+        boxShadow: 'none',
         clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)',
       }}
     >
-      <button
+      <ArchiveButton variant="ghost"
         type="button"
         aria-label="Close install invitation"
         onClick={() => defer(PWA_INSTALL_NUDGE_DEFER_MS, 'close')}
-        style={{ position: 'absolute', top: 7, right: 9, border: 0, background: 'transparent', color: 'var(--color-star-dim)', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1 }}
+        style={{ position: 'absolute', top: 7, right: 9, cursor: 'pointer', lineHeight: 1 }}
       >
         ×
-      </button>
+      </ArchiveButton>
       <div style={{ paddingRight: '1.4rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, letterSpacing: '0.15em', color: 'var(--color-nucleus)' }}>
         KEEP THE CONSOLE WITHIN REACH
       </div>
@@ -144,12 +145,12 @@ export function PwaInstallNudge({
         Add Multiverse to your home screen for a focused, standalone launch.
       </p>
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.8rem' }}>
-        <button type="button" onClick={() => defer(PWA_INSTALL_NUDGE_DEFER_MS, 'not_now')} style={{ border: 0, background: 'transparent', color: 'var(--color-star-dim)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer' }}>
+        <ArchiveButton variant="secondary" type="button" onClick={() => defer(PWA_INSTALL_NUDGE_DEFER_MS, 'not_now')} style={{ cursor: 'pointer' }}>
           NOT NOW
-        </button>
-        <button type="button" className="btn-primary" disabled={installing} onClick={handleInstall} style={{ minHeight: 40, padding: '0.55rem 0.9rem', opacity: installing ? 0.6 : 1 }}>
+        </ArchiveButton>
+        <ArchiveButton variant="primary" type="button" className="btn-primary" disabled={installing} onClick={handleInstall} style={{ minHeight: 40, padding: '0.55rem 0.9rem', opacity: installing ? 0.6 : 1 }}>
           {installing ? 'OPENING…' : 'INSTALL'}
-        </button>
+        </ArchiveButton>
       </div>
     </aside>
   )

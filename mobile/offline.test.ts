@@ -45,6 +45,15 @@ describe('iOS full offline snapshot', () => {
     expect(parseOfflineSnapshot({ ...snapshot, intel: 'not-an-array' })).toBeNull()
   })
 
+  it('accepts cached headline counts without requiring them in older snapshots', () => {
+    expect(parseOfflineSnapshot(snapshot)).not.toBeNull()
+    const withStats = { ...snapshot, dashboardStats: { worlds: 128, voyagers: 640 } }
+    expect(parseOfflineSnapshot(withStats)?.dashboardStats).toEqual(withStats.dashboardStats)
+    for (const value of [-1, Infinity, 1.5, '640', null]) {
+      expect(parseOfflineSnapshot({ ...snapshot, dashboardStats: { worlds: 128, voyagers: value } })).toBeNull()
+    }
+  })
+
   it('collects and deduplicates only HTTPS media URLs', () => {
     const withDuplicates: OfflineSnapshot = {
       ...snapshot,
@@ -69,4 +78,33 @@ describe('iOS full offline snapshot', () => {
       'https://cdn.example/a.webp': 'file:///cache/a.webp',
     })
   })
+})
+
+describe('Dashboard update snapshot compatibility', () => {
+  it('accepts older snapshots and validates optional timestamped updates', () => {
+    expect(parseOfflineSnapshot(snapshot)).not.toBeNull()
+    expect(parseOfflineSnapshot({ ...snapshot, dashboardUpdates: [{ id:'intel-1', occurredAt:'2026-09-09T00:00:00Z', category:'Intel', title:'One', href:'/intel/1' }] })).not.toBeNull()
+    expect(parseOfflineSnapshot({ ...snapshot, dashboardUpdates: [{ id:'1', occurredAt:'not-a-date', category:'Intel', title:'One', href:'/intel/1' }] })).toBeNull()
+    expect(parseOfflineSnapshot({ ...snapshot, dashboardUpdates: [{ id:'1', occurredAt:'2026-09-09T00:00:00Z', category:'Intel', title:'One', href:'https://other.test' }] })).toBeNull()
+  })
+})
+
+it('preserves public event cards and cached media without enabling offline participation', () => {
+  const event = {id:'signal-1',kind:'Signal Dispatch',title:'Mirror',description:'Open for identification.',href:'/signal',action:'Identify signal',image:'https://cdn.example/event.webp'}
+  const withEvents = {...snapshot, dashboardEvents:[event]}
+  expect(parseOfflineSnapshot(withEvents)?.dashboardEvents).toEqual([event])
+  expect(collectOfflineMediaUrls(withEvents)).toContain(event.image)
+  expect(parseOfflineSnapshot({...snapshot,dashboardEvents:[{...event,href:'https://untrusted.example'}]})).toBeNull()
+  expect(parseOfflineSnapshot({...snapshot,dashboardEvents:[{...event,image:12}]})).toBeNull()
+})
+
+ it('keeps saved Voyager status optional and validates its counters', () => {
+   const dashboardVoyager = {role:'voyager',name:'Mira',avatarUrl:null,awaitingYou:8,deviceDays:0}
+   expect(parseOfflineSnapshot({...snapshot,dashboardVoyager})?.dashboardVoyager).toEqual(dashboardVoyager)
+   expect(parseOfflineSnapshot({...snapshot,dashboardVoyager:{...dashboardVoyager,awaitingYou:-1}})).toBeNull()
+ })
+
+it('includes news author portraits and all attachments in the offline media cache', () => {
+  const intel=[{...snapshot.intel[0],publisher_avatar_url:'https://cdn.example/avatar.webp',images:['https://cdn.example/one.webp','https://cdn.example/two.webp']}]
+  expect(collectOfflineMediaUrls({...snapshot,intel})).toEqual(expect.arrayContaining([intel[0].publisher_avatar_url,...intel[0].images]))
 })

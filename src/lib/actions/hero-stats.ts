@@ -26,6 +26,8 @@ const getGuestHeroStatsCached = unstable_cache(
         .in('role', ['voyager', 'applicant', 'architect'])
         .not('registered_at', 'is', null),
     ])
+    if (worldsRes.error) throw worldsRes.error
+    if (voyagersRes.error) throw voyagersRes.error
     return {
       worlds: worldsRes.count ?? 0,
       voyagers: voyagersRes.count ?? 0,

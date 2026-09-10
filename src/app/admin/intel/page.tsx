@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput, ArchiveSelect, ArchiveTextarea } from '@/components/archive-input'
 import { useState, useEffect, useRef } from 'react'
 import {
   getAllIntel, createIntel, updateIntel, deleteIntel,
@@ -14,9 +16,9 @@ const S = {
   th:    { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(227,82,5,0.16)', whiteSpace: 'nowrap' as const },
   td:    { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'top' as const, fontSize: '13px' },
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
-  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none' },
 }
 
 const TAG_COLOR: Record<IntelTag, string> = { NOTICE: 'rgba(245,245,245,0.55)', DEVICE: '#C84406', ORG: '#E8A020' }
@@ -193,9 +195,9 @@ export default function IntelAdmin() {
         <div>
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>情报管理</div>
         </div>
-        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
+        <ArchiveButton type="submit" variant="primary" className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', cursor: 'pointer' }}>
           + 新增情报
-        </button>
+        </ArchiveButton>
       </div>
 
       {msg && (
@@ -241,8 +243,8 @@ export default function IntelAdmin() {
                   </td>
                   <td style={{ ...S.td, fontSize: 'var(--fs-caption)', whiteSpace: 'nowrap' }}>{formatTs(i.timestamp)}</td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
-                    <button onClick={() => openEdit(i)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>编辑</button>
-                    <button onClick={() => handleDelete(i.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>删除</button>
+                    <ArchiveButton type="submit" variant="secondary" onClick={() => openEdit(i)} style={{ marginRight: '8px', cursor: 'pointer' }}>编辑</ArchiveButton>
+                    <ArchiveButton type="submit" variant="secondary" onClick={() => handleDelete(i.id)} style={{ cursor: 'pointer' }}>删除</ArchiveButton>
                   </td>
                 </tr>
               ))}
@@ -255,39 +257,39 @@ export default function IntelAdmin() {
         <div ref={formRef} style={{ ...S.card, border: '1px solid #C84406' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div style={{ color: '#C84406', fontSize: '12px', letterSpacing: '0.2em' }}>{editId ? `编辑: ${editId}` : `新增情报 (自动 ID: ${nextIntelId(items)})`}</div>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '18px' }}>×</button>
+            <ArchiveButton type="submit" variant="secondary" onClick={() => setShowForm(false)} style={{ cursor: 'pointer' }}>×</ArchiveButton>
           </div>
 
           {/* Row 1: ID / Tag / Timestamp */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={S.label}>ID（留空则自动生成）</label>
-              <input style={S.input} value={form.id} onChange={e => set('id', e.target.value)} placeholder={nextIntelId(items)} disabled={!!editId} />
+              <ArchiveInput style={S.input} value={form.id} onChange={e => set('id', e.target.value)} placeholder={nextIntelId(items)} disabled={!!editId} />
             </div>
             <div>
               <label style={S.label}>类型</label>
-              <select style={S.sel} value={form.tag} onChange={e => set('tag', e.target.value as IntelTag)}>
+              <ArchiveSelect style={S.sel} value={form.tag} onChange={e => set('tag', e.target.value as IntelTag)}>
                 <option value="NOTICE">NOTICE — 通知</option>
                 <option value="DEVICE">DEVICE — 设备</option>
                 <option value="ORG">ORG — 组织</option>
-              </select>
+              </ArchiveSelect>
             </div>
             <div>
               <label style={S.label}>时间戳</label>
-              <input style={S.input} type="datetime-local" value={form.timestamp} onChange={e => set('timestamp', e.target.value)} />
+              <ArchiveInput style={S.input} type="datetime-local" value={form.timestamp} onChange={e => set('timestamp', e.target.value)} />
             </div>
           </div>
 
           {/* Title */}
           <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>标题 *</label>
-            <input style={S.input} value={form.title} onChange={e => set('title', e.target.value)} placeholder="情报标题" />
+            <ArchiveInput style={S.input} value={form.title} onChange={e => set('title', e.target.value)} placeholder="情报标题" />
           </div>
 
           {/* Content */}
           <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>正文内容</label>
-            <textarea style={{ ...S.area, minHeight: '120px' }} value={form.content} onChange={e => set('content', e.target.value)} placeholder="情报详细内容..." />
+            <ArchiveTextarea style={{ ...S.area, minHeight: '120px' }} value={form.content} onChange={e => set('content', e.target.value)} placeholder="情报详细内容..." />
           </div>
 
           {/* Publisher */}
@@ -310,10 +312,10 @@ export default function IntelAdmin() {
                   <div key={url} style={{ position: 'relative' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid rgba(227,82,5,0.16)' }} />
-                    <button
+                    <ArchiveButton type="submit" variant="secondary"
                       onClick={() => removeExisting(url)}
-                      style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
-                    >×</button>
+                      style={{ position: 'absolute', top: '2px', right: '2px', width: '18px', height: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                    >×</ArchiveButton>
                   </div>
                 ))}
               </div>
@@ -326,24 +328,24 @@ export default function IntelAdmin() {
                   <div key={idx} style={{ position: 'relative' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', border: '1px solid #C84406', opacity: 0.8 }} />
-                    <button
+                    <ArchiveButton type="submit" variant="secondary"
                       onClick={() => removePending(idx)}
-                      style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(232,48,48,0.85)', border: 'none', color: '#fff', width: '18px', height: '18px', cursor: 'pointer', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
-                    >×</button>
+                      style={{ position: 'absolute', top: '2px', right: '2px', width: '18px', height: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                    >×</ArchiveButton>
                     <div style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(200,68,6,0.85)', color: '#fff', fontSize: 'var(--fs-caption)', padding: '1px 3px' }}>待上传</div>
                   </div>
                 ))}
               </div>
             )}
 
-            <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} style={{ display: 'none' }} />
-            <button
+            <ArchiveInput ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileSelect} style={{ display: 'none' }} />
+            <ArchiveButton variant="secondary"
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              style={{ padding: '6px 14px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.55)', background: '#0F1430' }}
+              style={{ padding: '6px 14px', cursor: 'pointer' }}
             >
               + 选择图片
-            </button>
+            </ArchiveButton>
             <span style={{ marginLeft: '10px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
               已保存 {currentImages.length} 张 · 待上传 {pendingFiles.length} 张
             </span>
@@ -352,17 +354,17 @@ export default function IntelAdmin() {
           {/* Footer row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#E83030', fontSize: '13px' }}>
-              <input type="checkbox" checked={form.classified} onChange={e => set('classified', e.target.checked)} />
+              <ArchiveInput type="checkbox" checked={form.classified} onChange={e => set('classified', e.target.checked)} />
               机密（仅 Voyager 以上可见）
             </label>
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               onClick={handleSave}
               disabled={saving}
-              style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}
+              style={{ padding: '8px 24px', cursor: saving ? 'not-allowed' : 'pointer', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}
             >
               {uploading ? '上传图片中...' : saving ? '保存中...' : '保存'}
-            </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            </ArchiveButton>
+            <ArchiveButton type="submit" variant="secondary" onClick={() => setShowForm(false)} style={{ padding: '8px 16px', cursor: 'pointer' }}>取消</ArchiveButton>
           </div>
         </div>
       )}
@@ -372,13 +374,13 @@ export default function IntelAdmin() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', marginBottom: '4px' }}>DASHBOARD FEED</div>
-            <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: '12px', fontFamily: 'monospace' }}>
+            <div style={{ color: 'rgba(245,245,245,0.55)', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
               {feedLastGenerated
                 ? `Last generated: ${new Date(feedLastGenerated).toLocaleString()}`
                 : 'No feed generated yet'}
             </div>
           </div>
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             onClick={async () => {
               setFeedGenerating(true)
               setFeedMsg(null)
@@ -392,13 +394,13 @@ export default function IntelAdmin() {
               }
             }}
             disabled={feedGenerating}
-            style={{ padding: '8px 20px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', cursor: feedGenerating ? 'not-allowed' : 'pointer', border: '1px solid #E35205', color: '#E35205', background: 'rgba(200,68,6,0.06)', opacity: feedGenerating ? 0.5 : 1 }}
+            style={{ padding: '8px 20px', cursor: feedGenerating ? 'not-allowed' : 'pointer', opacity: feedGenerating ? 0.5 : 1 }}
           >
             {feedGenerating ? 'GENERATING...' : 'REGENERATE FEED'}
-          </button>
+          </ArchiveButton>
         </div>
         {feedMsg && (
-          <div style={{ marginTop: '10px', padding: '6px 10px', background: feedMsg.ok ? 'rgba(32,216,144,0.08)' : 'rgba(232,48,48,0.08)', border: `1px solid ${feedMsg.ok ? '#20D890' : '#E83030'}`, color: feedMsg.ok ? '#20D890' : '#E83030', fontSize: '12px', fontFamily: 'monospace' }}>
+          <div style={{ marginTop: '10px', padding: '6px 10px', background: feedMsg.ok ? 'rgba(32,216,144,0.08)' : 'rgba(232,48,48,0.08)', border: `1px solid ${feedMsg.ok ? '#20D890' : '#E83030'}`, color: feedMsg.ok ? '#20D890' : '#E83030', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
             {feedMsg.text}
           </div>
         )}

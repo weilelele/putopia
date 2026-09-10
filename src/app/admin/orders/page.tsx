@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput, ArchiveSelect } from '@/components/archive-input'
 import { useState, useEffect, useMemo } from 'react'
 import { getAllOrders, updateOrderFulfillment, createOrderManually, type AdminOrder } from '@/lib/actions/orders'
 import { getAllowedDeviceOrderStatuses } from '@/lib/device-order-status'
@@ -15,9 +17,9 @@ const S = {
   card: { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '18px', marginBottom: '14px' } as React.CSSProperties,
   input: { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 9px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box' } as React.CSSProperties,
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', marginBottom: '4px' } as React.CSSProperties,
-  btn: { background: '#C84406', border: 'none', color: '#0A0E27', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', padding: '8px 16px', cursor: 'pointer', borderRadius: '2px' } as React.CSSProperties,
+  btn: { background: '#C84406', border: 'none', color: '#080C20', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', padding: '8px 16px', cursor: 'pointer', borderRadius: '2px' } as React.CSSProperties,
   filterBtn: (on: boolean): React.CSSProperties => ({
-    background: on ? '#E35205' : 'transparent', color: on ? '#0A0E27' : 'rgba(245,245,245,0.55)',
+    background: on ? '#E35205' : 'transparent', color: on ? '#080C20' : 'rgba(245,245,245,0.55)',
     border: '1px solid rgba(227,82,5,0.3)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
     letterSpacing: '0.1em', padding: '7px 12px', cursor: 'pointer', borderRadius: '2px',
   }),
@@ -131,13 +133,13 @@ export default function OrdersAdmin() {
           <h1 style={{ fontSize: '20px', margin: '6px 0 0' }}>ORDERS</h1>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button style={S.filterBtn(filter === 'toship')} onClick={() => setFilter('toship')}>TO SHIP ({counts.toship})</button>
-          <button style={S.filterBtn(filter === 'shipped')} onClick={() => setFilter('shipped')}>SHIPPED ({counts.shipped})</button>
-          <button style={S.filterBtn(filter === 'all')} onClick={() => setFilter('all')}>ALL ({counts.all})</button>
-          <button style={{ ...S.btn, background: showNew ? 'rgba(227,82,5,0.2)' : '#E35205', color: showNew ? '#E35205' : '#0A0E27', border: '1px solid #E35205', marginLeft: '8px' }}
+          <ArchiveButton type="submit" variant="secondary" style={S.filterBtn(filter === 'toship')} onClick={() => setFilter('toship')}>TO SHIP ({counts.toship})</ArchiveButton>
+          <ArchiveButton type="submit" variant="secondary" style={S.filterBtn(filter === 'shipped')} onClick={() => setFilter('shipped')}>SHIPPED ({counts.shipped})</ArchiveButton>
+          <ArchiveButton type="submit" variant="secondary" style={S.filterBtn(filter === 'all')} onClick={() => setFilter('all')}>ALL ({counts.all})</ArchiveButton>
+          <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, background: showNew ? 'rgba(227,82,5,0.2)' : '#E35205', color: showNew ? '#E35205' : '#080C20', marginLeft: '8px' }}
             onClick={() => { setShowNew((v) => !v); setCreateMsg(null) }}>
             {showNew ? '✕ CANCEL' : '+ NEW ORDER'}
-          </button>
+          </ArchiveButton>
         </div>
       </div>
 
@@ -148,20 +150,20 @@ export default function OrdersAdmin() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div>
               <label style={S.label}>BUYER EMAIL *</label>
-              <input style={S.input} value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
+              <ArchiveInput style={S.input} value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="voyager@example.com" onKeyDown={(e) => e.key === 'Enter' && handleCreate()} />
             </div>
             <div>
               <label style={S.label}>INTERNAL NOTE (optional)</label>
-              <input style={S.input} value={newNote} onChange={(e) => setNewNote(e.target.value)}
+              <ArchiveInput style={S.input} value={newNote} onChange={(e) => setNewNote(e.target.value)}
                 placeholder="e.g. paid via Venmo, gift, event" />
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button style={{ ...S.btn, opacity: creating || !newEmail.trim() ? 0.5 : 1 }}
+            <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, opacity: creating || !newEmail.trim() ? 0.5 : 1 }}
               disabled={creating || !newEmail.trim()} onClick={handleCreate}>
               {creating ? 'CREATING...' : 'CONFIRM PAYMENT & CREATE ORDER'}
-            </button>
+            </ArchiveButton>
             {createMsg && (
               <span style={{ fontSize: '12px', color: createMsg.ok ? '#20D890' : '#E83030' }}>{createMsg.text}</span>
             )}
@@ -232,33 +234,33 @@ export default function OrdersAdmin() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '10px', marginBottom: '10px' }}>
                     <div>
                       <label style={S.label}>STATUS</label>
-                      <select style={S.input} value={d.status} onChange={(e) => setD(o.id, 'status', e.target.value)}>
+                      <ArchiveSelect style={S.input} value={d.status} onChange={(e) => setD(o.id, 'status', e.target.value)}>
                         {(o.product_type === 'device_batch_claim'
                           ? getAllowedDeviceOrderStatuses(o.status)
                           : STATUSES
                         ).map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
+                      </ArchiveSelect>
                     </div>
                     <div>
                       <label style={S.label}>CARRIER</label>
-                      <input style={S.input} value={d.carrier} onChange={(e) => setD(o.id, 'carrier', e.target.value)} placeholder="USPS / UPS / FedEx" />
+                      <ArchiveInput style={S.input} value={d.carrier} onChange={(e) => setD(o.id, 'carrier', e.target.value)} placeholder="USPS / UPS / FedEx" />
                     </div>
                   </div>
                   <div style={{ marginBottom: '10px' }}>
                     <label style={S.label}>TRACKING NUMBER</label>
-                    <input style={S.input} value={d.tracking_number} onChange={(e) => setD(o.id, 'tracking_number', e.target.value)} placeholder="e.g. 9400 1000 0000 0000 0000 00" />
+                    <ArchiveInput style={S.input} value={d.tracking_number} onChange={(e) => setD(o.id, 'tracking_number', e.target.value)} placeholder="e.g. 9400 1000 0000 0000 0000 00" />
                   </div>
                   <div style={{ marginBottom: '12px' }}>
                     <label style={S.label}>TRACKING URL (optional)</label>
-                    <input style={S.input} value={d.tracking_url} onChange={(e) => setD(o.id, 'tracking_url', e.target.value)} placeholder="https://tools.usps.com/go/TrackConfirmAction?tLabels=..." />
+                    <ArchiveInput style={S.input} value={d.tracking_url} onChange={(e) => setD(o.id, 'tracking_url', e.target.value)} placeholder="https://tools.usps.com/go/TrackConfirmAction?tLabels=..." />
                   </div>
                   {o.product_type === 'device_batch_claim' && d.status === 'shipped' && o.status !== 'shipped' && (
                     <div style={{ marginBottom: '12px' }}>
                       <label style={S.label}>VERIFY PHYSICAL UNIT CODE *</label>
-                      <input
+                      <ArchiveInput
                         autoComplete="off"
                         placeholder="Type or scan the code printed on the Unit"
-                        style={{ ...S.input, borderColor: '#E35205' }}
+                        style={{ ...S.input }}
                         value={d.expected_unit_code}
                         onChange={(e) => setD(o.id, 'expected_unit_code', e.target.value.toUpperCase())}
                       />
@@ -271,9 +273,9 @@ export default function OrdersAdmin() {
                     {msg?.id === o.id && (
                       <span style={{ fontSize: '12px', color: msg.ok ? '#20D890' : '#E83030' }}>{msg.text}</span>
                     )}
-                    <button style={{ ...S.btn, opacity: savingId === o.id ? 0.5 : 1 }} disabled={savingId === o.id} onClick={() => save(o)}>
+                    <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, opacity: savingId === o.id ? 0.5 : 1 }} disabled={savingId === o.id} onClick={() => save(o)}>
                       {savingId === o.id ? 'SAVING...' : 'SAVE'}
-                    </button>
+                    </ArchiveButton>
                   </div>
                 </div>
               </div>

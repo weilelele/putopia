@@ -1,10 +1,10 @@
 'use client'
 
+import { ArchiveInput } from '@/components/archive-input'
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -51,7 +51,7 @@ function LoginPageContent() {
 
   return (
     <main className="main pilot-archive-page pilot-login-page">
-      <ArchiveBrandHeader />
+
 
       <div className="pilot-login-shell">
         <header className="pilot-login-heading">
@@ -62,7 +62,7 @@ function LoginPageContent() {
 
         <form onSubmit={handleSubmit} className="pilot-login-form">
           <ArchiveField htmlFor="login-email" label="EMAIL ADDRESS">
-            <input
+            <ArchiveInput
               id="login-email"
               type="email"
               autoComplete="email"
@@ -72,7 +72,7 @@ function LoginPageContent() {
           </ArchiveField>
 
           <ArchiveField htmlFor="login-password" label="ACCESS CODE">
-            <input
+            <ArchiveInput
               id="login-password"
               type="password"
               autoComplete="current-password"

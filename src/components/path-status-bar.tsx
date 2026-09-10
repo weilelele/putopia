@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
@@ -77,7 +78,7 @@ export function PathStatusBar({
               </span>
             )}
             {showNudge && (
-              <span style={{ position: 'absolute', top: -2, right: -2, width: 9, height: 9, borderRadius: '50%', background: '#E83030', border: '1.5px solid var(--color-void)', boxShadow: '0 0 6px rgba(232,48,48,0.8)', animation: 'pathbar-pulse 1.8s ease-in-out infinite' }} />
+              <span style={{ position: 'absolute', top: -2, right: -2, width: 9, height: 9, borderRadius: '50%', background: '#E83030', border: '1.5px solid var(--color-void)', boxShadow: 'none', animation: 'pathbar-pulse 1.8s ease-in-out infinite' }} />
             )}
           </span>
         </Link>
@@ -87,7 +88,7 @@ export function PathStatusBar({
         <Link href="/voyager-path" title="View your path" style={{ ...cell, flex: 1, minWidth: 0 }} {...hov}
           onClick={() => posthog.capture('pathbar_view_path_clicked', { role: user.role })}
         >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: `0 0 6px ${idColor}`, flexShrink: 0 }} />
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: 'none', flexShrink: 0 }} />
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.25 }}>
             <span style={{ fontSize: 'var(--fs-label)', color: idColor, letterSpacing: '0.14em', fontWeight: 700, whiteSpace: 'nowrap' }}>{idLabel}</span>
             <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em', marginTop: 3, whiteSpace: 'nowrap' }}>VIEW YOUR PATH</span>
@@ -112,7 +113,7 @@ export function PathStatusBar({
         {diagBottom}
 
         {/* Right half — device days; clicking opens the device modal */}
-        <button onClick={() => { posthog.capture('pathbar_device_clicked', { role: user.role, has_device: hasDevice, device_days: deviceDays }); onDeviceClick() }} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1 1 0', minWidth: 0, gap: 11 }} {...hov}>
+        <ArchiveButton type="submit" variant="secondary" onClick={() => { posthog.capture('pathbar_device_clicked', { role: user.role, has_device: hasDevice, device_days: deviceDays }); onDeviceClick() }} title={hasDevice ? `Device held ${deviceDays}d` : 'No device assigned'} style={{ ...cell, flex: '1 1 0', minWidth: 0, gap: 11 }} {...hov}>
           <span aria-label={hasDevice ? 'Device active' : 'No device'} style={{
             display: 'inline-block', width: 54, height: 32, flexShrink: 0,
             background: hasDevice ? '#20D890' : 'rgba(245,245,245,0.4)',
@@ -126,7 +127,7 @@ export function PathStatusBar({
             <span style={{ fontSize: 20, fontWeight: 700, color: hasDevice ? '#20D890' : 'rgba(245,245,245,0.5)' }}>{deviceDays}</span>
             <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em' }}>{deviceDays === 1 ? 'DAY' : 'DAYS'}</span>
           </span>
-        </button>
+        </ArchiveButton>
       </div>
 
       <style>{`

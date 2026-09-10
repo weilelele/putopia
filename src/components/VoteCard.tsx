@@ -135,7 +135,7 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
           const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
           return (
             <div key={option.id}>
-              <button
+              <ArchiveButton type="submit" variant="secondary"
                 onClick={() => toggle(option.id)}
                 disabled={!canVote}
                 className={`archive-vote-option${isSelected ? ' is-selected' : ''}`}
@@ -157,7 +157,7 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-              </button>
+              </ArchiveButton>
             </div>
           )
         })}

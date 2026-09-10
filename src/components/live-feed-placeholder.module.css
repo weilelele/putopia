@@ -42,3 +42,6 @@
   justify-self: end;
   text-align: right;
 }
+
+.image { display: block; width: 100%; height: auto; aspect-ratio: 16/10; object-fit: cover; }
+.caption { padding: 8px 12px; color: var(--color-star-dim); font-size: var(--fs-caption); }

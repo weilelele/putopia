@@ -5,7 +5,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -14,41 +13,6 @@ import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { formatBatchPrice, type DeviceBatch } from '@/lib/device-batches'
 
 const ORANGE = '#E35205'
-
-interface BenefitGroup {
-  no:    string
-  title: string
-  items: { label: string; desc: string }[]
-}
-
-const BENEFITS: BenefitGroup[] = [
-  {
-    no: '01',
-    title: 'ACCESS & PERMISSIONS',
-    items: [
-      { label: 'Voyager status', desc: 'Your account is upgraded from Applicant to Voyager.' },
-      { label: 'Profile + classified intel', desc: 'Edit your own Voyager page and unlock restricted briefings.' },
-      { label: 'Expanded voting', desc: 'Take part in decisions reserved for full members.' },
-    ],
-  },
-  {
-    no: '02',
-    title: 'PHYSICAL & HONORS',
-    items: [
-      { label: 'Initiation Seal', desc: 'The organization badge — your physical mark of entry.' },
-      { label: 'First parts pack', desc: 'Cairo Batch 01 components, dispatched once restoration completes.' },
-      { label: 'Letter of invitation', desc: 'A formal summons into the Collective, addressed to you.' },
-    ],
-  },
-  {
-    no: '03',
-    title: 'TEST ELIGIBILITY',
-    items: [
-      { label: 'Early trait test', desc: 'Priority access to the Voyager trait diagnostic.' },
-      { label: 'Match & lock a device', desc: 'Find the device that resonates with you and reserve it ahead of others.' },
-    ],
-  },
-]
 
 export function DeviceClaimClient({ batch }: { batch: DeviceBatch }) {
   return (
@@ -65,6 +29,14 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
   const [status, setStatus] = useState<'idle' | 'claiming' | 'error'>('idle')
   const [errMsg, setErrMsg] = useState('')
   const claimPrice = batch.claimPrice
+  const benefits = batch.distributionStages.map((stage, index) => ({
+    no: String(index + 1).padStart(2, '0'),
+    title: stage.label,
+    items: [
+      { label: stage.window, desc: stage.summary },
+      ...stage.contents.map((content) => ({ label: content, desc: '' })),
+    ],
+  }))
   const intelLines = [
     `SOURCE   : ${batch.lead.name} / ${batch.lead.role}`,
     `LOCATION : ${batch.location}`,
@@ -119,7 +91,7 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
 
   return (
     <div className="main archive-flow-main device-claim-page">
-      <ArchiveBrandHeader />
+
       <div className="archive-flow-content archive-flow-content--wide">
         <div className="archive-flow-back">
           <ArchiveLinkButton href={`/devices/batches/${batch.slug}`} variant="ghost">
@@ -128,7 +100,7 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         </div>
         <ArchivePageHeader title={batch.name} accent="CLAIM" />
         <p className="archive-flow-summary">
-          {batch.location} · {batch.distributionStages.length} configured packs
+          {batch.location} · {batch.distributionStages.length} separate shipments
         </p>
         {searchParams.get('checkout') === 'cancelled' && (
           <div className="device-claim-notice" role="status">
@@ -158,27 +130,19 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
       {/* Narrative */}
       <div className="mb-10" style={{ maxWidth: '640px' }}>
         <p className="font-mono text-sm leading-loose mb-4" style={{ color: 'rgba(245,245,245,0.7)' }}>
-          Our architect has been surveying antique shops in and around Cairo. The initial
-          collection is estimated at between 100 and 300 units — devices whose origin and
-          purpose remain partially unknown.
+          {batch.summary}
         </p>
-        <p className="font-mono text-sm leading-loose mb-4" style={{ color: 'rgba(245,245,245,0.7)' }}>
-          Alongside the hardware, we have recovered a number of ancient antennas. These were
-          originally designed to receive signals from specific worlds. Our architect has
-          developed specialized components to replace and integrate them into the Cairo units.
-        </p>
-        <p className="font-mono text-sm leading-loose" style={{ color: 'rgba(245,245,245,0.45)' }}>
-          Restoration is underway. The first parts pack can be secured now. Your device will
-          be dispatched once the calibration phase is complete.
+        <p className="font-mono text-sm leading-loose">
+          {batch.statusLine}. {batch.estimatedCompletion}
         </p>
       </div>
 
-      {/* What you receive — 3 benefit groups */}
+      {/* The batch is the authority for every promised shipment. */}
       <section className="device-claim-benefits">
         <ArchiveSectionLabel>WHAT YOU RECEIVE</ArchiveSectionLabel>
 
         <div className="device-claim-benefit-grid">
-          {BENEFITS.map((group) => (
+          {benefits.map((group) => (
             <ArchiveCard key={group.no} className="device-claim-benefit">
               <div className="flex items-baseline gap-2 mb-3 pb-2 border-b" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
                 <span className="font-mono font-bold" style={{ color: ORANGE, fontSize: '0.9rem' }}>{group.no}</span>
@@ -201,6 +165,18 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         </div>
       </section>
 
+      {batch.faq?.length ? (
+        <section className="device-claim-benefits">
+          <ArchiveSectionLabel>BEFORE YOU CLAIM</ArchiveSectionLabel>
+          {batch.faq.map((item) => (
+            <details key={item.question} className="mb-4 font-mono text-sm">
+              <summary>{item.question}</summary>
+              <p className="mt-2 leading-relaxed">{item.answer}</p>
+            </details>
+          ))}
+        </section>
+      ) : null}
+
       {/* Pricing + CTA */}
       <ArchiveCard className="device-claim-price">
         <div className="flex items-baseline gap-3 mb-1">
@@ -213,7 +189,7 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         </div>
 
         <ArchiveButton
-          disabled={status === 'claiming' || !claimPrice}
+          disabled={status === 'claiming' || !claimPrice || batch.status !== 'claim_open'}
           fullWidth
           onClick={handleClaim}
         >
@@ -252,9 +228,9 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         className="mb-10 border-l-2 pl-4 font-mono text-xs"
         style={{ borderColor: 'rgba(227,82,5,0.4)', color: 'rgba(245,245,245,0.35)', lineHeight: '1.8', maxWidth: '640px' }}
       >
-        <div style={{ color: 'rgba(245,245,245,0.5)', marginBottom: '0.25rem' }}>UPGRADE PATH</div>
-        This claim uses the price configured for <strong>{batch.code}</strong>. Final checkout
-        will confirm shipping details and every configured distribution pack.
+        <div style={{ color: 'rgba(245,245,245,0.5)', marginBottom: '0.25rem' }}>YOUR CLAIM</div>
+        Your claim covers <strong>{batch.name}</strong> and the {batch.distributionStages.length} shipments listed above.
+        Keep your delivery address up to date for each shipment.
       </div>
 
       </div>

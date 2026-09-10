@@ -1,3 +1,7 @@
+import { getDashboard } from '@/lib/actions/dashboard'
+import { getDashboardStats } from '@/lib/actions/dashboard-stats'
+import { readDashboardUpdates } from '@/lib/dashboard-updates'
+import { latestUpdates } from '@/lib/dashboard-model'
 import { NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { listDeviceLibraryEntries } from '@/lib/device-library-repository'
@@ -31,6 +35,9 @@ export async function GET() {
   const authenticated = Boolean(user)
   const role = profile?.role ?? 'guest'
 
+  const dashboardPromise = getDashboard().catch(() => null)
+  const statsPromise = getDashboardStats().catch(() => undefined)
+  const updatesPromise = readDashboardUpdates(false).catch(() => null)
   const [worldsResult, devicesResult, intelResult, voyagersResult, storiesResult, votesResult, functionsResult] = await Promise.all([
     admin
       .from('worlds')
@@ -45,14 +52,14 @@ export async function GET() {
       : Promise.resolve({ data: [], error: null }),
     admin
       .from('intel')
-      .select('id, title, content, timestamp, tag, images, publisher_name, created_at')
+      .select('id, title, content, timestamp, tag, images, publisher_id, publisher_name, created_at')
       .eq('classified', false)
       .order('timestamp', { ascending: false })
       .limit(LIMITS.intel),
     authenticated
       ? admin
         .from('voyager_profiles')
-        .select('id, display_name, bio, avatar_url, role, observation_days, worlds_discovered, batch_label, joined_at')
+        .select('id, display_name, bio, avatar_url, location, role, observation_days, worlds_discovered, batch_label, joined_at')
         .in('role', ['voyager', 'architect'])
         .order('joined_at', { ascending: true })
         .limit(LIMITS.voyagers)
@@ -105,7 +112,10 @@ export async function GET() {
     // Older native clients understand only unit statuses, not Batch stages.
     status: 'unknown',
   }))
-  const intel = intelResult.data ?? []
+  const publisherIds = [...new Set((intelResult.data ?? []).flatMap(item => item.publisher_id ? [item.publisher_id] : []))]
+  const publishers = publisherIds.length ? await admin.from('voyager_profiles').select('id,avatar_url').in('id',publisherIds) : {data:[]}
+  const avatars = new Map((publishers.data ?? []).map(item => [item.id,item.avatar_url]))
+  const intel = (intelResult.data ?? []).map(item => ({...item,publisher_avatar_url:avatars.get(item.publisher_id ?? '') ?? null}))
   const voyagers = voyagersResult.data ?? []
   const stories = storiesResult.data ?? []
   const votes = votesResult.data ?? []
@@ -121,7 +131,13 @@ export async function GET() {
     console.warn('[offline/snapshot] Optional sections were omitted.', warningErrors)
   }
 
+  const dashboardSource = await updatesPromise
+  const dashboardUpdates = dashboardSource ? latestUpdates(dashboardSource.updates) : undefined
   const response = NextResponse.json({
+    dashboardUpdates,
+    dashboardEvents: (await dashboardPromise)?.events,
+    dashboardVoyager: (await dashboardPromise)?.voyager ?? undefined,
+    dashboardStats: await statsPromise,
     version: 2,
     syncedAt: new Date().toISOString(),
     viewer: {

@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveTextarea } from '@/components/archive-input'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -113,7 +114,7 @@ export function DreamcatcherChat({ roomId, city, timeZone }: { roomId: string; c
     <div className={styles.chat}>
       {canPost ? <form className={styles.composer} onSubmit={send}>
         <label htmlFor={`chat-${roomId}`}>MESSAGE {city.toUpperCase()}</label>
-        <textarea id={`chat-${roomId}`} className="input-dark" rows={3} maxLength={CHAT_MAX_LENGTH}
+        <ArchiveTextarea id={`chat-${roomId}`} className="input-dark" rows={3} maxLength={CHAT_MAX_LENGTH}
           placeholder="Leave a message…" value={body} disabled={sending}
           onChange={(event) => setBody(event.target.value)} />
         <div className={styles.composerFooter}>

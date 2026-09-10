@@ -1,3 +1,5 @@
+> **RETIRED — 历史记录，不再作为产品 UI 规范。** 当前唯一规范为 [UI 2.3](../design-system.md)，交互示例为 `/ui-kit`。历史图片和验收结果不能覆盖现行规范。
+
 # Signal Monument
 
 Signal Monument treats empty space as evidence: a deep, uninterrupted field holds a small number of precisely placed marks, as though an unknown transmission has been isolated from noise. Form is clinical and monumental at once—concentric observation circles, hairline coordinates, and a single encoded portal communicate through scale and position rather than explanation. Every alignment must feel meticulously crafted and tested through countless refinements.

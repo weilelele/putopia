@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 import Script from 'next/script'
@@ -77,7 +78,7 @@ export default function RootLayout({
         `}</Script>
         <PwaProvider>
           <AuthProvider>
-            <ScrollRestorer />
+            <Suspense fallback={null}><ScrollRestorer /></Suspense>
             <div className="app-shell w-full">
               <Sidebar />
               {children}

@@ -1,0 +1,213 @@
+{
+  "faq": [
+    {
+      "answer": "Kyoto One is the first Kyoto batch of Multiverse Consoles. Each Console has a charcoal-gray housing, a pale front panel, silver side controls and orange details. This allocation is limited to 50 Consoles.",
+      "question": "What is Kyoto One?"
+    },
+    {
+      "answer": "Yes. US$520 is the full batch preorder price for one assigned Multiverse Console (Kyoto One Batch) and the three shipments described below. The full amount is collected when you claim; it is not a deposit or a recurring subscription. The Console arrives in the third shipment.",
+      "question": "Is this a preorder, and what does $520 cover?"
+    },
+    {
+      "answer": "Package 1: Initial Voyager Pack, containing a badge and welcome letter. Package 2: Mysterious Widgets, with small widgets and components; the exact selection is still being finalized. An antenna is a possibility, not a confirmed inclusion. Package 3: Multiverse Console (Kyoto One Batch).",
+      "question": "What is in each shipment?"
+    },
+    {
+      "answer": "The packages will be dispatched separately, in that order. Dispatch dates for all three packages are not yet confirmed. This is a preorder, not an offer of immediate delivery. Timing updates will be posted in this batch record.",
+      "question": "When will the packages ship?"
+    },
+    {
+      "answer": "The destinations currently supported are shown in checkout. Shipping charges and tax treatment have not yet been finalized; their inclusion in the $520 batch price has not been confirmed. These terms remain pending.",
+      "question": "What about shipping destinations, shipping costs and taxes?"
+    },
+    {
+      "answer": "No. The gallery includes an original device design reference and AI-generated warehouse visualizations based on the device design. They show the design and setting, not the condition or serial number of an individual unit.",
+      "question": "Are the images photographs of my assigned unit?"
+    },
+    {
+      "answer": "We have not established whether other Consoles can reach the same routes. Exclusive access is not a confirmed part of this claim.",
+      "question": "Are the unusual routes exclusive to this batch?"
+    },
+    {
+      "answer": "The earlier Initial Pack order and this $520 Kyoto One claim are separate. Your earlier order remains due for delivery without a new purchase. No upgrade credit has been announced.",
+      "question": "Does my earlier $12 Initial Pack include this Console?"
+    },
+    {
+      "answer": "Batch-specific cancellation, return and support terms have not yet been published. They remain an outstanding release detail.",
+      "question": "What are the cancellation, return and support terms?"
+    }
+  ],
+  "code": "KYOTO-ONE",
+  "lead": {
+    "bio": "Ryo is a philosopher-engineer based in Kyoto and one of the Collective's earliest members. For Kyoto One, his focus is the order of the work: understand what the Consoles have retained, establish a reliable baseline, then decide what should change.",
+    "name": "Ryo Tanaka",
+    "role": "Architect · Kyoto One Lead",
+    "initials": "RT",
+    "location": "Kyoto, Japan",
+    "latestNote": "Before we change the system, we need to understand what it has retained. The first task is to establish a baseline we can return to."
+  },
+  "name": "Kyoto One",
+  "slug": "kyoto-one",
+  "facts": [
+    {
+      "label": "BATCH",
+      "value": "Kyoto One"
+    },
+    {
+      "label": "ALLOCATION",
+      "value": "50 Consoles"
+    },
+    {
+      "label": "CLAIM PRICE",
+      "value": "US$520"
+    },
+    {
+      "label": "CLAIM TYPE",
+      "value": "Preorder · full payment"
+    },
+    {
+      "label": "SHIPMENTS",
+      "value": "3 separate packages"
+    },
+    {
+      "label": "DISPATCH",
+      "value": "Dates not yet confirmed"
+    }
+  ],
+  "image": "/assets/kyoto-one-20260910/01-warehouse-hero.png",
+  "status": "claim_open",
+  "holders": [],
+  "summary": "Found in Kyoto, these Consoles carry traces of an engineer whose whereabouts remain unknown. Silver controls project from their low, dark housings; three displays face the operator. They wake quickly, but battery endurance and system responsiveness still need attention. Before making changes, we need to understand the routes they have retained. One may lead back to the person who left them behind.",
+  "imageAlt": "Kyoto One on a wooden workbench at night, with an illuminated starry landscape on the central display",
+  "imageFit": "contain",
+  "location": "Kyoto, Japan",
+  "timeZone": "Asia/Tokyo",
+  "claimHref": "/devices/claim",
+  "heroMedia": [
+    {
+      "alt": "Multiverse Console viewed from the front left in a dim warehouse, with a robot reading in an overgrown library on its screen",
+      "src": "/assets/q1-20260910/01-robot-library.png",
+      "kind": "image",
+      "caption": "Robot library · AI-generated warehouse visualization"
+    },
+    {
+      "alt": "Multiverse Console viewed from the front right in a dim warehouse, with a shepherd reading outdoors on its screen",
+      "src": "/assets/q1-20260910/02-shepherd.png",
+      "kind": "image",
+      "caption": "Shepherd observation · AI-generated warehouse visualization"
+    },
+    {
+      "alt": "Original Kyoto One rear housing design",
+      "src": "/assets/kyoto-one-20260910/04-rear-reference.jpg",
+      "kind": "image",
+      "caption": "Rear housing · original design reference"
+    }
+  ],
+  "inventory": {
+    "claimedQuantity": 0,
+    "listingQuantity": 50
+  },
+  "updatedAt": "Sep 10, 2026",
+  "claimPrice": {
+    "amount": 520,
+    "currency": "USD",
+    "description": "Full preorder price for one Console and three separate shipments. Paid in full at claim. Dispatch dates, shipping charges and tax treatment remain unconfirmed."
+  },
+  "statusLine": "Preorder claims open · 50 Consoles · three shipments",
+  "heroCaption": "Warehouse observation · AI-generated design visualization",
+  "availability": "50 Consoles allocated for preorder claims.",
+  "latestUpdate": {
+    "body": "Fifty Consoles are available to claim in Kyoto One as preorders at US$520 each. Each claim includes three separate shipments: Initial Voyager Pack with a badge and welcome letter; Mysterious Widgets, with the exact selection to be confirmed; then Multiverse Console (Kyoto One Batch). Dispatch dates are not yet confirmed.\n\nThe second package is still taking shape. An antenna may be included, but its exact contents have not been finalized. We will record those details here as they are confirmed.\n\nEarlier Initial Pack orders remain a separate delivery commitment. You do not need to claim Kyoto One to receive your earlier purchase.",
+    "date": "Sep 10, 2026",
+    "media": [
+      {
+        "alt": "Kyoto One on a wooden workbench at night, with an illuminated starry landscape on the central display",
+        "src": "/assets/kyoto-one-20260910/01-warehouse-hero.png",
+        "kind": "image",
+        "caption": "Warehouse observation · AI-generated design visualization"
+      }
+    ],
+    "title": "Kyoto One opens for preorder claims"
+  },
+  "archiveStages": [
+    {
+      "id": "intel-1",
+      "label": "Kyoto One: the record begins",
+      "period": "Sep 09, 2026",
+      "summary": "The Consoles were found in Kyoto. The clues surrounding them point to an electrical engineer, but we have yet to establish who he was or where he went. For now, the devices are our starting point.\n\nThey are well preserved and quick to wake. Some of the worlds they reach lie beyond the familiar routes. Battery endurance and system responsiveness still need attention, but a change to the system could affect what remains inside it. Before making those changes, we need to understand what the Consoles have retained.\n\nFifty Consoles are available to claim in Kyoto One as preorders at US$520 each. Each claim includes three separate shipments: Initial Voyager Pack with a badge and welcome letter; Mysterious Widgets, with the exact selection to be confirmed; then Multiverse Console (Kyoto One Batch). Dispatch dates are not yet confirmed.",
+      "evidence": []
+    },
+    {
+      "id": "intel-2",
+      "label": "Read the housing before the signal",
+      "period": "Sep 09, 2026",
+      "summary": "Before turning to the signal, look at the housing. The pale front panel sits inside a low, dark shell. Silver controls extend from the sides, crossed by orange guards. A circular display sits between two narrow screens, and the body slopes down towards the rear.\n\nFollow the edge around the device and the orange line continues along the dark casing. At the rear, it traces the closed panel. The controls, panel edges and three-screen face give us a consistent way to identify this batch.\n\nThe next step is to record the condition of each Console against that common structure. Which details are shared, and which belong to an individual unit? Those differences need to be understood before the batch leaves our care.",
+      "evidence": []
+    },
+    {
+      "id": "intel-3",
+      "label": "A quick start is only the first observation",
+      "period": "Sep 09, 2026",
+      "summary": "The Consoles wake quickly. What matters next is how they behave once they have been running for a while.\n\nBattery endurance and system responsiveness are the two areas that need attention. We need to understand how the power holds up during use and whether the controls remain responsive over longer sessions. Those checks are still ahead; we do not have a measured runtime to publish.\n\nThe next engineering update will set out the test conditions and observations together. That will give us a baseline for deciding what needs to change, and a way to check whether each change has helped.",
+      "evidence": []
+    },
+    {
+      "id": "intel-4",
+      "label": "Preserve the route before changing the system",
+      "period": "Sep 09, 2026",
+      "summary": "Before we change the system, we need to understand what it has retained. Can the same routes still be reached after an update? That question determines the order of the work.\n\nSome routes are unfamiliar. We do not yet know whether another Console can reach the same places, or what information this batch relies on to find them. The first task is to document the existing state and establish a way to return to it.\n\nPreservation is still ahead of us. Once there is a reliable baseline, we can compare each change against it: does the device run better, and does the same route remain accessible? Until then, we have reason to move carefully.",
+      "evidence": []
+    },
+    {
+      "id": "intel-5",
+      "label": "A figure is not an identification",
+      "period": "Sep 09, 2026",
+      "summary": "Among the unresolved observations is a figure who may be connected to the Consoles' former owner. If that connection holds, the route could tell us something about where he went.\n\nWe cannot identify him yet. We also do not know whether the scene shows a person present there, a recording, or someone with a resemblance to the engineer. Each possibility calls for a different line of inquiry.\n\nThe next step is to return to the route and look for details that distinguish those possibilities. Can the figure be observed again? Does the scene change? Until we can answer those questions, his identity remains open.",
+      "evidence": []
+    }
+  ],
+  "nextMilestone": "Confirm dispatch dates and the component selection for Package 2.",
+  "distributionStages": [
+    {
+      "id": "initial-voyager-pack",
+      "label": "Initial Voyager Pack",
+      "status": "upcoming",
+      "window": "Dispatch date not yet confirmed",
+      "summary": "Your first shipment: the badge and welcome letter that mark your entry into the Collective.",
+      "contents": [
+        "Badge",
+        "Welcome letter"
+      ]
+    },
+    {
+      "id": "components-pack",
+      "label": "Mysterious Widgets",
+      "status": "upcoming",
+      "window": "After Package 1 · date not yet confirmed",
+      "summary": "The second shipment brings smaller items before the Console. The exact selection is being finalized; an antenna is a possibility, not a confirmed inclusion.",
+      "contents": [
+        "Mysterious widgets — selection to be confirmed",
+        "Small components — selection to be confirmed"
+      ]
+    },
+    {
+      "id": "console",
+      "label": "Multiverse Console (Kyoto One Batch)",
+      "media": [
+        {
+          "alt": "Kyoto One on a wooden workbench at night, with an illuminated starry landscape on the central display",
+          "src": "/assets/kyoto-one-20260910/01-warehouse-hero.png",
+          "kind": "image",
+          "caption": "Warehouse observation · AI-generated design visualization"
+        }
+      ],
+      "status": "upcoming",
+      "window": "After Package 2 · date not yet confirmed",
+      "summary": "Your assigned gray-shell Multiverse Console (Kyoto One Batch) arrives in the third shipment.",
+      "contents": [
+        "Multiverse Console (Kyoto One Batch)"
+      ]
+    }
+  ],
+  "estimatedCompletion": "All three dispatch dates are not yet confirmed."
+}

@@ -1752,7 +1752,7 @@ DEPENDENCIES:
   - ExpoAsset (from `../node_modules/expo/node_modules/expo-asset/ios`)
   - ExpoDevice (from `../node_modules/expo-device/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
-  - ExpoFont (from `../node_modules/expo/node_modules/expo-font/ios`)
+  - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoKeepAwake (from `../node_modules/expo/node_modules/expo-keep-awake/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
@@ -1843,7 +1843,7 @@ EXTERNAL SOURCES:
   ExpoFileSystem:
     :path: "../node_modules/expo-file-system/ios"
   ExpoFont:
-    :path: "../node_modules/expo/node_modules/expo-font/ios"
+    :path: "../node_modules/expo-font/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo/node_modules/expo-keep-awake/ios"
   ExpoModulesCore:
@@ -2074,4 +2074,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 8f733da7e8bf23cf0737967a8f0691491743513b
 
-COCOAPODS: 1.17.0
+COCOAPODS: 1.16.2

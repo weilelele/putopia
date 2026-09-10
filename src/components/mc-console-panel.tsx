@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useState, useEffect } from 'react'
 import type { McFunction, McFunctionStatus } from '@/types/database'
 import SmartImage from './smart-image'
@@ -52,7 +53,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
       {/* Content: image only until tapped; the functions module appears after. */}
       <div className={`mc-console-panel__grid${started ? ' mc-console-panel__grid--split' : ''}`}>
         {/* Device image — tap to scan */}
-        <button
+        <ArchiveButton variant="ghost"
           type="button"
           onClick={() => setStarted(true)}
           aria-label={started ? 'Multiverse Console' : 'Tap to scan the device functions'}
@@ -60,7 +61,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
           className="mc-console-panel__media"
         >
           <SmartImage src="/assets/device-console.jpg" alt="Multiverse Console" sizes="(min-width: 768px) 600px, 100vw" width={1280} height={1023} preload className="mc-console-panel__image" />
-        </button>
+        </ArchiveButton>
 
         {/* Confirmed functions — the whole module appears only after the tap */}
         {started && (
@@ -86,7 +87,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
                       <span style={{
                         width: 6, height: 6, borderRadius: '50%',
                         background: visible ? meta.color : 'rgba(227,82,5,0.28)',
-                        boxShadow: visible ? `0 0 7px ${meta.color}` : 'none',
+                        boxShadow: 'none',
                         flexShrink: 0, display: 'inline-block',
                         transition: 'background 0.3s, box-shadow 0.3s',
                       }} />

@@ -1749,15 +1749,17 @@ export async function getArchiveReel(worldId: string): Promise<ArchiveReel> {
 // ─── Console dashboard board (doc 4.1) ────────────────────────────────────────
 
 export interface DispatchDashboard {
+  openWorlds: { id: string; name: string; openedAt: string }[]
+  awaitingWorldIds: string[]
   awaitingYou: number   // revealed (currently-open) days this viewer may vote on and hasn't
   inTuning: number      // currently-revealed signals across worlds in tuning
   yourWorlds: { id: string; name: string; stage: WorldStage }[]
 }
 
 /** Stats for the home-page Signal Dispatch board. Null for guests. */
-export async function getDispatchDashboard(): Promise<DispatchDashboard | null> {
+export async function getDispatchDashboard(publicOverview = false): Promise<DispatchDashboard | null> {
   const me = await currentUser()
-  if (!me) return null
+  if (!me && !publicOverview) return null
   const admin = createAdminClient() as DB
 
   const { data: pubTasks } = await admin
@@ -1783,7 +1785,7 @@ export async function getDispatchDashboard(): Promise<DispatchDashboard | null> 
   }
   const meta = await worldMetaMap(admin, [...threadWorld.values()])
 
-  const { data: resp } = await admin.from('signal_responses').select('task_id').eq('user_id', me.id)
+  const { data: resp } = me ? await admin.from('signal_responses').select('task_id').eq('user_id', me.id) : { data: [] }
   const responded = new Set(((resp ?? []) as { task_id: string }[]).map((r) => r.task_id))
 
   const tasksByThread = new Map<string, typeof allTasks>()
@@ -1795,6 +1797,8 @@ export async function getDispatchDashboard(): Promise<DispatchDashboard | null> 
 
   const now = new Date(); const nowMs = now.getTime()
   let inTuning = 0   // surfaced (opened) signals across worlds in tuning
+  const openWorlds: { id: string; name: string; openedAt: string }[] = []
+  const awaitingWorldIds: string[] = []
   let awaitingYou = 0
   for (const [threadId, rows] of tasksByThread) {
     const sg = threadGap.get(threadId)
@@ -1809,19 +1813,22 @@ export async function getDispatchDashboard(): Promise<DispatchDashboard | null> 
     const phase = tuningPhase(schedule, gap, now)
     if (phase.kind === 'open') {
       const openTask = rows.find((r) => (r.day_index ?? 0) === phase.index)
-      if (openTask && !responded.has(openTask.id) && eligibleToVote(me.role, me.id, wm?.vote_scope ?? 'all', wm?.discoverer_id ?? null)) {
+      const openSchedule = schedule.find((entry) => entry.dayIndex === phase.index)
+      if (openTask && openSchedule && wid && wm && !openWorlds.some(world => world.id === wid)) openWorlds.push({ id: wid, name: wm.name, openedAt: openSchedule.openAt.toISOString() })
+      if (me && openTask && !responded.has(openTask.id) && eligibleToVote(me.role, me.id, wm?.vote_scope ?? 'all', wm?.discoverer_id ?? null)) {
         awaitingYou++
+        if (wid) awaitingWorldIds.push(wid)
       }
     }
   }
 
-  const { data: mine } = await admin
+  const { data: mine } = me ? await admin
     .from('worlds')
     .select('id, name, lifecycle_state')
     .eq('discoverer_id', me.id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }) : { data: [] }
   const yourWorlds = ((mine ?? []) as { id: string; name: string; lifecycle_state: WorldLifecycle }[])
     .map((w) => ({ id: w.id, name: w.name, stage: worldStage(w.lifecycle_state) }))
 
-  return { awaitingYou, inTuning, yourWorlds }
+  return { openWorlds, awaitingYou, awaitingWorldIds, inTuning, yourWorlds }
 }

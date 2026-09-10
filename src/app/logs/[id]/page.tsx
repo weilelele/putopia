@@ -1,4 +1,6 @@
 'use client'
+import { ArchiveTextarea } from '@/components/archive-input'
+import { BackLink } from '@/components/back-link'
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
@@ -7,7 +9,6 @@ import { getStoryById } from '@/lib/actions/stories'
 import { Send } from 'lucide-react'
 import type { StoryWithAvatar } from '@/types/database'
 import posthog from 'posthog-js'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
@@ -122,14 +123,12 @@ export default function StoryPage() {
 
   return (
     <main className="main pilot-archive-page archive-detail-page archive-log-detail-page">
-      <ArchiveBrandHeader />
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGER LOGS <span>/</span> ENTRY</div>
-      </div>
+
+
 
       <div style={{ maxWidth: '720px', width: '100%' }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <ArchiveLinkButton href="/logs" variant="ghost">← VOYAGER LOGS</ArchiveLinkButton>
+        <BackLink href="/logs" label="Voyager Logs" />
       </div>
 
       {/* Story header */}
@@ -222,7 +221,7 @@ export default function StoryPage() {
       <form onSubmit={handleTransmit}>
         <ArchiveCard>
           <ArchiveField htmlFor="log-message" label="TRANSMIT A MESSAGE">
-            <textarea
+            <ArchiveTextarea
               id="log-message"
               rows={3}
               value={commentText}

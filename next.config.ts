@@ -39,6 +39,13 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    // Primary navigation is tab-like. Keep recently visited dynamic page
+    // segments in the client router cache so returning to a tab does not
+    // immediately repeat its RSC request and server-side reads.
+    staleTimes: {
+      dynamic: 300,
+      static: 300,
+    },
     serverActions: {
       bodySizeLimit: '10mb',
     },

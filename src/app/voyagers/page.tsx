@@ -1,22 +1,25 @@
 'use client'
+import { RootBrandHeader } from '@/components/root-brand-header'
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
+import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import Link from 'next/link'
 import { getAllVoyagers, updateProfile, uploadAvatar } from '@/lib/actions/profile'
 import { useAuth } from '@/lib/auth-context'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveButton } from '@/components/archive-button'
-import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
-import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { ArchiveStatStrip, type ArchiveStatItem } from '@/components/archive-stat-strip'
-import { ArchiveTabs } from '@/components/archive-tabs'
+import { BatchTabs } from '@/components/batch-tabs'
 import { SectionTracker } from '@/components/section-tracker'
 import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
-import { Camera, X as XClose, FileText, ArrowRight } from 'lucide-react'
+import { Camera, ArrowRight } from 'lucide-react'
 import type { VoyagerProfile, UserRole } from '@/types/database'
+import { createClientDataCache } from '@/lib/client-data-cache'
+
+const voyagersPageCache = createClientDataCache<VoyagerProfile[]>(5 * 60_000)
 
 // ── Platform icons ─────────────────────────────────────────────────────────
 const XIcon = () => (
@@ -84,8 +87,9 @@ const BATCH_COLLAPSE = 6
 // ── Page ───────────────────────────────────────────────────────────────────
 export default function VoyagersPage() {
   const { user, isAtLeast } = useAuth()
-  const [voyagers, setVoyagers] = useState<VoyagerProfile[]>([])
-  const [loading, setLoading] = useState(true)
+  const cachedVoyagers = voyagersPageCache.peek()
+  const [voyagers, setVoyagers] = useState<VoyagerProfile[]>(() => cachedVoyagers ?? [])
+  const [loading, setLoading] = useState(cachedVoyagers === undefined)
   const [loadError, setLoadError] = useState(false)
 
   // ── Edit modal state ───────────────────────────────────────────────────
@@ -94,40 +98,40 @@ export default function VoyagersPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [profileUnknown, setProfileUnknown] = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const modalFileRef = useRef<HTMLInputElement>(null)
 
   // ── Batch selector state ────────────────────────────────────────────────
-  const [activeBatch, setActiveBatch] = useState<string | null>(null)
+  const [activeBatch, setActiveBatch] = useSessionPreference<string | null>('mc:view:voyagers:batch:s2-default', null)
   const [batchExpanded, setBatchExpanded] = useState(false)
-  const batchRailRef = useRef<HTMLDivElement>(null)
   const selectBatch = (label: string) => { setActiveBatch(label); setBatchExpanded(false) }
-  const scrollRail = (dir: number) => batchRailRef.current?.scrollBy({ left: dir * 240, behavior: 'smooth' })
 
-  const refresh = useCallback(async () => {
-    const data = await getAllVoyagers()
+  const refresh = useCallback(async (force = false) => {
+    const data = await voyagersPageCache.load(getAllVoyagers, force)
     setVoyagers(data)
   }, [])
 
-  const loadVoyagers = useCallback(async () => {
+  const loadVoyagers = useCallback(async (force = false) => {
     await Promise.resolve()
-    setLoading(true)
+    if (voyagersPageCache.peek() === undefined) setLoading(true)
     setLoadError(false)
     try {
-      await refresh()
+      await refresh(force)
     } catch {
-      setLoadError(true)
+      if (voyagersPageCache.peek() === undefined) setLoadError(true)
     } finally {
       setLoading(false)
     }
   }, [refresh])
 
   useEffect(() => {
-    void Promise.resolve().then(loadVoyagers)
+    void Promise.resolve().then(() => loadVoyagers())
   }, [loadVoyagers])
 
   const openEdit = (v: VoyagerProfile) => {
     setEditing(v)
+    setProfileUnknown(false)
     setForm(profileToForm(v))
     setAvatarFile(null)
     setAvatarPreview(null)
@@ -144,9 +148,10 @@ export default function VoyagersPage() {
   }
 
   const handleSave = async () => {
-    if (!form || !editing) return
+    if (!form || !editing || saving || profileUnknown) return
     setSaving(true); setSaveMsg(null)
 
+    try {
     // 1. Upload avatar if changed
     if (avatarFile) {
       const fd = new FormData()
@@ -172,9 +177,10 @@ export default function VoyagersPage() {
       setSaveMsg({ text: result.error, ok: false })
     } else {
       setSaveMsg({ text: 'Saved ✓', ok: true })
-      await refresh()
+      await refresh(true)
       setTimeout(() => { closeEdit() }, 600)
     }
+    } catch { setProfileUnknown(true); setSaveMsg({ text: 'Result unconfirmed. Review your profile before saving again.', ok: false }) } finally { setSaving(false) }
   }
 
   const setF = (k: keyof EditForm, v: string) =>
@@ -191,7 +197,7 @@ export default function VoyagersPage() {
     batchMap.get(label)!.push(v)
   }
   const batches = [...batchMap.entries()].map(([label, members]) => ({ label, members }))
-  const currentLabel = batches.find(b => b.label === activeBatch)?.label ?? batches[0]?.label
+  const currentLabel = batches.find(b => b.label === activeBatch)?.label ?? batches.find(b => /\bS2\b/i.test(b.label))?.label ?? batches[0]?.label
   const currentBatch = batches.find(b => b.label === currentLabel)
   const currentMembers = currentBatch?.members ?? []
   const shownMembers = batchExpanded ? currentMembers : currentMembers.slice(0, BATCH_COLLAPSE)
@@ -207,47 +213,19 @@ export default function VoyagersPage() {
   }
 
   const statItems: ArchiveStatItem[] = [
-    { value: loading ? '—' : architects.length, label: 'ARCHITECTS', color: 'var(--color-nucleus)', onSelect: () => jumpTo('section-architects') },
-    { value: loading ? '—' : latestBatch?.members.length ?? 0, label: 'NEW BATCH', color: 'var(--color-ok)', onSelect: () => jumpTo('section-voyagers', latestBatch?.label) },
-    { value: loading ? '—' : voyagers.length, label: 'ALL VOYAGERS', color: 'var(--color-warn)', onSelect: () => jumpTo('section-voyagers') },
+    { value: loading ? '—' : architects.length, label: 'ARCHITECTS', onSelect: () => jumpTo('section-architects') },
+    { value: loading ? '—' : latestBatch?.members.length ?? 0, label: 'NEW BATCH', onSelect: () => jumpTo('section-voyagers', latestBatch?.label) },
+    { value: loading ? '—' : voyagers.length, label: 'ALL VOYAGERS', onSelect: () => jumpTo('section-voyagers') },
   ]
 
-  const profileControl = user.role === 'guest' ? undefined : (() => {
-    const idColor = user.role === 'applicant' ? '#E8A020' : user.role === 'architect' ? '#E35205' : '#FFB07A'
-    const profileName = user.name || user.email?.split('@')[0] || 'Voyager'
-    const profileInitials = profileName.slice(0, 2).toUpperCase()
-
-    return (
-      <Link href="/profile" aria-label={`Open ${profileName}'s profile`} className="voyagers-profile-link">
-        {user.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.avatarUrl} alt={profileName} style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', display: 'block', border: `1.5px solid ${idColor}66` }} />
-        ) : (
-          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: '50%', border: `1.5px solid ${idColor}66`, background: '#0A0D1A', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: idColor }}>
-            {profileInitials}
-          </span>
-        )}
-      </Link>
-    )
-  })()
 
   return (
-    <main className="main pilot-archive-page pilot-voyagers-page">
+    <main className="main pilot-archive-page pilot-voyagers-page" data-route-scroll>
       <SectionTracker section="voyagers" />
-      <ArchiveBrandHeader />
 
-      <ArchivePageHeader
-        accent="VOYAGERS"
-        action={(
-          <ArchiveLinkButton className="archive-page-header__wide-action" fullWidth href="/logs">
-            <FileText size={15} />
-            VOYAGER LOGS
-            <ArrowRight size={14} />
-          </ArchiveLinkButton>
-        )}
-        identity={profileControl}
-        title="ACTIVE"
-      />
+
+      <h1 className="sr-only">Voyagers</h1>
+      <RootBrandHeader><ArchiveLinkButton variant="ghost" href={user.role === 'guest' ? '/login?redirect=%2Fprofile' : '/profile'}>MY PROFILE <ArrowRight aria-hidden size={18} /></ArchiveLinkButton></RootBrandHeader>
 
       {/* ── Stat board — Architect Council / new Voyagers / total Voyagers ── */}
       <ArchiveStatStrip items={statItems} />
@@ -259,7 +237,7 @@ export default function VoyagersPage() {
           className="archive-state-page archive-route-state-section"
           title="REGISTRY UNAVAILABLE"
           description="The Voyager registry could not be retrieved."
-          onRetry={loadVoyagers}
+          onRetry={() => { void loadVoyagers(true) }}
         />
       ) : (
         <>
@@ -280,23 +258,9 @@ export default function VoyagersPage() {
               <style>{`.batch-rail::-webkit-scrollbar{display:none}.batch-rail{scrollbar-width:none}`}</style>
 
               {/* Batch selector — horizontal scroll rail */}
-              <ArchiveSectionLabel>BATCHES</ArchiveSectionLabel>
+              <ArchiveSectionLabel>VOYAGER BATCHES</ArchiveSectionLabel>
 
-              <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
-                {batches.length > 1 && (
-                  <>
-                    <button onClick={() => scrollRail(-1)} aria-label="scroll left" className="hidden md:flex" style={railArrow('left')}>‹</button>
-                    <button onClick={() => scrollRail(1)} aria-label="scroll right" className="hidden md:flex" style={railArrow('right')}>›</button>
-                  </>
-                )}
-                <ArchiveTabs
-                  activeId={currentLabel ?? ''}
-                  ariaLabel="Voyager batches"
-                  containerRef={batchRailRef}
-                  items={batches.map(({ label, members }) => ({ id: label, label, count: members.length }))}
-                  onChange={selectBatch}
-                />
-              </div>
+              <BatchTabs activeId={currentLabel ?? ''} items={batches.map(({label,members}) => ({id:label,label,count:members.length}))} onChange={selectBatch} />
 
               {/* Selected batch members — full cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -318,28 +282,13 @@ export default function VoyagersPage() {
         </>
       )}
 
+      <ArchiveLinkButton variant="primary" className="voyager-logs-entry" fullWidth href="/logs">VOYAGER LOGS <ArrowRight aria-hidden size={20} /></ArchiveLinkButton>
+
       {/* ── Edit Modal ── */}
       {editing && form && (
-        <div
-          className="voyagers-modal-backdrop"
-          style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(5,8,18,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
-          onClick={closeEdit}
-        >
-          <div
-            className="voyagers-modal-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="voyagers-edit-title"
-            onClick={e => e.stopPropagation()}
-            style={{ background: '#0F1430', border: '1px solid #C84406', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '24px', fontFamily: 'var(--font-mono)' }}
-          >
+        <ArchiveSheet open title="Edit profile" onClose={closeEdit} busy={saving} dirty={!profileUnknown && !saveMsg?.ok && (!!avatarFile || JSON.stringify(form) !== JSON.stringify(profileToForm(editing)))}>
             {/* Header */}
-            <div className="voyagers-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div id="voyagers-edit-title" style={{ color: '#C84406', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em' }}>EDIT PROFILE</div>
-              <button onClick={closeEdit} className="voyagers-modal-close" aria-label="Close edit profile" style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}>
-                <XClose size={16} />
-              </button>
-            </div>
+
 
             {/* Avatar */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
@@ -366,16 +315,16 @@ export default function VoyagersPage() {
                   <Camera size={11} />
                 </div>
               </div>
-              <input ref={modalFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
+              <ArchiveInput ref={modalFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
             </div>
 
             {/* Fields */}
             <FieldGroup>
               <ArchiveField htmlFor="voyager-display-name" label="DISPLAY NAME">
-                <input id="voyager-display-name" value={form.display_name} onChange={e => setF('display_name', e.target.value)} />
+                <ArchiveInput id="voyager-display-name" value={form.display_name} onChange={e => setF('display_name', e.target.value)} />
               </ArchiveField>
               <ArchiveField htmlFor="voyager-location" label="LOCATION">
-                <input id="voyager-location" value={form.location} onChange={e => setF('location', e.target.value)} placeholder="City, Country" />
+                <ArchiveInput id="voyager-location" value={form.location} onChange={e => setF('location', e.target.value)} placeholder="City, Country" />
               </ArchiveField>
             </FieldGroup>
 
@@ -384,7 +333,7 @@ export default function VoyagersPage() {
               htmlFor="voyager-bio"
               label={`BIO (${form.bio.length} / ${BIO_LIMIT})`}
             >
-              <textarea
+              <ArchiveTextarea
                 id="voyager-bio"
                 value={form.bio}
                 maxLength={BIO_LIMIT}
@@ -396,23 +345,23 @@ export default function VoyagersPage() {
             <ArchiveSectionLabel className="voyagers-modal-section-label">SOCIAL LINKS</ArchiveSectionLabel>
             <FieldGroup>
               <ArchiveField htmlFor="voyager-x" label="X / TWITTER (FULL URL)">
-                <input id="voyager-x" value={form.social_x} onChange={e => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
+                <ArchiveInput id="voyager-x" value={form.social_x} onChange={e => setF('social_x', e.target.value)} placeholder="https://x.com/yourhandle" />
               </ArchiveField>
               <ArchiveField htmlFor="voyager-instagram" label="INSTAGRAM (FULL URL)">
-                <input id="voyager-instagram" value={form.social_instagram} onChange={e => setF('social_instagram', e.target.value)} placeholder="https://instagram.com/yourhandle" />
+                <ArchiveInput id="voyager-instagram" value={form.social_instagram} onChange={e => setF('social_instagram', e.target.value)} placeholder="https://instagram.com/yourhandle" />
               </ArchiveField>
               <ArchiveField htmlFor="voyager-linkedin" label="LINKEDIN (FULL URL)">
-                <input id="voyager-linkedin" value={form.social_linkedin} onChange={e => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
+                <ArchiveInput id="voyager-linkedin" value={form.social_linkedin} onChange={e => setF('social_linkedin', e.target.value)} placeholder="https://linkedin.com/in/yourhandle" />
               </ArchiveField>
             </FieldGroup>
 
             <ArchiveSectionLabel className="voyagers-modal-section-label">FIELD DATA</ArchiveSectionLabel>
             <FieldGroup cols={2}>
               <ArchiveField htmlFor="voyager-observation-days" label="OBSERVATION DAYS">
-                <input id="voyager-observation-days" type="number" min="0" value={form.observation_days} onChange={e => setF('observation_days', e.target.value)} />
+                <ArchiveInput id="voyager-observation-days" type="number" min="0" value={form.observation_days} onChange={e => setF('observation_days', e.target.value)} />
               </ArchiveField>
               <ArchiveField htmlFor="voyager-worlds" label="WORLDS DISCOVERED">
-                <input id="voyager-worlds" type="number" min="0" value={form.worlds_discovered} onChange={e => setF('worlds_discovered', e.target.value)} />
+                <ArchiveInput id="voyager-worlds" type="number" min="0" value={form.worlds_discovered} onChange={e => setF('worlds_discovered', e.target.value)} />
               </ArchiveField>
             </FieldGroup>
 
@@ -422,19 +371,16 @@ export default function VoyagersPage() {
               </div>
             )}
 
+            {profileUnknown && <ArchiveButton variant="secondary" onClick={() => window.location.reload()}>Reload and review profile</ArchiveButton>}
             <div className="voyagers-modal-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
-              <ArchiveButton onClick={closeEdit} variant="ghost">
-                CANCEL
-              </ArchiveButton>
               <ArchiveButton
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || profileUnknown}
               >
                 {saving ? 'SAVING...' : 'SAVE'}
               </ArchiveButton>
             </div>
-          </div>
-        </div>
+          </ArchiveSheet>
       )}
     </main>
   )
@@ -449,14 +395,6 @@ function FieldGroup({ cols = 1, children }: { cols?: number; children: React.Rea
 }
 
 // ── Batch rail helpers ─────────────────────────────────────────────────────
-function railArrow(side: 'left' | 'right'): React.CSSProperties {
-  return {
-    position: 'absolute', top: '50%', transform: 'translateY(-50%)', [side]: '-4px', zIndex: 3,
-    width: 28, height: 28, borderRadius: '50%', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(15,20,48,0.92)', border: '1px solid rgba(227,82,5,0.3)',
-    color: '#C84406', fontFamily: 'var(--font-mono)', fontSize: '1rem', lineHeight: 1, cursor: 'pointer',
-  }
-}
 // ── Card component ─────────────────────────────────────────────────────────
 function VoyagerCard({
   voyager, user, isAtLeast, onEditClick, isArchitect = false,
@@ -467,113 +405,24 @@ function VoyagerCard({
   onEditClick: (v: VoyagerProfile) => void
   isArchitect?: boolean
 }) {
-  const color    = accentColor(voyager.display_name)
-  const initStr  = getInitials(voyager.display_name)
-  const isOwn    = isAtLeast('voyager') && user?.id === voyager.id
-  const avatarSrc = voyager.avatar_url ?? null
-
+  const isOwn = isAtLeast('voyager') && user?.id === voyager.id
   const links = [
-    voyager.social_x         && { key: 'x',  icon: <XIcon />,         href: voyager.social_x },
-    voyager.social_instagram && { key: 'ig', icon: <InstagramIcon />,  href: voyager.social_instagram },
-    voyager.social_linkedin  && { key: 'li', icon: <LinkedInIcon />,   href: voyager.social_linkedin },
+    voyager.social_x && { key: 'X', icon: <XIcon />, href: voyager.social_x },
+    voyager.social_instagram && { key: 'Instagram', icon: <InstagramIcon />, href: voyager.social_instagram },
+    voyager.social_linkedin && { key: 'LinkedIn', icon: <LinkedInIcon />, href: voyager.social_linkedin },
   ].filter(Boolean) as { key: string; icon: React.ReactNode; href: string }[]
-
-  return (
-    <ArchiveCard
-      actionable={isOwn}
-      onClick={isOwn ? () => onEditClick(voyager) : undefined}
-      className="voyager-card transition-all duration-200"
-      style={{
-        borderColor: isOwn ? `${color}55` : isArchitect ? 'rgba(200,68,6,0.18)' : 'rgba(227,82,5,0.16)',
-      }}
-    >
-      {/* Avatar + name row */}
-      <div className="flex items-start gap-3 mb-3">
-        <div className="relative shrink-0">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-mono font-bold overflow-hidden"
-            style={{ background: avatarSrc ? 'transparent' : `${color}18`, color, border: `2px solid ${color}40` }}
-          >
-            {avatarSrc
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={avatarSrc} alt={voyager.display_name} className="w-full h-full object-cover" />
-              : initStr}
-          </div>
-          {isOwn && (
-            <div
-              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border"
-              style={{ background: '#151B3A', borderColor: '#C84406', color: '#C84406' }}
-            >
-              <Camera size={10} />
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-mono font-semibold" style={{ color: '#F5F5F5' }}>
-              {voyager.display_name}
-            </span>
-            {isOwn && (
-              <span className="voyager-card__tag text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#C84406', borderColor: 'rgba(200,68,6,0.4)', background: 'rgba(200,68,6,0.08)' }}>
-                YOU
-              </span>
-            )}
-            {isArchitect && (
-              <span className="voyager-card__tag text-xs font-mono px-1.5 py-0.5 border" style={{ color: '#E8A020', borderColor: 'rgba(232,160,32,0.35)', background: 'rgba(232,160,32,0.06)' }}>
-                ARCHITECT
-              </span>
-            )}
-          </div>
-          {voyager.location && (
-            <div className="text-xs font-mono mt-0.5" style={{ color: 'rgba(245,245,245,0.35)' }}>{voyager.location}</div>
-          )}
-          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>
-            joined {formatJoinDate(voyager.joined_at)}
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="flex gap-4 mb-3 py-2 border-y" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
-        <div className="text-center flex-1">
-          <div className="text-xl font-mono font-bold" style={{ color: '#C84406' }}>
-            {voyager.observation_days}
-          </div>
-          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>OBS DAYS</div>
-        </div>
-        <div className="w-px" style={{ background: 'rgba(227,82,5,0.16)' }} />
-        <div className="text-center flex-1">
-          <div className="text-xl font-mono font-bold" style={{ color: '#20D890' }}>
-            {voyager.worlds_discovered}
-          </div>
-          <div className="text-xs font-mono" style={{ color: 'rgba(245,245,245,0.35)' }}>WORLDS</div>
-        </div>
-      </div>
-
-      {/* Bio — display limit matches BIO_LIMIT */}
-      <p className="text-xs leading-relaxed font-mono mb-3" style={{ color: 'rgba(245,245,245,0.55)' }}>
-        {voyager.bio
-          ? (voyager.bio.length > BIO_LIMIT ? voyager.bio.slice(0, BIO_LIMIT) + '…' : voyager.bio)
-          : '—'}
-      </p>
-
-      {/* Social links — stop card click from propagating */}
-      {links.length > 0 && (
-        <div className="flex gap-3 pt-2 border-t" style={{ borderColor: 'rgba(227,82,5,0.16)' }}>
-          {links.map(({ key, icon, href }) => (
-            <a key={key} href={href} target="_blank" rel="noopener noreferrer"
-              onClick={e => e.stopPropagation()}
-              className="voyager-card__social flex items-center justify-center w-7 h-7 border transition-colors"
-              style={{ borderColor: 'rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', borderRadius: '2px' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(242,240,230,0.2)'; (e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.55)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(227,82,5,0.16)'; (e.currentTarget as HTMLElement).style.color = 'rgba(245,245,245,0.35)' }}
-            >
-              {icon}
-            </a>
-          ))}
-        </div>
-      )}
-    </ArchiveCard>
-  )
+  return <article className={`voyager-directory-row${isArchitect ? ' voyager-directory-row--architect' : ''}`}>
+    <div className="voyager-directory-identity">
+      <div className="voyager-directory-portrait">{voyager.avatar_url
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img src={voyager.avatar_url} alt={voyager.display_name} />
+        : <span>{getInitials(voyager.display_name)}</span>}</div>
+      <div><h3>{voyager.display_name}</h3>{isArchitect && <p>ARCHITECT</p>}{voyager.location && <p>{voyager.location}</p>}<p>{voyager.observation_days} observation days</p>
+    <details className="voyager-directory-details"><summary>Worlds &amp; observations <ArrowRight aria-hidden size={16} /></summary>
+      <div><p>{voyager.worlds_discovered} worlds · Joined {formatJoinDate(voyager.joined_at)}</p>{voyager.bio && <p>{voyager.bio}</p>}
+      {links.length > 0 && <div className="voyager-directory-social">{links.map(({key,icon,href})=><a key={key} href={href} aria-label={`${voyager.display_name} on ${key}`} target="_blank" rel="noopener noreferrer">{icon}</a>)}</div>}
+      {isOwn && <ArchiveButton variant="secondary" onClick={() => onEditClick(voyager)}>Edit profile</ArchiveButton>}</div>
+    </details></div>
+    </div>
+  </article>
 }

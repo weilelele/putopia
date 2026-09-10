@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveSelect, ArchiveTextarea, ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect } from 'react'
 import { generateNews, getArchitects } from '@/lib/actions/news-gen'
 import { createIntel } from '@/lib/actions/intel'
@@ -10,11 +12,11 @@ import type { GeneratedNews } from '@/lib/actions/news-gen'
 const S = {
   card:  { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '24px', marginBottom: '16px' } as React.CSSProperties,
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '6px' } as React.CSSProperties,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
-  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as React.CSSProperties,
-  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' } as React.CSSProperties,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
+  area:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical', boxSizing: 'border-box' } as React.CSSProperties,
+  sel:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none' } as React.CSSProperties,
   btn:   (color: string, dim?: boolean) => ({
-    padding: '9px 22px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em',
+    padding: '9px 22px', fontFamily: 'var(--font-mono)', fontSize: '12px', letterSpacing: '0.15em',
     cursor: dim ? 'not-allowed' : 'pointer', border: `1px solid ${color}`, color,
     background: dim ? 'transparent' : `${color}14`, opacity: dim ? 0.5 : 1,
   }) as React.CSSProperties,
@@ -161,7 +163,7 @@ export default function CreateNewsPage() {
           <div style={{ color: '#F5F5F5', fontSize: '20px', fontWeight: 'bold', marginTop: '2px' }}>AI 情报生成</div>
         </div>
         {phase !== 'input' && (
-          <button onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>← 重新开始</button>
+          <ArchiveButton type="submit" variant="secondary" onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>← 重新开始</ArchiveButton>
         )}
       </div>
 
@@ -171,7 +173,7 @@ export default function CreateNewsPage() {
           <div key={p} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: 'var(--fs-caption)', fontFamily: 'monospace',
+              justifyContent: 'center', fontSize: 'var(--fs-caption)', fontFamily: 'var(--font-mono)',
               background: phase === p ? '#C84406' : ((['input','review','done'].indexOf(phase) > i) ? '#151B3A' : '#0F1430'),
               border: `1px solid ${phase === p ? '#C84406' : 'rgba(227,82,5,0.16)'}`,
               color: phase === p ? '#fff' : 'rgba(245,245,245,0.35)',
@@ -199,12 +201,12 @@ export default function CreateNewsPage() {
               {/* 发布者选择 */}
               <div>
                 <label style={S.label}>发布者 *</label>
-                <select style={S.sel} value={selectedId} onChange={e => setSelectedId(e.target.value)}>
+                <ArchiveSelect style={S.sel} value={selectedId} onChange={e => setSelectedId(e.target.value)}>
                   <option value="">— 选择 Architect —</option>
                   {architects.map(a => (
                     <option key={a.id} value={a.id}>{a.display_name}{a.location ? `  ·  ${a.location}` : ''}</option>
                   ))}
-                </select>
+                </ArchiveSelect>
                 {selectedPersona?.bio && (
                   <div style={{ marginTop: '8px', padding: '8px 10px', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', fontSize: '12px', lineHeight: 1.6 }}>
                     {selectedPersona.bio}
@@ -215,17 +217,17 @@ export default function CreateNewsPage() {
               {/* 情报类型 */}
               <div>
                 <label style={S.label}>情报类型</label>
-                <select style={S.sel} value={tag} onChange={e => setTag(e.target.value as IntelTag)}>
+                <ArchiveSelect style={S.sel} value={tag} onChange={e => setTag(e.target.value as IntelTag)}>
                   {(Object.entries(TAG_LABELS) as [IntelTag, string][]).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
                   ))}
-                </select>
+                </ArchiveSelect>
               </div>
 
               {/* Idea 输入 */}
               <div>
                 <label style={S.label}>核心 Idea *</label>
-                <textarea
+                <ArchiveTextarea
                   style={{ ...S.area, minHeight: '120px' }}
                   value={idea}
                   onChange={e => setIdea(e.target.value)}
@@ -241,13 +243,13 @@ export default function CreateNewsPage() {
               )}
 
               <div>
-                <button
+                <ArchiveButton type="submit" variant="secondary"
                   onClick={handleGenerate}
                   disabled={generating}
                   style={S.btn('#E35205', generating)}
                 >
                   {generating ? '✦ 生成中...' : '✦ AI 生成草稿'}
-                </button>
+                </ArchiveButton>
                 {generating && (
                   <span style={{ marginLeft: '12px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
                     正在调用 Claude，通常需要 5-10 秒...
@@ -270,7 +272,7 @@ export default function CreateNewsPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={selectedPersona.avatar_url} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(227,82,5,0.16)' }} />
               ) : (
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#151B3A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E35205', fontSize: '14px', fontFamily: 'monospace' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#151B3A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E35205', fontSize: '14px', fontFamily: 'var(--font-mono)' }}>
                   {selectedPersona.display_name[0]}
                 </div>
               )}
@@ -287,13 +289,13 @@ export default function CreateNewsPage() {
           {/* 标题编辑 */}
           <div style={S.card}>
             <label style={S.label}>标题（可编辑）</label>
-            <input style={S.input} value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+            <ArchiveInput style={S.input} value={editTitle} onChange={e => setEditTitle(e.target.value)} />
           </div>
 
           {/* 正文编辑 */}
           <div style={S.card}>
             <label style={S.label}>正文（可编辑）</label>
-            <textarea style={{ ...S.area, minHeight: '160px' }} value={editContent} onChange={e => setEditContent(e.target.value)} />
+            <ArchiveTextarea style={{ ...S.area, minHeight: '160px' }} value={editContent} onChange={e => setEditContent(e.target.value)} />
             <div style={{ marginTop: '6px', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
               {editContent.length} 字 · 配图提示词：<span style={{ color: 'rgba(245,245,245,0.35)', fontStyle: 'italic' }}>{generated.imagePrompt}</span>
             </div>
@@ -347,11 +349,11 @@ export default function CreateNewsPage() {
 
                   {/* 已选标记 */}
                   {selectedImg === url && (
-                    <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#E35205', color: '#0F1430', fontSize: 'var(--fs-caption)', padding: '2px 6px', fontFamily: 'monospace' }}>✓ 已选</div>
+                    <div style={{ position: 'absolute', top: '6px', right: '6px', background: '#E35205', color: '#0F1430', fontSize: 'var(--fs-caption)', padding: '2px 6px', fontFamily: 'var(--font-mono)' }}>✓ 已选</div>
                   )}
 
                   {/* 图片序号 */}
-                  <div style={{ position: 'absolute', bottom: '5px', left: '6px', background: 'rgba(0,0,0,0.7)', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', padding: '1px 5px', fontFamily: 'monospace' }}>
+                  <div style={{ position: 'absolute', bottom: '5px', left: '6px', background: 'rgba(0,0,0,0.7)', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', padding: '1px 5px', fontFamily: 'var(--font-mono)' }}>
                     {imgLoaded[i] && !imgErrors[i] ? `图 ${i + 1}` : '...'}
                   </div>
                 </div>
@@ -372,16 +374,16 @@ export default function CreateNewsPage() {
           )}
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               onClick={handlePublish}
               disabled={publishing || !editTitle.trim() || !editContent.trim()}
               style={S.btn('#C84406', publishing || !editTitle.trim() || !editContent.trim())}
             >
               {publishing ? '发布中...' : '▶ 发布情报'}
-            </button>
-            <button onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
+            </ArchiveButton>
+            <ArchiveButton type="submit" variant="secondary" onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
               ↺ 重新生成
-            </button>
+            </ArchiveButton>
             <span style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)' }}>
               {!selectedImg ? '未选图片，将以无图发布' : '已选 1 张配图'}
             </span>
@@ -401,9 +403,9 @@ export default function CreateNewsPage() {
             <a href="/intel" target="_blank" style={{ ...S.btn('#E35205'), textDecoration: 'none', display: 'inline-block' }}>
               查看情报页 →
             </a>
-            <button onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
+            <ArchiveButton type="submit" variant="secondary" onClick={handleReset} style={S.btn('rgba(245,245,245,0.35)')}>
               + 再创建一条
-            </button>
+            </ArchiveButton>
           </div>
         </div>
       )}

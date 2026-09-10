@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
@@ -9,7 +10,7 @@ import { resolveVariant, type ResolvedVariant } from '@/lib/onboarding-variants'
 import type { OnboardingVariantRow } from '@/types/database'
 import { FlameSlider, WorldChoiceCards, ConsoleChoiceCards, WORLD_OPTIONS, URGENCY_READINGS, URGENCY_END_LABELS, urgencyToReason } from '@/components/flame-slider'
 import { submitApplication } from '@/lib/actions/applications'
-import { HudField } from '@/components/hud-field'
+import { ArchiveField } from '@/components/archive-field'
 import { ArchiveButton } from '@/components/archive-button'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 
@@ -377,27 +378,27 @@ function VideoSection({ src }: { src: string }) {
       {/* ── Layer 1: CRT Scanlines ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
-        background: 'repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,0,0,0.10) 3px, rgba(0,0,0,0.10) 4px)',
+        background: 'transparent',
       }} />
 
       {/* ── Layer 2: Vignette (dark corners) ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
-        background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(5,8,22,0.72) 100%)',
+        background: 'transparent',
       }} />
 
       {/* ── Layer 3: Cyan inset glow — screen edge bleed ── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
-        boxShadow: 'inset 0 0 35px rgba(200,68,6,0.07), inset 0 0 70px rgba(200,68,6,0.03)',
+        boxShadow: 'none',
       }} />
 
       {/* ── Layer 4: Sweeping scan line ── */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 4 }}>
         <div style={{
           position: 'absolute', left: 0, right: 0, height: 2,
-          background: 'linear-gradient(90deg, transparent 0%, rgba(200,68,6,0.35) 30%, rgba(200,68,6,0.65) 50%, rgba(200,68,6,0.35) 70%, transparent 100%)',
-          boxShadow: '0 0 8px rgba(200,68,6,0.4), 0 0 20px rgba(200,68,6,0.15)',
+          background: 'transparent',
+          boxShadow: 'none',
           animation: 'videoSweep 5s linear infinite',
         }} />
       </div>
@@ -406,7 +407,7 @@ function VideoSection({ src }: { src: string }) {
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: '28%',
         pointerEvents: 'none', zIndex: 5,
-        background: 'linear-gradient(180deg, rgba(255,30,60,0.07) 0%, transparent 100%)',
+        background: 'transparent',
         mixBlendMode: 'screen',
       }} />
 
@@ -414,7 +415,7 @@ function VideoSection({ src }: { src: string }) {
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, height: '28%',
         pointerEvents: 'none', zIndex: 5,
-        background: 'linear-gradient(0deg, rgba(0,210,255,0.07) 0%, transparent 100%)',
+        background: 'transparent',
         mixBlendMode: 'screen',
       }} />
 
@@ -618,14 +619,8 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
         <form className="onboarding-email-form" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-            <label style={{
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-              letterSpacing: '0.3em', color: 'var(--color-star-deep)',
-            }}>
-              YOUR EMAIL
-            </label>
-            <HudField style={{ width: '100%' }}>
-              <input
+            <ArchiveField htmlFor="join-email" label="YOUR EMAIL">
+              <ArchiveInput
                 ref={inputRef}
                 type="email"
                 required
@@ -635,7 +630,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
                 className="input-dark"
                 style={{ width: '100%' }}
               />
-            </HudField>
+            </ArchiveField>
           </div>
 
           {submitError && (
@@ -875,8 +870,8 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
           ref={beamRef}
           style={{
             position: 'absolute', left: 0, right: 0, top: '-4px', height: 4,
-            background: 'linear-gradient(90deg, transparent 0%, rgba(200,68,6,0.25) 10%, rgba(200,68,6,1) 50%, rgba(200,68,6,0.25) 90%, transparent 100%)',
-            boxShadow: '0 0 24px rgba(200,68,6,1), 0 0 80px rgba(200,68,6,0.65), 0 0 160px rgba(200,68,6,0.25), 0 12px 60px rgba(200,68,6,0.18)',
+            background: 'transparent',
+            boxShadow: 'none',
           }}
         />
       </div>
@@ -884,7 +879,7 @@ function ScanTransition({ onComplete }: { onComplete: () => void }) {
       {/* CRT scanlines over everything */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: 'repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px)',
+        background: 'transparent',
       }} />
 
     </div>
@@ -915,7 +910,7 @@ function SuccessScreen() {
         border: '1px solid rgba(32,216,144,0.4)',
         background: 'rgba(32,216,144,0.04)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 0 28px rgba(32,216,144,0.14)',
+        boxShadow: 'none',
       }}>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-h3)', color: 'var(--color-ok)' }}>✓</span>
       </div>

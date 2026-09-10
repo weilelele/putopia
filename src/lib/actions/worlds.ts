@@ -433,8 +433,19 @@ export async function graduateWorld(worldId: string): Promise<{ ok: boolean; err
   if (!first) return { ok: false, error: 'Add a Final Form asset before graduating' }
 
   const poster = first.poster_url ?? first.url
-  const { error } = await admin.from('worlds').update({ lifecycle_state: 'stable', image_path: poster }).eq('id', worldId)
+  const { data: transitioned, error } = await admin.from('worlds').update({ lifecycle_state: 'stable', image_path: poster }).eq('id', worldId).neq('lifecycle_state', 'stable').select('id,name,name_en').maybeSingle()
   if (error) return { ok: false, error: error.message }
+  if (transitioned) {
+    const client = await createClient()
+    const { data: { user } } = await client.auth.getUser()
+    const { data: actor } = user ? await admin.from('voyager_profiles').select('display_name').eq('id', user.id).maybeSingle() : { data: null }
+    await logActivity({ actor_id: user?.id ?? null, actor_name: actor?.display_name ?? 'Collective', actor_role: 'architect', event_type: 'world_established', target_id: worldId, target_title: transitioned.name_en || transitioned.name, target_image: poster, target_href: `/worlds/${encodeURIComponent(worldId)}` })
+    revalidatePath('/console')
+  }
+  if (!transitioned) {
+    const { error: posterError } = await admin.from('worlds').update({ image_path: poster }).eq('id', worldId).eq('lifecycle_state', 'stable')
+    if (posterError) return { ok: false, error: posterError.message }
+  }
   revalidatePath('/worlds')
   revalidatePath(`/worlds/${worldId}`)
   return { ok: true }

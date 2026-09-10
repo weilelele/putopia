@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput } from '@/components/archive-input'
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { listFinalFormAssets, recordFinalFormAsset, removeFinalFormAsset, graduateWorld } from '@/lib/actions/worlds'
@@ -89,7 +91,7 @@ export function FinalFormPanel({ worldId }: { worldId: string }) {
         <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: '#20D890' }}>FINAL FORM</span>
         <label style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: '#E35205', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1, border: '1px solid rgba(227,82,5,0.4)', padding: '4px 10px' }}>
           {busy ? 'Working…' : '+ Upload image / video'}
-          <input ref={fileRef} type="file" accept="image/*,video/*" disabled={busy} onChange={onPick} style={{ display: 'none' }} />
+          <ArchiveInput ref={fileRef} type="file" accept="image/*,video/*" disabled={busy} onChange={onPick} style={{ display: 'none' }} />
         </label>
       </div>
 
@@ -104,17 +106,17 @@ export function FinalFormPanel({ worldId }: { worldId: string }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={a.poster_url || a.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               {a.media === 'video' && <span style={{ position: 'absolute', bottom: 2, left: 3, fontSize: 'var(--fs-caption)', color: '#20D890' }}>▶</span>}
-              <button onClick={() => onRemove(a.id)} disabled={busy} aria-label="Remove" style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, lineHeight: '16px', textAlign: 'center', background: 'rgba(7,9,18,0.8)', border: '1px solid rgba(232,48,48,0.5)', color: '#E83030', fontSize: 12, cursor: 'pointer', padding: 0 }}>×</button>
+              <ArchiveButton type="submit" variant="ghost" onClick={() => onRemove(a.id)} disabled={busy} aria-label="Remove" style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, lineHeight: '16px', textAlign: 'center', cursor: 'pointer', padding: 0 }}>×</ArchiveButton>
             </div>
           ))}
         </div>
       )}
 
-      <button
+      <ArchiveButton type="submit" variant="secondary"
         onClick={onGraduate}
         disabled={busy || assets.length === 0}
-        style={{ width: '100%', padding: '7px 0', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', fontWeight: 700, border: 'none', cursor: busy || assets.length === 0 ? 'default' : 'pointer', background: assets.length === 0 ? 'rgba(32,216,144,0.18)' : '#20D890', color: assets.length === 0 ? 'rgba(245,245,245,0.4)' : '#06140D' }}
-      >GRADUATE → ESTABLISHED</button>
+        style={{ width: '100%', padding: '7px 0', cursor: busy || assets.length === 0 ? 'default' : 'pointer', background: assets.length === 0 ? 'rgba(32,216,144,0.18)' : '#20D890', color: assets.length === 0 ? 'rgba(245,245,245,0.4)' : '#06140D' }}
+      >GRADUATE → ESTABLISHED</ArchiveButton>
     </div>
   )
 }

@@ -1,10 +1,12 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect } from 'react'
 import { getMcFunctions, createMcFunction, updateMcFunction, deleteMcFunction } from '@/lib/actions/mc-functions'
 import type { McFunction, McFunctionStatus } from '@/types/database'
 import { Plus, Trash2, GripVertical } from 'lucide-react'
-import { HudField } from '@/components/hud-field'
+import { ArchiveField } from '@/components/archive-field'
 
 const STATUS_OPTIONS: { value: McFunctionStatus; label: string; color: string }[] = [
   { value: 'active',         label: '生效',   color: '#20D890' },
@@ -74,8 +76,8 @@ export default function McConfigPage() {
 
         {/* Function list */}
         <div className="hud-frame" style={{ marginBottom: '1.5rem' }}>
-          <div className="hud-tick-rail hud-tick-left" />
-          <div className="hud-tick-rail hud-tick-right" />
+
+
           <div style={{ padding: '0 0.5rem' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
               CONFIRMED FUNCTIONS
@@ -100,43 +102,32 @@ export default function McConfigPage() {
                       <GripVertical size={14} style={{ color: 'rgba(245,245,245,0.35)', cursor: 'grab' }} />
 
                       {/* Name */}
-                      <input
+                      <ArchiveInput
                         defaultValue={fn.name}
                         onBlur={e => handleNameBlur(fn.id, e.target.value)}
-                        style={{
-                          background: 'transparent', border: 'none', outline: 'none',
-                          fontFamily: 'var(--font-mono)', fontSize: '0.75rem',
-                          color: 'var(--color-star-dim)', width: '100%',
-                        }}
+                        style={{ outline: 'none', width: '100%' }}
                       />
 
                       {/* Status selector */}
                       <div style={{ display: 'flex', gap: '0.4rem' }}>
                         {STATUS_OPTIONS.map(opt => (
-                          <button
+                          <ArchiveButton type="submit" variant="secondary"
                             key={opt.value}
                             onClick={() => handleStatusChange(fn.id, opt.value)}
-                            style={{
-                              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-                              letterSpacing: '0.08em', padding: '3px 8px',
-                              border: `1px solid ${fn.status === opt.value ? opt.color : 'rgba(227,82,5,0.16)'}`,
-                              background: fn.status === opt.value ? `${opt.color}18` : 'transparent',
-                              color: fn.status === opt.value ? opt.color : 'rgba(245,245,245,0.35)',
-                              cursor: 'pointer', transition: 'all 0.15s',
-                            }}
+                            style={{ padding: '3px 8px', border: `1px solid ${fn.status === opt.value ? opt.color : 'rgba(227,82,5,0.16)'}`, background: fn.status === opt.value ? `${opt.color}18` : 'transparent', color: fn.status === opt.value ? opt.color : 'rgba(245,245,245,0.35)', cursor: 'pointer', transition: 'all 0.15s' }}
                           >
                             {opt.label}
-                          </button>
+                          </ArchiveButton>
                         ))}
                       </div>
 
                       {/* Delete */}
-                      <button
+                      <ArchiveButton type="submit" variant="secondary"
                         onClick={() => handleDelete(fn.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(245,245,245,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         <Trash2 size={14} />
-                      </button>
+                      </ArchiveButton>
                     </div>
                   )
                 })}
@@ -147,17 +138,16 @@ export default function McConfigPage() {
 
         {/* Add new */}
         <div className="hud-frame">
-          <div className="hud-tick-rail hud-tick-left" />
-          <div className="hud-tick-rail hud-tick-right" />
+
+
           <div style={{ padding: '0 0.5rem' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.22em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
               ADD FUNCTION
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <div style={{ flex: 1, minWidth: 180 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>NAME</div>
-                <HudField style={{ width: '100%' }}>
-                  <input
+                <ArchiveField htmlFor="mc-function-name" label="NAME">
+                  <ArchiveInput
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAdd()}
@@ -165,37 +155,30 @@ export default function McConfigPage() {
                     className="input-dark"
                     style={{ width: '100%' }}
                   />
-                </HudField>
+                </ArchiveField>
               </div>
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginBottom: '0.35rem', letterSpacing: '0.12em' }}>STATUS</div>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
                   {STATUS_OPTIONS.map(opt => (
-                    <button
+                    <ArchiveButton type="submit" variant="secondary"
                       key={opt.value}
                       onClick={() => setNewStatus(opt.value)}
-                      style={{
-                        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-                        letterSpacing: '0.08em', padding: '5px 10px',
-                        border: `1px solid ${newStatus === opt.value ? opt.color : 'rgba(227,82,5,0.16)'}`,
-                        background: newStatus === opt.value ? `${opt.color}18` : 'transparent',
-                        color: newStatus === opt.value ? opt.color : 'rgba(245,245,245,0.35)',
-                        cursor: 'pointer', transition: 'all 0.15s',
-                      }}
+                      style={{ padding: '5px 10px', border: `1px solid ${newStatus === opt.value ? opt.color : 'rgba(227,82,5,0.16)'}`, background: newStatus === opt.value ? `${opt.color}18` : 'transparent', color: newStatus === opt.value ? opt.color : 'rgba(245,245,245,0.35)', cursor: 'pointer', transition: 'all 0.15s' }}
                     >
                       {opt.label}
-                    </button>
+                    </ArchiveButton>
                   ))}
                 </div>
               </div>
-              <button
+              <ArchiveButton type="submit" variant="primary"
                 onClick={handleAdd}
                 disabled={!newName.trim() || adding}
                 className="btn-primary"
-                style={{ padding: '0.5rem 1.1rem', fontSize: 'var(--fs-caption)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                style={{ padding: '0.5rem 1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
               >
                 <Plus size={12} /> ADD
-              </button>
+              </ArchiveButton>
             </div>
             {error && (
               <div style={{ marginTop: '0.5rem', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-fault)' }}>{error}</div>

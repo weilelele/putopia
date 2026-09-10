@@ -1,17 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getPublishedStories } from '@/lib/actions/stories'
 import { useAuth } from '@/lib/auth-context'
 import { SectionTracker } from '@/components/section-tracker'
 import { BackLink } from '@/components/back-link'
 import { Plus, ArrowRight } from 'lucide-react'
 import type { StoryWithAvatar } from '@/types/database'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkCard } from '@/components/archive-link-card'
 import { ArchivePageHeader } from '@/components/archive-page-header'
+import { createClientDataCache } from '@/lib/client-data-cache'
+
+const logsPageCache = createClientDataCache<StoryWithAvatar[]>(5 * 60_000)
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -30,36 +33,44 @@ function getInitials(name: string) {
 
 export default function LogsPage() {
   const { isAtLeast } = useAuth()
-  const [stories, setStories] = useState<StoryWithAvatar[]>([])
+  const [stories, setStories] = useState<StoryWithAvatar[]>(() => logsPageCache.peek() ?? [])
 
-  useEffect(() => { getPublishedStories().then(setStories) }, [])
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(() => logsPageCache.peek() ? 'ready' : 'loading')
+  const loadStories = useCallback(async (force = false) => {
+    setStatus('loading')
+    try {
+      setStories(await logsPageCache.load(getPublishedStories, force))
+      setStatus('ready')
+    } catch {
+      setStatus('error')
+    }
+  }, [])
+
+  useEffect(() => { void Promise.resolve().then(() => loadStories()) }, [loadStories])
 
   return (
-    <main className="main pilot-archive-page archive-collection-page archive-logs-page">
+    <main className="main pilot-archive-page archive-collection-page archive-logs-page" data-route-scroll>
       <SectionTracker section="logs" />
-      <ArchiveBrandHeader />
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGER LOGS</div>
-        <div className="right">
-          <div className="item">ENTRIES <span className="val">{stories.length}</span></div>
-        </div>
-      </div>
+
+
 
       <BackLink href="/voyagers" label="VOYAGERS" />
       <ArchivePageHeader
         accent="LOGS"
         action={isAtLeast('architect') ? (
-          <ArchiveButton variant="secondary">
+          <ArchiveLinkButton href="/admin/stories" variant="secondary">
             <Plus size={12} />
             SUBMIT LOG ENTRY
-          </ArchiveButton>
+          </ArchiveLinkButton>
         ) : undefined}
         title="VOYAGER"
       />
 
       {/* Stories Feed */}
       <div className="space-y-6 max-w-3xl">
-        {stories.length === 0 && (
+        {status === 'loading' && <p role="status">Loading Voyager Logs…</p>}
+        {status === 'error' && <ArchiveCard><p>Voyager Logs could not be loaded.</p><ArchiveButton onClick={() => void loadStories(true)}>Retry</ArchiveButton></ArchiveCard>}
+        {status === 'ready' && stories.length === 0 && (
           <ArchiveCard className="archive-empty-state">
             <h2>NO LOG ENTRIES YET</h2>
             <p>Published Voyager stories will appear here.</p>

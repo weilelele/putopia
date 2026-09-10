@@ -1,0 +1,254 @@
+[
+  {
+    "file": "src/app/admin/WikiSyncButton.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/admin/activity/page.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/app/admin/analytics/day-selector.tsx",
+    "controls": 3
+  },
+  {
+    "file": "src/app/admin/analytics/refresh-button.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/admin/analytics/tabs.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/admin/create-news/page.tsx",
+    "controls": 10
+  },
+  {
+    "file": "src/app/admin/device-batches/batch-camera-fields.tsx",
+    "controls": 5
+  },
+  {
+    "file": "src/app/admin/device-batches/batch-config-editor.tsx",
+    "controls": 41
+  },
+  {
+    "file": "src/app/admin/device-batches/blueprints/story-blueprint-browser.tsx",
+    "controls": 34
+  },
+  {
+    "file": "src/app/admin/device-batches/new/new-batch-form.tsx",
+    "controls": 8
+  },
+  {
+    "file": "src/app/admin/dreamcatchers/dreamcatcher-editor.tsx",
+    "controls": 4
+  },
+  {
+    "file": "src/app/admin/intel/page.tsx",
+    "controls": 17
+  },
+  {
+    "file": "src/app/admin/mc-config/page.tsx",
+    "controls": 6
+  },
+  {
+    "file": "src/app/admin/onboarding-preview/page.tsx",
+    "controls": 10
+  },
+  {
+    "file": "src/app/admin/orders/page.tsx",
+    "controls": 13
+  },
+  {
+    "file": "src/app/admin/quiz/page.tsx",
+    "controls": 12
+  },
+  {
+    "file": "src/app/admin/signal-tasks/page.tsx",
+    "controls": 43
+  },
+  {
+    "file": "src/app/admin/stories/page.tsx",
+    "controls": 16
+  },
+  {
+    "file": "src/app/admin/votes/page.tsx",
+    "controls": 8
+  },
+  {
+    "file": "src/app/admin/voyagers/page.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/app/admin/worlds/page.tsx",
+    "controls": 15
+  },
+  {
+    "file": "src/app/apply/page.tsx",
+    "controls": 5
+  },
+  {
+    "file": "src/app/auth/expired/page.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/demo/page.tsx",
+    "controls": 3
+  },
+  {
+    "file": "src/app/devices/_components/batch-actions.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/devices/_components/batch-discussion-board.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/app/devices/error.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/devices/live/device-live-room.tsx",
+    "controls": 8
+  },
+  {
+    "file": "src/app/feed-demo/page.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/app/intel/CreateIntelModal.tsx",
+    "controls": 8
+  },
+  {
+    "file": "src/app/login/page.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/app/logs/[id]/page.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/new/demo/page.tsx",
+    "controls": 4
+  },
+  {
+    "file": "src/app/new/onboarding-client.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/profile/page.tsx",
+    "controls": 7
+  },
+  {
+    "file": "src/app/quiz/page.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/register/page.tsx",
+    "controls": 3
+  },
+  {
+    "file": "src/app/signal/SignalFeed.tsx",
+    "controls": 4
+  },
+  {
+    "file": "src/app/studio/StudioForm.tsx",
+    "controls": 8
+  },
+  {
+    "file": "src/app/ui-kit/ui-kit.tsx",
+    "controls": 10
+  },
+  {
+    "file": "src/app/vote/CreateVoteModal.tsx",
+    "controls": 5
+  },
+  {
+    "file": "src/app/voyager-path/page.tsx",
+    "controls": 4
+  },
+  {
+    "file": "src/app/voyagers/page.tsx",
+    "controls": 11
+  },
+  {
+    "file": "src/app/worldflow/worldflow-client.tsx",
+    "controls": 73
+  },
+  {
+    "file": "src/app/worlds/[id]/page.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/app/worlds/live/dreamcatcher-chat.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/app/worlds/live/worlds-live-room.tsx",
+    "controls": 13
+  },
+  {
+    "file": "src/components/VoteCard.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/components/access-gate.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/components/activity-feed.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/components/archive-reel.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/components/archive-sheet.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/components/archive-stat-strip.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/components/collapsible-world-grid.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/components/comment-thread.tsx",
+    "controls": 8
+  },
+  {
+    "file": "src/components/final-form-panel.tsx",
+    "controls": 3
+  },
+  {
+    "file": "src/components/flame-slider.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/components/mc-console-panel.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/components/member-picker.tsx",
+    "controls": 2
+  },
+  {
+    "file": "src/components/nav.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/components/path-status-bar.tsx",
+    "controls": 1
+  },
+  {
+    "file": "src/components/pwa-install-nudge.tsx",
+    "controls": 3
+  },
+  {
+    "file": "src/components/world-scan-hero.tsx",
+    "controls": 1
+  }
+]

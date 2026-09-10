@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useState } from 'react'
 import Link from 'next/link'
 
@@ -310,16 +311,9 @@ function VoteGroup({ events }: { events: FeedEvent[] }) {
 
       {/* Collapsed cast summary */}
       {!expanded && casts.length > 0 && (
-        <button
+        <ArchiveButton type="submit" variant="secondary"
           onClick={() => setExpanded(true)}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-            padding: '0.75rem 1rem',
-            background: 'transparent', border: 'none',
-            borderBottom: '1px solid var(--bd-faint)',
-            borderTop: '1px solid var(--bd-faint)',
-            cursor: 'pointer', textAlign: 'left',
-          }}
+          style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem 1rem', borderBottom: '1px solid var(--bd-faint)', borderTop: '1px solid var(--bd-faint)', cursor: 'pointer', textAlign: 'left' }}
           onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
         >
@@ -363,28 +357,20 @@ function VoteGroup({ events }: { events: FeedEvent[] }) {
           }}>
             EXPAND ▾
           </span>
-        </button>
+        </ArchiveButton>
       )}
 
       {expanded && casts.map(e => <FeedRow key={e.id} event={e} />)}
 
       {expanded && (
-        <button
+        <ArchiveButton type="submit" variant="secondary"
           onClick={() => setExpanded(false)}
-          style={{
-            width: '100%', padding: '0.4rem 1rem',
-            background: 'transparent', border: 'none',
-            borderBottom: '1px solid var(--bd-faint)',
-            borderTop: '1px solid var(--bd-faint)',
-            cursor: 'pointer',
-            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-            color: 'var(--color-star-deep)', textAlign: 'right', letterSpacing: '0.1em',
-          }}
+          style={{ width: '100%', padding: '0.4rem 1rem', borderBottom: '1px solid var(--bd-faint)', borderTop: '1px solid var(--bd-faint)', cursor: 'pointer', textAlign: 'right' }}
           onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-star-dim)')}
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-star-deep)')}
         >
           COLLAPSE ▴
-        </button>
+        </ArchiveButton>
       )}
     </div>
   )
@@ -428,7 +414,7 @@ export default function FeedDemoPage() {
           padding: '1.25rem 1rem 0.75rem',
           borderBottom: '1px solid var(--bd-faint)',
           position: 'sticky', top: 0, zIndex: 10,
-          background: 'rgba(10,14,39,0.92)', backdropFilter: 'blur(12px)',
+          background: 'rgba(10,14,39,0.92)', backdropFilter: 'none',
         }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.3rem' }}>
             PC://CONSOLE / DASHBOARD
@@ -438,7 +424,7 @@ export default function FeedDemoPage() {
               LIVE FEED
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#20D890', boxShadow: '0 0 7px #20D890', display: 'inline-block' }} />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#20D890', boxShadow: 'none', display: 'inline-block' }} />
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', letterSpacing: '0.1em' }}>
                 {new Date().toISOString().slice(0, 10).replace(/-/g, '.')}
               </span>

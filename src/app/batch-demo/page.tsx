@@ -72,12 +72,7 @@ export default function BatchDemoPage() {
         .batch-rail { scrollbar-width: none; }
       `}</style>
 
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> VOYAGERS <span>/</span> BATCH-DEMO</div>
-        <div className="right">
-          <div className="item">BATCHES <span className="val">{BATCHES.length}</span></div>
-        </div>
-      </div>
+
 
       <div className="page-head">
         <div>
@@ -127,7 +122,7 @@ export default function BatchDemoPage() {
                     background: isActive ? 'rgba(200,68,6,0.12)' : '#151B3A',
                     color: isActive ? '#C84406' : 'rgba(245,245,245,0.55)',
                     border: `1px solid ${isActive ? '#C84406' : 'rgba(227,82,5,0.16)'}`,
-                    boxShadow: isActive ? '0 0 12px rgba(200,68,6,0.18)' : 'none',
+                    boxShadow: 'none',
                     cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s',
                   }}
                 >
@@ -191,7 +186,7 @@ function fadeStyle(side: 'left' | 'right'): React.CSSProperties {
   return {
     position: 'absolute', top: 0, bottom: 0, [side]: 0, width: 40, zIndex: 2,
     pointerEvents: 'none',
-    background: `linear-gradient(to ${side === 'left' ? 'right' : 'left'}, var(--bg-base, #0A0E27), transparent)`,
+    background: 'transparent',
   }
 }
 

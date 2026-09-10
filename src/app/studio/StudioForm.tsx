@@ -1,7 +1,7 @@
 'use client'
 
+import { ArchiveSelect, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchivePageHeader } from '@/components/archive-page-header'
 
@@ -90,7 +90,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
   return (
     <div className="studio-archive">
       <div className="studio-archive-heading">
-        <ArchiveBrandHeader />
+
         <ArchivePageHeader title="CONTENT" accent="STUDIO" />
       </div>
       <div className="studio-archive-layout" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
@@ -111,22 +111,15 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
               {(['instagram', 'twitter'] as Platform[]).map(p => {
                 const active = platforms.includes(p)
                 return (
-                  <button
+                  <ArchiveButton variant="secondary"
                     type="button"
                     key={p}
                     onClick={() => togglePlatform(p)}
                     className={`studio-option${active ? ' is-active' : ''}`}
-                    style={{
-                      flex: 1, padding: '8px 0',
-                      fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
-                      background: active ? 'rgba(255,90,31,0.1)' : 'transparent',
-                      border: `1px solid ${active ? 'rgba(255,90,31,0.45)' : 'var(--bd-faint)'}`,
-                      color: active ? 'var(--color-star)' : 'var(--color-star-deep)',
-                      cursor: 'pointer', transition: 'all 0.15s',
-                    }}
+                    style={{ flex: 1, padding: '8px 0', background: active ? 'rgba(255,90,31,0.1)' : 'transparent', border: `1px solid ${active ? 'rgba(255,90,31,0.45)' : 'var(--bd-faint)'}`, color: active ? 'var(--color-star)' : 'var(--color-star-deep)', cursor: 'pointer', transition: 'all 0.15s' }}
                   >
                     {p === 'instagram' ? 'INSTAGRAM' : 'X / TWITTER'}
-                  </button>
+                  </ArchiveButton>
                 )
               })}
             </div>
@@ -134,23 +127,15 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
             {(() => {
               const active = platforms.includes('xiaohongshu')
               return (
-                <button
+                <ArchiveButton variant="secondary"
                   type="button"
                   onClick={() => togglePlatform('xiaohongshu')}
                   className={`studio-option${active ? ' is-active' : ''}`}
-                  style={{
-                    width: '100%', padding: '8px 0',
-                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
-                    background: active ? 'rgba(255,30,60,0.1)' : 'transparent',
-                    border: `1px solid ${active ? 'rgba(255,30,60,0.5)' : 'var(--bd-faint)'}`,
-                    color: active ? 'var(--color-star)' : 'var(--color-star-deep)',
-                    cursor: 'pointer', transition: 'all 0.15s',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                  }}
+                  style={{ width: '100%', padding: '8px 0', background: active ? 'rgba(255,30,60,0.1)' : 'transparent', border: `1px solid ${active ? 'rgba(255,30,60,0.5)' : 'var(--bd-faint)'}`, color: active ? 'var(--color-star)' : 'var(--color-star-deep)', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
                 >
                   <span>小红书 / RED</span>
                   <span style={{ fontSize: 'var(--fs-caption)', opacity: 0.55, letterSpacing: '0.05em' }}>中文</span>
-                </button>
+                </ArchiveButton>
               )
             })()}
           </div>
@@ -162,20 +147,12 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
             {CONTENT_TYPES.map(ct => {
               const active = contentType === ct.value
               return (
-                <button
+                <ArchiveButton variant="secondary"
                   type="button"
                   key={ct.value}
                   onClick={() => setContentType(ct.value)}
                   className={`studio-option${active ? ' is-active' : ''}`}
-                  style={{
-                    padding: '8px 10px', textAlign: 'left',
-                    fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em',
-                    background: active ? 'rgba(255,90,31,0.08)' : 'transparent',
-                    border: `1px solid ${active ? 'rgba(255,90,31,0.3)' : 'transparent'}`,
-                    color: active ? 'var(--color-star)' : 'var(--color-star-deep)',
-                    cursor: 'pointer', transition: 'all 0.15s',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  }}
+                  style={{ padding: '8px 10px', textAlign: 'left', background: active ? 'rgba(255,90,31,0.08)' : 'transparent', border: `1px solid ${active ? 'rgba(255,90,31,0.3)' : 'transparent'}`, color: active ? 'var(--color-star)' : 'var(--color-star-deep)', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
                   <span>{ct.label}</span>
                   {active && (
@@ -183,7 +160,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                       {ct.desc}
                     </span>
                   )}
-                </button>
+                </ArchiveButton>
               )
             })}
           </div>
@@ -191,16 +168,10 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
 
         {/* Reference — grouped select */}
         <Section label={<>REFERENCE <span style={{ fontSize: 'var(--fs-caption)', opacity: 0.5, letterSpacing: '0.1em' }}>OPTIONAL</span></>}>
-          <select
+          <ArchiveSelect
             value={referenceId}
             onChange={e => setReferenceId(e.target.value)}
-            style={{
-              width: '100%', padding: '8px 10px',
-              background: 'var(--color-void)', border: '1px solid var(--bd-faint)',
-              color: referenceId ? 'var(--color-star)' : 'var(--color-star-deep)',
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-              cursor: 'pointer',
-            }}
+            style={{ width: '100%', padding: '8px 10px', color: referenceId ? 'var(--color-star)' : 'var(--color-star-deep)', cursor: 'pointer' }}
           >
             <option value="">— none —</option>
             <optgroup label="INTEL">
@@ -222,12 +193,12 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                 </option>
               ))}
             </optgroup>
-          </select>
+          </ArchiveSelect>
         </Section>
 
         {/* Brief */}
         <Section label="YOUR BRIEF" style={{ flex: 1 }}>
-          <textarea
+          <ArchiveTextarea
             value={brief}
             onChange={e => setBrief(e.target.value)}
             placeholder={
@@ -235,14 +206,7 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
               'Raw material, key message, tone, reference event — anything relevant.\n\n' +
               'The more specific, the better the output.'
             }
-            style={{
-              width: '100%', minHeight: 160,
-              padding: 12,
-              background: 'var(--color-void)', border: '1px solid var(--bd-faint)',
-              color: 'var(--color-star)',
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', lineHeight: 1.75,
-              resize: 'vertical',
-            }}
+            style={{ width: '100%', minHeight: 160, padding: 12, lineHeight: 1.75, resize: 'vertical' }}
           />
         </Section>
 
@@ -451,18 +415,12 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                       <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'var(--color-fault)' }}>
                         PREVIEW UNAVAILABLE
                       </div>
-                      <button
+                      <ArchiveButton type="submit" variant="secondary"
                         onClick={() => { setImgError(false); setImgLoaded(false); setImgKey(k => k + 1) }}
-                        style={{
-                          fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', padding: '4px 12px',
-                          fontFamily: 'var(--font-mono)',
-                          background: 'transparent',
-                          border: '1px solid var(--bd-faint)',
-                          color: 'var(--color-star-deep)', cursor: 'pointer',
-                        }}
+                        style={{ padding: '4px 12px', cursor: 'pointer' }}
                       >
                         RETRY
-                      </button>
+                      </ArchiveButton>
                     </div>
                   )}
 
@@ -490,17 +448,12 @@ export default function StudioForm({ intelList, worldsList, devicesList }: Props
                     → Paste the <strong style={{ color: 'var(--color-ok)' }}>full prompt above</strong> into LovArt for production quality
                   </div>
                   {imgLoaded && (
-                    <button
+                    <ArchiveButton type="submit" variant="secondary"
                       onClick={() => { setImgLoaded(false); setImgError(false); setImgKey(k => k + 1) }}
-                      style={{
-                        fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', padding: '3px 10px',
-                        fontFamily: 'var(--font-mono)', flexShrink: 0,
-                        background: 'transparent', border: '1px solid var(--bd-faint)',
-                        color: 'var(--color-star-deep)', cursor: 'pointer',
-                      }}
+                      style={{ padding: '3px 10px', flexShrink: 0, cursor: 'pointer' }}
                     >
                       ↺ REGENERATE
-                    </button>
+                    </ArchiveButton>
                   )}
                 </div>
               </div>
@@ -539,19 +492,12 @@ function Section({
 
 function CopyBtn({ onCopy, isCopied }: { onCopy: () => void; isCopied: boolean }) {
   return (
-    <button
+    <ArchiveButton type="submit" variant="secondary"
       onClick={onCopy}
-      style={{
-        padding: '3px 10px',
-        fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',
-        background: isCopied ? 'rgba(32,216,144,0.08)' : 'transparent',
-        border: `1px solid ${isCopied ? 'rgba(32,216,144,0.3)' : 'var(--bd-faint)'}`,
-        color: isCopied ? 'var(--color-ok)' : 'var(--color-star-deep)',
-        cursor: 'pointer', transition: 'all 0.2s',
-      }}
+      style={{ padding: '3px 10px', background: isCopied ? 'rgba(32,216,144,0.08)' : 'transparent', border: `1px solid ${isCopied ? 'rgba(32,216,144,0.3)' : 'var(--bd-faint)'}`, color: isCopied ? 'var(--color-ok)' : 'var(--color-star-deep)', cursor: 'pointer', transition: 'all 0.2s' }}
     >
       {isCopied ? '✓ COPIED' : 'COPY'}
-    </button>
+    </ArchiveButton>
   )
 }
 
@@ -613,7 +559,7 @@ function ScanLine({ small }: { small?: boolean }) {
     }}>
       <div style={{
         position: 'absolute', left: 0, right: 0, height: 1,
-        background: 'linear-gradient(90deg, transparent, rgba(200,68,6,0.8), transparent)',
+        background: 'transparent',
         animation: 'studioScan 1.4s linear infinite',
       }} />
       <style>{`

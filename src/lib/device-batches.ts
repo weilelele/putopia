@@ -79,6 +79,7 @@ export type DeviceBatch = {
   estimatedCompletion: string
   explorationProgress?: number
   claimHref?: string
+  faq?: { question: string; answer: string }[]
   facts: { label: string; value: string }[]
   lead: DeviceBatchLead
   holders: DeviceBatchHolder[]
