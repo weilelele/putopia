@@ -1,6 +1,6 @@
 # 页面与内容模板
 
-> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。五个一级 Tab 在移动端恢复紧凑原图形＋文字 Logo；二级及更深页面无 Logo；桌面/横屏统一侧栏保留品牌，内容区不重复。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Dashboard 内容池采用已确认的四类 Updates 与两类 Events。
+> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示完整品牌介绍、设备原图、View Device、Request Access / Login 和原三个数字指标，不再叠加左上角小 Logo；登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。五个一级 Tab 在移动端恢复紧凑原图形＋文字 Logo；二级及更深页面无 Logo；桌面/横屏统一侧栏保留品牌，内容区不重复。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Dashboard 内容池采用已确认的四类 Updates 与两类 Events。
 
 
 
@@ -31,7 +31,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 阅读顺序
 
-1. 一级必要操作区 → 三项数字看板 → Updates；Dashboard 名称仅作为 sr-only h1，不显示标题行或其留白。尺寸按主规范 §1.3；真实日期可放内容区。
+1. 游客：完整品牌介绍 → 设备原图 / View Device → Request Access / Login → 三项数字看板 → Updates → Events；登录后：紧凑品牌行 → Voyager 欢迎与身份状态 → Updates → Events；Dashboard 名称仅作为 sr-only h1，不显示标题行或其留白。尺寸按主规范 §1.3；真实日期可放内容区。
 2. 标题栏下 16px 进入 **Updates** 标题 + 最近 10 条提示 → 纵向时间轴。
 3. **Events** 标题 → 横向可参与活动卡片。
 4. 固定在视口底部的 Quiet Rail，Dashboard 选中。
@@ -60,7 +60,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 顶部数字看板
 
-保留原有 Parallel Worlds / Devices / Voyagers 三项数字及点击展开／再次点击收起说明的交互。数字看板是产品内容，不属于被移除的重复 Tab 标题。顺序固定为 数字看板 → Updates → Events；不恢复 Dashboard 大标题或个人资料入口。
+保留原有 Parallel Worlds / Devices / Voyagers 三项数字及点击展开／再次点击收起说明的交互。数字看板是产品内容，不属于被移除的重复 Tab 标题。游客数字看板位于品牌介绍、设备展示和登录/申请入口之后，随后为 Updates → Events；不恢复 Dashboard 大标题或个人资料入口。
 
 使用新版 ArchiveStatStrip：三等分、品牌橙数字、Courier Prime、深蓝平面底、细边框；标签至少 12px，可换行，点击目标至少 44px。不得恢复旧光效、装饰框或旧版表单样式。统计失败显示“—”和独立重试，不显示假的 0，也不阻断 Updates / Events。
 
@@ -68,7 +68,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 
 ### 首屏与验收
 
-390×844 首屏应看见数字看板、Updates 起始内容和底栏，不显示重复 Dashboard 标题；不要求 Events 同时出现。本轮不增加顶部 Events 跳转，Updates → Events 顺序不变。图中长图只画一次底栏，实际固定于视口，而不是作为长列表尾部普通行。验证所有 10 条可读，最后一张活动的按钮不被固定底栏遮挡。
+390×844 游客首屏优先完整品牌和设备展示，CTA、数字看板、Updates 随自然滚动出现，不再强求 Updates 同屏；登录后优先 Voyager 身份状态，不显示重复 Dashboard 标题；不要求 Events 同时出现。本轮不增加顶部 Events 跳转，Updates → Events 顺序不变。图中长图只画一次底栏，实际固定于视口，而不是作为长列表尾部普通行。验证所有 10 条可读，最后一张活动的按钮不被固定底栏遮挡。
 
 ## 3. Intel：清楚的内容层级与阅读
 
@@ -193,3 +193,5 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 ## 9. 页面验收的共同结果
 
 用户能回答：这是哪里、主要内容是什么、当前状态是什么、我能做什么、操作后发生了什么。五个主 tab 使用同一品牌、字体、导航、按钮、列表与反馈语法；页面通过内容层级体现差别，不能五页换五套主题。
+
+访客 Dashboard 的完整品牌展示同时替代桌面/横屏侧栏顶部的小 Logo；侧栏导航和账户入口保留。离线默认页沿用这一例外，其他页面的品牌层级规则不变。
