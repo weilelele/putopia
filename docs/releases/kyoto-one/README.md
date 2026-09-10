@@ -1,4 +1,4 @@
-# Q1 preorder release — Kyoto One Batch
+# Kyoto One preorder release
 
 Confirmed scope: 50 gray-shell Consoles, US$520 paid in full, three separate shipments. Lead: Ryo Tanaka (interpreting the user's “Real” as the Kyoto architect recommended immediately before selection).
 
@@ -27,3 +27,7 @@ No database schema migration is required. Old batch records and their versions m
 The display name is Q1; the stable `kyoto-one` URL, internal KYOTO-ONE code and unit identifiers remain unchanged. The device series remains Kyoto One. Price, allocation and customer records are unchanged.
 
 The main warehouse hero is retained: its material rendering is more restrained than the older world composites. The lower gallery now uses the robot-library and shepherd scenes selected from the source Feishu gallery, retouched to remove location labels, plus the original rear reference. The two scenes prioritize a more engaging view of the screen worlds; they are visualizations, not documentary photographs. Some stylized surface rendering remains. Retouches are in `public/assets/q1-20260910/`, with provenance in `q1-media.json`.
+
+## Name correction — 10 September 2026
+
+The user restored the batch name to **Kyoto One**, superseding the earlier Q1 display name. The batch navigation now reads the actual batch name instead of deriving a city label, so the tab displays KYOTO ONE. Backend content, English FAQ/intel and the team document use Kyoto One. Package labels and selected media remain as confirmed.
