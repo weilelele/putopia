@@ -6,7 +6,7 @@
 
 版本 2.3 · 2026-09-09 · 从属于 [权威 UI 规范](../design-system.md)。
 
-**状态：本轮评审的方向已确认；下面的尺寸、时限、映射与转换规则为统一实施默认值，产品代码尚待实现和验证。** 用户本轮未采纳 Dashboard 的 Events 跳转优化，继续保持 Updates → Events，不加入该入口。
+**状态：Dashboard 的 Updates / Events 内容池、数量、排序、过期、权限和去重规则已确认并进入实现。** 用户未采纳 Dashboard 的 Events 跳转优化，继续保持 Updates → Events，不加入该入口。
 
 本文集中管理跨页行为；[组件说明](ui-components.md) 管理外观和局部语义，[页面模板](page-patterns.md) 管理内容组织。业务权限、服务端结果和现有数据契约不由 UI 文档改写。
 

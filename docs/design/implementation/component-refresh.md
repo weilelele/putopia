@@ -4,6 +4,8 @@
 
 游客仅显示原数字概览，登录后仅显示身份头部；完成无外框指标、灰白/橙色文字层级和圆形头像的调整。恢复完整桌面侧栏，并为手机横屏提供紧凑侧栏；宽屏 Dashboard 将 Updates / Events 并排。Intel 列表/详情与 Updates 新闻补回作者头像和图片；iOS 离线头部、新闻缓存与横屏导航同步修改。其余旧轮次记录中的“两块头部叠加”规则已废止。
 
+> 2026-09-10 内容池更正：Updates 只保留 Intel、Voyager Activated（最多 2 条、7 天）、Established World（最多 3 条、按世界去重）和 Device Update（按设备去重），总数最多 10。Vote Open 与当前开放的 Signal Tuning 移入 Events，两类各最多 3 个；Dreamcatcher、Console Claim、World Submission、Voyager Quiz 和旧 Signal Dispatch 不再进入 Dashboard Events。下方关于旧内容池的描述仅供追溯。
+
 > 2026-09-10 最新更正：此前“所有一级页保留 Logo”“Events 只按用户资格筛选”与“已做浏览器检查即可算视觉完成”的描述已取代。当前应用内容页无 Logo、Events 公开可见，并要求逐页参考图与实际截图对照。下方旧轮次记录仅供追溯。
 
 ## 最新修正

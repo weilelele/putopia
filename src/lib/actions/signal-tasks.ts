@@ -1749,7 +1749,7 @@ export async function getArchiveReel(worldId: string): Promise<ArchiveReel> {
 // ─── Console dashboard board (doc 4.1) ────────────────────────────────────────
 
 export interface DispatchDashboard {
-  openWorlds: { id: string; name: string }[]
+  openWorlds: { id: string; name: string; openedAt: string }[]
   awaitingWorldIds: string[]
   awaitingYou: number   // revealed (currently-open) days this viewer may vote on and hasn't
   inTuning: number      // currently-revealed signals across worlds in tuning
@@ -1797,7 +1797,7 @@ export async function getDispatchDashboard(publicOverview = false): Promise<Disp
 
   const now = new Date(); const nowMs = now.getTime()
   let inTuning = 0   // surfaced (opened) signals across worlds in tuning
-  const openWorlds: { id: string; name: string }[] = []
+  const openWorlds: { id: string; name: string; openedAt: string }[] = []
   const awaitingWorldIds: string[] = []
   let awaitingYou = 0
   for (const [threadId, rows] of tasksByThread) {
@@ -1813,7 +1813,8 @@ export async function getDispatchDashboard(publicOverview = false): Promise<Disp
     const phase = tuningPhase(schedule, gap, now)
     if (phase.kind === 'open') {
       const openTask = rows.find((r) => (r.day_index ?? 0) === phase.index)
-      if (openTask && wid && wm && !openWorlds.some(world => world.id === wid)) openWorlds.push({ id: wid, name: wm.name })
+      const openSchedule = schedule.find((entry) => entry.dayIndex === phase.index)
+      if (openTask && openSchedule && wid && wm && !openWorlds.some(world => world.id === wid)) openWorlds.push({ id: wid, name: wm.name, openedAt: openSchedule.openAt.toISOString() })
       if (me && openTask && !responded.has(openTask.id) && eligibleToVote(me.role, me.id, wm?.vote_scope ?? 'all', wm?.discoverer_id ?? null)) {
         awaitingYou++
         if (wid) awaitingWorldIds.push(wid)

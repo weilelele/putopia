@@ -1,6 +1,6 @@
 # UI 2.3 实现与验收记录
 
-> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。内容区不重复放品牌 Logo；恢复桌面/横屏统一侧栏中的原品牌、导航和账号区域。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 的类型/有效期暂不改变，当前口径见实现说明。
+> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。内容区不重复放品牌 Logo；恢复桌面/横屏统一侧栏中的原品牌、导航和账号区域。Dashboard 采用已确认的四类 Updates 与两类 Events 内容池。
 
 
 2026-09-09。设计批准、代码实现、验证和正式发布分别记录。当前权威入口是 [design-system.md](../../design-system.md)，产品内 `/ui-kit` 使用真实共享组件。旧版 golden screens 和海报哲学文档保留历史记录并标记废弃，不再指导开发。
@@ -9,7 +9,7 @@
 
 - 全站共享颜色、字体、字号、平面容器、按钮、页头、五 Tab 导航和详情返回。应用内容页移除品牌区；一级 Tab 名称仅保留辅助技术可见的 h1，移除可见重复标题及占位；二级及深层页面移除重复 Logo。管理、认证、申请、付款结果和加载页同步基础样式。
 - `/ui-kit` 替换旧静态样板，覆盖主导航、来源返回、按钮、输入、筛选、弹层、草稿退出、必填校验、提交中/成功/未知、加载/空/错误/离线；样例只使用本地数据。
-- Dashboard 使用独立 Updates 和 Events 数据模型。Updates 为各来源真实时间戳汇总后的全局最新 10 条；Events 公开展示真实开放的活动及入口；截止时间与设备状态仍有效，参与权限在目标流程中校验。
+- Dashboard 使用独立 Updates 和 Events 数据模型。Updates 只含 Intel、Voyager Activated、Established World、Device Update，应用分类上限和实体去重后取全局最新 10 条。Events 只含最多 3 个开放 Vote 与最多 3 个当前 Signal Tuning。
 - `/welcome` 是独立启动页。普通根入口及 PWA 进入这里；点击任意处或键盘 Enter/Space 立即替换为 `/console`，未操作时在动画完整播放结束后再停留 3 秒替换。直接访问详情和活动入口保留原目的地，不被启动页打断。减少动态效果时显示原文字 Logo 静态图。
 - iOS 启动动画和原品牌字形随包打包，计时不依赖网络；结束后显示 Dashboard 或原生离线 Dashboard。WebView 和离线页使用统一五 Tab、颜色、字体及层级。未缓存状态仍显示导航；不伪造离线可参与活动。
 - 编辑与创建弹层共用原生 HTML dialog 的焦点约束、背景隔离、关闭和草稿确认。提交结果未知时先检查记录，禁止无条件重复提交。
@@ -57,25 +57,25 @@ Vercel 预览沿用项目现有登录保护，需要有权限的 Vercel 账号�
 
 “已修改”只表示改动已进入预览分支；不表示生产站已上线、所有业务流程已验证或每个细节已完成设计验收。
 
-## Updates 当前内容类型与有效时长（待用户确认筛选规则）
+## Dashboard 内容池与有效性（已确认）
 
-这是现有实现的实际口径，不是新提案。本轮只恢复作者/媒体展示，未改下面的内容筛选规则。
+Updates 固定最多 10 条，不为 Intel 子类型预留位置。分类上限与实体去重先执行，再按发生时间倒序取全局最新 10 条。
 
-| 展示类型 | 实际进入条件与来源 | 用于排序的时间 | 当前有效时长 / 移出条件 |
-| --- | --- | --- | --- |
-| Intel 新闻（NOTICE / DEVICE / ORG） | Intel 记录；公开新闻可读，未授权的 classified 新闻为锁定提示 | 新闻 `timestamp` | 无天数上限；被更新内容挤出全局最新 10 条。删除后不再读出 |
-| Signal tuning | 有关联世界的 Signal thread；当前没有按调谐是否结束筛选 | Thread `created_at` | 无天数上限；调谐结束不会自动移出；受最新 10 条限制 |
-| Established world · 建立事件 | 可见的 `world_established` 活动记录 | 活动 `created_at` | 无天数上限；隐藏/删除该活动或被挤出最新 10 条后不显示 |
-| Established world · Final form | 当前世界为 stable 的 Final assets | Asset `created_at` | 无天数上限；世界不再 stable、资产删除或被挤出最新 10 条后不显示 |
-| Voyager activated | 可见的 `voyager_activated` 活动；排除明确标为 architect 的 actor，role 为 null 的记录仍纳入 | 活动 `created_at` | 无天数上限；隐藏/删除该活动或被挤出最新 10 条后不显示 |
-| Device update | 可见的 `device_updated` 活动，以及已发布设备批次的资料更新 | 活动 `created_at` / 批次发布内容中的 `updatedAt` | 无天数上限；活动隐藏或批次不再发布则相应来源消失，其余受最新 10 条限制 |
-| Vote opened | 投票记录，目前包括已关闭/已到期的投票 | Vote `created_at` | 无天数上限；不会因 `ends_at` 或关闭自动从 Updates 移出；受最新 10 条限制 |
+| Updates 类型 | 进入与排序规则 | 上限 / 移出条件 |
+| --- | --- | --- |
+| Intel（NOTICE / DEVICE / ORG） | 全部子类型有资格；按 `timestamp` 排序。Classified 对游客只返回锁定卡 | 无分类上限；删除或被全局最新 10 条挤出 |
+| Voyager Activated | 可见的非 Architect 激活事件，按 `created_at` | 最多 2 条，只保留 7 天内 |
+| Established World | 世界正式进入 stable 的 `world_established` 事件 | 最多 3 条；同一世界仅最新一条，不因 Final Asset 修改重复生成 |
+| Device Update | 显式设备事件或已发布批次中的正式 Latest Update | 同一设备只留最新一条；普通资料修订不产生独立动态 |
 
-所有来源合并后按发生时间倒序取 10 条；多数来源先各取最新 10 条。没有各类型保留配额，也没有按类型轮换。因此某一类新信息较多时，可以占满整个 Updates。
+Signal Tuning 和 Vote Open 不再进入 Updates。30 秒只是服务端缓存刷新间隔，不是内容有效期。
 
-**30 秒是服务端缓存刷新间隔，不是信息有效期。** 页面也没有每 30 秒自动轮询，通常在重新请求/刷新时取数。
+| Events 类型 | 开放规则 | 数量与排序 |
+| --- | --- | --- |
+| Vote Open | `is_active` 且未到期；游客可见，登录后移除已完成或无资格项目 | 最多 3 个，最近截止优先 |
+| Signal Tuning | 世界当前轮次确实开放；游客可见，登录后只保留该用户尚可参与的世界 | 最多 3 个，实际开放时间倒序 |
 
-两个已知口径需下一步确认：同一世界可能同时有“建立事件”和“Final form 资产”，同一设备可能同时有活动记录与批次更新，它们使用不同 ID，当前不会按世界/设备合并；投票与 Signal 结束并不使历史 Updates 自动过期。Events 使用另外的开放/有效性条件，不能用 Events 的截止时间解释 Updates。
+两类事件交错排列。Dreamcatcher、Console Claim、World Submission、Voyager Quiz 和旧 Signal Dispatch 不进入 Dashboard Events，仍保留在各自所属功能页面。活动结束或完成后从相应用户的 Events 移出；游客点击需要登录的操作后返回原任务。
 
 ## 最新修正：紧凑布局与信息层级
 

@@ -132,7 +132,7 @@ export async function GET() {
   }
 
   const dashboardSource = await updatesPromise
-  const dashboardUpdates = dashboardSource ? latestUpdates(dashboardSource.updates.filter(item => !item.locked), votes) : undefined
+  const dashboardUpdates = dashboardSource ? latestUpdates(dashboardSource.updates) : undefined
   const response = NextResponse.json({
     dashboardUpdates,
     dashboardEvents: (await dashboardPromise)?.events,

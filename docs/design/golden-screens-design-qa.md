@@ -9,7 +9,7 @@
 - Dashboard：游客只显示原口径三项统计，登录后只显示身份、Path、Signal Dispatch、Days。加载时使用中性占位，避免短暂展示错误身份状态。
 - 浏览器只读实测：390px Intel 作者头像及媒体、Dashboard 游客/登录状态；667×375 Dashboard 与 Worlds 无横向溢出；844×390 Devices 媒体与操作双栏；1280px Devices、Intel、Voyagers 以及 1440px Dashboard 的完整品牌侧栏与宽屏布局。
 - 发现并修正：窄横屏昵称逐字换行；宽屏媒体占满首屏；Worlds 旧最小高度导致横屏媒体过高。新闻原始拼图保留；单图与多图使用不同响应式尺寸。
-- UI Kit 提供 Guest / Signed in / Applicant 互斥样板。新闻与 Updates 使用共享作者、媒体组件。Updates 信息类型与有效期未调整。
+- UI Kit 提供 Guest / Signed in / Applicant 互斥样板。新闻与 Updates 使用共享作者、媒体组件。Updates / Events 已同步用户确认的内容池与上限规则。
 - iOS 离线页同步条件展示、作者/图片及横屏导航；原生运行与真机验收仍待完成。静态检查不能替代原生视觉验收。
 - 本轮不宣称全部深层业务流程通过；未测试付款、资料保存、发帖等生产写入。后续以用户对视觉与信息口径的确认继续迭代。
 

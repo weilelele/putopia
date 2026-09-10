@@ -1,6 +1,6 @@
 # Multiverse Collective / Multiverse Console UI 规范
 
-> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。内容区不重复放品牌 Logo；恢复桌面/横屏统一侧栏中的原品牌、导航和账号区域。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 的类型/有效期暂不改变，当前口径见实现说明。
+> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。内容区不重复放品牌 Logo；恢复桌面/横屏统一侧栏中的原品牌、导航和账号区域。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 只收录 Intel、Voyager Activated、Established World、Device Update；Events 只收录开放 Vote 与 Signal Tuning。
 
 
 版本：2.3 · 2026-09-09 · 全站改版的权威入口。
@@ -34,8 +34,8 @@
 | 第一款 Quiet Rail 底栏 | 无围框、无竖分隔、无底边；轻顶线与短橙色选中标记 |
 | 五个主入口 | **DASHBOARD / INTEL / DEVICES / WORLDS / VOYAGERS**，顺序固定 |
 | Dashboard 不是 Home | 页面和首入口使用 Dashboard，不能为了排版缩成 HOME |
-| Updates | 最近 10 条动态，按发生时间倒序的纵向时间轴 |
-| Events | 可参与活动的横向滑动卡片，露出下一张；不采用双列操作网格 |
+| Updates | 四类动态合并后的最近 10 条；Voyager 最多 2 条且仅 7 天内，Established World 最多 3 条 |
+| Events | 最多 3 个开放 Vote + 最多 3 个当前 Signal Tuning；横向滑动且露出下一张 |
 | My Profile | 放在 Voyagers；Dashboard 保留身份状态头像，但不提供个人资料编辑入口或资料管理面板 |
 | 应用内页头 | 应用内容区不显示顶部品牌 Logo；桌面/横屏统一侧栏和 Voyager 状态卡保留原资产；一级无重复 Tab 标题，二级保留返回/标题；浏览器、PWA、原生壳一致 |
 | 品牌保护 | 主配色、文字 logo、图形 logo 保持不变；调整出现位置与频率，不改变资产 |
@@ -75,6 +75,10 @@
 页面内容左右 16px，顶部 16px，必要操作行最小 44px。二级/任务栏内容最小高 56px，标题 24px/700（正文上下文可用 20px/700）。长文、200% 字体放大允许增高。默认随正文滚动，安全区由平台适配一次。
 
 Dashboard 数字看板是原有产品内容，必须保留，不能与重复 Tab 标题一同删除。Events 公开可浏览；登录和权限只控制实际参与，不能作为隐藏整个活动区域的前置条件。
+
+Updates 不设置 Intel 子类型保留位，NOTICE / DEVICE / ORG 只要符合时间排序都可进入。Classified Intel 对游客保留锁定卡，正文、作者和媒体不下发；点击后由详情权限拦截。Established World 只认世界正式进入 stable 的事件，同一世界去重。Device Update 使用正式发布的 Latest Update 与显式设备事件，同一设备去重，普通资料修订不产生独立动态。
+
+Events 对游客公开。Vote 必须 active 且未到期，按最近截止优先；登录后移除已完成或无资格项目。Signal Tuning 必须处于当前开放轮次，按开放时间倒序；登录后只显示该用户尚可参与的世界。两类各最多 3 个并交错排列。Dreamcatcher、Console Claim、World Submission、Voyager Quiz 和旧 Signal Dispatch 不进入 Dashboard Events。
 
 每个改动页面必须记录选定参考、实际截图、字号/字体/间距/动作位置/媒体对照，以及按最新产品要求保留的差异。没有逐页截图对照就标记待验收；构建、组件替换和无溢出检查不能代替效果图验收。
 
