@@ -1,5 +1,7 @@
 'use client'
 
+import styles from './voyager-path.module.css'
+import { BackLink } from '@/components/back-link'
 import { ArchiveButton } from '@/components/archive-button'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -277,151 +279,35 @@ function BenefitDetailModal({ item, onClose }: { item: BenefitDetail; onClose: (
 
 // ─── Path Rail (stage bar — full width, arrow connectors) ────────────────────
 
-function PathRail({
-  allDone, isVoyager,
-  viewedStage, onStageClick, onConsoleClick,
-}: {
+function PathRail({ allDone, isVoyager, viewedStage, onStageClick, onConsoleClick }: {
   allDone: boolean
   isVoyager: boolean
   viewedStage: ViewStage
   onStageClick: (s: ViewStage) => void
   onConsoleClick: () => void
 }) {
-  // APPLICANT node: green if voyager, amber if tasks done, amber-dim otherwise
-  const applicantDone  = allDone || isVoyager
-  const applicantHex   = applicantDone ? '#20D890' : '#E8A020'
-  const applicantColor = applicantDone ? 'var(--color-ok)' : 'var(--color-warn)'
-
-  // VOYAGER node: gold current if isVoyager, dim-preview if applicant clicked, inactive otherwise
-  const voyagerCurrent  = isVoyager
-  const voyagerPreview  = !isVoyager && viewedStage === 'voyager'
-  const voyagerHex      = 'rgba(227,82,5,'
-  const vBorder = voyagerCurrent ? `${voyagerHex}0.75)` : voyagerPreview ? `${voyagerHex}0.45)` : `${voyagerHex}0.22)`
-  const vBg     = voyagerCurrent ? `${voyagerHex}0.12)` : voyagerPreview ? `${voyagerHex}0.06)` : 'transparent'
-  const vColor  = voyagerCurrent ? `${voyagerHex}0.95)` : voyagerPreview ? `${voyagerHex}0.6)` : `${voyagerHex}0.38)`
-
-  // A→V connector: fully lit when voyager, half-lit when allDone, dim otherwise
-  const avConnector = isVoyager
-    ? 'var(--color-ok)'
-    : allDone ? 'var(--color-nucleus)' : 'rgba(227,82,5,0.12)'
-  const avChevron = isVoyager ? '#20D890' : allDone ? '#E35205' : 'rgba(227,82,5,0.22)'
-
-  return (
-    <div className="dd-panel" style={{
-      ['--dd-bd' as string]: isVoyager ? 'rgba(227,82,5,0.4)' : 'rgba(227,82,5,0.25)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px 28px' }}>
-
-        {/* ── APPLICANT ── */}
-        <ArchiveButton variant="secondary"
-          type="button"
-          disabled={isVoyager}
-          onClick={() => !isVoyager && onStageClick('applicant')}
-          className="archive-path-node-button"
-          style={{ flexShrink: 0, textAlign: 'center', width: 72, cursor: isVoyager ? 'default' : 'pointer' }}
-        >
-          <div style={{
-            width: 44, height: 44, borderRadius: '50%', margin: '0 auto 7px',
-            border: `2px solid ${applicantHex}`,
-            background: `${applicantHex}18`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: applicantColor,
-            animation: applicantDone
-              ? (isVoyager ? 'none' : 'node-done 0.4s ease-out')
-              : 'node-pulse 2.4s ease-in-out infinite',
-            outline: (!isVoyager && viewedStage === 'applicant') ? `2px solid ${applicantHex}45` : 'none',
-            outlineOffset: 3,
-            transition: 'all 0.35s ease',
-            opacity: isVoyager ? 0.6 : 1,
-          }}>
-            {applicantDone ? <CheckIcon size={18} /> : <ApplicantIcon size={20} />}
-          </div>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: applicantColor, fontFamily: 'var(--font-mono)', opacity: isVoyager ? 0.55 : 1, transition: 'opacity 0.3s' }}>
-            APPLICANT
-          </div>
-          <div style={{ fontSize: 'var(--fs-caption)', color: `${applicantHex}80`, letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
-            {applicantDone ? 'COMPLETE' : 'CURRENT'}
-          </div>
-        </ArchiveButton>
-
-        {/* ── A → V connector ── */}
-        <div style={{ flex: 1, paddingTop: 21, display: 'flex', alignItems: 'center' }}>
-          <div style={{ flex: 1, height: 2, background: avConnector, transition: 'background 0.5s' }} />
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
-            <path d="M2 1l5 4-5 4" stroke={avChevron} strokeWidth="1.4"
-              strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke 0.5s' } as React.CSSProperties} />
-          </svg>
-          <div style={{ flex: 1, height: 2, background: isVoyager ? 'rgba(227,82,5,0.15)' : 'rgba(227,82,5,0.06)', transition: 'background 0.5s' }} />
-        </div>
-
-        {/* ── VOYAGER ── */}
-        <ArchiveButton variant="secondary"
-          type="button"
-          disabled={isVoyager}
-          onClick={() => !isVoyager && onStageClick('voyager')}
-          className="archive-path-node-button"
-          style={{ flexShrink: 0, textAlign: 'center', width: 72, cursor: isVoyager ? 'default' : 'pointer' }}
-        >
-          <div style={{
-            width: 44, height: 44, borderRadius: '50%', margin: '0 auto 7px',
-            border: `2px solid ${vBorder}`,
-            background: vBg,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: vColor,
-            animation: voyagerCurrent ? 'voyager-pulse 2.4s ease-in-out infinite' : 'none',
-            outline: voyagerCurrent ? `2px solid rgba(227,82,5,0.2)` : 'none',
-            outlineOffset: 3,
-            transition: 'all 0.35s ease',
-          }}>
-            <VoyagerIcon size={20} />
-          </div>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: vColor, fontFamily: 'var(--font-mono)', transition: 'color 0.3s' }}>
-            VOYAGER
-          </div>
-          {voyagerCurrent && (
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(227,82,5,0.55)', letterSpacing: '0.08em', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
-              CURRENT
-            </div>
-          )}
-        </ArchiveButton>
-
-        {/* ── V → C connector ── */}
-        <div style={{ flex: 1, paddingTop: 21, display: 'flex', alignItems: 'center' }}>
-          <div style={{ flex: 1, height: 2, background: 'rgba(227,82,5,0.06)' }} />
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
-            <path d="M2 1l5 4-5 4" stroke="rgba(227,82,5,0.15)" strokeWidth="1.4"
-              strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <div style={{ flex: 1, height: 2, background: 'rgba(227,82,5,0.04)' }} />
-        </div>
-
-        {/* ── CONSOLE HOLDER ── */}
-        <ArchiveButton variant="secondary"
-          type="button"
-          onClick={onConsoleClick}
-          className="archive-path-node-button"
-          style={{ flexShrink: 0, textAlign: 'center', width: 72, cursor: 'pointer' }}
-        >
-          <div style={{
-            width: 44, height: 44, borderRadius: '50%', margin: '0 auto 7px',
-            border: '2px solid rgba(227,82,5,0.22)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'rgba(227,82,5,0.38)',
-          }}>
-            <LockIcon size={14} />
-          </div>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.13em', color: 'rgba(227,82,5,0.38)', fontFamily: 'var(--font-mono)' }}>
-            CONSOLE
-          </div>
-          <div style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(227,82,5,0.28)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
-            HOLDER
-          </div>
-        </ArchiveButton>
-
-      </div>
-
-    </div>
-  )
+  const applicantDone = allDone || isVoyager
+  return <div className={styles.rail} role="group" aria-label="Your path stages">
+    <ArchiveButton variant="ghost" disabled={isVoyager} onClick={() => onStageClick('applicant')}
+      className={styles.stage} aria-pressed={!isVoyager && viewedStage === 'applicant'}>
+      <span className={styles.stageIcon}>{applicantDone ? <CheckIcon size={20} /> : <ApplicantIcon size={20} />}</span>
+      <span className={styles.stageLabel}>APPLICANT</span>
+      <span className={styles.stageStatus}>{applicantDone ? 'COMPLETE' : 'CURRENT'}</span>
+    </ArchiveButton>
+    <span className={styles.connector} aria-hidden><ArrowIcon size={14} /></span>
+    <ArchiveButton variant="ghost" disabled={isVoyager} onClick={() => onStageClick('voyager')}
+      className={styles.stage} aria-pressed={isVoyager || viewedStage === 'voyager'}>
+      <span className={styles.stageIcon}><VoyagerIcon size={20} /></span>
+      <span className={styles.stageLabel}>VOYAGER</span>
+      <span className={styles.stageStatus}>{isVoyager ? 'CURRENT' : 'PREVIEW'}</span>
+    </ArchiveButton>
+    <span className={styles.connector} aria-hidden><ArrowIcon size={14} /></span>
+    <ArchiveButton variant="ghost" onClick={onConsoleClick} className={styles.stage}>
+      <span className={styles.stageIcon}><LockIcon size={18} /></span>
+      <span className={styles.stageLabel}>CONSOLE<br />HOLDER</span>
+      <span className={styles.stageStatus}>LOCKED</span>
+    </ArchiveButton>
+  </div>
 }
 
 // ─── APPLICANT stage: three EQUAL parallel tasks → Voyager ────────────────────
@@ -457,7 +343,7 @@ function VoyagerUnlockTrack({
       <Link
         key={task.key}
         href={task.href}
-        className="dd-panel"
+        className={`dd-panel ${styles.task}`}
         style={{
           ['--dd-bd' as string]: done ? 'rgba(32,216,144,0.45)' : 'rgba(227,82,5,0.32)',
           ['--dd-fill' as string]: done ? 'rgba(32,216,144,0.05)' : '#0F1430',
@@ -468,9 +354,9 @@ function VoyagerUnlockTrack({
         }}
       >
         {taskNode(done, task.icon)}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 'var(--fs-label)', color: done ? 'rgba(32,216,144,0.85)' : '#F5F5F5' }}>{task.label}</span>
+        <div className={styles.taskBody}>
+          <div className={styles.taskHeading}>
+            <span className={styles.taskTitle}>{task.label}</span>
             {task.chip && (
               <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: done ? green : orange, border: `1px solid ${done ? 'rgba(32,216,144,0.3)' : 'rgba(227,82,5,0.35)'}`, padding: '1px 6px', background: done ? 'rgba(32,216,144,0.08)' : 'rgba(227,82,5,0.08)' }}>{task.chip}</span>
             )}
@@ -478,11 +364,9 @@ function VoyagerUnlockTrack({
               <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.14em', color: green, border: '1px solid rgba(32,216,144,0.25)', padding: '1px 6px', background: 'rgba(32,216,144,0.08)' }}>DONE</span>
             )}
           </div>
-          <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.42)', lineHeight: 1.5 }}>{task.description}</div>
+          <p className={styles.taskDescription}>{task.description}</p>
         </div>
-        <div style={{ flexShrink: 0, marginTop: 7, color: done ? 'rgba(32,216,144,0.55)' : task.accentColor }}>
-          {done ? <CheckIcon size={15} /> : <ArrowIcon size={15} />}
-        </div>
+        <span className={styles.taskArrow} aria-hidden><ArrowIcon size={18} /></span>
       </Link>
     )
   }
@@ -781,7 +665,7 @@ export default function VoyagerPathPage() {
       {detailItem && <BenefitDetailModal item={detailItem} onClose={() => setDetailItem(null)} />}
 
 
-      <div className="archive-path-shell">
+      <div className={`archive-path-shell ${styles.shell}`}><BackLink href="/voyagers" label="Back to Voyagers" /><h1 className="sr-only">Your Path</h1>
 
         {/* ── YOUR PATH ── */}
         <section style={{ marginBottom: 16 }}>
@@ -803,7 +687,7 @@ export default function VoyagerPathPage() {
             <>
               <div className="archive-path-progress-heading">
                 <ArchiveSectionLabel>BECOME A VOYAGER</ArchiveSectionLabel>
-                <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: allDone ? '#20D890' : 'rgba(245,245,245,0.3)' }}>
+                <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: allDone ? 'var(--color-ok)' : 'var(--color-star-dim)' }}>
                   {allDone ? 'VOYAGER UNLOCKED ✦' : `${completedCount} / ${totalTasks} COMPLETE`}
                 </span>
               </div>

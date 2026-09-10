@@ -1,0 +1,17 @@
+.shell:global(.archive-path-shell) { padding: 0 0 24px; max-width: 760px; }
+.shell > :global(.archive-back-link) { margin-bottom: 12px; }
+.rail { display: grid; grid-template-columns: minmax(0,1fr) 16px minmax(0,1fr) 16px minmax(0,1fr); align-items: start; gap: 2px; padding: 16px 4px; border-bottom: 1px solid var(--bd-faint); }
+.stage:global(.archive-button) { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; width: 100%; min-width: 0; min-height: 120px; padding: 4px 0; border: 0; background: transparent; white-space: normal; color: var(--color-star-dim); font-weight: 400; line-height: 1.35; clip-path: none; }
+.stage:global(.archive-button):disabled { opacity: 1; color: var(--color-star-dim); }
+.stage:global(.archive-button)[aria-pressed='true'] { color: var(--color-nucleus); }
+.stageIcon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 44px; border: 1px solid currentColor; border-radius: 50%; }
+.stageLabel { font-size: var(--fs-caption); letter-spacing: .02em; min-height: 34px; text-align: center; overflow-wrap: anywhere; }
+.stageStatus { font-size: var(--fs-caption); letter-spacing: 0; color: var(--color-star-dim); }
+.connector { display: flex; align-items: center; justify-content: center; height: 44px; margin-top: 4px; color: var(--color-star-dim); }
+.task:global(.dd-panel) { display: grid !important; grid-template-columns: 30px minmax(0,1fr) 18px; gap: 12px; padding: 14px !important; clip-path: none; align-items: start; }
+.taskBody { min-width: 0; }
+.taskHeading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-bottom: 6px; }
+.taskTitle { color: var(--color-star); font-size: var(--fs-body); line-height: 1.4; }
+.taskDescription { margin: 0; color: var(--color-star-dim); font-size: var(--fs-label); line-height: 1.5; overflow-wrap: anywhere; }
+.taskArrow { color: var(--color-nucleus); margin-top: 6px; }
+@media (min-width: 600px) { .rail { gap: 12px; padding: 20px 24px; } .stageLabel { font-size: var(--fs-label); } }
