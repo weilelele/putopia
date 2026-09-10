@@ -54,6 +54,12 @@ select {
   height: 100svh;
 }
 
+/* Focused routes may intentionally omit the sidebar. Keep their only child in
+   the full-width track instead of the reserved desktop navigation column. */
+.app-shell:not(:has(> .sidebar)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .sidebar {
   display: none;
   height: 100svh;
