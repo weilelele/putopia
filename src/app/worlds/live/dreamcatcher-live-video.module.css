@@ -1,3 +1,8 @@
+.video {
+  /* Playback has separate controls; swipes on the picture belong to the page. */
+  pointer-events: none;
+}
+
 .controls {
   position: absolute;
   top: var(--s-2);

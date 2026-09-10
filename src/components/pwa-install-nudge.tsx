@@ -4,6 +4,7 @@ import { ArchiveButton } from '@/components/archive-button'
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import posthog from 'posthog-js'
 import { usePwaInstall } from '@/components/pwa-provider'
+import { getRouteScrollContainer } from '@/lib/route-scroll-container'
 import {
   PWA_INSTALL_NUDGE_DECLINE_MS,
   PWA_INSTALL_NUDGE_DEFER_MS,
@@ -72,8 +73,8 @@ export function PwaInstallNudge({
       maybeShow()
     }, ENGAGEMENT_DELAY_MS)
 
-    const container = scrollContainer.current
     const onScroll = () => {
+      const container = scrollContainer.current && getRouteScrollContainer(scrollContainer.current)
       if (!container) return
       const scrollableHeight = container.scrollHeight - container.clientHeight
       if (scrollableHeight > 0 && container.scrollTop / scrollableHeight >= DASHBOARD_SCROLL_THRESHOLD) {
@@ -81,11 +82,11 @@ export function PwaInstallNudge({
         maybeShow()
       }
     }
-    container?.addEventListener('scroll', onScroll, { passive: true })
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true })
 
     return () => {
       window.clearTimeout(timeout)
-      container?.removeEventListener('scroll', onScroll)
+      document.removeEventListener('scroll', onScroll, true)
     }
   }, [canInstall, eligibleUser, scrollContainer, visible])
 

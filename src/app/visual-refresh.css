@@ -74,6 +74,27 @@ select {
   scrollbar-gutter: stable;
 }
 
+/* Wide reading pages scroll as one surface, including their outer gutters.
+   Keep bounded workspaces on their own scroll model. */
+@media (min-width: 768px) {
+  .app-shell:has(> [data-route-scroll]) {
+    overflow-y: auto;
+    align-items: start;
+    scrollbar-gutter: stable;
+    overflow-anchor: none;
+  }
+
+  .app-shell > [data-route-scroll] {
+    overflow: visible;
+    height: auto;
+    scrollbar-gutter: auto;
+  }
+
+  .app-shell:has(> [data-route-scroll]) > .sidebar {
+    align-self: start;
+  }
+}
+
 .top-bar {
   min-height: 44px;
   margin-bottom: 1.25rem;

@@ -131,7 +131,7 @@ function StateClip({ url, label, loop, fallbackImage, onEnded }: {
           <span className={playerStyles.unavailable} role="status">VIDEO COULD NOT LOAD</span>
         </>
       ) : (
-        <video key={attempt} ref={videoRef} aria-label={label} autoPlay className={styles.liveVideo}
+        <video key={attempt} ref={videoRef} aria-label={label} autoPlay className={`${styles.liveVideo} ${playerStyles.video}`}
           loop={loop} muted playsInline preload="auto" src={url}
           onEnded={loop ? undefined : onEnded} onError={() => setFailed(true)}
           onPlaying={() => setBlocked(false)}>
