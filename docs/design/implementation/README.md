@@ -1,6 +1,6 @@
 # UI 2.3 实现与验收记录
 
-> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。内容区不重复放品牌 Logo；恢复桌面/横屏统一侧栏中的原品牌、导航和账号区域。Dashboard 采用已确认的四类 Updates 与两类 Events 内容池。
+> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。五个一级 Tab 在移动端恢复紧凑原图形＋文字 Logo；二级及更深页面无 Logo；桌面/横屏统一侧栏保留品牌，内容区不重复。Dashboard 采用已确认的四类 Updates 与两类 Events 内容池。
 
 
 2026-09-09。设计批准、代码实现、验证和正式发布分别记录。当前权威入口是 [design-system.md](../../design-system.md)，产品内 `/ui-kit` 使用真实共享组件。旧版 golden screens 和海报哲学文档保留历史记录并标记废弃，不再指导开发。
@@ -80,3 +80,7 @@ Signal Tuning 和 Vote Open 不再进入 Updates。30 秒只是服务端缓存�
 ## 最新修正：紧凑布局与信息层级
 
 Devices 导航已用原品牌图形替换手柄；欢迎标题统一 WELCOME, VOYAGER；Intel 保留首条宽图，后续条目使用右侧缩略图。Devices 城市标签居左。Voyagers 批次箭头使用共享 BatchTabs，首尾禁用且不覆盖标签。Worlds Live 新增独立加载占位，避免 WORLD RECORDS 闪屏。UI Kit 与原生离线展示同步；iOS 仍需原生视觉验收。
+
+## 一级品牌区与二级页面
+
+五个一级 Tab 共用 RootBrandHeader：移动端左侧原品牌图形与字标、右侧原操作入口。Your Path、Logs、详情页不使用此组件。桌面及带侧栏的横屏只显示侧栏品牌。UI Kit 和 iOS 离线根页面同步；缓存详情不显示品牌页头。

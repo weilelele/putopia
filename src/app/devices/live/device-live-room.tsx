@@ -1,4 +1,5 @@
 'use client'
+import { RootBrandHeader } from '@/components/root-brand-header'
 import { ArchiveTabs } from '@/components/archive-tabs'
 import { ArchiveButton } from '@/components/archive-button'
 import { useSessionPreference } from '@/lib/use-session-preference'
@@ -122,10 +123,11 @@ export function DeviceLiveRoom({
 
   return (
     <main className={`main ${styles.page}`}>{!isRoot && <BackLink href="/devices" label="Devices" />}
-      <header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
+      {isRoot ? <><h1 className="sr-only">Devices</h1><RootBrandHeader><ArchiveButton variant="ghost" className={styles.archiveLink} onClick={() => setSheetOpen(true)}>ARCHIVE <ChevronRight aria-hidden size={16} /></ArchiveButton></RootBrandHeader></> : (<header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
         <h1 className={isRoot ? 'sr-only' : undefined}>DEVICES</h1>
         <ArchiveButton variant="ghost" className={styles.archiveLink} onClick={() => setSheetOpen(true)}>ARCHIVE <ChevronRight aria-hidden size={16} /></ArchiveButton>
-      </header>
+      </header>)}
+
 
       <nav className={styles.objectNav} aria-label="Device batches">
         <div className={styles.objectTabs}>

@@ -225,6 +225,13 @@ function DashboardView({ snapshot, media, select }: {
   </View>
 }
 
+function OfflineBrand({compact=false}: {compact?:boolean}) {
+  return <View style={{flexDirection:'row',alignItems:'center',gap:8,minHeight:48,marginBottom:8}} accessibilityLabel="Multiverse Collective">
+    <Image source={require('./assets/vi-icon.png')} resizeMode="contain" style={{width:compact ? 24 : 28,height:22}} />
+    <Image source={require('./assets/vi-wordmark.png')} resizeMode="contain" style={{width:compact ? 92 : 120,height:36}} />
+  </View>
+}
+
 function NativePublisher({item,media}: {item: OfflineIntel; media: OfflineMediaMap}) {
   const name = item.publisher_name ?? 'Multiverse Collective'
   return <View style={styles.nativePublisher}>{item.publisher_avatar_url ? <CachedImage uri={item.publisher_avatar_url} media={media} style={styles.nativeAvatar} /> : <View style={styles.nativeAvatar}><Text style={styles.meta}>{name.slice(0,2).toUpperCase()}</Text></View>}<Text style={styles.directoryMeta}>{name}</Text></View>
@@ -507,6 +514,7 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
               </Pressable>
             </View>
             <ScrollView ref={scrollView} onScroll={event => { positions.current[scrollKey] = event.nativeEvent.contentOffset.y }} scrollEventThrottle={100} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+              {!detail && !isLogs && !landscape && <OfflineBrand />}
               {missingDetail && <View><DetailHeader title="Not saved on this device" meta="OFFLINE" onBack={() => setDetail(null)} /><EmptyState>Reconnect to load this record, or return to your saved list.</EmptyState></View>}
               {!missingDetail && activeTab === 'dashboard' && <DashboardView snapshot={snapshot} media={media} select={select} />}
               {!missingDetail && activeTab === 'intel' && <IntelView snapshot={snapshot} media={media} detail={detail} setDetail={setDetail} />}
@@ -517,7 +525,7 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
 
           </>
         ) : (
-          <View style={styles.noSnapshot}>
+          <View style={styles.noSnapshot}>{!landscape && <OfflineBrand />}
             {activeTab === 'dashboard' && <DashboardStats />}
             <Text style={styles.noSnapshotTitle}>NO OFFLINE COPY YET</Text>
             <Text style={styles.noSnapshotBody}>Connect once to save the Multiverse Console and its latest content on this device.</Text>
@@ -527,7 +535,7 @@ export function OfflineHome({ connected, reconnecting, snapshot, media, onRetry 
             </Pressable>
           </View>
         )}
-            <View style={[styles.bottomNav,landscape && styles.offlineSidebar]}>
+            <View style={[styles.bottomNav,landscape && styles.offlineSidebar]}>{landscape && <OfflineBrand compact />}
               {TABS.map((tab) => (
                 <Pressable key={tab.key} accessibilityRole="button" accessibilityLabel={tab.label} accessibilityState={{ selected: activeTab === tab.key }}
                   onPress={() => changeTab(tab.key)} style={styles.navItem}>
