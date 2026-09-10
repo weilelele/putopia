@@ -1,8 +1,8 @@
 {
   "faq": [
     {
-      "question": "What is Q1?",
-      "answer": "Q1 is the 50-Console claim allocation for the Kyoto One Batch. Each Multiverse Console has a charcoal-gray housing, a pale front panel, silver side controls and orange details."
+      "answer": "Kyoto One is the first Kyoto batch of Multiverse Consoles. Each Console has a charcoal-gray housing, a pale front panel, silver side controls and orange details. This allocation is limited to 50 Consoles.",
+      "question": "What is Kyoto One?"
     },
     {
       "answer": "Yes. US$520 is the full batch preorder price for one assigned Multiverse Console (Kyoto One Batch) and the three shipments described below. The full amount is collected when you claim; it is not a deposit or a recurring subscription. The Console arrives in the third shipment.",
@@ -29,7 +29,7 @@
       "question": "Are the unusual routes exclusive to this batch?"
     },
     {
-      "answer": "The earlier Initial Pack order and this $520 Q1 claim are separate. Your earlier order remains due for delivery without a new purchase. No upgrade credit has been announced.",
+      "answer": "The earlier Initial Pack order and this $520 Kyoto One claim are separate. Your earlier order remains due for delivery without a new purchase. No upgrade credit has been announced.",
       "question": "Does my earlier $12 Initial Pack include this Console?"
     },
     {
@@ -39,19 +39,19 @@
   ],
   "code": "KYOTO-ONE",
   "lead": {
-    "bio": "Ryo is a philosopher-engineer based in Kyoto and one of the Collective's earliest members. For Q1, his focus is the order of the work: understand what the Consoles have retained, establish a reliable baseline, then decide what should change.",
+    "bio": "Ryo is a philosopher-engineer based in Kyoto and one of the Collective's earliest members. For Kyoto One, his focus is the order of the work: understand what the Consoles have retained, establish a reliable baseline, then decide what should change.",
     "name": "Ryo Tanaka",
-    "role": "Architect · Q1 Lead",
+    "role": "Architect · Kyoto One Lead",
     "initials": "RT",
     "location": "Kyoto, Japan",
     "latestNote": "Before we change the system, we need to understand what it has retained. The first task is to establish a baseline we can return to."
   },
-  "name": "Q1",
+  "name": "Kyoto One",
   "slug": "kyoto-one",
   "facts": [
     {
       "label": "BATCH",
-      "value": "Q1"
+      "value": "Kyoto One"
     },
     {
       "label": "ALLOCATION",
@@ -85,15 +85,15 @@
   "claimHref": "/devices/claim",
   "heroMedia": [
     {
-      "kind": "image",
-      "src": "/assets/q1-20260910/01-robot-library.png",
       "alt": "Multiverse Console viewed from the front left in a dim warehouse, with a robot reading in an overgrown library on its screen",
+      "src": "/assets/q1-20260910/01-robot-library.png",
+      "kind": "image",
       "caption": "Robot library · AI-generated warehouse visualization"
     },
     {
-      "kind": "image",
-      "src": "/assets/q1-20260910/02-shepherd.png",
       "alt": "Multiverse Console viewed from the front right in a dim warehouse, with a shepherd reading outdoors on its screen",
+      "src": "/assets/q1-20260910/02-shepherd.png",
+      "kind": "image",
       "caption": "Shepherd observation · AI-generated warehouse visualization"
     },
     {
@@ -117,7 +117,7 @@
   "heroCaption": "Warehouse observation · AI-generated design visualization",
   "availability": "50 Consoles allocated for preorder claims.",
   "latestUpdate": {
-    "body": "Fifty Consoles are available to claim in Q1 as preorders at US$520 each. Each claim includes three separate shipments: Initial Voyager Pack with a badge and welcome letter; Mysterious Widgets, with the exact selection to be confirmed; then Multiverse Console (Kyoto One Batch). Dispatch dates are not yet confirmed.\n\nThe second package is still taking shape. An antenna may be included, but its exact contents have not been finalized. We will record those details here as they are confirmed.\n\nEarlier Initial Pack orders remain a separate delivery commitment. You do not need to claim Q1 to receive your earlier purchase.",
+    "body": "Fifty Consoles are available to claim in Kyoto One as preorders at US$520 each. Each claim includes three separate shipments: Initial Voyager Pack with a badge and welcome letter; Mysterious Widgets, with the exact selection to be confirmed; then Multiverse Console (Kyoto One Batch). Dispatch dates are not yet confirmed.\n\nThe second package is still taking shape. An antenna may be included, but its exact contents have not been finalized. We will record those details here as they are confirmed.\n\nEarlier Initial Pack orders remain a separate delivery commitment. You do not need to claim Kyoto One to receive your earlier purchase.",
     "date": "Sep 10, 2026",
     "media": [
       {
@@ -127,14 +127,14 @@
         "caption": "Warehouse observation · AI-generated design visualization"
       }
     ],
-    "title": "Q1 opens for preorder claims"
+    "title": "Kyoto One opens for preorder claims"
   },
   "archiveStages": [
     {
       "id": "intel-1",
       "label": "Kyoto One: the record begins",
       "period": "Sep 09, 2026",
-      "summary": "The Consoles were found in Kyoto. The clues surrounding them point to an electrical engineer, but we have yet to establish who he was or where he went. For now, the devices are our starting point.\n\nThey are well preserved and quick to wake. Some of the worlds they reach lie beyond the familiar routes. Battery endurance and system responsiveness still need attention, but a change to the system could affect what remains inside it. Before making those changes, we need to understand what the Consoles have retained.\n\nFifty Consoles are available to claim in Q1 as preorders at US$520 each. Each claim includes three separate shipments: Initial Voyager Pack with a badge and welcome letter; Mysterious Widgets, with the exact selection to be confirmed; then Multiverse Console (Kyoto One Batch). Dispatch dates are not yet confirmed.",
+      "summary": "The Consoles were found in Kyoto. The clues surrounding them point to an electrical engineer, but we have yet to establish who he was or where he went. For now, the devices are our starting point.\n\nThey are well preserved and quick to wake. Some of the worlds they reach lie beyond the familiar routes. Battery endurance and system responsiveness still need attention, but a change to the system could affect what remains inside it. Before making those changes, we need to understand what the Consoles have retained.\n\nFifty Consoles are available to claim in Kyoto One as preorders at US$520 each. Each claim includes three separate shipments: Initial Voyager Pack with a badge and welcome letter; Mysterious Widgets, with the exact selection to be confirmed; then Multiverse Console (Kyoto One Batch). Dispatch dates are not yet confirmed.",
       "evidence": []
     },
     {

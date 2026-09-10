@@ -138,7 +138,7 @@ export function DeviceLiveRoom({
               href={`/devices/batches/${item.slug}`}
               key={item.slug}
             >
-              {cityLabel(item)}
+              {item.name}
             </Link>
           ))}
         </div>
