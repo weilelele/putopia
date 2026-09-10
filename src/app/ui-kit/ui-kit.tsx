@@ -1,4 +1,5 @@
 'use client'
+import { RootBrandHeader } from '@/components/root-brand-header'
 import { BatchTabs } from '@/components/batch-tabs'
 import { PublisherIdentity, NewsMedia } from '@/components/news-content'
 import { DashboardVoyagerHeader } from '@/components/dashboard-voyager-header'
@@ -49,7 +50,7 @@ export function UiKit() {
         <ArchiveTabs ariaLabel="Page preview" activeId={['logs','profile'].includes(view) ? 'voyagers' : view} items={['dashboard','intel','devices','worlds','voyagers'].map(id => ({ id, label: id.toUpperCase() }))} onChange={setView} mode="filter" />
         <div className={`uk-phone ${view === 'intel' ? 'archive-intel-page' : ''}`}>
           {!['logs','profile'].includes(view) ? <>
-<h2 className="sr-only">{view.toUpperCase()}</h2>
+<h2 className="sr-only">{view.toUpperCase()}</h2>{['dashboard','devices','worlds'].includes(view) && <RootBrandHeader />}
 </> : <>
 <ArchiveButton type="submit" variant="ghost" className="back-link" onClick={() => setView(source)}>← Back to {source}</ArchiveButton>
 <h2 className="uk-page-title">{view === 'logs' ? 'VOYAGER LOGS' : 'MY PROFILE'}</h2>
@@ -60,9 +61,9 @@ export function UiKit() {
 <h3>EVENTS</h3>
 <EventRail events={[{id:'fixture-vote',kind:'Vote Open',title:'Choose the next signal',description:'Open votes remain visible before login.',href:'#submit-01',action:'View and vote'},{id:'fixture-tuning',kind:'Signal Tuning',image:'/assets/ui-kit/world-records-antenna.png',title:'Tune a new world',description:'The current signal is open for tuning.',href:'#shell-01',action:'Tune signal'}]} />
 </> : view === 'intel' ? <>
-<div className="archive-root-actions">
+<RootBrandHeader>
 <ArchiveButton variant="ghost" onClick={() => setSheet(true)}>VOTING HUB →</ArchiveButton>
-</div>
+</RootBrandHeader>
 <ArchiveTabs mode="filter" activeId={selection} ariaLabel="Intel visibility" items={[{id:'all',label:'ALL'},{id:'public',label:'PUBLIC'},{id:'classified',label:'CLASSIFIED'}]} onChange={setSelection} />
 <article className="intel-lead">
 <span className="intel-entry-meta">NOTICE · 09 SEP 2026</span>
@@ -105,9 +106,9 @@ export function UiKit() {
 <p>A real queue and its current availability come from the service. Offline mode keeps saved content read only.</p>
 </details>
 </ArchiveCard> : view === 'voyagers' ? <>
-<div className="archive-root-actions">
+<RootBrandHeader>
 <ArchiveButton className="uk-profile-entry" variant="ghost" onClick={() => { setSource(view); setView('profile') }}>MY PROFILE →</ArchiveButton>
-</div>
+</RootBrandHeader>
 <BatchTabs activeId={selection === 'batch1' ? 'batch1' : 'batch2'} items={[{id:'batch1',label:'2025 Batch',count:7},{id:'batch2',label:'2026 Batch S2',count:53}]} onChange={setSelection} />
 <article className="voyager-directory-row">
 <div className="voyager-directory-identity">

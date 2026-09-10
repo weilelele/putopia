@@ -1,4 +1,5 @@
 'use client'
+import { RootBrandHeader } from '@/components/root-brand-header'
 import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
@@ -224,7 +225,7 @@ export default function VoyagersPage() {
 
 
       <h1 className="sr-only">Voyagers</h1>
-      <div className="archive-root-actions"><ArchiveLinkButton variant="ghost" href={user.role === 'guest' ? '/login?redirect=%2Fprofile' : '/profile'}>MY PROFILE <ArrowRight aria-hidden size={18} /></ArchiveLinkButton></div>
+      <RootBrandHeader><ArchiveLinkButton variant="ghost" href={user.role === 'guest' ? '/login?redirect=%2Fprofile' : '/profile'}>MY PROFILE <ArrowRight aria-hidden size={18} /></ArchiveLinkButton></RootBrandHeader>
 
       {/* ── Stat board — Architect Council / new Voyagers / total Voyagers ── */}
       <ArchiveStatStrip items={statItems} />

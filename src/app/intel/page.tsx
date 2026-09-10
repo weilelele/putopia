@@ -1,4 +1,5 @@
 'use client'
+import { RootBrandHeader } from '@/components/root-brand-header'
 import { PublisherIdentity, NewsMedia } from '@/components/news-content'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
@@ -140,7 +141,7 @@ function IntelPageContent() {
 
 
       <h1 className="sr-only">Intel</h1>
-      <div className="archive-root-actions"><ArchiveLinkButton href="/vote" variant="ghost">VOTING HUB <ArrowRight aria-hidden size={18} /></ArchiveLinkButton></div>
+      <RootBrandHeader><ArchiveLinkButton href="/vote" variant="ghost">VOTING HUB <ArrowRight aria-hidden size={18} /></ArchiveLinkButton></RootBrandHeader>
 
       <FilterBar
         options={INTEL_FILTERS}
