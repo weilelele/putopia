@@ -30,11 +30,11 @@ describe('production-only Device Library', () => {
     ])).toEqual([])
   })
 
-  it('uses the approved snapshot and live inventory, never the pending draft', () => {
+  it('uses the approved snapshot and paid inventory, never pending reservations or the draft', () => {
     const [batch] = publishedRowsToBatches([row])
     expect(batch.name).toBe(published.name)
     expect(batch.summary).toBe(published.summary)
-    expect(batch.inventory).toEqual({ claimedQuantity: 5, listingQuantity: 50 })
+    expect(batch.inventory).toEqual({ claimedQuantity: 3, listingQuantity: 50 })
     expect(batch.claimPrice?.amount).toBe(420)
     expect(rowToBatch(row)?.name).toBe('Private draft')
   })

@@ -48,7 +48,11 @@ export function rowToBatch(row: DeviceBatchRow, published = false): DeviceBatch 
         : content.claimPrice,
     inventory: published
       ? {
-          claimedQuantity: row.claimed_quantity + row.reserved_quantity,
+          // Pending Checkout Sessions reserve a physical Unit to prevent
+          // overselling, but they are not completed claims. Public availability
+          // only decreases after Stripe confirms payment and the order moves to
+          // a claimed status.
+          claimedQuantity: row.claimed_quantity,
           listingQuantity: row.listing_quantity,
         }
       : {
