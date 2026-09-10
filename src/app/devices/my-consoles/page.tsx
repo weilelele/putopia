@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Check, Clock3, Package } from 'lucide-react'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { DEVICE_BATCH_STATUS } from '@/lib/device-batches'
@@ -30,18 +29,9 @@ export default async function MyConsolesPage() {
 
   return (
     <main className={`main pilot-archive-page archive-collection-page ${styles.archivePage}`}>
-      <ArchiveBrandHeader />
 
-      <div className="top-bar">
-        <div className="crumbs">
-          DEVICE ARCHIVE <span>/</span> MY CONSOLES
-        </div>
-        <div className="right">
-          <div className="item">
-            CLAIMED <span className="val">{records.length}</span>
-          </div>
-        </div>
-      </div>
+
+
 
       <ArchivePageHeader
         accent="CONSOLES"

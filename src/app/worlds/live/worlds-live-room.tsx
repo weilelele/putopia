@@ -1,10 +1,16 @@
 'use client'
+import { RootBrandHeader } from '@/components/root-brand-header'
+import { ArchiveTabs } from '@/components/archive-tabs'
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveTextarea } from '@/components/archive-input'
+import { useSessionPreference } from '@/lib/use-session-preference'
 
+import { ArchiveSheet } from '@/components/archive-sheet'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import { Check, ChevronRight, CircleHelp, Clock3, X } from 'lucide-react'
+import { Check, ChevronRight, CircleHelp, Clock3 } from 'lucide-react'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { submitDreamcatcherWorld } from '@/lib/actions/worlds'
 import { submitSignalResponse, type PublicInvestigation } from '@/lib/actions/signal-tasks'
@@ -15,7 +21,6 @@ import { DreamcatcherChat } from './dreamcatcher-chat'
 import roomStyles from './worlds-room.module.css'
 import playerStyles from './dreamcatcher-live-video.module.css'
 import styles from '../../live-observation-room.module.css'
-import { useRememberedState } from '@/lib/remembered-state'
 
 type RoomTab = 'queue' | 'dispatch' | 'chat'
 type Detail = { kind: 'dispatch'; investigation: PublicInvestigation }
@@ -53,15 +58,13 @@ export function WorldsLiveRoom({
   loggedIn: boolean
 }) {
   const router = useRouter()
-  const [selectedSlug, setSelectedSlug] = useRememberedState(
-    'primary-tab:worlds:room',
-    rooms[0]?.slug ?? '',
-  )
-  const [activeTab, setActiveTab] = useRememberedState<RoomTab>('primary-tab:worlds:panel', 'queue')
+  const [selectedSlug, setSelectedSlug] = useSessionPreference('mc:view:worlds:room', rooms[0]?.slug ?? '')
+  const [activeTab, setActiveTab] = useSessionPreference<RoomTab>('mc:view:worlds:tab', 'queue')
   const [infoOpen, setInfoOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
   const [detail, setDetail] = useState<Detail | null>(null)
   const [dream, setDream] = useState('')
+  const [submissionUnknown, setSubmissionUnknown] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [pendingChoice, setPendingChoice] = useState('')
   const [isPending, startTransition] = useTransition()
@@ -90,7 +93,7 @@ export function WorldsLiveRoom({
 
   if (!selected) return (
     <main className={`main ${styles.page}`} data-route-scroll>
-      <header className={styles.roomHeader}><h1>WORLDS</h1><Link className={styles.archiveLink} href="/worlds">ARCHIVE</Link></header>
+      <h1 className="sr-only">Worlds</h1><RootBrandHeader><Link className={styles.archiveLink} href="/worlds">ARCHIVE</Link></RootBrandHeader>
       <section className={styles.sectionPanel}><div className={styles.emptyRoom}>NO DREAMCATCHERS PUBLISHED<br />Please check back later. Existing worlds remain in the archive.</div></section>
     </main>
   )
@@ -103,9 +106,10 @@ export function WorldsLiveRoom({
 
   function submitDream(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!dream.trim() || queueFull || isPending) return
+    if (!dream.trim() || queueFull || isPending || submissionUnknown) return
     setStatusMessage('')
     startTransition(async () => {
+      try {
       const result = await submitDreamcatcherWorld({
         dreamcatcherSlug: selected.slug,
         name: dream.trim().slice(0, 80),
@@ -120,6 +124,7 @@ export function WorldsLiveRoom({
       setActiveTab('queue')
       setStatusMessage('Dream accepted by this device.')
       window.location.reload()
+      } catch { setSubmissionUnknown(true); setStatusMessage('Result unconfirmed. Refresh the queue to check your submission before trying again.') }
     })
   }
 
@@ -127,8 +132,9 @@ export function WorldsLiveRoom({
   const dispatchDay = dispatch?.days.findLast((day) => !day.task.closed) ?? dispatch?.days.at(-1)
 
   function confirmSignal() {
-    if (!dispatchDay || !pendingChoice || isPending) return
+    if (!dispatchDay || !pendingChoice || isPending || submissionUnknown) return
     startTransition(async () => {
+      try {
       const result = await submitSignalResponse(dispatchDay.task.id, pendingChoice)
       if (!result.ok) {
         setStatusMessage(result.error ?? 'Could not record this signal.')
@@ -138,26 +144,22 @@ export function WorldsLiveRoom({
       setPendingChoice('')
       setStatusMessage('Signal recorded. This world will return to its original Dreamcatcher.')
       window.location.reload()
+      } catch { setSubmissionUnknown(true); setStatusMessage('Result unconfirmed. Refresh the queue to check your submission before trying again.') }
     })
   }
 
   return (
     <main className={`main ${styles.page}`} data-route-scroll>
-      <header className={styles.roomHeader}>
-        <h1>WORLDS</h1>
-      </header>
+      <h1 className="sr-only">Worlds</h1>
 
+      <RootBrandHeader><ArchiveLinkButton href="/worlds" variant="ghost" aria-label="Archive — explore all Worlds">ARCHIVE <ChevronRight aria-hidden size={18} /></ArchiveLinkButton></RootBrandHeader>
       <nav className={`${styles.objectNav} ${roomStyles.navigation}`} aria-label="Dreamcatcher locations">
-        <div className={styles.objectTabs} role="tablist">
-          {rooms.map((room) => (
-            <button aria-selected={selected.slug === room.slug} className={styles.objectTab} key={room.slug} onClick={() => chooseRoom(room.slug)} role="tab" type="button">{room.city.toUpperCase()}</button>
-          ))}
-        </div>
-        <ArchiveLinkButton className={roomStyles.archiveEntry} href="/worlds" variant="secondary" aria-label="Archive — explore all Worlds">
-          <span>ARCHIVE<small>ALL WORLDS</small></span><ChevronRight aria-hidden size={18} />
-        </ArchiveLinkButton>
+        <ArchiveTabs mode="filter" ariaLabel="Dreamcatcher location" activeId={selected.slug}
+          items={rooms.map(room=>({id:room.slug,label:room.city.toUpperCase()}))} onChange={chooseRoom} />
+
       </nav>
 
+      <div className={styles.workspace}><div className={styles.workspaceMedia}>
       <section className={`${styles.liveFrame} ${playerStyles.frame}`} aria-label={`${selected.city} Dreamcatcher state video`}>
         <div className={styles.liveImage}>
           <DreamcatcherLiveVideo key={selected.id}
@@ -172,7 +174,7 @@ export function WorldsLiveRoom({
         </div>
       </section>
 
-      <div className={styles.desktopSplit}>
+      </div><div className={`${styles.desktopSplit} ${styles.workspaceDetails}`}>
         <section className={styles.sectionPanel} aria-labelledby="device-status">
           <header className={styles.queueHeader}>
             <div><div className={styles.eyebrow}>CURRENT DEVICE STATE</div><h2 id="device-status">{STATUS_LABEL[selected.status]}</h2></div>
@@ -183,43 +185,42 @@ export function WorldsLiveRoom({
             <span>EST. ~{selected.roundDurationMinutes} MIN / ROUND</span>
           </div>
           <div className={styles.dreamActionRow}>
-            <button aria-label="How this Dreamcatcher works" className={styles.infoButton} onClick={() => setInfoOpen(true)} type="button"><CircleHelp aria-hidden size={20} /></button>
-            <button className={styles.primaryButton} disabled={queueFull || selected.status === 'offline'} onClick={() => setSubmitOpen(true)} type="button">{queueFull ? 'CHOOSE ANOTHER DEVICE' : 'DESCRIBE A DREAM'}</button>
+            <ArchiveButton variant="ghost" aria-label="How this Dreamcatcher works" className={styles.infoButton} onClick={() => setInfoOpen(true)} type="button"><CircleHelp aria-hidden size={20} /></ArchiveButton>
+            <ArchiveButton variant="primary" className={styles.primaryButton} disabled={queueFull || selected.status === 'offline'} onClick={() => setSubmitOpen(true)} type="button">{queueFull ? 'CHOOSE ANOTHER DEVICE' : 'DESCRIBE A DREAM'}</ArchiveButton>
           </div>
           {statusMessage ? <p aria-live="polite" className={styles.formStatus}>{statusMessage}</p> : null}
         </section>
 
         <section className={styles.sectionPanel}>
-          <div className={styles.contentTabs} role="tablist" aria-label="Dreamcatcher room content">
-            <button aria-selected={activeTab === 'queue'} className={styles.contentTab} onClick={() => setActiveTab('queue')} role="tab" type="button">QUEUE</button>
-            <button aria-selected={activeTab === 'dispatch'} className={styles.contentTab} onClick={() => setActiveTab('dispatch')} role="tab" type="button">DISPATCH {roomInvestigations.length || ''}</button>
-            <button aria-selected={activeTab === 'chat'} className={styles.contentTab} onClick={() => setActiveTab('chat')} role="tab" type="button">LIVE CHAT</button>
-          </div>
+          <ArchiveTabs ariaLabel="Dreamcatcher room content" activeId={activeTab}
+            items={[{id:'queue',label:'QUEUE'},{id:'dispatch',label:'DISPATCH',count:roomInvestigations.length},{id:'chat',label:'LIVE CHAT'}].map(item=>({...item,panelId:`world-room-${item.id}`}))}
+            onChange={id => setActiveTab(id as typeof activeTab)} />
 
-          {activeTab === 'queue' ? <div className={styles.queueList} role="tabpanel">
+          {activeTab === 'queue' ? <div className={styles.queueList} role="tabpanel" id={`world-room-${activeTab}`} aria-labelledby={`world-room-${activeTab}-tab`}>
             {selected.queue.map((job, index) => <Link className={`${styles.queueItem} ${roomStyles.queueLink}`} data-active={job.status === 'processing'} key={job.id} href={`/worlds/${encodeURIComponent(job.worldId)}`} prefetch={false}><span className={styles.queueIndex}>{String(index + 1).padStart(2, '0')}</span><span><strong>{job.title}</strong><small>SUBMITTED BY {job.submitter.toUpperCase()}</small></span><span className={styles.queueStatus}>{jobStatus(job)} <ChevronRight aria-hidden size={14} /></span></Link>)}
             {!selected.queue.length ? <div className={styles.emptyRoom}>NO DREAMS WAITING · {STATUS_LABEL[selected.status]}</div> : null}
           </div> : null}
 
-          {activeTab === 'dispatch' ? <div className={styles.queueList} role="tabpanel">
+          {activeTab === 'dispatch' ? <div className={styles.queueList} role="tabpanel" id={`world-room-${activeTab}`} aria-labelledby={`world-room-${activeTab}-tab`}>
             {roomInvestigations.map((investigation) => {
               const day = investigation.days.findLast((item) => !item.task.closed) ?? investigation.days.at(-1)
               const options = day?.task.assets.filter((asset) => asset.asset_role === 'option') ?? []
-              return <button className={styles.dispatchItem} key={investigation.id} onClick={() => { setPendingChoice(day?.task.mySelection ?? ''); setDetail({ kind: 'dispatch', investigation }) }} type="button"><span className={styles.dispatchMosaic}>{options.slice(0, 4).map((asset) => asset.display_url || asset.processed_url ? <Image alt="" height={80} key={asset.id} src={asset.display_url ?? asset.processed_url!} width={80} unoptimized /> : null)}</span><span className={styles.dispatchCopy}><span className={styles.eyebrow}>SIGNAL DISPATCH · ROUND {day?.dayIndex ?? 1}</span><strong>{investigation.title}</strong><small>{day?.task.mySelection ? 'CHOICE RECORDED' : `${options.length} SIGNALS · COMMUNITY CHOICE`}</small></span><ChevronRight aria-hidden size={18} /></button>
+              return <ArchiveButton variant="secondary" className={styles.dispatchItem} key={investigation.id} onClick={() => { setPendingChoice(day?.task.mySelection ?? ''); setDetail({ kind: 'dispatch', investigation }) }} type="button"><span className={styles.dispatchMosaic}>{options.slice(0, 4).map((asset) => asset.display_url || asset.processed_url ? <Image alt="" height={80} key={asset.id} src={asset.display_url ?? asset.processed_url!} width={80} unoptimized /> : null)}</span><span className={styles.dispatchCopy}><span className={styles.eyebrow}>SIGNAL DISPATCH · ROUND {day?.dayIndex ?? 1}</span><strong>{investigation.title}</strong><small>{day?.task.mySelection ? 'CHOICE RECORDED' : `${options.length} SIGNALS · COMMUNITY CHOICE`}</small></span><ChevronRight aria-hidden size={18} /></ArchiveButton>
             })}
             {!roomInvestigations.length ? <div className={styles.emptyRoom}>NO SIGNALS AWAITING A COMMUNITY CHOICE</div> : null}
           </div> : null}
 
-          {activeTab === 'chat' ? <div role="tabpanel"><DreamcatcherChat key={selected.id} roomId={selected.id} city={selected.city} timeZone={selected.timeZone} /></div> : null}
+          {activeTab === 'chat' ? <div role="tabpanel" id={`world-room-${activeTab}`} aria-labelledby={`world-room-${activeTab}-tab`}><DreamcatcherChat key={selected.id} roomId={selected.id} city={selected.city} timeZone={selected.timeZone} /></div> : null}
         </section>
       </div>
 
 
-      {infoOpen ? <div className={styles.sheetBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setInfoOpen(false) }}><section aria-label="How the Dreamcatcher works" aria-modal="true" className={styles.sheet} role="dialog"><header className={styles.sheetHeader}><h2>HOW THIS DEVICE WORKS</h2><button aria-label="Close information" className={styles.iconButton} onClick={() => setInfoOpen(false)} type="button"><X aria-hidden size={22} /></button></header><div className={styles.dialogBody}><p>This Dreamcatcher processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. The duration is predictable, but the room does not show a countdown.</p><p>A completed round returns three or four video signals for community selection. After the choice closes, the world returns to this same Dreamcatcher for its next round.</p><p>The waiting queue has a fixed capacity. If this device stops accepting dreams, choose another location.</p></div></section></div> : null}
+      </div>
+      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Dreamcatcher works" dirty={false} busy={false}><div className={styles.dialogBody}><p>This Dreamcatcher processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. The duration is predictable, but the room does not show a countdown.</p><p>A completed round returns three or four video signals for community selection. After the choice closes, the world returns to this same Dreamcatcher for its next round.</p><p>The waiting queue has a fixed capacity. If this device stops accepting dreams, choose another location.</p></div></ArchiveSheet> : null}
 
-      {submitOpen ? <div className={styles.sheetBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSubmitOpen(false) }}><section aria-label="Describe a dream" aria-modal="true" className={styles.sheet} role="dialog"><header className={styles.sheetHeader}><div><div className={styles.eyebrow}>SUBMIT TO {selected.code}</div><h2>DESCRIBE A DREAM</h2></div><button aria-label="Close dream submission" className={styles.iconButton} onClick={() => setSubmitOpen(false)} type="button"><X aria-hidden size={22} /></button></header>{loggedIn ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT SHOULD THIS DEVICE SEARCH FOR?</label><textarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe a dream or world…" rows={5} value={dream} /><button className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</button>{statusMessage ? <p className={styles.formStatus}>{statusMessage}</p> : null}</form> : <div className={styles.dialogBody}><p>Applicant access or above is required to submit to a Dreamcatcher.</p><Link className={styles.primaryButton} href="/login">LOG IN TO CONTINUE</Link></div>}</section></div> : null}
+      {submitOpen ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Describe a dream" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}>{loggedIn ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT SHOULD THIS DEVICE SEARCH FOR?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe a dream or world…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form> : <div className={styles.dialogBody}><p>Applicant access or above is required to submit to a Dreamcatcher.</p><Link className={styles.primaryButton} href="/login">LOG IN TO CONTINUE</Link></div>}</ArchiveSheet> : null}
 
-      {detail ? <div className={styles.sheetBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDetail(null) }}><section aria-label="Dream details" aria-modal="true" className={styles.sheet} role="dialog"><header className={styles.sheetHeader}><div><div className={styles.eyebrow}>SIGNAL DISPATCH</div><h2>{detail.investigation.title}</h2></div><button aria-label="Close dream details" className={styles.iconButton} onClick={() => setDetail(null)} type="button"><X aria-hidden size={22} /></button></header><div className={styles.dreamDetailBody}>{dispatchDay ? <><p>{dispatchDay.task.prompt ?? 'Which video signal feels most true to this world?'}</p><div className={styles.signalCandidateGrid}>{dispatchDay.task.assets.filter((asset) => asset.asset_role === 'option').map((asset, index) => <button aria-label={`Select signal ${index + 1}`} aria-pressed={pendingChoice === asset.id} className={styles.signalCandidate} disabled={!!dispatchDay.task.mySelection || dispatchDay.task.closed} key={asset.id} onClick={() => setPendingChoice(asset.id)} type="button">{asset.processed_url ? <video autoPlay loop muted playsInline preload="metadata" src={asset.processed_url} /> : asset.display_url ? <Image alt="" fill src={asset.display_url} unoptimized /> : null}<span>SIGNAL {String(index + 1).padStart(2, '0')}</span>{pendingChoice === asset.id ? <Check aria-hidden className={styles.signalCheck} size={20} /> : null}</button>)}</div><button className={styles.primaryButton} disabled={!pendingChoice || !!dispatchDay.task.mySelection || dispatchDay.task.closed || isPending} onClick={confirmSignal} type="button">{dispatchDay.task.mySelection ? 'SIGNAL RECORDED' : 'CONFIRM SIGNAL'}</button></> : null}</div></section></div> : null}
+      {detail ? <ArchiveSheet open onClose={() => setDetail(null)} title="Dream details" dirty={!submissionUnknown && !!pendingChoice && !dispatchDay?.task.mySelection} busy={isPending}><div className={styles.dreamDetailBody}>{dispatchDay ? <><p>{dispatchDay.task.prompt ?? 'Which video signal feels most true to this world?'}</p><div className={styles.signalCandidateGrid}>{dispatchDay.task.assets.filter((asset) => asset.asset_role === 'option').map((asset, index) => <ArchiveButton variant="ghost" aria-label={`Select signal ${index + 1}`} aria-pressed={pendingChoice === asset.id} className={styles.signalCandidate} disabled={!!dispatchDay.task.mySelection || dispatchDay.task.closed} key={asset.id} onClick={() => setPendingChoice(asset.id)} type="button">{asset.processed_url ? <video autoPlay loop muted playsInline preload="metadata" src={asset.processed_url} /> : asset.display_url ? <Image alt="" fill src={asset.display_url} unoptimized /> : null}<span>SIGNAL {String(index + 1).padStart(2, '0')}</span>{pendingChoice === asset.id ? <Check aria-hidden className={styles.signalCheck} size={20} /> : null}</ArchiveButton>)}</div><ArchiveButton variant="primary" className={styles.primaryButton} disabled={!pendingChoice || !!dispatchDay.task.mySelection || dispatchDay.task.closed || isPending || submissionUnknown} onClick={confirmSignal} type="button">{dispatchDay.task.mySelection ? 'SIGNAL RECORDED' : 'CONFIRM SIGNAL'}</ArchiveButton>{statusMessage && <p role="status" className={styles.formStatus}>{statusMessage}</p>}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check signal</ArchiveButton>}</> : null}</div></ArchiveSheet> : null}
     </main>
   )
 }

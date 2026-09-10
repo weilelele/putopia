@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from '@react-native-community/netinfo'
+import { useFonts } from 'expo-font'
 import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { StatusBar } from 'expo-status-bar'
@@ -17,6 +18,7 @@ import {
   WebView,
   type WebViewMessageEvent,
 } from 'react-native-webview'
+import { LaunchScreen } from './LaunchScreen'
 import { OfflineHome } from './OfflineHome'
 import { cacheOfflineMedia } from './offline-media'
 import {
@@ -143,6 +145,10 @@ function firstVisibleContentProbeScript(): string {
 }
 
 export default function App() {
+  useFonts({ CourierPrime: require('./assets/fonts/CourierPrime-regular.ttf'), CourierPrimeBold: require('./assets/fonts/CourierPrime-bold.ttf') })
+  const [modalOpen, setModalOpen] = useState(false)
+  const [launchComplete, setLaunchComplete] = useState(false)
+  const finishLaunch = useCallback(() => setLaunchComplete(true), [])
   const webView = useRef<WebView>(null)
   const permissionStarted = useRef(false)
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -356,6 +362,7 @@ export default function App() {
     try {
       const message = JSON.parse(event.nativeEvent.data) as {
         type?: string
+        open?: boolean
         authenticated?: boolean
         deviceCount?: number
         ok?: boolean
@@ -364,6 +371,7 @@ export default function App() {
         code?: string | null
         snapshot?: unknown
       }
+      if (message.type === 'ui-modal') { setModalOpen(message.open === true); return }
       if (message.type === 'push-session') {
         const nextAuthenticated = message.authenticated === true
         const previouslyAuthenticated = verifiedSession.current === true
@@ -434,7 +442,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar style="light" backgroundColor="#070912" />
+      <StatusBar style="light" backgroundColor="#080C20" />
       <WebView
         ref={webView}
         source={{ uri: START_URL }}
@@ -444,7 +452,7 @@ export default function App() {
         domStorageEnabled
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
-        allowsBackForwardNavigationGestures
+        allowsBackForwardNavigationGestures={!modalOpen}
         allowsInlineMediaPlayback
         allowsFullscreenVideo
         mediaPlaybackRequiresUserAction={false}
@@ -495,23 +503,24 @@ export default function App() {
           onRetry={retryConsole}
         />
       )}
+      {!launchComplete && <LaunchScreen onComplete={finishLaunch} />}
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#070912' },
-  web: { flex: 1, backgroundColor: '#070912' },
+  safe: { flex: 1, backgroundColor: '#080C20' },
+  web: { flex: 1, backgroundColor: '#080C20' },
   center: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 18,
-    backgroundColor: '#070912',
+    backgroundColor: '#080C20',
   },
   signal: {
     color: 'rgba(245,245,245,0.55)',
-    fontFamily: 'Courier',
+    fontFamily: 'CourierPrime',
     fontSize: 12,
     letterSpacing: 1.2,
   },

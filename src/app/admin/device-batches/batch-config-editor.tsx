@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveSelect, ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
 import {
   ArrowDown,
@@ -397,7 +398,7 @@ export function BatchConfigEditor({
     <div className={styles.editor}>
       <section className={styles.workspaceHeader}>
         <ArchiveField htmlFor="batch-config-selector" label="SELECT BATCH">
-          <select
+          <ArchiveSelect
             id="batch-config-selector"
             onChange={(event) => {
               setSelectedSlug(event.target.value)
@@ -416,7 +417,7 @@ export function BatchConfigEditor({
                 {record.hasUnpublishedChanges ? ' · CHANGES' : ''}
               </option>
             ))}
-          </select>
+          </ArchiveSelect>
         </ArchiveField>
 
         <div className={styles.workspaceActions}>
@@ -513,13 +514,13 @@ export function BatchConfigEditor({
               <h2>{selectedBatch.name}</h2>
               <p>{draft.statusLine}</p>
             </div>
-            <button
+            <ArchiveButton variant="ghost"
               aria-label="Close preview"
               onClick={() => setPreviewOpen(false)}
               type="button"
             >
               <X aria-hidden size={18} />
-            </button>
+            </ArchiveButton>
           </div>
           <div className={styles.previewStats}>
             <div>
@@ -568,14 +569,14 @@ export function BatchConfigEditor({
           <div className={styles.formCard}>
             <div className={styles.threeColumnGrid}>
               <ArchiveField htmlFor="batch-name" label="BATCH NAME">
-                <input
+                <ArchiveInput
                   id="batch-name"
                   onChange={(event) => updateDraft({ name: event.target.value })}
                   value={draft.name}
                 />
               </ArchiveField>
               <ArchiveField htmlFor="batch-code" label="BATCH CODE">
-                <input
+                <ArchiveInput
                   id="batch-code"
                   onChange={(event) =>
                     updateDraft({ code: event.target.value.toUpperCase() })
@@ -584,7 +585,7 @@ export function BatchConfigEditor({
                 />
               </ArchiveField>
               <ArchiveField htmlFor="batch-location" label="LOCATION">
-                <input
+                <ArchiveInput
                   id="batch-location"
                   onChange={(event) => updateDraft({ location: event.target.value })}
                   value={draft.location}
@@ -593,7 +594,7 @@ export function BatchConfigEditor({
             </div>
             <div className={styles.threeColumnGrid}>
               <ArchiveField htmlFor="batch-status" label="STATUS">
-                <select
+                <ArchiveSelect
                   id="batch-status"
                   onChange={(event) =>
                     updateDraft({ status: event.target.value as BatchConfigDraft['status'] })
@@ -605,10 +606,10 @@ export function BatchConfigEditor({
                       {labels.label}
                     </option>
                   ))}
-                </select>
+                </ArchiveSelect>
               </ArchiveField>
               <ArchiveField htmlFor="batch-time-zone" label="TIME ZONE">
-                <input
+                <ArchiveInput
                   id="batch-time-zone"
                   list="batch-time-zone-options"
                   onChange={(event) => updateDraft({ timeZone: event.target.value })}
@@ -621,7 +622,7 @@ export function BatchConfigEditor({
                 </datalist>
               </ArchiveField>
               <ArchiveField htmlFor="batch-updated-at" label="LAST UPDATED">
-                <input
+                <ArchiveInput
                   id="batch-updated-at"
                   onChange={(event) => updateDraft({ updatedAt: event.target.value })}
                   placeholder="Jul 30, 2026"
@@ -630,7 +631,7 @@ export function BatchConfigEditor({
               </ArchiveField>
             </div>
             <ArchiveField htmlFor="batch-completion" label="FINAL COMPLETION">
-              <input
+              <ArchiveInput
                 id="batch-completion"
                 onChange={(event) =>
                   updateDraft({ estimatedCompletion: event.target.value })
@@ -639,21 +640,21 @@ export function BatchConfigEditor({
               />
             </ArchiveField>
             <ArchiveField htmlFor="batch-status-line" label="CURRENT STATUS LINE">
-              <input
+              <ArchiveInput
                 id="batch-status-line"
                 onChange={(event) => updateDraft({ statusLine: event.target.value })}
                 value={draft.statusLine}
               />
             </ArchiveField>
             <ArchiveField htmlFor="batch-milestone" label="NEXT MILESTONE">
-              <input
+              <ArchiveInput
                 id="batch-milestone"
                 onChange={(event) => updateDraft({ nextMilestone: event.target.value })}
                 value={draft.nextMilestone}
               />
             </ArchiveField>
             <ArchiveField htmlFor="batch-summary" label="PUBLIC SUMMARY">
-              <textarea
+              <ArchiveTextarea
                 id="batch-summary"
                 onChange={(event) => updateDraft({ summary: event.target.value })}
                 rows={5}
@@ -662,14 +663,14 @@ export function BatchConfigEditor({
             </ArchiveField>
             <div className={styles.twoColumnGrid}>
               <ArchiveField htmlFor="batch-primary-image" label="PRIMARY IMAGE URL">
-                <input
+                <ArchiveInput
                   id="batch-primary-image"
                   onChange={(event) => updateDraft({ image: event.target.value })}
                   value={draft.image}
                 />
               </ArchiveField>
               <ArchiveField htmlFor="batch-image-fit" label="IMAGE FIT">
-                <select
+                <ArchiveSelect
                   id="batch-image-fit"
                   onChange={(event) =>
                     updateDraft({
@@ -680,18 +681,18 @@ export function BatchConfigEditor({
                 >
                   <option value="cover">COVER</option>
                   <option value="contain">CONTAIN</option>
-                </select>
+                </ArchiveSelect>
               </ArchiveField>
             </div>
             <ArchiveField htmlFor="batch-image-alt" label="PRIMARY IMAGE ALT TEXT">
-              <input
+              <ArchiveInput
                 id="batch-image-alt"
                 onChange={(event) => updateDraft({ imageAlt: event.target.value })}
                 value={draft.imageAlt}
               />
             </ArchiveField>
             <ArchiveField htmlFor="batch-hero-caption" label="HERO CAPTION">
-              <input
+              <ArchiveInput
                 id="batch-hero-caption"
                 onChange={(event) => updateDraft({ heroCaption: event.target.value })}
                 value={draft.heroCaption}
@@ -701,7 +702,7 @@ export function BatchConfigEditor({
               htmlFor="batch-hero-media"
               label="HERO MEDIA · KIND | URL | CAPTION | ALT | POSTER"
             >
-              <textarea
+              <ArchiveTextarea
                 id="batch-hero-media"
                 onChange={(event) =>
                   updateDraft({ heroMedia: parseMediaLines(event.target.value) })
@@ -712,7 +713,7 @@ export function BatchConfigEditor({
             </ArchiveField>
             <div className={styles.threeColumnGrid}>
               <ArchiveField htmlFor="batch-lead-name" label="FIELD LEAD">
-                <input
+                <ArchiveInput
                   id="batch-lead-name"
                   onChange={(event) =>
                     updateDraft({
@@ -723,7 +724,7 @@ export function BatchConfigEditor({
                 />
               </ArchiveField>
               <ArchiveField htmlFor="batch-lead-role" label="LEAD ROLE">
-                <input
+                <ArchiveInput
                   id="batch-lead-role"
                   onChange={(event) =>
                     updateDraft({
@@ -734,7 +735,7 @@ export function BatchConfigEditor({
                 />
               </ArchiveField>
               <ArchiveField htmlFor="batch-lead-initials" label="INITIALS">
-                <input
+                <ArchiveInput
                   id="batch-lead-initials"
                   onChange={(event) =>
                     updateDraft({
@@ -749,7 +750,7 @@ export function BatchConfigEditor({
               </ArchiveField>
             </div>
             <ArchiveField htmlFor="batch-lead-bio" label="FIELD LEAD BIO">
-              <textarea
+              <ArchiveTextarea
                 id="batch-lead-bio"
                 onChange={(event) =>
                   updateDraft({
@@ -761,7 +762,7 @@ export function BatchConfigEditor({
               />
             </ArchiveField>
             <ArchiveField htmlFor="batch-lead-note" label="FIELD LEAD LATEST NOTE">
-              <textarea
+              <ArchiveTextarea
                 id="batch-lead-note"
                 onChange={(event) =>
                   updateDraft({
@@ -810,7 +811,7 @@ export function BatchConfigEditor({
           <div className={styles.formCard}>
             <div className={styles.twoColumnGrid}>
               <ArchiveField htmlFor="batch-listing-quantity" label="LISTING QUANTITY">
-                <input
+                <ArchiveInput
                   id="batch-listing-quantity"
                   min="0"
                   onChange={(event) =>
@@ -822,7 +823,7 @@ export function BatchConfigEditor({
                 />
               </ArchiveField>
               <ArchiveField htmlFor="batch-claimed-quantity" label="CLAIMED UNITS">
-                <input
+                <ArchiveInput
                   disabled={selectedRecord.persisted}
                   id="batch-claimed-quantity"
                   min="0"
@@ -838,7 +839,7 @@ export function BatchConfigEditor({
 
             <div className={styles.twoColumnGrid}>
               <ArchiveField htmlFor="batch-price-amount" label="BATCH PRICE">
-                <input
+                <ArchiveInput
                   id="batch-price-amount"
                   min="0"
                   onChange={(event) => updatePrice('amount', Number(event.target.value))}
@@ -848,7 +849,7 @@ export function BatchConfigEditor({
                 />
               </ArchiveField>
               <ArchiveField htmlFor="batch-price-currency" label="CURRENCY">
-                <input
+                <ArchiveInput
                   id="batch-price-currency"
                   maxLength={3}
                   onChange={(event) =>
@@ -859,7 +860,7 @@ export function BatchConfigEditor({
               </ArchiveField>
             </div>
             <ArchiveField htmlFor="batch-price-description" label="WHAT THE CLAIM INCLUDES">
-              <textarea
+              <ArchiveTextarea
                 id="batch-price-description"
                 onChange={(event) => updatePrice('description', event.target.value)}
                 rows={4}
@@ -895,35 +896,35 @@ export function BatchConfigEditor({
                     <strong>{stage.label || 'Untitled Pack'}</strong>
                   </div>
                   <div>
-                    <button
+                    <ArchiveButton variant="ghost"
                       aria-label={`Move ${stage.label} earlier`}
                       disabled={index === 0}
                       onClick={() => moveStage(index, -1)}
                       type="button"
                     >
                       <ArrowUp aria-hidden size={15} />
-                    </button>
-                    <button
+                    </ArchiveButton>
+                    <ArchiveButton variant="ghost"
                       aria-label={`Move ${stage.label} later`}
                       disabled={index === draft.distributionStages.length - 1}
                       onClick={() => moveStage(index, 1)}
                       type="button"
                     >
                       <ArrowDown aria-hidden size={15} />
-                    </button>
-                    <button
+                    </ArchiveButton>
+                    <ArchiveButton variant="ghost"
                       aria-label={`Remove ${stage.label}`}
                       onClick={() => removeStage(stage.id)}
                       type="button"
                     >
                       <Trash2 aria-hidden size={15} />
-                    </button>
+                    </ArchiveButton>
                   </div>
                 </div>
 
                 <div className={styles.stageFields}>
                   <ArchiveField htmlFor={`${stage.id}-label`} label="PACK NAME">
-                    <input
+                    <ArchiveInput
                       id={`${stage.id}-label`}
                       onChange={(event) =>
                         updateStage(stage.id, 'label', event.target.value)
@@ -933,7 +934,7 @@ export function BatchConfigEditor({
                   </ArchiveField>
                   <div className={styles.stageMetaFields}>
                     <ArchiveField htmlFor={`${stage.id}-window`} label="DELIVERY WINDOW">
-                      <input
+                      <ArchiveInput
                         id={`${stage.id}-window`}
                         onChange={(event) =>
                           updateStage(stage.id, 'window', event.target.value)
@@ -942,7 +943,7 @@ export function BatchConfigEditor({
                       />
                     </ArchiveField>
                     <ArchiveField htmlFor={`${stage.id}-status`} label="PACK STATUS">
-                      <select
+                      <ArchiveSelect
                         id={`${stage.id}-status`}
                         onChange={(event) =>
                           updateStage(stage.id, 'status', event.target.value)
@@ -952,11 +953,11 @@ export function BatchConfigEditor({
                         <option value="upcoming">UPCOMING</option>
                         <option value="current">CURRENT</option>
                         <option value="completed">COMPLETED</option>
-                      </select>
+                      </ArchiveSelect>
                     </ArchiveField>
                   </div>
                   <ArchiveField htmlFor={`${stage.id}-summary`} label="SUMMARY">
-                    <textarea
+                    <ArchiveTextarea
                       id={`${stage.id}-summary`}
                       onChange={(event) =>
                         updateStage(stage.id, 'summary', event.target.value)
@@ -969,7 +970,7 @@ export function BatchConfigEditor({
                     htmlFor={`${stage.id}-contents`}
                     label="CONTENTS · ONE ITEM PER LINE"
                   >
-                    <textarea
+                    <ArchiveTextarea
                       id={`${stage.id}-contents`}
                       onChange={(event) =>
                         updateStage(stage.id, 'contents', event.target.value)
@@ -982,7 +983,7 @@ export function BatchConfigEditor({
                     htmlFor={`${stage.id}-media`}
                     label="PACK MEDIA · KIND | URL | CAPTION | ALT | POSTER"
                   >
-                    <textarea
+                    <ArchiveTextarea
                       id={`${stage.id}-media`}
                       onChange={(event) =>
                         updateStageMedia(stage.id, event.target.value)
@@ -1031,7 +1032,7 @@ export function BatchConfigEditor({
           <div className={styles.updateLayout}>
             <div className={styles.formCard}>
               <ArchiveField htmlFor="batch-update-date" label="UPDATE DATE">
-                <input
+                <ArchiveInput
                   id="batch-update-date"
                   onChange={(event) => updateLatestUpdate('date', event.target.value)}
                   placeholder="Jul 30, 2026"
@@ -1039,14 +1040,14 @@ export function BatchConfigEditor({
                 />
               </ArchiveField>
               <ArchiveField htmlFor="batch-update-title" label="UPDATE TITLE">
-                <input
+                <ArchiveInput
                   id="batch-update-title"
                   onChange={(event) => updateLatestUpdate('title', event.target.value)}
                   value={draft.latestUpdate.title}
                 />
               </ArchiveField>
               <ArchiveField htmlFor="batch-update-body" label="UPDATE BODY">
-                <textarea
+                <ArchiveTextarea
                   id="batch-update-body"
                   onChange={(event) => updateLatestUpdate('body', event.target.value)}
                   rows={8}
@@ -1057,7 +1058,7 @@ export function BatchConfigEditor({
                 htmlFor="batch-update-media"
                 label="UPDATE MEDIA · KIND | URL | CAPTION | ALT | POSTER"
               >
-                <textarea
+                <ArchiveTextarea
                   id="batch-update-media"
                   onChange={(event) =>
                     updateLatestUpdateMedia(event.target.value)
@@ -1082,7 +1083,7 @@ export function BatchConfigEditor({
                 never sends an email.
               </p>
               <label className={styles.notificationConfirmation}>
-                <input
+                <ArchiveInput
                   checked={confirmMajorUpdate}
                   onChange={(event) => setConfirmMajorUpdate(event.target.checked)}
                   type="checkbox"

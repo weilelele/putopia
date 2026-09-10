@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { getApplicantTaskStatus } from '@/lib/actions/tasks'
 import { getQuizQuestions, submitQuizAnswers } from '@/lib/actions/quiz'
 import type { QuizQuestion } from '@/lib/actions/quiz'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -148,7 +147,7 @@ function QuestionScreen({
         {question.options.map((opt) => {
           const isSelected = selected === opt.key
           return (
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               key={opt.key}
               onClick={() => onSelect(opt.key)}
               aria-pressed={isSelected}
@@ -159,7 +158,7 @@ function QuestionScreen({
                 {opt.key.toUpperCase()}
               </span>
               {opt.label}
-            </button>
+            </ArchiveButton>
           )
         })}
       </div>
@@ -367,7 +366,7 @@ export default function QuizPage() {
 
   return (
     <div className="main pilot-archive-page archive-quiz-page">
-      <ArchiveBrandHeader />
+
       <div className="archive-quiz-nav">
         <span>FIELD ASSESSMENT</span>
         <ArchiveLinkButton href="/console" variant="ghost">← BACK</ArchiveLinkButton>

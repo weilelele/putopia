@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useState } from 'react'
 import type { ComponentProps } from 'react'
 import { WorldPoster } from '@/components/world-poster'
@@ -48,13 +49,13 @@ export function CollapsibleWorldGrid({ worlds }: { worlds: PosterWorld[] }) {
       </div>
       {hasMore && (
         <div style={{ textAlign: 'center', marginTop: '0.85rem' }}>
-          <button
+          <ArchiveButton type="submit" variant="ghost"
             onClick={() => setStep((s) => (fullyExpanded ? 0 : s + 1))}
             className="btn-ghost"
-            style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.12em' }}
+            style={{  }}
           >
             {fullyExpanded ? '▲ COLLAPSE' : '▼ MORE'}
-          </button>
+          </ArchiveButton>
         </div>
       )}
     </>

@@ -1,0 +1,50 @@
+[
+  {
+    "file": "src/app/apply/page.tsx",
+    "changes": 2
+  },
+  {
+    "file": "src/app/batch-demo/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/intel/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/logs/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/profile/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/vote/VotingHub.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/worlds/loading.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/worlds/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/devices/my-consoles/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/intel/[id]/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/logs/[id]/page.tsx",
+    "changes": 1
+  },
+  {
+    "file": "src/app/worlds/[id]/page.tsx",
+    "changes": 1
+  }
+]

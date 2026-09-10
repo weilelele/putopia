@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useState } from 'react'
 
 type SyncState = 'idle' | 'syncing' | 'done' | 'error'
@@ -35,24 +36,13 @@ export default function WikiSyncButton() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <button
+      <ArchiveButton type="submit" variant="secondary"
         onClick={handleSync}
         disabled={state === 'syncing'}
-        style={{
-          background:    'transparent',
-          border:        `1px solid ${color}`,
-          color,
-          fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.2em',
-          padding:       '5px 12px',
-          cursor:        state === 'syncing' ? 'default' : 'pointer',
-          opacity,
-          fontFamily:    'monospace',
-          transition:    'all 0.2s',
-        }}
+        style={{ border:        `1px solid ${color}`, color, padding:       '5px 12px', cursor:        state === 'syncing' ? 'default' : 'pointer', opacity, transition:    'all 0.2s' }}
       >
         {label}
-      </button>
+      </ArchiveButton>
       {info && (
         <span style={{ fontSize: 'var(--fs-caption)', color: state === 'error' ? '#E83030' : 'rgba(245,245,245,0.35)', letterSpacing: '0.05em' }}>
           {info}

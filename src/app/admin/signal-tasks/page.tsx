@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveSelect, ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import { FinalFormPanel } from '@/components/final-form-panel'
@@ -84,10 +86,10 @@ function fmtReveal(d: Date): string {
 const S = {
   card: { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '18px', marginBottom: '12px' } as const,
   label: { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const } as const,
-  area: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 60 } as const,
-  sel: { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' } as const,
-  btn: { padding: '6px 14px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' } as const,
+  input: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const } as const,
+  area: { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 60 } as const,
+  sel: { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none' } as const,
+  btn: { padding: '6px 14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' } as const,
   btnOk: { background: '#E35205', color: '#070912' } as const,
   btnGhost: { background: 'transparent', border: '1px solid rgba(227,82,5,0.3)', color: 'rgba(245,245,245,0.55)' } as const,
   btnDanger: { background: 'transparent', border: '1px solid rgba(232,48,48,0.4)', color: '#E83030' } as const,
@@ -143,9 +145,9 @@ export default function SignalTasksAdmin() {
       <div style={{ width: 240, flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <span style={{ color: '#C84406', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em' }}>INVESTIGATIONS</span>
-          <button style={{ ...S.btn, ...S.btnOk, padding: '4px 10px' }} onClick={() => setNewInvOpen((o) => !o)}>
+          <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, ...S.btnOk, padding: '4px 10px' }} onClick={() => setNewInvOpen((o) => !o)}>
             {newInvOpen ? '✕' : '+ NEW'}
-          </button>
+          </ArchiveButton>
         </div>
 
         {newInvOpen && (
@@ -164,7 +166,7 @@ export default function SignalTasksAdmin() {
         )}
 
         {investigations.map((inv) => (
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             key={inv.id}
             onClick={() => { setActiveInvId(inv.id); setActiveTaskId(null) }}
             style={{
@@ -178,7 +180,7 @@ export default function SignalTasksAdmin() {
             <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.35)', marginTop: 3, letterSpacing: '0.06em' }}>
               SIGNAL TUNING · {inv.dayCount} day{inv.dayCount !== 1 ? 's' : ''}
             </div>
-          </button>
+          </ArchiveButton>
         ))}
       </div>
 
@@ -262,14 +264,14 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
     <div style={{ ...S.card, padding: 12, marginBottom: 12 }}>
       {/* mode toggle */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-        <button
+        <ArchiveButton type="submit" variant="secondary"
           style={{ ...S.btn, flex: 1, ...(mode === 'promote' ? S.btnOk : S.btnGhost) }}
           onClick={() => setMode('promote')}
-        >Promote World</button>
-        <button
+        >Promote World</ArchiveButton>
+        <ArchiveButton type="submit" variant="secondary"
           style={{ ...S.btn, flex: 1, ...(mode === 'create' ? S.btnOk : S.btnGhost) }}
           onClick={() => setMode('create')}
-        >New World</button>
+        >New World</ArchiveButton>
       </div>
 
       {mode === 'promote' ? (
@@ -280,9 +282,9 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
         ) : (
           <>
             <label style={S.label}>INITIAL VISION</label>
-            <select style={{ ...S.sel, width: '100%', marginBottom: 8 }} value={worldId} onChange={(e) => setWorldId(e.target.value)}>
+            <ArchiveSelect style={{ ...S.sel, width: '100%', marginBottom: 8 }} value={worldId} onChange={(e) => setWorldId(e.target.value)}>
               {worlds.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-            </select>
+            </ArchiveSelect>
             {selectedWorld?.description && (
               <div style={{
                 fontSize: 'var(--fs-caption)', lineHeight: 1.55, color: 'rgba(245,245,245,0.5)',
@@ -297,22 +299,22 @@ function NewInvestigationForm({ onCreated }: { onCreated: (id: string) => void }
       ) : (
         <>
           <label style={S.label}>WORLD NAME</label>
-          <input style={{ ...S.input, marginBottom: 8 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. The Glass Sea" />
+          <ArchiveInput style={{ ...S.input, marginBottom: 8 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. The Glass Sea" />
           <label style={S.label}>INITIAL VISION (optional)</label>
-          <textarea style={{ ...S.area, marginBottom: 8, minHeight: 48 }} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="The creator's initial vision…" />
+          <ArchiveTextarea style={{ ...S.area, marginBottom: 8, minHeight: 48 }} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="The creator's initial vision…" />
         </>
       )}
 
       <label style={S.label}>WHO CAN VOTE</label>
-      <select style={{ ...S.sel, width: '100%', marginBottom: 10 }} value={voteScope} onChange={(e) => setVoteScope(e.target.value as WorldVoteScope)}>
+      <ArchiveSelect style={{ ...S.sel, width: '100%', marginBottom: 10 }} value={voteScope} onChange={(e) => setVoteScope(e.target.value as WorldVoteScope)}>
         {Object.entries(VOTE_SCOPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
+      </ArchiveSelect>
 
-      <button
+      <ArchiveButton type="submit" variant="secondary"
         style={{ ...S.btn, ...S.btnOk, opacity: !canSubmit || busy ? 0.5 : 1, width: '100%' }}
         disabled={!canSubmit || busy}
         onClick={submit}
-      >{busy ? 'Working…' : mode === 'promote' ? 'Promote to Tuning' : 'Create & Tune'}</button>
+      >{busy ? 'Working…' : mode === 'promote' ? 'Promote to Tuning' : 'Create & Tune'}</ArchiveButton>
     </div>
   )
 }
@@ -344,9 +346,9 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
         </div>
         <div>
           <label style={S.label}>WHO CAN VOTE</label>
-          <select style={{ ...S.sel, fontSize: 12 }} value={cfg.voteScope} onChange={(e) => patch({ voteScope: e.target.value as WorldVoteScope })}>
+          <ArchiveSelect style={{ ...S.sel }} value={cfg.voteScope} onChange={(e) => patch({ voteScope: e.target.value as WorldVoteScope })}>
             {Object.entries(VOTE_SCOPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
+          </ArchiveSelect>
         </div>
       </div>
       {/* Tuning cadence — the first question opens at the world's scan end; each
@@ -358,7 +360,7 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
         </div>
         <div>
           <label style={S.label}>GAP BETWEEN QUESTIONS (HOURS)</label>
-          <input
+          <ArchiveInput
             type="number" min={0} defaultValue={cfg.gapHours}
             style={{ ...S.input, width: 80, padding: '5px 8px' }}
             onBlur={(e) => { const v = Number(e.target.value); if (v >= 0 && v !== cfg.gapHours) patch({ gapHours: v }) }}
@@ -367,10 +369,10 @@ function InvestigationConfigBar({ threadId }: { threadId: string }) {
       </div>
       {cfg.visionText && (
         <div style={{ marginTop: 10 }}>
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             onClick={() => setVisionOpen((v) => !v)}
-            style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', fontSize: 'var(--fs-caption)' }}
-          >{visionOpen ? '▲ Hide initial vision' : '▼ Initial vision'}</button>
+            style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px' }}
+          >{visionOpen ? '▲ Hide initial vision' : '▼ Initial vision'}</ArchiveButton>
           {visionOpen && (
             <div style={{ marginTop: 8, fontSize: 'var(--fs-caption)', lineHeight: 1.6, color: 'rgba(245,245,245,0.55)', whiteSpace: 'pre-wrap', maxHeight: 160, overflowY: 'auto' }}>
               {cfg.visionText}
@@ -432,15 +434,15 @@ function DayList({
           {investigationTitle || 'DAYS'}
         </span>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', color: finalOpen ? '#20D890' : undefined }}
             onClick={() => setFinalOpen((v) => !v)}
-          >Final Form</button>
-          <button
+          >Final Form</ArchiveButton>
+          <ArchiveButton type="submit" variant="secondary"
             style={{ ...S.btn, ...S.btnGhost, padding: '3px 8px', opacity: busy ? 0.5 : 1 }}
             disabled={busy}
             onClick={addDay}
-          >{busy ? '…' : '+ Day'}</button>
+          >{busy ? '…' : '+ Day'}</ArchiveButton>
         </div>
       </div>
 
@@ -464,7 +466,7 @@ function DayList({
           status = { label: openAt ? `◷ ${fmtReveal(openAt)}` : '◷ scheduled', color: '#E8A020' }
         }
         return (
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             key={t.id}
             onClick={() => onSelectTask(t.id)}
             style={{
@@ -480,7 +482,7 @@ function DayList({
             <div style={{ fontSize: 'var(--fs-caption)', color: status.color, marginTop: 2 }}>
               {status.label}
             </div>
-          </button>
+          </ArchiveButton>
         )
       })}
     </div>
@@ -524,21 +526,21 @@ function TaskEditor({
             DAY {dayNum} · {task.task_date}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               style={{ ...S.btn, ...(task.is_published ? S.btnGhost : S.btnOk) }}
               onClick={async () => { await setTaskPublished(taskId, !task.is_published); await reload(); onChanged() }}
-            >{task.is_published ? '○ Unpublish' : '● Publish'}</button>
-            <button
+            >{task.is_published ? '○ Unpublish' : '● Publish'}</ArchiveButton>
+            <ArchiveButton type="submit" variant="secondary"
               style={{ ...S.btn, ...S.btnDanger }}
               onClick={async () => { if (confirm('Delete this day and all its assets?')) { await deleteTask(taskId); onDeleted() } }}
-            >Delete</button>
+            >Delete</ArchiveButton>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 8 }}>
           <div>
             <label style={S.label}>TYPE (this day)</label>
-            <select
-              style={{ ...S.sel, fontSize: 12 }}
+            <ArchiveSelect
+              style={{ ...S.sel }}
               value={task.type}
               onChange={async (e) => {
                 if (assets.length && !confirm('Changing the type may not match the existing candidates in this day. Continue?')) return
@@ -546,11 +548,11 @@ function TaskEditor({
               }}
             >
               {Object.entries(TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
+            </ArchiveSelect>
           </div>
           <div>
             <label style={S.label}>DATE</label>
-            <input
+            <ArchiveInput
               type="date" style={{ ...S.input, width: 140 }}
               value={task.task_date}
               onChange={async (e) => { await updateTask(taskId, { task_date: e.target.value }); await reload(); onChanged() }}
@@ -558,11 +560,11 @@ function TaskEditor({
           </div>
         </div>
         <label style={S.label}>PROMPT</label>
-        <textarea style={S.area} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Write the puzzle prompt…" />
-        <button
+        <ArchiveTextarea style={S.area} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Write the puzzle prompt…" />
+        <ArchiveButton type="submit" variant="secondary"
           style={{ ...S.btn, ...S.btnGhost, marginTop: 8 }}
           onClick={async () => { await updateTask(taskId, { prompt }); await reload(); onChanged() }}
-        >Save prompt</button>
+        >Save prompt</ArchiveButton>
         {task.is_published && selectedCount === 0 && (
           <div style={{ marginTop: 8, fontSize: 'var(--fs-caption)', color: '#E8A020' }}>⚠ Published but no assets selected — members will see nothing.</div>
         )}
@@ -679,8 +681,8 @@ function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; f
   return (
     <div style={S.card}>
       <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-        <button style={{ ...S.btn, flex: 1, ...(mode === 'random' ? S.btnOk : S.btnGhost) }} onClick={() => { setMode('random'); setResult('') }}>Random pull</button>
-        <button style={{ ...S.btn, flex: 1, ...(mode === 'pick' ? S.btnOk : S.btnGhost) }} onClick={() => { setMode('pick'); setResult('') }}>Pick from Forge</button>
+        <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, flex: 1, ...(mode === 'random' ? S.btnOk : S.btnGhost) }} onClick={() => { setMode('random'); setResult('') }}>Random pull</ArchiveButton>
+        <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, flex: 1, ...(mode === 'pick' ? S.btnOk : S.btnGhost) }} onClick={() => { setMode('pick'); setResult('') }}>Pick from Forge</ArchiveButton>
       </div>
 
       {mode === 'random' ? (
@@ -689,30 +691,30 @@ function Generator({ taskId, freqs, taskType, onGenerated }: { taskId: string; f
             const f = freqs.find((x) => x.channelId === src.channelId)
             return (
               <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-                <select style={{ ...S.sel, maxWidth: 180 }} value={src.channelId} onChange={(e) => onPickFreq(i, e.target.value)}>
+                <ArchiveSelect style={{ ...S.sel, maxWidth: 180 }} value={src.channelId} onChange={(e) => onPickFreq(i, e.target.value)}>
                   {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq != null ? `${fr.freq} · ${fr.name}` : `${fr.name} (unscheduled)`}</option>)}
-                </select>
-                <select style={{ ...S.sel, maxWidth: 160 }} value={src.bandId} onChange={(e) => onPickBand(i, e.target.value)}>
+                </ArchiveSelect>
+                <ArchiveSelect style={{ ...S.sel, maxWidth: 160 }} value={src.bandId} onChange={(e) => onPickBand(i, e.target.value)}>
                   {(f?.bands || []).map((b) => <option key={b.bandId} value={b.bandId}>{b.name} ({b.imageCount}i/{b.videoCount}v)</option>)}
-                </select>
+                </ArchiveSelect>
                 {!audioMode && (
-                  <select style={{ ...S.sel, maxWidth: 80 }} value={src.media} onChange={(e) => updateSource(i, { media: e.target.value as 'image' | 'video' })}>
+                  <ArchiveSelect style={{ ...S.sel, maxWidth: 80 }} value={src.media} onChange={(e) => updateSource(i, { media: e.target.value as 'image' | 'video' })}>
                     <option value="image">image</option>
                     <option value="video">video</option>
-                  </select>
+                  </ArchiveSelect>
                 )}
-                <input type="number" min={1} max={20} style={{ ...S.input, width: 52 }} value={src.count} onChange={(e) => updateSource(i, { count: Math.max(1, Number(e.target.value)) })} />
-                <button style={{ ...S.btn, ...S.btnDanger, padding: '4px 8px' }} onClick={() => removeSource(i)}>×</button>
+                <ArchiveInput type="number" min={1} max={20} style={{ ...S.input, width: 52 }} value={src.count} onChange={(e) => updateSource(i, { count: Math.max(1, Number(e.target.value)) })} />
+                <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, ...S.btnDanger, padding: '4px 8px' }} onClick={() => removeSource(i)}>×</ArchiveButton>
               </div>
             )
           })}
-          <button style={{ ...S.btn, ...S.btnGhost, marginBottom: 10 }} onClick={addSource} disabled={sources.length >= 3 || !freqs.length}>+ Add source (max 3)</button>
+          <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, ...S.btnGhost, marginBottom: 10 }} onClick={addSource} disabled={sources.length >= 3 || !freqs.length}>+ Add source (max 3)</ArchiveButton>
 
           <CropSettings {...cropProps} showClip={showClip(sources.some((s) => s.media === 'video'))} />
 
-          <button style={{ ...S.btn, ...S.btnOk, opacity: busy || !sources.length ? 0.5 : 1 }} disabled={busy || !sources.length} onClick={runRandom}>
+          <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, ...S.btnOk, opacity: busy || !sources.length ? 0.5 : 1 }} disabled={busy || !sources.length} onClick={runRandom}>
             {busy ? 'Pulling…' : '⚡ Pull random candidates'}
-          </button>
+          </ArchiveButton>
         </>
       ) : (
         <ForgePicker
@@ -747,30 +749,30 @@ function CropSettings({
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 10, alignItems: 'flex-end' }}>
           <div>
             <label style={S.label}>FILTER</label>
-            <select style={S.sel} value={filter} onChange={(e) => setFilter(e.target.value as FilterPreset)}>
+            <ArchiveSelect style={S.sel} value={filter} onChange={(e) => setFilter(e.target.value as FilterPreset)}>
               {FILTER_PRESETS.map((p) => <option key={p} value={p}>{FILTER_LABELS[p]}</option>)}
-            </select>
+            </ArchiveSelect>
           </div>
           <div>
             <label style={S.label}>SHAPE</label>
-            <select style={S.sel} value={shape} onChange={(e) => setShape(e.target.value as CropShape)}>
+            <ArchiveSelect style={S.sel} value={shape} onChange={(e) => setShape(e.target.value as CropShape)}>
               {SHAPES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
+            </ArchiveSelect>
           </div>
           <div>
             <label style={S.label}>CROP {(areaRatio * 100).toFixed(0)}%</label>
-            <input type="range" min={5} max={40} value={Math.round(areaRatio * 100)} onChange={(e) => setAreaRatio(Number(e.target.value) / 100)} style={{ accentColor: '#E35205', width: 120 }} />
+            <ArchiveInput type="range" min={5} max={40} value={Math.round(areaRatio * 100)} onChange={(e) => setAreaRatio(Number(e.target.value) / 100)} style={{ accentColor: '#E35205', width: 120 }} />
           </div>
           <div>
             <label style={S.label}>GLITCH {glitch}</label>
-            <input type="range" min={0} max={100} value={glitch} onChange={(e) => setGlitch(Number(e.target.value))} style={{ accentColor: '#E35205', width: 120 }} />
+            <ArchiveInput type="range" min={0} max={100} value={glitch} onChange={(e) => setGlitch(Number(e.target.value))} style={{ accentColor: '#E35205', width: 120 }} />
           </div>
         </div>
       )}
       {showClip && (
         <div style={{ marginBottom: 10 }}>
           <label style={S.label}>CLIP LENGTH {durationSec}s</label>
-          <input type="range" min={2} max={10} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} style={{ accentColor: '#E35205', width: 140 }} />
+          <ArchiveInput type="range" min={2} max={10} value={durationSec} onChange={(e) => setDurationSec(Number(e.target.value))} style={{ accentColor: '#E35205', width: 140 }} />
         </div>
       )}
     </>
@@ -870,23 +872,23 @@ function ForgePicker({
   return (
     <>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-        <select
+        <ArchiveSelect
           style={{ ...S.sel, maxWidth: 180 }} value={channelId}
           onChange={(e) => { const f = freqs.find((x) => x.channelId === e.target.value); setChannelId(e.target.value); setBandId(pickFirstBand(f)); setAssets([]) }}
         >
           {freqs.map((fr) => <option key={fr.channelId} value={fr.channelId}>{fr.freq != null ? `${fr.freq} · ${fr.name}` : `${fr.name} (unscheduled)`}</option>)}
-        </select>
-        <select style={{ ...S.sel, maxWidth: 160 }} value={bandId} onChange={(e) => { setBandId(e.target.value); setAssets([]) }}>
+        </ArchiveSelect>
+        <ArchiveSelect style={{ ...S.sel, maxWidth: 160 }} value={bandId} onChange={(e) => { setBandId(e.target.value); setAssets([]) }}>
           <option value="">— band —</option>
           {(freq?.bands || []).map((b) => <option key={b.bandId} value={b.bandId}>{b.name} ({b.imageCount}i/{b.videoCount}v)</option>)}
-        </select>
+        </ArchiveSelect>
         {!audioMode && (
-          <select style={{ ...S.sel, maxWidth: 80 }} value={media} onChange={(e) => { setMedia(e.target.value as 'image' | 'video'); setAssets([]) }}>
+          <ArchiveSelect style={{ ...S.sel, maxWidth: 80 }} value={media} onChange={(e) => { setMedia(e.target.value as 'image' | 'video'); setAssets([]) }}>
             <option value="image">image</option>
             <option value="video">video</option>
-          </select>
+          </ArchiveSelect>
         )}
-        <button style={{ ...S.btn, ...S.btnGhost }} onClick={browse} disabled={!bandId || loading}>{loading ? 'Loading…' : 'Browse'}</button>
+        <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, ...S.btnGhost }} onClick={browse} disabled={!bandId || loading}>{loading ? 'Loading…' : 'Browse'}</ArchiveButton>
       </div>
 
       {assets.length > 0 && (
@@ -913,11 +915,11 @@ function ForgePicker({
 
       {assets.length > 0 && settings}
 
-      <button
+      <ArchiveButton type="submit" variant="secondary"
         style={{ ...S.btn, ...S.btnOk, opacity: busy || picked.size === 0 ? 0.5 : 1 }}
         disabled={busy || picked.size === 0}
         onClick={pull}
-      >{busy ? 'Pulling…' : `⚡ Pull ${picked.size || ''} selected`}</button>
+      >{busy ? 'Pulling…' : `⚡ Pull ${picked.size || ''} selected`}</ArchiveButton>
     </>
   )
 }
@@ -951,18 +953,18 @@ function AssetCard({ asset, showRole, onChanged }: { asset: SignalTaskAsset; sho
         {asset.source_freq ?? '–'} {asset.source_band_name}
       </div>
       <div style={{ display: 'flex', gap: 4, marginTop: 5, flexWrap: 'wrap' }}>
-        <button style={{ ...S.btn, padding: '3px 6px', fontSize: 'var(--fs-caption)', ...(asset.is_selected ? S.btnOk : S.btnGhost) }}
+        <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, padding: '3px 6px', ...(asset.is_selected ? S.btnOk : S.btnGhost) }}
           onClick={() => wrap(() => setAssetSelected(asset.id, !asset.is_selected))}>
           {asset.is_selected ? '✓ Live' : 'Live'}
-        </button>
+        </ArchiveButton>
         {showRole && asset.is_selected && (
-          <button style={{ ...S.btn, padding: '3px 6px', fontSize: 'var(--fs-caption)', ...(asset.asset_role === 'main' ? S.btnOk : S.btnGhost) }}
+          <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, padding: '3px 6px', ...(asset.asset_role === 'main' ? S.btnOk : S.btnGhost) }}
             onClick={() => wrap(() => setAssetRole(asset.id, asset.asset_role === 'main' ? 'option' : 'main'))}>
             {asset.asset_role === 'main' ? '★ Main' : 'Main'}
-          </button>
+          </ArchiveButton>
         )}
-        <button style={{ ...S.btn, padding: '3px 6px', fontSize: 'var(--fs-caption)', ...S.btnDanger }}
-          onClick={() => wrap(() => deleteAsset(asset.id))}>Del</button>
+        <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, padding: '3px 6px', ...S.btnDanger }}
+          onClick={() => wrap(() => deleteAsset(asset.id))}>Del</ArchiveButton>
       </div>
     </div>
   )

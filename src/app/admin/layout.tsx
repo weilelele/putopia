@@ -3,7 +3,6 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import type { Database } from '@/types/database'
 import WikiSyncButton from './WikiSyncButton'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveCard } from '@/components/archive-card'
 import { AdminNav } from '@/components/admin-nav'
 
@@ -87,7 +86,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="admin-archive">
       <header className="admin-archive-header">
-        <ArchiveBrandHeader className="admin-archive-brand" />
+
         <div className="admin-archive-meta">
           <span className="admin-archive-badge">ADMIN</span>
           <span className="admin-archive-user">{profile.display_name}</span>

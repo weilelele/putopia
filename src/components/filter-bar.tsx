@@ -15,6 +15,7 @@ export function FilterBar({ options, active, onChange, className }: Props) {
   return (
     <div className={`archive-filter-bar${className ? ` ${className}` : ''}`}>
       <ArchiveTabs
+        mode="filter"
         activeId={active}
         ariaLabel="Content filters"
         items={options.map(({ key, label }) => ({ id: key, label }))}

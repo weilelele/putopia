@@ -1,32 +1,12 @@
 'use client'
-
-import Link from 'next/link'
+import { useSyncExternalStore } from 'react'
+import { usePathname } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-
-/**
- * Borderless back link for second-level pages. Sits in the slot the page
- * eyebrow ("// X") used to occupy, above the page title, and returns to the
- * parent (one level up).
- */
+import { routeLabel, safeAppPath } from '@/lib/ui-navigation'
+const subscribe = () => () => {}
 export function BackLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.4rem',
-        color: 'rgba(227,82,5,0.8)',
-        fontFamily: 'var(--font-mono)',
-        fontSize: 'var(--fs-caption)',
-        letterSpacing: '0.14em',
-        textDecoration: 'none',
-        marginBottom: '0.5rem',
-        width: 'fit-content',
-      }}
-    >
-      <ArrowLeft size={13} />
-      {label}
-    </Link>
-  )
+  const path = usePathname()
+  const source = useSyncExternalStore(subscribe, () => { try { return safeAppPath(sessionStorage.getItem(`mc:from:${path}`), location.origin) } catch { return null } }, () => null)
+  const target = source && source.split('?')[0] !== path ? source : href
+  return <a href={target} className="archive-back-link"><ArrowLeft aria-hidden size={20} strokeWidth={1.5} />{source ? `Back to ${routeLabel(target.split('?')[0])}` : label}</a>
 }

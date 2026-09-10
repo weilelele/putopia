@@ -1,0 +1,562 @@
+[
+  {
+    "route": "/activate",
+    "file": "src/app/activate/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/activity",
+    "file": "src/app/admin/activity/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/analytics",
+    "file": "src/app/admin/analytics/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/create-news",
+    "file": "src/app/admin/create-news/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/device-batches/blueprints",
+    "file": "src/app/admin/device-batches/blueprints/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/device-batches",
+    "file": "src/app/admin/device-batches/error.tsx",
+    "surface": "error",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/device-batches/new",
+    "file": "src/app/admin/device-batches/new/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/device-batches",
+    "file": "src/app/admin/device-batches/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/devices",
+    "file": "src/app/admin/devices/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/dreamcatchers",
+    "file": "src/app/admin/dreamcatchers/error.tsx",
+    "surface": "error",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/dreamcatchers",
+    "file": "src/app/admin/dreamcatchers/loading.tsx",
+    "surface": "loading",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/dreamcatchers",
+    "file": "src/app/admin/dreamcatchers/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/intel",
+    "file": "src/app/admin/intel/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/mc-config",
+    "file": "src/app/admin/mc-config/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/onboarding-preview",
+    "file": "src/app/admin/onboarding-preview/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/orders",
+    "file": "src/app/admin/orders/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin",
+    "file": "src/app/admin/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/quiz",
+    "file": "src/app/admin/quiz/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/signal-tasks",
+    "file": "src/app/admin/signal-tasks/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/stories",
+    "file": "src/app/admin/stories/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/votes",
+    "file": "src/app/admin/votes/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/voyagers",
+    "file": "src/app/admin/voyagers/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/admin/worlds",
+    "file": "src/app/admin/worlds/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/apply",
+    "file": "src/app/apply/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/auth/callback",
+    "file": "src/app/auth/callback/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/auth/expired",
+    "file": "src/app/auth/expired/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/batch-demo",
+    "file": "src/app/batch-demo/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/console",
+    "file": "src/app/console/loading.tsx",
+    "surface": "loading",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/console",
+    "file": "src/app/console/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "local mobile read-only"
+  },
+  {
+    "route": "/demo",
+    "file": "src/app/demo/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/dev/camera-glitch-lab",
+    "file": "src/app/dev/camera-glitch-lab/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/devices/[id]",
+    "file": "src/app/devices/[id]/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/devices/batches/[slug]/discussion",
+    "file": "src/app/devices/batches/[slug]/discussion/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/devices/batches/[slug]",
+    "file": "src/app/devices/batches/[slug]/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/devices/claim",
+    "file": "src/app/devices/claim/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/devices/claim/success",
+    "file": "src/app/devices/claim/success/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/devices",
+    "file": "src/app/devices/error.tsx",
+    "surface": "error",
+    "migration": "shared tokens and shell",
+    "verification": "guest redirected to login; authenticated flow verification pending"
+  },
+  {
+    "route": "/devices/live",
+    "file": "src/app/devices/live/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/devices/my-consoles",
+    "file": "src/app/devices/my-consoles/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/devices",
+    "file": "src/app/devices/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "guest redirected to login; authenticated flow verification pending"
+  },
+  {
+    "route": "/",
+    "file": "src/app/error.tsx",
+    "surface": "error",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/feed-demo",
+    "file": "src/app/feed-demo/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/feed-proto",
+    "file": "src/app/feed-proto/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/flip-demo",
+    "file": "src/app/flip-demo/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/intel/[id]",
+    "file": "src/app/intel/[id]/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/intel",
+    "file": "src/app/intel/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "guest redirected to login; authenticated flow verification pending"
+  },
+  {
+    "route": "/investor-deck",
+    "file": "src/app/investor-deck/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/join/success",
+    "file": "src/app/join/success/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/",
+    "file": "src/app/loading.tsx",
+    "surface": "loading",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/login",
+    "file": "src/app/login/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/logs/[id]",
+    "file": "src/app/logs/[id]/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/logs",
+    "file": "src/app/logs/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "guest redirected to login; authenticated flow verification pending"
+  },
+  {
+    "route": "/new/demo",
+    "file": "src/app/new/demo/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/new",
+    "file": "src/app/new/loading.tsx",
+    "surface": "loading",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/new",
+    "file": "src/app/new/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/newsletter/direct",
+    "file": "src/app/newsletter/direct/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/newsletter/task-gated",
+    "file": "src/app/newsletter/task-gated/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/newsletter/unregistered",
+    "file": "src/app/newsletter/unregistered/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/offline",
+    "file": "src/app/offline/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "local mobile read-only"
+  },
+  {
+    "route": "/",
+    "file": "src/app/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/preview",
+    "file": "src/app/preview/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/profile",
+    "file": "src/app/profile/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/public-info",
+    "file": "src/app/public-info/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/quiz",
+    "file": "src/app/quiz/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/register",
+    "file": "src/app/register/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/signal",
+    "file": "src/app/signal/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/studio",
+    "file": "src/app/studio/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/ui-kit",
+    "file": "src/app/ui-kit/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "local mobile read-only"
+  },
+  {
+    "route": "/vote",
+    "file": "src/app/vote/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/voyager-pack",
+    "file": "src/app/voyager-pack/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/voyager-path",
+    "file": "src/app/voyager-path/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/voyagers",
+    "file": "src/app/voyagers/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "guest redirected to login; authenticated flow verification pending"
+  },
+  {
+    "route": "/welcome",
+    "file": "src/app/welcome/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "local mobile read-only"
+  },
+  {
+    "route": "/worldflow",
+    "file": "src/app/worldflow/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/worlds/[id]",
+    "file": "src/app/worlds/[id]/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/worlds/live",
+    "file": "src/app/worlds/live/error.tsx",
+    "surface": "error",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/worlds/live",
+    "file": "src/app/worlds/live/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "local mobile read-only"
+  },
+  {
+    "route": "/worlds",
+    "file": "src/app/worlds/loading.tsx",
+    "surface": "loading",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/worlds",
+    "file": "src/app/worlds/page.tsx",
+    "surface": "page",
+    "migration": "page and shared components",
+    "verification": "static checks; flow verification pending"
+  },
+  {
+    "route": "/worlds/submit",
+    "file": "src/app/worlds/submit/page.tsx",
+    "surface": "page",
+    "migration": "shared tokens and shell",
+    "verification": "static checks; flow verification pending"
+  }
+]

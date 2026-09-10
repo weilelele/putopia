@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useEffect, useState, useTransition } from 'react'
 import { getActivityFeedAdmin, setActivityEventVisibility, deleteActivityEvent } from '@/lib/actions/activity-events'
 import type { ActivityEvent } from '@/lib/actions/activity-events'
@@ -150,36 +151,22 @@ export default function AdminActivityPage() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                  <button
+                  <ArchiveButton type="submit" variant="secondary"
                     onClick={() => toggle(ev.id, ev.is_visible)}
                     disabled={pending}
-                    style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-                      letterSpacing: '0.1em', padding: '0.2rem 0.5rem',
-                      background: 'transparent', cursor: 'pointer',
-                      color: ev.is_visible ? 'var(--color-star-deep)' : '#20D890',
-                      border: `1px solid ${ev.is_visible ? 'var(--bd-faint)' : 'rgba(32,216,144,0.35)'}`,
-                      transition: 'all 0.1s',
-                    }}
+                    style={{ padding: '0.2rem 0.5rem', cursor: 'pointer', color: ev.is_visible ? 'var(--color-star-deep)' : '#20D890', border: `1px solid ${ev.is_visible ? 'var(--bd-faint)' : 'rgba(32,216,144,0.35)'}`, transition: 'all 0.1s' }}
                     title={ev.is_visible ? 'Hide from feed' : 'Show in feed'}
                   >
                     {ev.is_visible ? 'HIDE' : 'SHOW'}
-                  </button>
-                  <button
+                  </ArchiveButton>
+                  <ArchiveButton type="submit" variant="secondary"
                     onClick={() => remove(ev.id)}
                     disabled={pending}
-                    style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-                      letterSpacing: '0.1em', padding: '0.2rem 0.5rem',
-                      background: 'transparent', cursor: 'pointer',
-                      color: 'rgba(232,48,48,0.7)',
-                      border: '1px solid rgba(232,48,48,0.25)',
-                      transition: 'all 0.1s',
-                    }}
+                    style={{ padding: '0.2rem 0.5rem', cursor: 'pointer', transition: 'all 0.1s' }}
                     title="Delete permanently"
                   >
                     DEL
-                  </button>
+                  </ArchiveButton>
                 </div>
               </div>
             )

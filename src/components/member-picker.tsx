@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { searchMembers } from '@/lib/actions/profile'
 
@@ -105,15 +107,15 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           <span style={{ color: '#F5F5F5', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', flex: 1 }}>
             {value.name}
           </span>
-          <button
+          <ArchiveButton variant="secondary"
             type="button"
             onClick={clear}
-            style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', padding: '0 2px', lineHeight: 1 }}
-          >×</button>
+            style={{ cursor: 'pointer', padding: '0 2px', lineHeight: 1 }}
+          >×</ArchiveButton>
         </div>
       ) : (
         // Search input
-        <input
+        <ArchiveInput
           style={baseInput}
           value={query}
           onChange={e => setQuery(e.target.value)}

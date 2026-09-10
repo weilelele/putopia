@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
 import { useEffect, useState } from 'react'
 import { getArchiveReel } from '@/lib/actions/signal-tasks'
 import type { ArchiveReel } from '@/lib/actions/signal-tasks'
@@ -86,7 +87,7 @@ export function ArchiveReelView({ world }: { world: World }) {
             // eslint-disable-next-line @next/next/no-img-element
             : <img src={s.url} alt="Final form" style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} />
         )}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'none', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: 10, left: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', background: 'rgba(7,9,18,0.72)', padding: '3px 8px', color: tagColor }}>
           {s.kind === 'final' ? '● FINAL FORM' : `◉ DAY ${s.dayIndex + 1}`}
         </div>
@@ -94,18 +95,18 @@ export function ArchiveReelView({ world }: { world: World }) {
 
       {/* Nav */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, maxWidth: 480, margin: '12px auto 0' }}>
-        <button onClick={() => setI((v) => Math.max(0, v - 1))} disabled={i <= 0} aria-label="Earlier" style={navBtn(i <= 0)}>◀</button>
+        <ArchiveButton type="submit" variant="ghost" onClick={() => setI((v) => Math.max(0, v - 1))} disabled={i <= 0} aria-label="Earlier" style={navBtn(i <= 0)}>◀</ArchiveButton>
         <div style={{ flex: 1, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', fontWeight: 700, letterSpacing: '0.16em', color: 'var(--color-star)' }}>{label}</div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)', marginTop: 3, minHeight: 14 }}>{sub ?? ' '}</div>
         </div>
-        <button onClick={() => setI((v) => Math.min(slides.length - 1, v + 1))} disabled={i >= slides.length - 1} aria-label="Later" style={navBtn(i >= slides.length - 1)}>▶</button>
+        <ArchiveButton type="submit" variant="ghost" onClick={() => setI((v) => Math.min(slides.length - 1, v + 1))} disabled={i >= slides.length - 1} aria-label="Later" style={navBtn(i >= slides.length - 1)}>▶</ArchiveButton>
       </div>
 
       {/* Dots */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 11 }}>
         {slides.map((_, k) => (
-          <span key={k} onClick={() => setI(k)} style={{ width: 7, height: 7, borderRadius: '50%', cursor: 'pointer', background: k === i ? '#E35205' : 'rgba(245,245,245,0.22)' }} />
+          <ArchiveButton key={k} variant="ghost" aria-label={`Show frame ${k + 1}`} aria-pressed={k === i} onClick={() => setI(k)} className="archive-page-dot"><span aria-hidden /></ArchiveButton>
         ))}
       </div>
     </div>
@@ -128,11 +129,11 @@ function PosterHero({ world, displayName, loading }: { world: World; displayName
         // eslint-disable-next-line @next/next/no-img-element
         <img src={world.image_path} alt={displayName} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       ) : (
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'transparent' }} />
       )}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(160,45,4,0.42) 60%, rgba(12,5,1,0.93) 100%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'transparent', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem 1.25rem' }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}>{displayName}</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: 'none' }}>{displayName}</div>
       </div>
     </div>
   )

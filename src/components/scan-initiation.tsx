@@ -51,20 +51,20 @@ export function ScanInitiation({
       </svg>
 
       {/* Faint CRT scanlines */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.22) 2px, rgba(0,0,0,0.22) 3px)' }} />
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'transparent' }} />
 
       {/* Legibility pool — darkens the center so the text reads over the static */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 60% 45% at 50% 50%, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 45%, transparent 75%)' }} />
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'transparent' }} />
 
       {/* Content */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-        <div style={{ fontSize: '2.6rem', fontWeight: 700, letterSpacing: '0.32em', color: '#FFFFFF', textShadow: '0 0 2px #000, 0 2px 16px rgba(0,0,0,0.9)' }}>
+        <div style={{ fontSize: '2.6rem', fontWeight: 700, letterSpacing: '0.32em', color: '#FFFFFF', textShadow: 'none' }}>
           SCANNING
         </div>
 
         <div style={{ marginTop: '1.6rem', width: 260, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {lines.map((line, i) => (
-            <div key={line} className="scan-init-line" style={{ animationDelay: `${0.5 + i * 0.85}s`, fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(245,245,245,0.85)', textShadow: '0 0 2px #000, 0 1px 6px rgba(0,0,0,0.9)' }}>
+            <div key={line} className="scan-init-line" style={{ animationDelay: `${0.5 + i * 0.85}s`, fontSize: 'var(--fs-caption)', letterSpacing: '0.08em', color: 'rgba(245,245,245,0.85)', textShadow: 'none' }}>
               {line}
             </div>
           ))}

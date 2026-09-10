@@ -23,11 +23,12 @@ function normalizeScope(scope: unknown): UserRole[] {
 const getAllVotesCached = unstable_cache(
   async (): Promise<Vote[]> => {
     const supabase = createAdminClient()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('votes')
       .select('*')
       .order('created_at', { ascending: false })
 
+    if (error) throw new Error('Votes could not be loaded')
     return (data ?? []).map((v) => ({ ...v, scope: normalizeScope(v.scope) })) as Vote[]
   },
   ['all-votes'],
@@ -168,11 +169,12 @@ export async function getMyVoteResponses() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('vote_responses')
     .select('vote_id, selected_options')
     .eq('user_id', user.id)
 
+  if (error) throw new Error('Vote participation could not be checked')
   return data ?? []
 }
 

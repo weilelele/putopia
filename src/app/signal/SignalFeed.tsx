@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -18,37 +18,11 @@ import type {
 import { scanSecondsLeft } from '@/lib/signal/scan'
 
 function AboutModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      onClick={onClose}
-      className="signal-modal-backdrop"
-      style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="signal-modal-panel"
-      >
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute', top: 14, right: 16,
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: 'rgba(245,245,245,0.4)', fontSize: 18, lineHeight: 1, padding: 4,
-          }}
-        >✕</button>
-        <div style={{ color: '#E35205', fontSize: 'var(--fs-caption)', letterSpacing: '0.16em', marginBottom: 12 }}>SIGNAL DISPATCH</div>
-        <p style={{ fontSize: 14, color: 'rgba(245,245,245,0.85)', lineHeight: 1.9, margin: 0 }}>
-          We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
-          Your intuition is the only instrument that can make sense of them —
-          help us decipher the noise, and connect to more parallel worlds.
-        </p>
-      </div>
-    </div>
-  )
+  return <ArchiveSheet open title="Signal Dispatch" onClose={onClose}>
+    <p>We&apos;ve intercepted a vast stream of disordered signals from across the multiverse.
+      Your intuition is the only instrument that can make sense of them —
+      help us decipher the noise, and connect to more parallel worlds.</p>
+  </ArchiveSheet>
 }
 
 export function InvestigationFeed({ initial }: { initial: InvestigationFeedData }) {
@@ -61,16 +35,16 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
       {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
       <div style={{ maxWidth: 880, margin: '0 auto' }}>
         {/* header */}
-        <ArchiveBrandHeader />
+
         <div className="signal-feed-header">
           <ArchiveLinkButton href="/worlds" variant="ghost">← WORLD RECORDS</ArchiveLinkButton>
           <div className="signal-feed-title-row">
             <ArchivePageHeader title="SIGNAL" accent="DISPATCH" />
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               onClick={() => setAboutOpen(true)}
               title="What is this?"
               className="signal-about-button"
-            >?</button>
+            >?</ArchiveButton>
           </div>
           {!feed.loggedIn && (
             <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', marginTop: 8, letterSpacing: '0.1em' }}>
@@ -136,25 +110,19 @@ export function InvestigationCard({
         )}
         {/* day navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             onClick={() => canGoBack && setSelectedSlot((d) => d - 1)}
             disabled={!canGoBack}
-            style={{
-              background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
-              width: 28, height: 28, cursor: canGoBack ? 'pointer' : 'default', fontFamily: 'monospace', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >◀</button>
+            style={{ color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)', width: 28, height: 28, cursor: canGoBack ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >◀</ArchiveButton>
           <span style={{ fontSize: 12, color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', minWidth: 48, textAlign: 'center' }}>
             {onSearching ? 'SEARCHING' : `DAY ${current!.dayIndex + 1}`}
           </span>
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             onClick={() => canGoForward && setSelectedSlot((d) => d + 1)}
             disabled={!canGoForward}
-            style={{
-              background: 'none', border: '1px solid rgba(227,82,5,0.3)', color: canGoForward ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)',
-              width: 28, height: 28, cursor: canGoForward ? 'pointer' : 'default', fontFamily: 'monospace', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >▶</button>
+            style={{ color: canGoForward ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)', width: 28, height: 28, cursor: canGoForward ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >▶</ArchiveButton>
         </div>
       </div>
 
@@ -325,16 +293,13 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
           const pct = total > 0 ? Math.round((count / total) * 100) : 0
           const selectable = canParticipate && !responded && !closed
           return (
-            <button
+            <ArchiveButton variant="secondary"
               type="button"
               key={a.id}
               onClick={() => selectable && setPick(a.id)}
               disabled={!selectable}
               className="signal-option"
-              style={{
-                border: isMine ? '2px solid #20D890' : isPicked ? '2px solid #E35205' : isLeader ? '1px solid rgba(200,68,6,0.5)' : '1px solid rgba(227,82,5,0.16)',
-                background: '#070912', cursor: selectable ? 'pointer' : 'default', position: 'relative',
-              }}
+              style={{ border: isMine ? '2px solid #20D890' : isPicked ? '2px solid #E35205' : isLeader ? '1px solid rgba(200,68,6,0.5)' : '1px solid rgba(227,82,5,0.16)', cursor: selectable ? 'pointer' : 'default', position: 'relative' }}
             >
               {isMine && <div style={{ position: 'absolute', top: 6, right: 7, zIndex: 2, color: '#20D890', fontSize: 14, lineHeight: 1 }}>✓</div>}
               <AssetView asset={a} />
@@ -344,7 +309,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
                   <span style={{ fontSize: 'var(--fs-caption)', fontWeight: isLeader ? 600 : 400, color: isLeader ? '#FF8A3D' : 'rgba(245,245,245,0.82)' }}>{pct}%</span>
                 </span>
               )}
-            </button>
+            </ArchiveButton>
           )
         })}
       </div>

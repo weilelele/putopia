@@ -1,9 +1,9 @@
 'use client'
 
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
 import { submitApplication } from '@/lib/actions/applications'
 import posthog from 'posthog-js'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
@@ -58,10 +58,8 @@ export default function ApplyPage() {
   if (submitted) {
     return (
       <div className="main pilot-archive-page archive-collection-page archive-apply-page archive-apply-success">
-        <ArchiveBrandHeader />
-        <div className="top-bar">
-          <div className="crumbs">PC://CONSOLE <span>/</span> APPLICATION <span>/</span> TRANSMITTED</div>
-        </div>
+
+
         <div className="archive-apply-shell">
           <ArchiveCard className="archive-apply-confirmation">
             <div>
@@ -89,10 +87,8 @@ export default function ApplyPage() {
 
   return (
     <div className="main pilot-archive-page archive-collection-page archive-apply-page">
-      <ArchiveBrandHeader />
-      <div className="top-bar">
-        <div className="crumbs">PC://CONSOLE <span>/</span> APPLICATION</div>
-      </div>
+
+
 
       <div className="archive-apply-shell">
         <ArchivePageHeader title="JOIN THE" accent="COLLECTIVE" />
@@ -108,7 +104,7 @@ export default function ApplyPage() {
 
         <form onSubmit={handleSubmit} className="archive-apply-form">
           <ArchiveField htmlFor="application-name" label="NAME">
-              <input
+              <ArchiveInput
                 id="application-name"
                 type="text" required value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -117,7 +113,7 @@ export default function ApplyPage() {
           </ArchiveField>
 
           <ArchiveField htmlFor="application-email" label="EMAIL">
-              <input
+              <ArchiveInput
                 id="application-email"
                 type="email" required value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -126,7 +122,7 @@ export default function ApplyPage() {
           </ArchiveField>
 
           <ArchiveField htmlFor="application-location" label="LOCATION / REGION">
-              <input
+              <ArchiveInput
                 id="application-location"
                 type="text" value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
@@ -140,7 +136,7 @@ export default function ApplyPage() {
               {reasons.map((r) => {
                 const isSelected = selectedReason === r.id
                 return (
-                  <button
+                  <ArchiveButton variant="secondary"
                     type="button"
                     key={r.id}
                     onClick={() => setSelectedReason(r.id)}
@@ -153,13 +149,13 @@ export default function ApplyPage() {
                     <span className="archive-reason-option__copy">
                       {r.text}
                     </span>
-                  </button>
+                  </ArchiveButton>
                 )
               })}
             </div>
             {selectedReason === 'other' && (
               <ArchiveField htmlFor="application-other-reason" label="YOUR REASON">
-                <textarea
+                <ArchiveTextarea
                   id="application-other-reason"
                   required rows={3} maxLength={300} value={otherText}
                   onChange={(e) => setOtherText(e.target.value)}

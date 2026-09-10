@@ -1,165 +1,58 @@
 'use client'
+import { useEffect } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { safeAppPath } from '@/lib/ui-navigation'
 
-import { useEffect, useLayoutEffect, useRef } from 'react'
-import { usePathname } from 'next/navigation'
-
-const SCROLLER_SELECTOR = '[data-route-scroll], .main, .landing-main'
-const KEY = (path: string) => `putopia-scroll:${path}`
-const RESTORE_DEADLINE_MS = 4_000
-const SCROLL_KEYS = new Set([
-  'ArrowUp',
-  'ArrowDown',
-  'PageUp',
-  'PageDown',
-  'Home',
-  'End',
-  ' ',
-  'Spacebar',
-])
-
-function findRouteScroller(): HTMLElement | null {
-  return document.querySelector<HTMLElement>(SCROLLER_SELECTOR)
+function read(key: string) { try { return sessionStorage.getItem(key) } catch { return null } }
+function save(key: string, value: string) { try { sessionStorage.setItem(key, value) } catch { /* Private storage may be unavailable. */ } }
+function scroller() {
+  return [...document.querySelectorAll<HTMLElement>('main, .main')].find(el => /auto|scroll/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight) ?? document.scrollingElement
 }
-
-function readSaved(path: string): number {
-  try {
-    const value = Number(sessionStorage.getItem(KEY(path)) ?? '')
-    return Number.isFinite(value) && value > 0 ? value : 0
-  } catch {
-    return 0
-  }
-}
-
-function save(path: string, element: HTMLElement | null) {
-  if (!element) return
-  try {
-    sessionStorage.setItem(KEY(path), String(element.scrollTop))
-  } catch {
-    // Session storage can be unavailable in locked-down embedded browsers.
-  }
-}
-
+/** Save the actual scrolling surface before navigation; restore tab/query context. */
 export function ScrollRestorer() {
   const pathname = usePathname()
-  const currentPath = useRef(pathname)
-
+  const search = useSearchParams().toString()
   useEffect(() => {
+    const route = pathname + (search ? `?${search}` : '')
+    const key = `mc:scroll:${route}`
+    const previousMode = history.scrollRestoration
     history.scrollRestoration = 'manual'
-  }, [])
-
-  useEffect(() => {
-    currentPath.current = pathname
-  }, [pathname])
-
-  // Save before Next replaces the old route DOM. Waiting for a pathname effect
-  // is too late: the previous scroll container may already have been removed.
-  useEffect(() => {
-    const saveBeforeNavigation = (event: Event) => {
-      const target = event.target
-      if (!(target instanceof Element)) return
-      const anchor = target.closest<HTMLAnchorElement>('a[href]')
-      if (!anchor) return
-
-      const destination = new URL(anchor.href, window.location.href)
-      if (destination.origin !== window.location.origin) return
-      if (destination.pathname === window.location.pathname) return
-      save(currentPath.current, findRouteScroller())
+    let restoring = true
+    const y = Number(read(key) ?? 0)
+    const restore = () => {
+      if (!restoring) return
+      const element = scroller()
+      if (!element) return
+      element.scrollTo({ top: y, behavior: 'instant' })
+      if (element.scrollHeight - element.clientHeight >= y && Math.abs(element.scrollTop - y) < 2) restoring = false
     }
-
-    document.addEventListener('pointerdown', saveBeforeNavigation, true)
-    document.addEventListener('click', saveBeforeNavigation, true)
-    return () => {
-      document.removeEventListener('pointerdown', saveBeforeNavigation, true)
-      document.removeEventListener('click', saveBeforeNavigation, true)
+    const observer = new MutationObserver(restore)
+    observer.observe(document.querySelector('.app-shell') ?? document.body, { childList: true, subtree: true })
+    const timers = [0, 100, 300, 700].map(delay => setTimeout(restore, delay))
+    const stop = () => { restoring = false }
+    const record = () => { if (!restoring) save(key, String(scroller()?.scrollTop ?? 0)) }
+    const done = setTimeout(() => { restoring = false }, 8000)
+    const navigate = (event: MouseEvent) => {
+      const anchor = (event.target as Element)?.closest?.('a[href]') as HTMLAnchorElement | null
+      if (!anchor || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || anchor.target === '_blank') return
+      const target = safeAppPath(anchor.href, location.origin)
+      if (!target || target === route || target.startsWith(`${route}#`)) return
+      save(key, String(scroller()?.scrollTop ?? 0))
+      const path = new URL(target, location.origin).pathname
+      save(`mc:from:${path}`, route)
     }
-  }, [])
-
-  // Continuously remember the actual page scroller. The app shell fixes body
-  // in place, so window.scrollY is always zero on the primary routes.
-  useEffect(() => {
-    if (pathname === '/console') return
-
-    let element = findRouteScroller()
-    let debounce: ReturnType<typeof setTimeout> | undefined
-
-    const flush = () => save(pathname, element)
-    const onScroll = (event: Event) => {
-      const target = event.target
-      if (!(target instanceof HTMLElement) || !target.matches(SCROLLER_SELECTOR)) return
-      element = target
-      if (debounce) clearTimeout(debounce)
-      debounce = setTimeout(flush, 120)
-    }
-
-    document.addEventListener('scroll', onScroll, true)
-    window.addEventListener('pagehide', flush)
-    return () => {
-      document.removeEventListener('scroll', onScroll, true)
-      window.removeEventListener('pagehide', flush)
-      if (debounce) clearTimeout(debounce)
-      flush()
-    }
-  }, [pathname])
-
-  // Dashboard already has a content-aware restorer in ConsoleClient. Other
-  // routes share this implementation, including pages whose loading shell is
-  // replaced or whose content grows after an async client read.
-  useLayoutEffect(() => {
-    if (pathname === '/console') return
-    const saved = readSaved(pathname)
-    if (!saved) return
-
-    let stopped = false
-    let element: HTMLElement | null = null
-    const resizeObserver = new ResizeObserver(() => pin())
-
-    const watch = (next: HTMLElement) => {
-      if (element === next) return
-      resizeObserver.disconnect()
-      element = next
-      resizeObserver.observe(next)
-      for (const child of next.children) resizeObserver.observe(child)
-    }
-
-    const pin = () => {
-      if (stopped) return
-      const next = findRouteScroller()
-      if (!next) return
-      watch(next)
-      const maximum = Math.max(0, next.scrollHeight - next.clientHeight)
-      const target = Math.min(saved, maximum)
-      if (Math.abs(next.scrollTop - target) > 1) next.scrollTop = target
-    }
-
-    const mutationObserver = new MutationObserver(pin)
-    mutationObserver.observe(document.querySelector('.app-shell') ?? document.body, {
-      childList: true,
-      subtree: true,
-    })
-
-    const stop = () => {
-      if (stopped) return
-      stopped = true
-      resizeObserver.disconnect()
-      mutationObserver.disconnect()
-      clearTimeout(deadline)
-      window.removeEventListener('wheel', stop)
-      window.removeEventListener('touchstart', stop)
-      window.removeEventListener('keydown', onKey, true)
-    }
-    const onKey = (event: KeyboardEvent) => {
-      if (SCROLL_KEYS.has(event.key)) stop()
-    }
-
+    document.addEventListener('click', navigate, true)
+    document.addEventListener('scroll', record, { capture: true, passive: true })
     window.addEventListener('wheel', stop, { passive: true })
     window.addEventListener('touchstart', stop, { passive: true })
-    window.addEventListener('keydown', onKey, true)
-
-    const deadline = setTimeout(stop, RESTORE_DEADLINE_MS)
-    pin()
-
-    return stop
-  }, [pathname])
-
+    window.addEventListener('keydown', stop)
+    return () => {
+      observer.disconnect(); timers.forEach(clearTimeout); clearTimeout(done)
+      document.removeEventListener('click', navigate, true)
+      document.removeEventListener('scroll', record, true)
+      window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop)
+      history.scrollRestoration = previousMode
+    }
+  }, [pathname, search])
   return null
 }

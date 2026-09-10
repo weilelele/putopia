@@ -1,0 +1,43 @@
+{
+  "version": "2.3",
+  "date": "2026-09-09",
+  "references": [
+    {
+      "file": "devices-style.png",
+      "source": "output/design-exploration/2026-09-09/02-devices.png",
+      "sha256": "188644be44c8bd5a68be352ea5349dbac1a196e204ad298e8c9f6b359869a6cd",
+      "role": "visual reference; normative corrections in README.md"
+    },
+    {
+      "file": "quiet-rail.png",
+      "source": "output/design-exploration/2026-09-09/bottom-nav/01-quiet-rail.png",
+      "sha256": "f6ae3458aece56262673892caf7076f9c770371b3f21b25f7960aca896b07d63",
+      "role": "visual reference; normative corrections in README.md"
+    },
+    {
+      "file": "devices-selected-nav.png",
+      "source": "output/design-exploration/2026-09-09/devices-selected-nav.png",
+      "sha256": "b0684bc64f5a219ead94bd5a5f2ea5c104b52c27ba26e201ccb33d40627cce90",
+      "role": "visual reference; normative corrections in README.md"
+    },
+    {
+      "file": "dashboard-updates-events.png",
+      "source": "output/design-exploration/2026-09-09/dashboard-formal/dashboard-updates-events.png",
+      "sha256": "10fe60e6b600ca088ef42dc79071eda6ffd04f2ef42581485bee444407075690",
+      "role": "visual reference; normative corrections in README.md"
+    },
+    {
+      "file": "intel.png",
+      "source": "output/design-exploration/2026-09-09/additional-pages/02-intel.png",
+      "sha256": "8a1e4c60a919a8aa5d29e3f8b2ffad89e776c18bd7a4bc291c6095a39f638b67",
+      "role": "visual reference; normative corrections in README.md"
+    },
+    {
+      "file": "voyagers.png",
+      "source": "output/design-exploration/2026-09-09/additional-pages/03-voyagers.png",
+      "sha256": "f146e7f9d4ce1838a5ca31a2e1c728a094c8ed4e6758fbd3c2ac8d1e6f70249e",
+      "role": "visual reference; normative corrections in README.md"
+    }
+  ],
+  "app_header_override": "Primary tab roots may retain a consistent compact brand area. Secondary and deeper pages have no logo. Historical images are unchanged; follow version 2.3 dimensions and interaction contracts."
+}

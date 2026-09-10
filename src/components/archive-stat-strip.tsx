@@ -1,8 +1,9 @@
+import { ArchiveButton } from '@/components/archive-button'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 
 export interface ArchiveStatItem {
-  color?: string
+  controls?: string
   expanded?: boolean
   href?: string
   label: string
@@ -17,10 +18,10 @@ interface ArchiveStatStripProps {
 export function ArchiveStatStrip({ items }: ArchiveStatStripProps) {
   return (
     <div className="archive-stat-strip">
-      {items.map(({ color, expanded, href, label, onSelect, value }) => {
+      {items.map(({ controls, expanded, href, label, onSelect, value }) => {
         const content = (
           <>
-            <span className="archive-stat-strip__value" style={color ? { color } : undefined}>{value}</span>
+            <span className="archive-stat-strip__value">{value}</span>
             <span className="archive-stat-strip__label">{label}</span>
           </>
         )
@@ -34,9 +35,9 @@ export function ArchiveStatStrip({ items }: ArchiveStatStripProps) {
         }
 
         return onSelect ? (
-          <button aria-expanded={expanded} className="archive-stat-strip__item" key={label} onClick={onSelect} type="button">
+          <ArchiveButton variant="secondary" aria-expanded={expanded} aria-controls={controls} className="archive-stat-strip__item" key={label} onClick={onSelect} type="button">
             {content}
-          </button>
+          </ArchiveButton>
         ) : (
           <div className="archive-stat-strip__item" key={label}>{content}</div>
         )

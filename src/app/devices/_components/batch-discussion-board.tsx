@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveTextarea, ArchiveInput } from '@/components/archive-input'
 import { useState, type FormEvent } from 'react'
 import Image from 'next/image'
 import { Image as ImageIcon, Paperclip, Send } from 'lucide-react'
@@ -76,7 +77,7 @@ export function BatchDiscussionBoard({
 
       <form className={styles.discussionComposer} onSubmit={submitPost}>
         <label htmlFor={`batch-message-${batch.slug}`}>ADD TO THE RECORD</label>
-        <textarea
+        <ArchiveTextarea
           disabled={!canPost || posting}
           id={`batch-message-${batch.slug}`}
           onChange={(event) => setMessage(event.target.value)}
@@ -88,7 +89,7 @@ export function BatchDiscussionBoard({
           <label className={styles.attachmentButton}>
             <Paperclip aria-hidden size={16} />
             <span>{attachment?.name || 'ADD IMAGE'}</span>
-            <input
+            <ArchiveInput
               accept="image/jpeg,image/png,image/webp"
               disabled={!canPost || posting}
               onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}

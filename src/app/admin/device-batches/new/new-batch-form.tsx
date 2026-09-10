@@ -1,5 +1,6 @@
 'use client'
 
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus } from 'lucide-react'
@@ -88,7 +89,7 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
       <section className={styles.formCard}>
         <div className={styles.twoColumnGrid}>
           <ArchiveField htmlFor="new-batch-name" label="BATCH NAME">
-            <input
+            <ArchiveInput
               id="new-batch-name"
               onChange={(event) => updateName(event.target.value)}
               placeholder="Lisbon Echo Array"
@@ -96,7 +97,7 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
             />
           </ArchiveField>
           <ArchiveField htmlFor="new-batch-location" label="LOCATION">
-            <input
+            <ArchiveInput
               id="new-batch-location"
               onChange={(event) => updateField('location', event.target.value)}
               placeholder="Lisbon, Portugal"
@@ -107,7 +108,7 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
 
         <div className={styles.twoColumnGrid}>
           <ArchiveField htmlFor="new-batch-code" label="BATCH CODE">
-            <input
+            <ArchiveInput
               id="new-batch-code"
               onChange={(event) => updateField('code', event.target.value.toUpperCase())}
               placeholder="LISBON-ECHO-03"
@@ -115,7 +116,7 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
             />
           </ArchiveField>
           <ArchiveField htmlFor="new-batch-slug" label="URL SLUG">
-            <input
+            <ArchiveInput
               id="new-batch-slug"
               onChange={(event) => {
                 setSlugTouched(true)
@@ -129,7 +130,7 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
 
         <div className={styles.twoColumnGrid}>
           <ArchiveField htmlFor="new-batch-lead" label="FIELD LEAD">
-            <input
+            <ArchiveInput
               id="new-batch-lead"
               onChange={(event) => updateField('leadName', event.target.value)}
               placeholder="Iris Vale"
@@ -137,7 +138,7 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
             />
           </ArchiveField>
           <ArchiveField htmlFor="new-batch-time-zone" label="TIME ZONE">
-            <input
+            <ArchiveInput
               id="new-batch-time-zone"
               list="device-batch-time-zones"
               onChange={(event) => updateField('timeZone', event.target.value)}
@@ -153,7 +154,7 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
         </div>
 
         <ArchiveField htmlFor="new-batch-date" label="FIRST RECORD DATE">
-          <input
+          <ArchiveInput
             id="new-batch-date"
             onChange={(event) => updateField('updatedAt', event.target.value)}
             placeholder="Jul 30, 2026"
@@ -162,7 +163,7 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
         </ArchiveField>
 
         <ArchiveField htmlFor="new-batch-summary" label="INITIAL FIELD SUMMARY">
-          <textarea
+          <ArchiveTextarea
             id="new-batch-summary"
             onChange={(event) => updateField('summary', event.target.value)}
             placeholder="Describe what was found, what is confirmed, and what the team needs to verify next."

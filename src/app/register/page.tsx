@@ -1,11 +1,11 @@
 'use client'
 
+import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
 import { getFirstTouch } from '@/lib/utm'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { syncLoopsRegistration } from '@/lib/actions/profile'
@@ -120,7 +120,7 @@ export default function RegisterPage() {
 
   return (
     <main className="main pilot-archive-page archive-auth-page">
-      <ArchiveBrandHeader />
+
       <div className="archive-auth-shell">
         <header className="archive-auth-heading">
           <p>INVITATION VERIFIED</p>
@@ -129,7 +129,7 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="archive-auth-form">
           <ArchiveField htmlFor="register-display-name" label="DISPLAY NAME">
-            <input
+            <ArchiveInput
               id="register-display-name"
               type="text"
               value={displayName}
@@ -140,7 +140,7 @@ export default function RegisterPage() {
           </ArchiveField>
 
           <ArchiveField htmlFor="register-password" label="ACCESS CODE">
-            <input
+            <ArchiveInput
               id="register-password"
               type="password"
               value={password}
@@ -150,7 +150,7 @@ export default function RegisterPage() {
           </ArchiveField>
 
           <ArchiveField htmlFor="register-password-confirm" label="CONFIRM ACCESS CODE">
-            <input
+            <ArchiveInput
               id="register-password-confirm"
               type="password"
               value={confirmPassword}

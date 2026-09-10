@@ -1,6 +1,5 @@
 import { getMyProfile } from '@/lib/actions/profile'
 import { getMyOrders } from '@/lib/actions/orders'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchivePageHeader } from '@/components/archive-page-header'
@@ -17,7 +16,7 @@ export default async function JoinSuccessPage() {
     return (
       <main className="main join-success-page">
         <div className="join-success-shell">
-          <ArchiveBrandHeader />
+
           <ArchiveCard className="join-success-card">
             <ArchivePageHeader title="WELCOME," accent="VOYAGER." />
             <p className="join-success-copy">
@@ -37,7 +36,7 @@ export default async function JoinSuccessPage() {
   return (
     <main className="main join-success-page">
       <div className="join-success-shell">
-        <ArchiveBrandHeader />
+
         <ArchiveCard className="join-success-card">
           <ArchivePageHeader title="WELCOME," accent={`${p.display_name}.`} />
           <p className="join-success-copy">

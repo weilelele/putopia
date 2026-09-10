@@ -1,0 +1,162 @@
+[
+  {
+    "file": "src/components/access-gate.tsx",
+    "edits": 8
+  },
+  {
+    "file": "src/components/activity-feed.tsx",
+    "edits": 5
+  },
+  {
+    "file": "src/components/archive-reel.tsx",
+    "edits": 4
+  },
+  {
+    "file": "src/components/flame-slider.tsx",
+    "edits": 2
+  },
+  {
+    "file": "src/components/mc-console-panel.tsx",
+    "edits": 1
+  },
+  {
+    "file": "src/components/nav.tsx",
+    "edits": 2
+  },
+  {
+    "file": "src/components/path-status-bar.tsx",
+    "edits": 2
+  },
+  {
+    "file": "src/components/pwa-install-nudge.tsx",
+    "edits": 1
+  },
+  {
+    "file": "src/components/scan-initiation.tsx",
+    "edits": 4
+  },
+  {
+    "file": "src/components/world-poster.tsx",
+    "edits": 2
+  },
+  {
+    "file": "src/components/world-scan-hero.tsx",
+    "edits": 5
+  },
+  {
+    "file": "src/app/admin/WikiSyncButton.tsx",
+    "edits": 1
+  },
+  {
+    "file": "src/app/batch-demo/page.tsx",
+    "edits": 2
+  },
+  {
+    "file": "src/app/demo/page.tsx",
+    "edits": 12
+  },
+  {
+    "file": "src/app/feed-demo/page.tsx",
+    "edits": 2
+  },
+  {
+    "file": "src/app/feed-proto/feed-client.tsx",
+    "edits": 7
+  },
+  {
+    "file": "src/app/flip-demo/page.tsx",
+    "edits": 0
+  },
+  {
+    "file": "src/app/intel/CreateIntelModal.tsx",
+    "edits": 1
+  },
+  {
+    "file": "src/app/new/onboarding-client.tsx",
+    "edits": 11
+  },
+  {
+    "file": "src/app/signal/SignalFeed.tsx",
+    "edits": 2
+  },
+  {
+    "file": "src/app/studio/StudioForm.tsx",
+    "edits": 1
+  },
+  {
+    "file": "src/app/voyagers/page.tsx",
+    "edits": 1
+  },
+  {
+    "file": "src/app/admin/analytics/day-selector.tsx",
+    "edits": 3
+  },
+  {
+    "file": "src/app/admin/analytics/membership-panel.tsx",
+    "edits": 12
+  },
+  {
+    "file": "src/app/admin/analytics/newsletter-panel.tsx",
+    "edits": 13
+  },
+  {
+    "file": "src/app/admin/analytics/page.tsx",
+    "edits": 84
+  },
+  {
+    "file": "src/app/admin/analytics/refresh-button.tsx",
+    "edits": 1
+  },
+  {
+    "file": "src/app/admin/analytics/tabs.tsx",
+    "edits": 1
+  },
+  {
+    "file": "src/app/admin/create-news/page.tsx",
+    "edits": 8
+  },
+  {
+    "file": "src/app/admin/intel/page.tsx",
+    "edits": 12
+  },
+  {
+    "file": "src/app/admin/onboarding-preview/page.tsx",
+    "edits": 5
+  },
+  {
+    "file": "src/app/admin/orders/page.tsx",
+    "edits": 0
+  },
+  {
+    "file": "src/app/admin/quiz/page.tsx",
+    "edits": 8
+  },
+  {
+    "file": "src/app/admin/signal-tasks/page.tsx",
+    "edits": 4
+  },
+  {
+    "file": "src/app/admin/stories/page.tsx",
+    "edits": 9
+  },
+  {
+    "file": "src/app/admin/votes/page.tsx",
+    "edits": 1
+  },
+  {
+    "file": "src/app/admin/worlds/page.tsx",
+    "edits": 9
+  },
+  {
+    "file": "src/app/new/demo/page.tsx",
+    "edits": 7
+  },
+  {
+    "file": "src/app/worlds/[id]/page.tsx",
+    "edits": 6
+  },
+  {
+    "file": "src/app/globals.css",
+    "edits": 48
+  }
+]

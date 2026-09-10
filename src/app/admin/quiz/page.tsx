@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveTextarea, ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect } from 'react'
 import {
   adminGetQuizQuestions,
@@ -14,13 +16,13 @@ import type { QuizQuestionAdmin, QuizOption } from '@/lib/actions/quiz'
 const S = {
   card:   { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '20px', marginBottom: '12px' },
   label:  { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 72 },
-  btn:    { padding: '6px 14px', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
+  input:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 72 },
+  btn:    { padding: '6px 14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
   btnOk:  { background: '#E35205', color: '#070912' },
   btnGhost: { background: 'transparent', border: '1px solid rgba(227,82,5,0.3)', color: 'rgba(245,245,245,0.55)' },
   btnDanger: { background: 'transparent', border: '1px solid rgba(232,48,48,0.4)', color: '#E83030' },
-  sel:    { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none' },
+  sel:    { background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none' },
 }
 
 const QUIZ_ID   = 'applicant-baseline-v1'
@@ -63,7 +65,7 @@ function QuestionEditor({
       {/* Prompt */}
       <div>
         <label style={S.label}>QUESTION PROMPT</label>
-        <textarea
+        <ArchiveTextarea
           style={S.area}
           value={draft.prompt}
           onChange={e => setPrompt(e.target.value)}
@@ -80,7 +82,7 @@ function QuestionEditor({
             <div key={opt.key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {/* Radio: mark as correct answer */}
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flexShrink: 0, width: 36 }}>
-                <input
+                <ArchiveInput
                   type="radio"
                   // eslint-disable-next-line react-hooks/purity -- name is cosmetic; the radio is fully controlled via checked/onChange
                   name={`answer-${Math.random()}`}
@@ -88,11 +90,11 @@ function QuestionEditor({
                   onChange={() => setAnswer(opt.key)}
                   style={{ accentColor: '#E35205', width: 14, height: 14 }}
                 />
-                <span style={{ fontFamily: 'monospace', fontSize: '12px', color: draft.answer_key === opt.key ? '#E35205' : 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', fontWeight: draft.answer_key === opt.key ? 700 : 400 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: draft.answer_key === opt.key ? '#E35205' : 'rgba(245,245,245,0.35)', letterSpacing: '0.08em', fontWeight: draft.answer_key === opt.key ? 700 : 400 }}>
                   {opt.key.toUpperCase()}
                 </span>
               </label>
-              <input
+              <ArchiveInput
                 style={{ ...S.input, flex: 1, border: draft.answer_key === opt.key ? '1px solid rgba(227,82,5,0.45)' : '1px solid rgba(227,82,5,0.16)' }}
                 value={opt.label}
                 onChange={e => setOption(opt.key, e.target.value)}
@@ -108,16 +110,16 @@ function QuestionEditor({
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-        <button style={{ ...S.btn, ...S.btnGhost }} onClick={onCancel} disabled={saving}>
+        <ArchiveButton type="submit" variant="secondary" style={{ ...S.btn, ...S.btnGhost }} onClick={onCancel} disabled={saving}>
           CANCEL
-        </button>
-        <button
+        </ArchiveButton>
+        <ArchiveButton type="submit" variant="secondary"
           style={{ ...S.btn, ...S.btnOk, opacity: (!valid || saving) ? 0.5 : 1 }}
           onClick={() => valid && onSave(draft)}
           disabled={!valid || saving}
         >
           {saving ? 'SAVING…' : 'SAVE QUESTION'}
-        </button>
+        </ArchiveButton>
       </div>
     </div>
   )
@@ -209,12 +211,12 @@ export default function QuizAdminPage() {
           </div>
         </div>
         {editingId !== 'new' && (
-          <button
+          <ArchiveButton type="submit" variant="secondary"
             style={{ ...S.btn, ...S.btnOk }}
             onClick={() => setEditingId('new')}
           >
             + ADD QUESTION
-          </button>
+          </ArchiveButton>
         )}
       </div>
 
@@ -279,7 +281,7 @@ export default function QuizAdminPage() {
                     flexShrink: 0, width: 28, height: 28,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: 'rgba(227,82,5,0.1)', border: '1px solid rgba(227,82,5,0.25)',
-                    color: '#E35205', fontSize: '12px', letterSpacing: '0.08em', fontFamily: 'monospace',
+                    color: '#E35205', fontSize: '12px', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)',
                   }}>
                     {q.sort_order}
                   </div>
@@ -291,47 +293,47 @@ export default function QuizAdminPage() {
 
                   {/* Action buttons */}
                   <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                    <button
-                      style={{ ...S.btn, ...S.btnGhost, padding: '4px 8px', fontSize: '13px' }}
+                    <ArchiveButton type="submit" variant="secondary"
+                      style={{ ...S.btn, ...S.btnGhost, padding: '4px 8px' }}
                       onClick={() => handleMove(q.id, -1)}
                       disabled={idx === 0 || saving}
                       title="Move up"
-                    >↑</button>
-                    <button
-                      style={{ ...S.btn, ...S.btnGhost, padding: '4px 8px', fontSize: '13px' }}
+                    >↑</ArchiveButton>
+                    <ArchiveButton type="submit" variant="secondary"
+                      style={{ ...S.btn, ...S.btnGhost, padding: '4px 8px' }}
                       onClick={() => handleMove(q.id, 1)}
                       disabled={idx === questions.length - 1 || saving}
                       title="Move down"
-                    >↓</button>
-                    <button
+                    >↓</ArchiveButton>
+                    <ArchiveButton type="submit" variant="secondary"
                       style={{ ...S.btn, ...S.btnGhost }}
                       onClick={() => setEditingId(q.id)}
                     >
                       EDIT
-                    </button>
+                    </ArchiveButton>
                     {confirmDelete === q.id ? (
                       <>
-                        <button
+                        <ArchiveButton type="submit" variant="secondary"
                           style={{ ...S.btn, ...S.btnDanger }}
                           onClick={() => handleDelete(q.id)}
                           disabled={saving}
                         >
                           CONFIRM
-                        </button>
-                        <button
+                        </ArchiveButton>
+                        <ArchiveButton type="submit" variant="secondary"
                           style={{ ...S.btn, ...S.btnGhost }}
                           onClick={() => setConfirmDelete(null)}
                         >
                           ✕
-                        </button>
+                        </ArchiveButton>
                       </>
                     ) : (
-                      <button
+                      <ArchiveButton type="submit" variant="secondary"
                         style={{ ...S.btn, ...S.btnDanger }}
                         onClick={() => setConfirmDelete(q.id)}
                       >
                         DEL
-                      </button>
+                      </ArchiveButton>
                     )}
                   </div>
                 </div>
@@ -352,7 +354,7 @@ export default function QuizAdminPage() {
                       >
                         <span style={{
                           width: 20, textAlign: 'center', flexShrink: 0,
-                          fontFamily: 'monospace', fontSize: '12px',
+                          fontFamily: 'var(--font-mono)', fontSize: '12px',
                           color: isCorrect ? '#20D890' : 'rgba(245,245,245,0.35)',
                           fontWeight: isCorrect ? 700 : 400,
                           letterSpacing: '0.05em',
@@ -360,7 +362,7 @@ export default function QuizAdminPage() {
                           {isCorrect ? '✓' : opt.key.toUpperCase()}
                         </span>
                         <span style={{
-                          fontFamily: 'monospace', fontSize: '12px',
+                          fontFamily: 'var(--font-mono)', fontSize: '12px',
                           color: isCorrect ? 'rgba(32,216,144,0.8)' : 'rgba(245,245,245,0.55)',
                         }}>
                           {opt.label}

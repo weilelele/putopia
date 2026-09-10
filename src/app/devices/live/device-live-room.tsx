@@ -1,8 +1,14 @@
 'use client'
+import { RootBrandHeader } from '@/components/root-brand-header'
+import { ArchiveTabs } from '@/components/archive-tabs'
+import { ArchiveButton } from '@/components/archive-button'
+import { useSessionPreference } from '@/lib/use-session-preference'
 
+import { ArchiveSheet } from '@/components/archive-sheet'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { BackLink } from '@/components/back-link'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
@@ -12,13 +18,12 @@ import {
   ListFilter,
   MessageSquare,
   Radio,
-  X,
 } from 'lucide-react'
 import styles from '../../live-observation-room.module.css'
 import { BatchDiscussionBoard } from '../_components/batch-discussion-board'
 import { FollowBatchButton } from '../_components/batch-actions'
 import { useFollowedBatchSlugs } from '../_components/use-followed-batches'
-import { useRememberedState } from '@/lib/remembered-state'
+import { LiveFeedPlaceholder } from '@/components/live-feed-placeholder'
 import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
 import type { DeviceCameraSource } from '@/lib/device-camera'
 import {
@@ -73,10 +78,11 @@ export function DeviceLiveRoom({
   camera?: DeviceCameraSource | null
 }) {
   const router = useRouter()
+  const isRoot = usePathname() === '/devices'
   const followedBatchSlugs = useFollowedBatchSlugs()
-  const [activeTab, setActiveTab] = useRememberedState<ContentTab>('primary-tab:devices:panel', 'info')
+  const [activeTab, setActiveTab] = useSessionPreference<ContentTab>(`mc:view:devices:${batch.slug}:tab`, 'info')
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [filter, setFilter] = useRememberedState<BatchFilter>('primary-tab:devices:filter', 'all')
+  const [filter, setFilter] = useSessionPreference<BatchFilter>('mc:view:devices:filter', 'all')
   const [openShipment, setOpenShipment] = useState<string | null>(null)
   const [progressOpen, setProgressOpen] = useState(false)
   const [now, setNow] = useState<number | null>(null)
@@ -117,42 +123,35 @@ export function DeviceLiveRoom({
   }
 
   return (
-    <main className={`main ${styles.page}`} data-route-scroll>
-      <header className={styles.roomHeader}>
-        <h1>DEVICE</h1>
-        <Link className={styles.archiveLink} href="/devices">
-          LIBRARY <ChevronRight aria-hidden size={16} />
-        </Link>
-      </header>
+    <main className={`main ${styles.page}`} data-route-scroll>{!isRoot && <BackLink href="/devices" label="Devices" />}
+      {isRoot ? <><h1 className="sr-only">Devices</h1><RootBrandHeader><ArchiveButton variant="ghost" className={styles.archiveLink} onClick={() => setSheetOpen(true)}>ARCHIVE <ChevronRight aria-hidden size={16} /></ArchiveButton></RootBrandHeader></> : (<header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
+        <h1 className={isRoot ? 'sr-only' : undefined}>DEVICES</h1>
+        <ArchiveButton variant="ghost" className={styles.archiveLink} onClick={() => setSheetOpen(true)}>ARCHIVE <ChevronRight aria-hidden size={16} /></ArchiveButton>
+      </header>)}
 
       <nav className={styles.objectNav} aria-label="Device batches">
-        <div className={styles.objectTabs} role="tablist">
+        <div className={styles.objectTabs}>
           {topBatches.map((item) => (
             <Link
-              aria-selected={batch.slug === item.slug}
+              aria-current={batch.slug === item.slug ? 'page' : undefined}
               className={styles.objectTab}
               href={`/devices/batches/${item.slug}`}
               key={item.slug}
-              role="tab"
             >
               {cityLabel(item)}
             </Link>
           ))}
         </div>
-        <button aria-label="Open all device batches" className={styles.listButton} onClick={() => setSheetOpen(true)} type="button">
+        <ArchiveButton variant="ghost" aria-label="Open all device batches" className={styles.listButton} onClick={() => setSheetOpen(true)} type="button">
           <ListFilter aria-hidden size={20} />
-        </button>
+        </ArchiveButton>
       </nav>
 
+      <div className={styles.workspace}><div className={styles.workspaceMedia}>
       {camera ? (
         <CosmoCameraEmbed source={camera} location={batch.location} />
       ) : (
-        <figure className="m-0">
-          <div className="relative aspect-[3/2]">
-            <Image alt={batch.imageAlt} fill priority sizes="(max-width: 767px) 100vw, 960px" src={batch.image} style={{ objectFit: batch.imageFit ?? 'cover' }} />
-          </div>
-          <figcaption className="flex flex-wrap gap-3 px-4 py-3 text-xs">
-          <span className="w-full">{batch.heroCaption}</span>
+        <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`} image={batch.heroMedia?.find(item => item.kind === 'image')?.src ?? batch.image} imageAlt={batch.imageAlt}>
           <span>{batch.name.toUpperCase()}</span>
           <span className={styles.liveMetaItem}>
             <span
@@ -169,10 +168,10 @@ export function DeviceLiveRoom({
           >
             <Clock3 aria-hidden size={16} /> {localClock}
           </time>
-        </figcaption>
-        </figure>
+        </LiveFeedPlaceholder>
       )}
 
+      </div><div className={styles.workspaceDetails}>
       {(batch.status === 'claim_open' && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
         <div className={styles.paymentHeader}>
           <div>
@@ -188,49 +187,34 @@ export function DeviceLiveRoom({
         <div className={styles.shipments}>
           {batch.distributionStages.map((shipment, index) => (
             <div className={styles.shipmentGroup} key={shipment.id}>
-              <button aria-expanded={openShipment === shipment.id} className={styles.shipment} onClick={() => setOpenShipment((current) => current === shipment.id ? null : shipment.id)} type="button">
+              <ArchiveButton variant="secondary" aria-expanded={openShipment === shipment.id} className={styles.shipment} onClick={() => setOpenShipment((current) => current === shipment.id ? null : shipment.id)} type="button">
                 <span className={styles.shipmentIndex}>{String(index + 1).padStart(2, '0')}</span>
                 <strong>{shipment.label}</strong>
                 <span className={`${styles.stageState} ${shipment.status === 'current' ? styles.stageCurrent : shipment.status === 'completed' ? styles.stageCompleted : ''}`}>{shipment.status.toUpperCase()}</span>
                 <ChevronDown aria-hidden className={styles.shipmentChevron} size={18} />
-              </button>
+              </ArchiveButton>
               {openShipment === shipment.id ? <p className={styles.shipmentDetail}>{shipment.summary}</p> : null}
             </div>
           ))}
         </div>
         <div className={styles.claimRow}>
           {ownedConsole ? (
-            <button className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => setProgressOpen(true)} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></button>
+            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => setProgressOpen(true)} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></ArchiveButton>
           ) : claimHref && remaining !== 0 ? (
             <Link className={`${styles.primaryButton} ${styles.claimButton}`} href={claimHref}><span>CLAIM A CONSOLE</span><strong>{remaining} REMAIN</strong></Link>
           ) : (
-            <button className={`${styles.primaryButton} ${styles.claimButton}`} disabled type="button"><span>CLAIMS CLOSED</span><strong>{remaining ?? 0} REMAIN</strong></button>
+            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} disabled type="button"><span>CLAIMS CLOSED</span><strong>{remaining ?? 0} REMAIN</strong></ArchiveButton>
           )}
         </div>
       </section> : null}
 
       <section className={styles.sectionPanel}>
-        <div className={styles.contentTabs} role="tablist" aria-label="Device room content">
-          {([
-            ['info', 'INFO'],
-            ['updates', 'UPDATES'],
-            ['discussion', 'DISCUSSION'],
-          ] as const).map(([id, label]) => (
-            <button
-              aria-selected={activeTab === id}
-              className={styles.contentTab}
-              key={id}
-              onClick={() => setActiveTab(id)}
-              role="tab"
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <ArchiveTabs ariaLabel="Device room content" activeId={activeTab}
+          items={[{id:'info',label:'INFO'},{id:'updates',label:'UPDATES'},{id:'discussion',label:'DISCUSSION'}].map(item=>({...item,panelId:`device-room-${item.id}`}))}
+          onChange={id => setActiveTab(id as typeof activeTab)} />
 
         {activeTab === 'info' ? (
-          <div className={styles.panelBody} role="tabpanel">
+          <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
             <div className={styles.eyebrow}>{batch.code} · BATCH DOSSIER</div>
             <h2 className={styles.infoTitle}>{batch.name}</h2>
             <p className={styles.intro}>{batch.summary}</p>
@@ -290,14 +274,14 @@ export function DeviceLiveRoom({
         ) : null}
 
         {activeTab === 'discussion' ? (
-          <div className={styles.panelBody} role="tabpanel">
+          <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
             <div className={styles.eyebrow}><MessageSquare aria-hidden size={14} /> BATCH DISCUSSION</div>
             <BatchDiscussionBoard batch={batch} canPost={canPost} initialPosts={discussionPosts} />
           </div>
         ) : null}
 
         {activeTab === 'updates' ? (
-          <div className={styles.panelBody} role="tabpanel">
+          <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
             <div className={styles.eyebrow}><Radio aria-hidden size={14} /> VERIFIED FIELD EVENTS</div>
             <div className={styles.updateList}>
               <div className={styles.updateRow}>
@@ -315,39 +299,31 @@ export function DeviceLiveRoom({
         ) : null}
       </section>
 
+      </div></div>
       {sheetOpen ? (
-        <div className={styles.sheetBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSheetOpen(false) }}>
-          <section aria-label="All device batches" aria-modal="true" className={styles.sheet} role="dialog">
-            <header className={styles.sheetHeader}>
-              <h2>ALL DEVICE BATCHES</h2>
-              <button aria-label="Close batch list" className={styles.iconButton} onClick={() => setSheetOpen(false)} type="button"><X aria-hidden size={22} /></button>
-            </header>
+        <ArchiveSheet open onClose={() => setSheetOpen(false)} title="All device batches" dirty={false} busy={false}>
+
             <div className={styles.filterRow}>
               {(['all', 'following', 'survey', 'claim', 'distributing', 'active'] as BatchFilter[]).map((item) => (
-                <button aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => setFilter(item)} type="button">{item.toUpperCase()}</button>
+                <ArchiveButton variant="secondary" aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => setFilter(item)} type="button">{item.toUpperCase()}</ArchiveButton>
               ))}
             </div>
             <div className={styles.sheetList}>
               {filteredBatches.map((item) => (
-                <button className={styles.sheetRow} key={item.code} onClick={() => chooseBatch(item.slug)} type="button">
+                <ArchiveButton variant="secondary" className={styles.sheetRow} key={item.code} onClick={() => chooseBatch(item.slug)} type="button">
                   <span className={styles.dot} style={{ background: statusDotColor(item.status) }} />
                   <span><strong>{item.name.toUpperCase()}</strong><small>{item.location}</small></span>
                   <span className={styles.sheetStatus}>{item.slug === batch.slug ? 'CURRENT · ' : ''}{DEVICE_BATCH_STATUS[item.status].shortLabel}</span>
                   <ChevronRight aria-hidden size={18} />
-                </button>
+                </ArchiveButton>
               ))}
             </div>
-          </section>
-        </div>
+          </ArchiveSheet>
       ) : null}
 
       {progressOpen && ownedConsole ? (
-        <div className={styles.sheetBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setProgressOpen(false) }}>
-          <section aria-label="My Console progress" aria-modal="true" className={styles.sheet} role="dialog">
-            <header className={styles.sheetHeader}>
-              <div><div className={styles.eyebrow}>MY ASSIGNED UNIT</div><h2>{ownedConsole.unitCode}</h2></div>
-              <button aria-label="Close my progress" className={styles.iconButton} onClick={() => setProgressOpen(false)} type="button"><X aria-hidden size={22} /></button>
-            </header>
+        <ArchiveSheet open onClose={() => setProgressOpen(false)} title="My Console progress" dirty={false} busy={false}>
+
             <div className={styles.dialogBody}>
               <div className={styles.facts}>
                 <div className={styles.fact}><span>UNIT STATUS</span><strong>{ownedConsole.unitStatus.toUpperCase()}</strong></div>
@@ -365,8 +341,7 @@ export function DeviceLiveRoom({
               </div>
               <Link className={styles.primaryButton} href="/devices/my-consoles">OPEN FULL UNIT RECORD</Link>
             </div>
-          </section>
-        </div>
+          </ArchiveSheet>
       ) : null}
     </main>
   )

@@ -147,9 +147,9 @@ export default function FlipDemo() {
     <main className="flip-demo">
       <style>{`
         .flip-demo { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2.6rem;
-          background: radial-gradient(120% 80% at 50% 34%, rgba(227,82,5,.10), transparent 60%), #0A0E27;
+          background: #080C20;
           color:#F5F5F5; font-family:var(--font-mono),monospace; padding:4rem 1rem; }
-        .flip-stage { position:relative; filter:drop-shadow(0 0 34px rgba(227,82,5,.32)); }
+        .flip-stage { position:relative;  }
         .flip-cell { position:absolute; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; perspective:820px;
           transition: left var(--spread,680ms) cubic-bezier(.16,.84,.34,1), top var(--spread,680ms) cubic-bezier(.16,.84,.34,1); }
         .flip-glyph { height:100%; width:auto; display:block; transform-origin:center center; backface-visibility:hidden;

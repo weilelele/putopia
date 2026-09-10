@@ -1,4 +1,6 @@
 'use client'
+import { ArchiveSelect, ArchiveTextarea } from '@/components/archive-input'
+import { BackLink } from '@/components/back-link'
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
@@ -16,7 +18,6 @@ import { WorldScanHero } from '@/components/world-scan-hero'
 import { ArchiveReelView } from '@/components/archive-reel'
 import { worldScanState, scanComplete } from '@/lib/signal/scan'
 import { resolveWorldScan } from '@/lib/signal/scan-resolve'
-import { ArchiveBrandHeader } from '@/components/archive-brand-header'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
@@ -136,24 +137,14 @@ export default function WorldDetailPage() {
 
   return (
     <main className="main pilot-archive-page archive-detail-page">
-      <ArchiveBrandHeader />
-      <div className="top-bar">
-        <div className="crumbs">
-          {isGuest
-            ? <>PC://WORKSPACE <span>/</span> WORLD RECORDS</>
-            : <>PC://CONSOLE <span>/</span> WORLD RECORDS <span>/</span> {world.id}</>
-          }
-        </div>
-        <div className="right">
-          <div className="item">ID <span className="val">{world.id}</span></div>
-        </div>
-      </div>
+
+
 
       <div style={{ maxWidth: '720px', width: '100%' }}>
         <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 3 }}>
           {/* Native anchor (not next/link) — a hard navigation that can't be
               swallowed by a failed client/RSC transition (e.g. on SSO-gated previews). */}
-          <a href={backHref} className="archive-button archive-button--ghost">{backLabel}</a>
+          <BackLink href={backHref} label={backLabel} />
         </div>
 
         {/* Hero — Signal Scanning countdown / no-signal, else image or gradient */}
@@ -181,11 +172,11 @@ export default function WorldDetailPage() {
             {isOwner && (
               <ArchiveCard className="archive-inline-panel">
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>WHO CAN VOTE</span>
-                <select value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', background: 'var(--bg-card)', color: 'var(--color-star)', border: '1px solid rgba(227,82,5,0.3)', padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
+                <ArchiveSelect value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
                   <option value="all">Open to everyone</option>
                   <option value="voters">Voyagers only</option>
                   <option value="self">Just me (private)</option>
-                </select>
+                </ArchiveSelect>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', color: 'var(--color-star-deep)' }}>
                   {scopeSaving ? 'Saving…' : 'You can change this anytime.'}
                 </span>
@@ -198,7 +189,7 @@ export default function WorldDetailPage() {
           {hasImage ? (
             <>
               {/* gradient placeholder shows until the hero image fades in */}
-              <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'transparent' }} />
               <LazyImage
                 src={world.image_path!}
                 alt={displayName}
@@ -206,12 +197,12 @@ export default function WorldDetailPage() {
               />
             </>
           ) : (
-            <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, ${world.gradient_from}, ${world.gradient_to})` }} />
+            <div style={{ width: '100%', height: '100%', background: 'var(--bg-panel)' }} />
           )}
           {/* scanline overlay */}
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'none', pointerEvents: 'none' }} />
           {/* bottom fade — transparent → warm orange tint → near-black, keeps title legible over busy images */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(160,45,4,0.42) 60%, rgba(12,5,1,0.93) 100%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'transparent', pointerEvents: 'none' }} />
           {/* ID badge */}
           <div style={{ position: 'absolute', top: 12, left: 12 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', background: 'rgba(7,9,18,0.75)', color: 'var(--color-star-deep)', padding: '3px 8px', border: '1px solid var(--bd-faint)' }}>
@@ -228,7 +219,7 @@ export default function WorldDetailPage() {
           )}
           {/* Title overlay at bottom */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem 1.25rem' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: '0 2px 12px rgba(0,0,0,0.8)' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h3)', fontWeight: 700, color: 'var(--color-star)', lineHeight: 1.2, textShadow: 'none' }}>
               {displayName}
             </div>
           </div>
@@ -239,7 +230,7 @@ export default function WorldDetailPage() {
         {scanFailed && isOwner && retryOpen && (
           <ArchiveCard className="archive-rescan-card">
             <ArchiveField htmlFor="world-rescan-notes" label="REVISE FIELD NOTES — THEN RE-SCAN">
-              <textarea
+              <ArchiveTextarea
                 id="world-rescan-notes"
                 value={retryDesc}
                 onChange={(e) => setRetryDesc(e.target.value)}
@@ -298,7 +289,7 @@ export default function WorldDetailPage() {
                 {world.description}
               </article>
               {!descExpanded && world.description.length > DESC_CLAMP && (
-                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '3rem', background: 'linear-gradient(to bottom, transparent, var(--bg-panel, #0F1430))', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '3rem', background: 'transparent', pointerEvents: 'none' }} />
               )}
             </div>
             {world.description.length > DESC_CLAMP && (

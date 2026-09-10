@@ -1,5 +1,7 @@
 'use client'
 
+import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState, useEffect, useRef } from 'react'
 import {
   getAllStories, updateStory, submitStory, publishStory, unpublishStory, deleteStory,
@@ -13,8 +15,8 @@ const S = {
   th:      { textAlign: 'left' as const, padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', borderBottom: '1px solid rgba(227,82,5,0.16)', whiteSpace: 'nowrap' as const },
   td:      { padding: '8px 12px', color: 'rgba(245,245,245,0.55)', borderBottom: '1px solid #0F1430', verticalAlign: 'top' as const, fontSize: '13px' },
   label:   { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
-  input:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
-  area:    { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'monospace', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
+  input:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
+  area:    { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const },
   row:     { display: 'grid', gap: '12px', marginBottom: '12px' } as const,
 }
 
@@ -120,9 +122,9 @@ export default function StoriesAdmin() {
             航行日志管理
           </div>
         </div>
-        <button className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: 'pointer', border: '1px solid #C84406', color: '#C84406', background: 'rgba(200,68,6,0.08)' }}>
+        <ArchiveButton type="submit" variant="primary" className="admin-primary-action" onClick={openNew} style={{ padding: '8px 18px', cursor: 'pointer' }}>
           + 新增故事
-        </button>
+        </ArchiveButton>
       </div>
 
       {msg && (
@@ -163,11 +165,11 @@ export default function StoriesAdmin() {
                     </span>
                   </td>
                   <td style={{ ...S.td, whiteSpace: 'nowrap' }}>
-                    <button onClick={() => openEdit(s)} style={{ marginRight: '8px', background: 'none', border: 'none', color: '#C84406', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>编辑</button>
-                    <button onClick={() => handleTogglePublish(s)} style={{ marginRight: '8px', background: 'none', border: 'none', color: s.is_published ? 'rgba(245,245,245,0.35)' : '#20D890', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>
+                    <ArchiveButton type="submit" variant="secondary" onClick={() => openEdit(s)} style={{ marginRight: '8px', cursor: 'pointer' }}>编辑</ArchiveButton>
+                    <ArchiveButton type="submit" variant="secondary" onClick={() => handleTogglePublish(s)} style={{ marginRight: '8px', color: s.is_published ? 'rgba(245,245,245,0.35)' : '#20D890', cursor: 'pointer' }}>
                       {s.is_published ? '撤稿' : '发布'}
-                    </button>
-                    <button onClick={() => handleDelete(s.id)} style={{ background: 'none', border: 'none', color: '#E83030', cursor: 'pointer', fontFamily: 'monospace', fontSize: '12px' }}>删除</button>
+                    </ArchiveButton>
+                    <ArchiveButton type="submit" variant="secondary" onClick={() => handleDelete(s.id)} style={{ cursor: 'pointer' }}>删除</ArchiveButton>
                   </td>
                 </tr>
               ))}
@@ -183,13 +185,13 @@ export default function StoriesAdmin() {
             <div style={{ color: '#C84406', fontSize: '12px', letterSpacing: '0.2em' }}>
               {editId ? `编辑: ${editId}` : '新增故事'}
             </div>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '18px' }}>×</button>
+            <ArchiveButton type="submit" variant="secondary" onClick={() => setShowForm(false)} style={{ cursor: 'pointer' }}>×</ArchiveButton>
           </div>
 
           <div style={{ ...S.row, gridTemplateColumns: '1fr 1fr' }}>
             <div>
               <label style={S.label}>ID (URL slug) *</label>
-              <input
+              <ArchiveInput
                 style={S.input}
                 value={form.id}
                 onChange={e => set('id', e.target.value)}
@@ -197,21 +199,21 @@ export default function StoriesAdmin() {
                 disabled={!!editId}
               />
               {!editId && form.title && (
-                <button onClick={() => set('id', toSlug(form.title))} style={{ marginTop: '4px', background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontFamily: 'monospace', fontSize: 'var(--fs-caption)', padding: 0 }}>
+                <ArchiveButton type="submit" variant="secondary" onClick={() => set('id', toSlug(form.title))} style={{ marginTop: '4px', cursor: 'pointer', padding: 0 }}>
                   ↻ 从标题生成: {toSlug(form.title)}
-                </button>
+                </ArchiveButton>
               )}
             </div>
             <div>
               <label style={S.label}>日期 *</label>
-              <input style={S.input} type="date" value={form.date} onChange={e => set('date', e.target.value)} />
+              <ArchiveInput style={S.input} type="date" value={form.date} onChange={e => set('date', e.target.value)} />
             </div>
           </div>
 
           <div style={{ ...S.row, gridTemplateColumns: '2fr 1fr', marginBottom: '12px' }}>
             <div>
               <label style={S.label}>标题 *</label>
-              <input style={S.input} value={form.title} onChange={e => set('title', e.target.value)} placeholder="故事标题" />
+              <ArchiveInput style={S.input} value={form.title} onChange={e => set('title', e.target.value)} placeholder="故事标题" />
             </div>
             <MemberPicker
               label="作者"
@@ -222,38 +224,38 @@ export default function StoriesAdmin() {
 
           <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>标签（逗号分隔）</label>
-            <input style={S.input} value={form.tags} onChange={e => set('tags', e.target.value)} placeholder="FIRST CONTACT, DISCOVERY, PERSONAL" />
+            <ArchiveInput style={S.input} value={form.tags} onChange={e => set('tags', e.target.value)} placeholder="FIRST CONTACT, DISCOVERY, PERSONAL" />
           </div>
 
           <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>YouTube 视频 ID（发布前必填）</label>
-            <input style={S.input} value={form.youtube_id} onChange={e => set('youtube_id', e.target.value)} placeholder="例：dQw4w9WgXcQ（URL 中 v= 后面的部分）" />
+            <ArchiveInput style={S.input} value={form.youtube_id} onChange={e => set('youtube_id', e.target.value)} placeholder="例：dQw4w9WgXcQ（URL 中 v= 后面的部分）" />
           </div>
 
           <div style={{ marginBottom: '12px' }}>
             <label style={S.label}>摘要（显示在列表页）</label>
-            <textarea style={{ ...S.area, minHeight: '80px' }} value={form.excerpt} onChange={e => set('excerpt', e.target.value)} placeholder="2-3 句话的摘要..." />
+            <ArchiveTextarea style={{ ...S.area, minHeight: '80px' }} value={form.excerpt} onChange={e => set('excerpt', e.target.value)} placeholder="2-3 句话的摘要..." />
           </div>
 
           <div style={{ marginBottom: '16px' }}>
             <label style={S.label}>正文内容（段落之间空一行）</label>
-            <textarea style={{ ...S.area, minHeight: '400px' }} value={form.content} onChange={e => set('content', e.target.value)} placeholder="故事正文，段落间用空行分隔..." />
+            <ArchiveTextarea style={{ ...S.area, minHeight: '400px' }} value={form.content} onChange={e => set('content', e.target.value)} placeholder="故事正文，段落间用空行分隔..." />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'rgba(245,245,245,0.55)', fontSize: '13px' }}>
-              <input type="checkbox" checked={form.is_published} onChange={e => set('is_published', e.target.checked)} />
+              <ArchiveInput type="checkbox" checked={form.is_published} onChange={e => set('is_published', e.target.checked)} />
               直接发布（勾选则立即对 Voyager 可见）
             </label>
 
-            <button
+            <ArchiveButton type="submit" variant="secondary"
               onClick={handleSave}
               disabled={saving}
-              style={{ padding: '8px 24px', fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.15em', cursor: saving ? 'not-allowed' : 'pointer', border: '1px solid #C84406', color: '#C84406', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}
+              style={{ padding: '8px 24px', cursor: saving ? 'not-allowed' : 'pointer', background: saving ? 'transparent' : 'rgba(200,68,6,0.08)', opacity: saving ? 0.6 : 1 }}
             >
               {saving ? '保存中...' : '保存'}
-            </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: '1px solid rgba(227,82,5,0.16)', color: 'rgba(245,245,245,0.35)', padding: '8px 16px', fontFamily: 'monospace', fontSize: '12px', cursor: 'pointer' }}>取消</button>
+            </ArchiveButton>
+            <ArchiveButton type="submit" variant="secondary" onClick={() => setShowForm(false)} style={{ padding: '8px 16px', cursor: 'pointer' }}>取消</ArchiveButton>
           </div>
         </div>
       )}
