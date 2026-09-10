@@ -84,3 +84,5 @@ Devices 导航已用原品牌图形替换手柄；欢迎标题统一 WELCOME, VO
 ## 一级品牌区与二级页面
 
 五个一级 Tab 共用 RootBrandHeader：移动端左侧原品牌图形与字标、右侧原操作入口。Your Path、Logs、详情页不使用此组件。桌面及带侧栏的横屏只显示侧栏品牌。UI Kit 和 iOS 离线根页面同步；缓存详情不显示品牌页头。
+
+本轮品牌层级可在[一级品牌预览](https://putopia-git-codex-ui-primary-brand-weileleles-projects.vercel.app/console)与[对应 UI Kit](https://putopia-git-codex-ui-primary-brand-weileleles-projects.vercel.app/ui-kit)查看。此独立分支已完成视觉验证，等待并入正在整合的 ui-v23；原 ui-v23 入口在整合前可能仍显示上一版品牌规则。
