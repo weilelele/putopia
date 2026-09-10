@@ -1,21 +1,27 @@
 'use client'
-import { PublisherIdentity, NewsMedia } from './news-content'
+import { PublisherIdentity } from './news-content'
 import { useRef, useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowRight, FileText, Users, Globe, Cpu, Lock } from 'lucide-react'
 import SmartImage from './smart-image'
 import { ArchiveButton } from './archive-button'
 import { ArchiveLinkButton } from './archive-link-button'
 import type { DashboardUpdate, DashboardEvent } from '@/lib/dashboard-model'
 export function UpdateTimeline({ updates }: { updates: DashboardUpdate[] }) {
-  return <ol className="update-timeline">{updates.map(item => <li key={item.id} className="update-row">
-    <div className="update-time"><span aria-hidden className="update-node" /><time dateTime={item.occurredAt} title={new Date(item.occurredAt).toISOString()}>{new Date(item.occurredAt).toISOString().slice(5,10).replace('-','/')}</time></div>
-    <Link className={`update-content${item.category === 'Intel' ? ' update-content--intel' : item.image ? ' update-content--media' : ''}`} href={item.href} scroll={false}>
-      {item.category !== 'Intel' && item.image && <SmartImage src={item.image} alt="" width={120} height={64} sizes="120px" className="update-image" />}
-      <div><span className="update-category">{item.category}</span><h3>{item.title}</h3>{item.authorName && <PublisherIdentity name={item.authorName} avatar={item.authorAvatar} />}{item.locked ? <p>Restricted · sign in with eligible access</p> : item.description && <p>{item.description}</p>}</div>
-      {item.category === 'Intel' && !item.locked && <NewsMedia images={item.images ?? (item.image ? [item.image] : [])} title={item.title} />}
-    </Link>
-  </li>)}</ol>
+  return <ol className="update-timeline">{updates.map(item => {
+    const images = item.locked ? [] : item.images?.length ? item.images : item.image ? [item.image] : []
+    const Icon = item.locked ? Lock : item.category === 'Voyager activated' ? Users : item.category === 'Established world' ? Globe : item.category === 'Device update' ? Cpu : FileText
+    return <li key={item.id} className="update-row">
+      <div className="update-time"><span aria-hidden className="update-node" /><time dateTime={item.occurredAt} title={new Date(item.occurredAt).toISOString()}>{new Date(item.occurredAt).toISOString().slice(5,10).replace('-','/')}</time></div>
+      <Link className="update-content update-content--compact" href={item.href} scroll={false}>
+        <span className="update-thumbnail">
+          {images[0] ? <SmartImage src={images[0]} alt="" width={120} height={96} sizes="(max-width: 359px) 72px, (max-width: 767px) 88px, 120px" className="update-image" /> : <Icon aria-hidden size={26} strokeWidth={1.5} />}
+          {images.length > 1 && <span className="update-image-count" aria-label={`${images.length} images`}>+{images.length - 1}</span>}
+        </span>
+        <div className="update-copy"><span className="update-category">{item.category}</span><h3>{item.title}</h3>{!item.locked && item.authorName && <PublisherIdentity name={item.authorName} avatar={item.authorAvatar} />}{item.locked ? <p>Restricted · sign in with eligible access</p> : item.description && <p>{item.description}</p>}</div>
+      </Link>
+    </li>
+  })}</ol>
 }
 export function EventRail({ events }: { events: DashboardEvent[] }) {
   const rail = useRef<HTMLUListElement>(null)
