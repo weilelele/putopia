@@ -1,6 +1,6 @@
 # Multiverse Collective / Multiverse Console UI 规范
 
-> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。五个一级 Tab 在移动端恢复紧凑原图形＋文字 Logo；二级及更深页面无 Logo；桌面/横屏统一侧栏保留品牌，内容区不重复。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 只收录 Intel、Voyager Activated、Established World、Device Update；Events 只收录开放 Vote 与 Signal Tuning。
+> **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示完整品牌介绍、设备原图、View Device、Request Access / Login 和原三个数字指标，不再叠加左上角小 Logo；登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。五个一级 Tab 在移动端恢复紧凑原图形＋文字 Logo；二级及更深页面无 Logo；桌面/横屏统一侧栏保留品牌，内容区不重复。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 只收录 Intel、Voyager Activated、Established World、Device Update；Events 只收录开放 Vote 与 Signal Tuning。
 
 
 版本：2.3 · 2026-09-09 · 全站改版的权威入口。
@@ -59,13 +59,13 @@
 
 ### 1.3 页面层级与紧凑操作区（最新更正）
 
-**五个一级 Tab 在移动端使用紧凑的原图形＋文字 Logo，二级及更深页面不放 Logo。** 原图形宽 28px、原字标宽 108–120px，等比完整显示；与右侧既有操作共用 56px 高的首行。没有操作时仅显示左侧品牌。桌面及有侧栏的横屏布局只在侧栏显示品牌，内容区省略重复 Logo。Voyager 身份状态卡中的设备符号和启动动画继续保留原资产。
+**一级 Tab 在移动端使用紧凑的原图形＋文字 Logo，二级及更深页面不放 Logo。未登录 Dashboard 是明确例外：完整品牌介绍替代紧凑品牌行，不重复显示左上角 Logo。** 原图形宽 28px、原字标宽 108–120px，等比完整显示；与右侧既有操作共用 56px 高的首行。没有操作时仅显示左侧品牌。桌面及有侧栏的横屏布局只在侧栏显示品牌，内容区省略重复 Logo。Voyager 身份状态卡中的设备符号和启动动画继续保留原资产。
 
 一级 Tab 不显示重复页面名称；页面名称保留为不占布局空间的 sr-only h1。必要次级入口位于顶部右侧，使用无边框、无满宽容器的轻量链接，命中至少 44px；没有动作时，移动端保留品牌；侧栏布局省略空操作行。二级页移除 Logo 时同时移除其高度、留白和分隔线。二级页面保留返回与自己的可见标题。
 
 | 页面 | 顶部与动作顺序 |
 | --- | --- |
-| Dashboard | 原口径数字看板 → Updates → Events；无个人资料入口 |
+| Dashboard | 游客：完整品牌介绍 → 设备展示与 View Device → Request Access / Login → 原口径数字看板 → Updates → Events；登录后：紧凑品牌行 → Voyager 欢迎与身份状态 → Updates → Events |
 | Intel | 右上 Voting Hub → 分类筛选 → 最新 Intel 重点内容 → Recent 轻列表 |
 | Devices | 右上 Archive → 批次选择 → 实际媒体 → 当前行动 → 内容 Tabs |
 | Worlds | 右上 Archive → 房间选择 → 实际媒体与状态 → 当前行动 → 内容 Tabs |
@@ -74,7 +74,7 @@
 
 页面内容左右 16px，顶部 16px，必要操作行最小 44px。二级/任务栏内容最小高 56px，标题 24px/700（正文上下文可用 20px/700）。长文、200% 字体放大允许增高。默认随正文滚动，安全区由平台适配一次。
 
-Dashboard 数字看板是原有产品内容，必须保留，不能与重复 Tab 标题一同删除。Events 公开可浏览；登录和权限只控制实际参与，不能作为隐藏整个活动区域的前置条件。
+游客 Dashboard 的品牌介绍、设备原图、入口和数字看板是原有产品内容，必须保留，不能与重复 Tab 标题一同删除。Events 公开可浏览；登录和权限只控制实际参与，不能作为隐藏整个活动区域的前置条件。
 
 Updates 不设置 Intel 子类型保留位，NOTICE / DEVICE / ORG 只要符合时间排序都可进入。Classified Intel 对游客保留锁定卡，正文、作者和媒体不下发；点击后由详情权限拦截。Established World 只认世界正式进入 stable 的事件，同一世界去重。Device Update 使用正式发布的 Latest Update 与显式设备事件，同一设备去重，普通资料修订不产生独立动态。
 
@@ -305,3 +305,5 @@ Archive 系列组件和 `/ui-kit` 已按 2.3 更新。原 Golden examples 已退
 - Worlds Live 拥有同布局加载占位，不展示归档页标题。区块间距默认 20–24px，紧凑条目上下 12–16px，保留字号与点击区下限。
 
 欢迎标题修正：统一 WELCOME, VOYAGER；此前 Broker 为错误文案。Voyager Batches 首次进入默认选 Batch S2，用户主动切换后保留本次会话选择；S2 不存在时回退到可用首批。设备导航白色/橙色状态为用户明确指定的展示变体，不修改原品牌文件。
+
+访客 Dashboard 的完整品牌展示同时替代桌面/横屏侧栏顶部的小 Logo；侧栏导航和账户入口保留。离线默认页沿用这一例外，其他页面的品牌层级规则不变。

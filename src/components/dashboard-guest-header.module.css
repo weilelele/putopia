@@ -1,0 +1,23 @@
+.hero { display: grid; gap: 24px; width: 100%; max-width: 960px; margin: 0 auto 32px; }
+.introduction { display: flex; flex-direction: column; align-items: center; gap: 24px; padding-top: 32px; }
+.wordmark { display: block; width: 86%; max-width: 400px; height: auto; object-fit: contain; }
+.emblem { display: block; width: 112px; height: auto; object-fit: contain; }
+.tagline { max-width: 460px; margin: 0; color: var(--color-star); font-size: var(--fs-body); line-height: 1.6; text-align: center; }
+.device { display: block; border: 1px solid var(--bd-faint); color: var(--color-nucleus); text-decoration: none; }
+.deviceHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 8px 12px; font-size: var(--fs-caption); line-height: 1.4; }
+.deviceHeading > span { color: var(--color-star-dim); }
+.deviceImage { display: block; width: 100%; height: auto; object-fit: contain; }
+.deviceFooter { display: flex; align-items: center; justify-content: flex-end; min-height: 44px; padding: 8px 12px; font-size: var(--fs-caption); }
+.device:hover .deviceFooter { text-decoration: underline; }
+.device:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.actions > :global(.archive-button) { min-width: 0; min-height: 48px; padding: 12px 8px; gap: 8px; font-size: var(--fs-caption); letter-spacing: .02em; white-space: normal; }
+.actions svg { flex-shrink: 0; }
+.statistics :global(.dashboard-stats) { margin: 0; }
+@media (min-width: 900px) {
+  .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; column-gap: 32px; }
+  .introduction { grid-column: 1; grid-row: 1; padding-top: 0; }
+  .showcase { grid-column: 2; grid-row: 1 / span 3; }
+  .actions { grid-column: 1; grid-row: 2; }
+  .statistics { grid-column: 1; grid-row: 3; }
+}
