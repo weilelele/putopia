@@ -639,22 +639,44 @@
 }
 
 .compactClaimPanel .paymentHeader {
-  padding-block: var(--s-3);
-  align-items: center;
-  flex-wrap: wrap;
+  padding-block: var(--s-5);
+  display: grid;
+  gap: var(--s-3);
 }
 
 .compactClaimPanel .paymentHeader h2 {
   font-size: var(--fs-label);
   font-weight: 700;
+  color: var(--color-nucleus);
 }
 
 .compactClaimPanel .paymentPrice {
-  font-size: var(--fs-body);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-3);
+  white-space: normal;
+}
+
+.compactClaimPanel .paymentPrice strong {
+  font-size: 44px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.compactClaimPanel .paymentPrice span {
+  font-size: var(--fs-label);
 }
 
 .compactClaimPanel .claimCounts > div {
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-block: var(--s-4);
+}
+
+.compactClaimPanel .claimCounts strong {
+  font-size: var(--fs-h3);
+  font-weight: 700;
 }
 
 .compactClaimPanel .claimCounts span {
@@ -666,7 +688,7 @@
 }
 
 .compactClaimPanel .claimRow {
-  padding-block: var(--s-3);
+  padding-block: var(--s-5);
 }
 
 .compactClaimPanel .claimButton {
