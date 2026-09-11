@@ -1,5 +1,4 @@
-import { RootBrandHeader } from '@/components/root-brand-header'
-import { ArchivePageHeader } from '@/components/archive-page-header'
+import { PrimaryTabLoading } from '@/components/primary-tab-loading'
 export default function ConsoleLoading() {
-  return <main className="main archive-console-page" aria-busy="true" aria-label="Loading Dashboard"><ArchivePageHeader hideTitle title="Dashboard" /><RootBrandHeader /><div className="dashboard-header-loading" aria-hidden="true" /><h2>Updates</h2><p role="status">Loading the latest updates…</p><div className="archive-route-skeleton" style={{ height: 80, marginBlock: 16 }} /><h2>Events</h2><p>Checking available events…</p></main>
+  return <PrimaryTabLoading kind="dashboard" />
 }

@@ -3198,9 +3198,7 @@ body:has(.uk-root) .sidebar {
 
 .archive-route-skeleton {
   border-color: var(--archive-line-soft);
-  background: var(--color-void);
-  background-size: 200% 100%;
-  animation: archive-route-shimmer 1.4s ease-in-out infinite;
+  background: var(--bg-panel);
 }
 
 .archive-route-state--error {
@@ -3241,20 +3239,9 @@ body:has(.uk-root) .sidebar {
   color: var(--color-star-deep);
 }
 
-@keyframes archive-route-shimmer {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
-}
-
 @media (min-width: 640px) {
   .archive-route-state__cards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .archive-route-skeleton {
-    animation: none;
   }
 }
 
@@ -4261,5 +4248,112 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 }
 .pilot-login-page .pilot-login-form { gap: 24px; }
 
-.startup-symbol { width: 88px; height: auto; flex-shrink: 0; pointer-events: none; }
+.startup-screen { gap: 24px; }
+.startup-symbol { width: 48px; height: auto; flex-shrink: 0; pointer-events: none; }
 .startup-screen > p { position: absolute; bottom: max(36px, env(safe-area-inset-bottom)); margin: 0; }
+
+/* Primary tab transition: content-shaped, static, and shared by all five tabs. */
+.primary-tab-loading__content {
+  width: min(100%, 760px);
+  margin: 12px auto 0;
+}
+.primary-tab-loading__status {
+  margin: 0 0 16px;
+  color: var(--color-nucleus);
+  font-size: var(--fs-label);
+  letter-spacing: .08em;
+}
+.primary-tab-loading__rail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-height: 52px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--bd-faint);
+}
+.primary-tab-loading__rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+}
+.primary-tab-loading__rail-item + .primary-tab-loading__rail-item {
+  border-left: 1px solid var(--bd-faint);
+}
+.primary-tab-loading__rail-line {
+  display: block;
+  width: 62%;
+  height: 10px;
+}
+.primary-tab-loading__metric {
+  display: block;
+  width: 28px;
+  height: 18px;
+}
+.primary-tab-loading__lead {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 16px 0 20px;
+  border-bottom: 1px solid var(--bd-faint);
+}
+.primary-tab-loading__lead.is-media {
+  grid-template-columns: minmax(0, 1fr);
+}
+.primary-tab-loading__media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--bd-faint);
+}
+.primary-tab-loading__lead.is-media .primary-tab-loading__media {
+  aspect-ratio: 16 / 10;
+}
+.primary-tab-loading__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+.primary-tab-loading__line {
+  display: block;
+  height: 12px;
+}
+.primary-tab-loading__line.is-long { width: 92%; }
+.primary-tab-loading__line.is-medium { width: 72%; }
+.primary-tab-loading__line.is-short { width: 48%; }
+.primary-tab-loading__list { display: grid; }
+.primary-tab-loading__row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 88px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--bd-faint);
+}
+.primary-tab-loading__avatar {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--bd-faint);
+}
+.uk-primary-loading-preview {
+  padding: 16px;
+  border: 1px solid var(--bd-faint);
+  background: var(--color-deep);
+}
+.uk-primary-loading-preview .primary-tab-loading__content { margin-top: 0; }
+.uk-primary-loading-preview .uk-nav-preview { margin: 20px -16px -16px; }
+@media (min-width: 768px) {
+  .primary-tab-loading__content { width: min(100%, 880px); }
+  .primary-tab-loading__lead { grid-template-columns: 160px minmax(0, 1fr); }
+  .primary-tab-loading__lead.is-media { grid-template-columns: minmax(320px, 1.2fr) minmax(220px, .8fr); }
+  .primary-tab-loading__row { grid-template-columns: 52px minmax(0, 1fr); }
+  .primary-tab-loading__avatar { width: 52px; height: 52px; }
+}

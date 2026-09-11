@@ -18,6 +18,7 @@ import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveCard } from '@/components/archive-card'
 import Link from 'next/link'
 import { createClientDataCache } from '@/lib/client-data-cache'
+import { PrimaryTabLoading } from '@/components/primary-tab-loading'
 
 type FilterTab = 'all' | 'public' | 'classified'
 
@@ -81,7 +82,7 @@ const INTEL_FILTERS = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function IntelPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PrimaryTabLoading kind="collection" />}>
       <IntelPageContent />
     </Suspense>
   )
@@ -133,6 +134,8 @@ function IntelPageContent() {
     intel
 
   const showClassifiedWall = activeFilter === 'classified' && !isAtLeast('voyager')
+
+  if (loading && !cached) return <PrimaryTabLoading kind="collection" />
 
   return (
     <div className="main pilot-archive-page archive-collection-page archive-intel-page" data-route-scroll>

@@ -18,6 +18,7 @@ import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-rou
 import { Camera, ArrowRight } from 'lucide-react'
 import type { VoyagerProfile, UserRole } from '@/types/database'
 import { createClientDataCache } from '@/lib/client-data-cache'
+import { PrimaryTabLoading } from '@/components/primary-tab-loading'
 
 const voyagersPageCache = createClientDataCache<VoyagerProfile[]>(5 * 60_000)
 
@@ -128,6 +129,8 @@ export default function VoyagersPage() {
   useEffect(() => {
     void Promise.resolve().then(() => loadVoyagers())
   }, [loadVoyagers])
+
+  if (loading && cachedVoyagers === undefined) return <PrimaryTabLoading kind="registry" />
 
   const openEdit = (v: VoyagerProfile) => {
     setEditing(v)

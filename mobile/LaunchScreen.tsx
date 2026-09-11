@@ -42,7 +42,7 @@ export function LaunchScreen({ onComplete }: { onComplete: () => void }) {
     if (settledCells.current.size === cells.length) setPlaybackComplete(true)
   }, [])
   const { width: viewport } = useWindowDimensions()
-  const scale = Math.min(600, viewport - 48) / width
+  const scale = Math.min(520, (viewport - 48) * 0.82) / width
   const finish = useCallback(() => { if (!finished.current) { finished.current = true; onComplete() } }, [onComplete])
   useEffect(() => {
     let mounted = true
@@ -70,6 +70,6 @@ export function LaunchScreen({ onComplete }: { onComplete: () => void }) {
 }
 const styles = StyleSheet.create({
   screen: { ...StyleSheet.absoluteFillObject, zIndex: 100, backgroundColor: '#080C20', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  symbol: { width: 88, height: 88 * 492 / 881, marginTop: 32 },
+  symbol: { width: 48, height: 48 * 492 / 881, marginTop: 24 },
   hint: { position: 'absolute', bottom: 36, color: '#F5F5F5', fontFamily: 'CourierPrime', fontSize: 14 },
 })
