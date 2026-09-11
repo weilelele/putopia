@@ -10,7 +10,7 @@ export function ownerTab(path: string): string | null {
   if (path === '/console') return '/console'
   if (/^\/(intel|vote)(\/|$)/.test(path)) return '/intel'
   if (/^\/devices(\/|$)/.test(path)) return '/devices'
-  if (/^\/(worlds|signal)(\/|$)/.test(path)) return '/worlds/live'
+  if (/^\/(worlds|worldflow|signal)(\/|$)/.test(path)) return '/worlds/live'
   if (/^\/(voyagers|profile|logs|voyager-path)(\/|$)/.test(path)) return '/voyagers'
   return null
 }

@@ -8,11 +8,13 @@ describe('UI navigation contract', () => {
     expect(ownerTab('/logs/42')).toBe('/voyagers')
     expect(ownerTab('/profile')).toBe('/voyagers')
     expect(ownerTab('/worlds/42')).toBe('/worlds/live')
+    expect(ownerTab('/worldflow')).toBe('/worlds/live')
     expect(ownerTab('/devices-unrelated')).toBeNull()
   })
   it('hides global navigation during focused tasks and launch', () => {
     for (const path of ['/welcome', '/vote', '/signal', '/devices/claim', '/worlds/submit']) expect(hasGlobalNavigation(path)).toBe(false)
     expect(hasGlobalNavigation('/logs/42')).toBe(true)
+    expect(hasGlobalNavigation('/worldflow')).toBe(true)
   })
   it('keeps login escapable through the shared navigation without assigning a tab', () => {
     expect(hasGlobalNavigation('/login')).toBe(true)

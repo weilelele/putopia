@@ -2,12 +2,10 @@
 import { useEffect } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { safeAppPath } from '@/lib/ui-navigation'
+import { getRouteScrollContainer as scroller } from '@/lib/route-scroll-container'
 
 function read(key: string) { try { return sessionStorage.getItem(key) } catch { return null } }
 function save(key: string, value: string) { try { sessionStorage.setItem(key, value) } catch { /* Private storage may be unavailable. */ } }
-function scroller() {
-  return [...document.querySelectorAll<HTMLElement>('main, .main')].find(el => /auto|scroll/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight) ?? document.scrollingElement
-}
 /** Save the actual scrolling surface before navigation; restore tab/query context. */
 export function ScrollRestorer() {
   const pathname = usePathname()
@@ -18,9 +16,10 @@ export function ScrollRestorer() {
     const previousMode = history.scrollRestoration
     history.scrollRestoration = 'manual'
     let restoring = true
+    let navigating = false
     const y = Number(read(key) ?? 0)
     const restore = () => {
-      if (!restoring) return
+      if (!restoring || navigating) return
       const element = scroller()
       if (!element) return
       element.scrollTo({ top: y, behavior: 'instant' })
@@ -30,7 +29,7 @@ export function ScrollRestorer() {
     observer.observe(document.querySelector('.app-shell') ?? document.body, { childList: true, subtree: true })
     const timers = [0, 100, 300, 700].map(delay => setTimeout(restore, delay))
     const stop = () => { restoring = false }
-    const record = () => { if (!restoring) save(key, String(scroller()?.scrollTop ?? 0)) }
+    const record = () => { if (!restoring && !navigating) save(key, String(scroller()?.scrollTop ?? 0)) }
     const done = setTimeout(() => { restoring = false }, 8000)
     const navigate = (event: MouseEvent) => {
       const anchor = (event.target as Element)?.closest?.('a[href]') as HTMLAnchorElement | null
@@ -38,6 +37,9 @@ export function ScrollRestorer() {
       const target = safeAppPath(anchor.href, location.origin)
       if (!target || target === route || target.startsWith(`${route}#`)) return
       save(key, String(scroller()?.scrollTop ?? 0))
+      // The shared shell can shrink/reset while the next route is loading.
+      // Do not let that layout scroll overwrite the departing route's position.
+      navigating = true
       const path = new URL(target, location.origin).pathname
       save(`mc:from:${path}`, route)
     }

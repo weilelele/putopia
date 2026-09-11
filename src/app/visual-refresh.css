@@ -54,6 +54,12 @@ select {
   height: 100svh;
 }
 
+/* Focused routes may intentionally omit the sidebar. Keep their only child in
+   the full-width track instead of the reserved desktop navigation column. */
+.app-shell:not(:has(> .sidebar)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .sidebar {
   display: none;
   height: 100svh;
@@ -66,6 +72,27 @@ select {
   padding: max(1rem, env(safe-area-inset-top)) 1rem calc(6.9rem + env(safe-area-inset-bottom));
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
+}
+
+/* Wide reading pages scroll as one surface, including their outer gutters.
+   Keep bounded workspaces on their own scroll model. */
+@media (min-width: 768px) {
+  .app-shell:has(> [data-route-scroll]) {
+    overflow-y: auto;
+    align-items: start;
+    scrollbar-gutter: stable;
+    overflow-anchor: none;
+  }
+
+  .app-shell > [data-route-scroll] {
+    overflow: visible;
+    height: auto;
+    scrollbar-gutter: auto;
+  }
+
+  .app-shell:has(> [data-route-scroll]) > .sidebar {
+    align-self: start;
+  }
 }
 
 .top-bar {

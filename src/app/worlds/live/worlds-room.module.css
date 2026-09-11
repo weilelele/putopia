@@ -1,3 +1,15 @@
+.scrollPage {
+  /* Give WebKit a bounded scrollport instead of an intrinsic grid-item height. */
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.scrollPage > div {
+  /* The media/status stack must overflow vertically, never shrink to the screen. */
+  flex-shrink: 0;
+}
+
 .navigation {
   grid-template-columns: minmax(0, 1fr) 9rem;
 }
