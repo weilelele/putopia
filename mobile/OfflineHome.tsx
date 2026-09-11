@@ -209,12 +209,19 @@ function DashboardView({ snapshot, media, select }: {
     <SectionTitle>UPDATES</SectionTitle>
     <Text style={styles.meta}>Latest {updates.length} saved updates</Text>
     {updates.length ? updates.map(item => {
-      const news = snapshot.intel.find(entry => item.id === `intel-${entry.id}`)
+      const locked = 'locked' in item && item.locked
+      const news = locked ? undefined : snapshot.intel.find(entry => item.id === `intel-${entry.id}`)
+      const images = locked ? [] : 'images' in item && item.images?.length ? item.images : item.image ? [item.image] : []
+      const thumb = images[0]
+
       return <View key={item.id} style={styles.updateRow}>
       <View style={styles.updateTime}><View style={styles.updateNode} /><Text style={styles.updateDate}>{item.date.slice(5,10).replace('-', '/')}</Text></View>
-      <Pressable accessibilityRole="button" accessibilityLabel={item.title} onPress={() => select(item.tab,item.detail)} style={[styles.updateContent,news && {flexDirection:'column'}]}>
-        {!news && <CachedImage uri={item.image} media={media} style={thumbnail} />}
-        <View style={{flex:1}}><Text style={styles.meta}>{item.category}</Text><Text style={styles.cardTitle}>{item.title}</Text>{news && <><NativePublisher item={news} media={media} /><NativeNewsMedia images={news.images} media={media} /></>}</View>
+      <Pressable accessibilityRole="button" accessibilityLabel={item.title} onPress={() => select(item.tab,item.detail)} style={styles.updateContent}>
+        <View style={[thumbnail,{backgroundColor:PANEL,alignItems:'center',justifyContent:'center'}]}>
+          {thumb && mediaUri(thumb,media) ? <CachedImage uri={thumb} media={media} style={thumbnail} /> : <Text style={styles.meta}>{locked ? 'LOCKED' : '—'}</Text>}
+          {images.length > 1 && <Text style={{position:'absolute',right:3,bottom:3,backgroundColor:DEEP,color:WHITE,fontFamily:'CourierPrime',fontSize:12,paddingHorizontal:4}}>+{images.length-1}</Text>}
+        </View>
+        <View style={{flex:1,minWidth:0}}><Text style={styles.meta}>{item.category}</Text><Text numberOfLines={2} style={styles.directoryName}>{item.title}</Text>{news && <NativePublisher item={news} media={media} />}{locked ? <Text style={styles.directoryMeta}>Restricted · reconnect to sign in</Text> : 'description' in item && item.description ? <Text numberOfLines={1} style={styles.directoryMeta}>{item.description}</Text> : null}</View>
       </Pressable>
     </View>}) : <EmptyState>No updates were saved. Reconnect to load the latest activity.</EmptyState>}
     <SectionTitle>EVENTS</SectionTitle>
@@ -587,8 +594,8 @@ const styles = StyleSheet.create({
   updateNode: { width: 7, height: 7, borderRadius: 4, backgroundColor: ORANGE, marginLeft: -4, marginBottom: 8 },
   updateDate: { width: 36, color: DIM, fontFamily: 'CourierPrime', fontSize: 12 },
   updateContent: { flex: 1, flexDirection: 'row', gap: 12 },
-  updateImage: { width: 120, height: 64 },
-  updateImageSmall: { width: 96, height: 56 },
+  updateImage: { width: 88, height: 70 },
+  updateImageSmall: { width: 72, height: 58 },
   root: { ...StyleSheet.absoluteFillObject, backgroundColor: DEEP },
   safeArea: { flex: 1, backgroundColor: DEEP },
   topBar: { minHeight: 32, paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: BORDER },

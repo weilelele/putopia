@@ -14,6 +14,7 @@ import { ArchiveTabs } from '@/components/archive-tabs'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { UpdateTimeline, EventRail } from '@/components/dashboard-content'
 import { PrimaryNavigation } from '@/components/primary-navigation'
+import { PrimaryTabLoadingBody } from '@/components/primary-tab-loading'
 
 type Result = 'ready' | 'submitting' | 'success' | 'unknown'
 export function UiKit() {
@@ -215,6 +216,15 @@ export function UiKit() {
 <p>Uses the display name from FORM-01. No request is sent.</p>
 <ArchiveButton loading={result === 'submitting'} disabled={result === 'success' || result === 'unknown'} onClick={submit}>Save fixture</ArchiveButton>
 <div role="status">{result === 'success' ? 'Saved successfully.' : result === 'unknown' ? 'Result unconfirmed. Check the saved record before trying again.' : result === 'submitting' ? 'Saving…' : ''}</div>{result === 'unknown' && <ArchiveButton variant="secondary" onClick={() => setResult('success')}>Check saved record</ArchiveButton>}</section>
+      <section className="uk-section uk-span">
+<h2>LOAD-01 · Primary tab transition</h2>
+<p>The target tab becomes active immediately. A content-shaped shell holds the final layout until its first useful data is ready.</p>
+<div className="uk-primary-loading-preview" aria-label="Primary tab loading preview">
+<RootBrandHeader />
+<PrimaryTabLoadingBody kind="collection" />
+<div className="uk-nav-preview"><PrimaryNavigation variant="bottom" activePath="/intel" onNavigate={() => {}} /></div>
+</div>
+</section>
       <section className="uk-section uk-span">
 <h2>LIVE-01 · Loading and offline states</h2>
 <ArchiveTabs mode="filter" ariaLabel="Live state" activeId={live} items={['loading','empty','error','offline','ready'].map(id => ({id,label:id.toUpperCase()}))} onChange={setLive} />

@@ -16,7 +16,7 @@ export function ownerTab(path: string): string | null {
 }
 export function isPrimaryRoute(path: string) { return PRIMARY_NAV.some(item => item.href === path) }
 export function hasGlobalNavigation(path: string) {
-  return ownerTab(path) !== null && !/^\/(vote|signal|worlds\/submit|devices\/claim)(\/|$)/.test(path)
+  return path === '/login' || ownerTab(path) !== null && !/^\/(vote|signal|worlds\/submit|devices\/claim)(\/|$)/.test(path)
 }
 export function fallbackRoute(path: string): string {
   if (/^\/logs\//.test(path)) return '/logs'

@@ -1,5 +1,6 @@
 'use client'
 
+import { BackLink } from '@/components/back-link'
 import { ArchiveInput } from '@/components/archive-input'
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -52,8 +53,8 @@ function LoginPageContent() {
   return (
     <main className="main pilot-archive-page pilot-login-page">
 
-
       <div className="pilot-login-shell">
+        <BackLink href="/console" label="Back to Dashboard" />
         <header className="pilot-login-heading">
           <h1 className="pilot-login-title">
             AUTHENTICATE
