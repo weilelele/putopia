@@ -174,14 +174,11 @@ export function DeviceLiveRoom({
       </div><div className={styles.workspaceDetails}>
       {(batch.status === 'claim_open' && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
         <div className={styles.paymentHeader}>
-          <div>
-            <div className={styles.eyebrow}>CLAIM DISPATCH</div>
-            <h2 id="claim-heading">{batch.inventory?.listingQuantity ?? batch.holders.length} CONSOLES</h2>
-          </div>
+          <h2 id="claim-heading">CONSOLE CLAIM</h2>
           {batch.claimPrice ? <div className={styles.paymentPrice}>{formatBatchPrice(batch.claimPrice)} / CLAIM</div> : null}
         </div>
         <div className={styles.claimCounts}>
-          <div><span>TOTAL</span><strong>{batch.inventory?.listingQuantity ?? batch.holders.length}</strong></div>
+          <div><span>BATCH TOTAL</span><strong>{batch.inventory?.listingQuantity ?? batch.holders.length}</strong></div>
           <div><span>REMAINING</span><strong>{remaining ?? 0}</strong></div>
         </div>
         <div className={styles.shipments}>
@@ -201,9 +198,9 @@ export function DeviceLiveRoom({
           {ownedConsole ? (
             <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => setProgressOpen(true)} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></ArchiveButton>
           ) : claimHref && remaining !== 0 ? (
-            <Link className={`${styles.primaryButton} ${styles.claimButton}`} href={claimHref}><span>CLAIM A CONSOLE</span><strong>{remaining} REMAIN</strong></Link>
+            <Link className={`${styles.primaryButton} ${styles.claimButton}`} href={claimHref}><span>CLAIM A CONSOLE</span></Link>
           ) : (
-            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} disabled type="button"><span>CLAIMS CLOSED</span><strong>{remaining ?? 0} REMAIN</strong></ArchiveButton>
+            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} disabled type="button"><span>CLAIMS CLOSED</span></ArchiveButton>
           )}
         </div>
       </section> : null}

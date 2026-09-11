@@ -640,6 +640,25 @@
 
 .compactClaimPanel .paymentHeader {
   padding-block: var(--s-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.compactClaimPanel .paymentHeader h2 {
+  font-size: var(--fs-label);
+  font-weight: 700;
+}
+
+.compactClaimPanel .paymentPrice {
+  font-size: var(--fs-body);
+}
+
+.compactClaimPanel .claimCounts > div {
+  flex-wrap: wrap;
+}
+
+.compactClaimPanel .claimCounts span {
+  color: var(--color-star-dim);
 }
 
 .compactClaimPanel .shipment {
