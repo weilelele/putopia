@@ -26,6 +26,12 @@ function packageImage(batch: DeviceBatch, stage: DistributionStage): DeviceBatch
   }
 }
 
+const packageTeasers: Record<string, string> = {
+  'initial-voyager-pack': 'A badge and a letter to begin your journey.',
+  'components-pack': 'Small objects. Clues to what comes next.',
+  console: 'A window into worlds you have yet to discover.',
+}
+
 export function ConsolePackages({ batch }: { batch: DeviceBatch }) {
   const [open, setOpen] = useState(false)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -44,16 +50,13 @@ export function ConsolePackages({ batch }: { batch: DeviceBatch }) {
       </ArchiveButton>
     </div>
     {open && <ArchiveSheet open title="Explore the packages" onClose={close}>
-      <p className={styles.intro}>{batch.name} · Unfold the experience, step by step.</p>
       <ol className={styles.packages}>
         {batch.distributionStages.map((stage, index) => {
           const media = packageImage(batch, stage)
           return <li key={stage.id} className={styles.package}>
-            <header><span>PACKAGE {String(index + 1).padStart(2, '0')}</span><h3>{stage.label}</h3></header>
-            {media && <figure><div className={`${styles.image} ${stage.id === 'initial-voyager-pack' ? styles.welcomeImage : ''}`}><Image src={media.src} alt={media.alt} fill sizes="(max-width: 560px) calc(100vw - 32px), 526px" /></div><figcaption>{media.caption}</figcaption></figure>}
-            <p>{stage.summary}</p>
-            <ul className={styles.contents}>{stage.contents.map(item => <li key={item}>{item}</li>)}</ul>
-            <div className={styles.timing}><span>{stage.status.toUpperCase()}</span><p>{stage.window}</p></div>
+            <header><span>PACKAGE {String(index + 1).padStart(2, '0')}</span><h3>{stage.id === 'console' ? 'Multiverse Console' : stage.label}</h3></header>
+            {media && <figure><div className={`${styles.image} ${stage.id === 'initial-voyager-pack' ? styles.welcomeImage : ''}`}><Image src={media.src} alt={media.alt} fill sizes="(max-width: 560px) calc(100vw - 32px), 526px" /></div>{stage.id === 'components-pack' ? <figcaption>Concept image · contents to be revealed.</figcaption> : stage.id === 'console' ? <figcaption>Design visualization.</figcaption> : null}</figure>}
+            <p>{packageTeasers[stage.id] ?? stage.summary}</p>
           </li>
         })}
       </ol>
