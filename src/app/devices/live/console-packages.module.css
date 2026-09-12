@@ -5,7 +5,6 @@
 .overview h3 { margin: 0; font-size: var(--fs-title); font-weight: 700; }
 .overview p { margin: var(--s-3) 0; color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.5; }
 .overview .explore { padding-inline: 0; color: var(--color-nucleus); justify-content: flex-start; gap: var(--s-2); text-align: left; }
-.intro { margin: 0; font-size: var(--fs-body); color: var(--color-star-dim); }
 .packages { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s-6); }
 .package { min-width: 0; padding-bottom: var(--s-5); border-bottom: 1px solid var(--bd-faint); }
 .package header > span { color: var(--color-nucleus); font-size: var(--fs-caption); letter-spacing: .08em; }
@@ -15,10 +14,5 @@
 .image img { object-fit: contain; }
 .welcomeImage { aspect-ratio: 4 / 5; }
 .package figcaption { padding-top: var(--s-2); color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }
-.package p, .contents { font-size: var(--fs-body); line-height: 1.5; overflow-wrap: anywhere; }
+.package p { font-size: var(--fs-body); line-height: 1.5; overflow-wrap: anywhere; }
 .package p { margin: 0 0 var(--s-3); }
-.contents { padding-left: var(--s-5); margin: 0 0 var(--s-4); }
-.contents li + li { margin-top: var(--s-1); }
-.timing { border-left: 2px solid var(--bd-orange); padding-left: var(--s-3); color: var(--color-star-dim); }
-.timing span { font-size: var(--fs-caption); }
-.timing p { margin: var(--s-1) 0 0; font-size: var(--fs-label); }
