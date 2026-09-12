@@ -4219,7 +4219,7 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .bottom-nav__item:not(.bottom-nav__item--active) .navigation-device-mark,
 .nav-item:not(.active) .navigation-device-mark { filter: brightness(0) invert(1); }
 
-/* Unified compact Updates: a stable thumbnail column for every content type. */
+/* Compact Updates reserve a thumbnail column only when an image is available. */
 .update-content--compact { grid-template-columns: 88px minmax(0, 1fr); gap: 12px; align-items: start; }
 .update-thumbnail { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 5 / 4; background: var(--color-void); color: var(--color-nucleus); overflow: hidden; }
 .update-content--compact .update-image { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -4233,6 +4233,8 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .update-content--compact .news-publisher-avatar, .update-content--compact .news-publisher-avatar img { width: 20px; height: 20px; flex-basis: 20px; }
 @media (min-width: 768px) { .update-content--compact { grid-template-columns: 120px minmax(0, 1fr); } }
 @media (max-width: 359px) { .update-content--compact { grid-template-columns: 72px minmax(0, 1fr); gap: 8px; } }
+
+.update-content--compact.update-content--text { grid-template-columns: minmax(0, 1fr); }
 
 /* Authentication remains part of the workspace, with an always-reachable exit. */
 .pilot-login-page .pilot-login-shell {

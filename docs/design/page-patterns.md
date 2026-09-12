@@ -44,7 +44,7 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 - Intel 的 NOTICE / DEVICE / ORG 都有资格进入，不设置子类型保留位。Classified 对游客显示锁定卡，详情继续拦截正文。
 - Voyager Activated 最多 2 条且只保留 7 天内；Established World 最多 3 条且每个世界只出现一次；Device Update 按设备去重。应用分类上限和实体去重后，再取全局最新 10 条。
 - 标题说清发生了什么；类型和时间辅助理解，说明不重复标题。来源链接指向真实详情，无目标时不假装可点击。
-- 时间轴独立一列；有图固定左图右文，无图正文占剩余宽度。390px 时缩略图 120×64，间距 12px，文字不能缩至 12px 以下。
+- 时间轴独立一列；有图固定左图右文；无图或图片加载失败时，正文从内容区左侧开始占满剩余宽度，不渲染替代图标、占位图片或空缩略图列。390px 时缩略图 120×64，间距 12px，文字不能缩至 12px 以下。
 - 「8 条图文 + 2 条纯文」只属于示例，不是数据配额。真实比例由事件决定。
 - 不展示评论计数与一排行内动作，不把每条动态做成厚重卡片。10 条通过页面纵滚阅读；不会全部塞进 844px。
 
@@ -90,6 +90,8 @@ Multiverse Collective 将内容、社群、参与活动与 Multiverse Console �
 筛选无结果、文章已删除、无权限、评论失败、媒体失败各有状态。返回恢复筛选和列表位置，不跳回无关根页。
 
 ## 4. Devices：设备档案、观察与履约进展
+
+Material Records 位于 INFO 内的 FAQ（Before You Claim）上方。所有素材条目在统一页内弹窗查看，图片完整等比显示，视频在弹窗内播放；不跳转原始文件或打开新标签。关闭后恢复原列表位置及触发条目的焦点。
 
 参考：[已选 Devices 风格](reference/devices-style.png) 与 [组合稿](reference/devices-selected-nav.png)。组合稿中的 HOME 已失效。
 

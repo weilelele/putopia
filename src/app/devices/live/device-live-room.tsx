@@ -10,7 +10,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { BackLink } from '@/components/back-link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronRight,
   CirclePlay,
@@ -33,6 +33,7 @@ import {
   getBatchClaimHref,
   getBatchRemainingQuantity,
   type DeviceBatch,
+  type DeviceBatchMedia,
   type DeviceBatchStatus,
 } from '@/lib/device-batches'
 import type { DeviceBatchDiscussionPost } from '@/lib/actions/device-batch-community'
@@ -83,6 +84,12 @@ export function DeviceLiveRoom({
   const [activeTab, setActiveTab] = useSessionPreference<ContentTab>(`mc:view:devices:${batch.slug}:tab`, 'info')
   const [sheetOpen, setSheetOpen] = useState(false)
   const [filter, setFilter] = useSessionPreference<BatchFilter>('mc:view:devices:filter', 'all')
+  const [selectedMedia, setSelectedMedia] = useState<DeviceBatchMedia | null>(null)
+  const mediaTrigger = useRef<HTMLButtonElement>(null)
+  const closeMedia = () => {
+    setSelectedMedia(null)
+    requestAnimationFrame(() => mediaTrigger.current?.focus({ preventScroll: true }))
+  }
   const [progressOpen, setProgressOpen] = useState(false)
   const [now, setNow] = useState<number | null>(null)
   const formattedPrice = batch.claimPrice ? formatBatchPrice(batch.claimPrice) : ''
@@ -227,6 +234,24 @@ export function DeviceLiveRoom({
               <div className={styles.fact}><span>NEXT MILESTONE</span><strong>{batch.nextMilestone}</strong></div>
             </div>
 
+            <div className={styles.mediaSection}>
+              <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3><span>{materialRecords.length} ITEM{materialRecords.length === 1 ? '' : 'S'}</span></div>
+              <div className={styles.mediaList}>
+                {materialRecords.map((item) => (
+                  <button className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button" aria-haspopup="dialog" onClick={event => { mediaTrigger.current = event.currentTarget; setSelectedMedia(item) }}>
+                    <span className={styles.mediaThumb}>
+                      {item.kind === 'image' || item.poster ? <Image alt="" fill sizes="100px" src={item.poster ?? item.src} /> : null}
+                      {item.kind === 'video' ? <span className={styles.videoBadge}><CirclePlay aria-hidden size={16} /></span> : null}
+                    </span>
+                    <span className={styles.mediaCopy}>
+                      <strong>{item.caption || item.alt}</strong>
+                    </span>
+                    <ChevronRight aria-hidden size={18} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {batch.faq?.length ? (
               <section className={styles.progressBlock} aria-label="Batch FAQ">
                 <div className={styles.eyebrow}>BEFORE YOU CLAIM</div>
@@ -238,24 +263,6 @@ export function DeviceLiveRoom({
                 ))}
               </section>
             ) : null}
-
-            <div className={styles.mediaSection}>
-              <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3><span>{materialRecords.length} ITEM{materialRecords.length === 1 ? '' : 'S'}</span></div>
-              <div className={styles.mediaList}>
-                {materialRecords.map((item) => (
-                  <a className={styles.mediaRow} href={item.src} key={`${item.src}-${item.caption}`} rel="noreferrer" target="_blank">
-                    <span className={styles.mediaThumb}>
-                      <Image alt="" fill sizes="100px" src={item.poster ?? item.src} />
-                      {item.kind === 'video' ? <span className={styles.videoBadge}><CirclePlay aria-hidden size={16} /></span> : null}
-                    </span>
-                    <span className={styles.mediaCopy}>
-                      <strong>{item.caption}</strong>
-                    </span>
-                    <ChevronRight aria-hidden size={18} />
-                  </a>
-                ))}
-              </div>
-            </div>
           </div>
         ) : null}
 
@@ -329,6 +336,16 @@ export function DeviceLiveRoom({
             </div>
           </ArchiveSheet>
       ) : null}
+      {selectedMedia && <ArchiveSheet open title="Material record" onClose={closeMedia}>
+        <figure className={styles.materialPreview}>
+          <div className={styles.materialPreviewMedia}>
+            {selectedMedia.kind === 'video'
+              ? <video src={selectedMedia.src} poster={selectedMedia.poster} controls playsInline preload="metadata" aria-label={selectedMedia.alt} />
+              : <Image src={selectedMedia.src} alt={selectedMedia.alt} fill sizes="(max-width: 560px) calc(100vw - 32px), 526px" />}
+          </div>
+          <figcaption>{selectedMedia.caption || selectedMedia.alt}</figcaption>
+        </figure>
+      </ArchiveSheet>}
     </main>
   )
 }
