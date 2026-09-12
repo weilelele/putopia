@@ -149,7 +149,7 @@ ArchiveButton 已支持 primary、secondary、ghost、destructive、fullWidth、
 | 内容 | 比例与模式 |
 | --- | --- |
 | 普通世界/活动封面 | 默认 16:9；受控裁切且记录焦点 |
-| Dashboard 缩略图 | 390px 下 120×64，3:2，固定左图右文 |
+| Dashboard 缩略图 | 有图时左图右文；无图或加载失败时不保留缩略图列，正文左对齐 |
 | 成员头像 | 40/48/64px 正方形；身份头像可圆形，不把卡片都胶囊化 |
 | 产品原始结构图 | contain 保全轮廓；不能裁掉重要结构 |
 | logo | 永远 contain，不能滤镜、裁切 |

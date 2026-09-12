@@ -1628,3 +1628,8 @@
 .workspaceDetails .queueItem { grid-template-columns: 24px minmax(0,1fr); }
 .workspaceDetails .queueStatus { grid-column: 2; text-align: left; }
 .workspaceMedia .liveImage { min-height: 0; }
+
+.materialPreview { margin: 0; }
+.materialPreviewMedia { position: relative; width: 100%; aspect-ratio: 4 / 3; }
+.materialPreviewMedia img, .materialPreviewMedia video { width: 100%; height: 100%; object-fit: contain; }
+.materialPreview figcaption { margin-top: var(--s-3); font-size: var(--fs-body); line-height: 1.5; overflow-wrap: anywhere; }

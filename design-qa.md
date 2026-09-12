@@ -67,3 +67,11 @@ No remaining P0/P1/P2 visual or interaction issues identified in this scope. Ins
 ## 2026-09-13 package copy refinement
 
 Passed: reduced each package to its name, existing image and a short teaser. Removed the duplicate intro, contents list and dispatch status from Explore; retained the source data and FAQ. Short concept/design captions preserve image context. Checked the production build at 390 × 844: all three images loaded, no horizontal overflow, scrolling and close/focus return work. The previous geometry, font sizes and imagery remain intact. Design check, TypeScript, lint (0 errors, 26 warnings), 277 tests and production build passed.
+
+## Updates without images and device material viewer
+
+Passed: checked two real text-only Dashboard updates at 390px, 320px and desktop width. Both have no thumbnail element and zero text offset from their content column; 320px has no horizontal overflow. Existing illustrated updates retain their thumbnails and author identities.
+
+Material Records precedes the batch FAQ. Opened all three Kyoto One records in the native ArchiveSheet without navigation/new tabs, checked full image fit at phone and desktop widths, Escape/Close, and focus return to the originating material row. Image and video rendering follow the same selected-record modal; the current batch only supplies images, so video playback was not exercised. Shared Devices/batch component carries the change to both routes.
+
+Design check, TypeScript, lint (0 errors, 26 existing warnings), 277 tests, mobile type/config check and production build passed. Native offline no-image placeholders are also removed; that bundled native change needs a future app build and was not tested on installed iOS hardware.

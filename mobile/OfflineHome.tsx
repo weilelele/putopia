@@ -217,10 +217,10 @@ function DashboardView({ snapshot, media, select }: {
       return <View key={item.id} style={styles.updateRow}>
       <View style={styles.updateTime}><View style={styles.updateNode} /><Text style={styles.updateDate}>{item.date.slice(5,10).replace('-', '/')}</Text></View>
       <Pressable accessibilityRole="button" accessibilityLabel={item.title} onPress={() => select(item.tab,item.detail)} style={styles.updateContent}>
-        <View style={[thumbnail,{backgroundColor:PANEL,alignItems:'center',justifyContent:'center'}]}>
-          {thumb && mediaUri(thumb,media) ? <CachedImage uri={thumb} media={media} style={thumbnail} /> : <Text style={styles.meta}>{locked ? 'LOCKED' : '—'}</Text>}
+        {thumb && mediaUri(thumb,media) ? <View style={thumbnail}>
+          <CachedImage uri={thumb} media={media} style={thumbnail} />
           {images.length > 1 && <Text style={{position:'absolute',right:3,bottom:3,backgroundColor:DEEP,color:WHITE,fontFamily:'CourierPrime',fontSize:12,paddingHorizontal:4}}>+{images.length-1}</Text>}
-        </View>
+        </View> : null}
         <View style={{flex:1,minWidth:0}}><Text style={styles.meta}>{item.category}</Text><Text numberOfLines={2} style={styles.directoryName}>{item.title}</Text>{news && <NativePublisher item={news} media={media} />}{locked ? <Text style={styles.directoryMeta}>Restricted · reconnect to sign in</Text> : 'description' in item && item.description ? <Text numberOfLines={1} style={styles.directoryMeta}>{item.description}</Text> : null}</View>
       </Pressable>
     </View>}) : <EmptyState>No updates were saved. Reconnect to load the latest activity.</EmptyState>}
