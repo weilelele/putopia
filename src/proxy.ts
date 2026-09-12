@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { allowsUnregisteredViewer, requiresRegistration, routeWithSearch } from '@/lib/access-policy'
 
 export async function proxy(request: NextRequest) {
   // Skip auth middleware if Supabase is not configured yet
@@ -56,8 +57,8 @@ export async function proxy(request: NextRequest) {
   // The handle_new_user trigger auto-creates a shell voyager_profile on every
   // auth signup, so a user who clicks an invite link gets a live session BEFORE
   // ever completing /register — they have no password and no chosen identity
-  // (registered_at stays NULL). Force any such logged-in user through /register
-  // before they can browse or post anything.
+  // (registered_at stays NULL). Keep the public entry points available, then
+  // require registration when that session enters protected product areas.
   //
   // Registration is one-way, so once confirmed we cache it in a cookie and the
   // hot path skips the DB entirely. This is a funnel gate, not a security
@@ -66,11 +67,16 @@ export async function proxy(request: NextRequest) {
   const REG_COOKIE = 'pv-registered'
   if (user) {
     const REGISTER_EXEMPT = ['/register', '/auth', '/api']
-    const exempt = REGISTER_EXEMPT.some((p) => pathname === p || pathname.startsWith(p + '/'))
+    const exempt = allowsUnregisteredViewer(pathname)
+      || REGISTER_EXEMPT.some((p) => pathname === p || pathname.startsWith(p + '/'))
     if (!exempt && request.cookies.get(REG_COOKIE)?.value !== user.id) {
       const profile = await getProfile()
       if (!profile?.registered_at) {
-        return NextResponse.redirect(new URL('/register', request.url))
+        const registerUrl = request.nextUrl.clone()
+        registerUrl.pathname = '/register'
+        registerUrl.search = ''
+        registerUrl.searchParams.set('redirect', routeWithSearch(pathname, request.nextUrl.search))
+        return NextResponse.redirect(registerUrl)
       }
       supabaseResponse.cookies.set(REG_COOKIE, user.id, {
         httpOnly: true,
@@ -101,14 +107,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/welcome', request.url))
   }
 
-  // Category listing pages require a logged-in user.
-  // Guests can access individual content pages (e.g. /intel/[id]) but not the root listings.
-  // Redirect to /login with a ?redirect= param so the user lands on the right page after signing in.
-  const GUEST_BLOCKED = ['/intel', '/devices', '/worlds', '/voyagers', '/vote', '/logs']
-  if (!user && GUEST_BLOCKED.some(p => pathname === p || pathname === p + '/')) {
+  // Dashboard and the primary Devices page are public. The other three primary
+  // tabs require registration; the supporting root listings retain that gate.
+  if (!user && requiresRegistration(pathname)) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
-    loginUrl.searchParams.set('redirect', pathname)
+    loginUrl.search = ''
+    loginUrl.searchParams.set('redirect', routeWithSearch(pathname, request.nextUrl.search))
     return NextResponse.redirect(loginUrl)
   }
 

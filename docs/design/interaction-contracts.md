@@ -10,6 +10,8 @@
 
 本文集中管理跨页行为；[组件说明](ui-components.md) 管理外观和局部语义，[页面模板](page-patterns.md) 管理内容组织。业务权限、服务端结果和现有数据契约不由 UI 文档改写。
 
+**一级入口权限：** Dashboard `/console` 与 Devices `/devices` 对游客、未完成注册的账户及注册用户开放；领取、支付、发帖和个人设备等敏感动作继续使用自身权限。Intel `/intel`、Worlds `/worlds/live`、Voyagers `/voyagers` 需要完成注册。游客点击受限 Tab 后进入登录，已有会话但未完成注册者进入注册；两种访问页都保留 BottomNav／Sidebar，并在成功后返回原目标。
+
 ## 1. 页头模式与路由层级
 
 一级由五个主 Tab 的指定入口定义，不按 URL 的斜杠数量判断。例如 `/worlds/live` 是一级，而 `/logs` 是二级。内页签切换不自动升降页面层级。
