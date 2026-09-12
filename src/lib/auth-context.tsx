@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { UserRole } from '@/types/database'
+import { allowsUnregisteredViewer, routeWithSearch } from '@/lib/access-policy'
 
 export type { UserRole }
 
@@ -66,8 +67,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // session up (the guest console) without ever hitting the gate.
     if (!error && !data?.registered_at) {
       const path = window.location.pathname
-      const exempt = ['/register', '/auth'].some((p) => path === p || path.startsWith(p + '/'))
-      if (!exempt) router.replace('/register')
+      const exempt = allowsUnregisteredViewer(path)
+        || ['/register', '/auth'].some((p) => path === p || path.startsWith(p + '/'))
+      if (!exempt) {
+        const target = routeWithSearch(path, window.location.search)
+        router.replace(`/register?redirect=${encodeURIComponent(target)}`)
+      }
     }
   }, [router])
 

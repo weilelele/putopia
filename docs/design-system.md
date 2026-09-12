@@ -34,6 +34,7 @@
 | 原始第二款 Devices 的整体风格 | 作为密度、媒体与文字关系的参考；旧品牌区不再沿用；二级页头及尺寸以 2.3 分层规则为准 |
 | 第一款 Quiet Rail 底栏 | 无围框、无竖分隔、无底边；轻顶线与短橙色选中标记 |
 | 五个主入口 | **DASHBOARD / INTEL / DEVICES / WORLDS / VOYAGERS**，顺序固定 |
+| 一级入口权限 | Dashboard 与 Devices 对所有用户开放；Intel、Worlds、Voyagers 需要完成注册。进入登录/注册页时主导航常驻 |
 | Dashboard 不是 Home | 页面和首入口使用 Dashboard，不能为了排版缩成 HOME |
 | Updates | 四类动态合并后的最近 10 条；Voyager 最多 2 条且仅 7 天内，Established World 最多 3 条 |
 | Events | 最多 3 个开放 Vote + 最多 3 个当前 Signal Tuning；横向滑动且露出下一张 |
