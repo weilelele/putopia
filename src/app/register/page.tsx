@@ -12,6 +12,7 @@ import { syncLoopsRegistration } from '@/lib/actions/profile'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import { trackRedditSignUp } from '@/lib/actions/reddit-ads'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
+import { safeAppPath } from '@/lib/ui-navigation'
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
@@ -106,7 +107,9 @@ export default function RegisterPage() {
       })
     }
 
-    router.push('/console')
+    const requested = new URLSearchParams(window.location.search).get('redirect')
+    const destination = safeAppPath(requested, window.location.origin) ?? '/console'
+    router.push(destination === '/login' || destination === '/register' ? '/console' : destination)
     router.refresh()
   }
 
