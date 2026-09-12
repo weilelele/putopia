@@ -63,3 +63,7 @@ Scope: Devices and batch detail share DeviceLiveRoom. Reviewed against the appro
 - Local checks passed: design guidance, TypeScript, lint (0 errors, 26 existing warnings), 276 Vitest tests and production build. No checkout, profile or database writes were used for verification.
 
 No remaining P0/P1/P2 visual or interaction issues identified in this scope. Installed iOS hardware was not available for direct verification; the existing WebView modal bridge is reused.
+
+## 2026-09-13 package copy refinement
+
+Passed: reduced each package to its name, existing image and a short teaser. Removed the duplicate intro, contents list and dispatch status from Explore; retained the source data and FAQ. Short concept/design captions preserve image context. Checked the production build at 390 × 844: all three images loaded, no horizontal overflow, scrolling and close/focus return work. The previous geometry, font sizes and imagery remain intact. Design check, TypeScript, lint (0 errors, 26 warnings), 277 tests and production build passed.
