@@ -1,7 +1,8 @@
 'use client'
 
-import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
+import { ArchiveSelect, ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
+import type { DeviceLeadOption } from '@/lib/device-lead'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { ArchiveButton } from '@/components/archive-button'
@@ -27,7 +28,7 @@ const EMPTY_SEED: LocalBatchSeed = {
   updatedAt: '',
 }
 
-export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
+export function NewBatchForm({ reservedSlugs, members }: { reservedSlugs: string[]; members: DeviceLeadOption[] }) {
   const router = useRouter()
   const [form, setForm] = useState(EMPTY_SEED)
   const [slugTouched, setSlugTouched] = useState(false)
@@ -130,12 +131,13 @@ export function NewBatchForm({ reservedSlugs }: { reservedSlugs: string[] }) {
 
         <div className={styles.twoColumnGrid}>
           <ArchiveField htmlFor="new-batch-lead" label="FIELD LEAD">
-            <ArchiveInput
-              id="new-batch-lead"
-              onChange={(event) => updateField('leadName', event.target.value)}
-              placeholder="Iris Vale"
-              value={form.leadName}
-            />
+            <ArchiveSelect id="new-batch-lead" value={form.leadProfileId ?? ''} onChange={(event) => {
+              const member = members.find((item) => item.id === event.target.value)
+              if (member) setForm((current) => ({ ...current, leadName: member.display_name, leadProfileId: member.id }))
+            }}>
+              <option value="" disabled>Select a member</option>
+              {members.map((member) => <option key={member.id} value={member.id}>{member.display_name} · {member.role}</option>)}
+            </ArchiveSelect>
           </ArchiveField>
           <ArchiveField htmlFor="new-batch-time-zone" label="TIME ZONE">
             <ArchiveInput

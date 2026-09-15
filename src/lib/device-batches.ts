@@ -4,6 +4,8 @@ export type DeviceBatchStatus = 'survey' | 'claim_open' | 'distribution' | 'acti
 export type DistributionStageStatus = 'completed' | 'current' | 'upcoming'
 
 export type DeviceBatchLead = {
+  profileId?: string
+  avatarUrl?: string | null
   name: string
   role: string
   initials: string
@@ -24,6 +26,14 @@ export type DeviceBatchMedia = {
   kind: 'image' | 'video'
   poster?: string
   src: string
+}
+
+export type DeviceBatchUpdate = {
+  id: string
+  date: string
+  title: string
+  body: string
+  media?: DeviceBatchMedia[]
 }
 
 export type DistributionStage = {
@@ -57,6 +67,8 @@ export type BatchInventory = {
 }
 
 export type DeviceBatch = {
+  updates?: DeviceBatchUpdate[]
+  preparationPhase?: 'searching' | 'preparing'
   liveCamera?: DeviceCameraBinding
   slug: string
   code: string

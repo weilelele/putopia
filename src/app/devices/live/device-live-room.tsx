@@ -6,15 +6,17 @@ import { ArchiveButton } from '@/components/archive-button'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { ArchiveSheet } from '@/components/archive-sheet'
-import Image from 'next/image'
-import Link from 'next/link'
 import { BackLink } from '@/components/back-link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
+import { DeviceGallery, UpdateMedia, DeviceMediaImage as Image } from '../_components/device-gallery'
+import { DeviceFieldLead } from '../_components/device-field-lead'
+import mediaStyles from '../_components/device-gallery.module.css'
+import { getDeviceBatchMedia, getDeviceBatchUpdates, getDeviceBatchProgress } from '@/lib/device-batch-content'
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
 import {
   ChevronRight,
   CirclePlay,
-  Clock3,
   ListFilter,
   MessageSquare,
   Radio,
@@ -28,12 +30,10 @@ import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
 import type { DeviceCameraSource } from '@/lib/device-camera'
 import {
   DEVICE_BATCH_STATUS,
-  formatDeviceBatchLocalTime,
   formatBatchPrice,
   getBatchClaimHref,
   getBatchRemainingQuantity,
   type DeviceBatch,
-  type DeviceBatchMedia,
   type DeviceBatchStatus,
 } from '@/lib/device-batches'
 import type { DeviceBatchDiscussionPost } from '@/lib/actions/device-batch-community'
@@ -48,21 +48,6 @@ function statusDotColor(status: DeviceBatchStatus) {
   return 'var(--color-ok)'
 }
 
-function cityLabel(batch: DeviceBatch) {
-  return batch.location.split(',')[0]?.trim().toUpperCase() || batch.code
-}
-
-function batchProgress(batch: DeviceBatch) {
-  const stages = batch.distributionStages
-  const stageStatus = (index: number) => stages[index]?.status ?? 'upcoming'
-  return [
-    { label: 'PREPARING', status: batch.status === 'survey' ? 'current' : 'completed' },
-    { label: 'PACK ONE', status: stageStatus(0) },
-    { label: 'PACK TWO', status: stageStatus(Math.min(1, stages.length - 1)) },
-    { label: 'CONSOLE', status: stageStatus(stages.length - 1) },
-  ]
-}
-
 export function DeviceLiveRoom({
   batch,
   batches,
@@ -70,7 +55,9 @@ export function DeviceLiveRoom({
   discussionPosts,
   ownedConsole,
   camera,
+  onSelectBatch,
 }: {
+  onSelectBatch: (slug: string) => void
   batch: DeviceBatch
   batches: DeviceBatch[]
   canPost: boolean
@@ -78,45 +65,24 @@ export function DeviceLiveRoom({
   ownedConsole: DeviceConsoleRecord | null
   camera?: DeviceCameraSource | null
 }) {
-  const router = useRouter()
-  const isRoot = usePathname() === '/devices'
+  const pathname = usePathname()
+  const [isRoot] = useState(pathname === '/devices')
   const followedBatchSlugs = useFollowedBatchSlugs()
   const [activeTab, setActiveTab] = useSessionPreference<ContentTab>(`mc:view:devices:${batch.slug}:tab`, 'info')
   const [sheetOpen, setSheetOpen] = useState(false)
   const [filter, setFilter] = useSessionPreference<BatchFilter>('mc:view:devices:filter', 'all')
-  const [selectedMedia, setSelectedMedia] = useState<DeviceBatchMedia | null>(null)
-  const mediaTrigger = useRef<HTMLButtonElement>(null)
-  const closeMedia = () => {
-    setSelectedMedia(null)
-    requestAnimationFrame(() => mediaTrigger.current?.focus({ preventScroll: true }))
-  }
   const [progressOpen, setProgressOpen] = useState(false)
-  const [now, setNow] = useState<number | null>(null)
   const formattedPrice = batch.claimPrice ? formatBatchPrice(batch.claimPrice) : ''
   const priceAmount = formattedPrice.slice(0, formattedPrice.lastIndexOf(' '))
-  const progress = batchProgress(batch)
+  const progress = getDeviceBatchProgress(batch)
   const remaining = getBatchRemainingQuantity(batch)
   const claimHref = getBatchClaimHref(batch)
-  const currentStage = progress.find((stage) => stage.status === 'current')?.label
-    ?? (progress.some((stage) => stage.status === 'upcoming') ? 'AWAITING DISPATCH' : 'COMPLETE')
-  const materialRecords = batch.heroMedia?.length
-    ? batch.heroMedia
-    : [{ alt: batch.imageAlt, caption: batch.heroCaption, kind: 'image' as const, src: batch.image }]
-  const topBatches = useMemo(
-    () => [batch, ...batches.filter((item) => item.slug !== batch.slug)].slice(0, 3),
-    [batch, batches],
-  )
-
-  useEffect(() => {
-    const tick = () => setNow(Date.now())
-    tick()
-    const interval = window.setInterval(tick, 1_000)
-    return () => window.clearInterval(interval)
-  }, [])
-
-  const localClock = now === null
-    ? '--:--:--'
-    : formatDeviceBatchLocalTime(batch.timeZone, now)
+  const currentStage = progress.find((stage) => stage.status === 'current')?.label ?? (progress.every((stage) => stage.status === 'completed') ? 'COMPLETE' : 'AWAITING NEXT STAGE')
+  const materialRecords = getDeviceBatchMedia(batch)
+  const updates = getDeviceBatchUpdates(batch)
+  const [gallerySelection, setGallerySelection] = useState({ slug: batch.slug, index: 0 })
+  const selectedMedia = gallerySelection.slug === batch.slug ? gallerySelection.index : 0
+  const selectMedia = (index: number) => setGallerySelection({ slug: batch.slug, index })
 
   const filteredBatches = useMemo(() => {
     if (filter === 'all') return batches
@@ -127,7 +93,8 @@ export function DeviceLiveRoom({
 
   function chooseBatch(slug: string) {
     setSheetOpen(false)
-    router.push(`/devices/batches/${slug}`)
+    setProgressOpen(false)
+    onSelectBatch(slug)
   }
 
   return (
@@ -138,16 +105,28 @@ export function DeviceLiveRoom({
       </header>)}
 
       <nav className={styles.objectNav} aria-label="Device batches">
-        <div className={styles.objectTabs}>
-          {topBatches.map((item) => (
-            <Link
-              aria-current={batch.slug === item.slug ? 'page' : undefined}
+        <div className={styles.objectTabs} role="tablist">
+          {batches.map((item, index) => (
+            <button
+              role="tab"
+              aria-selected={batch.slug === item.slug}
               className={styles.objectTab}
-              href={`/devices/batches/${item.slug}`}
+              type="button"
+              tabIndex={batch.slug === item.slug ? 0 : -1}
+              onClick={() => chooseBatch(item.slug)}
+              onKeyDown={(event) => {
+                const nextIndex = event.key === 'ArrowRight' ? (index + 1) % batches.length
+                  : event.key === 'ArrowLeft' ? (index - 1 + batches.length) % batches.length
+                    : event.key === 'Home' ? 0 : event.key === 'End' ? batches.length - 1 : null
+                if (nextIndex === null) return
+                event.preventDefault()
+                chooseBatch(batches[nextIndex].slug)
+                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus()
+              }}
               key={item.slug}
             >
               {item.name}
-            </Link>
+            </button>
           ))}
         </div>
         <ArchiveButton variant="ghost" aria-label="Open all device batches" className={styles.listButton} onClick={() => setSheetOpen(true)} type="button">
@@ -156,28 +135,11 @@ export function DeviceLiveRoom({
       </nav>
 
       <div className={styles.workspace}><div className={styles.workspaceMedia}>
-      {camera ? (
-        <CosmoCameraEmbed source={camera} location={batch.location} />
-      ) : (
-        <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`} image={batch.heroMedia?.find(item => item.kind === 'image')?.src ?? batch.image} imageAlt={batch.imageAlt}>
-          <span>{batch.name.toUpperCase()}</span>
-          <span className={styles.liveMetaItem}>
-            <span
-              className={styles.dot}
-              style={{ background: statusDotColor(batch.status) }}
-            />
-            {DEVICE_BATCH_STATUS[batch.status].label}
-          </span>
-          <span>{batch.location.toUpperCase()}</span>
-          <time
-            aria-label={`Local time in ${cityLabel(batch)}: ${localClock}`}
-            className={styles.liveMetaItem}
-            dateTime={now === null ? undefined : new Date(now).toISOString()}
-          >
-            <Clock3 aria-hidden size={16} /> {localClock}
-          </time>
-        </LiveFeedPlaceholder>
-      )}
+      <DeviceGallery primaryLabel={camera ? 'LIVE' : 'COVER'} media={materialRecords} selected={selectedMedia} onSelect={selectMedia} primary={
+        camera ? <CosmoCameraEmbed source={camera} location={batch.location} />
+          : batch.image ? <div className={mediaStyles.frame}><Image src={batch.image} alt={batch.imageAlt} fill sizes="(max-width: 767px) 100vw, 1000px" unoptimized /></div>
+            : <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}><span>{batch.name}</span></LiveFeedPlaceholder>
+      } />
 
       </div><div className={styles.workspaceDetails}>
       {(batch.status === 'claim_open' && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
@@ -217,11 +179,11 @@ export function DeviceLiveRoom({
 
             <div className={styles.progressBlock}>
               <div className={styles.progressLabel}><span>CURRENT BATCH PROGRESS</span><span>{currentStage}</span></div>
-              <div className={styles.progressGrid}>
+              <div className={mediaStyles.progress}>
                 {progress.map((step) => (
                   <div className={styles.progressStep} data-status={step.status} key={step.label}>
                     <span className={styles.progressBar} />
-                    <strong>{step.label}</strong>
+                    <strong aria-label={step.fullLabel} title={step.fullLabel}>{step.label}</strong>
                   </div>
                 ))}
               </div>
@@ -230,17 +192,17 @@ export function DeviceLiveRoom({
             <div className={styles.facts}>
               <div className={styles.fact}><span>LOCATION</span><strong>{batch.location}</strong></div>
               <div className={styles.fact}><span>CONFIRMED UNITS</span><strong>{(batch.inventory?.listingQuantity ?? batch.holders.length) || 'PENDING'}</strong></div>
-              <div className={styles.fact}><span>FIELD LEAD</span><strong>{batch.lead.name}</strong></div>
+              <div className={styles.fact}><span>FIELD LEAD</span><DeviceFieldLead key={batch.slug} lead={batch.lead} /></div>
               <div className={styles.fact}><span>NEXT MILESTONE</span><strong>{batch.nextMilestone}</strong></div>
             </div>
 
             <div className={styles.mediaSection}>
               <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3><span>{materialRecords.length} ITEM{materialRecords.length === 1 ? '' : 'S'}</span></div>
               <div className={styles.mediaList}>
-                {materialRecords.map((item) => (
-                  <button className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button" aria-haspopup="dialog" onClick={event => { mediaTrigger.current = event.currentTarget; setSelectedMedia(item) }}>
+                {materialRecords.map((item, index) => (
+                  <button className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button" onClick={() => { selectMedia(index + 1); document.getElementById('device-gallery')?.scrollIntoView({ behavior: 'auto', block: 'start' }) }}>
                     <span className={styles.mediaThumb}>
-                      {item.kind === 'image' || item.poster ? <Image alt="" fill sizes="100px" src={item.poster ?? item.src} /> : null}
+                      {item.kind === 'image' || item.poster ? <Image alt="" fill sizes="100px" src={item.poster ?? item.src} unoptimized /> : null}
                       {item.kind === 'video' ? <span className={styles.videoBadge}><CirclePlay aria-hidden size={16} /></span> : null}
                     </span>
                     <span className={styles.mediaCopy}>
@@ -269,7 +231,7 @@ export function DeviceLiveRoom({
         {activeTab === 'discussion' ? (
           <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
             <div className={styles.eyebrow}><MessageSquare aria-hidden size={14} /> BATCH DISCUSSION</div>
-            <BatchDiscussionBoard batch={batch} canPost={canPost} initialPosts={discussionPosts} />
+            <BatchDiscussionBoard key={batch.slug} batch={batch} canPost={canPost} initialPosts={discussionPosts} />
           </div>
         ) : null}
 
@@ -277,15 +239,14 @@ export function DeviceLiveRoom({
           <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
             <div className={styles.eyebrow}><Radio aria-hidden size={14} /> VERIFIED FIELD EVENTS</div>
             <div className={styles.updateList}>
-              <div className={styles.updateRow}>
-                <span className={styles.updateTime}>{batch.latestUpdate.date}</span>
-                <span><strong>{batch.latestUpdate.title}</strong><p>{batch.latestUpdate.body}</p></span>
-              </div>
-              {batch.archiveStages.toReversed().map((update) => (
-                <div className={styles.updateRow} key={update.id}>
-                  <span className={styles.updateTime}>{update.period}</span>
-                  <span><strong>{update.label}</strong><p>{update.summary}</p></span>
-                </div>
+              {updates.length === 0 ? <p>No updates published yet.</p> : null}
+              {updates.map((update) => (
+                <article className={styles.updateRow} key={update.id}>
+                  <span className={styles.updateTime}>{update.date}</span>
+                  <div><strong>{update.title}</strong><p className={mediaStyles.updateBody}>{update.body}</p>
+                    <UpdateMedia media={update.media ?? []} />
+                  </div>
+                </article>
               ))}
             </div>
           </div>
@@ -336,16 +297,6 @@ export function DeviceLiveRoom({
             </div>
           </ArchiveSheet>
       ) : null}
-      {selectedMedia && <ArchiveSheet open title="Material record" onClose={closeMedia}>
-        <figure className={styles.materialPreview}>
-          <div className={styles.materialPreviewMedia}>
-            {selectedMedia.kind === 'video'
-              ? <video src={selectedMedia.src} poster={selectedMedia.poster} controls playsInline preload="metadata" aria-label={selectedMedia.alt} />
-              : <Image src={selectedMedia.src} alt={selectedMedia.alt} fill sizes="(max-width: 560px) calc(100vw - 32px), 526px" />}
-          </div>
-          <figcaption>{selectedMedia.caption || selectedMedia.alt}</figcaption>
-        </figure>
-      </ArchiveSheet>}
     </main>
   )
 }

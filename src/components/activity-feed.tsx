@@ -295,7 +295,7 @@ function CollapseGroup({ events, accent, summary }: { events: ActivityEvent[]; a
 
 // ─── Voyager quick-view modal ─────────────────────────────────────────────────
 
-function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null; onClose: () => void }) {
+export function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null; onClose: () => void }) {
   if (!profile) return null
 
   const initials = profile.display_name.slice(0, 2).toUpperCase()

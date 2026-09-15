@@ -2,6 +2,10 @@
 
 import { ArchiveSelect, ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState } from 'react'
+import { EMPTY_DEVICE_UPDATE } from '@/lib/device-batch-content'
+import { UpdateEditor } from './update-editor'
+import type { DeviceLeadOption } from '@/lib/device-lead'
+import { leadFromProfile } from '@/lib/device-lead'
 import {
   ArrowDown,
   ArrowUp,
@@ -109,7 +113,9 @@ function formatMediaLines(items?: DeviceBatchMedia[]) {
 export function BatchConfigEditor({
   records,
   initialSlug,
+  members,
 }: {
+  members: DeviceLeadOption[]
   records: AdminDeviceBatchRecord[]
   initialSlug?: string
 }) {
@@ -120,6 +126,7 @@ export function BatchConfigEditor({
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('overview')
   const [workingDrafts, setWorkingDrafts] = useState<Record<string, BatchConfigDraft>>({})
   const [message, setMessage] = useState('')
+  const [uploadBusy, setUploadBusy] = useState(false)
   const [saveBusy, setSaveBusy] = useState<'draft' | 'publish' | ''>('')
   const [previewOpen, setPreviewOpen] = useState(false)
   const [confirmMajorUpdate, setConfirmMajorUpdate] = useState(false)
@@ -159,30 +166,6 @@ export function BatchConfigEditor({
     if (!draft) return
     updateDraft({
       inventory: { ...(draft.inventory ?? EMPTY_INVENTORY), [field]: value },
-    })
-  }
-
-  function updateLatestUpdate(
-    field: 'body' | 'date' | 'title',
-    value: string,
-  ) {
-    if (!draft) return
-    setConfirmMajorUpdate(false)
-    setNotificationMessage('')
-    updateDraft({
-      latestUpdate: { ...draft.latestUpdate, [field]: value },
-    })
-  }
-
-  function updateLatestUpdateMedia(value: string) {
-    if (!draft) return
-    setConfirmMajorUpdate(false)
-    setNotificationMessage('')
-    updateDraft({
-      latestUpdate: {
-        ...draft.latestUpdate,
-        media: parseMediaLines(value),
-      },
     })
   }
 
@@ -303,6 +286,7 @@ export function BatchConfigEditor({
   }
 
   async function persistBatch(publish: boolean) {
+    if (uploadBusy) return
     if (!draft || !selectedBatch || !selectedRecord) return
     const [firstError] = validateBatchConfigDraft(draft)
     if (firstError) {
@@ -312,7 +296,7 @@ export function BatchConfigEditor({
 
     const normalizedDraft = normalizeBatchConfigDraft(draft)
     if (publish && !window.confirm(`Publish all current changes for “${draft.name}” to the live Device page? This also applies any stock, pricing, and Pack changes. Preview environments may share production data. Follower emails are sent separately.`)) return
-    const batch = { ...selectedBatch, ...normalizedDraft }
+    const batch = { ...selectedBatch, ...normalizedDraft, latestUpdate: normalizedDraft.updates?.[0] ?? { ...EMPTY_DEVICE_UPDATE }, heroMedia: [] }
     setSaveBusy(publish ? 'publish' : 'draft')
     setMessage('')
     const result = await saveDeviceBatchRecord({
@@ -400,6 +384,7 @@ export function BatchConfigEditor({
         <ArchiveField htmlFor="batch-config-selector" label="SELECT BATCH">
           <ArchiveSelect
             id="batch-config-selector"
+            disabled={uploadBusy}
             onChange={(event) => {
               setSelectedSlug(event.target.value)
               setActiveTab('overview')
@@ -429,7 +414,7 @@ export function BatchConfigEditor({
           </ArchiveButton>
           <ArchiveButton
             disabled={
-              !hasUnsavedChanges || validationErrors.length > 0 || Boolean(saveBusy)
+              !hasUnsavedChanges || validationErrors.length > 0 || Boolean(saveBusy) || uploadBusy
             }
             onClick={() => void persistBatch(false)}
             variant="secondary"
@@ -498,7 +483,7 @@ export function BatchConfigEditor({
             ariaLabel="Batch configuration sections"
             items={tabs}
             onChange={(id) => {
-              setActiveTab(id as WorkspaceTab)
+              if (!uploadBusy) setActiveTab(id as WorkspaceTab)
               setMessage('')
             }}
           />
@@ -698,68 +683,22 @@ export function BatchConfigEditor({
                 value={draft.heroCaption}
               />
             </ArchiveField>
-            <ArchiveField
-              htmlFor="batch-hero-media"
-              label="HERO MEDIA · KIND | URL | CAPTION | ALT | POSTER"
-            >
-              <ArchiveTextarea
-                id="batch-hero-media"
-                onChange={(event) =>
-                  updateDraft({ heroMedia: parseMediaLines(event.target.value) })
-                }
-                rows={5}
-                value={formatMediaLines(draft.heroMedia)}
-              />
+            <p>Gallery images and videos are managed in Updates.</p>
+            <ArchiveField htmlFor="batch-preparation" label="EARLY STAGE">
+              <ArchiveSelect id="batch-preparation" value={draft.preparationPhase ?? 'preparing'} onChange={(event) => updateDraft({ preparationPhase: event.target.value as 'searching' | 'preparing' })}>
+                <option value="searching">SEARCHING</option><option value="preparing">PREPARING</option>
+              </ArchiveSelect>
+              <p>Applies while the Batch is under survey. Pack and Console progress follow the distribution stages.</p>
             </ArchiveField>
-            <div className={styles.threeColumnGrid}>
-              <ArchiveField htmlFor="batch-lead-name" label="FIELD LEAD">
-                <ArchiveInput
-                  id="batch-lead-name"
-                  onChange={(event) =>
-                    updateDraft({
-                      lead: { ...draft.lead, name: event.target.value },
-                    })
-                  }
-                  value={draft.lead.name}
-                />
-              </ArchiveField>
-              <ArchiveField htmlFor="batch-lead-role" label="LEAD ROLE">
-                <ArchiveInput
-                  id="batch-lead-role"
-                  onChange={(event) =>
-                    updateDraft({
-                      lead: { ...draft.lead, role: event.target.value },
-                    })
-                  }
-                  value={draft.lead.role}
-                />
-              </ArchiveField>
-              <ArchiveField htmlFor="batch-lead-initials" label="INITIALS">
-                <ArchiveInput
-                  id="batch-lead-initials"
-                  onChange={(event) =>
-                    updateDraft({
-                      lead: {
-                        ...draft.lead,
-                        initials: event.target.value.toUpperCase(),
-                      },
-                    })
-                  }
-                  value={draft.lead.initials}
-                />
-              </ArchiveField>
-            </div>
-            <ArchiveField htmlFor="batch-lead-bio" label="FIELD LEAD BIO">
-              <ArchiveTextarea
-                id="batch-lead-bio"
-                onChange={(event) =>
-                  updateDraft({
-                    lead: { ...draft.lead, bio: event.target.value },
-                  })
-                }
-                rows={4}
-                value={draft.lead.bio}
-              />
+            <ArchiveField htmlFor="batch-lead-profile" label="FIELD LEAD">
+              <ArchiveSelect id="batch-lead-profile" value={draft.lead.profileId ?? ''} onChange={(event) => {
+                const member = members.find((item) => item.id === event.target.value)
+                if (member) updateDraft({ lead: { ...leadFromProfile(member), latestNote: draft.lead.latestNote } })
+              }}>
+                <option value="" disabled>{draft.lead.name ? `${draft.lead.name} — select a member` : 'Select a member'}</option>
+                {draft.lead.profileId && !members.some((member) => member.id === draft.lead.profileId) ? <option value={draft.lead.profileId}>{draft.lead.name} — unavailable</option> : null}
+                {members.map((member) => <option key={member.id} value={member.id}>{member.display_name} · {member.role}</option>)}
+              </ArchiveSelect>
             </ArchiveField>
             <ArchiveField htmlFor="batch-lead-note" label="FIELD LEAD LATEST NOTE">
               <ArchiveTextarea
@@ -1019,67 +958,26 @@ export function BatchConfigEditor({
 
       {activeTab === 'update' ? (
         <section
-          aria-label="Latest public update"
+          aria-label="Updates"
           className={styles.workspaceSection}
           role="tabpanel"
         >
           <div className={styles.sectionHeading}>
             <div>
-              <h2>Latest public update</h2>
-              <p>Edit this report, save a private draft, then choose PUBLISH LIVE below. Publishing applies all current Batch changes; the date is descriptive, not a schedule.</p>
+              <h2>Updates</h2>
+              <p>Review all published updates below, then add, edit or remove reports in the working list. SAVE DRAFT keeps edits private. PUBLISH LIVE publishes the entire list, including removals, together with other Batch changes.</p>
             </div>
           </div>
-          <div className={styles.updateLayout}>
-            <div className={styles.formCard}>
-              <ArchiveField htmlFor="batch-update-date" label="UPDATE DATE">
-                <ArchiveInput
-                  id="batch-update-date"
-                  onChange={(event) => updateLatestUpdate('date', event.target.value)}
-                  placeholder="Jul 30, 2026"
-                  value={draft.latestUpdate.date}
-                />
-              </ArchiveField>
-              <ArchiveField htmlFor="batch-update-title" label="UPDATE TITLE">
-                <ArchiveInput
-                  id="batch-update-title"
-                  onChange={(event) => updateLatestUpdate('title', event.target.value)}
-                  value={draft.latestUpdate.title}
-                />
-              </ArchiveField>
-              <ArchiveField htmlFor="batch-update-body" label="UPDATE BODY">
-                <ArchiveTextarea
-                  id="batch-update-body"
-                  onChange={(event) => updateLatestUpdate('body', event.target.value)}
-                  rows={8}
-                  value={draft.latestUpdate.body}
-                />
-              </ArchiveField>
-              <ArchiveField
-                htmlFor="batch-update-media"
-                label="UPDATE MEDIA · KIND | URL | CAPTION | ALT | POSTER"
-              >
-                <ArchiveTextarea
-                  id="batch-update-media"
-                  onChange={(event) =>
-                    updateLatestUpdateMedia(event.target.value)
-                  }
-                  rows={4}
-                  value={formatMediaLines(draft.latestUpdate.media)}
-                />
-              </ArchiveField>
-            </div>
-            <article className={styles.updatePreview}>
-              <span>LIVE PREVIEW</span>
-              <small>{draft.latestUpdate.date || 'DATE PENDING'}</small>
-              <h3>{draft.latestUpdate.title || 'Untitled update'}</h3>
-              <p>{draft.latestUpdate.body || 'Add the newest Batch progress.'}</p>
-            </article>
-          </div>
+          <UpdateEditor key={selectedSlug} publishedUpdates={selectedRecord.publishedUpdates ?? []} updates={draft.updates ?? []} onBusyChange={setUploadBusy} onChange={(updates) => {
+            setConfirmMajorUpdate(false)
+            setNotificationMessage('')
+            updateDraft({ updates, latestUpdate: updates[0] ?? { ...EMPTY_DEVICE_UPDATE }, heroMedia: [] })
+          }} />
           <div className={styles.notificationPanel}>
             <div>
               <strong>FOLLOWER EMAIL</strong>
               <p>
-                Send this update to members who follow this Batch. Saving a draft alone
+                Send the first update in the working list to members who follow this Batch. Saving a draft alone
                 never sends an email.
               </p>
               <label className={styles.notificationConfirmation}>
@@ -1094,6 +992,7 @@ export function BatchConfigEditor({
             <ArchiveButton
               disabled={
                 !confirmMajorUpdate
+                || !draft.updates?.length
                 || !draft.latestUpdate.title.trim()
                 || !draft.latestUpdate.body.trim()
                 || notificationBusy === 'major-update'
@@ -1127,7 +1026,7 @@ export function BatchConfigEditor({
           </p>
           <div className={styles.secondaryActions}>
             <ArchiveButton
-              disabled={!hasUnsavedChanges}
+              disabled={uploadBusy || !hasUnsavedChanges}
               onClick={resetUnsavedChanges}
               variant="ghost"
             >
@@ -1138,7 +1037,7 @@ export function BatchConfigEditor({
         <div className={styles.workspaceActions}>
           <ArchiveButton
             disabled={
-              !hasUnsavedChanges || validationErrors.length > 0 || Boolean(saveBusy)
+              !hasUnsavedChanges || validationErrors.length > 0 || Boolean(saveBusy) || uploadBusy
             }
             onClick={() => void persistBatch(false)}
             variant="secondary"
@@ -1147,7 +1046,7 @@ export function BatchConfigEditor({
             {saveBusy === 'draft' ? 'SAVING…' : 'SAVE DRAFT'}
           </ArchiveButton>
           <ArchiveButton
-            disabled={validationErrors.length > 0 || Boolean(saveBusy)}
+            disabled={validationErrors.length > 0 || Boolean(saveBusy) || uploadBusy}
             onClick={() => void persistBatch(true)}
           >
             <UploadCloud aria-hidden size={15} />

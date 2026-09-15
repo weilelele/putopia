@@ -1,3 +1,4 @@
+import { listDeviceLeadOptions } from '@/lib/device-lead-repository'
 import type { Metadata } from 'next'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { listAdminDeviceBatchRecords } from '@/lib/device-batch-repository'
@@ -45,7 +46,7 @@ export default async function DeviceBatchAdminPage({
         </div>
       </header>
 
-      <BatchConfigEditor records={records} initialSlug={initialSlug} />
+      <BatchConfigEditor records={records} initialSlug={initialSlug} members={await listDeviceLeadOptions()} />
     </div>
   )
 }

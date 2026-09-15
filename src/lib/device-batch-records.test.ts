@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { getDeviceBatch } from './__fixtures__/device-batches'
-import { publishedRowsToBatches, rowToBatch, type DeviceBatchRow } from './device-batch-records'
+import { getPublishedDeviceUpdates, publishedRowsToBatches, rowToBatch, type DeviceBatchRow } from './device-batch-records'
 import { toDeviceLibraryEntry } from './device-library-entry'
 
 const published = getDeviceBatch('cairo-batch-01')!
@@ -17,6 +17,15 @@ const row: DeviceBatchRow = {
 }
 
 describe('production-only Device Library', () => {
+  it('keeps published updates visible independently of an edited or empty draft', () => {
+    const live = { id: 'live', date: '2026-09-16', title: 'Published report', body: 'Live content' }
+    const differentSnapshots = { ...row, content: { ...published, updates: [] }, published_content: { ...published, updates: [live] } }
+    expect(getPublishedDeviceUpdates(differentSnapshots)).toEqual([live])
+    expect(rowToBatch(differentSnapshots)?.updates).toEqual([])
+    expect(getPublishedDeviceUpdates({ ...differentSnapshots, publication_status: 'draft' })).toEqual([])
+    expect(getPublishedDeviceUpdates({ ...row, published_content: null })).toEqual([])
+  })
+
   it('does not restore mock batches for an empty registry', () => {
     expect(publishedRowsToBatches([])).toEqual([])
   })

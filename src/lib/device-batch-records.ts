@@ -1,12 +1,14 @@
 import {
   getDeviceBatchTimeZone,
   type DeviceBatch,
+  type DeviceBatchUpdate,
 } from '@/lib/device-batches'
 
 export type BatchPublicationStatus = 'draft' | 'published' | 'archived'
 
 export type AdminDeviceBatchRecord = {
   batch: DeviceBatch
+  publishedUpdates?: DeviceBatchUpdate[]
   hasUnpublishedChanges: boolean
   publicationStatus: BatchPublicationStatus
   revision: number
@@ -68,4 +70,11 @@ export function publishedRowsToBatches(rows: DeviceBatchRow[]) {
     .filter((row) => row.publication_status === 'published')
     .map((row) => rowToBatch(row, true))
     .filter((batch): batch is DeviceBatch => batch !== null)
+}
+
+/** Read the live snapshot separately from the editable draft. */
+export function getPublishedDeviceUpdates(row: Pick<DeviceBatchRow, 'published_content' | 'publication_status'>): DeviceBatchUpdate[] {
+  if (row.publication_status !== 'published') return []
+  const published = row.published_content as Partial<DeviceBatch> | null | undefined
+  return published?.updates ?? []
 }

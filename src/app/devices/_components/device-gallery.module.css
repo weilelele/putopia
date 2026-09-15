@@ -1,0 +1,16 @@
+.gallery { min-width: 0; scroll-margin-top: var(--s-4); }
+.frame { position: relative; width: 100%; aspect-ratio: 4 / 3; background: var(--color-deep); }
+.frame img, .frame video { width: 100%; height: 100%; object-fit: contain; }
+.caption { margin: var(--s-2) 0; font-size: var(--fs-caption); color: var(--color-star-dim); }
+.rail { display: flex; gap: var(--s-2); overflow-x: auto; padding: var(--s-2) 0; }
+.thumbnail { flex: 0 0 88px; min-height: 64px; padding: var(--s-1); border: 1px solid var(--bd-faint); color: var(--color-star); background: var(--color-deep); font: inherit; font-size: var(--fs-caption); cursor: pointer; }
+.thumbnail[aria-pressed='true'] { border-color: var(--color-nucleus); color: var(--color-nucleus); }
+.thumbnail img { width: 100%; height: 48px; object-fit: cover; }
+.thumbnail:focus-visible, .lead:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.lead { display: flex; align-items: center; gap: var(--s-2); min-height: 44px; padding: 0; border: 0; color: var(--color-star); background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.lead img { width: 44px; height: 44px; object-fit: cover; }
+.updateMedia { display: grid; gap: var(--s-3); margin-top: var(--s-3); }
+.updateMedia img, .updateMedia video { display: block; width: 100%; height: auto; max-height: 420px; object-fit: contain; }
+.updateBody { white-space: pre-wrap; }
+.progress { display: grid; grid-template-columns: repeat(5, minmax(56px, 1fr)); gap: var(--s-1); overflow-x: auto; }
+@media (min-width: 768px) { .frame { aspect-ratio: 16 / 9; } }
