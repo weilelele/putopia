@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { preferredSurveillanceQuality, SURVEILLANCE_PROFILES, type SurveillancePreset } from '@/lib/surveillance-profile'
+import { preferredSurveillanceQuality, surveillanceVideoFailureAction, SURVEILLANCE_PROFILES, type SurveillancePreset } from '@/lib/surveillance-profile'
 import styles from './surveillance-video.module.css'
 
 type Connection = EventTarget & { saveData?: boolean }
@@ -44,6 +44,8 @@ export function SurveillanceVideo({ className, label, loop, mediaRef, poster, pr
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [renderer, setRenderer] = useState<'native' | 'canvas'>('native')
   const [quality, setQuality] = useState<'standard' | 'eco'>('standard')
+  const [nativeFallbackSrc, setNativeFallbackSrc] = useState<string | null>(null)
+  const corsReadable = nativeFallbackSrc !== src
   const profile = SURVEILLANCE_PROFILES[preset][quality]
   const filter = `blur(${profile.softness}px) saturate(${profile.saturation}%) contrast(${profile.contrast}%)`
 
@@ -61,7 +63,7 @@ export function SurveillanceVideo({ className, label, loop, mediaRef, poster, pr
     const video = videoRef.current
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d', { alpha: false })
-    if (!video || !canvas || !context) { setRenderer('native'); return }
+    if (!corsReadable || !video || !canvas || !context) { setRenderer('native'); return }
     let inView = true
     let timer = 0
     let frame = 0
@@ -91,7 +93,7 @@ export function SurveillanceVideo({ className, label, loop, mediaRef, poster, pr
     }
     draw()
     return () => { window.clearTimeout(timer); observer?.disconnect() }
-  }, [profile, src, videoRef])
+  }, [corsReadable, profile, src, videoRef])
 
   useEffect(() => {
     const video = videoRef.current
@@ -106,10 +108,19 @@ export function SurveillanceVideo({ className, label, loop, mediaRef, poster, pr
     document.addEventListener('visibilitychange', update)
     update()
     return () => { observer?.disconnect(); document.removeEventListener('visibilitychange', update) }
-  }, [src, videoRef])
+  }, [corsReadable, src, videoRef])
 
-  return <span className={`${styles.stage} ${className ?? ''}`} data-renderer={renderer} data-surveillance-preset={preset} data-surveillance-quality={quality}>
-    <video ref={videoRef} aria-label={label} autoPlay className={styles.video} crossOrigin="anonymous" loop={loop} muted playsInline poster={poster} preload="metadata" src={src} style={{ filter }} onEnded={onEnded} onError={onError} onPlaying={onPlaying}>Your browser does not support this video.</video>
+  function handleError() {
+    if (surveillanceVideoFailureAction(corsReadable) === 'retry-native') {
+      setRenderer('native')
+      setNativeFallbackSrc(src)
+      return
+    }
+    onError?.()
+  }
+
+  return <span className={`${styles.stage} ${className ?? ''}`} data-media-transport={corsReadable ? 'effect-source' : 'native'} data-renderer={renderer} data-surveillance-preset={preset} data-surveillance-quality={quality}>
+    <video key={corsReadable ? 'cors' : 'native'} ref={videoRef} aria-label={label} autoPlay className={styles.video} crossOrigin={corsReadable ? 'anonymous' : undefined} loop={loop} muted playsInline poster={poster} preload="metadata" src={src} style={{ filter }} onEnded={onEnded} onError={handleError} onPlaying={onPlaying}>Your browser does not support this video.</video>
     <canvas aria-hidden className={styles.canvas} ref={canvasRef} style={{ filter }} />
   </span>
 }

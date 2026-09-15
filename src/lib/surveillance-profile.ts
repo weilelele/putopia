@@ -27,6 +27,10 @@ export function preferredSurveillanceQuality({ reducedMotion = false, saveData =
   return reducedMotion || saveData ? 'eco' : 'standard'
 }
 
+export function surveillanceVideoFailureAction(corsReadable: boolean): 'retry-native' | 'report-error' {
+  return corsReadable ? 'retry-native' : 'report-error'
+}
+
 export function surveillanceEffectMessage(
   quality: SurveillanceQuality,
   binding: { channelId: string; bandId: string },

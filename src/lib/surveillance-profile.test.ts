@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { preferredSurveillanceQuality, surveillanceEffectMessage, SURVEILLANCE_PROFILES } from './surveillance-profile'
+import { preferredSurveillanceQuality, surveillanceEffectMessage, surveillanceVideoFailureAction, SURVEILLANCE_PROFILES } from './surveillance-profile'
 
 describe('surveillance profiles', () => {
   it('keeps Device A and Worlds B visually distinct', () => {
@@ -17,5 +17,10 @@ describe('surveillance profiles', () => {
     expect(surveillanceEffectMessage('standard', { channelId: 'c', bandId: 'b' })).toMatchObject({
       profile: 'surveillance-v2', profileVersion: 2, preset: 'device-a', channelId: 'c', bandId: 'b',
     })
+  })
+
+  it('retries a failed canvas source as native video before reporting an error', () => {
+    expect(surveillanceVideoFailureAction(true)).toBe('retry-native')
+    expect(surveillanceVideoFailureAction(false)).toBe('report-error')
   })
 })
