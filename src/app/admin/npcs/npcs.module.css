@@ -1,0 +1,18 @@
+.page { max-width: 720px; margin: auto; display: grid; gap: 24px; font-family: var(--font-mono); color: var(--color-star); }
+.heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.heading h1 { font-size: var(--fs-h3); }
+.heading h2 { font-size: var(--fs-title); }
+.heading span { font-size: var(--fs-caption); color: var(--color-nucleus); }
+.page p { font-size: var(--fs-body); line-height: 1.5; overflow-wrap: anywhere; }
+.editor { border-top: 1px solid var(--bd-faint); padding-top: 24px; display: grid; gap: 16px; min-width: 0; }
+.form, .fields, .devices { display: grid; gap: 16px; min-width: 0; }
+.fields { border: 0; padding: 0; margin: 0; }
+.fields input, .fields textarea, .devices select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; padding: 10px; color: var(--color-star); background: var(--color-deep); border: 1px solid var(--color-star-dim); font: inherit; font-size: var(--fs-body); }
+.fields :focus-visible, .devices :focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.actions, .unit { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.unit { justify-content: space-between; border-bottom: 1px solid var(--bd-faint); padding-bottom: 16px; }
+.devices h3 { font-size: var(--fs-title); }
+.avatar img { object-fit: cover; }
+
+.field { display: grid; gap: 8px; min-width: 0; }
+.field > label { font-size: var(--fs-label); }
