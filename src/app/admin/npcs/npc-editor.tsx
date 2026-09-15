@@ -11,18 +11,7 @@ type Profile = { id: string; display_name: string; bio: string | null; avatar_ur
 type Batch = { slug: string; name: string; listing_quantity: number; claimed_quantity: number; reserved_quantity: number; allocated_quantity?: number }
 type Unit = { user_id: string | null; batch_slug: string; unit_code: string }
 
-export function NpcSettings({ profiles, batches, units }: { profiles: Profile[]; batches: Batch[]; units: Unit[] }) {
-  const [creating, setCreating] = useState(false)
-  return <section className={styles.page}>
-    <header className={styles.heading}><h1>NPC settings</h1><ArchiveButton onClick={() => setCreating(true)} disabled={creating}>Create NPC</ArchiveButton></header>
-    <p>Manage official characters and their devices. Each allocation uses one Batch slot. Releasing it makes the device available again.</p>
-    {creating && <NpcEditor batches={batches} units={[]} onClose={() => setCreating(false)} />}
-    {!profiles.length && !creating && <p>No NPCs yet. Create a character, then allocate a device.</p>}
-    {profiles.map((profile) => <NpcEditor key={profile.id} profile={profile} batches={batches} units={units.filter((unit) => unit.user_id === profile.id)} />)}
-  </section>
-}
-
-function NpcEditor({ profile, batches, units, onClose }: { profile?: Profile; batches: Batch[]; units: Unit[]; onClose?: () => void }) {
+export function NpcEditor({ profile, batches, units }: { profile?: Profile; batches: Batch[]; units: Unit[] }) {
   const router = useRouter()
   const [input, setInput] = useState<NpcProfileInput>({ displayName: profile?.display_name ?? '', bio: profile?.bio ?? '', avatarUrl: profile?.avatar_url ?? '', location: profile?.location ?? '' })
   const [busy, setBusy] = useState(false)
@@ -44,7 +33,11 @@ function NpcEditor({ profile, batches, units, onClose }: { profile?: Profile; ba
 
   async function submit(event: FormEvent) {
     event.preventDefault()
-    if (await run(() => saveNpc(profile?.id ?? null, input), 'Profile saved.')) onClose?.()
+    await run(async () => {
+      const result = await saveNpc(profile?.id ?? null, input)
+      if (!result.error && !profile && result.id) router.replace(`/admin/npcs/${result.id}`)
+      return result
+    }, 'Profile saved.')
   }
 
   return <article className={styles.editor}>
@@ -74,7 +67,7 @@ function NpcEditor({ profile, batches, units, onClose }: { profile?: Profile; ba
             event.target.value = ''
           }} />
         </NpcField>}
-        <div className={styles.actions}><ArchiveButton type="submit" disabled={busy}>{busy ? 'Saving…' : profile ? 'Save profile' : 'Create NPC'}</ArchiveButton>{onClose && <ArchiveButton variant="ghost" onClick={onClose}>Cancel</ArchiveButton>}</div>
+        <div className={styles.actions}><ArchiveButton type="submit" disabled={busy}>{busy ? 'Saving…' : profile ? 'Save profile' : 'Create NPC'}</ArchiveButton></div>
       </fieldset>
     </form>
     {profile && <section className={styles.devices}>
