@@ -1,16 +1,32 @@
 import type {
+  WorldflowFeedback,
   WorldflowState,
 } from '@/lib/actions/worldflow'
 
 type MutationResult = {
   error?: string
+  feedback?: WorldflowFeedback
   id?: string
   nextStep?: number
   ok?: boolean
+  resolvedIds?: string[]
   state?: WorldflowState
 }
 
 type WorldflowMutation =
+  | {
+      action: 'addFeedback'
+      body: string
+      step: number
+      version: 1
+      worldId: string
+    }
+  | {
+      action: 'resolveFeedback'
+      feedbackIds: string[]
+      version: 1
+      worldId: string
+    }
   | {
       action: 'create'
       description: string
@@ -87,4 +103,19 @@ export function reviewWorldflowStep(input: {
   worldId: string
 }) {
   return mutateWorldflow({ action: 'review', version: 1, ...input })
+}
+
+export function addWorldflowFeedback(input: {
+  body: string
+  step: number
+  worldId: string
+}) {
+  return mutateWorldflow({ action: 'addFeedback', version: 1, ...input })
+}
+
+export function resolveWorldflowFeedback(input: {
+  feedbackIds: string[]
+  worldId: string
+}) {
+  return mutateWorldflow({ action: 'resolveFeedback', version: 1, ...input })
 }

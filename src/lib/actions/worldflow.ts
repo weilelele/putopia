@@ -97,6 +97,18 @@ export type WorldflowAsset = {
   created_at: string
 }
 
+export type WorldflowFeedback = {
+  id: string
+  world_id: string
+  step: number
+  author_id: string
+  author_name: string
+  body: string
+  created_at: string
+  resolved_at: string | null
+  resolved_by: string | null
+}
+
 export type WorldflowCloudAsset = {
   id: string
   media_type: 'image' | 'video'
@@ -319,4 +331,50 @@ export async function reviewWorldflowStep(input: { worldId: string; state: World
   if (error) return { error: error.message }
   revalidatePath('/worldflow')
   return { ok: true, state, nextStep }
+}
+
+export async function addWorldflowFeedback(input: { worldId: string; step: number; body: string }) {
+  const access = await worldAccess(input.worldId)
+  if ('error' in access) return { error: access.error }
+  if (!Number.isInteger(input.step) || input.step < 1 || input.step > 7) {
+    return { error: '步骤无效。' }
+  }
+  const body = input.body.trim().slice(0, 2000)
+  if (!body) return { error: '请填写反馈内容。' }
+
+  const { data, error } = await access.admin
+    .from('worldflow_feedback')
+    .insert({
+      author_id: access.me.id,
+      author_name: access.me.name,
+      body,
+      step: input.step,
+      world_id: input.worldId,
+    })
+    .select('*')
+    .single()
+  if (error) return { error: error.message }
+  revalidatePath('/worldflow')
+  return { feedback: data as WorldflowFeedback, ok: true }
+}
+
+export async function resolveWorldflowFeedback(input: { worldId: string; feedbackIds: string[] }) {
+  const access = await worldAccess(input.worldId)
+  if ('error' in access) return { error: access.error }
+  if (access.me.role !== 'architect') return { error: '只有 architect 可以移除反馈。' }
+  const feedbackIds = [...new Set(input.feedbackIds)].filter(Boolean).slice(0, 100)
+  if (!feedbackIds.length) return { error: '请先勾选要移除的反馈。' }
+
+  const { data, error } = await access.admin
+    .from('worldflow_feedback')
+    .update({ resolved_at: new Date().toISOString(), resolved_by: access.me.id })
+    .eq('world_id', input.worldId)
+    .is('resolved_at', null)
+    .in('id', feedbackIds)
+    .select('id')
+  if (error) return { error: error.message }
+  const resolvedIds = (data ?? []).map((item) => item.id as string)
+  if (!resolvedIds.length) return { error: '这些反馈已经被移除，请刷新页面。' }
+  revalidatePath('/worldflow')
+  return { ok: true, resolvedIds }
 }

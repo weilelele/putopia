@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import {
+  addWorldflowFeedback,
   createWorldflowWorld,
+  resolveWorldflowFeedback,
   reviewWorldflowStep,
   saveWorldflowState,
   submitWorldflowStep,
@@ -13,9 +15,11 @@ const MAX_BODY_BYTES = 1_100_000
 
 type MutationBody = {
   action?: string
+  body?: string
   currentStep?: number
   decision?: 'approve' | 'changes'
   description?: string
+  feedbackIds?: string[]
   name?: string
   state?: WorldflowState
   step?: number
@@ -50,6 +54,22 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: '创建信息不完整。' }, { status: 400 })
       }
       const result = await createWorldflowWorld({ name: body.name, description: body.description })
+      return NextResponse.json(result, { status: result.error ? 400 : 200 })
+    }
+
+    if (body.action === 'addFeedback') {
+      if (!body.worldId || typeof body.step !== 'number' || typeof body.body !== 'string') {
+        return NextResponse.json({ error: '反馈信息不完整。' }, { status: 400 })
+      }
+      const result = await addWorldflowFeedback({ body: body.body, step: body.step, worldId: body.worldId })
+      return NextResponse.json(result, { status: result.error ? 400 : 200 })
+    }
+
+    if (body.action === 'resolveFeedback') {
+      if (!body.worldId || !Array.isArray(body.feedbackIds)) {
+        return NextResponse.json({ error: '反馈信息不完整。' }, { status: 400 })
+      }
+      const result = await resolveWorldflowFeedback({ feedbackIds: body.feedbackIds, worldId: body.worldId })
       return NextResponse.json(result, { status: result.error ? 400 : 200 })
     }
 
