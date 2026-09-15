@@ -37,13 +37,16 @@ import {
   type WorldflowCloudAsset,
   type WorldflowCosmoChannel,
   type WorldflowEvent,
+  type WorldflowFeedback,
   type WorldflowForgeBinding,
   type WorldflowState,
   type WorldflowStepStatus,
   type WorldflowWorld,
 } from "@/lib/actions/worldflow";
 import {
+  addWorldflowFeedback,
   createWorldflowWorld,
+  resolveWorldflowFeedback,
   reviewWorldflowStep,
   saveWorldflowState,
   submitWorldflowStep,
@@ -1135,11 +1138,13 @@ function EventStructureEditor({
 
 export function WorldflowClient({
   assets: initialAssets,
+  feedback: initialFeedback,
   initialSelectedId,
   user,
   worlds,
 }: {
   assets: WorldflowAsset[];
+  feedback: WorldflowFeedback[];
   initialSelectedId: string | null;
   user: { id: string; name: string; role: string };
   worlds: WorldflowWorld[];
@@ -1173,6 +1178,10 @@ export function WorldflowClient({
   const [contextExpanded, setContextExpanded] = useState(false);
   const [shotSetupExpanded, setShotSetupExpanded] = useState(false);
   const [assets, setAssets] = useState(initialAssets);
+  const [feedback, setFeedback] = useState(initialFeedback);
+  const [feedbackComposerOpen, setFeedbackComposerOpen] = useState(false);
+  const [feedbackDraft, setFeedbackDraft] = useState("");
+  const [selectedFeedbackIds, setSelectedFeedbackIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -1249,10 +1258,27 @@ export function WorldflowClient({
   const selectedParentEvent = eventSelection?.parent ?? null;
   const selectedTimeSlot = eventSelection?.slot ?? null;
   const videoSequence = state ? buildWorldflowVideoSequence(state, assets) : [];
+  const activeFeedback = selectedSource
+    ? feedback.filter(
+        (item) =>
+          item.world_id === selectedSource.id && item.step === activeStep,
+      )
+    : [];
+  const activeSelectedFeedbackIds = selectedFeedbackIds.filter((id) =>
+    activeFeedback.some((item) => item.id === id),
+  );
 
   function selectEvent(eventId: string | null) {
     setSelectedEventId(eventId);
     setContextExpanded(false);
+  }
+
+  function selectStep(step: number) {
+    setActiveStep(step);
+    setContextExpanded(false);
+    setFeedbackComposerOpen(false);
+    setFeedbackDraft("");
+    setSelectedFeedbackIds([]);
   }
 
   function assetsForScope(
@@ -1294,6 +1320,9 @@ export function WorldflowClient({
     selectEvent(null);
     setShotSetupExpanded(false);
     setUndoSnapshot(null);
+    setFeedbackComposerOpen(false);
+    setFeedbackDraft("");
+    setSelectedFeedbackIds([]);
     setMessage("");
     window.history.replaceState(null, "", `/worldflow?world=${world.id}`);
   }
@@ -1443,7 +1472,7 @@ export function WorldflowClient({
         stateRef.current = result.state;
         persistedStateRef.current = result.state;
       }
-      if (result.nextStep) setActiveStep(result.nextStep);
+      if (result.nextStep) selectStep(result.nextStep);
       setMessage(
         result.error ?? (decision === "approve" ? "审核通过" : "已退回修改"),
       );
@@ -1453,6 +1482,47 @@ export function WorldflowClient({
         window.localStorage.removeItem(draftStorageKey(selectedSource.id));
         router.refresh();
       }
+    });
+  }
+
+  function submitFeedback() {
+    if (!selectedSource || !feedbackDraft.trim()) return;
+    startTransition(async () => {
+      const result = await addWorldflowFeedback({
+        body: feedbackDraft,
+        step: activeStep,
+        worldId: selectedSource.id,
+      });
+      const createdFeedback = result.feedback;
+      if (createdFeedback) {
+        setFeedback((items) => [
+          createdFeedback,
+          ...items.filter((item) => item.id !== createdFeedback.id),
+        ]);
+        setFeedbackDraft("");
+        setFeedbackComposerOpen(false);
+      }
+      setMessage(result.error ?? `已添加到 STEP ${activeStep} 的反馈提示`);
+    });
+  }
+
+  function removeSelectedFeedback() {
+    if (!selectedSource || !activeSelectedFeedbackIds.length) return;
+    startTransition(async () => {
+      const result = await resolveWorldflowFeedback({
+        feedbackIds: activeSelectedFeedbackIds,
+        worldId: selectedSource.id,
+      });
+      if (result.resolvedIds?.length) {
+        const resolved = new Set(result.resolvedIds);
+        setFeedback((items) => items.filter((item) => !resolved.has(item.id)));
+        setSelectedFeedbackIds((ids) =>
+          ids.filter((id) => !resolved.has(id)),
+        );
+      }
+      setMessage(
+        result.error ?? `已移除 ${result.resolvedIds?.length ?? 0} 条反馈提示`,
+      );
     });
   }
 
@@ -1753,8 +1823,7 @@ export function WorldflowClient({
               data-active={activeStep === index + 1}
               key={step[0]}
               onClick={() => {
-                setActiveStep(index + 1);
-                setContextExpanded(false);
+                selectStep(index + 1);
               }}
               type="button"
             >
@@ -1773,8 +1842,7 @@ export function WorldflowClient({
               data-active={activeStep === index + 4}
               key={step[0]}
               onClick={() => {
-                setActiveStep(index + 4);
-                setContextExpanded(false);
+                selectStep(index + 4);
               }}
               type="button"
             >
@@ -1787,8 +1855,7 @@ export function WorldflowClient({
             data-active={activeStep >= 5}
             disabled={selectedSource.current_step < 5}
             onClick={() => {
-              setActiveStep(Math.max(5, selectedSource.current_step));
-              setContextExpanded(false);
+              selectStep(Math.max(5, selectedSource.current_step));
             }}
             type="button"
           >
@@ -1858,6 +1925,113 @@ export function WorldflowClient({
         </div>
       </div>
 
+      <section
+        aria-labelledby="step-feedback-title"
+        className={styles.feedbackPanel}
+      >
+        <header>
+          <div>
+            <span>STEP FEEDBACK</span>
+            <h3 id="step-feedback-title">STEP {activeStep} · 反馈提示</h3>
+            <p>反馈会持续显示在当前步骤，直到 architect 勾选移除。</p>
+          </div>
+          <ArchiveButton
+            aria-expanded={feedbackComposerOpen}
+            className={styles.secondary}
+            onClick={() => setFeedbackComposerOpen((open) => !open)}
+            variant="secondary"
+          >
+            <Plus size={16} />
+            添加反馈
+          </ArchiveButton>
+        </header>
+
+        {feedbackComposerOpen ? (
+          <div className={styles.feedbackComposer}>
+            <label htmlFor={`worldflow-feedback-${activeStep}`}>
+              反馈内容
+            </label>
+            <ArchiveTextarea
+              autoFocus
+              id={`worldflow-feedback-${activeStep}`}
+              maxLength={2000}
+              onChange={(event) => setFeedbackDraft(event.target.value)}
+              placeholder="写下需要留意、修改或继续讨论的内容……"
+              value={feedbackDraft}
+            />
+            <div>
+              <span>{feedbackDraft.length} / 2000</span>
+              <ArchiveButton
+                disabled={pending}
+                onClick={() => {
+                  setFeedbackComposerOpen(false);
+                  setFeedbackDraft("");
+                }}
+                variant="secondary"
+              >
+                取消
+              </ArchiveButton>
+              <ArchiveButton
+                disabled={pending || !feedbackDraft.trim()}
+                onClick={submitFeedback}
+                variant="primary"
+              >
+                保存反馈
+              </ArchiveButton>
+            </div>
+          </div>
+        ) : null}
+
+        {activeFeedback.length ? (
+          <div className={styles.feedbackList}>
+            {activeFeedback.map((item) => (
+              <article key={item.id}>
+                {isArchitect ? (
+                  <label className={styles.feedbackCheckbox}>
+                    <ArchiveInput
+                      aria-label={`选择移除反馈：${item.body}`}
+                      checked={selectedFeedbackIds.includes(item.id)}
+                      onChange={(event) =>
+                        setSelectedFeedbackIds((ids) =>
+                          event.target.checked
+                            ? [...ids, item.id]
+                            : ids.filter((id) => id !== item.id),
+                        )
+                      }
+                      type="checkbox"
+                    />
+                    <span>选择移除</span>
+                  </label>
+                ) : null}
+                <p>{item.body}</p>
+                <footer>
+                  <strong>{item.author_name}</strong>
+                  <time dateTime={item.created_at}>
+                    {formatDate(item.created_at)}
+                  </time>
+                </footer>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className={styles.feedbackEmpty}>这个步骤暂时没有反馈。</p>
+        )}
+
+        {isArchitect && activeSelectedFeedbackIds.length ? (
+          <footer className={styles.feedbackAdminActions}>
+            <span>已选择 {activeSelectedFeedbackIds.length} 条</span>
+            <ArchiveButton
+              disabled={pending}
+              onClick={removeSelectedFeedback}
+              variant="secondary"
+            >
+              <Trash2 size={16} />
+              移除已选反馈
+            </ArchiveButton>
+          </footer>
+        ) : null}
+      </section>
+
       {activeStep >= 5 ? (
         <section className={styles.productionMilestones}>
           {[5, 6, 7].map((step) => {
@@ -1869,8 +2043,7 @@ export function WorldflowClient({
                 disabled={!unlocked}
                 key={step}
                 onClick={() => {
-                  setActiveStep(step);
-                  setContextExpanded(false);
+                  selectStep(step);
                 }}
                 type="button"
               >

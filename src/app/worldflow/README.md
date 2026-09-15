@@ -11,7 +11,9 @@ an older Worldflow branch or add a rewrite to the legacy prototype.
 - `src/app/worldflow`: authenticated workspace, seven milestones, and the shared
   event/image/video production workbench.
 - `src/lib/actions/worldflow.ts`: workflow types, creation, saving, submission,
-  and architect review. Every signed-in creator (including architects) can create.
+  architect review, and persistent step feedback. Every signed-in creator
+  (including architects) can create and add feedback; only architects can
+  remove feedback from the active workspace.
 - `src/app/api/worldflow/cosmo-assets/route.ts`: search Cosmo channels by name or
   frequency, select a Band, and list image/video candidates.
 - `src/app/api/worldflow/assets/link/route.ts`: associate one existing cloud asset
@@ -30,10 +32,12 @@ stored in `worldflow_assets`; `storage_path` is null. Reading a cloud asset
 redirects to its source URL. Local uploads use the private `worldflow-assets`
 Storage bucket. Cosmo is never written to by this module.
 
-The four `supabase/migrations/*worldflow*.sql` migrations were already applied
-to production before this module was restored to `main`. They are preserved
-unchanged as history; this release requires no new schema or data migration.
-Do not rerun all migrations against production just to deploy the page.
+The original four `supabase/migrations/*worldflow*.sql` migrations were already
+applied to production before this module was restored to `main`. They are
+preserved unchanged as history. Step feedback adds
+`20260915063709_worldflow_step_feedback.sql`; production rollout applies only
+this migration before deploying the feedback UI. Do not rerun the historical
+migrations.
 
 ## Verification
 

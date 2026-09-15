@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { WorldflowAsset, WorldflowWorld } from '@/lib/actions/worldflow'
+import type { WorldflowAsset, WorldflowFeedback, WorldflowWorld } from '@/lib/actions/worldflow'
 import type { Database } from '@/types/database'
 
 type WorldflowTables = {
@@ -20,6 +20,17 @@ type WorldflowTables = {
       storage_path: string | null
     }
     Update: Partial<Omit<WorldflowAsset, 'created_at' | 'id' | 'uploaded_by' | 'world_id'>>
+    Relationships: []
+  }
+  worldflow_feedback: {
+    Row: WorldflowFeedback
+    Insert: Omit<WorldflowFeedback, 'created_at' | 'id' | 'resolved_at' | 'resolved_by'> & {
+      created_at?: string
+      id?: string
+      resolved_at?: string | null
+      resolved_by?: string | null
+    }
+    Update: Pick<WorldflowFeedback, 'resolved_at' | 'resolved_by'>
     Relationships: []
   }
   signal_task_assets: {

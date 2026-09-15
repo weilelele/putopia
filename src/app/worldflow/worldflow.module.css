@@ -392,6 +392,7 @@ button.worldCard {
 .editor,
 .shotSelector,
 .productionMilestones,
+.feedbackPanel,
 .actionBar {
   max-width: 1440px;
   margin-inline: auto;
@@ -413,6 +414,133 @@ button.worldCard {
 .stepTitle h2 {
   margin: var(--s-1) 0;
   font-size: var(--fs-h2);
+}
+
+.feedbackPanel {
+  margin-bottom: var(--s-4);
+  padding: var(--s-4);
+  border: 1px solid var(--bd-faint);
+  background: var(--color-void);
+}
+
+.feedbackPanel > header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.feedbackPanel > header > div {
+  display: grid;
+  gap: var(--s-1);
+}
+
+.feedbackPanel > header span {
+  color: var(--color-nucleus);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.08em;
+}
+
+.feedbackPanel h3,
+.feedbackPanel p {
+  margin: 0;
+}
+
+.feedbackPanel > header p,
+.feedbackEmpty,
+.feedbackComposer > div > span {
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
+  line-height: 1.5;
+}
+
+.feedbackComposer {
+  display: grid;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--bd-orange);
+  background: var(--bg-panel);
+}
+
+.feedbackComposer > label {
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
+}
+
+.feedbackComposer textarea {
+  width: 100%;
+  min-height: 112px;
+  padding: var(--s-3);
+  resize: vertical;
+  background: var(--color-deep);
+}
+
+.feedbackComposer > div,
+.feedbackAdminActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.feedbackComposer > div > span,
+.feedbackAdminActions > span {
+  margin-right: auto;
+}
+
+.feedbackList {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.feedbackList article {
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-left: 3px solid var(--color-nucleus);
+  background: var(--bg-panel);
+}
+
+.feedbackList article > p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+.feedbackList article > footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.feedbackCheckbox {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--s-2);
+  justify-self: start;
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+  cursor: pointer;
+}
+
+.feedbackCheckbox input {
+  width: 18px;
+  min-height: 18px;
+  height: 18px;
+  accent-color: var(--color-nucleus);
+}
+
+.feedbackAdminActions {
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--bd-faint);
+  color: var(--color-star-dim);
+  font-size: var(--fs-label);
 }
 
 .productionMilestones {
@@ -1697,6 +1825,7 @@ button.emptyAsset {
 
   .structureEditor > header,
   .shotFoundation > header,
+  .feedbackPanel > header,
   .cloudLibrary > header,
   .context > header,
   .videoSequence > header {
