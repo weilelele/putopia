@@ -15,6 +15,7 @@ export type IntelTag = 'NOTICE' | 'DEVICE' | 'ORG'
 export type VoyagerProfile = {
   id: string                  // references auth.users
   display_name: string
+  account_kind?: 'human' | 'npc'
   bio: string | null
   avatar_url: string | null
   social_x: string | null
@@ -455,6 +456,18 @@ export type Database = {
         }>
         Relationships: []
       }
+      device_batch_allocations: {
+        Row: { id: string; user_id: string; batch_slug: string; kind: string; status: string; created_by: string; created_at: string; released_by: string | null; released_at: string | null }
+        Insert: { user_id: string; batch_slug: string; created_by: string }
+        Update: { status?: string }
+        Relationships: []
+      }
+      device_batch_units: {
+        Row: { id: number; batch_slug: string; unit_code: string; user_id: string | null; order_id: string | null; allocation_id: string | null; status: string }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
       voyager_profiles: {
         Row: VoyagerProfile
         Insert: Omit<VoyagerProfile, 'joined_at' | 'registered_at' | 'updated_at'>
@@ -610,6 +623,10 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      set_npc_device_allocation: {
+        Args: { p_actor_id: string; p_user_id: string; p_batch_slug: string; p_allocate: boolean }
+        Returns: string | null
+      }
       replace_story_content_plan: {
         Args: {
           p_workflow_id: string
