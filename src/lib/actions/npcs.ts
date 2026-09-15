@@ -8,6 +8,7 @@ import { validateNpcProfile, type NpcProfileInput } from '@/lib/npc-model'
 
 function refreshNpcs() {
   revalidatePath('/admin/npcs')
+  revalidatePath('/admin/npcs/[id]', 'page')
   revalidatePath('/devices', 'layout')
 }
 
