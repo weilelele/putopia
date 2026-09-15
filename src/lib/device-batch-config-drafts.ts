@@ -1,3 +1,4 @@
+import { getDeviceBatchUpdates, isDeviceMediaUrl, EMPTY_DEVICE_UPDATE } from './device-batch-content'
 import { isDeviceCameraBinding, type DeviceCameraBinding } from './device-camera'
 import {
   getDeviceBatchTimeZone,
@@ -12,6 +13,8 @@ import {
 } from './device-batches'
 
 export type BatchConfigDraft = {
+  updates?: DeviceBatch['updates']
+  preparationPhase?: DeviceBatch['preparationPhase']
   liveCamera?: DeviceCameraBinding
   code: string
   claimPrice?: BatchPrice
@@ -160,6 +163,8 @@ function isBatchConfigDraft(value: unknown): value is BatchConfigDraft {
     typeof draft.heroCaption === 'string' &&
     (draft.liveCamera === undefined || isDeviceCameraBinding(draft.liveCamera)) &&
     (draft.heroMedia === undefined || isMedia(draft.heroMedia)) &&
+    (draft.preparationPhase === undefined || ['searching', 'preparing'].includes(draft.preparationPhase)) &&
+    (draft.updates === undefined || (Array.isArray(draft.updates) && draft.updates.every((update) => typeof update.id === 'string' && isLatestUpdate(update)))) &&
     isLead(draft.lead) &&
     isLatestUpdate(draft.latestUpdate) &&
     Array.isArray(draft.distributionStages) &&
@@ -170,7 +175,10 @@ function isBatchConfigDraft(value: unknown): value is BatchConfigDraft {
 }
 
 export function createBatchConfigDraft(batch: DeviceBatch): BatchConfigDraft {
+  const latestUpdate = batch.updates?.[0] ?? EMPTY_DEVICE_UPDATE
   return {
+    updates: getDeviceBatchUpdates(batch).map((update) => ({ ...update, media: update.media?.map((item) => ({ ...item })) })),
+    preparationPhase: batch.preparationPhase ?? 'preparing',
     liveCamera: batch.liveCamera ? { ...batch.liveCamera } : undefined,
     code: batch.code,
     claimPrice: batch.claimPrice ? { ...batch.claimPrice } : undefined,
@@ -187,8 +195,8 @@ export function createBatchConfigDraft(batch: DeviceBatch): BatchConfigDraft {
     imageFit: batch.imageFit,
     inventory: batch.inventory ? { ...batch.inventory } : undefined,
     latestUpdate: {
-      ...batch.latestUpdate,
-      media: batch.latestUpdate.media?.map((item) => ({ ...item })),
+      ...latestUpdate,
+      media: latestUpdate.media?.map((item) => ({ ...item })),
     },
     lead: { ...batch.lead },
     location: batch.location,
@@ -206,6 +214,22 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
   const errors: string[] = []
   if (draft.liveCamera !== undefined && !isDeviceCameraBinding(draft.liveCamera)) {
     errors.push('Camera requires a title, valid Cosmo channel and Band IDs, and a valid frame fit.')
+  }
+  if (draft.preparationPhase !== undefined && !['searching', 'preparing'].includes(draft.preparationPhase)) errors.push('Choose Searching or Preparing.')
+  if (draft.updates !== undefined) {
+    if (!Array.isArray(draft.updates)) errors.push('Updates must be a list.')
+    else {
+      const ids = new Set<string>()
+      for (const update of draft.updates) {
+        if (!isLatestUpdate(update) || !update.id || ids.has(update.id)) {
+          errors.push('Updates need unique IDs and valid content.')
+          continue
+        }
+        ids.add(update.id)
+        if (!update.date.trim() || !update.title.trim() || (!update.body.trim() && !update.media?.length)) errors.push('Each update needs a date, title, and text or media.')
+        if (update.media?.some((item) => !isDeviceMediaUrl(item.src) || (item.poster && !isDeviceMediaUrl(item.poster)))) errors.push('Media needs an HTTPS URL or a local asset path.')
+      }
+    }
   }
   const price = draft.claimPrice
   const currentStageCount = draft.distributionStages.filter(
@@ -273,13 +297,6 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
   if (currentStageCount > 1) {
     errors.push('Only one Pack can be marked current.')
   }
-  if (
-    draft.latestUpdate.date.trim().length === 0 ||
-    draft.latestUpdate.title.trim().length === 0 ||
-    draft.latestUpdate.body.trim().length === 0
-  ) {
-    errors.push('The latest update requires a date, title, and body.')
-  }
 
   return errors
 }
@@ -287,6 +304,10 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
 export function normalizeBatchConfigDraft(draft: BatchConfigDraft): BatchConfigDraft {
   return {
     ...draft,
+    updates: draft.updates?.map((update) => ({
+      ...update, title: update.title.trim(), date: update.date.trim(), body: update.body.trim(),
+      media: update.media?.map((item) => ({ ...item, src: item.src.trim(), alt: item.alt.trim(), caption: item.caption.trim(), poster: item.poster?.trim() || undefined })),
+    })),
     code: draft.code.trim().toUpperCase(),
     claimPrice: draft.claimPrice
       ? {
@@ -321,18 +342,7 @@ export function normalizeBatchConfigDraft(draft: BatchConfigDraft): BatchConfigD
     })),
     image: draft.image.trim(),
     imageAlt: draft.imageAlt.trim(),
-    latestUpdate: {
-      body: draft.latestUpdate.body.trim(),
-      date: draft.latestUpdate.date.trim(),
-      media: draft.latestUpdate.media?.map((item) => ({
-        ...item,
-        alt: item.alt.trim(),
-        caption: item.caption.trim(),
-        poster: item.poster?.trim() || undefined,
-        src: item.src.trim(),
-      })),
-      title: draft.latestUpdate.title.trim(),
-    },
+    latestUpdate: draft.updates?.[0] ?? { ...EMPTY_DEVICE_UPDATE },
     nextMilestone: draft.nextMilestone.trim(),
     lead: {
       ...draft.lead,

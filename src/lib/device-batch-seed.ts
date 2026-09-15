@@ -4,6 +4,7 @@ import {
 } from './device-batches'
 
 export type LocalBatchSeed = {
+  leadProfileId?: string
   code: string
   leadName: string
   location: string
@@ -48,6 +49,7 @@ export function validateLocalBatchSeed(seed: LocalBatchSeed) {
 
 export function normalizeLocalBatchSeed(seed: LocalBatchSeed): LocalBatchSeed {
   return {
+    leadProfileId: seed.leadProfileId,
     code: seed.code.trim().toUpperCase(),
     leadName: seed.leadName.trim(),
     location: seed.location.trim(),
@@ -70,6 +72,8 @@ export function createDeviceBatchFromSeed(seed: LocalBatchSeed): DeviceBatch {
       .toUpperCase() || 'FL'
 
   return {
+    updates: [],
+    preparationPhase: 'searching',
     archiveStages: [],
     code: normalized.code,
     distributionStages: [
@@ -97,6 +101,7 @@ export function createDeviceBatchFromSeed(seed: LocalBatchSeed): DeviceBatch {
       title: 'Initial field record',
     },
     lead: {
+      profileId: normalized.leadProfileId,
       bio: `${normalized.leadName} is preparing the first field record for this Batch.`,
       initials,
       latestNote: 'Initial field record pending.',

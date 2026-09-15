@@ -1,0 +1,11 @@
+.editor, .entry, .mediaEntry { display: grid; gap: var(--s-4); min-width: 0; }
+.entry { margin: 0; padding: var(--s-5) 0; border: 0; border-top: 1px solid var(--bd-faint); }
+.entry legend { padding-right: var(--s-3); color: var(--color-star-dim); font-size: var(--fs-label); }
+.mediaEntry { padding-top: var(--s-4); border-top: 1px solid var(--bd-faint); }
+.editor p { font-size: var(--fs-label); color: var(--color-star-dim); line-height: 1.5; }
+.editor input[type='file'] { max-width: 100%; }
+
+.publishedEntry { border-top: 1px solid var(--bd-faint); padding: var(--s-3) 0; }
+.publishedEntry summary { cursor: pointer; min-height: 44px; color: var(--color-star); overflow-wrap: anywhere; }
+.publishedEntry summary:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.body { white-space: pre-wrap; }

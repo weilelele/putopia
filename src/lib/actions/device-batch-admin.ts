@@ -1,5 +1,9 @@
 'use server'
 
+import { randomUUID } from 'node:crypto'
+import { EMPTY_DEVICE_UPDATE } from '@/lib/device-batch-content'
+import { getPublishedDeviceUpdates } from '@/lib/device-batch-records'
+import { leadFromProfile } from '@/lib/device-lead'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import {
@@ -73,7 +77,16 @@ export async function saveDeviceBatchRecord(input: {
   const validationError = validateBatch(input.batch)
   if (validationError) return { error: validationError }
 
-  const batch = input.batch
+  let batch = input.batch
+  if (batch.lead.profileId) {
+    const client = await createClient()
+    const { data: lead } = await client.from('voyager_profiles')
+      .select('id, display_name, role, avatar_url, location, bio')
+      .eq('id', batch.lead.profileId).in('role', ['architect', 'voyager']).maybeSingle()
+    if (!lead) return { error: 'Choose an available Architect or Voyager as Field Lead.' }
+    batch = { ...batch, lead: { ...leadFromProfile(lead), latestNote: batch.lead.latestNote } }
+  }
+  batch = { ...batch, updates: batch.updates ?? [], latestUpdate: batch.updates?.[0] ?? { ...EMPTY_DEVICE_UPDATE } }
   const inventory = batch.inventory ?? {
     claimedQuantity: 0,
     listingQuantity: 0,
@@ -138,7 +151,7 @@ export async function saveDeviceBatchRecord(input: {
       .eq('id', existing.id)
       .eq('revision', existing.revision)
       .select(
-        'content, has_unpublished_changes, publication_status, revision, listing_quantity, claimed_quantity, reserved_quantity, price_amount, price_currency',
+        'content, published_content, has_unpublished_changes, publication_status, revision, listing_quantity, claimed_quantity, reserved_quantity, price_amount, price_currency',
       )
       .maybeSingle()
     if (error) return { error: error.message }
@@ -161,7 +174,7 @@ export async function saveDeviceBatchRecord(input: {
         created_by: user.id,
       })
       .select(
-        'id, content, has_unpublished_changes, publication_status, revision, listing_quantity, claimed_quantity, reserved_quantity, price_amount, price_currency',
+        'id, content, published_content, has_unpublished_changes, publication_status, revision, listing_quantity, claimed_quantity, reserved_quantity, price_amount, price_currency',
       )
       .single()
     if (error) return { error: error.message }
@@ -193,6 +206,7 @@ export async function saveDeviceBatchRecord(input: {
             ?? saved.listing_quantity,
         },
       },
+      publishedUpdates: getPublishedDeviceUpdates(saved),
       hasUnpublishedChanges: saved.has_unpublished_changes,
       publicationStatus: saved.publication_status,
       revision: saved.revision,
@@ -208,6 +222,7 @@ export async function createDeviceBatchDraft(
   const user = await requireArchitect()
   if (!user) return { error: 'Forbidden' }
 
+  if (!seed.leadProfileId) return { error: 'Choose a Field Lead member.' }
   const normalized = normalizeLocalBatchSeed(seed)
   const [validationError] = validateLocalBatchSeed(normalized)
   if (validationError) return { error: validationError }
@@ -221,4 +236,23 @@ export async function createDeviceBatchDraft(
   return result.error
     ? { error: result.error }
     : { error: null, slug: normalized.slug }
+}
+
+/** Sign a unique path; the browser sends media directly to Storage. */
+export async function createDeviceMediaUpload(input: { type: string; size: number }) {
+  const user = await requireArchitect()
+  if (!user) return { error: 'Forbidden' }
+  const extensions: Record<string, string> = {
+    'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
+    'video/mp4': 'mp4', 'video/webm': 'webm',
+  }
+  const extension = extensions[input.type]
+  if (!extension || !Number.isFinite(input.size) || input.size <= 0 || input.size > 50 * 1024 * 1024) {
+    return { error: 'Choose a JPEG, PNG, WebP, MP4 or WebM file up to 50 MB.' }
+  }
+  const storage = createAdminClient().storage.from('device-update-media')
+  const path = `${user.id}/${randomUUID()}.${extension}`
+  const { data, error } = await storage.createSignedUploadUrl(path)
+  if (error || !data) return { error: 'Media upload is unavailable. Check the device media storage setup or add an existing URL.' }
+  return { error: null, upload: { path, token: data.token, url: `/api/device-media/${path}` } }
 }

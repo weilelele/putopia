@@ -3,7 +3,7 @@ import 'server-only'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { DeviceBatch } from '@/lib/device-batches'
 
-import { publishedRowsToBatches, rowToBatch, type DeviceBatchRow, type AdminDeviceBatchRecord } from '@/lib/device-batch-records'
+import { getPublishedDeviceUpdates, publishedRowsToBatches, rowToBatch, type DeviceBatchRow, type AdminDeviceBatchRecord } from '@/lib/device-batch-records'
 export type { BatchPublicationStatus, AdminDeviceBatchRecord } from '@/lib/device-batch-records'
 
 async function attachLiveHolderDirectory(
@@ -49,7 +49,8 @@ export async function listPublicDeviceBatches(): Promise<DeviceBatch[]> {
         'content, published_content, publication_status, revision, listing_quantity, claimed_quantity, reserved_quantity, price_amount, price_currency',
       )
       .eq('publication_status', 'published')
-      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
 
     if (error) throw error
     // Only persistent published snapshots are authoritative; never show mocks.
@@ -83,6 +84,7 @@ export async function listAdminDeviceBatchRecords(): Promise<AdminDeviceBatchRec
       if (!batch) continue
       persisted.set(batch.slug, {
         batch,
+        publishedUpdates: getPublishedDeviceUpdates(row),
         hasUnpublishedChanges: row.has_unpublished_changes ?? false,
         publicationStatus: row.publication_status,
         revision: row.revision,

@@ -1,3 +1,4 @@
+import { listDeviceLeadOptions } from '@/lib/device-lead-repository'
 import type { Metadata } from 'next'
 import { listAdminDeviceBatchRecords } from '@/lib/device-batch-repository'
 import { NewBatchForm } from './new-batch-form'
@@ -25,6 +26,7 @@ export default async function NewDeviceBatchPage() {
       </header>
 
       <NewBatchForm
+        members={await listDeviceLeadOptions()}
         reservedSlugs={records.map((record) => record.batch.slug)}
       />
     </div>
