@@ -2,25 +2,26 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { buildCameraEmbedUrl, isCameraStatusMessage, shouldShowCameraLive, type CameraPlaybackState, type DeviceCameraSource } from '@/lib/device-camera'
-import { DEVICE_CAMERA_EFFECTS, deviceCameraEffectDelay, nextDeviceCameraEffect, type DeviceCameraBaseEffectId, type DeviceCameraEffectId } from '@/lib/device-camera-effects'
+import { preferredSurveillanceQuality, surveillanceEffectMessage, type SurveillanceQuality } from '@/lib/surveillance-profile'
 import styles from './cosmo-camera-embed.module.css'
 
 const subscribe = () => () => {}
 const originSnapshot = () => window.location.origin
 const serverOriginSnapshot = () => ''
+type VideoConnection = EventTarget & { saveData?: boolean }
+type NavigatorWithConnection = Navigator & { connection?: VideoConnection }
 function CameraFrame({ source, parentOrigin, location }: { source: DeviceCameraSource; parentOrigin: string; location: string }) {
   const frame = useRef<HTMLIFrameElement>(null)
   const [state, setState] = useState<CameraPlaybackState | 'connecting'>('connecting')
   const [hasPlayed, setHasPlayed] = useState(false)
-  const [effect, setEffect] = useState<DeviceCameraEffectId>('signal-decay')
+  const [quality, setQuality] = useState<SurveillanceQuality>('standard')
   const [retry, setRetry] = useState(0)
   const receivedAt = useRef(0)
   const src = buildCameraEmbedUrl(source, parentOrigin, { effects: true })
-  const effectMessage = useMemo(() => ({
-    type: 'cosmo.embed.effects', version: 1,
-    channelId: source.binding.channelId, bandId: source.binding.bandId,
-    ...DEVICE_CAMERA_EFFECTS[effect],
-  }), [effect, source.binding.bandId, source.binding.channelId])
+  const effectMessage = useMemo(
+    () => surveillanceEffectMessage(quality, source.binding),
+    [quality, source.binding],
+  )
   const sendEffect = useCallback(() => {
     frame.current?.contentWindow?.postMessage(effectMessage, source.embedOrigin)
   }, [effectMessage, source.embedOrigin])
@@ -52,21 +53,19 @@ function CameraFrame({ source, parentOrigin, location }: { source: DeviceCameraS
   }, [sendEffect, source])
 
   useEffect(() => {
-    let trigger: ReturnType<typeof setTimeout>
-    let currentEffect: DeviceCameraEffectId = 'signal-decay'
-    let lastBase: DeviceCameraBaseEffectId = 'signal-decay'
-    function schedule() {
-      trigger = setTimeout(() => {
-        if (document.visibilityState !== 'visible') { schedule(); return }
-        const next = nextDeviceCameraEffect(currentEffect, lastBase)
-        currentEffect = next
-        if (next !== 'glitch-art') lastBase = next
-        setEffect(next)
-        schedule()
-      }, deviceCameraEffectDelay(currentEffect, Math.random()))
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const connection = (navigator as NavigatorWithConnection).connection
+    const update = () => setQuality(preferredSurveillanceQuality({
+      reducedMotion: motion.matches,
+      saveData: connection?.saveData === true,
+    }))
+    update()
+    motion.addEventListener('change', update)
+    connection?.addEventListener('change', update)
+    return () => {
+      motion.removeEventListener('change', update)
+      connection?.removeEventListener('change', update)
     }
-    schedule()
-    return () => clearTimeout(trigger)
   }, [])
 
   const live = state !== 'connecting' && shouldShowCameraLive(state, hasPlayed)

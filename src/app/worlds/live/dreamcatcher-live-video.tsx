@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { memo, useEffect, useRef, useState } from 'react'
 import { ArchiveButton } from '@/components/archive-button'
+import { SurveillanceVideo } from '@/components/surveillance-video'
 import {
   advanceDreamcatcherPlayback,
   advanceDreamcatcherSteadyVideo,
@@ -50,7 +51,7 @@ export const DreamcatcherLiveVideo = memo(function DreamcatcherLiveVideo({
     if (!nextUrl) return
     const preload = document.createElement('video')
     preload.muted = true
-    preload.preload = 'auto'
+    preload.preload = 'metadata'
     preload.src = nextUrl
     preload.load()
     return () => { preload.removeAttribute('src'); preload.load() }
@@ -80,7 +81,7 @@ export const DreamcatcherLiveVideo = memo(function DreamcatcherLiveVideo({
       data-reconnecting={reconnectingPhase === phase ? 'true' : 'false'}
       data-signal-filter="analog-interference" data-signal-phase={phase}>
       {asset ? (
-        <StateClip key={`${phase}:${asset.assetId}:${synced.sequence}`} url={asset.url}
+        <StateClip key={`${phase}:${asset.assetId}:${synced.sequence}`} url={asset.url} poster={fallbackImage}
           label={label} loop={steady} fallbackImage={fallbackImage}
           onEnded={() => setCursor((current) => advanceDreamcatcherPlayback(current, working, library))} />
       ) : (
@@ -96,8 +97,8 @@ export const DreamcatcherLiveVideo = memo(function DreamcatcherLiveVideo({
   )
 })
 
-function StateClip({ url, label, loop, fallbackImage, onEnded }: {
-  url: string; label: string; loop: boolean; fallbackImage: string; onEnded: () => void
+function StateClip({ url, label, loop, poster, fallbackImage, onEnded }: {
+  url: string; label: string; loop: boolean; poster: string; fallbackImage: string; onEnded: () => void
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [failed, setFailed] = useState(false)
@@ -131,12 +132,10 @@ function StateClip({ url, label, loop, fallbackImage, onEnded }: {
           <span className={playerStyles.unavailable} role="status">VIDEO COULD NOT LOAD</span>
         </>
       ) : (
-        <video key={attempt} ref={videoRef} aria-label={label} autoPlay className={`${styles.liveVideo} ${playerStyles.video}`}
-          loop={loop} muted playsInline preload="auto" src={url}
+        <SurveillanceVideo key={attempt} preset="worlds-b" mediaRef={videoRef} label={label} className={`${styles.liveVideo} ${playerStyles.video}`}
+          loop={loop} poster={poster} src={url}
           onEnded={loop ? undefined : onEnded} onError={() => setFailed(true)}
-          onPlaying={() => setBlocked(false)}>
-          Your browser does not support this video.
-        </video>
+          onPlaying={() => setBlocked(false)} />
       )}
       {!failed && !blocked ? <span className={playerStyles.liveBadge}><span aria-hidden className={playerStyles.liveDot} />LIVE</span> : null}
       {failed || blocked ? <div className={playerStyles.controls}>
