@@ -1,122 +1,99 @@
 'use client'
 
-import { ArchiveButton } from '@/components/archive-button'
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 import type { McFunction, McFunctionStatus } from '@/types/database'
+import { ArchiveSheet } from './archive-sheet'
 import SmartImage from './smart-image'
+import styles from './mc-console-panel.module.css'
 
-const STATUS_META: Record<McFunctionStatus, { label: string; color: string }> = {
-  active:         { label: 'ACTIVE', color: '#20D890' },
-  in_development: { label: 'DEV',    color: '#E35205' },
-  unknown:        { label: '???',    color: 'rgba(245,245,245,0.35)' },
+const WORLDS = [
+  { file: 'meadow', name: 'The quiet meadow', position: '25% center' },
+  { file: 'library', name: 'The forgotten library', position: '85% center' },
+  { file: 'night', name: 'A world after dark', position: 'center' },
+]
+const STATUS: Record<McFunctionStatus, string> = { active: 'Active', in_development: 'In development', unknown: 'Unconfirmed' }
+const DETAILS: Record<string, string> = {
+  'Worlds Detection': 'Tune into signals and observe scenes from parallel worlds.',
+  'Audio Collection': 'Receive sounds from the other side and send sound back.',
+  'Quantum Discharge': 'Send energy into a connected world.',
+  'Inner Voice': 'Attempt to receive the inner voices of intelligent life in other worlds.',
 }
 
-/**
- * Staggered "boot flicker" reveal — once `start` is true, reveals one entry at a
- * time. Returns the index revealed so far (-1 until the scan begins).
- */
-function useFnAnimation(count: number, start: boolean) {
-  const [readyIdx, setReadyIdx] = useState(-1)
+export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
+  const [guideOpen, setGuideOpen] = useState(false)
+  const [frame, setFrame] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const [reducedMotion, setReducedMotion] = useState(true)
+  const stage = useRef<HTMLDivElement>(null)
+  const worldIndex = ((frame % WORLDS.length) + WORLDS.length) % WORLDS.length
+  const world = WORLDS[worldIndex]
 
   useEffect(() => {
-    if (!start) return
-    const timers: ReturnType<typeof setTimeout>[] = []
-    for (let i = 0; i < count; i++) {
-      timers.push(setTimeout(() => setReadyIdx(i), 400 + i * 240))
-    }
-    return () => timers.forEach(clearTimeout)
-  }, [count, start])
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const sync = () => setReducedMotion(preference.matches)
+    sync()
+    preference.addEventListener('change', sync)
+    return () => preference.removeEventListener('change', sync)
+  }, [])
 
-  return { readyIdx }
-}
+  useEffect(() => {
+    if (paused || reducedMotion || guideOpen) return
+    let visible = false
+    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting })
+    if (stage.current) observer.observe(stage.current)
+    const timer = setInterval(() => {
+      if (visible && !document.hidden) setFrame(value => value + 1)
+    }, 6500)
+    return () => { observer.disconnect(); clearInterval(timer) }
+  }, [paused, reducedMotion, guideOpen])
 
-/**
- * Multiverse Console showcase panel: device-desk.png image + CONFIRMED FUNCTIONS.
- * The functions module isn't present at all until the visitor taps the device
- * image — then the whole module slides in and its entries scan in one at a time.
- * Shared by the guest console hero / device archive.
- */
-export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
-  const [started, setStarted] = useState(false)
-  const { readyIdx } = useFnAnimation(mcFunctions.length, started)
+  function move(direction: number) {
+    setPaused(true)
+    setFrame(value => value + direction)
+  }
 
   return (
-    <div className={`mc-console-panel${started ? ' mc-console-panel--started' : ''}`}>
-      <style>{`@keyframes mcScanHint{0%,100%{opacity:0.55}50%{opacity:1}}@keyframes mcModuleIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}`}</style>
-
-      {/* Section divider title — matches the "INTERNAL UPDATES" feed divider */}
-      <div className="mc-console-panel__title">
-        <div className="mc-console-panel__title-line" />
-        <span className="mc-console-panel__title-label">MULTIVERSE CONSOLE</span>
-      </div>
-
-      {/* Content: image only until tapped; the functions module appears after. */}
-      <div className={`mc-console-panel__grid${started ? ' mc-console-panel__grid--split' : ''}`}>
-        {/* Device image — tap to scan */}
-        <ArchiveButton variant="ghost"
-          type="button"
-          onClick={() => setStarted(true)}
-          aria-label={started ? 'Multiverse Console' : 'Tap to scan the device functions'}
-          aria-pressed={started}
-          className="mc-console-panel__media"
-        >
-          <SmartImage src="/assets/device-console.jpg" alt="Multiverse Console" sizes="(min-width: 768px) 600px, 100vw" width={1280} height={1023} preload className="mc-console-panel__image" />
-        </ArchiveButton>
-
-        {/* Confirmed functions — the whole module appears only after the tap */}
-        {started && (
-          <div className="mc-console-panel__functions">
-            {/* Section label */}
-            <div className="mc-console-panel__function-head">
-              CONFIRMED FUNCTIONS
-            </div>
-
-            {/* Function rows — revealed one by one */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              {mcFunctions.length > 0 ? mcFunctions.map((fn, i) => {
-                const meta = STATUS_META[fn.status]
-                const visible = i <= readyIdx
-                return (
-                  <div key={fn.id} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '10px 0', borderBottom: '1px solid #0D1220',
-                    opacity: visible ? 1 : 0,
-                    animation: visible ? 'fnFlicker 0.55s ease-out forwards' : 'none',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{
-                        width: 6, height: 6, borderRadius: '50%',
-                        background: visible ? meta.color : 'rgba(227,82,5,0.28)',
-                        boxShadow: 'none',
-                        flexShrink: 0, display: 'inline-block',
-                        transition: 'background 0.3s, box-shadow 0.3s',
-                      }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', letterSpacing: '0.02em' }}>
-                        {fn.name}
-                      </span>
-                    </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.18em', color: meta.color, opacity: 0.9 }}>
-                      {meta.label}
-                    </span>
-                  </div>
-                )
-              }) : (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #0D1220', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#151E30', flexShrink: 0, display: 'inline-block' }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: '#1A2438' }}>——————————</span>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Footer */}
-            <div style={{ marginTop: '14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: '#283048', letterSpacing: '0.16em', textAlign: 'right' }}>
-              + MORE FUNCTIONS UNDER ACTIVE RESEARCH
+    <section className={styles.panel} aria-label="About the Multiverse Console">
+      <div className={styles.layout}>
+        <header className={styles.heading}>
+          <h2>Multiverse Console</h2>
+          <p className={styles.intro}>This device is an exclusive asset of our Collective — the instrument we use to explore this world.</p>
+          <p className={styles.description}>Tune into parallel worlds. Watch their scenes. Listen and send sound.</p>
+        </header>
+        <div className={styles.viewer}>
+          <div ref={stage} className={styles.device} role="img" aria-label={`Multiverse Console showing ${world.name}`}>
+            <SmartImage src="/assets/console-intro/device.png" alt="" width={1536} height={1024} sizes="(min-width: 768px) 480px, 100vw" preload className={styles.deviceImage} />
+            <div className={styles.screen} aria-hidden="true">
+              {WORLDS.map((item, index) => (
+                <SmartImage key={item.file} src={`/assets/console-intro/${item.file}.webp`} alt="" width={640} height={640} sizes="180px" className={styles.world} style={{ opacity: index === worldIndex ? 1 : 0, objectPosition: item.position }} />
+              ))}
+              {frame !== 0 && !reducedMotion && <span key={frame} className={styles.interference} />}
             </div>
           </div>
-        )}
+          <div className={styles.controls}>
+            <button type="button" onClick={() => move(-1)} aria-label="Previous world"><ChevronLeft size={18} /></button>
+            <span>{world.name}</span>
+            {!reducedMotion && <button type="button" onClick={() => setPaused(value => !value)} aria-label={paused ? 'Play world previews' : 'Pause world previews'}>{paused ? <Play size={16} /> : <Pause size={16} />}</button>}
+            <button type="button" onClick={() => move(1)} aria-label="Next world"><ChevronRight size={18} /></button>
+          </div>
+        </div>
       </div>
-    </div>
+      <button className={styles.guideButton} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog">How the Console works <ArrowRight size={18} aria-hidden /></button>
+      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="How the Console works">
+        <div className={styles.guide}>
+          <p>The Console is our instrument for exploring parallel worlds.</p>
+          <h3>How to explore</h3>
+          <ol className={styles.steps}>
+            <li><h4>Find a signal</h4><p>Turn the dial to search for a parallel world.</p></li>
+            <li><h4>Observe a world</h4><p>Watch the scene through the central circular screen.</p></li>
+            <li><h4>Try to make contact</h4><p>Listen to sounds from the other side and send sound back.</p></li>
+          </ol>
+          <h3>Console capabilities</h3>
+          {mcFunctions.length ? <ul className={styles.functions}>{mcFunctions.map(fn => <li key={fn.id}><div><h4>{fn.name}</h4><span>{STATUS[fn.status]}</span></div>{DETAILS[fn.name] && <p>{DETAILS[fn.name]}</p>}</li>)}</ul> : <p>Capability details are currently unavailable. Please check back soon.</p>}
+          <p className={styles.note}>Each batch records devices detected and found in one place. Follow its field records to learn what has been discovered.</p>
+        </div>
+      </ArchiveSheet>
+    </section>
   )
 }
