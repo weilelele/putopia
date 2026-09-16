@@ -1,4 +1,4 @@
-import type { DeviceBatch, DeviceBatchMedia, DeviceBatchUpdate, DistributionStageStatus } from './device-batches'
+import { DEVICE_BATCH_PHASES, DEVICE_BATCH_STATUS, type DeviceBatch, type DeviceBatchMedia, type DeviceBatchUpdate, type DistributionStageStatus } from './device-batches'
 
 /** Updates are explicit content; legacy reports and media are never imported. */
 export function getDeviceBatchUpdates(batch: Pick<DeviceBatch, 'updates'>): DeviceBatchUpdate[] {
@@ -27,20 +27,12 @@ export function getDeviceBatchMedia(batch: DeviceBatch): DeviceBatchMedia[] {
 }
 
 export function getDeviceBatchProgress(batch: DeviceBatch) {
-  const early = batch.status === 'survey'
-  const searching = early && batch.preparationPhase === 'searching'
-  const phase = (active: boolean): DistributionStageStatus => active ? 'current' : 'completed'
-  const pack = (id: string, index: number) => batch.distributionStages.find((stage) => stage.id === id)
-    ?? batch.distributionStages.filter((stage) => stage.id !== 'console')[index]
-  const consoleStage = batch.distributionStages.find((stage) => stage.id === 'console')
-    ?? batch.distributionStages.find((stage) => /console/i.test(stage.label))
-  return [
-    { label: 'SEARCH', fullLabel: 'Searching', status: phase(searching) },
-    { label: 'PREP', fullLabel: 'Preparing', status: searching ? 'upcoming' as const : phase(early) },
-    { label: 'PACK 1', fullLabel: 'Pack One', status: early ? 'upcoming' as const : pack('pack-one', 0)?.status ?? 'upcoming' },
-    { label: 'PACK 2', fullLabel: 'Pack Two', status: early ? 'upcoming' as const : pack('pack-two', 1)?.status ?? 'upcoming' },
-    { label: 'CONSOLE', fullLabel: 'Console', status: early ? 'upcoming' as const : consoleStage?.status ?? 'upcoming' },
-  ]
+  const current = DEVICE_BATCH_PHASES.indexOf(batch.status)
+  return DEVICE_BATCH_PHASES.map((phase, index) => ({
+    label: DEVICE_BATCH_STATUS[phase].shortLabel,
+    fullLabel: DEVICE_BATCH_STATUS[phase].label,
+    status: (index < current ? 'completed' : index === current ? 'current' : 'upcoming') as DistributionStageStatus,
+  }))
 }
 
 export function isDeviceMediaUrl(value: string) {

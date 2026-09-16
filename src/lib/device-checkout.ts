@@ -1,5 +1,6 @@
 import {
   getBatchRemainingQuantity,
+  canClaimDeviceBatch,
   type DeviceBatch,
 } from '@/lib/device-batches'
 
@@ -95,7 +96,7 @@ export function getDeviceCheckoutExpiration(now = new Date()) {
 export function getDeviceCheckoutDetailsForBatch(
   batch: DeviceBatch,
 ): DeviceCheckoutValidation {
-  if (batch.status !== 'claim_open') {
+  if (!canClaimDeviceBatch(batch.status)) {
     return { ok: false, status: 409, error: 'Claims are not open for this batch' }
   }
   if (!batch.claimPrice) {

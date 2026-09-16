@@ -1,5 +1,7 @@
 import {
   getDeviceBatchTimeZone,
+  readDeviceBatchStatus,
+  deriveDistributionStages,
   type DeviceBatch,
   type DeviceBatchUpdate,
 } from '@/lib/device-batches'
@@ -40,6 +42,8 @@ export function rowToBatch(row: DeviceBatchRow, published = false): DeviceBatch 
 
   return {
     ...content,
+    status: readDeviceBatchStatus(content.status, content.distributionStages),
+    distributionStages: deriveDistributionStages(readDeviceBatchStatus(content.status, content.distributionStages), content.distributionStages ?? []),
     timeZone: getDeviceBatchTimeZone(content),
     claimPrice: published && row.price_amount !== null && row.price_currency
         ? {

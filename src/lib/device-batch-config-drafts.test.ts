@@ -12,7 +12,7 @@ describe('batch configuration drafts', () => {
     const batch = getDeviceBatch('cairo-batch-01')!
     const draft = createBatchConfigDraft(batch)
 
-    expect(draft.status).toBe('claim_open')
+    expect(draft.status).toBe('claiming')
     expect(draft.timeZone).toBe('Africa/Cairo')
     expect(draft.distributionStages).toHaveLength(3)
     expect(draft.distributionStages).not.toBe(batch.distributionStages)
@@ -26,7 +26,7 @@ describe('batch configuration drafts', () => {
     const draft = createBatchConfigDraft(batch)
     expect(
       parseBatchConfigDrafts(JSON.stringify({ [batch.slug]: draft }))[batch.slug]?.status,
-    ).toBe('claim_open')
+    ).toBe('claiming')
 
     expect(
       parseBatchConfigDrafts(
@@ -55,7 +55,7 @@ describe('batch configuration drafts', () => {
       }),
     ).toEqual([
       'Overview fields are required.',
-      'A claim-open Batch requires a price.',
+      'A claimable Batch requires a price.',
       'Every Batch needs at least one complete Pack with contents.',
     ])
   })
@@ -78,14 +78,14 @@ describe('batch configuration drafts', () => {
       }),
     ).toContain('Claimed units must stay between zero and the listing quantity.')
     expect(validateBatchConfigDraft({ ...draft, inventory: undefined })).toContain(
-      'A claim-open Batch requires listing inventory.',
+      'A claimable Batch requires listing inventory.',
     )
     expect(
       validateBatchConfigDraft({
         ...draft,
         inventory: { claimedQuantity: 0, listingQuantity: 0 },
       }),
-    ).toContain('A claim-open Batch requires at least one listed unit.')
+    ).toContain('A claimable Batch requires at least one listed unit.')
   })
 
   it('allows zero inventory before claims open', () => {
@@ -97,7 +97,7 @@ describe('batch configuration drafts', () => {
         ...draft,
         claimPrice: undefined,
         inventory: { claimedQuantity: 0, listingQuantity: 0 },
-        status: 'survey',
+        status: 'searching',
       }),
     ).toEqual([])
   })

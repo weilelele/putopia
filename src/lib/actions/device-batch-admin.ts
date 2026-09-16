@@ -16,7 +16,7 @@ import {
   validateLocalBatchSeed,
   type LocalBatchSeed,
 } from '@/lib/device-batch-seed'
-import type { DeviceBatch } from '@/lib/device-batches'
+import { deriveDistributionStages, type DeviceBatch } from '@/lib/device-batches'
 import type {
   AdminDeviceBatchRecord,
 } from '@/lib/device-batch-repository'
@@ -77,7 +77,8 @@ export async function saveDeviceBatchRecord(input: {
   const validationError = validateBatch(input.batch)
   if (validationError) return { error: validationError }
 
-  let batch = input.batch
+  let batch = { ...input.batch, distributionStages: deriveDistributionStages(input.batch.status, input.batch.distributionStages) }
+  delete (batch as DeviceBatch & { preparationPhase?: unknown }).preparationPhase
   if (batch.lead.profileId) {
     const client = await createClient()
     const { data: lead } = await client.from('voyager_profiles')
@@ -165,7 +166,7 @@ export async function saveDeviceBatchRecord(input: {
         claimed_quantity: input.publish ? inventory.claimedQuantity : 0,
         listing_quantity: input.publish ? inventory.listingQuantity : 0,
         reserved_quantity: 0,
-        device_status: input.publish ? batch.status : 'survey',
+        device_status: input.publish ? batch.status : 'searching',
         price_amount: input.publish ? batch.claimPrice?.amount ?? null : null,
         price_currency: input.publish
           ? batch.claimPrice?.currency.trim().toUpperCase() ?? null

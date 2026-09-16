@@ -2,6 +2,9 @@ import { getDeviceBatchUpdates, isDeviceMediaUrl, EMPTY_DEVICE_UPDATE } from './
 import { isDeviceCameraBinding, type DeviceCameraBinding } from './device-camera'
 import {
   getDeviceBatchTimeZone,
+  DEVICE_BATCH_PHASES,
+  canClaimDeviceBatch,
+  deriveDistributionStages,
   isValidDeviceBatchTimeZone,
   type BatchInventory,
   type BatchPrice,
@@ -14,7 +17,6 @@ import {
 
 export type BatchConfigDraft = {
   updates?: DeviceBatch['updates']
-  preparationPhase?: DeviceBatch['preparationPhase']
   liveCamera?: DeviceCameraBinding
   code: string
   claimPrice?: BatchPrice
@@ -46,12 +48,7 @@ export const EMPTY_BATCH_CONFIG_DRAFTS_SNAPSHOT = '{}'
 const draftListeners = new Set<() => void>()
 let storageListenerAttached = false
 
-const BATCH_STATUSES = new Set<DeviceBatchStatus>([
-  'survey',
-  'claim_open',
-  'distribution',
-  'active',
-])
+const BATCH_STATUSES = new Set<DeviceBatchStatus>(DEVICE_BATCH_PHASES)
 const STAGE_STATUSES = new Set<DistributionStage['status']>([
   'completed',
   'current',
@@ -163,7 +160,6 @@ function isBatchConfigDraft(value: unknown): value is BatchConfigDraft {
     typeof draft.heroCaption === 'string' &&
     (draft.liveCamera === undefined || isDeviceCameraBinding(draft.liveCamera)) &&
     (draft.heroMedia === undefined || isMedia(draft.heroMedia)) &&
-    (draft.preparationPhase === undefined || ['searching', 'preparing'].includes(draft.preparationPhase)) &&
     (draft.updates === undefined || (Array.isArray(draft.updates) && draft.updates.every((update) => typeof update.id === 'string' && isLatestUpdate(update)))) &&
     isLead(draft.lead) &&
     isLatestUpdate(draft.latestUpdate) &&
@@ -178,11 +174,10 @@ export function createBatchConfigDraft(batch: DeviceBatch): BatchConfigDraft {
   const latestUpdate = batch.updates?.[0] ?? EMPTY_DEVICE_UPDATE
   return {
     updates: getDeviceBatchUpdates(batch).map((update) => ({ ...update, media: update.media?.map((item) => ({ ...item })) })),
-    preparationPhase: batch.preparationPhase ?? 'preparing',
     liveCamera: batch.liveCamera ? { ...batch.liveCamera } : undefined,
     code: batch.code,
     claimPrice: batch.claimPrice ? { ...batch.claimPrice } : undefined,
-    distributionStages: batch.distributionStages.map((stage) => ({
+    distributionStages: deriveDistributionStages(batch.status, batch.distributionStages).map((stage) => ({
       ...stage,
       contents: [...stage.contents],
       media: stage.media?.map((item) => ({ ...item })),
@@ -212,10 +207,10 @@ export function createBatchConfigDraft(batch: DeviceBatch): BatchConfigDraft {
 
 export function validateBatchConfigDraft(draft: BatchConfigDraft) {
   const errors: string[] = []
+  if (!BATCH_STATUSES.has(draft.status)) errors.push('Choose a valid batch status.')
   if (draft.liveCamera !== undefined && !isDeviceCameraBinding(draft.liveCamera)) {
     errors.push('Camera requires a title, valid Cosmo channel and Band IDs, and a valid frame fit.')
   }
-  if (draft.preparationPhase !== undefined && !['searching', 'preparing'].includes(draft.preparationPhase)) errors.push('Choose Searching or Preparing.')
   if (draft.updates !== undefined) {
     if (!Array.isArray(draft.updates)) errors.push('Updates must be a list.')
     else {
@@ -232,9 +227,7 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
     }
   }
   const price = draft.claimPrice
-  const currentStageCount = draft.distributionStages.filter(
-    (stage) => stage.status === 'current',
-  ).length
+
 
   if (
     draft.code.trim().length === 0 ||
@@ -255,11 +248,11 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
   if (!isValidDeviceBatchTimeZone(draft.timeZone)) {
     errors.push('Use a valid time zone such as Asia/Tokyo or Europe/London.')
   }
-  if (draft.status === 'claim_open' && !price) {
-    errors.push('A claim-open Batch requires a price.')
+  if (canClaimDeviceBatch(draft.status) && !price) {
+    errors.push('A claimable Batch requires a price.')
   }
-  if (draft.status === 'claim_open' && !draft.inventory) {
-    errors.push('A claim-open Batch requires listing inventory.')
+  if (canClaimDeviceBatch(draft.status) && !draft.inventory) {
+    errors.push('A claimable Batch requires listing inventory.')
   }
   if (
     draft.inventory !== undefined &&
@@ -270,11 +263,11 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
     errors.push('Claimed units must stay between zero and the listing quantity.')
   }
   if (
-    draft.status === 'claim_open' &&
+    canClaimDeviceBatch(draft.status) &&
     draft.inventory !== undefined &&
     draft.inventory.listingQuantity === 0
   ) {
-    errors.push('A claim-open Batch requires at least one listed unit.')
+    errors.push('A claimable Batch requires at least one listed unit.')
   }
   if (
     price !== undefined &&
@@ -294,9 +287,7 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
   ) {
     errors.push('Every Batch needs at least one complete Pack with contents.')
   }
-  if (currentStageCount > 1) {
-    errors.push('Only one Pack can be marked current.')
-  }
+
 
   return errors
 }
@@ -316,7 +307,7 @@ export function normalizeBatchConfigDraft(draft: BatchConfigDraft): BatchConfigD
           description: draft.claimPrice.description.trim(),
         }
       : undefined,
-    distributionStages: draft.distributionStages.map((stage) => ({
+    distributionStages: deriveDistributionStages(draft.status, draft.distributionStages).map((stage) => ({
       ...stage,
       contents: stage.contents.map((item) => item.trim()).filter(Boolean),
       label: stage.label.trim(),

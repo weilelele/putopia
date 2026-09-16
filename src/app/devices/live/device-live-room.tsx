@@ -30,6 +30,8 @@ import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
 import type { DeviceCameraSource } from '@/lib/device-camera'
 import {
   DEVICE_BATCH_STATUS,
+  DEVICE_BATCH_PHASES,
+  canClaimDeviceBatch,
   formatBatchPrice,
   getBatchClaimHref,
   getBatchRemainingQuantity,
@@ -40,13 +42,7 @@ import type { DeviceBatchDiscussionPost } from '@/lib/actions/device-batch-commu
 import type { DeviceConsoleRecord } from '@/lib/actions/orders'
 
 type ContentTab = 'info' | 'updates' | 'discussion'
-type BatchFilter = 'all' | 'following' | 'survey' | 'claim' | 'distributing' | 'active'
-
-function statusDotColor(status: DeviceBatchStatus) {
-  if (status === 'claim_open') return 'var(--color-fault)'
-  if (status === 'survey') return 'var(--color-warn)'
-  return 'var(--color-ok)'
-}
+type BatchFilter = 'all' | 'following' | DeviceBatchStatus
 
 export function DeviceLiveRoom({
   batch,
@@ -70,7 +66,7 @@ export function DeviceLiveRoom({
   const followedBatchSlugs = useFollowedBatchSlugs()
   const [activeTab, setActiveTab] = useSessionPreference<ContentTab>(`mc:view:devices:${batch.slug}:tab`, 'info')
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [filter, setFilter] = useSessionPreference<BatchFilter>('mc:view:devices:filter', 'all')
+  const [filter, setFilter] = useSessionPreference<BatchFilter>('mc:view:devices:filter:v2', 'all')
   const [progressOpen, setProgressOpen] = useState(false)
   const formattedPrice = batch.claimPrice ? formatBatchPrice(batch.claimPrice) : ''
   const priceAmount = formattedPrice.slice(0, formattedPrice.lastIndexOf(' '))
@@ -87,8 +83,7 @@ export function DeviceLiveRoom({
   const filteredBatches = useMemo(() => {
     if (filter === 'all') return batches
     if (filter === 'following') return batches.filter((item) => followedBatchSlugs.includes(item.slug))
-    const status: DeviceBatchStatus = filter === 'claim' ? 'claim_open' : filter === 'distributing' ? 'distribution' : filter
-    return batches.filter((item) => item.status === status)
+    return batches.filter((item) => item.status === filter)
   }, [batches, filter, followedBatchSlugs])
 
   function chooseBatch(slug: string) {
@@ -142,7 +137,7 @@ export function DeviceLiveRoom({
       } />
 
       </div><div className={styles.workspaceDetails}>
-      {(batch.status === 'claim_open' && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
+      {(canClaimDeviceBatch(batch.status) && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
         <div className={styles.paymentHeader}>
           <h2 id="claim-heading">CONSOLE CLAIM</h2>
           {batch.claimPrice ? <div className={styles.paymentPrice}><strong>{priceAmount}</strong><span>{batch.claimPrice.currency.toUpperCase()} / CONSOLE</span></div> : null}
@@ -181,7 +176,7 @@ export function DeviceLiveRoom({
               <div className={styles.progressLabel}><span>CURRENT BATCH PROGRESS</span><span>{currentStage}</span></div>
               <div className={mediaStyles.progress}>
                 {progress.map((step) => (
-                  <div className={styles.progressStep} data-status={step.status} key={step.label}>
+                  <div className={`${styles.progressStep} ${mediaStyles.progressStep}`} aria-current={step.status === 'current' ? 'step' : undefined} data-status={step.status} key={step.label}>
                     <span className={styles.progressBar} />
                     <strong aria-label={step.fullLabel} title={step.fullLabel}>{step.label}</strong>
                   </div>
@@ -258,14 +253,14 @@ export function DeviceLiveRoom({
         <ArchiveSheet open onClose={() => setSheetOpen(false)} title="All device batches" dirty={false} busy={false}>
 
             <div className={styles.filterRow}>
-              {(['all', 'following', 'survey', 'claim', 'distributing', 'active'] as BatchFilter[]).map((item) => (
-                <ArchiveButton variant="secondary" aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => setFilter(item)} type="button">{item.toUpperCase()}</ArchiveButton>
+              {(['all', 'following', ...DEVICE_BATCH_PHASES] as BatchFilter[]).map((item) => (
+                <ArchiveButton variant="secondary" aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => setFilter(item)} type="button">{item === 'all' || item === 'following' ? item.toUpperCase() : DEVICE_BATCH_STATUS[item].label}</ArchiveButton>
               ))}
             </div>
             <div className={styles.sheetList}>
               {filteredBatches.map((item) => (
                 <ArchiveButton variant="secondary" className={styles.sheetRow} key={item.code} onClick={() => chooseBatch(item.slug)} type="button">
-                  <span className={styles.dot} style={{ background: statusDotColor(item.status) }} />
+                  <span className={styles.dot} style={{ background: 'var(--color-nucleus)' }} />
                   <span><strong>{item.name.toUpperCase()}</strong><small>{item.location}</small></span>
                   <span className={styles.sheetStatus}>{item.slug === batch.slug ? 'CURRENT · ' : ''}{DEVICE_BATCH_STATUS[item.status].shortLabel}</span>
                   <ChevronRight aria-hidden size={18} />
