@@ -52,6 +52,7 @@ import {
   submitWorldflowStep,
 } from "@/lib/worldflow-client-api";
 import { buildWorldflowVideoSequence } from "@/lib/worldflow-production";
+import { canEditWorldflowMilestone } from "@/lib/worldflow-progress";
 import {
   shouldSaveWorldflowBeforeMaterialChange,
   type WorldflowMaterialTarget,
@@ -1656,11 +1657,12 @@ export function WorldflowClient({
     );
 
   const stepStatus = statusOf(state, activeStep);
-  const milestoneEditable =
-    isOwner &&
-    activeStep <= selectedSource.current_step &&
-    stepStatus !== "review" &&
-    stepStatus !== "approved";
+  const milestoneEditable = canEditWorldflowMilestone({
+    activeStep,
+    currentStep: selectedSource.current_step,
+    isOwner: Boolean(isOwner),
+    status: stepStatus,
+  });
   const productionEditable = isOwner && selectedSource.current_step >= 5;
   const continuingShotEdit =
     isOwner && activeStep === 3 && selectedSource.current_step >= 5;
@@ -1672,14 +1674,12 @@ export function WorldflowClient({
     isOwner &&
     activeStep <= selectedSource.current_step &&
     !["review", "approved"].includes(stepStatus);
-
-  function beginNewIteration() {
-    updateState((current) => ({
-      ...current,
-      stepStatuses: { ...current.stepStatuses, [String(activeStep)]: "draft" },
-    }));
-    setMessage("本里程碑已重新打开；持续制作内容仍可随时修改");
-  }
+  const approvedEdit = stepStatus === "approved";
+  const editHint = approvedEdit
+    ? "此步骤已通过；修改后直接保存即可，不会重新进入审核流程。"
+    : activeStep >= 5
+      ? "事件、时段与已解锁素材可持续维护；里程碑审核不会锁死内容。"
+      : "修改后请保存；准备好后提交审核。";
 
   function updateEventSystem(
     mutator: (
@@ -2961,12 +2961,7 @@ export function WorldflowClient({
 
       <footer className={styles.actionBar}>
         <span>
-          {message ||
-            (editable
-              ? activeStep >= 5
-                ? "事件、时段与已解锁素材可持续维护；里程碑审核不会锁死内容。"
-                : "修改后请保存；准备好后提交审核。"
-              : "当前内容为只读。")}
+          {message || (editable ? editHint : "当前内容为只读。")}
         </span>
         <div>
           {isOwner && editable && undoSnapshot ? (
@@ -2980,15 +2975,6 @@ export function WorldflowClient({
               撤回：{undoSnapshot.label}
             </ArchiveButton>
           ) : null}
-          {isOwner && stepStatus === "approved" && activeStep >= 5 ? (
-            <ArchiveButton variant="secondary"
-              className={styles.secondary}
-              onClick={beginNewIteration}
-              type="button"
-            >
-              重新提交本里程碑
-            </ArchiveButton>
-          ) : null}
           {isOwner && editable ? (
             <>
               <ArchiveButton variant="secondary"
@@ -2998,7 +2984,7 @@ export function WorldflowClient({
                 type="button"
               >
                 <Save size={16} />
-                保存草稿
+                {approvedEdit ? "保存修改" : "保存草稿"}
               </ArchiveButton>
               {canSubmitMilestone ? (
                 <ArchiveButton variant="primary"
