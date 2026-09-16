@@ -13,7 +13,7 @@ import { DeviceFieldLead } from '../_components/device-field-lead'
 import mediaStyles from '../_components/device-gallery.module.css'
 import { getDeviceBatchMedia, getDeviceBatchUpdates, getDeviceBatchProgress } from '@/lib/device-batch-content'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   ChevronRight,
   CirclePlay,
@@ -52,7 +52,9 @@ export function DeviceLiveRoom({
   ownedConsole,
   camera,
   onSelectBatch,
+  introduction,
 }: {
+  introduction?: ReactNode
   onSelectBatch: (slug: string) => void
   batch: DeviceBatch
   batches: DeviceBatch[]
@@ -95,9 +97,15 @@ export function DeviceLiveRoom({
   return (
     <main className={`main ${styles.page}`} data-route-scroll>{!isRoot && <BackLink href="/devices" label="Devices" />}
       {isRoot ? <><h1 className="sr-only">Devices</h1><RootBrandHeader><ArchiveButton variant="ghost" className={styles.archiveLink} onClick={() => setSheetOpen(true)}>ARCHIVE <ChevronRight aria-hidden size={16} /></ArchiveButton></RootBrandHeader></> : (<header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
-        <h1 className={isRoot ? 'sr-only' : undefined}>DEVICES</h1>
+        <h1 className="sr-only">DEVICES</h1>
         <ArchiveButton variant="ghost" className={styles.archiveLink} onClick={() => setSheetOpen(true)}>ARCHIVE <ChevronRight aria-hidden size={16} /></ArchiveButton>
       </header>)}
+
+      {introduction}
+      <section className={styles.discoveryIntro} aria-label="Device discoveries">
+        <h2>Found Around the World</h2>
+        <p>Each batch records a group of devices detected and found in one place.</p>
+      </section>
 
       <nav className={styles.objectNav} aria-label="Device batches">
         <div className={styles.objectTabs} role="tablist">

@@ -1,0 +1,33 @@
+.panel { margin-block: var(--s-4) var(--s-5); color: var(--color-star); font-family: var(--font-mono); text-align: left; }
+.layout { display: grid; gap: var(--s-3); }
+.heading h2 { margin: 0 0 var(--s-3); font-size: var(--fs-h3); font-weight: 700; line-height: 1.25; }
+.intro, .description { margin: 0; font-size: var(--fs-body); line-height: 1.5; }
+.description { margin-top: var(--s-2); color: var(--color-star-dim); }
+.viewer { min-width: 0; width: 100%; max-width: 480px; margin-inline: auto; }
+.device { position: relative; aspect-ratio: 3 / 2; }
+.deviceImage { display: block; width: 100%; height: auto; }
+.screen { position: absolute; left: 34.3%; top: 18.4%; width: 31.8%; aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: var(--color-deep); isolation: isolate; }
+.world { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* User-approved screen-only transition; the surrounding interface remains static. */
+.interference { position: absolute; inset: 0; border-block: 2px solid var(--color-star); animation: signal-shift 280ms steps(2, end) both; pointer-events: none; }
+@keyframes signal-shift { 0% { transform: translateY(-70%); background: transparent; } 30% { transform: translate(8%, -15%); background: rgb(245 245 245 / 12%); } 65% { transform: translate(-8%, 30%); background: transparent; } 100% { transform: translateY(110%); opacity: 0; } }
+.controls { display: flex; align-items: center; justify-content: center; gap: var(--s-1); color: var(--color-star-dim); }
+.controls span { flex: 1; font-size: var(--fs-caption); text-align: center; }
+.controls button, .guideButton { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; border: 0; background: transparent; color: var(--color-star); font: inherit; cursor: pointer; }
+.controls button:hover { color: var(--color-nucleus); }
+.guideButton { justify-content: space-between; gap: var(--s-3); width: 100%; margin-top: var(--s-3); padding: var(--s-3) 0; border-block: 1px solid var(--bd-faint); color: var(--color-nucleus); font-size: var(--fs-body); text-align: left; }
+.controls button:focus-visible, .guideButton:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.guide { text-align: left; font-family: var(--font-mono); }
+.guide h3 { font-size: var(--fs-title); margin: var(--s-5) 0 var(--s-3); }
+.guide h4 { font-size: var(--fs-body); margin: 0; }
+.guide p { font-size: var(--fs-body); line-height: 1.5; margin: var(--s-2) 0; color: var(--color-star-dim); }
+.steps { padding-left: var(--s-5); }
+.steps li { padding: var(--s-2) 0; }
+.steps li::marker { color: var(--color-nucleus); }
+.functions { list-style: none; padding: 0; margin: 0; }
+.functions li { padding-block: var(--s-3); border-bottom: 1px solid var(--bd-faint); }
+.functions li > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s-2); }
+.functions span { color: var(--color-star-dim); font-size: var(--fs-caption); }
+.guide .note { margin-top: var(--s-5); }
+@media (min-width: 768px) { .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: var(--s-5); } }
+@media (prefers-reduced-motion: reduce) { .interference { display: none; animation: none; } }

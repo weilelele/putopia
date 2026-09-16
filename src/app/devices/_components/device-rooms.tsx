@@ -1,3 +1,5 @@
+import { getMcFunctions } from '@/lib/actions/mc-functions'
+import { McConsolePanel } from '@/components/mc-console-panel'
 import { getDeviceBatchDiscussion } from '@/lib/actions/device-batch-community'
 import { getMyDeviceConsoles } from '@/lib/actions/orders'
 import { getDeviceCameraSource } from '@/lib/device-camera-source'
@@ -8,9 +10,10 @@ export async function DeviceRooms({ batches, initialSlug }: {
   batches: DeviceBatch[]
   initialSlug: string
 }) {
-  const [discussions, consoles] = await Promise.all([
+  const [discussions, consoles, mcFunctions] = await Promise.all([
     Promise.all(batches.map((batch) => getDeviceBatchDiscussion(batch.slug))),
     getMyDeviceConsoles(),
+    getMcFunctions(),
   ])
   const rooms = batches.map((batch, index) => ({
     batch,
@@ -20,5 +23,5 @@ export async function DeviceRooms({ batches, initialSlug }: {
     ownedConsole: consoles.find((console) => console.order.device_batch_slug === batch.slug) ?? null,
   }))
 
-  return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} />
+  return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} introduction={<McConsolePanel mcFunctions={mcFunctions} />} />
 }

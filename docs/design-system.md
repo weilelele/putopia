@@ -317,3 +317,7 @@ Archive 系列组件和 `/ui-kit` 已按 2.3 更新。原 Golden examples 已退
 五个一级 Tab 使用统一的内容结构骨架。点击后立即高亮目标 Tab，底栏或侧栏不消失；数据未准备完成时显示一级紧凑品牌区、`RETRIEVING ARCHIVE`、三段导航或数字占位、主内容占位和三条列表占位。Dashboard / Voyagers 使用数字结构，Devices / Worlds 使用媒体结构，Intel 使用集合结构。骨架保持静态深蓝表面与细分隔线，不使用空白帧、扫光、虚构百分比或重复 Tab 名称。已有缓存时保留真实内容并后台更新。
 
 启动动画在手机端将字标控制在可用宽度的 82%、最大 520px；下方原图形 Logo 固定为 48px 宽并保持原比例，与字标间隔 24px。网页与原生使用同一比例；完整动画结束后另停留 3 秒才进入 Dashboard。
+
+### Device introduction · 2026-09-16
+
+User-approved exception: the Console introduction may auto-cycle world images inside its central circular screen with a brief screen-only glitch at transitions. Keep the housing and surrounding UI still; provide pause/manual controls and honor reduced motion. Device has no repeated visible page title. The introduction leads into “Found Around the World”; “How the Console works” opens the shared accessible sheet.

@@ -1633,3 +1633,7 @@
 .materialPreviewMedia { position: relative; width: 100%; aspect-ratio: 4 / 3; }
 .materialPreviewMedia img, .materialPreviewMedia video { width: 100%; height: 100%; object-fit: contain; }
 .materialPreview figcaption { margin-top: var(--s-3); font-size: var(--fs-body); line-height: 1.5; overflow-wrap: anywhere; }
+
+.discoveryIntro { margin-bottom: var(--s-4); }
+.discoveryIntro h2 { font-size: var(--fs-title); line-height: 1.3; margin: 0 0 var(--s-2); }
+.discoveryIntro p { font-size: var(--fs-body); line-height: 1.5; color: var(--color-star-dim); margin: 0; }
