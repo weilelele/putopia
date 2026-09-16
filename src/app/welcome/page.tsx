@@ -18,7 +18,8 @@ export default function WelcomePage() {
   }, [enter, playbackComplete])
   return <main className="startup-screen" data-playback={playbackComplete ? 'complete' : 'playing'} role="button" tabIndex={0} aria-label="Enter Dashboard" onClick={enter} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); enter() } }}>
     <div className="startup-wordmark"><FlipWordmark maxWidth={520} fill={0.82} playbackRate={2} replayable={false} onPlaybackComplete={animationFinished} /></div>
-    <Image className="startup-symbol" src="/assets/vi-icon.png" alt="" width={881} height={492} priority />
-    <p>Tap anywhere to enter</p>
+    <Image className="startup-symbol" src="/assets/vi-icon.png" alt="" width={881} height={492} sizes="140px" priority />
+    <p className="startup-tagline">We own devices looking into parallel worlds.</p>
+    <p className="startup-hint">Tap anywhere to enter</p>
   </main>
 }

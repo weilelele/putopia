@@ -4251,8 +4251,9 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .pilot-login-page .pilot-login-form { gap: 24px; }
 
 .startup-screen { gap: 24px; }
-.startup-symbol { width: 48px; height: auto; flex-shrink: 0; pointer-events: none; }
-.startup-screen > p { position: absolute; bottom: max(36px, env(safe-area-inset-bottom)); margin: 0; }
+.startup-symbol { width: 140px; height: auto; flex-shrink: 0; pointer-events: none; }
+.startup-screen > .startup-tagline { max-width: 460px; margin: 0; text-align: center; font-family: var(--font-mono); font-size: var(--fs-body); line-height: 1.55; color: var(--color-star); }
+.startup-screen > .startup-hint { position: absolute; bottom: max(36px, env(safe-area-inset-bottom)); margin: 0; }
 
 /* Primary tab transition: content-shaped, static, and shared by all five tabs. */
 .primary-tab-loading__content {
