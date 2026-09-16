@@ -1,3 +1,4 @@
+import { canClaimDeviceBatch } from '@/lib/device-batches'
 import { notFound, redirect } from 'next/navigation'
 import { DeviceClaimClient } from '../_components/device-claim-client'
 import { getPublicDeviceBatch } from '@/lib/device-batch-repository'
@@ -15,6 +16,7 @@ export default async function ClaimPage({
   const batch = await getPublicDeviceBatch(slug)
 
   if (!batch) notFound()
+  if (!canClaimDeviceBatch(batch.status)) redirect(`/devices/batches/${batch.slug}`)
 
   return <DeviceClaimClient batch={batch} />
 }

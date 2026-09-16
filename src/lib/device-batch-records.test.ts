@@ -59,7 +59,7 @@ describe('production-only Device Library', () => {
     const entry = toDeviceLibraryEntry(published)
     expect(entry.href).toBe('/devices/batches/cairo-batch-01')
     expect(entry.current_user_id).toBeNull()
-    expect(entry.status).toBe('claim_open')
+    expect(entry.status).toBe('claiming')
     expect(entry.description).toBe(published.summary)
   })
 })

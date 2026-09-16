@@ -59,11 +59,12 @@ describe('device update content', () => {
     expect(errors).toContain('Updates need unique IDs and valid content.')
   })
 
-  it('separates searching and preparing without marking missing packs complete', () => {
-    expect(getDeviceBatchProgress(batch).map((step) => step.label)).toEqual(['SEARCH', 'PREP', 'PACK 1', 'PACK 2', 'CONSOLE'])
-    const searching = { ...batch, status: 'survey' as const, preparationPhase: 'searching' as const }
-    expect(getDeviceBatchProgress(searching).map((step) => step.status)).toEqual(['current', 'upcoming', 'upcoming', 'upcoming', 'upcoming'])
-    expect(getDeviceBatchProgress({ ...searching, preparationPhase: 'preparing' }).map((step) => step.status)).toEqual(['completed', 'current', 'upcoming', 'upcoming', 'upcoming'])
-    expect(getDeviceBatchProgress({ ...batch, distributionStages: [batch.distributionStages[2]] }).map((step) => step.status)).toEqual(['completed', 'completed', 'upcoming', 'upcoming', 'upcoming'])
+  it('derives all five steps from the single batch status', () => {
+    const phases = ['searching', 'claiming', 'pack_one', 'pack_two', 'console'] as const
+    for (const [current, status] of phases.entries()) {
+      const progress = getDeviceBatchProgress({ ...batch, status, distributionStages: [] })
+      expect(progress.map((step) => step.label)).toEqual(['SEARCH', 'CLAIM', 'PACK 1', 'PACK 2', 'CONSOLE'])
+      expect(progress.map((step) => step.status)).toEqual(phases.map((_, index) => index < current ? 'completed' : index === current ? 'current' : 'upcoming'))
+    }
   })
 })

@@ -73,7 +73,6 @@ export function createDeviceBatchFromSeed(seed: LocalBatchSeed): DeviceBatch {
 
   return {
     updates: [],
-    preparationPhase: 'searching',
     archiveStages: [],
     code: normalized.code,
     distributionStages: [
@@ -113,7 +112,7 @@ export function createDeviceBatchFromSeed(seed: LocalBatchSeed): DeviceBatch {
     name: normalized.name,
     nextMilestone: 'Publish first field report',
     slug: normalized.slug,
-    status: 'survey',
+    status: 'searching',
     statusLine: 'Initial field record pending',
     summary: normalized.summary,
     timeZone: normalized.timeZone,

@@ -43,8 +43,6 @@ export function ConsolePackages({ batch }: { batch: DeviceBatch }) {
   if (!count) return null
   return <>
     <div className={styles.overview}>
-      <h3>{count === 3 ? 'THREE PACKAGES.' : `${count} ${count === 1 ? 'PACKAGE' : 'PACKAGES'}.`}</h3>
-      <p>Unfold the experience, step by step.</p>
       <ArchiveButton ref={trigger} variant="ghost" className={styles.explore} onClick={() => setOpen(true)} aria-haspopup="dialog">
         EXPLORE THE PACKAGES <ArrowRight aria-hidden size={20} />
       </ArchiveButton>
