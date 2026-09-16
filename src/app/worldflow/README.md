@@ -14,6 +14,9 @@ an older Worldflow branch or add a rewrite to the legacy prototype.
   architect review, and persistent step feedback. Every signed-in creator
   (including architects) can create and add feedback; only architects can
   remove feedback from the active workspace.
+- Approved steps remain editable by their creator. Saving later corrections
+  preserves the approved status and unlocked progress, so those edits do not
+  enter review again.
 - `src/app/api/worldflow/cosmo-assets/route.ts`: search Cosmo channels by name or
   frequency, select a Band, and list image/video candidates.
 - `src/app/api/worldflow/assets/link/route.ts`: associate one existing cloud asset
