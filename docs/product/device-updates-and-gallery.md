@@ -8,7 +8,7 @@
 - The admin shows the complete published snapshot separately from the working list. Published reports can be opened, edited or marked for removal; states distinguish Published, Unpublished Changes, Draft and Removal Pending. Saving a draft does not alter the published list. Publishing applies the entire working list.
 - The gallery deduplicates attachments by media kind and URL. Live camera (when configured) or primary image is first, then report attachments. Material Records opens the selected attachment in that gallery.
 - `lead.profileId` references an Architect or Voyager. New batches require this selection; legacy name-only records remain readable until an editor assigns a real member. Saving validates the role and copies the profile's public name, avatar and bio. The frontend opens the existing profile quick view.
-- `preparationPhase` is `searching` or `preparing` while status is `survey`. Existing records default to preparing; new batches start searching. The five visible labels are SEARCH → PREP → PACK 1 → PACK 2 → CONSOLE; accessible labels retain Searching, Preparing, Pack One, Pack Two and Console. Pack/Console states continue to use actual distribution stages.
+- `status` is the only batch phase: searching → claiming → pack_one → pack_two → console. Searching blocks claim navigation, checkout and new inventory reservations. Claiming and later phases accept paid claims with valid price and remaining inventory. The editor exposes one dropdown; Pack detail statuses are derived. The progress rail uses SEARCH → CLAIM → PACK 1 → PACK 2 → CONSOLE and a single orange highlight.
 
 ## Deployment
 
@@ -19,3 +19,9 @@ Apply `supabase/schema_v70.sql` before using file uploads. It creates the privat
 ## Verification
 
 Pure tests cover no legacy imports, empty-list deletion, published/draft separation, attachment deduplication/removal, persistence round trips, unsafe URLs, duplicate report IDs and early-stage progression. Browser checks at 390×844 cover fixed device tabs, gallery switching, video selection, adding/editing reports and adding an image URL. Test content was local only; no database writes, uploads or follower notifications were sent.
+
+## Unified status rollout
+
+Apply `supabase/schema_v74.sql` before deploying the unified editor. It extends the database status constraint and reservation gate without changing existing batches, prices, inventory, orders or publication snapshots. Legacy stored values remain readable during deployment; Survey maps to Searching, Claim Open to Claiming, Distribution to its current Pack, Active to Console. Every new save uses the canonical five-state model. Migration applied to production on 2026-09-16.
+
+The package entry contains only the EXPLORE THE PACKAGES button. Its detail sheet keeps the package descriptions.

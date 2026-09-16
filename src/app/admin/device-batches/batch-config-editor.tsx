@@ -37,6 +37,7 @@ import {
 } from '@/lib/device-batch-config-drafts'
 import {
   DEVICE_BATCH_STATUS,
+  deriveDistributionStages,
   DEVICE_BATCH_TIME_ZONE_OPTIONS,
   formatBatchPrice,
   type BatchInventory,
@@ -152,7 +153,8 @@ export function BatchConfigEditor({
 
   function updateDraft(patch: Partial<BatchConfigDraft>) {
     if (!draft) return
-    replaceDraft({ ...draft, ...patch })
+    const next = { ...draft, ...patch }
+    replaceDraft({ ...next, distributionStages: deriveDistributionStages(next.status, next.distributionStages) })
   }
 
   function updatePrice(field: keyof BatchPrice, value: number | string) {
@@ -225,7 +227,7 @@ export function BatchConfigEditor({
 
   function updateStage(
     id: string,
-    field: 'contents' | 'label' | 'status' | 'summary' | 'window',
+    field: 'contents' | 'label' | 'summary' | 'window',
     value: string,
   ) {
     if (!draft) return
@@ -578,7 +580,7 @@ export function BatchConfigEditor({
               </ArchiveField>
             </div>
             <div className={styles.threeColumnGrid}>
-              <ArchiveField htmlFor="batch-status" label="STATUS">
+              <ArchiveField htmlFor="batch-status" label="BATCH STATUS">
                 <ArchiveSelect
                   id="batch-status"
                   onChange={(event) =>
@@ -592,6 +594,7 @@ export function BatchConfigEditor({
                     </option>
                   ))}
                 </ArchiveSelect>
+                <p>Controls progress and paid claims. Searching is display-only; Claiming and later stages accept claims while stock remains.</p>
               </ArchiveField>
               <ArchiveField htmlFor="batch-time-zone" label="TIME ZONE">
                 <ArchiveInput
@@ -684,12 +687,6 @@ export function BatchConfigEditor({
               />
             </ArchiveField>
             <p>Gallery images and videos are managed in Updates.</p>
-            <ArchiveField htmlFor="batch-preparation" label="EARLY STAGE">
-              <ArchiveSelect id="batch-preparation" value={draft.preparationPhase ?? 'preparing'} onChange={(event) => updateDraft({ preparationPhase: event.target.value as 'searching' | 'preparing' })}>
-                <option value="searching">SEARCHING</option><option value="preparing">PREPARING</option>
-              </ArchiveSelect>
-              <p>Applies while the Batch is under survey. Pack and Console progress follow the distribution stages.</p>
-            </ArchiveField>
             <ArchiveField htmlFor="batch-lead-profile" label="FIELD LEAD">
               <ArchiveSelect id="batch-lead-profile" value={draft.lead.profileId ?? ''} onChange={(event) => {
                 const member = members.find((item) => item.id === event.target.value)
@@ -881,19 +878,7 @@ export function BatchConfigEditor({
                         value={stage.window}
                       />
                     </ArchiveField>
-                    <ArchiveField htmlFor={`${stage.id}-status`} label="PACK STATUS">
-                      <ArchiveSelect
-                        id={`${stage.id}-status`}
-                        onChange={(event) =>
-                          updateStage(stage.id, 'status', event.target.value)
-                        }
-                        value={stage.status}
-                      >
-                        <option value="upcoming">UPCOMING</option>
-                        <option value="current">CURRENT</option>
-                        <option value="completed">COMPLETED</option>
-                      </ArchiveSelect>
-                    </ArchiveField>
+                    <div><span>STATUS</span><p>{stage.status.toUpperCase()}</p><small>Follows the batch status in Overview.</small></div>
                   </div>
                   <ArchiveField htmlFor={`${stage.id}-summary`} label="SUMMARY">
                     <ArchiveTextarea

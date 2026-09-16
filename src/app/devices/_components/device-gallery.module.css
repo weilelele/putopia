@@ -14,3 +14,7 @@
 .updateBody { white-space: pre-wrap; }
 .progress { display: grid; grid-template-columns: repeat(5, minmax(56px, 1fr)); gap: var(--s-1); overflow-x: auto; }
 @media (min-width: 768px) { .frame { aspect-ratio: 16 / 9; } }
+
+.progress .progressStep[data-status='completed'] span, .progress .progressStep[data-status='current'] span { background: var(--color-nucleus); }
+.progress .progressStep[data-status='completed'] strong, .progress .progressStep[data-status='current'] strong { color: var(--color-nucleus); }
+.progress .progressStep[data-status='current'] strong { font-weight: 700; }

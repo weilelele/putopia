@@ -1,5 +1,7 @@
 'use client'
 
+import { canClaimDeviceBatch } from '@/lib/device-batches'
+
 import { Suspense, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -189,7 +191,7 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         </div>
 
         <ArchiveButton
-          disabled={status === 'claiming' || !claimPrice || batch.status !== 'claim_open'}
+          disabled={status === 'claiming' || !claimPrice || !canClaimDeviceBatch(batch.status)}
           fullWidth
           onClick={handleClaim}
         >

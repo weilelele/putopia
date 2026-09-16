@@ -1,6 +1,6 @@
 import type { DeviceCameraBinding } from './device-camera'
 
-export type DeviceBatchStatus = 'survey' | 'claim_open' | 'distribution' | 'active'
+export type DeviceBatchStatus = 'searching' | 'claiming' | 'pack_one' | 'pack_two' | 'console'
 export type DistributionStageStatus = 'completed' | 'current' | 'upcoming'
 
 export type DeviceBatchLead = {
@@ -68,7 +68,6 @@ export type BatchInventory = {
 
 export type DeviceBatch = {
   updates?: DeviceBatchUpdate[]
-  preparationPhase?: 'searching' | 'preparing'
   liveCamera?: DeviceCameraBinding
   slug: string
   code: string
@@ -109,10 +108,11 @@ export const DEVICE_BATCH_STATUS: Record<
   DeviceBatchStatus,
   { label: string; shortLabel: string }
 > = {
-  survey: { label: 'UNDER SURVEY', shortLabel: 'SURVEY' },
-  claim_open: { label: 'CLAIM OPEN', shortLabel: 'CLAIM' },
-  distribution: { label: 'DISTRIBUTION IN PROGRESS', shortLabel: 'DISTRIBUTING' },
-  active: { label: 'ACTIVE IN FIELD', shortLabel: 'ACTIVE' },
+  searching: { label: 'SEARCHING', shortLabel: 'SEARCH' },
+  claiming: { label: 'CLAIMING', shortLabel: 'CLAIM' },
+  pack_one: { label: 'PACK 1', shortLabel: 'PACK 1' },
+  pack_two: { label: 'PACK 2', shortLabel: 'PACK 2' },
+  console: { label: 'CONSOLE', shortLabel: 'CONSOLE' },
 }
 
 export const DEVICE_BATCH_TIME_ZONE_OPTIONS = [
@@ -199,7 +199,7 @@ export function formatBatchPrice(price: BatchPrice) {
 }
 
 export function getBatchClaimHref(batch: DeviceBatch) {
-  if (!batch.claimHref) return undefined
+  if (!canClaimDeviceBatch(batch.status) || !batch.claimHref) return undefined
 
   const params = new URLSearchParams({ batch: batch.slug })
   return `${batch.claimHref}?${params.toString()}`
@@ -216,4 +216,37 @@ export function getBatchAvailability(batch: DeviceBatch) {
 export function getBatchRemainingQuantity(batch: DeviceBatch) {
   if (!batch.inventory) return undefined
   return Math.max(batch.inventory.listingQuantity - batch.inventory.claimedQuantity, 0)
+}
+
+export const DEVICE_BATCH_PHASES = ['searching', 'claiming', 'pack_one', 'pack_two', 'console'] as const
+
+export function canClaimDeviceBatch(status: DeviceBatchStatus): boolean {
+  return DEVICE_BATCH_PHASES.includes(status) && status !== 'searching'
+}
+
+/** Read old stored records without turning an unopened batch into a sale. */
+export function readDeviceBatchStatus(status: unknown, stages: DistributionStage[] = []): DeviceBatchStatus {
+  if (DEVICE_BATCH_PHASES.includes(status as DeviceBatchStatus)) return status as DeviceBatchStatus
+  if (status === 'claim_open') return 'claiming'
+  if (status === 'active') return 'console'
+  if (status === 'distribution') {
+    const current = stages.find((stage) => stage.status === 'current')
+    if (current?.id === 'console' || /console/i.test(current?.label ?? '')) return 'console'
+    if (current?.id === 'pack-two' || current === stages[1]) return 'pack_two'
+    return 'pack_one'
+  }
+  return 'searching'
+}
+
+/** Pack details inherit the batch phase; they never control it. */
+export function deriveDistributionStages(status: DeviceBatchStatus, stages: DistributionStage[]): DistributionStage[] {
+  const current = DEVICE_BATCH_PHASES.indexOf(status)
+  let packIndex = 0
+  return stages.map((stage) => {
+    const index = stage.id === 'console' || /console/i.test(stage.label) ? 4
+      : stage.id === 'pack-one' ? (packIndex++, 2)
+      : stage.id === 'pack-two' ? (packIndex++, 3)
+      : packIndex < 2 ? 2 + packIndex++ : 5 + packIndex++
+    return { ...stage, status: index < current ? 'completed' : index === current ? 'current' : 'upcoming' }
+  })
 }

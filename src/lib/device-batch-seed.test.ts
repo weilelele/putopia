@@ -39,7 +39,7 @@ describe('device batch draft seeds', () => {
   it('turns a seed into an editable survey Batch', () => {
     const batch = createDeviceBatchFromSeed(seed)
 
-    expect(batch.status).toBe('survey')
+    expect(batch.status).toBe('searching')
     expect(batch.distributionStages).toHaveLength(1)
     expect(batch.distributionStages[0].contents).toEqual(['Multiverse Console'])
     expect(batch.lead.initials).toBe('IV')
