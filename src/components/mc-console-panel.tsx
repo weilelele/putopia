@@ -1,98 +1,106 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
-import type { McFunction, McFunctionStatus } from '@/types/database'
+import { Check, Plus, HelpCircle } from 'lucide-react'
+import type { McFunction } from '@/types/database'
 import { ArchiveSheet } from './archive-sheet'
 import SmartImage from './smart-image'
 import styles from './mc-console-panel.module.css'
 
 const WORLDS = [
-  { file: 'meadow', name: 'The quiet meadow', position: '25% center' },
-  { file: 'library', name: 'The forgotten library', position: '85% center' },
-  { file: 'night', name: 'A world after dark', position: 'center' },
+  { file: 'library', position: '85% center' },
+  { file: 'meadow', position: '0% center' },
+  { file: 'night', position: 'center' },
 ]
-const STATUS: Record<McFunctionStatus, string> = { active: 'Active', in_development: 'In development', unknown: 'Unconfirmed' }
 const DETAILS: Record<string, string> = {
-  'Worlds Detection': 'Tune into signals and observe scenes from parallel worlds.',
-  'Audio Collection': 'Receive sounds from the other side and send sound back.',
-  'Quantum Discharge': 'Send energy into a connected world.',
-  'Inner Voice': 'Attempt to receive the inner voices of intelligent life in other worlds.',
+  'Worlds Detection': 'Observe parallel worlds.',
+  'Audio Collection': 'Receive and send sound.',
+}
+
+/** Procedural signal noise, confined to the physical screen. */
+function SignalSnow({ animated }: { animated: boolean }) {
+  const canvas = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    const context = canvas.current?.getContext('2d')
+    if (!context) return
+    const pixels = context.createImageData(180, 180)
+    const draw = () => {
+      for (let i = 0; i < pixels.data.length; i += 4) {
+        const tone = 35 + Math.floor(Math.random() * 180)
+        pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = tone
+        pixels.data[i + 3] = 255
+      }
+      context.putImageData(pixels, 0, 0)
+    }
+    draw()
+    if (!animated) return
+    const timer = setInterval(draw, 120)
+    return () => clearInterval(timer)
+  }, [animated])
+  return <canvas ref={canvas} width={180} height={180} className={styles.snow} aria-hidden="true" />
 }
 
 export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
   const [guideOpen, setGuideOpen] = useState(false)
   const [frame, setFrame] = useState(0)
-  const [paused, setPaused] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(true)
+  const [visible, setVisible] = useState(false)
+  const [foreground, setForeground] = useState(true)
   const stage = useRef<HTMLDivElement>(null)
-  const worldIndex = ((frame % WORLDS.length) + WORLDS.length) % WORLDS.length
-  const world = WORLDS[worldIndex]
+  const snow = frame % 2 === 0
+  const worldIndex = Math.floor(frame / 2) % WORLDS.length
+  const running = visible && foreground && !guideOpen && !reducedMotion
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
     const sync = () => setReducedMotion(preference.matches)
+    const visibility = () => setForeground(!document.hidden)
     sync()
+    visibility()
     preference.addEventListener('change', sync)
-    return () => preference.removeEventListener('change', sync)
+    document.addEventListener('visibilitychange', visibility)
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))
+    if (stage.current) observer.observe(stage.current)
+    return () => {
+      observer.disconnect()
+      preference.removeEventListener('change', sync)
+      document.removeEventListener('visibilitychange', visibility)
+    }
   }, [])
 
   useEffect(() => {
-    if (paused || reducedMotion || guideOpen) return
-    let visible = false
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting })
-    if (stage.current) observer.observe(stage.current)
-    const timer = setInterval(() => {
-      if (visible && !document.hidden) setFrame(value => value + 1)
-    }, 6500)
-    return () => { observer.disconnect(); clearInterval(timer) }
-  }, [paused, reducedMotion, guideOpen])
+    if (!running) return
+    const timer = setTimeout(() => setFrame(value => (value + 1) % (WORLDS.length * 2)), snow ? 1400 : 6500)
+    return () => clearTimeout(timer)
+  }, [frame, snow, running])
 
-  function move(direction: number) {
-    setPaused(true)
-    setFrame(value => value + direction)
-  }
+  const groups = [
+    { title: 'Confirmed', functions: mcFunctions.filter(fn => fn.status === 'active'), confirmed: true },
+    { title: 'Unconfirmed', functions: mcFunctions.filter(fn => fn.status !== 'active'), confirmed: false },
+  ]
 
   return (
     <section className={styles.panel} aria-label="About the Multiverse Console">
-      <div className={styles.layout}>
-        <header className={styles.heading}>
-          <h2>Multiverse Console</h2>
-          <p className={styles.intro}>This device is an exclusive asset of our Collective — the instrument we use to explore this world.</p>
-          <p className={styles.description}>Tune into parallel worlds. Watch their scenes. Listen and send sound.</p>
-        </header>
-        <div className={styles.viewer}>
-          <div ref={stage} className={styles.device} role="img" aria-label={`Multiverse Console showing ${world.name}`}>
-            <SmartImage src="/assets/console-intro/device.png" alt="" width={1536} height={1024} sizes="(min-width: 768px) 480px, 100vw" preload className={styles.deviceImage} />
-            <div className={styles.screen} aria-hidden="true">
-              {WORLDS.map((item, index) => (
-                <SmartImage key={item.file} src={`/assets/console-intro/${item.file}.webp`} alt="" width={640} height={640} sizes="180px" className={styles.world} style={{ opacity: index === worldIndex ? 1 : 0, objectPosition: item.position }} />
-              ))}
-              {frame !== 0 && !reducedMotion && <span key={frame} className={styles.interference} />}
-            </div>
-          </div>
-          <div className={styles.controls}>
-            <button type="button" onClick={() => move(-1)} aria-label="Previous world"><ChevronLeft size={18} /></button>
-            <span>{world.name}</span>
-            {!reducedMotion && <button type="button" onClick={() => setPaused(value => !value)} aria-label={paused ? 'Play world previews' : 'Pause world previews'}>{paused ? <Play size={16} /> : <Pause size={16} />}</button>}
-            <button type="button" onClick={() => move(1)} aria-label="Next world"><ChevronRight size={18} /></button>
-          </div>
+      <header className={styles.heading}>
+        <h2>Multiverse<br />Console</h2>
+        <p>Our collective&apos;s exclusive instrument for exploring parallel worlds.</p>
+      </header>
+      <div ref={stage} className={styles.device} role="img" aria-label="Multiverse Console in an archival workshop, receiving signals from parallel worlds">
+        <SmartImage src="/assets/console-intro/scene.webp" alt="" width={1536} height={864} sizes="(min-width: 768px) 960px, 100vw" preload className={styles.deviceImage} />
+        <div className={styles.screen} aria-hidden="true">
+          {WORLDS.map((world, index) => <SmartImage key={world.file} src={`/assets/console-intro/${world.file}.webp`} alt="" width={640} height={640} sizes="(min-width: 768px) 320px, 130px" className={styles.world} style={{ opacity: !snow && index === worldIndex ? 1 : 0, objectPosition: world.position }} />)}
+          {snow && <SignalSnow animated={running} />}
         </div>
       </div>
-      <button className={styles.guideButton} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog">How the Console works <ArrowRight size={18} aria-hidden /></button>
-      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="How the Console works">
-        <div className={styles.guide}>
-          <p>The Console is our instrument for exploring parallel worlds.</p>
-          <h3>How to explore</h3>
-          <ol className={styles.steps}>
-            <li><h4>Find a signal</h4><p>Turn the dial to search for a parallel world.</p></li>
-            <li><h4>Observe a world</h4><p>Watch the scene through the central circular screen.</p></li>
-            <li><h4>Try to make contact</h4><p>Listen to sounds from the other side and send sound back.</p></li>
-          </ol>
-          <h3>Console capabilities</h3>
-          {mcFunctions.length ? <ul className={styles.functions}>{mcFunctions.map(fn => <li key={fn.id}><div><h4>{fn.name}</h4><span>{STATUS[fn.status]}</span></div>{DETAILS[fn.name] && <p>{DETAILS[fn.name]}</p>}</li>)}</ul> : <p>Capability details are currently unavailable. Please check back soon.</p>}
-          <p className={styles.note}>Each batch records devices detected and found in one place. Follow its field records to learn what has been discovered.</p>
-        </div>
+      <button className={styles.guideButton} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog">Explore the function <Plus size={20} aria-hidden /></button>
+      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="Console functions" className={styles.functionModal}>
+        {mcFunctions.length ? groups.map(group => <section className={styles.group} key={group.title} aria-label={group.title}>
+          <h3>{group.title}</h3>
+          {group.functions.length ? <ul>{group.functions.map(fn => <li key={fn.id}>
+            {group.confirmed ? <span className={styles.confirmedIcon}><Check size={19} aria-hidden /></span> : <HelpCircle className={styles.unknownIcon} size={32} aria-hidden />}
+            <div><h4>{fn.name}</h4><p>{group.confirmed ? (DETAILS[fn.name] || 'Confirmed capability.') : fn.status === 'in_development' ? 'In development' : 'Unconfirmed'}</p></div>
+          </li>)}</ul> : <p>No functions recorded in this category.</p>}
+        </section>) : <p>Function details are currently unavailable.</p>}
       </ArchiveSheet>
     </section>
   )
