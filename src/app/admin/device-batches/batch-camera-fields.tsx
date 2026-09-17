@@ -7,7 +7,7 @@ import styles from './batch-config-editor.module.css'
 
 export function BatchCameraFields({ value, onChange }: { value?: DeviceCameraBinding; onChange: (value: DeviceCameraBinding | undefined) => void }) {
   return <div className={styles.formCard}>
-    <h3>Scheduled camera</h3>
+    <h3>Live stream</h3>
     <p>Link an existing published Cosmo Band. Scheduling and playback stay in Cosmo; historical media stays in Info.</p>
     <ArchiveField htmlFor="batch-camera-enabled" label="CAMERA SOURCE">
       <ArchiveSelect id="batch-camera-enabled" value={value ? 'cosmo' : 'none'} onChange={(event) => onChange(event.target.value === 'cosmo' ? { provider: 'cosmo', channelId: '', bandId: '', title: '', fit: 'contain' } : undefined)}>
@@ -15,7 +15,8 @@ export function BatchCameraFields({ value, onChange }: { value?: DeviceCameraBin
       </ArchiveSelect>
     </ArchiveField>
     {value ? <>
-      <ArchiveField htmlFor="batch-camera-title" label="CAMERA TITLE"><ArchiveInput id="batch-camera-title" maxLength={120} value={value.title} onChange={(event) => onChange({ ...value, title: event.target.value })} /></ArchiveField>
+      <ArchiveField htmlFor="batch-camera-title" label="LIVE NAME"><ArchiveInput id="batch-camera-title" placeholder="Kyoto Live" maxLength={120} value={value.title} onChange={(event) => onChange({ ...value, title: event.target.value })} /></ArchiveField>
+      <p>The live name appears in the gallery. Enter the Channel ID and Band ID from the stream you want to use.</p>
       <div className={styles.threeColumnGrid}>
         <ArchiveField htmlFor="batch-camera-channel" label="COSMO CHANNEL ID"><ArchiveInput id="batch-camera-channel" value={value.channelId} onChange={(event) => onChange({ ...value, channelId: event.target.value.trim() })} /></ArchiveField>
         <ArchiveField htmlFor="batch-camera-band" label="COSMO BAND ID"><ArchiveInput id="batch-camera-band" value={value.bandId} onChange={(event) => onChange({ ...value, bandId: event.target.value.trim() })} /></ArchiveField>

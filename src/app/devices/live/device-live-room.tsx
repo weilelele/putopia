@@ -138,7 +138,7 @@ export function DeviceLiveRoom({
       </nav>
 
       <div className={styles.workspace}><div className={styles.workspaceMedia}>
-      <DeviceGallery primaryLabel={camera ? 'LIVE' : 'COVER'} media={materialRecords} selected={selectedMedia} onSelect={selectMedia} primary={
+      <DeviceGallery primaryLabel={camera ? camera.binding.title : 'COVER'} media={materialRecords} selected={selectedMedia} onSelect={selectMedia} primary={
         camera ? <CosmoCameraEmbed source={camera} location={batch.location} />
           : batch.image ? <div className={mediaStyles.frame}><Image src={batch.image} alt={batch.imageAlt} fill sizes="(max-width: 767px) 100vw, 1000px" unoptimized /></div>
             : <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}><span>{batch.name}</span></LiveFeedPlaceholder>
@@ -203,7 +203,7 @@ export function DeviceLiveRoom({
               <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3><span>{materialRecords.length} ITEM{materialRecords.length === 1 ? '' : 'S'}</span></div>
               <div className={styles.mediaList}>
                 {materialRecords.map((item, index) => (
-                  <button className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button" onClick={() => { selectMedia(index + 1); document.getElementById('device-gallery')?.scrollIntoView({ behavior: 'auto', block: 'start' }) }}>
+                  <button className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button" onClick={() => selectMedia(index + 1)}>
                     <span className={styles.mediaThumb}>
                       {item.kind === 'image' || item.poster ? <Image alt="" fill sizes="100px" src={item.poster ?? item.src} unoptimized /> : null}
                       {item.kind === 'video' ? <span className={styles.videoBadge}><CirclePlay aria-hidden size={16} /></span> : null}
