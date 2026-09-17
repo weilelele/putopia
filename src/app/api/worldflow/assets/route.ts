@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { asWorldflowAdmin } from '@/lib/worldflow-database'
+import { worldflowMaterialMutationError } from '@/lib/worldflow-material-access'
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024
 const MEDIA_TYPES: Record<string, { extension: string; mediaType: 'image' | 'video' }> = {
@@ -48,9 +49,6 @@ export async function POST(request: Request) {
   if (world.owner_id !== user.id) {
     return NextResponse.json({ error: '只有创建者可以添加素材。' }, { status: 403 })
   }
-  if (step > world.current_step) {
-    return NextResponse.json({ error: '请先完成当前步骤的审核。' }, { status: 409 })
-  }
   const state = world.workflow_state as {
     shots?: Array<{ id: string }>
     characters?: Array<{ id: string }>
@@ -64,9 +62,13 @@ export async function POST(request: Request) {
     >
     stepStatuses?: Record<string, string>
   }
-  const continuingShotEdit = step === 3 && world.current_step >= 5
-  if (step < 5 && !continuingShotEdit && ['review', 'approved'].includes(state.stepStatuses?.[String(step)] ?? '')) {
-    return NextResponse.json({ error: '当前步骤为只读状态，不能添加素材。' }, { status: 409 })
+  const mutationError = worldflowMaterialMutationError({
+    currentStep: world.current_step,
+    status: state.stepStatuses?.[String(step)] ?? 'draft',
+    step,
+  })
+  if (mutationError) {
+    return NextResponse.json({ error: mutationError }, { status: 409 })
   }
   if (step === 6 && media.mediaType !== 'image') {
     return NextResponse.json({ error: '图片素材步骤只接受图片。' }, { status: 415 })

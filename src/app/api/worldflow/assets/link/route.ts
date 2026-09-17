@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getBandAssetById } from '@/lib/cosmo'
 import { asWorldflowAdmin } from '@/lib/worldflow-database'
+import { worldflowMaterialMutationError } from '@/lib/worldflow-material-access'
 
 type LinkRequest = {
   characterId?: string | null
@@ -39,8 +40,6 @@ export async function POST(request: Request) {
   const { data: world } = await admin.from('worldflow_worlds').select('current_step, owner_id, workflow_state').eq('id', worldId).maybeSingle()
   if (!world) return NextResponse.json({ error: '找不到这个世界。' }, { status: 404 })
   if (world.owner_id !== user.id) return NextResponse.json({ error: '只有创建者可以关联素材。' }, { status: 403 })
-  if (step > world.current_step) return NextResponse.json({ error: '请先完成当前步骤的审核。' }, { status: 409 })
-
   const state = world.workflow_state as {
     shots?: Array<{ id: string }>
     characters?: Array<{ id: string }>
@@ -54,9 +53,13 @@ export async function POST(request: Request) {
     >
     stepStatuses?: Record<string, string>
   }
-  const continuingShotEdit = step === 3 && world.current_step >= 5
-  if (step < 5 && !continuingShotEdit && ['review', 'approved'].includes(state.stepStatuses?.[String(step)] ?? '')) {
-    return NextResponse.json({ error: '当前步骤为只读状态，不能关联素材。' }, { status: 409 })
+  const mutationError = worldflowMaterialMutationError({
+    currentStep: world.current_step,
+    status: state.stepStatuses?.[String(step)] ?? 'draft',
+    step,
+  })
+  if (mutationError) {
+    return NextResponse.json({ error: mutationError }, { status: 409 })
   }
   if (shotId && !state.shots?.some((shot) => shot.id === shotId)) return NextResponse.json({ error: '镜头无效。' }, { status: 400 })
   if (characterId && !state.characters?.some((character) => character.id === characterId)) return NextResponse.json({ error: '角色无效。' }, { status: 400 })
