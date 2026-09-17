@@ -96,9 +96,9 @@ export function DeviceLiveRoom({
 
   return (
     <main className={`main ${styles.page}`} data-route-scroll>{!isRoot && <BackLink href="/devices" label="Devices" />}
-      {isRoot ? <><h1 className="sr-only">Devices</h1><RootBrandHeader><ArchiveButton variant="ghost" className={styles.archiveLink} onClick={() => setSheetOpen(true)}>ARCHIVE <ChevronRight aria-hidden size={16} /></ArchiveButton></RootBrandHeader></> : (<header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
+      {isRoot ? <><h1 className="sr-only">Devices</h1><RootBrandHeader /></> : (<header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
         <h1 className="sr-only">DEVICES</h1>
-        <ArchiveButton variant="ghost" className={styles.archiveLink} onClick={() => setSheetOpen(true)}>ARCHIVE <ChevronRight aria-hidden size={16} /></ArchiveButton>
+
       </header>)}
 
       {introduction}

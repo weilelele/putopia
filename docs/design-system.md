@@ -320,4 +320,8 @@ Archive 系列组件和 `/ui-kit` 已按 2.3 更新。原 Golden examples 已退
 
 ### Device introduction · 2026-09-16
 
-User-approved exception: the Console introduction may auto-cycle world images inside its central circular screen with a brief screen-only glitch at transitions. Keep the housing and surrounding UI still; provide pause/manual controls and honor reduced motion. Device has no repeated visible page title. The introduction leads into “Found Around the World”; “How the Console works” opens the shared accessible sheet.
+User-approved exception: the Console introduction may auto-cycle world images inside its central circular screen with a brief screen-only glitch at transitions. Keep the housing and surrounding UI still; honor reduced motion. Device has no repeated visible page title. The introduction leads into “Found Around the World”; “Explore the function” opens a centered accessible modal with Confirmed and Unconfirmed groups.
+
+### Device scene · 2026-09-18
+
+User-approved revision: keep the device in a compact archival workshop photograph (16:9), with automatic static-to-world transitions confined to the circular screen and no world-selection controls. Reduced motion shows a still frame; offscreen/hidden/modal-open states suspend playback. The heading breaks after Multiverse. Copy: “Our collective's exclusive instrument for exploring parallel worlds.” Remove the Devices Archive top action; keep batch navigation and ALL unchanged.
