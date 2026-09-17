@@ -20,14 +20,17 @@ export function DeviceGallery({ primary, primaryLabel, media, selected, onSelect
 }) {
   const item = selected > 0 ? media[selected - 1] : null
   return <section className={styles.gallery} aria-label="Device media" id="device-gallery">
+    <div className={styles.stage}>
+      {/* Keep the live iframe mounted so returning to it does not reconnect. */}
+      <div className={styles.primary} data-hidden={!!item} aria-hidden={!!item} inert={!!item}>{primary}</div>
     {item ? <>
       <div className={styles.frame}>
         {item.kind === 'video'
           ? <video key={item.src} src={item.src} poster={item.poster} controls playsInline preload="metadata" />
           : <DeviceMediaImage src={item.src} alt={item.alt || item.caption} fill sizes="(max-width: 767px) 100vw, 1000px" unoptimized />}
       </div>
-      {item.caption ? <p className={styles.caption}>{item.caption}</p> : null}
-    </> : primary}
+    </> : null}
+    </div>
     {media.length ? <div className={styles.rail} aria-label="Choose media">
       <button className={styles.thumbnail} aria-pressed={!item} type="button" onClick={() => onSelect(0)}>{primaryLabel}</button>
       {media.map((entry, index) => <button className={styles.thumbnail} key={`${entry.kind}:${entry.src}`} type="button" aria-pressed={selected === index + 1} aria-label={entry.caption || `${entry.kind} ${index + 1}`} onClick={() => onSelect(index + 1)}>
