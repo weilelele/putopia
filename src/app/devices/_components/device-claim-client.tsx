@@ -167,18 +167,6 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         </div>
       </section>
 
-      {batch.faq?.length ? (
-        <section className="device-claim-benefits">
-          <ArchiveSectionLabel>BEFORE YOU CLAIM</ArchiveSectionLabel>
-          {batch.faq.map((item) => (
-            <details key={item.question} className="mb-4 font-mono text-sm">
-              <summary>{item.question}</summary>
-              <p className="mt-2 leading-relaxed">{item.answer}</p>
-            </details>
-          ))}
-        </section>
-      ) : null}
-
       {/* Pricing + CTA */}
       <ArchiveCard className="device-claim-price">
         <div className="flex items-baseline gap-3 mb-1">
