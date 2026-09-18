@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>multiverse</string>
-          <string>org.multiverseco.collective</string>
+          <string>org.multiversecollective.app</string>
         </array>
       </dict>
     </array>
