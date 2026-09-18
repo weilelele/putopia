@@ -49,3 +49,7 @@ supabase/.temp/
 top30_active_users.csv
 top30_emails_by_group.txt
 top30_invite_email_drafts.md
+
+# APNs auth keys — never commit
+*.p8
+AuthKey_*.p8

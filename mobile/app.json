@@ -15,8 +15,8 @@
     "icon": "./ios/MultiverseCollective/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "org.multiverseco.collective",
-      "buildNumber": "5",
+      "bundleIdentifier": "org.multiversecollective.app",
+      "buildNumber": "1",
       "entitlements": {
         "aps-environment": "production"
       },

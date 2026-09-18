@@ -35,7 +35,7 @@ import {
 
 const SITE_URL = 'https://www.multiverseco.org'
 const START_URL = `${SITE_URL}/console?source=ios_app`
-const APP_ID = 'org.multiverseco.collective'
+const APP_ID = 'org.multiversecollective.app'
 const PUSH_PREVIEW = process.env.EXPO_PUBLIC_PUSH_PREVIEW === '1'
 const PUSH_SYNC_RETRY_DELAYS = [2_000, 5_000, 15_000, 60_000]
 
