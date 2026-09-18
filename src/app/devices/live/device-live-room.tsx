@@ -1,4 +1,6 @@
 'use client'
+import { DevicePurchaseTerms } from '../_components/device-purchase-terms'
+import { KYOTO_PURCHASE_FAQ } from '@/lib/device-purchase-terms'
 import { ConsolePackages } from './console-packages'
 import { RootBrandHeader } from '@/components/root-brand-header'
 import { ArchiveTabs } from '@/components/archive-tabs'
@@ -154,6 +156,7 @@ export function DeviceLiveRoom({
           <div><span>BATCH TOTAL</span><strong>{batch.inventory?.listingQuantity ?? batch.holders.length}</strong></div>
           <div><span>REMAINING</span><strong>{remaining ?? 0}</strong></div>
         </div>
+        <DevicePurchaseTerms slug={batch.slug} />
         <div className={styles.claimRow}>
           {ownedConsole ? (
             <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => setProgressOpen(true)} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></ArchiveButton>
@@ -223,7 +226,7 @@ export function DeviceLiveRoom({
                 {batch.faq.map((item) => (
                   <details key={item.question} className="mt-4 text-sm">
                     <summary>{item.question}</summary>
-                    <p className="mt-2 leading-relaxed">{item.answer}</p>
+                    <p className="mt-2 leading-relaxed">{batch.slug === 'kyoto-one' ? KYOTO_PURCHASE_FAQ[item.question] ?? item.answer : item.answer}</p>
                   </details>
                 ))}
               </section>

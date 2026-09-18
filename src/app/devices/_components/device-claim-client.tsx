@@ -1,5 +1,6 @@
 'use client'
 
+import { DevicePurchaseTerms } from './device-purchase-terms'
 import { canClaimDeviceBatch } from '@/lib/device-batches'
 
 import { Suspense, useState } from 'react'
@@ -177,6 +178,8 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         <div className="text-xs font-mono mb-5" style={{ color: 'rgba(245,245,245,0.3)' }}>
           {claimPrice?.description ?? 'Pricing will be confirmed before claims open.'}
         </div>
+
+        <DevicePurchaseTerms slug={batch.slug} />
 
         <ArchiveButton
           disabled={status === 'claiming' || !claimPrice || !canClaimDeviceBatch(batch.status)}
