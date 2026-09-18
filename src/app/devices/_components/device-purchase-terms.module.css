@@ -1,0 +1,26 @@
+.terms {
+  display: grid;
+  gap: var(--s-3);
+  margin-block: var(--s-4);
+  padding-inline: var(--s-4);
+  color: var(--color-star);
+  font-size: var(--fs-label);
+  line-height: 1.6;
+  text-align: left;
+}
+
+.terms p { margin: 0; }
+.terms a {
+  color: var(--color-nucleus);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.terms a:focus-visible {
+  outline: 2px solid var(--color-nucleus);
+  outline-offset: 3px;
+}
+.terms span { color: var(--color-star-dim); }
