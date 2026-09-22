@@ -20,10 +20,6 @@
     "controls": 1
   },
   {
-    "file": "src/app/admin/create-news/page.tsx",
-    "controls": 10
-  },
-  {
     "file": "src/app/admin/device-batches/batch-camera-fields.tsx",
     "controls": 5
   },

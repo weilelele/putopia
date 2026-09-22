@@ -21,13 +21,6 @@
     "verification": "static checks; flow verification pending"
   },
   {
-    "route": "/admin/create-news",
-    "file": "src/app/admin/create-news/page.tsx",
-    "surface": "page",
-    "migration": "page and shared components",
-    "verification": "static checks; flow verification pending"
-  },
-  {
     "route": "/admin/device-batches/blueprints",
     "file": "src/app/admin/device-batches/blueprints/page.tsx",
     "surface": "page",

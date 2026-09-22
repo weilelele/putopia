@@ -19,6 +19,7 @@ import { ArchiveCard } from '@/components/archive-card'
 import Link from 'next/link'
 import { createClientDataCache } from '@/lib/client-data-cache'
 import { PrimaryTabLoading } from '@/components/primary-tab-loading'
+import { NoticeStatus } from '@/components/notice-status'
 
 type FilterTab = 'all' | 'public' | 'classified'
 
@@ -60,11 +61,13 @@ function IntelCard({ entry, commentCount = 0, lead = false }: { entry: IntelWith
   if (!lead) return <article className={`intel-recent-story${entry.images?.length ? " intel-recent-story--media" : ""}`}>
     <Link href={href} className="intel-recent-row"><div>{metadata}<h3>{entry.title}</h3></div><ArrowRight aria-hidden size={22} /></Link>
     <PublisherIdentity name={entry.publisher_name ?? 'Multiverse Collective'} avatar={entry.publisher_avatar_url} />
+    <NoticeStatus entry={entry} />
     {!!entry.images?.length && <Link href={href} className="intel-story-media" aria-label={`Open images: ${entry.title}`}><NewsMedia images={entry.images.slice(0,1)} title={entry.title} /></Link>}
     <Link href={href} className="intel-comments"><MessageSquare aria-hidden size={14} />{commentCount} comments</Link>
   </article>
   return <article className="intel-lead">
     {metadata}<h2>{entry.title}</h2>
+    <NoticeStatus entry={entry} />
     <PublisherIdentity name={entry.publisher_name ?? 'Multiverse Collective'} avatar={entry.publisher_avatar_url} />
     <p className="intel-summary">{entry.content}</p>
     {!!entry.images?.length && <Link href={href} className="intel-story-media" aria-label={`Open images: ${entry.title}`}><NewsMedia images={entry.images} title={entry.title} /></Link>}

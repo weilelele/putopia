@@ -15,7 +15,6 @@
 | `/admin/worlds` | 世界 CRUD（颜色/渐变/生命周期流转） | 02 |
 | `/admin/votes` | 议题 CRUD | 04 |
 | `/admin/intel` | 情报 CRUD（公开/机密） | 05 |
-| `/admin/create-news` | AI 辅助生成情报草稿 | 05 |
 | `/admin/stories` | 日志审核（发布/撤稿/编辑/删除） | 06 |
 | `/admin/devices` | 设备 CRUD + 图片 + 分配（=升级 voyager） | 07 |
 | `/admin/mc-config` | 控制台功能面板配置 | 08 |
@@ -32,7 +31,6 @@
   （真实操作者记在隐藏的 `posted_by_id`）。
 - **手动升级**：`provisionVoyagerByEmail`（按邮箱升 voyager）、审核 application=approved 直接升级。
 - **手动建单/发货**：`createOrderManually`（线下/赠送/测试），后台录承运商+单号驱动追踪邮件。
-- **AI 辅助**：情报草稿生成（`news-gen.ts`）。
 - **测验评分**：`answer_key` 绝不下发前端，服务端 `submitQuizAnswers` 评分，pass_mark=4；
   通过写 `task_quiz_at`。
 
@@ -52,7 +50,7 @@
 
 ## 6. 当前状态与缺口
 
-- ✅ 各模块后台工具、代发、手动升级/建单、AI 草稿、测验评分均已上线。
+- ✅ 各模块后台工具、代发、手动升级/建单、测验评分均已上线。
 - 🟡 后台高度依赖人工节奏（信号解谜纯手动出题）——运营成本是核心约束。
 - ⬜ 缺少统一的"运营仪表盘"（跨模块的待办/健康度/转化总览）；分析散在 `/admin/analytics` + PostHog。
 

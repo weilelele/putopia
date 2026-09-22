@@ -9,6 +9,7 @@ import { MemberPicker, type MemberValue } from '@/components/member-picker'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveField } from '@/components/archive-field'
+import { toLocalDateTime, validateNoticeTiming } from '@/lib/intel-notice'
 
 type Props = {
   onClose: () => void
@@ -21,6 +22,7 @@ type F = {
   title: string
   content: string
   timestamp: string
+  expires_at: string
   tag: IntelTag
   classified: boolean
   publisher_name: string
@@ -38,7 +40,7 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
 
   const [form, setForm] = useState<F>({
     id: '', title: '', content: '',
-    timestamp: new Date().toISOString().slice(0, 16),
+    timestamp: toLocalDateTime(new Date().toISOString()), expires_at: '',
     tag: 'NOTICE', classified: false,
     publisher_name: '', publisher_id: null,
   })
@@ -86,6 +88,8 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
   const handleSave = async () => {
     if (saving || uncertain) return
     if (!form.title.trim()) { setError('Title is required.'); return }
+    const validation = validateNoticeTiming(form)
+    if (validation) { setError(validation); return }
     const id = form.id.trim() || autoId
     setSaving(true); setUploading(pendingFiles.length > 0); setError(null)
 
@@ -101,6 +105,7 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
       content:        form.content.trim(),
       timestamp:      new Date(form.timestamp).toISOString(),
       tag:            form.tag,
+      expires_at:     form.tag === 'NOTICE' ? new Date(form.expires_at).toISOString() : null,
       classified:     form.classified,
       images:         newUrls,
       publisher_name: form.publisher_name.trim() || null,
@@ -118,26 +123,33 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
   }
 
   return (
-    <ArchiveSheet open title="Publish Intel" onClose={onClose} busy={saving} dirty={!uncertain && (!!form.title || !!form.content || !!form.publisher_name || pendingFiles.length > 0)}>
+    <ArchiveSheet open title="Publish Intel" onClose={onClose} busy={saving} dirty={!uncertain && (!!form.title || !!form.content || !!form.expires_at || !!form.publisher_name || pendingFiles.length > 0)}>
         {/* Header */}
 
 
-        {/* Row 1: ID / Type / Timestamp */}
-        <div className="archive-modal-grid archive-modal-grid--three">
+        {/* ID and type share a row on wide screens; dates retain full width. */}
+        <div className="archive-modal-grid archive-modal-grid--two">
           <ArchiveField htmlFor="intel-id" label="ID · OPTIONAL">
             <ArchiveInput id="intel-id" value={form.id} onChange={e => set('id', e.target.value)} placeholder={autoId} />
           </ArchiveField>
           <ArchiveField htmlFor="intel-type" label="TYPE">
             <ArchiveSelect id="intel-type" value={form.tag} onChange={e => set('tag', e.target.value as IntelTag)}>
-              <option value="NOTICE">NOTICE — Notice</option>
+              <option value="NOTICE">NOTICE — Task</option>
               <option value="DEVICE">DEVICE — Device</option>
               <option value="ORG">ORG — Organization</option>
             </ArchiveSelect>
           </ArchiveField>
-          <ArchiveField htmlFor="intel-timestamp" label="TIMESTAMP">
-            <ArchiveInput id="intel-timestamp" type="datetime-local" value={form.timestamp} onChange={e => set('timestamp', e.target.value)} />
-          </ArchiveField>
         </div>
+
+        <ArchiveField htmlFor="intel-timestamp" label="TIMESTAMP">
+          <ArchiveInput id="intel-timestamp" type="datetime-local" value={form.timestamp} onChange={e => set('timestamp', e.target.value)} />
+        </ArchiveField>
+
+        {form.tag === 'NOTICE' && (
+          <ArchiveField htmlFor="intel-expires-at" label="TASK EXPIRY *" helpText="Use your local time. At this time the task ends; the notice remains available as history.">
+            <ArchiveInput id="intel-expires-at" type="datetime-local" required value={form.expires_at} onChange={e => set('expires_at', e.target.value)} />
+          </ArchiveField>
+        )}
 
         {/* Title */}
         <ArchiveField htmlFor="intel-title" label="TITLE *">
