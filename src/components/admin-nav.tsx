@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 interface AdminNavItem {
   href: string
   label: string
+  external?: boolean
 }
 
 interface AdminNavProps {
@@ -17,8 +18,21 @@ export function AdminNav({ items }: AdminNavProps) {
 
   return (
     <nav className="admin-archive-nav" aria-label="Administration sections">
-      {items.map(({ href, label }) => {
-        const active = pathname === href || pathname.startsWith(`${href}/`)
+      {items.map(({ href, label, external }) => {
+        const active = !external && (pathname === href || pathname.startsWith(`${href}/`))
+        if (external) {
+          return (
+            <a
+              key={href}
+              href={href}
+              className="admin-tab"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {label} ↗
+            </a>
+          )
+        }
         return (
           <Link
             key={href}
