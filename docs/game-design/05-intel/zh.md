@@ -8,7 +8,7 @@ Intel 是组织的**官方公告 / 世界观叙事载体**——由 Architect �
 
 ## 2. 玩法 / 体验
 
-- Architect 在后台撰写情报：标题、正文、配图、标签 `tag ∈ {NOTICE, DEVICE, ORG}`、是否机密 `classified`。
+- Architect 在 Intel 主页面或后台情报管理撰写情报：标题、正文、配图、标签 `tag ∈ {NOTICE, DEVICE, ORG}`、是否机密 `classified`。
 - 列表与首页"LATEST INTEL"展示卡片（发布者头像/名、日期、标签、评论数）。
 - 详情页可读全文 + 评论讨论（复用 comments，subject_type='intel'）。
 - **阅读追踪**：滚动到底触发 `markIntelRead()`，写 `voyager_profiles.task_intel_at`——
@@ -27,7 +27,7 @@ Intel 是组织的**官方公告 / 世界观叙事载体**——由 Architect �
 
 | 项 | 说明 |
 |---|---|
-| `intel` 表 | id(text)、title、content、images、tag、classified、publisher_id/name、timestamp |
+| `intel` 表 | id(text)、title、content、images、tag、classified、publisher_id/name、timestamp、expires_at |
 | 读 | 公开走缓存 `getPublicIntel`（60s，含发布者头像）；机密走 RLS 的 `getAllIntel` |
 | 写 | Architect（service_role）CRUD；发布发 `intel_published`、更新发 `intel_updated` Status 事件 |
 
@@ -35,9 +35,10 @@ Intel 是组织的**官方公告 / 世界观叙事载体**——由 Architect �
 
 - ✅ 撰写、配图、标签、公开/机密分级、阅读追踪、评论、动态流均已上线。
 - ⬜ 情报与世界/信号的交叉引用较弱（无"本篇情报关联世界 X"的结构化链接）。
-- 🟡 也有 AI 生成新闻草稿的后台工具（`news-gen.ts` / `/admin/create-news`），辅助运营产出。
+
+NOTICE 已改为有截止时间的任务类型；到期后保留历史并标记已结束，旧通知未设截止时间的不视为进行中任务。Device 项目关联待后续实施。详见[任务规则](../../product/intel-notice-tasks.zh.md)。数据库迁移尚待上线。
 
 ## 6. 未来钩子
 
-- 情报作为世界生命周期的"剧情节点"：世界确立时自动生成一篇情报。
+- 情报作为世界生命周期的“剧情节点”，由 Architect 手动发布。
 - 机密情报的解锁与积分/批次挂钩，做内容养成。

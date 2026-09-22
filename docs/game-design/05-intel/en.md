@@ -9,7 +9,7 @@ both the guest-facing "front-page content" and a tiered benefit (classified inte
 
 ## 2. Gameplay / experience
 
-- An Architect writes intel in admin: title, body, images, tag `tag ∈ {NOTICE, DEVICE, ORG}`, classified flag.
+- An Architect writes intel from the Intel page or admin Intel management: title, body, images, tag `tag ∈ {NOTICE, DEVICE, ORG}`, classified flag.
 - The list and the home "LATEST INTEL" block show cards (publisher avatar/name, date, tag, comment count).
 - The detail page shows the full article + comment discussion (reuses comments, subject_type='intel').
 - **Read tracking**: scrolling to the bottom fires `markIntelRead()`, stamping
@@ -28,7 +28,7 @@ both the guest-facing "front-page content" and a tiered benefit (classified inte
 
 | Item | Notes |
 |---|---|
-| `intel` table | id(text), title, content, images, tag, classified, publisher_id/name, timestamp |
+| `intel` table | id(text), title, content, images, tag, classified, publisher_id/name, timestamp, expires_at |
 | Read | public via cached `getPublicIntel` (60s, incl. publisher avatar); classified via RLS `getAllIntel` |
 | Write | Architect (service_role) CRUD; publish posts `intel_published`, update posts `intel_updated` Status events |
 
@@ -36,9 +36,10 @@ both the guest-facing "front-page content" and a tiered benefit (classified inte
 
 - ✅ Authoring, images, tags, public/classified tiers, read tracking, comments, feed are live.
 - ⬜ Cross-referencing between intel and worlds/signals is weak (no structured "this article relates to world X").
-- 🟡 An AI news-draft admin tool also exists (`news-gen.ts` / `/admin/create-news`) to assist ops output.
+
+NOTICE now represents a task with a required expiry. Expired tasks remain readable history; legacy notices without deadlines are not active tasks. Device project linking is deferred. The database migration is pending deployment.
 
 ## 6. Future hooks
 
-- Use intel as "story nodes" of the world lifecycle: auto-generate an article when a world is established.
+- Use intel as "story nodes" of the world lifecycle: Architects manually publish an article when a world is established.
 - Tie classified-intel unlocks to points/batches for content progression.

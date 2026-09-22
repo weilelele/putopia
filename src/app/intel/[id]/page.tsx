@@ -5,6 +5,7 @@ import { BackLink } from '@/components/back-link'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { getIntelById } from '@/lib/actions/intel'
+import { NoticeStatus } from '@/components/notice-status'
 import type { IntelWithAvatar } from '@/types/database'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
@@ -118,6 +119,7 @@ export default function IntelDetailPage() {
             </h1>
 
             {/* Publisher */}
+            <NoticeStatus entry={entry} />
             <PublisherIdentity name={entry.publisher_name ?? 'Multiverse Collective'} avatar={entry.publisher_avatar_url} />
 
             <div className="archive-divider" />

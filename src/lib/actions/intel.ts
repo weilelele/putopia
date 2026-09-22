@@ -4,6 +4,22 @@ import { revalidatePath, unstable_cache } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { IntelInsert, IntelUpdate } from '@/types/database'
 import { logActivity } from './activity-events'
+import { validateNoticeTiming } from '@/lib/intel-notice'
+
+async function requireArchitect() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data: profile } = await supabase.from('voyager_profiles').select('role').eq('id', user.id).maybeSingle()
+  return profile?.role === 'architect' ? user : null
+}
+
+function revalidateIntel(id: string) {
+  revalidatePath('/intel')
+  revalidatePath(`/intel/${id}`)
+  revalidatePath('/admin/intel')
+  revalidatePath('/console')
+}
 
 // Public intel (unclassified) — accessible to all including guests.
 // Enriched with publisher_avatar_url so cards can show the author avatar.
@@ -85,15 +101,19 @@ export async function getIntelById(id: string) {
 }
 
 export async function createIntel(entry: IntelInsert) {
+  const user = await requireArchitect()
+  if (!user) return { error: 'Architect access is required.', data: null }
+  const validation = validateNoticeTiming(entry)
+  if (validation) return { error: validation, data: null }
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('intel')
-    .insert(entry)
+    .insert({ ...entry, created_by: user.id, expires_at: entry.tag === 'NOTICE' ? entry.expires_at : null })
     .select()
     .single()
 
   if (error) return { error: error.message, data: null }
-  revalidatePath('/intel')
+  revalidateIntel(data.id)
 
   logActivity({
     actor_id:    entry.publisher_id ?? null,
@@ -110,18 +130,23 @@ export async function createIntel(entry: IntelInsert) {
 }
 
 export async function updateIntel(id: string, updates: IntelUpdate) {
+  if (!(await requireArchitect())) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
 
   // Fetch current record for snapshot data
-  const { data: existing } = await admin.from('intel').select('title, images, publisher_id, publisher_name').eq('id', id).single()
+  const { data: existing, error: readError } = await admin.from('intel').select('*').eq('id', id).single()
+  if (readError || !existing) return { error: readError?.message ?? 'Intel not found.' }
+  const merged = { ...existing, ...updates }
+  const validation = validateNoticeTiming(merged)
+  if (validation) return { error: validation }
 
   const { error } = await admin
     .from('intel')
-    .update(updates)
+    .update({ ...updates, expires_at: merged.tag === 'NOTICE' ? merged.expires_at : null })
     .eq('id', id)
 
   if (error) return { error: error.message }
-  revalidatePath('/intel')
+  revalidateIntel(id)
 
   logActivity({
     actor_id:    existing?.publisher_id ?? null,
@@ -138,6 +163,7 @@ export async function updateIntel(id: string, updates: IntelUpdate) {
 }
 
 export async function deleteIntel(id: string) {
+  if (!(await requireArchitect())) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
   const { error } = await admin
     .from('intel')
@@ -145,6 +171,6 @@ export async function deleteIntel(id: string) {
     .eq('id', id)
 
   if (error) return { error: error.message }
-  revalidatePath('/intel')
+  revalidateIntel(id)
   return { error: null }
 }

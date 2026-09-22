@@ -112,10 +112,6 @@
     "edits": 1
   },
   {
-    "file": "src/app/admin/create-news/page.tsx",
-    "edits": 8
-  },
-  {
     "file": "src/app/admin/intel/page.tsx",
     "edits": 12
   },

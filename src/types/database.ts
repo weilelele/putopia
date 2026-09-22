@@ -261,6 +261,7 @@ export type Intel = {
   timestamp: string           // ISO timestamp
   tag: IntelTag
   classified: boolean
+  expires_at: string | null   // NOTICE task deadline; null for legacy notices / other tags
   images: string[]            // array of public storage URLs
   publisher_name: string | null
   publisher_id: string | null // references voyager_profiles.id
@@ -270,7 +271,7 @@ export type Intel = {
 
 export type IntelInsert = Omit<Intel, 'created_at'>
 export type IntelUpdate = Partial<Pick<Intel,
-  'title' | 'content' | 'timestamp' | 'tag' | 'classified' |
+  'title' | 'content' | 'timestamp' | 'tag' | 'classified' | 'expires_at' |
   'images' | 'publisher_name' | 'publisher_id'
 >>
 

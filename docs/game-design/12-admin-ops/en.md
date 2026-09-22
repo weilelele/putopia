@@ -16,7 +16,6 @@ behind the scenes and at what cadence content is fed*.
 | `/admin/worlds` | world CRUD (colors/gradient/lifecycle transitions) | 02 |
 | `/admin/votes` | poll CRUD | 04 |
 | `/admin/intel` | intel CRUD (public/classified) | 05 |
-| `/admin/create-news` | AI-assisted intel draft generation | 05 |
 | `/admin/stories` | log review (publish/unpublish/edit/delete) | 06 |
 | `/admin/devices` | device CRUD + images + assignment (=voyager upgrade) | 07 |
 | `/admin/mc-config` | console function-panel config | 08 |
@@ -33,7 +32,6 @@ behind the scenes and at what cadence content is fed*.
   vibe (the real operator is recorded in the hidden `posted_by_id`).
 - **Manual upgrade**: `provisionVoyagerByEmail` (upgrade by email), or approving an application=approved.
 - **Manual order/shipping**: `createOrderManually` (offline/gift/testing); entering carrier+tracking drives tracking email.
-- **AI assist**: intel draft generation (`news-gen.ts`).
 - **Quiz scoring**: `answer_key` is never sent to the client; server-side `submitQuizAnswers` scores it
   (pass_mark=4); passing stamps `task_quiz_at`.
 
@@ -53,7 +51,7 @@ The quiz carries Applicant Task 02 (page `/quiz`):
 
 ## 6. Current status & gaps
 
-- ✅ Per-module admin tools, impersonation, manual upgrade/order, AI drafts, quiz scoring are live.
+- ✅ Per-module admin tools, impersonation, manual upgrade/order, quiz scoring are live.
 - 🟡 Admin relies heavily on manual cadence (signal puzzles are fully hand-authored) — ops cost is a core constraint.
 - ⬜ No unified "ops dashboard" (cross-module todo/health/conversion overview); analytics are scattered across `/admin/analytics` + PostHog.
 

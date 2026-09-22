@@ -76,7 +76,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: '/admin/npcs',        label: 'NPCS' },
         { href: '/admin/orders',      label: 'ORDERS'   },
         { href: '/admin/mc-config',   label: 'MC CONFIG' },
-        { href: '/admin/create-news', label: 'AI NEWS'  },
         { href: '/admin/votes',       label: 'VOTES'    },
         { href: '/admin/quiz',        label: 'QUIZ'     },
         { href: '/admin/signal-tasks', label: 'DISPATCH' },

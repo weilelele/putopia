@@ -10,6 +10,9 @@ import { generateAndSaveFeed, getLatestFeed } from '@/lib/actions/dashboard-feed
 import { createClient } from '@/lib/supabase/client'
 import type { Intel, IntelTag } from '@/types/database'
 import { MemberPicker, type MemberValue } from '@/components/member-picker'
+import { ArchiveField } from '@/components/archive-field'
+import { NoticeStatus } from '@/components/notice-status'
+import { toLocalDateTime, validateNoticeTiming } from '@/lib/intel-notice'
 
 const S = {
   card:  { background: '#151B3A', border: '1px solid rgba(227,82,5,0.16)', padding: '20px', marginBottom: '16px' },
@@ -28,6 +31,7 @@ type F = {
   title: string
   content: string
   timestamp: string
+  expires_at: string
   tag: IntelTag
   classified: boolean
   publisher_name: string
@@ -36,7 +40,7 @@ type F = {
 
 const EMPTY: F = {
   id: '', title: '', content: '',
-  timestamp: new Date().toISOString().slice(0, 16),
+  timestamp: '', expires_at: '',
   tag: 'NOTICE', classified: false,
   publisher_name: '', publisher_id: null,
 }
@@ -95,7 +99,7 @@ export default function IntelAdmin() {
   }
 
   const openNew = () => {
-    setForm({ ...EMPTY, id: '', publisher_name: defaultPublisher })
+    setForm({ ...EMPTY, id: '', timestamp: toLocalDateTime(new Date().toISOString()), publisher_name: defaultPublisher })
     setEditId(null)
     resetImageState()
     setShowForm(true)
@@ -105,7 +109,8 @@ export default function IntelAdmin() {
   const openEdit = (i: Intel) => {
     setForm({
       id: i.id, title: i.title, content: i.content,
-      timestamp: i.timestamp.slice(0, 16), tag: i.tag, classified: i.classified,
+      timestamp: toLocalDateTime(i.timestamp), tag: i.tag, classified: i.classified,
+      expires_at: i.expires_at ? toLocalDateTime(i.expires_at) : '',
       publisher_name: i.publisher_name ?? defaultPublisher,
       publisher_id: i.publisher_id ?? null,
     })
@@ -157,6 +162,8 @@ export default function IntelAdmin() {
   const handleSave = async () => {
     const id = form.id.trim() || nextIntelId(items)
     if (!form.title.trim()) { setMsg({ text: '标题不能为空', ok: false }); return }
+    const validation = validateNoticeTiming(form)
+    if (validation) { setMsg({ text: validation, ok: false }); return }
     setSaving(true); setUploading(true); setMsg(null)
 
     const newUrls = await uploadPendingFiles(id)
@@ -169,6 +176,7 @@ export default function IntelAdmin() {
       content: form.content.trim(),
       timestamp: new Date(form.timestamp).toISOString(),
       tag: form.tag,
+      expires_at: form.tag === 'NOTICE' ? new Date(form.expires_at).toISOString() : null,
       classified: form.classified,
       images: allImages,
       publisher_name: form.publisher_name.trim() || null,
@@ -227,7 +235,7 @@ export default function IntelAdmin() {
                 <tr key={i.id}>
                   <td style={{ ...S.td, color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)' }}>{i.id}</td>
                   <td style={{ ...S.td, color: '#F5F5F5', maxWidth: '240px' }}>{i.title}</td>
-                  <td style={S.td}><span style={{ fontSize: 'var(--fs-caption)', color: TAG_COLOR[i.tag] }}>{i.tag}</span></td>
+                  <td style={S.td}><span style={{ fontSize: 'var(--fs-caption)', color: TAG_COLOR[i.tag] }}>{i.tag}</span><NoticeStatus entry={i} /></td>
                   <td style={S.td}>
                     {i.classified
                       ? <span style={{ fontSize: 'var(--fs-caption)', color: '#E83030' }}>⊘ 机密</span>
@@ -261,7 +269,7 @@ export default function IntelAdmin() {
           </div>
 
           {/* Row 1: ID / Tag / Timestamp */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+          <div className="grid grid-cols-1 gap-3 mb-3 md:grid-cols-3">
             <div>
               <label style={S.label}>ID（留空则自动生成）</label>
               <ArchiveInput style={S.input} value={form.id} onChange={e => set('id', e.target.value)} placeholder={nextIntelId(items)} disabled={!!editId} />
@@ -269,7 +277,7 @@ export default function IntelAdmin() {
             <div>
               <label style={S.label}>类型</label>
               <ArchiveSelect style={S.sel} value={form.tag} onChange={e => set('tag', e.target.value as IntelTag)}>
-                <option value="NOTICE">NOTICE — 通知</option>
+                <option value="NOTICE">NOTICE — 任务</option>
                 <option value="DEVICE">DEVICE — 设备</option>
                 <option value="ORG">ORG — 组织</option>
               </ArchiveSelect>
@@ -279,6 +287,12 @@ export default function IntelAdmin() {
               <ArchiveInput style={S.input} type="datetime-local" value={form.timestamp} onChange={e => set('timestamp', e.target.value)} />
             </div>
           </div>
+
+          {form.tag === 'NOTICE' && (
+            <ArchiveField htmlFor="admin-intel-expires-at" label="任务截止时间 *" helpText="按你所在时区填写。到期后标记已结束，保留为历史任务；旧通知需要补充截止时间才能保存。">
+              <ArchiveInput id="admin-intel-expires-at" type="datetime-local" required value={form.expires_at} onChange={e => set('expires_at', e.target.value)} />
+            </ArchiveField>
+          )}
 
           {/* Title */}
           <div style={{ marginBottom: '12px' }}>
