@@ -37,7 +37,7 @@ both the guest-facing "front-page content" and a tiered benefit (classified inte
 - ✅ Authoring, images, tags, public/classified tiers, read tracking, comments, feed are live.
 - ⬜ Cross-referencing between intel and worlds/signals is weak (no structured "this article relates to world X").
 
-NOTICE now represents a task with a required expiry. Expired tasks remain readable history; legacy notices without deadlines are not active tasks. Device project linking is deferred. The database migration is pending deployment.
+NOTICE now represents a task with a required expiry. Expired tasks remain readable history; legacy notices without deadlines are not active tasks. Device project linking is deferred. The database migration was applied to production on 2026-09-23.
 
 ## 6. Future hooks
 

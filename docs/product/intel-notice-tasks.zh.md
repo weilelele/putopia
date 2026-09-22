@@ -40,4 +40,4 @@ Device 项目应显式选择关联的 NOTICE；有效候选必须同时满足：
 
 先执行 `supabase/schema_v75.sql`，再部署应用。迁移增加可空的 expires_at 和 NOT VALID 约束：旧数据保留，新建/更新记录必须符合截止规则。无历史数据批量更新，无定时数据库写入需求。
 
-本次仅提供迁移文件，尚未应用到生产数据库。
+2026-09-23 已应用到生产数据库 MC Home（oxwfnmcwovxnrvagxzdz），迁移名 intel_notice_task_expiry_v75。字段、约束和索引已核验；18 篇现有情报及 5 篇旧 NOTICE 保留。
