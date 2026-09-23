@@ -12,17 +12,22 @@ export function DeviceMediaImage(props: ImageProps) {
 }
 
 export function DeviceGallery({ primary, primaryLabel, media, selected, onSelect }: {
-  primary: ReactNode
-  primaryLabel: string
+  primary?: ReactNode
+  primaryLabel?: string
   media: DeviceBatchMedia[]
   selected: number
   onSelect: (index: number) => void
 }) {
-  const item = selected > 0 ? media[selected - 1] : null
+  const hasPrimary = primary !== undefined && primary !== null
+  const mediaOffset = hasPrimary ? 1 : 0
+  const itemIndex = selected - mediaOffset
+  const item = itemIndex >= 0 ? media[itemIndex] : null
+  const primarySelected = hasPrimary && selected === 0
+
   return <section className={styles.gallery} aria-label="Device media" id="device-gallery">
     <div className={styles.stage}>
       {/* Keep the live iframe mounted so returning to it does not reconnect. */}
-      <div className={styles.primary} data-hidden={!!item} aria-hidden={!!item} inert={!!item}>{primary}</div>
+      {hasPrimary ? <div className={styles.primary} data-hidden={!primarySelected} aria-hidden={!primarySelected} inert={!primarySelected}>{primary}</div> : null}
     {item ? <>
       <div className={styles.frame}>
         {item.kind === 'video'
@@ -31,9 +36,9 @@ export function DeviceGallery({ primary, primaryLabel, media, selected, onSelect
       </div>
     </> : null}
     </div>
-    {media.length ? <div className={styles.rail} aria-label="Choose media">
-      <button className={styles.thumbnail} aria-pressed={!item} type="button" onClick={() => onSelect(0)}>{primaryLabel}</button>
-      {media.map((entry, index) => <button className={styles.thumbnail} key={`${entry.kind}:${entry.src}`} type="button" aria-pressed={selected === index + 1} aria-label={entry.caption || `${entry.kind} ${index + 1}`} onClick={() => onSelect(index + 1)}>
+    {hasPrimary || media.length ? <div className={styles.rail} aria-label="Choose media">
+      {hasPrimary ? <button className={styles.thumbnail} aria-pressed={primarySelected} type="button" onClick={() => onSelect(0)}>{primaryLabel}</button> : null}
+      {media.map((entry, index) => <button className={styles.thumbnail} key={`${entry.kind}:${entry.src}`} type="button" aria-pressed={selected === index + mediaOffset} aria-label={entry.caption || `${entry.kind} ${index + 1}`} onClick={() => onSelect(index + mediaOffset)}>
         {entry.kind === 'image' || entry.poster ? <DeviceMediaImage src={entry.poster ?? entry.src} alt="" width={80} height={48} unoptimized /> : <span>VIDEO</span>}
         {entry.kind === 'video' ? <span>▶</span> : null}
       </button>)}

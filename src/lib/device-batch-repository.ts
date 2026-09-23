@@ -2,6 +2,7 @@ import 'server-only'
 
 import { createAdminClient } from '@/lib/supabase/server'
 import type { DeviceBatch } from '@/lib/device-batches'
+import { leadFromProfile } from '@/lib/device-lead'
 
 import { getPublishedDeviceUpdates, publishedRowsToBatches, rowToBatch, type DeviceBatchRow, type AdminDeviceBatchRecord } from '@/lib/device-batch-records'
 export type { BatchPublicationStatus, AdminDeviceBatchRecord } from '@/lib/device-batch-records'
@@ -55,6 +56,32 @@ export async function listPublicDeviceBatches(): Promise<DeviceBatch[]> {
     if (error) throw error
     // Only persistent published snapshots are authoritative; never show mocks.
     const batches = publishedRowsToBatches((data ?? []) as DeviceBatchRow[])
+    const profileIds = [...new Set(batches.flatMap(batch => batch.lead.profileId ? [batch.lead.profileId] : []))]
+    const legacyNames = [...new Set(batches.filter(batch => !batch.lead.profileId).map(batch => batch.lead.name))]
+    if (legacyNames.length) {
+      const { data: profiles } = await admin.from('voyager_profiles')
+        .select('id, display_name, role, avatar_url, location, bio')
+        .in('display_name', legacyNames).in('role', ['architect', 'voyager'])
+      for (const batch of batches) {
+        if (batch.lead.profileId) continue
+        const matches = profiles?.filter(profile => profile.display_name === batch.lead.name) ?? []
+        // Legacy snapshots lack a profile ID. Never guess between namesakes.
+        if (matches.length === 1) batch.lead = {
+          ...batch.lead,
+          avatarUrl: matches[0].avatar_url ?? batch.lead.avatarUrl,
+          bio: matches[0].bio || batch.lead.bio,
+        }
+      }
+    }
+    if (profileIds.length) {
+      const { data: profiles } = await admin.from('voyager_profiles')
+        .select('id, display_name, role, avatar_url, location, bio')
+        .in('id', profileIds).in('role', ['architect', 'voyager'])
+      for (const batch of batches) {
+        const profile = profiles?.find(profile => profile.id === batch.lead.profileId)
+        if (profile) batch.lead = { ...leadFromProfile(profile), latestNote: batch.lead.latestNote }
+      }
+    }
     return attachLiveHolderDirectory(admin, batches)
   } catch (error) {
     console.error('[device-batches] published registry unavailable:', error)

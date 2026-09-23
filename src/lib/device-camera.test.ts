@@ -22,6 +22,7 @@ describe('Device camera embedding', () => {
     expect(url.pathname).toBe(`/embed/${camera.channelId}/${camera.bandId}`)
     expect(url.searchParams.get('muted')).toBe('1')
     expect(url.searchParams.get('clock')).toBe('1')
+    expect(new URL(buildCameraEmbedUrl(source, 'https://multiverseco.org', { clock: false })).searchParams.get('clock')).toBe('0')
     expect(url.searchParams.get('controls')).toBe('0')
     expect(url.searchParams.get('parentOrigin')).toBe('https://multiverseco.org')
     expect(url.searchParams.has('t')).toBe(false)

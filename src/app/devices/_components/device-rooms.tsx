@@ -23,5 +23,5 @@ export async function DeviceRooms({ batches, initialSlug }: {
     ownedConsole: consoles.find((console) => console.order.device_batch_slug === batch.slug) ?? null,
   }))
 
-  return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} introduction={<McConsolePanel mcFunctions={mcFunctions} />} />
+  return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} introduction={<McConsolePanel key="console-introduction" mcFunctions={mcFunctions} />} />
 }

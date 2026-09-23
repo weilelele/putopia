@@ -28,4 +28,11 @@ describe('Kyoto One release contract', () => {
     ])
     expect(batch.distributionStages.every((stage) => stage.status === 'upcoming')).toBe(true)
   })
+
+  it('publishes the concise claim FAQ and confirms the antenna in package two', () => {
+    expect(batch.faq).toHaveLength(5)
+    expect(batch.faq?.map((item) => item.question)).not.toContain('What is Kyoto One?')
+    expect(batch.distributionStages[1].contents).toContain('Console antenna')
+    expect(batch.distributionStages[1].summary).not.toMatch(/possible|not confirmed|finalized/i)
+  })
 })
