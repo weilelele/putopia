@@ -4,16 +4,17 @@ import { useState, type ReactNode, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArchiveButton } from '@/components/archive-button'
 import { saveNpc, setNpcDevice, uploadNpcAvatar } from '@/lib/actions/npcs'
-import type { NpcProfileInput } from '@/lib/npc-model'
+import { NPC_ROLE_OPTIONS, type NpcProfileInput } from '@/lib/npc-model'
+import type { UserRole } from '@/types/database'
 import styles from './npcs.module.css'
 
-type Profile = { id: string; display_name: string; bio: string | null; avatar_url: string | null; location: string | null }
+type Profile = { id: string; display_name: string; role: UserRole; bio: string | null; avatar_url: string | null; location: string | null }
 type Batch = { slug: string; name: string; listing_quantity: number; claimed_quantity: number; reserved_quantity: number; allocated_quantity?: number }
 type Unit = { user_id: string | null; batch_slug: string; unit_code: string }
 
 export function NpcEditor({ profile, batches, units }: { profile?: Profile; batches: Batch[]; units: Unit[] }) {
   const router = useRouter()
-  const [input, setInput] = useState<NpcProfileInput>({ displayName: profile?.display_name ?? '', bio: profile?.bio ?? '', avatarUrl: profile?.avatar_url ?? '', location: profile?.location ?? '' })
+  const [input, setInput] = useState<NpcProfileInput>({ displayName: profile?.display_name ?? '', role: profile?.role ?? 'guest', bio: profile?.bio ?? '', avatarUrl: profile?.avatar_url ?? '', location: profile?.location ?? '' })
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [batchSlug, setBatchSlug] = useState('')
@@ -47,6 +48,12 @@ export function NpcEditor({ profile, batches, units }: { profile?: Profile; batc
     <form onSubmit={submit} className={styles.form}>
       <fieldset disabled={busy} className={styles.fields}>
         <NpcField htmlFor={`${prefix}-name`} label="Name"><input id={`${prefix}-name`} required maxLength={80} value={input.displayName} onChange={(e) => setInput({ ...input, displayName: e.target.value })} /></NpcField>
+        <NpcField htmlFor={`${prefix}-role`} label="Identity type">
+          <select id={`${prefix}-role`} value={input.role} onChange={(e) => setInput({ ...input, role: e.target.value as UserRole })}>
+            {NPC_ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          <small className={styles.hint}>Controls how this character is identified. NPC accounts remain managed by architects and cannot sign in.</small>
+        </NpcField>
         <NpcField htmlFor={`${prefix}-bio`} label="Bio"><textarea id={`${prefix}-bio`} maxLength={2000} rows={3} value={input.bio} onChange={(e) => setInput({ ...input, bio: e.target.value })} /></NpcField>
         <NpcField htmlFor={`${prefix}-location`} label="Location"><input id={`${prefix}-location`} maxLength={120} value={input.location} onChange={(e) => setInput({ ...input, location: e.target.value })} /></NpcField>
         <NpcField htmlFor={`${prefix}-avatar`} label="Avatar URL (HTTPS)"><input id={`${prefix}-avatar`} type="url" value={input.avatarUrl} onChange={(e) => setInput({ ...input, avatarUrl: e.target.value })} /></NpcField>

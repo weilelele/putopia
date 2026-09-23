@@ -43,8 +43,11 @@ export async function saveNpc(id: string | null, input: NpcProfileInput) {
       npcId = data.user.id
       created = true
     }
-    const { data, error } = await admin.from('voyager_profiles').update({
-      display_name: input.displayName.trim(), bio: input.bio.trim() || null,
+    // role is administrator-managed and deliberately excluded from the
+    // self-service VoyagerProfileUpdate type.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (admin.from('voyager_profiles') as any).update({
+      display_name: input.displayName.trim(), role: input.role, bio: input.bio.trim() || null,
       avatar_url: input.avatarUrl.trim() || null, location: input.location.trim() || null,
     }).eq('id', npcId).eq('account_kind', 'npc').select('id').single()
     if (error || !data) {

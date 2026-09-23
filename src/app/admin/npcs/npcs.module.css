@@ -7,7 +7,7 @@
 .editor { border-top: 1px solid var(--bd-faint); padding-top: 24px; display: grid; gap: 16px; min-width: 0; }
 .form, .fields, .devices { display: grid; gap: 16px; min-width: 0; }
 .fields { border: 0; padding: 0; margin: 0; }
-.fields input, .fields textarea, .devices select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; padding: 10px; color: var(--color-star); background: var(--color-deep); border: 1px solid var(--color-star-dim); font: inherit; font-size: var(--fs-body); }
+.fields input, .fields textarea, .fields select, .devices select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; padding: 10px; color: var(--color-star); background: var(--color-deep); border: 1px solid var(--color-star-dim); font: inherit; font-size: var(--fs-body); }
 .fields :focus-visible, .devices :focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
 .actions, .unit { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
 .unit { justify-content: space-between; border-bottom: 1px solid var(--bd-faint); padding-bottom: 16px; }
@@ -16,6 +16,7 @@
 
 .field { display: grid; gap: 8px; min-width: 0; }
 .field > label { font-size: var(--fs-label); }
+.hint { color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }
 
 .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--bd-faint); }
 .row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--bd-faint); color: inherit; text-decoration: none; min-height: 76px; }
