@@ -169,6 +169,7 @@ export function CreateIntelModal({ onClose, onCreated, existingItems }: Props) {
         {/* Publisher */}
         <div style={{ marginBottom: '16px' }}>
           <MemberPicker
+            includeNpcs
             label="PUBLISHER"
             value={form.publisher_id ? { id: form.publisher_id, name: form.publisher_name } : null}
             onChange={setPublisher}

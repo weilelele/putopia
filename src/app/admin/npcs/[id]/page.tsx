@@ -13,7 +13,7 @@ export default async function NpcDetailPage({ params }: { params: Promise<{ id: 
   const creating = id === 'new'
   if (!creating && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound()
   const admin = createAdminClient()
-  const profile = creating ? null : await admin.from('voyager_profiles').select('id, display_name, bio, avatar_url, location').eq('account_kind', 'npc').eq('id', id).maybeSingle()
+  const profile = creating ? null : await admin.from('voyager_profiles').select('id, display_name, role, bio, avatar_url, location').eq('account_kind', 'npc').eq('id', id).maybeSingle()
   if (profile?.error) throw new Error('Could not load NPC profile')
   if (!creating && !profile?.data) notFound()
   const [batches, units] = await Promise.all([

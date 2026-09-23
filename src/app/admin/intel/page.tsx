@@ -310,6 +310,7 @@ export default function IntelAdmin() {
           <div style={{ marginBottom: '16px' }}>
             <MemberPicker
               label="发布者"
+              includeNpcs
               value={form.publisher_id ? { id: form.publisher_id, name: form.publisher_name } : null}
               onChange={setPublisher}
             />

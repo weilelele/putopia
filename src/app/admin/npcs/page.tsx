@@ -9,7 +9,7 @@ export default async function NpcsPage() {
   await requireNpcArchitect()
   const admin = createAdminClient()
   const [profiles, units] = await Promise.all([
-    admin.from('voyager_profiles').select('id, display_name, avatar_url, location').eq('account_kind', 'npc').order('joined_at'),
+    admin.from('voyager_profiles').select('id, display_name, role, avatar_url, location').eq('account_kind', 'npc').order('joined_at'),
     admin.from('device_batch_units').select('user_id').not('allocation_id', 'is', null).eq('status', 'assigned'),
   ])
   if (profiles.error || units.error) {
@@ -33,7 +33,7 @@ export default async function NpcsPage() {
                 /* eslint-disable-next-line @next/next/no-img-element -- NPC avatars support administrator-supplied HTTPS URLs. */
                 <img src={profile.avatar_url} alt="" width={44} height={44} /> : profile.display_name.slice(0, 1)}
             </span>
-            <span className={styles.identity}><strong>{profile.display_name}</strong><span>{profile.location || 'Location not set'}</span></span>
+            <span className={styles.identity}><strong>{profile.display_name}</strong><span>{profile.role.toUpperCase()} · {profile.location || 'Location not set'}</span></span>
             <span className={styles.count}>{count} {count === 1 ? 'device' : 'devices'}</span>
             <span aria-hidden="true">→</span>
           </Link>
