@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { noticeStatus, type NoticeTiming } from '@/lib/intel-notice'
+import { noticeStatus, noticeUtcOffset, type NoticeTiming } from '@/lib/intel-notice'
 
 const LABELS = { active: 'TASK ACTIVE', expired: 'TASK ENDED', scheduled: 'TASK NOT STARTED', legacy: 'ARCHIVED NOTICE' }
 
@@ -30,6 +30,6 @@ export function NoticeStatus({ entry }: { entry: NoticeTiming }) {
   if (!status) return null
   return <div className="my-2 text-[length:var(--fs-caption)] text-[var(--color-star-dim)]" role="status">
     <span>{LABELS[status]}</span>
-    {expires_at && status !== 'legacy' && <> · {status === 'expired' ? 'Ended' : 'Ends'} <time dateTime={expires_at}>{new Date(expires_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })} ({Intl.DateTimeFormat().resolvedOptions().timeZone})</time></>}
+    {expires_at && status !== 'legacy' && <> · {status === 'expired' ? 'Ended' : 'Ends'} <time dateTime={expires_at}>{new Date(expires_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })} ({noticeUtcOffset(expires_at)})</time></>}
   </div>
 }

@@ -33,3 +33,11 @@ export function toLocalDateTime(iso: string): string {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
   return local.toISOString().slice(0, 16)
 }
+
+/** Use the deadline's offset so daylight saving time matches the displayed date. */
+export function noticeUtcOffset(iso: string): string {
+  const minutes = -new Date(iso).getTimezoneOffset()
+  const hours = String(Math.floor(Math.abs(minutes) / 60)).padStart(2, '0')
+  const remainder = String(Math.abs(minutes) % 60).padStart(2, '0')
+  return `UTC${minutes >= 0 ? '+' : '-'}${hours}:${remainder}`
+}
