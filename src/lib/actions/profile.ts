@@ -128,17 +128,21 @@ export async function setVoyagerBatch(voyagerId: string, batchLabel: string) {
   return { error: null }
 }
 
-export async function searchMembers(query: string) {
+export async function searchMembers(query: string, includeNpcs = false) {
   const supabase = await createClient()
-  const { data } = await supabase
+  let search = supabase
     .from('voyager_profiles')
-    .select('id, display_name, role')
-    .in('role', ['voyager', 'architect'])
+    .select('id, display_name, role, account_kind')
+  // Intel attribution may include NPCs with any managed identity role.
+  search = includeNpcs
+    ? search.or('role.in.(voyager,architect),account_kind.eq.npc')
+    : search.in('role', ['voyager', 'architect'])
+  const { data } = await search
     .ilike('display_name', `%${query}%`)
     .order('display_name')
     .limit(10)
 
-  return (data ?? []) as { id: string; display_name: string; role: string }[]
+  return data ?? []
 }
 
 /** Public member details only; existing profile RLS remains authoritative. */

@@ -12,6 +12,7 @@ interface MemberPickerProps {
   value: MemberValue
   onChange: (v: MemberValue) => void
   inputStyle?: React.CSSProperties
+  includeNpcs?: boolean
 }
 
 const ROLE_COLOR: Record<string, string> = {
@@ -19,9 +20,9 @@ const ROLE_COLOR: Record<string, string> = {
   voyager: '#C84406',
 }
 
-export function MemberPicker({ label, value, onChange, inputStyle }: MemberPickerProps) {
+export function MemberPicker({ label, value, onChange, inputStyle, includeNpcs = false }: MemberPickerProps) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<{ id: string; display_name: string; role: string }[]>([])
+  const [results, setResults] = useState<Awaited<ReturnType<typeof searchMembers>>>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -42,11 +43,11 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
 
   const search = useCallback(async (q: string) => {
     setLoading(true)
-    const data = await searchMembers(q)
+    const data = await searchMembers(q, includeNpcs)
     setResults(data)
     setLoading(false)
     setOpen(true)
-  }, [])
+  }, [includeNpcs])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -119,7 +120,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           style={baseInput}
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search members by name..."
+          placeholder={includeNpcs ? 'Search members or NPCs by name...' : 'Search members by name...'}
           onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(200,68,6,0.5)' }}
           onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(227,82,5,0.16)' }}
           autoComplete="off"
@@ -146,7 +147,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
           )}
           {!loading && results.length === 0 && (
             <div style={{ padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
-              No members found
+              {includeNpcs ? 'No members or NPCs found' : 'No members found'}
             </div>
           )}
           {!loading && results.map(m => (
@@ -176,7 +177,7 @@ export function MemberPicker({ label, value, onChange, inputStyle }: MemberPicke
                 padding: '1px 5px',
                 opacity: 0.8,
               }}>
-                {m.role.toUpperCase()}
+                {m.account_kind === 'npc' ? `NPC · ${m.role.toUpperCase()}` : m.role.toUpperCase()}
               </span>
             </div>
           ))}
