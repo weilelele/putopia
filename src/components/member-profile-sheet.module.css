@@ -1,0 +1,14 @@
+.profile { color: var(--color-star); font-family: var(--font-mono); overflow-wrap: anywhere; }
+.identity { display: flex; gap: 16px; align-items: flex-start; }
+.identity > div { min-width: 0; }
+.identity h3 { font-size: var(--fs-title); line-height: 1.3; margin: 0 0 8px; }
+.avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--color-void); font-size: var(--fs-title); }
+.role { color: var(--color-nucleus); font-size: var(--fs-caption); text-transform: uppercase; margin: 0 0 4px; }
+.meta { color: var(--color-star-dim); font-size: var(--fs-label); line-height: 1.5; margin: 8px 0; }
+.bio { font-size: var(--fs-body); line-height: 1.5; white-space: pre-wrap; margin: 24px 0; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 16px 0; border-top: 1px solid var(--bd-faint); border-bottom: 1px solid var(--bd-faint); }
+.stats dt { color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.4; }
+.stats dd { font-size: var(--fs-title); margin: 8px 0 0; }
+.socials { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
+.socials a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-star); font-size: var(--fs-label); text-decoration: underline; text-underline-offset: 4px; }
+.socials a:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 4px; }

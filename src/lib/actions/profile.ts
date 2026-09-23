@@ -144,3 +144,13 @@ export async function searchMembers(query: string, includeNpcs = false) {
 
   return data ?? []
 }
+
+/** Public member details only; existing profile RLS remains authoritative. */
+export async function getMemberProfile(id: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase.from('voyager_profiles')
+    .select('id, display_name, avatar_url, role, bio, location, batch_label, joined_at, observation_days, worlds_discovered, social_x, social_instagram, social_linkedin')
+    .eq('id', id).maybeSingle()
+  if (error) throw new Error('Member profile could not be loaded.')
+  return data
+}

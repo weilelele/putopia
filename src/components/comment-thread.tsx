@@ -3,7 +3,9 @@
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSelect, ArchiveTextarea, ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useMemo, useRef } from 'react'
-import Link from 'next/link'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { MemberProfileSheet } from '@/components/member-profile-sheet'
+import styles from './comment-thread.module.css'
 import { Send, CornerDownRight, ImagePlus, X } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
@@ -90,10 +92,25 @@ export function CommentThread({
   const [comments, setComments] = useState<Comment[]>([])
   const [identities, setIdentities] = useState<ImpersonatableProfile[]>([])
   const [replyTo, setReplyTo] = useState<string | null>(null)
+  const profileTrigger = useRef<HTMLButtonElement | null>(null)
+  const [profileId, setProfileId] = useState<string | null>(null)
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [reload, setReload] = useState(0)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const headingId = useId()
 
   useEffect(() => {
-    getComments(subjectType, subjectId).then(setComments)
-  }, [subjectType, subjectId])
+    if (profileId === null) profileTrigger.current?.focus({ preventScroll: true })
+  }, [profileId])
+
+  useEffect(() => {
+    let active = true
+    getComments(subjectType, subjectId).then(items => {
+      if (active) { setComments(items); setLoadState('ready') }
+    }).catch(() => { if (active) setLoadState('error') })
+    return () => { active = false }
+  }, [subjectType, subjectId, reload])
 
   useEffect(() => {
     if (isArchitect) listImpersonatableProfiles().then(setIdentities)
@@ -122,57 +139,72 @@ export function CommentThread({
   const submit = async (body: string, parentId: string | null, asProfileId: string | null, imagePaths: string[]) => {
     if (posthogEvent) posthog.capture(posthogEvent, { subject_type: subjectType, subject_id: subjectId, is_reply: !!parentId, has_images: imagePaths.length > 0 })
     const res = await postComment(subjectType, subjectId, body, { parentId, asProfileId, subjectTitle, imagePaths })
-    if (res.error || !res.data) return false
+    if (res.error || !res.data) return { error: res.error ?? 'Could not send your comment. Please try again.' }
     setComments((prev) => [...prev, res.data!])
     setReplyTo(null)
-    return true
+    return { error: null }
   }
 
   const handleDelete = async (commentId: string) => {
     if (!window.confirm('Delete this transmission?')) return
-    const res = await deleteComment(commentId)
-    if (!res.error) {
-      setComments((prev) => prev.filter((c) => c.id !== commentId && c.parent_id !== commentId))
-    }
+    setDeleting(commentId)
+    setDeleteError(null)
+    try {
+      const res = await deleteComment(commentId)
+      if (res.error) { setDeleteError('Could not delete this comment. Please try again.'); return }
+      setComments(prev => {
+        const removed = new Set([commentId])
+        let changed = true
+        while (changed) {
+          changed = false
+          for (const item of prev) {
+            if (item.parent_id && removed.has(item.parent_id) && !removed.has(item.id)) {
+              removed.add(item.id); changed = true
+            }
+          }
+        }
+        return prev.filter(item => !removed.has(item.id))
+      })
+    } catch {
+      setDeleteError('Could not confirm deletion. Reload the discussion before retrying.')
+    } finally { setDeleting(null) }
   }
 
   const renderComment = (c: Comment, depth: number): React.ReactNode => {
     const canDelete = (!!user.id && c.author_id === user.id) || isArchitect
     const kids = childrenOf.get(c.id) ?? []
     return (
-      <div key={c.id} style={depth > 0 ? { marginLeft: '1.25rem', borderLeft: '1px solid var(--bd-faint)', paddingLeft: '1rem' } : undefined}>
-        <div className="card-void">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            {c.author_avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={c.author_avatar_url} alt={c.author_name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid var(--bd-cyan-2)' }} />
+      <div key={c.id} className={depth === 1 ? styles.replies : undefined}>
+        <article className={styles.comment}>
+          <header className={styles.commentHeader}>
+            {c.author_id ? (
+              <button type="button" className={styles.author} onClick={event => { profileTrigger.current = event.currentTarget; setProfileId(c.author_id) }} aria-label={`View ${c.author_name}'s profile`} aria-haspopup="dialog">
+                <CommentAvatar name={c.author_name} url={c.author_avatar_url} />
+                <span>{c.author_name}</span>
+              </button>
             ) : (
-              <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700, background: 'rgba(200,68,6,0.08)', color: 'var(--color-nebula)', border: '1px solid var(--bd-cyan-2)', flexShrink: 0 }}>
-                {getInitials(c.author_name)}
-              </div>
+              <div className={styles.author}><CommentAvatar name={c.author_name} url={c.author_avatar_url} /><span>{c.author_name}</span></div>
             )}
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)' }}>{c.author_name}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', marginLeft: 'auto' }}>
+            <time className={styles.date} dateTime={c.created_at}>
               {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-            </span>
-            {canDelete && (
-              <ArchiveButton type="submit" variant="secondary" onClick={() => handleDelete(c.id)} title="Delete" style={{ cursor: 'pointer', padding: '0 0.25rem' }}>✕</ArchiveButton>
-            )}
-          </div>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)', color: 'var(--color-star-dim)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0 }}>{c.body}</p>
+            </time>
+          </header>
+          <p className={styles.body}>{c.body}</p>
           <CommentImages paths={c.image_paths ?? []} />
-          {!isGuest && (
-            <ArchiveButton type="submit" variant="secondary"
-              onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}
-              style={{ marginTop: '0.5rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: 0 }}
-            >
-              <CornerDownRight size={11} /> {replyTo === c.id ? 'CANCEL' : 'REPLY'}
-            </ArchiveButton>
-          )}
-        </div>
+          {(!isGuest || canDelete) && <div className={styles.actions}>
+            {!isGuest && <ArchiveButton type="button" variant="ghost" className={styles.textAction}
+              onClick={() => setReplyTo(replyTo === c.id ? null : c.id)} aria-expanded={replyTo === c.id}>
+              <CornerDownRight size={16} aria-hidden /> {replyTo === c.id ? 'Cancel reply' : 'Reply'}
+            </ArchiveButton>}
+            {canDelete && <ArchiveButton type="button" variant="ghost" className={styles.textAction}
+              onClick={() => handleDelete(c.id)} disabled={deleting !== null} aria-label={`Delete comment by ${c.author_name}`}>
+              {deleting === c.id ? 'Deleting…' : 'Delete'}
+            </ArchiveButton>}
+          </div>}
+        </article>
 
         {replyTo === c.id && !isGuest && (
-          <div style={{ marginLeft: '1.25rem', borderLeft: '1px solid var(--bd-faint)', paddingLeft: '1rem', marginTop: '0.75rem' }}>
+          <div className={styles.replyComposer}>
             <Composer
               compact
               allowImages={allowImages}
@@ -184,7 +216,7 @@ export function CommentThread({
         )}
 
         {kids.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
+          <div>
             {kids.map((k) => renderComment(k, depth + 1))}
           </div>
         )}
@@ -193,56 +225,37 @@ export function CommentThread({
   }
 
   return (
-    <>
-      {/* Section header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)' }}>
-          TRANSMISSIONS [{comments.length}]
-        </div>
-        <div style={{ flex: 1, height: 1, background: 'var(--bd-faint)' }} />
+    <section className={styles.thread} aria-labelledby={headingId}>
+      <h2 id={headingId} className={styles.heading}>Discussion{loadState === 'ready' && <span> ({comments.length})</span>}</h2>
+      {loadState === 'loading' && <p className={styles.feedback} role="status">Loading comments…</p>}
+      {loadState === 'error' && <div className={styles.feedback} role="alert">
+        <p>Comments could not be loaded.</p>
+        <ArchiveButton variant="secondary" onClick={() => { setLoadState('loading'); setReload(value => value + 1) }}>Retry</ArchiveButton>
+      </div>}
+      {deleteError && <p className={styles.feedback} role="alert">{deleteError}</p>}
+      {roots.length > 0 && <div>{roots.map(c => renderComment(c, 0))}</div>}
+      {loadState === 'ready' && comments.length === 0 && <p className={styles.feedback}>No comments yet. Start the discussion.</p>}
+      <div className={styles.composer}>
+        {isGuest ? <>
+          <p className={styles.feedback}>Log in to join the discussion.</p>
+          <ArchiveLinkButton href={`/login?redirect=${subjectType === 'dreamcatcher' ? '/worlds/live' : `${SUBJECT_BASE[subjectType]}/${subjectId}`}`}>Log in to comment</ArchiveLinkButton>
+        </> : <Composer
+          identities={identities}
+          allowImages={allowImages}
+          placeholder="Add to the discussion…"
+          onSubmit={(body, asProfileId, imagePaths) => submit(body, null, asProfileId, imagePaths)}
+        />}
       </div>
-
-      {roots.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-          {roots.map((c) => renderComment(c, 0))}
-        </div>
-      )}
-
-      {comments.length === 0 && (
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star-deep)', textAlign: 'center', padding: '0.5rem 0 1.5rem' }}>
-          NO TRANSMISSIONS YET — BE THE FIRST.
-        </div>
-      )}
-
-      {isGuest ? (
-        <div className="hud-frame">
-          <div style={{ padding: '0.5rem', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
-              TRANSMISSIONS ARE MEMBERS-ONLY
-            </div>
-            <Link href={`/login?redirect=${subjectType === 'dreamcatcher' ? '/worlds/live' : `${SUBJECT_BASE[subjectType]}/${subjectId}`}`} className="btn-primary" style={{ display: 'inline-flex', padding: '0.5rem 1.25rem', fontSize: 'var(--fs-caption)' }}>
-              LOG IN TO TRANSMIT
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="hud-frame">
-          <div style={{ padding: '0 0.5rem' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.25em', color: 'var(--color-star-deep)', marginBottom: '0.75rem' }}>
-              TRANSMIT A MESSAGE
-            </div>
-            <Composer
-              identities={identities}
-              allowImages={allowImages}
-              placeholder="Leave a transmission..."
-              onSubmit={(body, asProfileId, imagePaths) => submit(body, null, asProfileId, imagePaths)}
-            />
-          </div>
-        </div>
-      )}
-    </>
+      {profileId && <MemberProfileSheet key={profileId} profileId={profileId} onClose={() => setProfileId(null)} />}
+    </section>
   )
+}
+
+function CommentAvatar({ name, url }: { name: string; url: string | null }) {
+  return url
+    // eslint-disable-next-line @next/next/no-img-element
+    ? <img className={styles.avatar} src={url} alt="" />
+    : <span className={styles.avatar} aria-hidden>{getInitials(name)}</span>
 }
 
 // ─── Staged image type ────────────────────────────────────────────────────────
@@ -263,7 +276,7 @@ function Composer({
 }: {
   identities: ImpersonatableProfile[]
   placeholder: string
-  onSubmit: (body: string, asProfileId: string | null, imagePaths: string[]) => Promise<boolean>
+  onSubmit: (body: string, asProfileId: string | null, imagePaths: string[]) => Promise<{ error: string | null }>
   compact?: boolean
   allowImages?: boolean
 }) {
@@ -329,9 +342,18 @@ function Composer({
       }
     }
 
-    const ok = await onSubmit(body, asProfileId || null, imagePaths)
-    setSending(false)
-    if (!ok) return
+    try {
+      const result = await onSubmit(body, asProfileId || null, imagePaths)
+      if (result.error) {
+        setUploadErr(result.error)
+        return
+      }
+    } catch {
+      setUploadErr('Could not confirm your comment was sent. Check the thread before trying again.')
+      return
+    } finally {
+      setSending(false)
+    }
     setText('')
     setStaged([])
     setTransmitted(true)
@@ -339,15 +361,16 @@ function Composer({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className={styles.form}>
       {identities.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <label style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: 'var(--color-star-deep)' }}>POST AS</label>
+        <div className={styles.postAs}>
+          <label htmlFor={`${commentFieldId}-identity`}>Post as</label>
           <ArchiveSelect
+            id={`${commentFieldId}-identity`}
             value={asProfileId}
             onChange={(e) => setAsProfileId(e.target.value)}
-            className="input-dark"
-            style={{ padding: '0.25rem 0.5rem', flex: compact ? 1 : 'unset', maxWidth: 280 }}
+
+            className={styles.identitySelect}
           >
             <option value="">Yourself</option>
             {identities.map((p) => (
@@ -359,14 +382,15 @@ function Composer({
         </div>
       )}
 
-      <ArchiveField htmlFor={commentFieldId} label="COMMENT">
+      <ArchiveField htmlFor={commentFieldId} label={compact ? "REPLY" : "COMMENT"}>
         <ArchiveTextarea
+          id={commentFieldId}
           rows={compact ? 2 : 3}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={placeholder}
-          className="input-dark"
-          style={{ resize: 'none' }}
+
+          className={styles.textarea}
         />
       </ArchiveField>
 
@@ -387,10 +411,11 @@ function Composer({
               />
               <ArchiveButton variant="secondary"
                 type="button"
+                aria-label={`Remove attachment ${i + 1}`}
                 onClick={() => removeImage(i)}
-                style={{ position: 'absolute', top: 2, right: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, padding: 0 }}
+                style={{ position: 'absolute', top: 2, right: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, padding: 0 }}
               >
-                <X size={10} />
+                <X size={16} aria-hidden />
               </ArchiveButton>
             </div>
           ))}
@@ -398,7 +423,7 @@ function Composer({
       )}
 
       {uploadErr && (
-        <div style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--sig-fault)', letterSpacing: '0.05em' }}>
+        <div role="alert" style={{ marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-star)', letterSpacing: '0.05em' }}>
           {uploadErr}
         </div>
       )}
@@ -420,9 +445,9 @@ function Composer({
                 onClick={() => canAddMore && fileRef.current?.click()}
                 disabled={!canAddMore}
                 title={canAddMore ? `Add image (${staged.length}/${MAX_IMAGES})` : `Maximum ${MAX_IMAGES} images reached`}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: canAddMore ? 'rgba(245,245,245,0.4)' : 'rgba(245,245,245,0.15)', padding: '4px 8px', cursor: canAddMore ? 'pointer' : 'not-allowed' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--color-star-dim)', padding: '4px 8px', cursor: canAddMore ? 'pointer' : 'not-allowed' }}
               >
-                <ImagePlus size={11} />
+                <ImagePlus size={16} aria-hidden />
                 {staged.length}/{MAX_IMAGES}
               </ArchiveButton>
             </>
@@ -431,8 +456,8 @@ function Composer({
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', color: 'var(--color-ok)' }}>✓ TRANSMISSION SENT</span>
           )}
         </div>
-        <ArchiveButton variant="primary" type="submit" disabled={!text.trim() || sending} className="btn-primary" style={{ padding: '0.5rem 1.25rem' }}>
-          <Send size={10} /> {sending ? (staged.length > 0 ? 'UPLOADING...' : 'SENDING...') : 'TRANSMIT'}
+        <ArchiveButton variant="primary" type="submit" disabled={!text.trim() || sending}  style={{ padding: '0.5rem 1.25rem' }}>
+          <Send size={16} aria-hidden /> {sending ? (staged.length > 0 ? 'UPLOADING...' : 'SENDING...') : 'TRANSMIT'}
         </ArchiveButton>
       </div>
     </form>
