@@ -1,36 +1,20 @@
 {
   "faq": [
     {
-      "answer": "Kyoto One is the first Kyoto batch of Multiverse Consoles. Each Console has a charcoal-gray housing, a pale front panel, silver side controls and orange details. This allocation is limited to 50 Consoles.",
-      "question": "What is Kyoto One?"
+      "answer": "One assigned Kyoto One Console and three shipments: an Initial Voyager Pack, an antenna with smaller widgets and components, and the Console. Shipping and taxes are included. The full amount is collected when you claim; it is not a deposit or subscription. Earlier $12 Initial Pack orders remain separate and will still be delivered.",
+      "question": "What does the US$520 preorder include?"
     },
     {
-      "answer": "Yes. US$520 is the full preorder price for one assigned Multiverse Console (Kyoto One Batch) and all three shipments, including shipping and taxes. The full amount is collected when you claim; it is not a deposit or a recurring subscription. The Console arrives in the third shipment.",
-      "question": "Is this a preorder, and what does $520 cover?"
-    },
-    {
-      "answer": "Package 1: Initial Voyager Pack, containing a badge and welcome letter. Package 2: Mysterious Widgets, with small widgets and components; the exact selection is still being finalized. An antenna is a possibility, not a confirmed inclusion. Package 3: Multiverse Console (Kyoto One Batch).",
-      "question": "What is in each shipment?"
-    },
-    {
-      "answer": "The packages will be dispatched separately, in that order. Dispatch dates for all three packages are not yet confirmed. This is a preorder, not an offer of immediate delivery. Timing updates will be posted in this batch record.",
-      "question": "When will the packages ship?"
+      "answer": "This is a preorder. The packages will be dispatched separately, in order, and their dispatch dates are not yet confirmed. Timing updates will be posted in this batch record.",
+      "question": "When will the three packages ship?"
     },
     {
       "answer": "All three shipments, shipping, and taxes are included in the $520 total. The destinations currently supported are shown in checkout.",
-      "question": "What about shipping destinations, shipping costs and taxes?"
+      "question": "What are the shipping and tax terms?"
     },
     {
       "answer": "No. The gallery includes an original device design reference and AI-generated warehouse visualizations based on the device design. They show the design and setting, not the condition or serial number of an individual unit.",
-      "question": "Are the images photographs of my assigned unit?"
-    },
-    {
-      "answer": "We have not established whether other Consoles can reach the same routes. Exclusive access is not a confirmed part of this claim.",
-      "question": "Are the unusual routes exclusive to this batch?"
-    },
-    {
-      "answer": "The earlier Initial Pack order and this $520 Kyoto One claim are separate. Your earlier order remains due for delivery without a new purchase. No upgrade credit has been announced.",
-      "question": "Does my earlier $12 Initial Pack include this Console?"
+      "question": "Are these images of my assigned unit?"
     },
     {
       "answer": "Cancel for a full refund before your first package is delivered. After delivery, cancellation and change-of-mind returns are unavailable for the entire order, including remaining shipments. To request cancellation or get help with your order, delivery, or device, email voyagers@multiverseco.org with your order number. For damaged, incorrect, or missing items, contact us for support.",
@@ -166,7 +150,7 @@
       "evidence": []
     }
   ],
-  "nextMilestone": "Confirm dispatch dates and the component selection for Package 2.",
+  "nextMilestone": "Confirm dispatch dates for all three packages.",
   "distributionStages": [
     {
       "id": "initial-voyager-pack",
@@ -184,10 +168,10 @@
       "label": "Mysterious Widgets",
       "status": "upcoming",
       "window": "After Package 1 · date not yet confirmed",
-      "summary": "The second shipment brings smaller items before the Console. The exact selection is being finalized; an antenna is a possibility, not a confirmed inclusion.",
+      "summary": "The second shipment includes the Console antenna with smaller widgets and components.",
       "contents": [
-        "Mysterious widgets — selection to be confirmed",
-        "Small components — selection to be confirmed"
+        "Console antenna",
+        "Mysterious widgets and components"
       ]
     },
     {

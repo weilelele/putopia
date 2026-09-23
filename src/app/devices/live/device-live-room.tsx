@@ -18,16 +18,12 @@ import Link from 'next/link'
 import { useMemo, useState, type ReactNode } from 'react'
 import {
   ChevronRight,
-  CirclePlay,
   ListFilter,
-  MessageSquare,
-  Radio,
 } from 'lucide-react'
 import styles from '../../live-observation-room.module.css'
 import { BatchDiscussionBoard } from '../_components/batch-discussion-board'
 import { FollowBatchButton } from '../_components/batch-actions'
 import { useFollowedBatchSlugs } from '../_components/use-followed-batches'
-import { LiveFeedPlaceholder } from '@/components/live-feed-placeholder'
 import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
 import type { DeviceCameraSource } from '@/lib/device-camera'
 import {
@@ -80,6 +76,8 @@ export function DeviceLiveRoom({
   const currentStage = progress.find((stage) => stage.status === 'current')?.label ?? (progress.every((stage) => stage.status === 'completed') ? 'COMPLETE' : 'AWAITING NEXT STAGE')
   const materialRecords = getDeviceBatchMedia(batch)
   const updates = getDeviceBatchUpdates(batch)
+  const purchaseFaq = batch.slug === 'kyoto-one' ? KYOTO_PURCHASE_FAQ : batch.faq ?? []
+  const nextMilestone = batch.slug === 'kyoto-one' ? 'Confirm dispatch dates for all three packages.' : batch.nextMilestone
   const [gallerySelection, setGallerySelection] = useState({ slug: batch.slug, index: 0 })
   const selectedMedia = gallerySelection.slug === batch.slug ? gallerySelection.index : 0
   const selectMedia = (index: number) => setGallerySelection({ slug: batch.slug, index })
@@ -106,7 +104,6 @@ export function DeviceLiveRoom({
       {introduction}
       <section className={styles.discoveryIntro} aria-label="Device discoveries">
         <h2>Found Around the World</h2>
-        <p>Each batch records a group of devices detected and found in one place.</p>
       </section>
 
       <nav className={styles.objectNav} aria-label="Device batches">
@@ -140,11 +137,13 @@ export function DeviceLiveRoom({
       </nav>
 
       <div className={styles.workspace}><div className={styles.workspaceMedia}>
-      <DeviceGallery primaryLabel={camera ? camera.binding.title : 'COVER'} media={materialRecords} selected={selectedMedia} onSelect={selectMedia} primary={
-        camera ? <CosmoCameraEmbed source={camera} location={batch.location} />
-          : batch.image ? <div className={mediaStyles.frame}><Image src={batch.image} alt={batch.imageAlt} fill sizes="(max-width: 767px) 100vw, 1000px" unoptimized /></div>
-            : <LiveFeedPlaceholder label={`${batch.name} live feed — not connected`}><span>{batch.name}</span></LiveFeedPlaceholder>
-      } />
+      <DeviceGallery
+        media={materialRecords}
+        onSelect={selectMedia}
+        primary={camera ? <CosmoCameraEmbed source={camera} location={batch.location} timeZone={batch.timeZone} /> : undefined}
+        primaryLabel={camera?.binding.title}
+        selected={selectedMedia}
+      />
 
       </div><div className={styles.workspaceDetails}>
       {(canClaimDeviceBatch(batch.status) && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
@@ -176,7 +175,6 @@ export function DeviceLiveRoom({
 
         {activeTab === 'info' ? (
           <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
-            <div className={styles.eyebrow}>{batch.code} · BATCH DOSSIER</div>
             <h2 className={styles.infoTitle}>{batch.name}</h2>
             <p className={styles.intro}>{batch.summary}</p>
             <div className={styles.infoActions}>
@@ -184,7 +182,7 @@ export function DeviceLiveRoom({
             </div>
 
             <div className={styles.progressBlock}>
-              <div className={styles.progressLabel}><span>CURRENT BATCH PROGRESS</span><span>{currentStage}</span></div>
+              <div className={styles.progressLabel}><span>BATCH PROGRESS</span><span>{currentStage}</span></div>
               <div className={mediaStyles.progress}>
                 {progress.map((step) => (
                   <div className={`${styles.progressStep} ${mediaStyles.progressStep}`} aria-current={step.status === 'current' ? 'step' : undefined} data-status={step.status} key={step.label}>
@@ -199,34 +197,37 @@ export function DeviceLiveRoom({
               <div className={styles.fact}><span>LOCATION</span><strong>{batch.location}</strong></div>
               <div className={styles.fact}><span>CONFIRMED UNITS</span><strong>{(batch.inventory?.listingQuantity ?? batch.holders.length) || 'PENDING'}</strong></div>
               <div className={styles.fact}><span>FIELD LEAD</span><DeviceFieldLead key={batch.slug} lead={batch.lead} /></div>
-              <div className={styles.fact}><span>NEXT MILESTONE</span><strong>{batch.nextMilestone}</strong></div>
+              <div className={styles.fact}><span>NEXT MILESTONE</span><strong>{nextMilestone}</strong></div>
             </div>
 
             <div className={styles.mediaSection}>
-              <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3><span>{materialRecords.length} ITEM{materialRecords.length === 1 ? '' : 'S'}</span></div>
+              <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3></div>
               <div className={styles.mediaList}>
-                {materialRecords.map((item, index) => (
-                  <button className={styles.mediaRow} key={`${item.src}-${item.caption}`} type="button" onClick={() => selectMedia(index + 1)}>
-                    <span className={styles.mediaThumb}>
-                      {item.kind === 'image' || item.poster ? <Image alt="" fill sizes="100px" src={item.poster ?? item.src} unoptimized /> : null}
-                      {item.kind === 'video' ? <span className={styles.videoBadge}><CirclePlay aria-hidden size={16} /></span> : null}
-                    </span>
-                    <span className={styles.mediaCopy}>
-                      <strong>{item.caption || item.alt}</strong>
-                    </span>
-                    <ChevronRight aria-hidden size={18} />
-                  </button>
-                ))}
+                {materialRecords.map((item) => {
+                  const [title, ...descriptionParts] = item.caption.split(' · ')
+                  const description = descriptionParts.join(' · ')
+                  return <figure className={styles.mediaRecord} key={`${item.src}-${item.caption}`}>
+                    <div className={styles.mediaRecordVisual}>
+                      {item.kind === 'video'
+                        ? <video controls playsInline poster={item.poster} preload="metadata" src={item.src} />
+                        : <Image alt={item.alt} height={1200} sizes="(max-width: 767px) calc(100vw - 64px), 34rem" src={item.src} style={{ height: 'auto', width: '100%' }} unoptimized width={1600} />}
+                    </div>
+                    <figcaption className={styles.mediaRecordCopy}>
+                      <strong>{title || item.alt}</strong>
+                      <p>{description || item.alt}</p>
+                    </figcaption>
+                  </figure>
+                })}
               </div>
             </div>
 
-            {batch.faq?.length ? (
+            {purchaseFaq.length ? (
               <section className={styles.progressBlock} aria-label="Batch FAQ">
                 <div className={styles.eyebrow}>BEFORE YOU CLAIM</div>
-                {batch.faq.map((item) => (
+                {purchaseFaq.map((item) => (
                   <details key={item.question} className="mt-4 text-sm">
                     <summary>{item.question}</summary>
-                    <p className="mt-2 leading-relaxed">{batch.slug === 'kyoto-one' ? KYOTO_PURCHASE_FAQ[item.question] ?? item.answer : item.answer}</p>
+                    <p className="mt-2 leading-relaxed">{item.answer}</p>
                   </details>
                 ))}
               </section>
@@ -236,14 +237,12 @@ export function DeviceLiveRoom({
 
         {activeTab === 'discussion' ? (
           <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
-            <div className={styles.eyebrow}><MessageSquare aria-hidden size={14} /> BATCH DISCUSSION</div>
             <BatchDiscussionBoard key={batch.slug} batch={batch} canPost={canPost} initialPosts={discussionPosts} />
           </div>
         ) : null}
 
         {activeTab === 'updates' ? (
           <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
-            <div className={styles.eyebrow}><Radio aria-hidden size={14} /> VERIFIED FIELD EVENTS</div>
             <div className={styles.updateList}>
               {updates.length === 0 ? <p>No updates published yet.</p> : null}
               {updates.map((update) => (

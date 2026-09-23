@@ -22,7 +22,6 @@ export type BatchConfigDraft = {
   claimPrice?: BatchPrice
   distributionStages: DistributionStage[]
   estimatedCompletion: string
-  heroCaption: string
   heroMedia?: DeviceBatchMedia[]
   image: string
   imageAlt: string
@@ -157,7 +156,6 @@ function isBatchConfigDraft(value: unknown): value is BatchConfigDraft {
     (draft.timeZone === undefined || typeof draft.timeZone === 'string') &&
     typeof draft.image === 'string' &&
     typeof draft.imageAlt === 'string' &&
-    typeof draft.heroCaption === 'string' &&
     (draft.liveCamera === undefined || isDeviceCameraBinding(draft.liveCamera)) &&
     (draft.heroMedia === undefined || isMedia(draft.heroMedia)) &&
     (draft.updates === undefined || (Array.isArray(draft.updates) && draft.updates.every((update) => typeof update.id === 'string' && isLatestUpdate(update)))) &&
@@ -183,7 +181,6 @@ export function createBatchConfigDraft(batch: DeviceBatch): BatchConfigDraft {
       media: stage.media?.map((item) => ({ ...item })),
     })),
     estimatedCompletion: batch.estimatedCompletion,
-    heroCaption: batch.heroCaption,
     heroMedia: batch.heroMedia?.map((item) => ({ ...item })),
     image: batch.image,
     imageAlt: batch.imageAlt,
@@ -236,12 +233,10 @@ export function validateBatchConfigDraft(draft: BatchConfigDraft) {
     draft.timeZone.trim().length === 0 ||
     draft.image.trim().length === 0 ||
     draft.imageAlt.trim().length === 0 ||
-    draft.heroCaption.trim().length === 0 ||
     draft.nextMilestone.trim().length === 0 ||
     draft.estimatedCompletion.trim().length === 0 ||
     draft.statusLine.trim().length === 0 ||
-    draft.summary.trim().length === 0 ||
-    draft.updatedAt.trim().length === 0
+    draft.summary.trim().length === 0
   ) {
     errors.push('Overview fields are required.')
   }
@@ -323,7 +318,6 @@ export function normalizeBatchConfigDraft(draft: BatchConfigDraft): BatchConfigD
     })),
     estimatedCompletion: draft.estimatedCompletion.trim(),
     liveCamera: draft.liveCamera ? { ...draft.liveCamera, title: draft.liveCamera.title.trim() } : undefined,
-    heroCaption: draft.heroCaption.trim(),
     heroMedia: draft.heroMedia?.map((item) => ({
       ...item,
       alt: item.alt.trim(),

@@ -96,12 +96,14 @@ export async function saveDeviceBatchRecord(input: {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: existing, error: readError } = await (admin.from('device_batches') as any)
-    .select('id, revision, publication_status, claimed_quantity, reserved_quantity')
+    .select('id, revision, publication_status, claimed_quantity, reserved_quantity, content')
     .eq('slug', batch.slug)
     .maybeSingle()
   if (readError) return { error: readError.message }
 
   const now = new Date().toISOString()
+  delete batch.heroCaption
+  batch = { ...batch, updatedAt: input.publish ? now : existing?.content?.updatedAt ?? now }
   const publicationStatus = input.publish
     ? 'published'
     : existing?.publication_status ?? 'draft'

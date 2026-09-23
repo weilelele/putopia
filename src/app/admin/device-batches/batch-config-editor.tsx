@@ -609,14 +609,6 @@ export function BatchConfigEditor({
                   ))}
                 </datalist>
               </ArchiveField>
-              <ArchiveField htmlFor="batch-updated-at" label="LAST UPDATED">
-                <ArchiveInput
-                  id="batch-updated-at"
-                  onChange={(event) => updateDraft({ updatedAt: event.target.value })}
-                  placeholder="Jul 30, 2026"
-                  value={draft.updatedAt}
-                />
-              </ArchiveField>
             </div>
             <ArchiveField htmlFor="batch-completion" label="FINAL COMPLETION">
               <ArchiveInput
@@ -677,13 +669,6 @@ export function BatchConfigEditor({
                 id="batch-image-alt"
                 onChange={(event) => updateDraft({ imageAlt: event.target.value })}
                 value={draft.imageAlt}
-              />
-            </ArchiveField>
-            <ArchiveField htmlFor="batch-hero-caption" label="HERO CAPTION">
-              <ArchiveInput
-                id="batch-hero-caption"
-                onChange={(event) => updateDraft({ heroCaption: event.target.value })}
-                value={draft.heroCaption}
               />
             </ArchiveField>
             <p>Gallery images and videos are managed in Updates.</p>
@@ -756,19 +741,6 @@ export function BatchConfigEditor({
                   step="1"
                   type="number"
                   value={inventory.listingQuantity}
-                />
-              </ArchiveField>
-              <ArchiveField htmlFor="batch-claimed-quantity" label="CLAIMED UNITS">
-                <ArchiveInput
-                  disabled={selectedRecord.persisted}
-                  id="batch-claimed-quantity"
-                  min="0"
-                  onChange={(event) =>
-                    updateInventory('claimedQuantity', Number(event.target.value))
-                  }
-                  step="1"
-                  type="number"
-                  value={inventory.claimedQuantity}
                 />
               </ArchiveField>
             </div>

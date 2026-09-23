@@ -19,7 +19,7 @@ function packageImage(batch: DeviceBatch, stage: DistributionStage): DeviceBatch
   if (batch.slug === 'kyoto-one' && stage.id === 'components-pack') return {
     kind: 'image', src: '/presentation/antenna-worlds/helix-desert.png',
     alt: 'Concept illustration of a helical antenna on a Console',
-    caption: 'Antenna concept illustration · not a confirmed package item',
+    caption: 'Antenna concept illustration',
   }
   if (stage.id === 'console') return {
     kind: 'image', src: batch.image, alt: batch.imageAlt, caption: 'Console batch reference',
@@ -28,7 +28,7 @@ function packageImage(batch: DeviceBatch, stage: DistributionStage): DeviceBatch
 
 const packageTeasers: Record<string, string> = {
   'initial-voyager-pack': 'A badge and a letter to begin your journey.',
-  'components-pack': 'Small objects. Clues to what comes next.',
+  'components-pack': 'Your Console antenna, accompanied by smaller widgets and components.',
   console: 'A window into worlds you have yet to discover.',
 }
 
@@ -43,8 +43,9 @@ export function ConsolePackages({ batch }: { batch: DeviceBatch }) {
   if (!count) return null
   return <>
     <div className={styles.overview}>
+      <h3>{count} {count === 1 ? 'PACKAGE' : 'PACKAGES'}</h3>
       <ArchiveButton ref={trigger} variant="ghost" className={styles.explore} onClick={() => setOpen(true)} aria-haspopup="dialog">
-        EXPLORE THE PACKAGES <ArrowRight aria-hidden size={20} />
+        VIEW PACKAGES <ArrowRight aria-hidden size={20} />
       </ArchiveButton>
     </div>
     {open && <ArchiveSheet open title="Explore the packages" onClose={close}>
@@ -53,7 +54,7 @@ export function ConsolePackages({ batch }: { batch: DeviceBatch }) {
           const media = packageImage(batch, stage)
           return <li key={stage.id} className={styles.package}>
             <header><span>PACKAGE {String(index + 1).padStart(2, '0')}</span><h3>{stage.id === 'console' ? 'Multiverse Console' : stage.label}</h3></header>
-            {media && <figure><div className={`${styles.image} ${stage.id === 'initial-voyager-pack' ? styles.welcomeImage : ''}`}><Image src={media.src} alt={media.alt} fill sizes="(max-width: 560px) calc(100vw - 32px), 526px" /></div>{stage.id === 'components-pack' ? <figcaption>Concept image · contents to be revealed.</figcaption> : stage.id === 'console' ? <figcaption>Design visualization.</figcaption> : null}</figure>}
+            {media && <figure><div className={`${styles.image} ${stage.id === 'initial-voyager-pack' ? styles.welcomeImage : ''}`}><Image src={media.src} alt={media.alt} fill sizes="(max-width: 560px) calc(100vw - 32px), 526px" /></div>{stage.id === 'components-pack' ? <figcaption>Concept image of the included antenna.</figcaption> : stage.id === 'console' ? <figcaption>Design visualization.</figcaption> : null}</figure>}
             <p>{packageTeasers[stage.id] ?? stage.summary}</p>
           </li>
         })}

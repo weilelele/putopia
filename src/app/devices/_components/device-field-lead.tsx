@@ -2,32 +2,27 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import { getVoyagerById } from '@/lib/actions/profile'
-import { VoyagerQuickView } from '@/components/activity-feed'
+import { UserRound } from 'lucide-react'
+import { ArchiveSheet } from '@/components/archive-sheet'
 import type { DeviceBatchLead } from '@/lib/device-batches'
-import type { VoyagerProfile } from '@/types/database'
 import styles from './device-gallery.module.css'
 
 export function DeviceFieldLead({ lead }: { lead: DeviceBatchLead }) {
-  const [profile, setProfile] = useState<VoyagerProfile | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  if (!lead.profileId) return <strong>{lead.name}</strong>
+  const [open, setOpen] = useState(false)
+  const [avatarFailed, setAvatarFailed] = useState(false)
+  const avatar = lead.avatarUrl && !avatarFailed
+    ? <Image src={lead.avatarUrl} alt="" width={44} height={44} unoptimized onError={() => setAvatarFailed(true)} />
+    : <span className={styles.leadAvatar} aria-label={`${lead.name} avatar unavailable`}><UserRound aria-hidden size={24} /></span>
   return <>
-    <button className={styles.lead} type="button" disabled={loading} onClick={async () => {
-      setLoading(true)
-      setError('')
-      try {
-        const result = await getVoyagerById(lead.profileId!)
-        if (!result) throw new Error('This profile is unavailable.')
-        setProfile(result)
-      } catch { setError('Could not load this profile. Select the name to try again.') }
-      finally { setLoading(false) }
-    }}>
-      {lead.avatarUrl ? <Image src={lead.avatarUrl} alt="" width={44} height={44} unoptimized /> : <span aria-hidden>{lead.initials}</span>}
-      <strong>{loading ? 'Loading…' : lead.name}</strong>
+    <button className={styles.lead} type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+      {avatar}
+      <strong>{lead.name}</strong>
     </button>
-    {error ? <p role="alert">{error}</p> : null}
-    {profile ? <VoyagerQuickView profile={profile} onClose={() => setProfile(null)} /> : null}
+    {open ? <ArchiveSheet open title={lead.name} onClose={() => setOpen(false)}>
+      <div className={styles.lead}>{avatar}<strong>{lead.name}</strong></div>
+      <p>{lead.role}{lead.location ? ` · ${lead.location}` : ''}</p>
+      <p className={styles.updateBody}>{lead.bio || 'Biography not yet available.'}</p>
+      {lead.latestNote ? <section><h3>FIELD LEAD LATEST NOTE</h3><p className={styles.updateBody}>{lead.latestNote}</p></section> : null}
+    </ArchiveSheet> : null}
   </>
 }

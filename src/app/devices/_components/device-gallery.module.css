@@ -15,6 +15,7 @@
 .thumbnail:focus-visible, .lead:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
 .lead { display: flex; align-items: center; gap: var(--s-2); min-height: 44px; padding: 0; border: 0; color: var(--color-star); background: transparent; font: inherit; text-align: left; cursor: pointer; }
 .lead img { width: 44px; height: 44px; object-fit: cover; }
+.leadAvatar { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border: 1px solid var(--bd-faint); color: var(--color-star); }
 .updateMedia { display: grid; gap: var(--s-3); margin-top: var(--s-3); }
 .updateMedia img, .updateMedia video { display: block; width: 100%; height: auto; max-height: 420px; object-fit: contain; }
 .updateBody { white-space: pre-wrap; }

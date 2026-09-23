@@ -75,13 +75,13 @@ export function BatchDiscussionBoard({
         <strong>{posts.length} MESSAGES</strong>
       </div>
 
-      <form className={styles.discussionComposer} onSubmit={submitPost}>
+      {canPost ? <form className={styles.discussionComposer} onSubmit={submitPost}>
         <label htmlFor={`batch-message-${batch.slug}`}>ADD TO THE RECORD</label>
         <ArchiveTextarea
-          disabled={!canPost || posting}
+          disabled={posting}
           id={`batch-message-${batch.slug}`}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder={canPost ? 'Write a public message…' : 'Payment-confirmed holders can post here.'}
+          placeholder="Write a public message…"
           rows={3}
           value={message}
         />
@@ -91,19 +91,19 @@ export function BatchDiscussionBoard({
             <span>{attachment?.name || 'ADD IMAGE'}</span>
             <ArchiveInput
               accept="image/jpeg,image/png,image/webp"
-              disabled={!canPost || posting}
+              disabled={posting}
               onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
               type="file"
             />
           </label>
-          <ArchiveButton disabled={!canPost || posting} type="submit">
+          <ArchiveButton disabled={posting} type="submit">
             {posting ? 'POSTING…' : 'POST MESSAGE'} <Send aria-hidden size={15} />
           </ArchiveButton>
         </div>
         <p aria-live="polite" className={styles.composerStatus}>
           {statusMessage}
         </p>
-      </form>
+      </form> : null}
 
       <div className={styles.discussionList}>
         {posts.map((post) => (
@@ -148,6 +148,8 @@ export function BatchDiscussionBoard({
       </div>
       {posts.length === 0 ? (
         <div className={styles.emptyArchive}>No messages yet. Confirmed holders can start the record.</div>
+      ) : !canPost ? (
+        <div className={styles.emptyArchive}>Only confirmed holders can post.</div>
       ) : null}
     </section>
   )

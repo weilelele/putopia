@@ -4,20 +4,28 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { buildCameraEmbedUrl, isCameraStatusMessage, shouldShowCameraLive, type CameraPlaybackState, type DeviceCameraSource } from '@/lib/device-camera'
 import { preferredSurveillanceQuality, surveillanceEffectMessage, type SurveillanceQuality } from '@/lib/surveillance-profile'
 import styles from './cosmo-camera-embed.module.css'
+import { formatDeviceBatchLocalTime } from '@/lib/device-batches'
 
 const subscribe = () => () => {}
 const originSnapshot = () => window.location.origin
 const serverOriginSnapshot = () => ''
 type VideoConnection = EventTarget & { saveData?: boolean }
 type NavigatorWithConnection = Navigator & { connection?: VideoConnection }
-function CameraFrame({ source, parentOrigin, location }: { source: DeviceCameraSource; parentOrigin: string; location: string }) {
+function CameraFrame({ source, parentOrigin, location, timeZone }: { source: DeviceCameraSource; parentOrigin: string; location: string; timeZone?: string }) {
+  const [now, setNow] = useState<Date | null>(null)
+  useEffect(() => {
+    const tick = () => setNow(new Date())
+    tick()
+    const timer = window.setInterval(tick, 1000)
+    return () => window.clearInterval(timer)
+  }, [])
   const frame = useRef<HTMLIFrameElement>(null)
   const [state, setState] = useState<CameraPlaybackState | 'connecting'>('connecting')
   const [hasPlayed, setHasPlayed] = useState(false)
   const [quality, setQuality] = useState<SurveillanceQuality>('standard')
   const [retry, setRetry] = useState(0)
   const receivedAt = useRef(0)
-  const src = buildCameraEmbedUrl(source, parentOrigin, { effects: true })
+  const src = buildCameraEmbedUrl(source, parentOrigin, { effects: true, clock: !timeZone })
   const effectMessage = useMemo(
     () => surveillanceEffectMessage(quality, source.binding),
     [quality, source.binding],
@@ -79,12 +87,13 @@ function CameraFrame({ source, parentOrigin, location }: { source: DeviceCameraS
         ref={frame} referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin" src={src} title={source.binding.title} />
     <span className={styles.live} data-playing={live}><span className={styles.dot} aria-hidden />LIVE</span>
     <span className={styles.location}>{location.toUpperCase()}</span>
+    {timeZone && now ? <time className={styles.clock} dateTime={now.toISOString()} aria-label={`Local time in ${location}, ${timeZone}`} title={timeZone}>{formatDeviceBatchLocalTime(timeZone, now.getTime())}</time> : null}
   </>
 }
 
-export function CosmoCameraEmbed({ source, location }: { source: DeviceCameraSource; location: string }) {
+export function CosmoCameraEmbed({ source, location, timeZone }: { source: DeviceCameraSource; location: string; timeZone?: string }) {
   const parentOrigin = useSyncExternalStore(subscribe, originSnapshot, serverOriginSnapshot)
   return <section className={styles.camera} aria-label={source.binding.title}>
-    {parentOrigin ? <CameraFrame key={`${source.embedOrigin}/${source.binding.channelId}/${source.binding.bandId}`} source={source} parentOrigin={parentOrigin} location={location} /> : null}
+    {parentOrigin ? <CameraFrame key={`${source.embedOrigin}/${source.binding.channelId}/${source.binding.bandId}`} source={source} parentOrigin={parentOrigin} location={location} timeZone={timeZone} /> : null}
   </section>
 }

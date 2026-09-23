@@ -81,7 +81,7 @@ export type DeviceBatch = {
   image: string
   imageAlt: string
   imageFit?: 'cover' | 'contain'
-  heroCaption: string
+  heroCaption?: string
   heroMedia?: DeviceBatchMedia[]
   summary: string
   claimPrice?: BatchPrice
