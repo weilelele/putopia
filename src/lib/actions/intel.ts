@@ -5,14 +5,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { IntelInsert, IntelUpdate } from '@/types/database'
 import { logActivity } from './activity-events'
 import { validateNoticeTiming } from '@/lib/intel-notice'
-
-async function requireArchitect() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data: profile } = await supabase.from('voyager_profiles').select('role').eq('id', user.id).maybeSingle()
-  return profile?.role === 'architect' ? user : null
-}
+import { requirePublishingArchitect, resolvePublishingIdentity } from '@/lib/publishing-identity'
 
 function revalidateIntel(id: string) {
   revalidatePath('/intel')
@@ -101,14 +94,26 @@ export async function getIntelById(id: string) {
 }
 
 export async function createIntel(entry: IntelInsert) {
-  const user = await requireArchitect()
-  if (!user) return { error: 'Architect access is required.', data: null }
+  const actor = await requirePublishingArchitect()
+  if (!actor) return { error: 'Architect access is required.', data: null }
   const validation = validateNoticeTiming(entry)
   if (validation) return { error: validation, data: null }
+  let publisher
+  try {
+    publisher = await resolvePublishingIdentity(entry.publisher_id, actor)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Invalid publishing identity.', data: null }
+  }
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('intel')
-    .insert({ ...entry, created_by: user.id, expires_at: entry.tag === 'NOTICE' ? entry.expires_at : null })
+    .insert({
+      ...entry,
+      publisher_id: publisher.id,
+      publisher_name: publisher.name,
+      created_by: actor.id,
+      expires_at: entry.tag === 'NOTICE' ? entry.expires_at : null,
+    })
     .select()
     .single()
 
@@ -116,9 +121,9 @@ export async function createIntel(entry: IntelInsert) {
   revalidateIntel(data.id)
 
   logActivity({
-    actor_id:    entry.publisher_id ?? null,
-    actor_name:  entry.publisher_name ?? 'Unknown',
-    actor_role:  'architect',
+    actor_id:    publisher.id,
+    actor_name:  publisher.name,
+    actor_role:  publisher.role,
     event_type:  'intel_published',
     target_id:   data.id,
     target_title: entry.title,
@@ -130,32 +135,47 @@ export async function createIntel(entry: IntelInsert) {
 }
 
 export async function updateIntel(id: string, updates: IntelUpdate) {
-  if (!(await requireArchitect())) return { error: 'Architect access is required.' }
+  const actor = await requirePublishingArchitect()
+  if (!actor) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
 
   // Fetch current record for snapshot data
   const { data: existing, error: readError } = await admin.from('intel').select('*').eq('id', id).single()
   if (readError || !existing) return { error: readError?.message ?? 'Intel not found.' }
-  const merged = { ...existing, ...updates }
+  let normalizedUpdates = updates
+  let publisher = null
+  if ('publisher_id' in updates || 'publisher_name' in updates) {
+    try {
+      publisher = await resolvePublishingIdentity(
+        updates.publisher_id === undefined ? existing.publisher_id : updates.publisher_id,
+        actor,
+        existing.publisher_id,
+      )
+      normalizedUpdates = { ...updates, publisher_id: publisher.id, publisher_name: publisher.name }
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Invalid publishing identity.' }
+    }
+  }
+  const merged = { ...existing, ...normalizedUpdates }
   const validation = validateNoticeTiming(merged)
   if (validation) return { error: validation }
 
   const { error } = await admin
     .from('intel')
-    .update({ ...updates, expires_at: merged.tag === 'NOTICE' ? merged.expires_at : null })
+    .update({ ...normalizedUpdates, expires_at: merged.tag === 'NOTICE' ? merged.expires_at : null })
     .eq('id', id)
 
   if (error) return { error: error.message }
   revalidateIntel(id)
 
   logActivity({
-    actor_id:    existing?.publisher_id ?? null,
-    actor_name:  existing?.publisher_name ?? 'Unknown',
-    actor_role:  'architect',
+    actor_id:    publisher?.id ?? existing.publisher_id ?? actor.id,
+    actor_name:  publisher?.name ?? existing.publisher_name ?? actor.name,
+    actor_role:  publisher?.role ?? 'architect',
     event_type:  'intel_updated',
     target_id:   id,
-    target_title: updates.title ?? existing?.title,
-    target_image: (updates.images ?? existing?.images)?.[0] ?? undefined,
+    target_title: normalizedUpdates.title ?? existing.title,
+    target_image: (normalizedUpdates.images ?? existing.images)?.[0] ?? undefined,
     target_href: `/intel/${id}`,
   })
 
@@ -163,7 +183,7 @@ export async function updateIntel(id: string, updates: IntelUpdate) {
 }
 
 export async function deleteIntel(id: string) {
-  if (!(await requireArchitect())) return { error: 'Architect access is required.' }
+  if (!(await requirePublishingArchitect())) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
   const { error } = await admin
     .from('intel')
