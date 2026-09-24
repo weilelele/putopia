@@ -7,6 +7,7 @@ import { sendPushToUser } from '@/lib/push/apns'
 import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types/database'
 import { isPublishedChatRoom, readDreamcatcherChat } from '@/lib/dreamcatcher-chat'
 import { CHAT_COOLDOWN_MS, validateChatMessage } from '@/lib/dreamcatcher-chat-model'
+import { getNpcIdentities, npcHasDevice, requireNpcArchitect } from '@/lib/npc-repository'
 
 // Path to revalidate when a thread changes (only device threads have a route today)
 function subjectPath(type: CommentSubjectType, id: string): string | null {
@@ -75,27 +76,26 @@ export async function getComments(
   })
 }
 
-// Profiles an architect may post AS. Voyagers + architects only (formal members).
-export async function listImpersonatableProfiles(): Promise<ImpersonatableProfile[]> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return []
-
-  const { data: me } = await supabase
-    .from('voyager_profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-  if (me?.role !== 'architect') return []
-
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from('voyager_profiles')
-    .select('id, display_name, avatar_url, role')
-    .in('role', ['voyager', 'architect'])
-    .order('display_name', { ascending: true })
-
-  return (data ?? []) as ImpersonatableProfile[]
+// NPC profiles a human architect may post as. Device-batch threads only expose
+// NPCs assigned to that batch; other threads expose device-holding NPCs.
+export async function listImpersonatableProfiles(
+  subjectType: CommentSubjectType,
+  subjectId: string,
+): Promise<ImpersonatableProfile[]> {
+  if (subjectType === 'dreamcatcher') return []
+  try {
+    await requireNpcArchitect()
+    const identities = await getNpcIdentities(subjectType === 'device_batch' ? subjectId : undefined)
+    return identities.map((identity) => ({
+      id: identity.id,
+      display_name: identity.display_name,
+      avatar_url: identity.avatar_url,
+      role: identity.role,
+      account_kind: 'npc',
+    }))
+  } catch {
+    return []
+  }
 }
 
 // Bulk comment counts for a list of subjects of the same type.
@@ -148,13 +148,13 @@ export async function postComment(
   // The caller's own profile (also gates whether impersonation is allowed).
   const { data: caller } = await supabase
     .from('voyager_profiles')
-    .select('display_name, avatar_url, role')
+    .select('display_name, avatar_url, role, account_kind')
     .eq('id', user.id)
     .single()
 
   // Resolve the effective author. By default it's the caller. An architect may
-  // post AS another voyager/architect — in that case author_* point at the
-  // impersonated member and posted_by_id records the real architect for audit.
+  // post as an NPC — in that case author_* point at the managed identity and
+  // posted_by_id records the real architect for audit.
   let authorId = user.id
   let authorName = caller?.display_name ?? 'Voyager'
   let authorAvatar = (caller?.role === 'voyager' || caller?.role === 'architect') ? (caller?.avatar_url ?? null) : null
@@ -179,16 +179,26 @@ export async function postComment(
   }
 
   if (opts?.asProfileId && opts.asProfileId !== user.id) {
-    if (caller?.role !== 'architect') {
+    if (caller?.role !== 'architect' || caller.account_kind === 'npc') {
       return { error: 'Only architects may post as another identity', data: null }
     }
     const { data: target } = await admin
       .from('voyager_profiles')
-      .select('id, display_name, avatar_url, role')
+      .select('id, display_name, avatar_url, role, account_kind')
       .eq('id', opts.asProfileId)
-      .single()
-    if (!target || (target.role !== 'voyager' && target.role !== 'architect')) {
-      return { error: 'Invalid identity', data: null }
+      .eq('account_kind', 'npc')
+      .maybeSingle()
+    if (!target) {
+      return { error: 'Only NPC identities can be selected for comments.', data: null }
+    }
+    let hasDevice = false
+    try {
+      hasDevice = await npcHasDevice(target.id, subjectType === 'device_batch' ? subjectId : undefined)
+    } catch {
+      return { error: 'Could not verify this NPC identity. Please try again.', data: null }
+    }
+    if (!hasDevice) {
+      return { error: 'This NPC is not assigned to an active device for this discussion.', data: null }
     }
     authorId = target.id
     authorName = target.display_name

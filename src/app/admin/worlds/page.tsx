@@ -87,7 +87,6 @@ export default function WorldsAdmin() {
   const handleSave = async () => {
     const id = form.id.trim() || nextWorldId(items)
     if (!form.name.trim()) { setMsg({ text: '名称不能为空', ok: false }); return }
-    if (!form.discoverer_name.trim()) { setMsg({ text: '请选择或输入发现者姓名', ok: false }); return }
     setSaving(true); setMsg(null)
     const payload = {
       id, name: form.name.trim(), name_en: form.name_en.trim() || form.name.trim(),
@@ -180,7 +179,8 @@ export default function WorldsAdmin() {
             </div>
             <div>
               <MemberPicker
-                label="发现者姓名"
+                label="发现者 NPC（留空则使用本人身份）"
+                scope="npcs"
                 value={form.discoverer_name ? { id: form.discoverer_id ?? '', name: form.discoverer_name } : null}
                 onChange={setDiscoverer}
               />

@@ -5,6 +5,7 @@ import { createAdminClient, createClient } from '@/lib/supabase/server'
 import type { WorldInsert, WorldUpdate, WorldFinalAsset, WorldFinalMedia } from '@/types/database'
 import { rollScanUntil } from '@/lib/signal/scan'
 import { logActivity } from './activity-events'
+import { requirePublishingArchitect, resolvePublishingIdentity } from '@/lib/publishing-identity'
 
 /** Stable / verified worlds (the main archive). Public + identical for everyone,
  *  so cached 60 s to cut DB load on the console; edits self-heal within the window. */
@@ -462,11 +463,20 @@ export async function getWorldById(id: string) {
   return data
 }
 
-export async function createWorld(world: WorldInsert, actor?: { id: string; name: string; role: string }) {
+export async function createWorld(world: WorldInsert) {
+  const actor = await requirePublishingArchitect()
+  if (!actor) return { error: 'Architect access is required.', data: null }
+  let discoverer
+  try {
+    discoverer = await resolvePublishingIdentity(world.discoverer_id, actor)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Invalid publishing identity.', data: null }
+  }
+
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('worlds')
-    .insert(world)
+    .insert({ ...world, discoverer_id: discoverer.id, discoverer_name: discoverer.name })
     .select()
     .single()
 
@@ -474,9 +484,9 @@ export async function createWorld(world: WorldInsert, actor?: { id: string; name
   revalidatePath('/worlds')
 
   logActivity({
-    actor_id:    actor?.id ?? null,
-    actor_name:  actor?.name ?? world.discoverer_name ?? 'Unknown',
-    actor_role:  actor?.role ?? 'architect',
+    actor_id:    discoverer.id,
+    actor_name:  discoverer.name,
+    actor_role:  discoverer.role,
     event_type:  'world_added',
     target_id:   data.id,
     target_title: world.name_en ?? world.name,
@@ -488,10 +498,34 @@ export async function createWorld(world: WorldInsert, actor?: { id: string; name
 }
 
 export async function updateWorld(id: string, updates: WorldUpdate) {
+  const actor = await requirePublishingArchitect()
+  if (!actor) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
+  const { data: world, error: readError } = await admin
+    .from('worlds')
+    .select('discoverer_id')
+    .eq('id', id)
+    .maybeSingle()
+  if (readError) return { error: readError.message }
+  if (!world) return { error: 'World not found.' }
+
+  let normalizedUpdates = updates
+  if ('discoverer_id' in updates || 'discoverer_name' in updates) {
+    try {
+      const discoverer = await resolvePublishingIdentity(
+        updates.discoverer_id === undefined ? world.discoverer_id : updates.discoverer_id,
+        actor,
+        world.discoverer_id,
+      )
+      normalizedUpdates = { ...updates, discoverer_id: discoverer.id, discoverer_name: discoverer.name }
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Invalid publishing identity.' }
+    }
+  }
+
   const { error } = await admin
     .from('worlds')
-    .update(updates)
+    .update(normalizedUpdates)
     .eq('id', id)
 
   if (error) return { error: error.message }
@@ -500,6 +534,7 @@ export async function updateWorld(id: string, updates: WorldUpdate) {
 }
 
 export async function deleteWorld(id: string) {
+  if (!(await requirePublishingArchitect())) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
   const { error } = await admin
     .from('worlds')
