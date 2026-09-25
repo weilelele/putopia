@@ -74,11 +74,13 @@ export function WorldPoster({
     >
       {bg && (
         // Cover and caption occupy separate flat surfaces for consistent contrast.
-        <LazyImage
-          src={bg}
-          className="world-poster-img"
-          style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }}
-        />
+        <div style={{ position: 'relative', height: 180 }}>
+          <LazyImage
+            src={bg}
+            className="world-poster-img"
+            style={{ objectFit: 'cover', display: 'block' }}
+          />
+        </div>
       )}
       {badge && <div style={{ position: 'absolute', top: 8, right: 8 }}>{badge}</div>}
 

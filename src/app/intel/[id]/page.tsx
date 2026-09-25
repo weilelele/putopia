@@ -31,8 +31,8 @@ export default function IntelDetailPage() {
   const id = params?.id as string
   const { user } = useAuth()
   const isGuest = user.role === 'guest'
-  const backHref = isGuest ? '/console' : '/intel'
-  const backLabel = isGuest ? '← DASHBOARD' : '← INTEL'
+  const backHref = '/intel'
+  const backLabel = '← INTEL'
 
   const [entry, setEntry] = useState<IntelWithAvatar | null | undefined>(undefined)
   const [loadError, setLoadError] = useState(false)

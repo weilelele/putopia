@@ -15,6 +15,12 @@ export function ownerTab(path: string): string | null {
   return null
 }
 export function isPrimaryRoute(path: string) { return PRIMARY_NAV.some(item => item.href === path) }
+/** Batch tabs replace content inside one persistent Devices browsing surface. */
+export function routeScrollKey(pathname: string, search = ''): string {
+  const path = pathname.replace(/\/$/, '') || '/'
+  const surface = path === '/devices' || /^\/devices\/batches\/[^/]+$/.test(path) ? '/devices' : pathname
+  return surface + (search ? `?${search.replace(/^\?/, '')}` : '')
+}
 export function hasGlobalNavigation(path: string) {
   return path === '/login' || path === '/register' || ownerTab(path) !== null && !/^\/(vote|signal|worlds\/submit|devices\/claim)(\/|$)/.test(path)
 }

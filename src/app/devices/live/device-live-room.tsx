@@ -3,6 +3,7 @@ import { DevicePurchaseTerms } from '../_components/device-purchase-terms'
 import { KYOTO_PURCHASE_FAQ } from '@/lib/device-purchase-terms'
 import { ConsolePackages } from './console-packages'
 import { RootBrandHeader } from '@/components/root-brand-header'
+import consoleStyles from '@/components/mc-console-panel.module.css'
 import { ArchiveTabs } from '@/components/archive-tabs'
 import { ArchiveButton } from '@/components/archive-button'
 import { useSessionPreference } from '@/lib/use-session-preference'
@@ -103,7 +104,7 @@ export function DeviceLiveRoom({
 
       {introduction}
       <section className={styles.discoveryIntro} aria-label="Device discoveries">
-        <h2>Found Around the World</h2>
+        <h2 className={consoleStyles.sectionTitle}>Found Devices Around The World</h2>
       </section>
 
       <nav className={styles.objectNav} aria-label="Device batches">

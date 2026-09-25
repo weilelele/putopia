@@ -107,8 +107,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/welcome', request.url))
   }
 
-  // Dashboard and the primary Devices page are public. The other three primary
-  // tabs require registration; the supporting root listings retain that gate.
+  // All five primary tabs and the world archive are public browsing surfaces.
+  // Supporting listings that still require registration retain their own gate.
   if (!user && requiresRegistration(pathname)) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'

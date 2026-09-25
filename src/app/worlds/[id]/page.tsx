@@ -31,9 +31,8 @@ export default function WorldDetailPage() {
   const params = useParams()
   const id = params?.id as string
   const { user } = useAuth()
-  const isGuest = user.role === 'guest'
-  const backHref = isGuest ? '/console' : '/worlds'
-  const backLabel = isGuest ? '← DASHBOARD' : '← WORLD RECORDS'
+  const backHref = '/worlds'
+  const backLabel = '← WORLD RECORDS'
 
   const [world, setWorld] = useState<World | null | undefined>(undefined)
   const [inv, setInv] = useState<WorldInvestigationData | null>(null)
