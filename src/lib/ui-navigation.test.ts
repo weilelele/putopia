@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { PRIMARY_NAV, ownerTab, hasGlobalNavigation, fallbackRoute, safeAppPath } from './ui-navigation'
+import { PRIMARY_NAV, ownerTab, hasGlobalNavigation, fallbackRoute, safeAppPath, routeScrollKey } from './ui-navigation'
 describe('UI navigation contract', () => {
+  it('keeps device batch switching on the same scroll surface, including history navigation', () => {
+    const routes = ['/devices', '/devices/batches/kyoto-one', '/devices/batches/kamakura-one', '/devices/batches/kyoto-one', '/devices']
+    expect(new Set(routes.map(path => routeScrollKey(path))).size).toBe(1)
+    expect(routeScrollKey('/devices/batches/kyoto-one/')).toBe('/devices')
+  })
+  it('keeps focused device routes and other query contexts separate', () => {
+    for (const path of ['/devices/batches/kyoto-one/discussion', '/devices/claim', '/devices/my-consoles', '/devices-other']) {
+      expect(routeScrollKey(path)).toBe(path)
+    }
+    expect(routeScrollKey('/intel', 'tab=public')).toBe('/intel?tab=public')
+    expect(routeScrollKey('/intel', '?tab=classified')).toBe('/intel?tab=classified')
+  })
   it('keeps the same five primary destinations in order', () => {
     expect(PRIMARY_NAV.map(item => item.href)).toEqual(['/console', '/intel', '/devices', '/worlds/live', '/voyagers'])
   })

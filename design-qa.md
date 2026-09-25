@@ -28,3 +28,7 @@ final result: passed
 ## Follow-up polish
 - Generated still is a design visualization, not a photograph of a delivered unit.
 - Reduced-motion setting was reviewed in code; not toggled through OS during this session.
+
+## Device public entry release · 2026-09-25
+
+Complete device photographs automatically cycle every 6 seconds without controls, preserving all three displays. Image configuration lives in src/lib/console-hero.ts. Mobile 390×844 browser checks confirmed automatic image changes, unchanged scroll position when switching locations and using browser back, and guest access to Intel, Worlds and Voyagers. Classified content and write actions retain authorization. World archive fill-image layout was fixed. See docs/audits/guest-access-2026-09-25.md for remaining guest restrictions.

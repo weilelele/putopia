@@ -1,11 +1,8 @@
 /** Access policy for the five primary product destinations. */
-export const PUBLIC_PRIMARY_ROUTES = ['/console', '/devices'] as const
-export const REGISTERED_PRIMARY_ROUTES = ['/intel', '/worlds/live', '/voyagers'] as const
-const PUBLIC_ENTRY_ROUTES = ['/', '/welcome'] as const
+export const PUBLIC_PRIMARY_ROUTES = ['/console', '/intel', '/devices', '/worlds/live', '/voyagers'] as const
+const PUBLIC_ENTRY_ROUTES = ['/', '/welcome', '/worlds'] as const
 
 const REGISTRATION_REQUIRED_ROUTES = [
-  ...REGISTERED_PRIMARY_ROUTES,
-  '/worlds',
   '/vote',
   '/logs',
 ] as const
@@ -15,8 +12,13 @@ export function isPublicPrimaryRoute(pathname: string): boolean {
 }
 
 export function allowsUnregisteredViewer(pathname: string): boolean {
+  const path = pathname.replace(/\/$/, '') || '/'
   return isPublicPrimaryRoute(pathname)
     || PUBLIC_ENTRY_ROUTES.some((route) => pathname === route || pathname === `${route}/`)
+    // Public reading routes only; do not include submission or account pages.
+    || /^\/intel\/[^/]+$/.test(path)
+    || (/^\/worlds\/[^/]+$/.test(path) && path !== '/worlds/submit')
+    || /^\/devices\/batches\/[^/]+(?:\/discussion)?$/.test(path)
 }
 
 export function requiresRegistration(pathname: string): boolean {

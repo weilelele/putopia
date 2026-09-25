@@ -34,7 +34,7 @@
 | 原始第二款 Devices 的整体风格 | 作为密度、媒体与文字关系的参考；旧品牌区不再沿用；二级页头及尺寸以 2.3 分层规则为准 |
 | 第一款 Quiet Rail 底栏 | 无围框、无竖分隔、无底边；轻顶线与短橙色选中标记 |
 | 五个主入口 | **DASHBOARD / INTEL / DEVICES / WORLDS / VOYAGERS**，顺序固定 |
-| 一级入口权限 | Dashboard 与 Devices 对所有用户开放；Intel、Worlds、Voyagers 需要完成注册。进入登录/注册页时主导航常驻 |
+| 一级入口权限 | Dashboard、Intel、Devices、Worlds、Voyagers 及 World Archive 对所有用户开放；公开详情同样允许游客浏览。登录仅用于参与、个人资料及受限内容。进入登录/注册页时主导航常驻 |
 | Dashboard 不是 Home | 页面和首入口使用 Dashboard，不能为了排版缩成 HOME |
 | Updates | 四类动态合并后的最近 10 条；Voyager 最多 2 条且仅 7 天内，Established World 最多 3 条 |
 | Events | 最多 3 个开放 Vote + 最多 3 个当前 Signal Tuning；横向滑动且露出下一张 |
@@ -325,3 +325,19 @@ User-approved exception: the Console introduction may auto-cycle world images in
 ### Device scene · 2026-09-18
 
 User-approved revision: keep the device in a compact archival workshop photograph (16:9), with automatic static-to-world transitions confined to the circular screen and no world-selection controls. Reduced motion shows a still frame; offscreen/hidden/modal-open states suspend playback. The heading breaks after Multiverse. Copy: “Our collective's exclusive instrument for exploring parallel worlds.” Remove the Devices Archive top action; keep batch navigation and ALL unchanged.
+
+### Device collective introduction · 2026-09-25
+
+User-approved layout revision: use the selected reference for structure only and retain existing brand assets, Courier Prime, tokens and shared buttons. Show the existing 16:9 workshop image first, followed by “Multiverse Console” (break after Multiverse) and “Our collective's exclusive device. Own it to unlock exploration of parallel worlds.” Below, View missions links to `/intel` as the full-width primary action; Meet voyagers (`/voyagers`) and Explore worlds (`/worlds`, the recorded-world archive) sit side by side as secondary actions. Keep the function dialog as a compact text action. “Found Devices Around The World” and “Multiverse Console” share the same h2 styling: `--fs-h2` on portrait phones, `--fs-h1` from 768px, weight 700 and line-height 1.15. Preserve the screen animation, existing authorization, batch navigation and ALL. The introduction is content-sized (roughly three quarters of a 390×844 viewport); allow natural growth on narrower screens and with enlarged text.
+
+### Device static introduction · 2026-09-25
+
+Latest user revision supersedes the animated introduction: use the complete Kyoto One warehouse image `/assets/kyoto-one-20260910/01-warehouse-hero.png`, whose central display already contains a starry world. Render the original 3:2 composition without cropping. Remove the procedural snow, separately positioned circular-screen layers and playback timers. The introduction currently uses one static image; the user also permits a simple whole-image carousel in a later iteration. Keep the approved heading, explanation, three navigation actions and function dialog.
+
+### Device carousel and public navigation · 2026-09-25
+
+Latest revision: use three complete static device photographs (Kyoto star screen, robot library, shepherd); all three displays must be populated. Previous/next controls manually cycle whole images, with a polite image-count announcement. Fit every image without cropping inside a stable 3:2 frame. Device location tabs share one scroll position with `/devices`; switching batches and browser history must preserve the introduction and scroll position. All five primary tabs and World Archive are public, while personal actions and classified content retain their authorization.
+
+### Device automatic slideshow · 2026-09-25
+
+Latest user revision replaces the manual image controls with automatic whole-image changes every 6 seconds. No arrows, counter or separate switching bar. Configure image sources, dimensions, alternative text and interval in `src/lib/console-hero.ts`; one image remains static. Keep the fixed frame and uncropped images. Pause while offscreen, hidden, hovered, keyboard-focused, the function dialog is open, or reduced motion is requested.

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { safeAppPath } from '@/lib/ui-navigation'
+import { routeScrollKey, safeAppPath } from '@/lib/ui-navigation'
 import { getRouteScrollContainer as scroller } from '@/lib/route-scroll-container'
 
 function read(key: string) { try { return sessionStorage.getItem(key) } catch { return null } }
@@ -10,8 +10,8 @@ function save(key: string, value: string) { try { sessionStorage.setItem(key, va
 export function ScrollRestorer() {
   const pathname = usePathname()
   const search = useSearchParams().toString()
+  const route = routeScrollKey(pathname, search)
   useEffect(() => {
-    const route = pathname + (search ? `?${search}` : '')
     const key = `mc:scroll:${route}`
     const previousMode = history.scrollRestoration
     history.scrollRestoration = 'manual'
@@ -36,6 +36,8 @@ export function ScrollRestorer() {
       if (!anchor || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || anchor.target === '_blank') return
       const target = safeAppPath(anchor.href, location.origin)
       if (!target || target === route || target.startsWith(`${route}#`)) return
+      const targetUrl = new URL(target, location.origin)
+      if (routeScrollKey(targetUrl.pathname, targetUrl.search) === route) return
       save(key, String(scroller()?.scrollTop ?? 0))
       // The shared shell can shrink/reset while the next route is loading.
       // Do not let that layout scroll overwrite the departing route's position.
@@ -55,6 +57,6 @@ export function ScrollRestorer() {
       window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop)
       history.scrollRestoration = previousMode
     }
-  }, [pathname, search])
+  }, [route])
   return null
 }
