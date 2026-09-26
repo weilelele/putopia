@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { StoryInsert, StoryUpdate } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
+import { requirePublishingArchitect, resolvePublishingIdentity } from '@/lib/publishing-identity'
 
 function hasYouTubeId(value: string | null | undefined) {
   return Boolean(value?.trim())
@@ -89,6 +90,7 @@ export async function getMyStories() {
 
 // Architect: list all stories (published + drafts)
 export async function getAllStories() {
+  if (!(await requirePublishingArchitect())) return []
   const admin = createAdminClient()
   const { data } = await admin
     .from('stories')
@@ -96,6 +98,34 @@ export async function getAllStories() {
     .order('date', { ascending: false })
 
   return data ?? []
+}
+
+// Architect: create a managed story as themselves or as an NPC.
+export async function createStoryAsArchitect(story: StoryInsert) {
+  const actor = await requirePublishingArchitect()
+  if (!actor) return { error: 'Architect access is required.', data: null }
+
+  let author
+  try {
+    author = await resolvePublishingIdentity(story.author_id, actor)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Invalid publishing identity.', data: null }
+  }
+
+  if (story.is_published && !hasYouTubeId(story.youtube_id)) {
+    return { error: 'A YouTube video ID is required before publishing a Voyager Log', data: null }
+  }
+
+  const { data, error } = await createAdminClient()
+    .from('stories')
+    .insert({ ...story, author_id: author.id, author_name: author.name })
+    .select()
+    .single()
+
+  if (error) return { error: error.message, data: null }
+  revalidatePath('/logs')
+  revalidatePath(`/logs/${data.id}`)
+  return { error: null, data }
 }
 
 // Voyager+: submit a new story (saved as draft, pending architect review)
@@ -152,6 +182,7 @@ export async function updateMyStory(id: string, updates: Omit<StoryUpdate, 'is_p
 
 // Architect: publish a story
 export async function publishStory(id: string) {
+  if (!(await requirePublishingArchitect())) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
   const { data: story, error: readError } = await admin
     .from('stories')
@@ -178,6 +209,7 @@ export async function publishStory(id: string) {
 
 // Architect: unpublish a story
 export async function unpublishStory(id: string) {
+  if (!(await requirePublishingArchitect())) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
   const { error } = await admin
     .from('stories')
@@ -192,19 +224,33 @@ export async function unpublishStory(id: string) {
 
 // Architect: update any story (content + metadata)
 export async function updateStory(id: string, updates: StoryUpdate) {
+  const actor = await requirePublishingArchitect()
+  if (!actor) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
-  if (updates.is_published) {
-    let youtubeId = updates.youtube_id
-    if (youtubeId === undefined) {
-      const { data: story, error: readError } = await admin
-        .from('stories')
-        .select('youtube_id')
-        .eq('id', id)
-        .maybeSingle()
-      if (readError) return { error: readError.message }
-      if (!story) return { error: 'Story not found' }
-      youtubeId = story.youtube_id
+  const { data: story, error: readError } = await admin
+    .from('stories')
+    .select('author_id, youtube_id')
+    .eq('id', id)
+    .maybeSingle()
+  if (readError) return { error: readError.message }
+  if (!story) return { error: 'Story not found' }
+
+  let normalizedUpdates = updates
+  if ('author_id' in updates || 'author_name' in updates) {
+    try {
+      const author = await resolvePublishingIdentity(
+        updates.author_id === undefined ? story.author_id : updates.author_id,
+        actor,
+        story.author_id,
+      )
+      normalizedUpdates = { ...updates, author_id: author.id, author_name: author.name }
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Invalid publishing identity.' }
     }
+  }
+
+  if (normalizedUpdates.is_published) {
+    const youtubeId = normalizedUpdates.youtube_id === undefined ? story.youtube_id : normalizedUpdates.youtube_id
     if (!hasYouTubeId(youtubeId)) {
       return { error: 'A YouTube video ID is required before publishing a Voyager Log' }
     }
@@ -212,7 +258,7 @@ export async function updateStory(id: string, updates: StoryUpdate) {
 
   const { error } = await admin
     .from('stories')
-    .update(updates)
+    .update(normalizedUpdates)
     .eq('id', id)
 
   if (error) return { error: error.message }
@@ -223,6 +269,7 @@ export async function updateStory(id: string, updates: StoryUpdate) {
 
 // Architect: delete a story
 export async function deleteStory(id: string) {
+  if (!(await requirePublishingArchitect())) return { error: 'Architect access is required.' }
   const admin = createAdminClient()
   const { error } = await admin
     .from('stories')

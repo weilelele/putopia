@@ -113,8 +113,8 @@ export function CommentThread({
   }, [subjectType, subjectId, reload])
 
   useEffect(() => {
-    if (isArchitect) listImpersonatableProfiles().then(setIdentities)
-  }, [isArchitect])
+    if (isArchitect) listImpersonatableProfiles(subjectType, subjectId).then(setIdentities)
+  }, [isArchitect, subjectId, subjectType])
 
   // Group replies under their parent for tree rendering. `comments` arrives
   // oldest→newest. We show top-level transmissions newest-first (reverse roots),
@@ -264,7 +264,7 @@ type StagedImage = { file: File; dataUrl: string }
 
 /**
  * Compose box shared by the top-level form and inline reply boxes.
- * When `identities` is non-empty (architect only) it shows a "Post as" selector.
+ * When `identities` is non-empty (architect only) it shows a "Post as" NPC selector.
  * When `allowImages` is true, up to 3 image attachments are supported.
  */
 function Composer({
@@ -364,7 +364,7 @@ function Composer({
     <form onSubmit={handleSubmit} className={styles.form}>
       {identities.length > 0 && (
         <div className={styles.postAs}>
-          <label htmlFor={`${commentFieldId}-identity`}>Post as</label>
+          <label htmlFor={`${commentFieldId}-identity`}>Post as NPC</label>
           <ArchiveSelect
             id={`${commentFieldId}-identity`}
             value={asProfileId}
@@ -375,7 +375,7 @@ function Composer({
             <option value="">Yourself</option>
             {identities.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.display_name} ({p.role})
+                {p.display_name} (NPC · {p.role})
               </option>
             ))}
           </ArchiveSelect>

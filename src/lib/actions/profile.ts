@@ -128,15 +128,14 @@ export async function setVoyagerBatch(voyagerId: string, batchLabel: string) {
   return { error: null }
 }
 
-export async function searchMembers(query: string, includeNpcs = false) {
+export async function searchMembers(query: string, scope: 'members' | 'npcs' = 'members') {
   const supabase = await createClient()
   let search = supabase
     .from('voyager_profiles')
     .select('id, display_name, role, account_kind')
-  // Intel attribution may include NPCs with any managed identity role.
-  search = includeNpcs
-    ? search.or('role.in.(voyager,architect),account_kind.eq.npc')
-    : search.in('role', ['voyager', 'architect'])
+  search = scope === 'npcs'
+    ? search.eq('account_kind', 'npc')
+    : search.or('account_kind.eq.human,account_kind.is.null').in('role', ['voyager', 'architect'])
   const { data } = await search
     .ilike('display_name', `%${query}%`)
     .order('display_name')
