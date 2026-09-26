@@ -9,17 +9,13 @@ import type { DeviceBatch, DeviceBatchMedia, DistributionStage } from '@/lib/dev
 import styles from './console-packages.module.css'
 
 function packageImage(batch: DeviceBatch, stage: DistributionStage): DeviceBatchMedia | undefined {
+  if (batch.slug === 'kyoto-one' && stage.id === 'components-pack') return undefined
   const published = stage.media?.find(media => media.kind === 'image')
   if (published) return published
   if (stage.id === 'initial-voyager-pack') return {
     kind: 'image', src: '/voyager-pack/pack-email.png',
     alt: 'Voyager badge and welcome letter presentation on a workbench',
     caption: 'Initial Voyager Pack · presentation from the Collective archive',
-  }
-  if (batch.slug === 'kyoto-one' && stage.id === 'components-pack') return {
-    kind: 'image', src: '/presentation/antenna-worlds/helix-desert.png',
-    alt: 'Concept illustration of a helical antenna on a Console',
-    caption: 'Antenna concept illustration',
   }
   if (stage.id === 'console') return {
     kind: 'image', src: batch.image, alt: batch.imageAlt, caption: 'Console batch reference',
@@ -54,7 +50,7 @@ export function ConsolePackages({ batch }: { batch: DeviceBatch }) {
           const media = packageImage(batch, stage)
           return <li key={stage.id} className={styles.package}>
             <header><span>PACKAGE {String(index + 1).padStart(2, '0')}</span><h3>{stage.id === 'console' ? 'Multiverse Console' : stage.label}</h3></header>
-            {media && <figure><div className={`${styles.image} ${stage.id === 'initial-voyager-pack' ? styles.welcomeImage : ''}`}><Image src={media.src} alt={media.alt} fill sizes="(max-width: 560px) calc(100vw - 32px), 526px" /></div>{stage.id === 'components-pack' ? <figcaption>Concept image of the included antenna.</figcaption> : stage.id === 'console' ? <figcaption>Design visualization.</figcaption> : null}</figure>}
+            {media && <figure><div className={`${styles.image} ${stage.id === 'initial-voyager-pack' ? styles.welcomeImage : ''}`}><Image src={media.src} alt={media.alt} fill sizes="(max-width: 560px) calc(100vw - 32px), 526px" /></div>{stage.id === 'console' ? <figcaption>Design visualization.</figcaption> : null}</figure>}
             <p>{packageTeasers[stage.id] ?? stage.summary}</p>
           </li>
         })}
