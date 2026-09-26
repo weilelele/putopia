@@ -150,13 +150,13 @@ export function DeviceLiveRoom({
       {(canClaimDeviceBatch(batch.status) && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
         <div className={styles.paymentHeader}>
           <h2 id="claim-heading">CONSOLE CLAIM</h2>
-          {batch.claimPrice ? <div className={styles.paymentPrice}><strong>{priceAmount}</strong><span>{batch.claimPrice.currency.toUpperCase()} / CONSOLE</span></div> : null}
+          {batch.claimPrice ? <div className={styles.paymentPrice}><strong>{priceAmount}</strong><span>{batch.claimPrice.currency.toUpperCase()} / CONSOLE{batch.slug === 'kyoto-one' ? ' · PREORDER' : ''}</span></div> : null}
         </div>
         <div className={styles.claimCounts}>
           <div><span>BATCH TOTAL</span><strong>{batch.inventory?.listingQuantity ?? batch.holders.length}</strong></div>
           <div><span>REMAINING</span><strong>{remaining ?? 0}</strong></div>
         </div>
-        <DevicePurchaseTerms slug={batch.slug} />
+        <ConsolePackages batch={batch} />
         <div className={styles.claimRow}>
           {ownedConsole ? (
             <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => setProgressOpen(true)} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></ArchiveButton>
@@ -166,7 +166,7 @@ export function DeviceLiveRoom({
             <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} disabled type="button"><span>CLAIMS CLOSED</span></ArchiveButton>
           )}
         </div>
-        <ConsolePackages batch={batch} />
+        <DevicePurchaseTerms compact slug={batch.slug} />
       </section> : null}
 
       <section className={styles.sectionPanel}>
