@@ -1,5 +1,7 @@
 # Multiverse Collective — 玩法设计文档 / Game Design Document
 
+> **2026-09-27 · Worlds 整合迭代 / Worlds integration:** [Dreamcatcher 梦境循环设计（中文）](../product/worlds-dreamcatcher-loop.zh.md)记录上报、队列、Cosmo、Dispatch 和连续 Round 的统一目标、现有缺口及分阶段改造计划。02/03 中与其冲突的历史描述不再作为新流程要求；新循环实现和生产状态见发布记录。 / This specification defines the proposed unified loop and rollout; conflicting legacy descriptions in 02/03 do not govern the new flow, whose implementation and production status are tracked in the release notes.
+
 > 本目录是 **Multiverse Collective（原 Putopia Collective）** 的完整玩法设计文档（GDD）。
 > 它从游戏策划 / 产品经理视角，对产品现有的全部模块、系统与玩法进行**全面、准确**的梳理，
 > 作为后续讨论、汇总与迭代的权威依据。

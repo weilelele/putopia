@@ -1,3 +1,4 @@
+import { parallaxArrayName } from './parallax-brand'
 import { createAdminClient } from '@/lib/supabase/server'
 import { publicDreamcatchers } from '@/lib/dreamcatcher-publication'
 
@@ -12,6 +13,8 @@ export type DreamcatcherJob = {
   submitter: string
   status: DreamcatcherJobStatus
   roundNumber: number
+  roundStatus?: string
+  generationStatus?: string
 }
 
 export type DreamcatcherRoom = {
@@ -40,7 +43,7 @@ export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
     .select('id, slug, code, name, city, location, time_zone, status, round_duration_minutes, queue_capacity, camera_image_path, is_public')
     .eq('is_public', true)
     .order('created_at', { ascending: true })
-  if (error) throw new Error('The Dreamcatcher registry is temporarily unavailable.')
+  if (error) throw new Error('The Parallax Array registry is temporarily unavailable.')
   const rooms = publicDreamcatchers((data ?? []) as Array<Record<string, unknown> & { id: string; is_public: boolean }>)
   if (!rooms.length) return []
 
@@ -50,13 +53,18 @@ export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
     .in('dreamcatcher_id', rooms.map((room: { id: string }) => room.id))
     .in('status', ['queued', 'processing', 'awaiting_dispatch', 'awaiting_vote', 'returning'])
     .order('queued_at', { ascending: true })
-  if (jobsError) throw new Error('The Dreamcatcher queue is temporarily unavailable.')
+  if (jobsError) throw new Error('The Parallax Array queue is temporarily unavailable.')
 
+  const { data: roundRows, error: roundError } = await (admin as any).from('dreamcatcher_rounds') // eslint-disable-line @typescript-eslint/no-explicit-any
+    .select('job_id,status,round_number,dreamcatcher_generation_requests(status)')
+    .in('dreamcatcher_id', rooms.map((room: { id: string }) => room.id)).not('status','in','(settled,cancelled)')
+  if (roundError) throw new Error('Parallax Array round status is unavailable.')
+  const roundMap = new Map<string, {status:string;round_number:number;dreamcatcher_generation_requests:{status:string}[] | {status:string}}>((roundRows ?? []).map((r: {job_id:string}) => [r.job_id,r]))
   const mappedRooms: DreamcatcherRoom[] = rooms.map((room: Record<string, unknown>) => ({
     id: room.id as string,
     slug: room.slug as string,
     code: room.code as string,
-    name: room.name as string,
+    name: parallaxArrayName(room.name as string),
     city: room.city as string,
     location: room.location as string,
     timeZone: room.time_zone as string,
@@ -69,6 +77,7 @@ export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
       .filter((job: { dreamcatcher_id: string }) => job.dreamcatcher_id === room.id)
       .map((job: Record<string, unknown>) => {
         const world = job.worlds as { name?: string; description?: string; discoverer_name?: string } | null
+        const generation = roundMap.get(job.id as string)?.dreamcatcher_generation_requests
         return {
           id: job.id as string,
           worldId: job.world_id as string,
@@ -77,6 +86,8 @@ export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
           submitter: world?.discoverer_name ?? 'Unknown operative',
           status: job.status as DreamcatcherJobStatus,
           roundNumber: job.round_number as number,
+          roundStatus: roundMap.get(job.id as string)?.status,
+          generationStatus: Array.isArray(generation) ? generation[0]?.status : generation?.status,
         }
       }),
   }))

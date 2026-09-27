@@ -122,7 +122,7 @@ export function DreamcatcherChat({ roomId, city, timeZone }: { roomId: string; c
           <ArchiveButton type="submit" disabled={sending || !body.trim()}>{sending ? 'SENDING…' : 'SEND MESSAGE'}</ArchiveButton>
         </div>
       </form> : authLoading ? <p className={styles.chatNote}>Checking sign-in…</p> :
-        <div className={styles.signIn}><p>Join the conversation with this Dreamcatcher.</p><ArchiveLinkButton href="/login?redirect=%2Fworlds%2Flive" variant="secondary">LOG IN TO CHAT</ArchiveLinkButton></div>}
+        <div className={styles.signIn}><p>Join the conversation with this Parallax Array.</p><ArchiveLinkButton href="/login?redirect=%2Fworlds%2Flive" variant="secondary">LOG IN TO CHAT</ArchiveLinkButton></div>}
       <p role="status" className={styles.chatNote}>{status}</p>
       <div className={styles.chatToolbar}><span>NEWEST FIRST</span><span>{cursor ? 'EARLIER MESSAGES' : 'AUTO-UPDATING'}</span></div>
       {readError ? <div className={styles.chatError} role="alert"><p>{readError}</p><ArchiveButton variant="secondary" onClick={() => setRefresh((value) => value + 1)}>RETRY</ArchiveButton></div> : null}

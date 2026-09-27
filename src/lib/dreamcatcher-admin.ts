@@ -1,4 +1,5 @@
 import 'server-only'
+import { parallaxArrayName } from './parallax-brand'
 
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import type { DreamcatcherPublicationRecord } from '@/lib/dreamcatcher-publication'
@@ -15,11 +16,11 @@ export async function requireDreamcatcherArchitect() {
 
 export async function listAdminDreamcatchers(): Promise<DreamcatcherPublicationRecord[]> {
   await requireDreamcatcherArchitect()
-  // The existing Dreamcatcher migration is not yet represented in Database.
+  // The existing Parallax Array migration is not yet represented in Database.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (createAdminClient() as any).from('dreamcatchers')
     .select('id, slug, code, name, city, country, location, time_zone, status, round_duration_minutes, queue_capacity, is_public')
     .order('created_at', { ascending: true }).order('slug', { ascending: true })
-  if (error) throw new Error('Could not load Dreamcatchers. Please try again.')
-  return data ?? []
+  if (error) throw new Error('Could not load Parallax Arrays. Please try again.')
+  return (data ?? []).map((row: DreamcatcherPublicationRecord) => ({ ...row, name: parallaxArrayName(row.name) }))
 }

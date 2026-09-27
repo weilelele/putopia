@@ -12,7 +12,7 @@ import type { DreamcatcherPublicationRecord } from '@/lib/dreamcatcher-publicati
 import styles from './dreamcatchers.module.css'
 
 const IDENTITY_FIELDS = [
-  { key: 'name', label: 'NAME', placeholder: 'Kyoto Dreamcatcher', max: 160 },
+  { key: 'name', label: 'NAME', placeholder: 'Kyoto Parallax Array', max: 160 },
   { key: 'slug', label: 'DEVICE ID', placeholder: 'kyoto-02', max: 80 },
   { key: 'code', label: 'DEVICE CODE', placeholder: 'DC-KYO-02', max: 40 },
 ] as const
@@ -69,12 +69,12 @@ export function DreamcatcherEditor({ record, onCancel, onSaved }: {
 
   return (
     <div className={styles.page}>
-      <ArchivePageHeader title={record ? 'EDIT DREAMCATCHER' : 'NEW DREAMCATCHER'} />
+      <ArchivePageHeader title={record ? 'EDIT PARALLAX ARRAY' : 'NEW PARALLAX ARRAY'} />
       <p className={styles.notice}>{record
         ? record.is_public ? 'This device is published. Saving updates its live details immediately.' : 'Saving keeps this device unpublished.'
         : 'New devices are unpublished. Review the details, then publish separately.'}</p>
       <ArchiveCard className={styles.card}>
-        <form className={styles.form} onChange={() => setDirty(true)} onSubmit={submit} aria-label={record ? 'Edit Dreamcatcher' : 'New Dreamcatcher'}>
+        <form className={styles.form} onChange={() => setDirty(true)} onSubmit={submit} aria-label={record ? 'Edit Parallax Array' : 'New Parallax Array'}>
           <fieldset disabled={pending} className={styles.fieldGroup}>
             <legend>IDENTITY</legend>
             <div className={styles.formGrid}>
@@ -100,7 +100,7 @@ export function DreamcatcherEditor({ record, onCancel, onSaved }: {
               <ArchiveField htmlFor="dc-round" label="MINUTES PER ROUND"><ArchiveSelect id="dc-round" name="round_duration_minutes" defaultValue={initial.round_duration_minutes}>{[8, 9, 10].map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}</ArchiveSelect></ArchiveField>
               <ArchiveField htmlFor="dc-capacity" label="WAITING CAPACITY"><ArchiveInput id="dc-capacity" name="queue_capacity" type="number" inputMode="numeric" min={1} max={500} step={1} required defaultValue={initial.queue_capacity} /></ArchiveField>
             </div>
-            <p className={styles.notice}>One dream is processed at a time. Duration changes apply to future rounds. Lowering capacity does not remove queued dreams; new submissions wait until there is room.</p>
+            <p className={styles.notice}>One dream is processed at a time. Duration changes apply to future rounds. Lowering capacity does not remove queued observations; new submissions wait until there is room.</p>
           </fieldset>
           {error && <p role="alert" className={styles.formError}>{error}</p>}
           {discardPrompt ? <section aria-label="Unsaved changes" className={styles.confirm}>

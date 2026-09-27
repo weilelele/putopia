@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Worlds Live Room — Multiverse Collective',
-  description: 'Observe Dreamcatcher state feeds, submit dreams, and follow Signal Dispatch.',
+  description: 'Observe Parallax Array state feeds, share observations, and follow Signal Dispatch.',
 }
 
 export default async function WorldsLivePage() {

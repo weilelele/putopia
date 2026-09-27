@@ -9,7 +9,7 @@ export async function isPublishedChatRoom(id: string): Promise<boolean> {
   const admin = createAdminClient()
   const { data, error } = await admin.from('dreamcatchers' as never)
     .select('id').eq('id', id).eq('is_public', true).maybeSingle()
-  if (error) throw new Error('Could not check this Dreamcatcher.')
+  if (error) throw new Error('Could not check this Parallax Array.')
   return !!data
 }
 

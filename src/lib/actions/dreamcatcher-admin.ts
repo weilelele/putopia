@@ -28,7 +28,7 @@ export async function setDreamcatcherPublication(input: DreamcatcherPublicationI
     .eq('id', input.id).eq('is_public', input.expectedIsPublic)
     .select('id').maybeSingle()
   if (error) return { error: 'Could not save publication status. Please try again.' }
-  if (!data) return { error: 'This Dreamcatcher changed in another session. Refresh and try again.' }
+  if (!data) return { error: 'This Parallax Array changed in another session. Refresh and try again.' }
 
   refreshDreamcatchers()
   return { error: null }
@@ -50,8 +50,18 @@ export async function saveDreamcatcher(input: DreamcatcherSaveInput): Promise<{ 
       .eq('id', plan.id).match(plan.expected)
   const { data, error } = await query.select('id').maybeSingle()
   if (error?.code === '23505') return { error: 'This device ID or code already exists. Choose a different one.' }
-  if (error) return { error: 'Could not save the Dreamcatcher. Please try again.' }
+  if (error) return { error: 'Could not save the Parallax Array. Please try again.' }
   if (!data) return { error: 'This device was changed by someone else. Close the editor and refresh before trying again.' }
   refreshDreamcatchers()
   return { error: null }
+}
+
+export async function retryDreamcatcherGeneration(form: FormData) {
+  await requireDreamcatcherArchitect()
+  const requestId = String(form.get('requestId') ?? '')
+  if (!/^[0-9a-f-]{36}$/i.test(requestId)) throw new Error('Invalid generation request')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (createAdminClient() as any).rpc('retry_dreamcatcher_generation', { p_request: requestId })
+  if (error) throw new Error('Could not retry generation')
+  revalidatePath('/admin/dreamcatchers/rounds')
 }

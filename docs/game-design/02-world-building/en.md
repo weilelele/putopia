@@ -1,5 +1,7 @@
 # 02 · World Building
 
+> **2026-09-27 iteration note:** The proposed Dreamcatcher flow is dream submission → queue → Cosmo result → Signal Dispatch → 24-hour voting closes with at least one valid response → next round. See the [unified loop specification (Chinese)](../../product/worlds-dreamcatcher-loop.zh.md). The manual promotion, daily tuning, and older entry points below describe legacy behavior, not requirements for the new flow. The new loop is not yet implemented. If the window closes with zero responses, only the original dream submitter may submit a late response; it immediately settles the round and starts the next round. Others remain read-only, with no new 24-hour window.
+
 ## 1. Positioning
 
 World Building is the *player-facing* layer of **Spine B (the world lifecycle)** and the product's

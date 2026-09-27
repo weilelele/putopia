@@ -5,7 +5,8 @@ import { BackLink } from '@/components/back-link'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { getWorldById, rescanWorld } from '@/lib/actions/worlds'
+import { roundLabel } from '@/lib/dreamcatcher-round-model'
+import { getDreamcatcherProgress, stopDreamcatcherWorld, getWorldById, rescanWorld } from '@/lib/actions/worlds'
 import { getWorldInvestigation, setWorldVoteScope } from '@/lib/actions/signal-tasks'
 import type { WorldInvestigationData } from '@/lib/actions/signal-tasks'
 import type { World, WorldVoteScope } from '@/types/database'
@@ -36,6 +37,9 @@ export default function WorldDetailPage() {
 
   const [world, setWorld] = useState<World | null | undefined>(undefined)
   const [inv, setInv] = useState<WorldInvestigationData | null>(null)
+  const [roundProgress, setRoundProgress] = useState<Awaited<ReturnType<typeof getDreamcatcherProgress>>>(null)
+  const [roundMessage, setRoundMessage] = useState('')
+  const [stopping, setStopping] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [descExpanded, setDescExpanded] = useState(false)
   const [scope, setScope] = useState<WorldVoteScope>('all')
@@ -50,10 +54,12 @@ export default function WorldDetailPage() {
     setWorld(undefined)
     setLoadError(false)
     try {
-      const [w, investigation] = await Promise.all([
+      const [w, investigation, progress] = await Promise.all([
         getWorldById(id),
         getWorldInvestigation(id).catch(() => null),
+        getDreamcatcherProgress(id),
       ])
+      setRoundProgress(progress)
       setWorld(w ?? null)
       setInv(investigation)
       if (w) {
@@ -72,6 +78,16 @@ export default function WorldDetailPage() {
     void Promise.resolve().then(loadWorld)
   }, [loadWorld])
 
+  useEffect(() => {
+    if (!roundProgress || ['cancelled'].includes(roundProgress.status)) return
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+      void Promise.all([getDreamcatcherProgress(id).then(setRoundProgress), getWorldInvestigation(id).then(setInv)])
+        .catch(() => setRoundMessage('Progress refresh is temporarily unavailable.'))
+    }, 30_000)
+    return () => window.clearInterval(timer)
+  }, [id, roundProgress?.status]) // eslint-disable-line react-hooks/exhaustive-deps -- status is the only round field controlling polling
+
   const isOwner = !!user.id && !!world && (user.id === world.submitted_by || user.id === world.discoverer_id)
 
   const onScopeChange = async (next: WorldVoteScope) => {
@@ -84,7 +100,7 @@ export default function WorldDetailPage() {
     refreshInvestigation()
   }
 
-  const refreshInvestigation = () => getWorldInvestigation(id).then(setInv)
+  const refreshInvestigation = () => Promise.all([getWorldInvestigation(id).then(setInv), getDreamcatcherProgress(id).then(setRoundProgress)])
   const refreshAll = () => {
     void loadWorld()
   }
@@ -127,8 +143,8 @@ export default function WorldDetailPage() {
   // Signal Scanning gate: while the scan window is open the proposer sees a
   // countdown; when it closes the world is READY (a signal was tuned) or FAILED.
   const scanState = worldScanState(world.scan_until, !!inv?.investigation)
-  const scanning = scanState === 'scanning'
-  const scanFailed = scanState === 'failed'
+  const scanning = !roundProgress && scanState === 'scanning'
+  const scanFailed = !roundProgress && scanState === 'failed'
   // A world in tuning leads with its Signal Tuning (top slot), not a hero image.
   const investigation = inv?.investigation ?? null
   // Established worlds lead with their Archive reel (final form → days → vision).
@@ -146,6 +162,17 @@ export default function WorldDetailPage() {
           <BackLink href={backHref} label={backLabel} />
         </div>
 
+        {roundProgress && <ArchiveCard className="archive-inline-panel">
+          <p>{roundLabel(roundProgress.status, roundProgress.roundNumber, roundProgress.generationStatus)}</p>
+          <ArchiveLinkButton href="/worlds/live" variant="ghost">VIEW PARALLAX ARRAY</ArchiveLinkButton>
+          {roundProgress.canStop && <ArchiveButton disabled={stopping} onClick={async () => {
+            setStopping(true)
+            try { const result = await stopDreamcatcherWorld(id); if (!result.ok) setRoundMessage(result.error ?? 'Could not end exploration'); else refreshAll() }
+            catch { setRoundMessage('Result unconfirmed. Refresh to check exploration status.') }
+            finally { setStopping(false) }
+          }}>END EXPLORATION</ArchiveButton>}
+          {roundMessage && <p role="status">{roundMessage}</p>}
+        </ArchiveCard>}
         {/* Hero — Signal Scanning countdown / no-signal, else image or gradient */}
         {scanning || scanFailed ? (
           <WorldScanHero

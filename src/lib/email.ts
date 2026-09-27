@@ -19,6 +19,7 @@ type SendEmailInput = {
   html: string
   text?: string
   replyTo?: string
+  timeoutMs?: number
   idempotencyKey?: string
 }
 
@@ -36,6 +37,7 @@ export async function sendEmail(
   try {
     const res = await fetch(RESEND_ENDPOINT, {
       method: 'POST',
+      ...(input.timeoutMs ? { signal: AbortSignal.timeout(input.timeoutMs) } : {}),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',

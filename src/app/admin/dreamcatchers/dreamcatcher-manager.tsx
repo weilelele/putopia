@@ -52,11 +52,11 @@ export function DreamcatcherManager({ records }: { records: DreamcatcherPublicat
 
   return (
     <div className={styles.page}>
-      <ArchivePageHeader title="DREAMCATCHERS" />
+      <ArchivePageHeader title="PARALLAX ARRAYS" />
       <p className={styles.intro}>Publish devices to Worlds, or hide them without deleting their records.</p>
       <p className={styles.notice}>Preview changes also affect live data.</p>
       <div className={styles.toolbar}>
-        <ArchiveButton disabled={pending} variant={confirm ? 'secondary' : 'primary'} onClick={() => { setConfirm(null); setError(''); setMessage(''); setEditor('new') }}>NEW DREAMCATCHER</ArchiveButton>
+        <ArchiveButton disabled={pending} variant={confirm ? 'secondary' : 'primary'} onClick={() => { setConfirm(null); setError(''); setMessage(''); setEditor('new') }}>NEW PARALLAX ARRAY</ArchiveButton>
         <ArchiveButton disabled={pending} variant="ghost" onClick={() => { setConfirm(null); setError(''); router.refresh() }}>REFRESH</ArchiveButton>
       </div>
       <ArchiveTabs activeId={filter} ariaLabel="Publication status" items={[
@@ -82,8 +82,8 @@ export function DreamcatcherManager({ records }: { records: DreamcatcherPublicat
               <section aria-label={`Confirm publication change for ${record.name}`} className={styles.confirm}>
                 <h3>{confirm.is_public ? 'Unpublish this device?' : 'Publish this device?'}</h3>
                 <p>{confirm.is_public
-                  ? 'It will disappear from Worlds and stop accepting new dreams. Queued dreams stay on this device; no new rounds start until it is republished. A running round and already-published votes can still finish. Existing world records are not deleted.'
-                  : 'It will appear in Worlds again. Its running state is preserved; eligible queued dreams can continue on this same device.'}</p>
+                  ? 'It will disappear from Worlds and stop accepting new observations. Queued observations stay on this device; no new rounds start until it is republished. A running round and already-published votes can still finish. Existing world records are not deleted.'
+                  : 'It will appear in Worlds again. Its running state is preserved; eligible queued observations can continue on this same device.'}</p>
                 {error && <p role="alert">{error}</p>}
                 <div className={styles.actions}>
                   <ArchiveButton disabled={pending} onClick={applyChange}>{pending ? 'SAVING…' : confirm.is_public ? 'CONFIRM UNPUBLISH' : 'CONFIRM PUBLISH'}</ArchiveButton>
@@ -99,7 +99,7 @@ export function DreamcatcherManager({ records }: { records: DreamcatcherPublicat
             )}
           </ArchiveCard>
         ))}
-        {!visible.length && <ArchiveCard className={styles.card}><p>{records.length ? 'No devices in this view.' : 'No Dreamcatchers have been created yet.'}</p></ArchiveCard>}
+        {!visible.length && <ArchiveCard className={styles.card}><p>{records.length ? 'No devices in this view.' : 'No Parallax Arrays have been created yet.'}</p></ArchiveCard>}
       </div>
     </div>
   )
