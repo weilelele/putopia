@@ -17,7 +17,7 @@ export default async function DreamcatcherRoundsAdminPage() {
   return <main className="main pilot-archive-page archive-detail-page">
     <h1>Parallax Array rounds</h1>
     <ArchiveLinkButton href="/admin/dreamcatchers" variant="ghost">BACK TO DEVICES</ArchiveLinkButton>
-    {!process.env.COSMO_MONGO_URI && <p>The existing Cosmo read connection is not configured. Set COSMO_MONGO_URI before accepting dreams.</p>}
+    {!process.env.COSMO_MONGO_URI && <p>The existing Cosmo read connection is not configured. Set COSMO_MONGO_URI before accepting observations.</p>}
     <p>Latest 100 round records. Requests use the existing Cosmo inbox; sync retries do not create another generation request.</p>
     {rows.map(row => <ArchiveCard key={row.id} className="archive-inline-panel">
       <ArchiveLinkButton href={`/worlds/${encodeURIComponent(row.dreamcatcher_rounds.world_id)}`} variant="ghost">{row.dreamcatcher_rounds.world_id} · ROUND {row.dreamcatcher_rounds.round_number}</ArchiveLinkButton>
