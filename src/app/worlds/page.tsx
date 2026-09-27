@@ -215,7 +215,7 @@ export default async function WorldsPage({
           <div className="worlds-action-stack">
             <ArchiveLinkButton className="worlds-primary-action" href="/worlds/live" variant="primary">
               <UploadIcon />
-              OPEN DREAMCATCHERS
+              OPEN PARALLAX ARRAYS
             </ArchiveLinkButton>
             <ArchiveLinkButton className="worlds-secondary-action" href="/signal" variant="ghost">
               <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>

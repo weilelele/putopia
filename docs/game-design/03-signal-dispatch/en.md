@@ -1,5 +1,7 @@
 # 03 · Signal Dispatch (daily puzzles)
 
+> **2026-09-27 correction:** “Fully manual authoring” below is historical. Current code includes Cosmo batch import, automatic publication, and feedback requests, but new-dream onboarding is not a complete loop. The proposed Dreamcatcher flow retains a full 24-hour voting window and advances only with at least one eligible response at close, without requiring the owner to vote. Generation may start at submission, but results remain hidden until the queue turn and simulated device work period are complete. See the [unified loop specification (Chinese)](../../product/worlds-dreamcatcher-loop.zh.md) for current gaps and planned changes; the proposed loop is not yet implemented. If the window closes with zero responses, only the original dream submitter may submit a late response; it immediately settles the round and starts the next round. Others remain read-only, with no new 24-hour window.
+
 ## 1. Positioning
 
 Signal Dispatch is the product's **core daily participation loop** and the engine of World Building's

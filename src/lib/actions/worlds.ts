@@ -129,16 +129,19 @@ export async function submitWorld(payload: {
   return { error: null, data }
 }
 
-/** Submit a world to one specific Dreamcatcher. The device queue, rather than
+/** Submit a world to one specific Parallax Array. The device queue, rather than
  * submission time, decides when Signal Scanning begins. */
 export async function submitDreamcatcherWorld(payload: {
   dreamcatcherSlug: string
+  submissionKey: string
   name: string
   description: string
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Please log in before submitting a dream.', data: null }
+  if (!user) return { error: 'Please log in before submitting an observation.', data: null }
+
+  if (!process.env.COSMO_MONGO_URI?.trim()) return { error: 'Observation submission is temporarily unavailable. Please try again later.', data: null }
 
   const name = payload.name.trim()
   const description = payload.description.trim()
@@ -156,62 +159,18 @@ export async function submitDreamcatcherWorld(payload: {
     return { error: 'Applicant access or above is required.', data: null }
   }
 
+  if (!/^[0-9a-f-]{36}$/i.test(payload.submissionKey)) return { error: 'Invalid submission key', data: null }
+  // One transaction creates the world, thread, first round and generation outbox.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
-  const { data: catcher } = await db
-    .from('dreamcatchers')
-    .select('id, round_duration_minutes, status')
-    .eq('slug', payload.dreamcatcherSlug)
-    .eq('is_public', true)
-    .maybeSingle()
-  if (!catcher) return { error: 'This Dreamcatcher is not accepting dreams yet.', data: null }
-  if (catcher.status === 'offline') return { error: 'This Dreamcatcher is offline. Choose another device.', data: null }
-
-  const discovererName = profile.display_name?.trim() || user.email?.split('@')[0] || 'Unknown Operative'
-  const worldId = `PROP-${Date.now().toString(36).toUpperCase()}`
-  const submittedAt = new Date().toISOString()
-  const { data: world, error: worldError } = await admin
-    .from('worlds')
-    .insert({
-      id: worldId,
-      name,
-      name_en: name,
-      discoverer_id: user.id,
-      discoverer_name: discovererName,
-      discovery_date: submittedAt.slice(0, 10),
-      gradient_from: '#1a1a2e',
-      gradient_to: '#16213e',
-      image_path: null,
-      description,
-      is_verified: false,
-      lifecycle_state: 'proposed',
-      submitted_by: user.id,
-      submitted_at: submittedAt,
-      scan_until: null,
-      dreamcatcher_id: catcher.id,
-    })
-    .select()
-    .single()
-  if (worldError || !world) return { error: worldError?.message ?? 'Could not create the world.', data: null }
-
-  const { error: queueError } = await db.from('dreamcatcher_jobs').insert({
-    dreamcatcher_id: catcher.id,
-    world_id: world.id,
-    submitted_by: user.id,
-    status: 'queued',
-    round_number: 1,
-    round_duration_minutes: catcher.round_duration_minutes,
+  const { data: worldId, error } = await db.rpc('submit_dreamcatcher_round_world', {
+    p_user: user.id, p_slug: payload.dreamcatcherSlug, p_name: name,
+    p_description: description, p_key: payload.submissionKey,
   })
-  if (queueError) {
-    await admin.from('worlds').delete().eq('id', world.id)
-    const message = queueError.code === '23505'
-      ? 'You already have an unfinished dream in this Dreamcatcher.'
-      : queueError.message.includes('queue is full')
-        ? 'This Dreamcatcher queue is full. Choose another device.'
-        : queueError.message
-    return { error: message, data: null }
-  }
-
+  if (error) return { error: error.code === '23505' ? 'You already have an unfinished observation in this Parallax Array.' : error.message, data: null }
+  const { data: world } = await admin.from('worlds').select('*').eq('id', worldId).single()
+  if (!world) return { error: 'Observation accepted. Refresh to see its progress.', data: null }
+  const discovererName = profile.display_name?.trim() || 'Operative'
   revalidatePath('/worlds/live')
   revalidatePath('/worlds')
   logActivity({
@@ -239,13 +198,16 @@ export async function rescanWorld(worldId: string, patch?: { description?: strin
   const admin = createAdminClient()
   const { data: world } = await admin
     .from('worlds')
-    .select('submitted_by, discoverer_id')
+    .select('submitted_by, discoverer_id, dreamcatcher_id')
     .eq('id', worldId)
     .maybeSingle()
   if (!world) return { ok: false, error: 'World not found' }
   if (user.id !== world.submitted_by && user.id !== world.discoverer_id) {
     return { ok: false, error: 'Not allowed' }
   }
+
+  const { data: roundJob } = await (admin as any).from('dreamcatcher_jobs').select('id').eq('world_id', worldId).eq('orchestration', 'dreamcatcher_rounds').maybeSingle() // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (roundJob) return { ok: false, error: 'Parallax Array rounds are managed by the device queue.' }
 
   // Re-roll the scan window and clear the prior outcome so it re-resolves
   // (success/failure email) when this fresh scan completes.
@@ -463,6 +425,7 @@ export async function getWorldById(id: string) {
 }
 
 export async function createWorld(world: WorldInsert, actor?: { id: string; name: string; role: string }) {
+  if (!(await callerIsArchitect())) return { error: 'Architect role required', data: null }
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('worlds')
@@ -488,6 +451,7 @@ export async function createWorld(world: WorldInsert, actor?: { id: string; name
 }
 
 export async function updateWorld(id: string, updates: WorldUpdate) {
+  if (!(await callerIsArchitect())) return { error: 'Architect role required' }
   const admin = createAdminClient()
   const { error } = await admin
     .from('worlds')
@@ -500,6 +464,7 @@ export async function updateWorld(id: string, updates: WorldUpdate) {
 }
 
 export async function deleteWorld(id: string) {
+  if (!(await callerIsArchitect())) return { error: 'Architect role required' }
   const admin = createAdminClient()
   const { error } = await admin
     .from('worlds')
@@ -509,4 +474,33 @@ export async function deleteWorld(id: string) {
   if (error) return { error: error.message }
   revalidatePath('/worlds')
   return { error: null }
+}
+
+/** End an exploration without deleting its rounds or published history. */
+export async function stopDreamcatcherWorld(worldId: string) {
+  const client = await createClient()
+  const { data: { user } } = await client.auth.getUser()
+  if (!user) return { ok: false, error: 'Please log in first' }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (createAdminClient() as any).rpc('stop_dreamcatcher_world', { p_world: worldId, p_user: user.id })
+  revalidatePath('/worlds/live')
+  revalidatePath(`/worlds/${worldId}`)
+  return error ? { ok: false, error: error.message } : { ok: true }
+}
+
+/** Safe round status for world history. Never returns unpublished asset URLs. */
+export async function getDreamcatcherProgress(worldId: string) {
+  const client = await createClient()
+  const { data: { user } } = await client.auth.getUser()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = createAdminClient() as any
+  const { data: round, error } = await admin.from('dreamcatcher_rounds')
+    .select('id,round_number,status,initiator_id,dreamcatcher_generation_requests(status)')
+    .eq('world_id',worldId).order('round_number',{ascending:false}).limit(1).maybeSingle()
+  if (error) throw new Error('Round progress unavailable')
+  if (!round) return null
+  const generation = round.dreamcatcher_generation_requests
+  return { roundNumber: round.round_number as number, status: round.status as string,
+    generationStatus: (Array.isArray(generation) ? generation[0]?.status : generation?.status) as string | undefined,
+    canStop: user?.id === round.initiator_id && !['settled','cancelled'].includes(round.status) }
 }

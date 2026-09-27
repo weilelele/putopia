@@ -1,3 +1,4 @@
+import { LEGACY_DISPATCH_ENABLED } from './dispatch-policy'
 /**
  * Signal Dispatch recall (re-engagement) — doc 3.3.
  *
@@ -49,6 +50,7 @@ function recallEmailHtml(worldName: string, dayNum: number, url: string): string
  *  Keys off the reveal schedule, not raw publish time, so pre-published days only
  *  trigger a recall once they actually surface. */
 export async function runSignalRecall(opts?: { skipUserIds?: Set<string> }): Promise<RecallResult> {
+  if (!LEGACY_DISPATCH_ENABLED) return { tasksProcessed: 0, emailsSent: 0, errors: [] }
   const admin = createAdminClient() as DB
   const result: RecallResult = { tasksProcessed: 0, emailsSent: 0, errors: [] }
   const now = new Date()
@@ -57,6 +59,7 @@ export async function runSignalRecall(opts?: { skipUserIds?: Set<string> }): Pro
   const { data: tasks } = await admin
     .from('signal_tasks')
     .select('id, thread_id, day_index')
+    .is('dreamcatcher_round_id', null)
     .eq('is_published', true)
     .is('recall_sent_at', null)
     .not('thread_id', 'is', null)
@@ -83,6 +86,7 @@ export async function runSignalRecall(opts?: { skipUserIds?: Set<string> }): Pro
       const { data: pubDays } = await admin
         .from('signal_tasks')
         .select('day_index, published_at')
+        .is('dreamcatcher_round_id', null)
         .eq('thread_id', task.thread_id)
         .eq('is_published', true)
         .not('published_at', 'is', null)
@@ -98,6 +102,7 @@ export async function runSignalRecall(opts?: { skipUserIds?: Set<string> }): Pro
       const { data: priorTasks } = await admin
         .from('signal_tasks')
         .select('id')
+        .is('dreamcatcher_round_id', null)
         .eq('thread_id', task.thread_id)
         .lt('day_index', dayIndex)
       const priorIds = ((priorTasks ?? []) as { id: string }[]).map((t) => t.id)
@@ -154,7 +159,7 @@ export async function runSignalRecall(opts?: { skipUserIds?: Set<string> }): Pro
       }
 
       // mark processed regardless of recipient count so we don't re-scan
-      await admin.from('signal_tasks').update({ recall_sent_at: new Date().toISOString() }).eq('id', task.id)
+      await admin.from('signal_tasks').update({ recall_sent_at: new Date().toISOString() }).eq('id', task.id).is('dreamcatcher_round_id', null)
       result.tasksProcessed++
     } catch (e) {
       result.errors.push(`task ${task.id}: ${(e as Error).message}`)

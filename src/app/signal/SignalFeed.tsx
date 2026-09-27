@@ -116,7 +116,7 @@ export function InvestigationCard({
             style={{ color: canGoBack ? 'rgba(245,245,245,0.7)' : 'rgba(245,245,245,0.15)', width: 28, height: 28, cursor: canGoBack ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >◀</ArchiveButton>
           <span style={{ fontSize: 12, color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', minWidth: 48, textAlign: 'center' }}>
-            {onSearching ? 'SEARCHING' : `DAY ${current!.dayIndex + 1}`}
+            {onSearching ? 'SEARCHING' : `${investigation.roundBased ? 'ROUND' : 'DAY'} ${current!.dayIndex + 1}`}
           </span>
           <ArchiveButton type="submit" variant="secondary"
             onClick={() => canGoForward && setSelectedSlot((d) => d + 1)}
@@ -140,7 +140,7 @@ export function InvestigationCard({
         <TaskCard
           key={current.task.id}
           task={current.task}
-          canParticipate={investigation.canParticipate}
+          canParticipate={current!.task.canRespond ?? investigation.canParticipate}
           lockReason={investigation.lockReason}
           onFiled={onFiled}
         />
@@ -250,6 +250,13 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
     return () => clearInterval(id)
   }, [task.closeAt, closed])
 
+  useEffect(() => {
+    if (!task.roundNumber || !task.closeAt || task.initiatorOnly || closed) return
+    const delay = Math.max(0, Date.parse(task.closeAt) - Date.now())
+    const timer = window.setTimeout(onFiled, Math.min(delay + 50, 2_147_483_647))
+    return () => window.clearTimeout(timer)
+  }, [task.roundNumber, task.closeAt, task.initiatorOnly, closed, onFiled])
+
   const main = task.assets.find((a) => a.asset_role === 'main')
   const options = task.assets.filter((a) => a.asset_role !== 'main')
   const total = task.distribution ? Object.values(task.distribution).reduce((s, n) => s + n, 0) : 0
@@ -271,6 +278,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
 
   return (
     <ArchiveCard className="signal-task-card">
+      {task.initiatorOnly && <p>Voting ended without responses. Only the original submitter can choose a signal to start the next round.</p>}
       {/* Prompt spans the full width — the response count moved to the footer. */}
       <p style={{ fontSize: 14.5, margin: '0 0 14px', lineHeight: 1.6, color: 'rgba(245,245,245,0.88)' }}>
         {task.prompt || TYPE_HINT[task.type] || 'Make your judgment.'}
@@ -320,7 +328,7 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
           {/* Identification window status — live countdown while open, else ended. */}
           {closed ? (
             <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.4)', letterSpacing: '0.12em', marginBottom: 6 }}>○ IDENTIFICATION CLOSED</div>
-          ) : task.closeAt ? (
+          ) : task.closeAt && !task.initiatorOnly ? (
             <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', letterSpacing: '0.12em', marginBottom: 6, fontVariantNumeric: 'tabular-nums' }}>◷ IDENTIFYING · {fmtCountdown(closeLeft)}</div>
           ) : null}
           {!responded && !closed && (canParticipate ? (

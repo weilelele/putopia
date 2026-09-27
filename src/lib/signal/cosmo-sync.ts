@@ -1,3 +1,5 @@
+import { LEGACY_DISPATCH_ENABLED } from './dispatch-policy'
+import { resolveCosmoSignalAsset } from './cosmo-assets'
 /**
  * Cosmo → MCo puzzle sync (Signal Tuning v2).
  *
@@ -58,6 +60,7 @@ export async function buildCosmoSignalDay(opts: {
   type: SignalTaskType
   prompt?: string | null
 }): Promise<BuildDayResult> {
+  if (!LEGACY_DISPATCH_ENABLED) return { ok: false, skipped: true, error: 'Legacy Dispatch retired' }
   const admin = createAdminClient() as DB
 
   // Newest expansion batch that actually has clips. getWorldExpansions is
@@ -121,38 +124,15 @@ export async function buildCosmoSignalDay(opts: {
   // cosmo/{videoId}.{mp4,webp}; use them when present, else fall back to the raw clip
   // + poster still (processing is best-effort). `source_asset_id` is the Cosmo video
   // id, which Cosmo uses to resolve a crowd pick back to this expansion on settle.
-  const BUCKET = 'signal-assets'
-  const publicUrl = (p: string) =>
-    admin.storage.from(BUCKET).getPublicUrl(p).data.publicUrl
-  const tiles = await Promise.all(
-    batch.map(async (e, i) => {
-      const clip = e.videos[0]
-      const videoId = clip.assetId
-      const { data: found } = await admin.storage
-        .from(BUCKET)
-        .list('cosmo', { search: videoId })
-      const names = new Set(
-        (found ?? []).map((f: { name: string }) => f.name),
-      )
-      const hasMp4 = names.has(`${videoId}.mp4`)
-      const hasWebp = names.has(`${videoId}.webp`)
-      return {
-        task_id: task.id,
-        media: 'video',
-        source_asset_id: videoId,
-        source_url: clip.url,
-        processed_url: hasMp4 ? publicUrl(`cosmo/${videoId}.mp4`) : clip.url,
-        processed_path: hasMp4 ? `cosmo/${videoId}.mp4` : null,
-        display_url: hasWebp
-          ? publicUrl(`cosmo/${videoId}.webp`)
-          : (clip.posterUrl ?? null),
-        crop_config: {},
-        asset_role: 'option',
-        is_selected: true, // auto-selected — the v2 curation bypass
-        display_order: i,
-      }
-    }),
-  )
+  const tiles = await Promise.all(batch.map(async (e, i) => {
+    const asset = await resolveCosmoSignalAsset(admin, e.videos[0])
+    return {
+      task_id: task.id, media: asset.media, source_asset_id: asset.assetId,
+      source_url: asset.url, processed_url: asset.processedUrl,
+      processed_path: asset.processedPath, display_url: asset.posterUrl,
+      crop_config: {}, asset_role: 'option', is_selected: true, display_order: i,
+    }
+  }))
   const { error: tileErr } = await admin.from('signal_task_assets').insert(tiles)
   if (tileErr) return { ok: false, error: tileErr.message }
 
@@ -177,12 +157,14 @@ export async function buildCosmoSignalDay(opts: {
 export async function emitClosedResults(
   threadId: string,
 ): Promise<{ emitted: number; error?: string }> {
+  if (!LEGACY_DISPATCH_ENABLED) return { emitted: 0 }
   const admin = createAdminClient() as DB
   const now = new Date()
 
   const { data: thread } = await admin
     .from('signal_threads')
     .select('world_id, reveal_anchor_at, gap_hours')
+    .eq('orchestration', 'legacy_daily')
     .eq('id', threadId)
     .maybeSingle()
   if (!thread?.world_id) return { emitted: 0, error: 'Thread or world not found' }
@@ -266,6 +248,7 @@ export async function emitClosedResults(
 export async function maybeEmitColdRequest(
   worldId: string,
 ): Promise<{ emitted: boolean; error?: string }> {
+  if (!LEGACY_DISPATCH_ENABLED) return { emitted: false }
   // The caller (runCosmoSync) already gated on this world being bootstrapped in
   // Cosmo, so we don't re-read Cosmo per world here — just dedup on an existing
   // request. (The row's existence is the once-only guard.)
@@ -379,6 +362,7 @@ async function recoverStalledWorld(
  *  a cold world, recover a stalled one, and build+publish the next day. Errors are
  *  isolated per thread so one bad world can't abort the run. */
 export async function runCosmoSync(): Promise<{ threads: number; results: unknown[] }> {
+  if (!LEGACY_DISPATCH_ENABLED) return { threads: 0, results: [] }
   const admin = createAdminClient() as DB
 
   // Only worlds actively in Signal Tuning. A graduated / abandoned world leaves
@@ -392,6 +376,7 @@ export async function runCosmoSync(): Promise<{ threads: number; results: unknow
   const { data: threadRows } = await admin
     .from('signal_threads')
     .select('id, world_id, created_at')
+    .eq('orchestration', 'legacy_daily')
     .in('world_id', worldIds)
     .order('created_at', { ascending: false })
   const seen = new Set<string>()

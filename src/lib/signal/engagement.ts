@@ -1,3 +1,4 @@
+import { LEGACY_DISPATCH_ENABLED } from './dispatch-policy'
 /**
  * Re-engagement emails (churn detection) — two rules layered on top of the
  * per-day single-miss recall:
@@ -201,6 +202,7 @@ interface Candidate {
 /** Detect churn streaks and send at most one re-engagement email per user.
  *  Returns the set of users emailed so the caller can skip them for recall. */
 export async function runEngagementEmails(): Promise<EngagementResult> {
+  if (!LEGACY_DISPATCH_ENABLED) return { ownerAbsentSent: 0, voterChurnSent: 0, errors: [], emailedUserIds: [] }
   const admin = createAdminClient() as DB
   const result: EngagementResult = { ownerAbsentSent: 0, voterChurnSent: 0, errors: [], emailedUserIds: [] }
   const now = new Date()
@@ -209,6 +211,7 @@ export async function runEngagementEmails(): Promise<EngagementResult> {
   const { data: threadRows } = await admin
     .from('signal_threads')
     .select('id, world_id, reveal_anchor_at, gap_hours')
+    .eq('orchestration', 'legacy_daily')
   const threads = (threadRows ?? []) as { id: string; world_id: string | null; reveal_anchor_at: string | null; gap_hours: number | null }[]
   if (!threads.length) return result
 

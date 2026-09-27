@@ -10,6 +10,7 @@
  * New tables aren't in generated types, so queries are cast to `any` (project
  * convention — see admin/layout.tsx).
  */
+import { getRoundInvestigations } from '@/lib/dreamcatcher-rounds'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { listFrequencies as cosmoListFrequencies, sampleBandAssets, getBandAssets as cosmoGetBandAssets } from '@/lib/cosmo'
 import type { CosmoFrequency } from '@/lib/cosmo'
@@ -568,6 +569,9 @@ export interface PublicSignalAsset {
 }
 
 export interface PublicSignalTask {
+  roundNumber?: number
+  canRespond?: boolean
+  initiatorOnly?: boolean
   id: string
   type: SignalTaskType
   prompt: string | null
@@ -633,6 +637,7 @@ export async function getSignalFeed(date?: string): Promise<SignalFeed> {
     const { data } = await admin
       .from('signal_tasks')
       .select('task_date')
+      .is('dreamcatcher_round_id', null)
       .eq('is_published', true)
       .lte('task_date', today)
       .order('task_date', { ascending: false })
@@ -643,6 +648,7 @@ export async function getSignalFeed(date?: string): Promise<SignalFeed> {
   const { data: taskRows } = await admin
     .from('signal_tasks')
     .select('id, type, prompt, thread_id, day_index, prev_task_id')
+    .is('dreamcatcher_round_id', null)
     .eq('is_published', true)
     .eq('task_date', targetDate)
     .order('sort_order', { ascending: true })
@@ -768,10 +774,15 @@ export async function submitSignalResponse(
   // resolve the owning world's vote scope + owner via the task's thread
   const { data: task } = await admin
     .from('signal_tasks')
-    .select('is_published, thread_id, day_index')
+    .select('is_published, thread_id, day_index, dreamcatcher_round_id')
     .eq('id', taskId)
     .maybeSingle()
   if (!task?.is_published) return { ok: false, error: 'Task is not published' }
+  if (task.dreamcatcher_round_id) {
+    const { error } = await admin.rpc('respond_dreamcatcher_round', { p_task: taskId, p_asset: assetId, p_user: me.id })
+    return error ? { ok: false, error: error.message } : { ok: true }
+  }
+
 
   let voteScope: WorldVoteScope = 'all'
   let ownerId: string | null = null
@@ -836,6 +847,8 @@ export async function submitSignalResponse(
 // add each day's puzzle by hand (no auto-generation, no auto-advance).
 
 export interface PublicInvestigation {
+  dreamcatcherId?: string
+  roundBased?: boolean
   id: string                      // thread id
   worldId: string | null
   title: string                   // world name
@@ -927,7 +940,7 @@ export async function promoteWorldToTuning(input: {
     lifecycle_state: 'syncing',
     vote_scope: input.voteScope ?? 'all',
   }).eq('id', input.worldId)
-  // If the world entered through a Dreamcatcher, preserve that original device
+  // If the world entered through a Parallax Array, preserve that original device
   // and attach its existing Signal Dispatch thread to the queued round.
   await admin.from('dreamcatcher_jobs').update({
     signal_thread_id: data.id,
@@ -1581,14 +1594,16 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   // Architects see the same member view here — future (not-yet-revealed) days are
   // hidden. The full authoring preview lives in /admin/signal-tasks.
 
+  const roundInvestigations = await getRoundInvestigations(me)
   const now = new Date()
 
   const { data: threadData } = await admin
     .from('signal_threads')
     .select('id, title, type, world_id, reveal_anchor_at, gap_hours')
+    .eq('orchestration', 'legacy_daily')
     .order('created_at', { ascending: false })
   const threads = (threadData ?? []) as (ThreadRow & { reveal_anchor_at: string | null; gap_hours: number | null })[]
-  if (!threads.length) return { investigations: [], role, loggedIn: !!me }
+  if (!threads.length) return { investigations: roundInvestigations, role, loggedIn: !!me }
 
   const { data: taskData } = await admin
     .from('signal_tasks')
@@ -1637,7 +1652,7 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   }
   ranked.sort((a, b) => b.freshness - a.freshness)
 
-  return { investigations: ranked.map((r) => r.inv), role, loggedIn: !!me }
+  return { investigations: [...roundInvestigations, ...ranked.map((r) => r.inv)], role, loggedIn: !!me }
 }
 
 export interface WorldInvestigationData {
@@ -1651,6 +1666,8 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
   const admin = createAdminClient() as DB
   const me = await currentUser()
   const role = me?.role ?? null
+  const rounds = await getRoundInvestigations(me, worldId, true)
+  if (rounds.length) return { investigation: rounds[0], role, loggedIn: !!me }
   // Architects see the same member view here — future (not-yet-revealed) days are
   // hidden. The full authoring preview lives in /admin/signal-tasks.
 
@@ -1765,6 +1782,7 @@ export async function getDispatchDashboard(publicOverview = false): Promise<Disp
   const { data: pubTasks } = await admin
     .from('signal_tasks')
     .select('id, thread_id, day_index, published_at')
+    .is('dreamcatcher_round_id', null)
     .eq('is_published', true)
     .not('thread_id', 'is', null)
   const allTasks = (pubTasks ?? []) as { id: string; thread_id: string; day_index: number | null; published_at: string | null }[]
@@ -1830,5 +1848,13 @@ export async function getDispatchDashboard(publicOverview = false): Promise<Disp
   const yourWorlds = ((mine ?? []) as { id: string; name: string; lifecycle_state: WorldLifecycle }[])
     .map((w) => ({ id: w.id, name: w.name, stage: worldStage(w.lifecycle_state) }))
 
+  const roundInvestigations = await getRoundInvestigations(me)
+  for (const inv of roundInvestigations) {
+    const day = inv.days.at(-1)
+    if (!day || !inv.worldId) continue
+    inTuning += inv.days.length
+    if (!day.task.initiatorOnly && !day.task.closed && day.revealAt) openWorlds.push({ id: inv.worldId, name: inv.title, openedAt: day.revealAt })
+    if (day.task.canRespond && !day.task.mySelection) { awaitingYou++; awaitingWorldIds.push(inv.worldId) }
+  }
   return { openWorlds, awaitingYou, awaitingWorldIds, inTuning, yourWorlds }
 }

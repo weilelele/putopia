@@ -99,7 +99,7 @@ export function UiKit() {
 </ol>
 <ArchiveButton variant="secondary" onClick={() => setLive('ready')}>Retry camera fixture</ArchiveButton>
 </ArchiveCard> : view === 'worlds' ? <ArchiveCard>
-<h3>Dreamcatcher · fixture</h3>
+<h3>Parallax Array · fixture</h3>
 <p>Ready to accept a dream</p>
 <ArchiveButton onClick={() => setSheet(true)}>Open submission fixture</ArchiveButton>
 <details>

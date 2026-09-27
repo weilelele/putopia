@@ -3,7 +3,7 @@ import { isPublicationInput, publicDreamcatchers } from './dreamcatcher-publicat
 
 const id = 'dd62c171-740b-4625-90a9-239338401a87'
 
-describe('Dreamcatcher publication', () => {
+describe('Parallax Array publication', () => {
   it('accepts publishing and unpublishing an exact device', () => {
     expect(isPublicationInput({ id, isPublic: true, expectedIsPublic: false })).toBe(true)
     expect(isPublicationInput({ id, isPublic: false, expectedIsPublic: true })).toBe(true)

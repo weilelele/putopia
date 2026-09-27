@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { EMPTY_DREAMCATCHER, dreamcatcherConfig, planDreamcatcherSave, validateDreamcatcherConfig } from './dreamcatcher-config'
 
-const config = { slug: 'kyoto-02', code: 'DC-KYO-02', name: 'Kyoto Dreamcatcher', city: 'Kyoto', country: 'Japan', location: 'Kyoto, Japan', time_zone: 'Asia/Tokyo', round_duration_minutes: 8, queue_capacity: 50 }
+const config = { slug: 'kyoto-02', code: 'DC-KYO-02', name: 'Kyoto Parallax Array', city: 'Kyoto', country: 'Japan', location: 'Kyoto, Japan', time_zone: 'Asia/Tokyo', round_duration_minutes: 8, queue_capacity: 50 }
 const id = 'dd62c171-740b-4625-90a9-239338401a87'
 
-describe('Dreamcatcher configuration', () => {
+describe('Parallax Array configuration', () => {
   it('starts with safe form defaults', () => {
     expect(EMPTY_DREAMCATCHER.round_duration_minutes).toBe(8)
     expect(EMPTY_DREAMCATCHER.queue_capacity).toBe(50)
     expect(validateDreamcatcherConfig(EMPTY_DREAMCATCHER)).not.toBeNull()
   })
   it('creates unpublished idle devices and strips injected runtime fields', () => {
-    const plan = planDreamcatcherSave({ mode: 'create', config: { ...config, code: ' dc-kyo-02 ', name: ' Kyoto Dreamcatcher ', is_public: true, status: 'processing', id } })
+    const plan = planDreamcatcherSave({ mode: 'create', config: { ...config, code: ' dc-kyo-02 ', name: ' Kyoto Parallax Array ', is_public: true, status: 'processing', id } })
     expect(plan).toEqual({ error: null, mode: 'create', values: { ...config, is_public: false, status: 'idle' } })
   })
   it('edits only whitelisted fields and compares the full original content', () => {
@@ -28,10 +28,10 @@ describe('Dreamcatcher configuration', () => {
     expect(plan.error).toBeNull()
   })
   it('keeps original field values intact for optimistic compare-and-update', () => {
-    const expected = { ...config, name: 'Kyoto Dreamcatcher ' }
+    const expected = { ...config, name: 'Kyoto Parallax Array ' }
     const plan = planDreamcatcherSave({ mode: 'edit', id, expected, config })
     if (plan.error !== null || plan.mode !== 'edit') throw new Error('Expected edit plan')
-    expect(plan.expected.name).toBe('Kyoto Dreamcatcher ')
+    expect(plan.expected.name).toBe('Kyoto Parallax Array ')
   })
   it('protects the permanent slug', () => {
     expect(planDreamcatcherSave({ mode: 'edit', id, expected: config, config: { ...config, slug: 'other-device' } }).error).toContain('cannot be changed')

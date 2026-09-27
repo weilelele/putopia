@@ -25,7 +25,7 @@ const SUBJECT_LABEL: Record<CommentSubjectType, string> = {
   device_batch: 'Device Batch',
   intel:  'intel report',
   world:  'world',
-  dreamcatcher: 'Dreamcatcher',
+  dreamcatcher: 'Parallax Array',
 }
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ export async function postComment(
   if (subjectType === 'dreamcatcher') {
     if (!caller) return { error: 'Complete your profile before posting.', data: null }
     try {
-      if (!await isPublishedChatRoom(subjectId)) return { error: 'This Dreamcatcher is no longer public.', data: null }
+      if (!await isPublishedChatRoom(subjectId)) return { error: 'This Parallax Array is no longer public.', data: null }
       // Basic per-user/per-room flood protection using persisted messages.
       // This is a best-effort cooldown, not an atomic distributed rate limiter.
       const { data: recent, error: recentError } = await admin.from('comments' as never)
@@ -174,7 +174,7 @@ export async function postComment(
       if (recentError) return { error: 'Could not send the message. Please try again.', data: null }
       if (recent?.length) return { error: 'Please wait a few seconds before sending another message.', data: null }
     } catch {
-      return { error: 'Could not check this Dreamcatcher. Please try again.', data: null }
+      return { error: 'Could not check this Parallax Array. Please try again.', data: null }
     }
   }
 

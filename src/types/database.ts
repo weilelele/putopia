@@ -204,7 +204,7 @@ export type World = {
   submitted_at: string | null
   scan_until: string | null   // Signal Scanning completes at this ISO ts (null = no scan ceremony)
   scan_resolved_at: string | null // outcome (success/failure email) settled at this ts; null = pending
-  dreamcatcher_id: string | null // owning Dreamcatcher; queue state lives in dreamcatcher_jobs
+  dreamcatcher_id: string | null // owning Parallax Array; queue state lives in dreamcatcher_jobs
   is_test: boolean            // test-console world; excluded from public listings
   created_at: string
 }

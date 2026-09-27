@@ -71,7 +71,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: '/admin/intel',       label: 'INTEL'    },
         { href: '/admin/worlds',      label: 'WORLDS'   },
         { href: 'https://worldflow.multiverseco.org', label: 'WORLDFLOW', external: true },
-        { href: '/admin/dreamcatchers', label: 'DREAMCATCHERS' },
+        { href: '/admin/dreamcatchers', label: 'PARALLAX ARRAYS' },
         { href: '/admin/voyagers',    label: 'VOYAGERS' },
         { href: '/admin/npcs',        label: 'NPCS' },
         { href: '/admin/orders',      label: 'ORDERS'   },
