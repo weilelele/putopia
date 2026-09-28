@@ -9,7 +9,7 @@ await db.exec(`
 create role anon; create role authenticated; create role service_role bypassrls;
 create schema auth; create function auth.uid() returns uuid language sql as $$select null::uuid$$;
 create table voyager_profiles(id uuid primary key, display_name text, role text);
-create table worlds(id text primary key,name text,name_en text,description text,discoverer_id uuid,discoverer_name text,submitted_by uuid,submitted_at timestamptz,discovery_date date,gradient_from text,gradient_to text,lifecycle_state text,is_verified boolean,dreamcatcher_id uuid,vote_scope text,scan_until timestamptz,scan_resolved_at timestamptz);
+create table worlds(id text primary key,name text,name_en text,description text,discoverer_id uuid,discoverer_name text,submitted_by uuid,submitted_at timestamptz,discovery_date date,gradient_from text,gradient_to text,image_path text,lifecycle_state text,is_verified boolean,dreamcatcher_id uuid,vote_scope text,scan_until timestamptz,scan_resolved_at timestamptz);
 create type signal_task_type as enum ('visual_match','visual_odd_one','audio_odd_one','audio_match');
 create type signal_asset_media as enum ('image','video','audio');
 create table signal_threads(id uuid primary key default gen_random_uuid(),world_id text,type signal_task_type,created_by uuid);
@@ -23,6 +23,7 @@ await db.exec(await readFile('supabase/schema_v54.sql','utf8'))
 await db.exec(await readFile('supabase/schema_v67.sql','utf8'))
 await db.exec(await readFile('supabase/schema_v78.sql','utf8'))
 await db.exec(await readFile('supabase/schema_v77.sql','utf8'))
+await db.exec(await readFile('supabase/schema_v79.sql','utf8'))
 const owner='00000000-0000-4000-8000-000000000001', voter='00000000-0000-4000-8000-000000000002', architect='00000000-0000-4000-8000-000000000003'
 await db.query("insert into voyager_profiles values ($1,'Owner','applicant'),($2,'Voter','voyager'),($3,'Architect','architect')",[owner,voter,architect])
 const one=async(sql,args=[]) => (await db.query(sql,args)).rows[0]
@@ -31,10 +32,24 @@ const wid=await submit(owner,'kyoto-02','10000000-0000-4000-8000-000000000001')
 assert.equal(await submit(owner,'kyoto-02','10000000-0000-4000-8000-000000000001'),wid)
 let r=await one('select * from dreamcatcher_rounds where world_id=$1',[wid])
 assert.equal(r.round_number,1)
+const entry=await one('select * from worlds where id=$1',[wid])
+assert.equal(entry.lifecycle_state,'proposed','Submission must use the legacy intake state')
+assert.equal(entry.scan_until,null,'Device queue owns the first scan start')
+assert.equal(entry.is_verified,false)
+assert.match(wid,/^PROP-[0-9A-Z]{8,10}$/,'Preserve the legacy timestamp identifier format')
+assert.ok(Math.abs(parseInt(wid.slice(5),36)-Date.now())<10000)
+await db.exec('select advance_dreamcatcher_rounds()')
+assert.equal((await one('select status from dreamcatcher_rounds where id=$1',[r.id])).status,'processing','Pending intake must survive the round cron')
+assert.equal((await one('select lifecycle_state from worlds where id=$1',[wid])).lifecycle_state,'proposed','Presentation must not promote intake')
+assert.equal(Date.parse((await one('select scan_until from worlds where id=$1',[wid])).scan_until),Date.parse((await one('select presentation_ready_at from dreamcatcher_rounds where id=$1',[r.id])).presentation_ready_at))
+assert.equal((await one('select count(*)::int n from cosmo_requests')).n,0,'Queue movement does not dispatch before bootstrap')
+assert.equal((await one("select has_function_privilege('authenticated','create_observation_world(uuid,text,text,text,text,text,text,timestamptz,uuid)','execute') as allowed")).allowed,false)
+
 const claim=await one('select id as "requestId",input from dreamcatcher_generation_requests where round_id=$1',[r.id])
 assert.equal(claim.input.roundId,r.id)
 const cid=(await one('select dispatch_dreamcatcher_generation($1,$2) as id',[claim.requestId,['old-batch']])).id
 assert.equal((await one('select dispatch_dreamcatcher_generation($1,$2) as id',[claim.requestId,[]])).id,cid)
+assert.equal((await one('select lifecycle_state from worlds where id=$1',[wid])).lifecycle_state,'syncing','Bootstrap-confirmed dispatch promotes the world')
 assert.deepEqual((await one('select payload from cosmo_requests where id=$1',[cid])).payload,{})
 assert.equal((await one('select count(*)::int as n from cosmo_requests')).n,1)
 const result={sessionId:'batch-one',assets:[{assetId:'a',media:'video',url:'https://example.com/a.mp4',processedUrl:'https://example.com/processed.mp4',processedPath:'cosmo/a.mp4',posterUrl:'https://example.com/animated.webp',order:0},{assetId:'b',media:'image',url:'https://example.com/b.webp',order:1}]}
@@ -140,5 +155,13 @@ await assert.rejects(db.query("update signal_tasks set is_published=false where 
 await db.exec("update dreamcatchers set queue_capacity=1 where slug='mexico-city-03'")
 await submit(owner,'mexico-city-03','10000000-0000-4000-8000-000000000004')
 await assert.rejects(submit(voter,'mexico-city-03','10000000-0000-4000-8000-000000000005'),/queue is full/)
-console.log('PASS: migration; hidden pre-generation; 24h voting; immutable owner fallback; idempotency; feedback history; Cosmo command deduplication and session fencing; device pause; late assets; queue capacity; protected content and RPC permissions')
+// Restoring the intake state must not revive stopped worlds or accept later-round regressions.
+await db.query("update worlds set lifecycle_state='stable' where id=$1",[lateWorld])
+await db.exec('select advance_dreamcatcher_rounds()')
+assert.equal((await one('select status from dreamcatcher_rounds where id=$1',[late.id])).status,'cancelled')
+const ordinary=(await one("select create_observation_world($1,'Old entry','Old English','Legacy description','Owner','#1a1a2e','#16213e',now()+interval '8 hours',null) id",[owner])).id
+assert.notEqual(ordinary,wid)
+assert.equal((await one('select lifecycle_state from worlds where id=$1',[ordinary])).lifecycle_state,'proposed')
+assert.equal((await one('select count(*)::int n from dreamcatcher_rounds where world_id=$1',[ordinary])).n,0,'Legacy entry does not silently enroll in new rounds')
+console.log('PASS: legacy shared intake; bootstrap-only promotion; migration; hidden pre-generation; 24h voting; immutable owner fallback; idempotency; feedback history; Cosmo command deduplication and session fencing; device pause; late assets; queue capacity; protected content and RPC permissions')
 await db.close()

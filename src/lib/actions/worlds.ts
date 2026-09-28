@@ -87,32 +87,18 @@ export async function submitWorld(payload: {
   if (!profile) return { error: 'Profile not found', data: null }
 
   const discovererName = profile.display_name?.trim() || user.email?.split('@')[0] || 'Unknown Operative'
-  const worldId = `PROP-${Date.now().toString(36).toUpperCase()}`
-
-  const { data, error } = await admin
-    .from('worlds')
-    .insert({
-      id: worldId,
-      name: payload.name,
-      name_en: payload.name_en || payload.name,
-      discoverer_id: user.id,
-      discoverer_name: discovererName,
-      discovery_date: new Date().toISOString().split('T')[0],
-      gradient_from: payload.gradient_from ?? '#1a1a2e',
-      gradient_to: payload.gradient_to ?? '#16213e',
-      image_path: null,
-      description: payload.description,
-      is_verified: false,
-      lifecycle_state: 'proposed',
-      submitted_by: user.id,
-      submitted_at: new Date().toISOString(),
-      // Roll the Signal Scanning window — the first reading returns in 8-10h.
-      scan_until: rollScanUntil(Date.now(), Math.random()),
-    })
-    .select()
-    .single()
-
+  // Share the legacy World entry with the atomic Parallax Array submission RPC.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: worldId, error } = await (admin as any).rpc('create_observation_world', {
+    p_user: user.id, p_name: payload.name, p_name_en: payload.name_en || payload.name,
+    p_description: payload.description, p_discoverer_name: discovererName,
+    p_gradient_from: payload.gradient_from ?? '#1a1a2e',
+    p_gradient_to: payload.gradient_to ?? '#16213e',
+    p_scan_until: rollScanUntil(Date.now(), Math.random()), p_dreamcatcher: null,
+  })
   if (error) return { error: error.message, data: null }
+  const { data, error: readError } = await admin.from('worlds').select('*').eq('id', worldId).single()
+  if (readError || !data) return { error: 'Observation accepted. Refresh to see its record.', data: null }
 
   revalidatePath('/worlds')
 
