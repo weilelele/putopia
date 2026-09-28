@@ -1,4 +1,5 @@
 'use client'
+import { deviceQueueOrder } from '@/lib/dreamcatcher-queue-policy'
 import { roundLabel } from '@/lib/dreamcatcher-round-model'
 import { RootBrandHeader } from '@/components/root-brand-header'
 import { ArchiveTabs } from '@/components/archive-tabs'
@@ -23,7 +24,7 @@ import roomStyles from './worlds-room.module.css'
 import playerStyles from './dreamcatcher-live-video.module.css'
 import styles from '../../live-observation-room.module.css'
 
-type RoomTab = 'queue' | 'dispatch' | 'observations' | 'chat'
+type RoomTab = 'dispatch' | 'observations' | 'chat'
 type Detail = { kind: 'dispatch'; investigationId: string }
 
 const STATUS_LABEL: Record<DreamcatcherStatus, string> = {
@@ -61,7 +62,10 @@ export function WorldsLiveRoom({
 }) {
   const router = useRouter()
   const [selectedSlug, setSelectedSlug] = useSessionPreference('mc:view:worlds:room', rooms[0]?.slug ?? '')
-  const [activeTab, setActiveTab] = useSessionPreference<RoomTab>('mc:view:worlds:tab', 'queue')
+  const [savedTab, setActiveTab] = useSessionPreference<RoomTab>('mc:view:worlds:tab', 'dispatch')
+  // Older sessions may still hold the removed Queue tab.
+  const activeTab = ['dispatch', 'observations', 'chat'].includes(savedTab) ? savedTab : 'dispatch'
+  const [queueExpanded, setQueueExpanded] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
   const [detail, setDetail] = useState<Detail | null>(null)
@@ -74,7 +78,8 @@ export function WorldsLiveRoom({
   const selected = rooms.find((room) => room.slug === selectedSlug) ?? rooms[0]
   const [now, setNow] = useState(rooms[0]?.observedAt ?? 0)
   const queueFull = !!selected && selected.queue.filter(j => j.status === 'queued' || j.status === 'returning').length >= selected.queueCapacity
-  const currentJob = selected?.queue.find((job) => job.status === 'processing')
+  const orderedQueue = deviceQueueOrder(selected?.queue ?? [])
+  const currentJob = orderedQueue.find((job) => job.roundStatus === 'processing' || (!job.roundStatus && job.status === 'processing'))
   const working = isDreamcatcherWorking(selected?.status ?? 'idle', selected?.queue ?? [])
   const clock = localTime(selected?.timeZone ?? 'UTC', now)
   const roomInvestigations = useMemo(() => {
@@ -103,7 +108,8 @@ export function WorldsLiveRoom({
 
   function chooseRoom(slug: string) {
     setSelectedSlug(slug)
-    setActiveTab('queue')
+    setActiveTab('dispatch')
+    setQueueExpanded(false)
     setStatusMessage('')
   }
 
@@ -179,15 +185,14 @@ export function WorldsLiveRoom({
       </section>
 
       </div><div className={`${styles.desktopSplit} ${styles.workspaceDetails}`}>
-        <section className={styles.sectionPanel} aria-labelledby="device-status">
+        <section className={`${styles.sectionPanel} ${roomStyles.devicePanel}`} aria-labelledby="device-status">
           <header className={styles.queueHeader}>
             <div><div className={styles.eyebrow}>CURRENT DEVICE STATE</div><h2 id="device-status">{STATUS_LABEL[selected.status]}</h2></div>
             <strong className={styles.queueCount}>{selected.code}</strong>
           </header>
-          <div className={styles.deviceStateBody}>
-            <span>{selected.status === 'offline' ? 'NOT ACCEPTING OBSERVATIONS' : selected.status === 'paused' ? 'ROUNDS PAUSED · QUEUE OPEN' : currentJob ? `ROUND ${currentJob.roundNumber} IN PROGRESS` : queueFull ? 'QUEUE AT CAPACITY' : 'ACCEPTING OBSERVATIONS'}</span>
-            <span>{selected.roundDurationMinutes} MIN DEVICE ROUND · SIGNALS MAY TAKE LONGER</span>
-          </div>
+          <p className={roomStyles.deviceSummary}>
+            {selected.status === 'offline' ? 'OBSERVATIONS CLOSED' : selected.status === 'paused' ? 'PAUSED · QUEUE OPEN' : queueFull ? 'QUEUE FULL' : currentJob ? `ROUND ${currentJob.roundNumber} · QUEUE OPEN` : 'OBSERVATIONS OPEN'}
+          </p>
           <div className={styles.dreamActionRow}>
             <ArchiveButton variant="ghost" aria-label="How this Parallax Array works" className={styles.infoButton} onClick={() => setInfoOpen(true)} type="button"><CircleHelp aria-hidden size={20} /></ArchiveButton>
             <ArchiveButton variant="primary" className={styles.primaryButton} disabled={queueFull || selected.status === 'offline'} onClick={() => { setSubmissionKey(crypto.randomUUID()); setSubmitOpen(true) }} type="button">{queueFull ? 'CHOOSE ANOTHER DEVICE' : 'SHARE AN OBSERVATION'}</ArchiveButton>
@@ -195,15 +200,27 @@ export function WorldsLiveRoom({
           {statusMessage ? <p aria-live="polite" className={styles.formStatus}>{statusMessage}</p> : null}
         </section>
 
-        <section className={styles.sectionPanel}>
-          <ArchiveTabs ariaLabel="Parallax Array room content" activeId={activeTab}
-            items={[{id:'queue',label:'QUEUE',count:selected.queue.length},{id:'dispatch',label:'DISPATCH',count:roomInvestigations.length},...(loggedIn ? [{id:'observations',label:'MY OBSERVATIONS',count:selected.myObservations?.length ?? 0}] : []),{id:'chat',label:'LIVE CHAT'}].map(item=>({...item,panelId:`world-room-${item.id}`}))}
-            onChange={id => setActiveTab(id as typeof activeTab)} />
+        <section className={`${styles.sectionPanel} ${roomStyles.queueOverview}`} aria-label="Device queue">
+          <div className={roomStyles.queueHeading}><h2>QUEUE{orderedQueue.length ? ` · ${orderedQueue.length}` : ''}</h2>{!orderedQueue.length ? <span>No observations waiting</span> : null}</div>
+          <div id="device-queue-items">
+            {(queueExpanded ? orderedQueue : orderedQueue.slice(0, 3)).map(job => <details className={roomStyles.queueEntry} key={`${selected.id}-${job.id}`}>
+              <summary className={roomStyles.queueSummary}>
+                <span className={roomStyles.queueTitle}>{job.title}</span>
+                <span className={roomStyles.queueMeta}>Round {job.roundNumber} · {job.roundStatus === 'processing' || (!job.roundStatus && job.status === 'processing') ? 'Processing' : 'Waiting'}</span>
+                <ChevronRight aria-hidden size={14} />
+              </summary>
+              <div className={roomStyles.queueDetail}><p>{job.description || job.title}</p><p>Submitted by {job.submitter}</p><Link href={`/worlds/${encodeURIComponent(job.worldId)}`} prefetch={false}>Open observation <ChevronRight aria-hidden size={14} /></Link></div>
+            </details>)}
+          </div>
+          {orderedQueue.length > 3 ? <ArchiveButton variant="ghost" className={roomStyles.queueToggle} aria-expanded={queueExpanded} aria-controls="device-queue-items" onClick={() => setQueueExpanded(value => !value)}>{queueExpanded ? 'SHOW LESS' : `SHOW ALL ${orderedQueue.length}`}</ArchiveButton> : null}
+        </section>
 
-          {activeTab === 'queue' ? <div className={styles.queueList} role="tabpanel" id={`world-room-${activeTab}`} aria-labelledby={`world-room-${activeTab}-tab`}>
-            {selected.queue.map((job, index) => <Link className={`${styles.queueItem} ${roomStyles.queueLink}`} data-active={job.status === 'processing'} key={job.id} href={`/worlds/${encodeURIComponent(job.worldId)}`} prefetch={false}><span className={styles.queueIndex}>{String(index + 1).padStart(2, '0')}</span><span><strong>{job.title}</strong><small>SUBMITTED BY {job.submitter.toUpperCase()}</small></span><span className={styles.queueStatus}>{jobStatus(job)} <ChevronRight aria-hidden size={14} /></span></Link>)}
-            {!selected.queue.length ? <div className={styles.emptyRoom}>NO OBSERVATIONS WAITING · {STATUS_LABEL[selected.status]}</div> : null}
-          </div> : null}
+        <section className={styles.sectionPanel}>
+          <div className={roomStyles.contentTabs}>
+            <ArchiveTabs ariaLabel="Parallax Array room content" activeId={activeTab}
+              items={[{id:'dispatch',label:'DISPATCH'},{id:'observations',label:'MINE'},{id:'chat',label:'LIVE CHAT'}].map(item=>({...item,panelId:`world-room-${item.id}`}))}
+              onChange={id => setActiveTab(id as RoomTab)} />
+          </div>
 
           {activeTab === 'dispatch' ? <div className={styles.queueList} role="tabpanel" id={`world-room-${activeTab}`} aria-labelledby={`world-room-${activeTab}-tab`}>
             {roomInvestigations.map((investigation) => {
@@ -213,6 +230,8 @@ export function WorldsLiveRoom({
             })}
             {!roomInvestigations.length ? <div className={styles.emptyRoom}>NO SIGNALS AWAITING A COMMUNITY CHOICE</div> : null}
           </div> : null}
+
+          {activeTab === 'observations' && !loggedIn ? <div className={roomStyles.signIn} role="tabpanel" id="world-room-observations" aria-labelledby="world-room-observations-tab"><p>Log in to follow your observations.</p><ArchiveLinkButton href="/login?redirect=%2Fworlds%2Flive" variant="secondary">LOG IN</ArchiveLinkButton></div> : null}
 
           {activeTab === 'observations' && loggedIn ? <div className={styles.queueList} role="tabpanel" id="world-room-observations" aria-labelledby="world-room-observations-tab">
             {(selected.myObservations ?? []).map(job => <Link className={`${styles.queueItem} ${roomStyles.queueLink}`} key={job.id} href={`/worlds/${encodeURIComponent(job.worldId)}`} prefetch={false}><ChevronRight aria-hidden size={16} /><span><strong>{job.title}</strong><small>{job.roundStatus === 'awaiting_assets' ? 'Device processing complete. Waiting for signals to return.' : 'Open your observation to follow its progress.'}</small></span><span className={styles.queueStatus}>{jobStatus(job)}</span></Link>)}
@@ -225,7 +244,7 @@ export function WorldsLiveRoom({
 
 
       </div>
-      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}><p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. The duration is predictable, but the room does not show a countdown.</p><p>Your observation leaves the queue when device processing finishes. Follow its progress in My Observations while signals are on their way. When signals arrive, they become available for a 24-hour community vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>You can submit another observation after device processing finishes, even while earlier signals or votes are pending. One new observation may wait for or use this device at a time. Returning rounds keep their place in the same queue. The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
+      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}><p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. Signals can take longer to arrive; a device round does not guarantee signals within that time.</p><p>Your observation leaves the queue when device processing finishes. Follow its progress in My Observations while signals are on their way. When signals arrive, they become available for a 24-hour community vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>You can submit another observation after device processing finishes, even while earlier signals or votes are pending. One new observation may wait for or use this device at a time. Returning rounds keep their place in the same queue. The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
 
       {submitOpen ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Share an observation" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}>{loggedIn ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT DID YOU OBSERVE?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe something you saw, remembered, or experienced…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form> : <div className={styles.dialogBody}><p>Applicant access or above is required to submit to a Parallax Array.</p><Link className={styles.primaryButton} href="/login">LOG IN TO CONTINUE</Link></div>}</ArchiveSheet> : null}
 
