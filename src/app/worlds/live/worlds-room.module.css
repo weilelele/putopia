@@ -69,3 +69,6 @@
 @media (min-width: 640px) {
   .navigation { grid-template-columns: minmax(0, 1fr) 11rem; }
 }
+
+/* Allow the room tab strip to scroll inside its grid cell on portrait phones. */
+.scrollPage section { min-width: 0; }
