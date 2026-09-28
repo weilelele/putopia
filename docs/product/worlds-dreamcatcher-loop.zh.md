@@ -120,7 +120,7 @@ flowchart TD
 
 用户确认：通信和取图方式不变，不新增 Cosmo worker、回调 API 或 worker 密钥，也不要求修改 Cosmo 后台。
 
-提交仍创建 World，Cosmo 按既有机制接纳并 bootstrap；本站复用 `getWorldBootstraps()` 读取接纳状态。就绪后由 Dreamcatcher 每分钟 cron 向已有 `cosmo_requests` 写入 `world_id`、`type: expansion` 和旧格式 payload：首轮 `{}`，后续 `{ puzzleType, tiles: [{ assetId, votes }] }`。原梦境及扩展上下文继续由 Cosmo 对应 World/channel/cubicle 保存，本站另存各轮反馈快照供追溯，不把新字段强塞进旧协议。
+提交仍创建 World；本站不再等待 Cosmo bootstrap 状态，由 Dreamcatcher 每分钟 cron 直接向已有 `cosmo_requests` 写入 `world_id`、`type: expansion` 和旧格式 payload：首轮 `{}`，后续 `{ puzzleType, tiles: [{ assetId, votes }] }`。原梦境及扩展上下文继续由 Cosmo 对应 World/channel/cubicle 保存，本站另存各轮反馈快照供追溯，不把新字段强塞进旧协议。
 
 获取结果继续走 `COSMO_MONGO_URI` 只读连接：`channel.mco.worldId → cubicle.expansions → ai-video / ai-image`。以 `sessionId` 分批，按旧逻辑每个 expansion 取首个完成视频；优先沿用 `signal-assets/cosmo/{videoId}.mp4` 与 `.webp`，不存在时回退原视频和封面 URL。
 
@@ -216,7 +216,7 @@ flowchart TD
 
 第一批只接新梦境。存量按已有 job/thread/batch/反馈关系逐个核对，生成迁移预览，不猜测历史 Round，不批量重置扫描时间。回滚应停止新任务领取，保留 outbox、外部在途请求及关联记录；停止重试，迟到结果只记账待处理，不自动发布或切回旧 emitter。
 
-测试覆盖：完整 Round 1→2→3、提前生成不可见、工作结束素材迟到、24h 实际起算、首票不提前推进、主人未投他人已投、零反馈后的权限收窄与活动池移除、原始发起者补投立即推进、旧 vote_scope 不阻断补投、非发起者/非发起者 Architect 补投拒绝、cron 延迟时权限仍生效、补投与 cron 并发结算幂等、截止时并发投票与结算、并发领取、重复提交与反馈、队满、设备暂停、bootstrap 拒绝、生成超时、部分素材、重复/乱序结果、取消后的迟到结果、新旧流程互斥。Vitest 保持纯逻辑和 mock，不连 DB/网络/env。真实外部闭环仅在明确隔离的数据与生成环境验证；preview 不能默认当作隔离环境。
+测试覆盖：完整 Round 1→2→3、提前生成不可见、工作结束素材迟到、24h 实际起算、首票不提前推进、主人未投他人已投、零反馈后的权限收窄与活动池移除、原始发起者补投立即推进、旧 vote_scope 不阻断补投、非发起者/非发起者 Architect 补投拒绝、cron 延迟时权限仍生效、补投与 cron 并发结算幂等、截止时并发投票与结算、并发领取、重复提交与反馈、队满、设备暂停、未接纳世界直接下发、生成超时、部分素材、重复/乱序结果、取消后的迟到结果、新旧流程互斥。Vitest 保持纯逻辑和 mock，不连 DB/网络/env。真实外部闭环仅在明确隔离的数据与生成环境验证；preview 不能默认当作隔离环境。
 
 编码阶段按仓库要求运行 design:check、tsc、lint、test、build，PR 注明新迁移是否已应用。本文档更新不等于上述开发与验证已经完成。
 
