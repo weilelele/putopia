@@ -84,6 +84,7 @@ function profileToForm(v: VoyagerProfile): EditForm {
 const BIO_LIMIT = 240
 const DEFAULT_BATCH = 'Original Batch'
 const BATCH_COLLAPSE = 6
+const ARCHITECT_COLLAPSE = 4
 
 // ── Page ───────────────────────────────────────────────────────────────────
 export default function VoyagersPage() {
@@ -106,6 +107,7 @@ export default function VoyagersPage() {
   // ── Batch selector state ────────────────────────────────────────────────
   const [activeBatch, setActiveBatch] = useSessionPreference<string | null>('mc:view:voyagers:batch:s2-default', null)
   const [batchExpanded, setBatchExpanded] = useState(false)
+  const [architectsExpanded, setArchitectsExpanded] = useState(false)
   const selectBatch = (label: string) => { setActiveBatch(label); setBatchExpanded(false) }
 
   const refresh = useCallback(async (force = false) => {
@@ -245,14 +247,22 @@ export default function VoyagersPage() {
       ) : (
         <>
           {architects.length > 0 && (
-            <section id="section-architects" style={{ marginBottom: '2.5rem', scrollMarginTop: '1rem' }}>
+            <section id="section-architects" style={{ scrollMarginTop: '1rem' }}>
               <ArchiveSectionLabel>ARCHITECTS</ArchiveSectionLabel>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {architects.map(v => (
+              <div id="architect-directory" className="voyager-directory-list">
+                {(architectsExpanded ? architects : architects.slice(0, ARCHITECT_COLLAPSE)).map(v => (
                   <VoyagerCard key={v.id} voyager={v} user={user} isAtLeast={isAtLeast}
                     onEditClick={openEdit} isArchitect />
                 ))}
               </div>
+              {architects.length > ARCHITECT_COLLAPSE && (
+                <div style={{ textAlign: 'center', marginTop: '8px' }}>
+                  <ArchiveButton variant="ghost" aria-expanded={architectsExpanded} aria-controls="architect-directory"
+                    onClick={() => setArchitectsExpanded(expanded => !expanded)}>
+                    {architectsExpanded ? '▲ COLLAPSE' : `▼ SHOW ALL (${architects.length})`}
+                  </ArchiveButton>
+                </div>
+              )}
             </section>
           )}
 
@@ -266,7 +276,7 @@ export default function VoyagersPage() {
               <BatchTabs activeId={currentLabel ?? ''} items={batches.map(({label,members}) => ({id:label,label,count:members.length}))} onChange={selectBatch} />
 
               {/* Selected batch members — full cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="voyager-directory-list">
                 {shownMembers.map(v => (
                   <VoyagerCard key={v.id} voyager={v} user={user} isAtLeast={isAtLeast}
                     onEditClick={openEdit} />
@@ -408,24 +418,52 @@ function VoyagerCard({
   onEditClick: (v: VoyagerProfile) => void
   isArchitect?: boolean
 }) {
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileTrigger = useRef<HTMLButtonElement>(null)
+  const closeProfile = () => {
+    setProfileOpen(false)
+    requestAnimationFrame(() => profileTrigger.current?.focus({ preventScroll: true }))
+  }
   const isOwn = isAtLeast('voyager') && user?.id === voyager.id
   const links = [
     voyager.social_x && { key: 'X', icon: <XIcon />, href: voyager.social_x },
     voyager.social_instagram && { key: 'Instagram', icon: <InstagramIcon />, href: voyager.social_instagram },
     voyager.social_linkedin && { key: 'LinkedIn', icon: <LinkedInIcon />, href: voyager.social_linkedin },
   ].filter(Boolean) as { key: string; icon: React.ReactNode; href: string }[]
-  return <article className={`voyager-directory-row${isArchitect ? ' voyager-directory-row--architect' : ''}`}>
-    <div className="voyager-directory-identity">
-      <div className="voyager-directory-portrait">{voyager.avatar_url
+  return <article className="voyager-directory-row">
+    <button ref={profileTrigger} type="button" className="voyager-directory-trigger" aria-haspopup="dialog"
+      aria-label={`View ${voyager.display_name}'s profile`} onClick={() => setProfileOpen(true)}>
+      <span className="voyager-directory-portrait">{voyager.avatar_url
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={voyager.avatar_url} alt={voyager.display_name} />
-        : <span>{getInitials(voyager.display_name)}</span>}</div>
-      <div><h3>{voyager.display_name}</h3>{isArchitect && <p>ARCHITECT</p>}{voyager.location && <p>{voyager.location}</p>}<p>{voyager.observation_days} observation days</p>
-    <details className="voyager-directory-details"><summary>Worlds &amp; observations <ArrowRight aria-hidden size={16} /></summary>
-      <div><p>{voyager.worlds_discovered} worlds · Joined {formatJoinDate(voyager.joined_at)}</p>{voyager.bio && <p>{voyager.bio}</p>}
-      {links.length > 0 && <div className="voyager-directory-social">{links.map(({key,icon,href})=><a key={key} href={href} aria-label={`${voyager.display_name} on ${key}`} target="_blank" rel="noopener noreferrer">{icon}</a>)}</div>}
-      {isOwn && <ArchiveButton variant="secondary" onClick={() => onEditClick(voyager)}>Edit profile</ArchiveButton>}</div>
-    </details></div>
-    </div>
+        ? <img src={voyager.avatar_url} alt="" loading="lazy" />
+        : <span>{getInitials(voyager.display_name)}</span>}</span>
+      <span className="voyager-directory-copy">
+        <span className="voyager-directory-name">{voyager.display_name}</span>
+        <span className="voyager-directory-meta">{voyager.location || (isArchitect ? 'Architect' : 'Voyager')}</span>
+      </span>
+      <ArrowRight aria-hidden size={16} />
+    </button>
+    {profileOpen && <ArchiveSheet open title={voyager.display_name} onClose={closeProfile}>
+      <div className="voyager-profile-detail">
+        <div className="voyager-profile-identity">
+          <div className="voyager-directory-portrait">{voyager.avatar_url
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={voyager.avatar_url} alt="" />
+            : <span>{getInitials(voyager.display_name)}</span>}</div>
+          <div><p className="voyager-profile-role">{isArchitect ? 'ARCHITECT' : 'VOYAGER'}</p>
+            {voyager.location && <p>{voyager.location}</p>}
+            {voyager.batch_label && <p>{voyager.batch_label}</p>}</div>
+        </div>
+        {voyager.bio && <p className="voyager-profile-bio">{voyager.bio}</p>}
+        <dl className="voyager-profile-stats">
+          <div><dt>Observation days</dt><dd>{voyager.observation_days}</dd></div>
+          <div><dt>Worlds discovered</dt><dd>{voyager.worlds_discovered}</dd></div>
+        </dl>
+        <p>Joined <time dateTime={voyager.joined_at}>{formatJoinDate(voyager.joined_at)}</time></p>
+        {links.length > 0 && <div className="voyager-directory-social">{links.map(({key,icon,href}) =>
+          <a key={key} href={href} target="_blank" rel="noopener noreferrer">{icon}{key}<span aria-hidden>↗</span></a>)}</div>}
+        {isOwn && <ArchiveButton variant="secondary" onClick={() => { setProfileOpen(false); onEditClick(voyager) }}>Edit profile</ArchiveButton>}
+      </div>
+    </ArchiveSheet>}
   </article>
 }

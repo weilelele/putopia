@@ -3997,20 +3997,30 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .intel-recent-row h3 { font-size: var(--fs-title); font-weight: 400; line-height: 1.4; margin: 6px 0; overflow-wrap: anywhere; }
 .pilot-voyagers-page > .archive-stat-strip { margin-bottom: 24px; }
 .pilot-voyagers-page .archive-section-label { color: var(--color-nucleus); font-size: var(--fs-title); font-weight: 400; margin-bottom: 16px; }
-.voyager-directory-row { padding: 12px 0 16px; border-bottom: 1px solid var(--bd-faint); min-width: 0; }
-.voyager-directory-identity { display: grid; grid-template-columns: 88px minmax(0,1fr); gap: 16px; align-items: start; }
-.voyager-directory-row--architect .voyager-directory-identity { grid-template-columns: 120px minmax(0,1fr); }
-.voyager-directory-portrait { aspect-ratio: 1; border: 1px solid var(--bd-faint); overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--color-nucleus); font-size: var(--fs-h3); }
+.voyager-directory-list { display: grid; grid-template-columns: minmax(0, 1fr); }
+.voyager-directory-row { border-bottom: 1px solid var(--bd-faint); min-width: 0; }
+.voyager-directory-trigger { display: grid; grid-template-columns: 40px minmax(0, 1fr) 16px; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 0; border: 0; background: transparent; color: var(--color-star); font-family: var(--font-mono); text-align: left; cursor: pointer; }
+.voyager-directory-trigger:hover { color: var(--color-nucleus); }
+.voyager-directory-trigger:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 2px; }
+.voyager-directory-trigger > svg { color: var(--color-nucleus); }
+.voyager-directory-portrait { aspect-ratio: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--color-void); color: var(--color-nucleus); font-size: var(--fs-body); }
 .voyager-directory-portrait img { width: 100%; height: 100%; object-fit: cover; }
-.voyager-directory-identity h3 { margin: 8px 0 12px; font-size: var(--fs-title); line-height: 1.3; font-weight: 700; overflow-wrap: anywhere; }
-.voyager-directory-identity p { margin: 6px 0; font-size: var(--fs-label); line-height: 1.5; overflow-wrap: anywhere; }
-.voyager-directory-details { margin-top: 4px; }
-.voyager-directory-details summary { display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 44px; font-size: var(--fs-label); color: var(--color-star-dim); list-style: none; }
-.voyager-directory-details summary::-webkit-details-marker { display: none; }
-.voyager-directory-details[open] summary { color: var(--color-nucleus); }
-.voyager-directory-details p { font-size: var(--fs-label); line-height: 1.6; overflow-wrap: anywhere; }
-.voyager-directory-social { display: flex; gap: 8px; }
-.voyager-directory-social a { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: var(--color-star-dim); }
+.voyager-directory-copy { min-width: 0; display: grid; gap: 2px; overflow-wrap: anywhere; }
+.voyager-directory-name { font-size: var(--fs-body); line-height: 1.25; }
+.voyager-directory-meta { font-size: var(--fs-caption); line-height: 1.4; color: var(--color-star-dim); }
+.voyager-profile-detail { overflow-wrap: anywhere; }
+.voyager-profile-detail p { font-size: var(--fs-label); line-height: 1.5; margin: 8px 0; }
+.voyager-profile-identity { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 16px; align-items: center; }
+.voyager-profile-role { color: var(--color-nucleus); }
+.voyager-profile-detail .voyager-profile-bio { white-space: pre-wrap; font-size: var(--fs-body); margin: 24px 0; }
+.voyager-profile-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 16px 0; margin: 24px 0 16px; border-block: 1px solid var(--bd-faint); }
+.voyager-profile-stats dt { font-size: var(--fs-caption); color: var(--color-star-dim); }
+.voyager-profile-stats dd { font-size: var(--fs-h3); margin: 8px 0 0; }
+.voyager-directory-social { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-block: 16px; }
+.voyager-directory-social a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--color-star); font-size: var(--fs-label); text-decoration: underline; text-underline-offset: 4px; }
+.voyager-directory-social a:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 2px; }
+@media (min-width: 768px) { .voyager-directory-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; } .voyager-directory-trigger { min-height: 72px; } }
+@media (min-width: 1100px) { .voyager-directory-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .voyager-logs-entry { margin: 24px 0; }
 .event-card { flex-basis: 68%; padding: 6px; }
 .event-copy { padding: 10px 0 0; gap: 6px; }
@@ -4018,7 +4028,7 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .event-copy p { font-size: var(--fs-label); line-height: 1.5; }
 .event-copy .archive-button { margin-top: 12px; min-height: 48px; }
 .event-rail-controls { gap: 4px; }
-@media (max-width: 359px) { .voyager-directory-row--architect .voyager-directory-identity { grid-template-columns: 96px minmax(0,1fr); gap: 12px; } .event-card { flex-basis: 82%; } }
+@media (max-width: 359px) { .event-card { flex-basis: 82%; } }
 @media (min-width: 768px) { .event-card { flex-basis: 340px; } .intel-lead h2 { max-width: 720px; } }
 
 .archive-button.archive-button--primary { font-size: var(--fs-body); font-weight: 400; }
@@ -4039,7 +4049,7 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .update-content p { -webkit-line-clamp: 1; }
 .event-copy h3 { -webkit-line-clamp: 2; }
 @media (max-width: 359px) { .update-row { grid-template-columns: 48px minmax(0,1fr); } .update-image { height: 56px; } }
-.intel-lead h2, .voyager-directory-identity h3 { font-weight: 400; }
+.intel-lead h2 { font-weight: 400; }
 .archive-stat-strip__label { font-weight: 400; }
 
 /* Retained Voyager welcome and account status, before the collective counts. */
