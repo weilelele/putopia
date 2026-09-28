@@ -127,7 +127,7 @@ export function WorldsLiveRoom({
       setSubmitOpen(false)
       setActiveTab('queue')
       setStatusMessage('Observation accepted by this device.')
-      window.location.reload()
+      router.refresh()
       } catch { setSubmissionUnknown(true); setStatusMessage('Result unconfirmed. Refresh the queue to check your submission before trying again.') }
     })
   }
@@ -147,7 +147,7 @@ export function WorldsLiveRoom({
       setDetail(null)
       setPendingChoice('')
       setStatusMessage(dispatchDay.task.initiatorOnly ? 'Signal recorded. The next round is returning to this Parallax Array.' : 'Signal recorded. Voting remains open for the full 24-hour window.')
-      window.location.reload()
+      router.refresh()
       } catch { setSubmissionUnknown(true); setStatusMessage('Result unconfirmed. Refresh the queue to check your submission before trying again.') }
     })
   }
