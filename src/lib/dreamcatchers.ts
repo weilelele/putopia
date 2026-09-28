@@ -14,6 +14,8 @@ export type DreamcatcherJob = {
   description: string
   submitter: string
   status: DreamcatcherJobStatus
+  queuedAt?: string
+  queueOrderId?: string
   roundNumber: number
   roundStatus?: string
   generationStatus?: string
@@ -61,10 +63,10 @@ export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
   if (jobsError) throw new Error('The Parallax Array queue is temporarily unavailable.')
 
   const { data: roundRows, error: roundError } = await (admin as any).from('dreamcatcher_rounds') // eslint-disable-line @typescript-eslint/no-explicit-any
-    .select('job_id,status,round_number,dreamcatcher_generation_requests(status)')
+    .select('id,job_id,status,round_number,queued_at,dreamcatcher_generation_requests(status)')
     .in('dreamcatcher_id', rooms.map((room: { id: string }) => room.id)).not('status','in','(settled,cancelled)')
   if (roundError) throw new Error('Parallax Array round status is unavailable.')
-  const roundMap = new Map<string, {status:string;round_number:number;dreamcatcher_generation_requests:{status:string}[] | {status:string}}>((roundRows ?? []).map((r: {job_id:string}) => [r.job_id,r]))
+  const roundMap = new Map<string, {id:string;queued_at:string | null;status:string;round_number:number;dreamcatcher_generation_requests:{status:string}[] | {status:string}}>((roundRows ?? []).map((r: {job_id:string}) => [r.job_id,r]))
   const mappedRooms: DreamcatcherRoom[] = rooms.map((room: Record<string, unknown>) => ({
     id: room.id as string,
     slug: room.slug as string,
@@ -96,7 +98,9 @@ export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
           description: world?.description ?? '',
           submitter: world?.discoverer_name ?? 'Unknown operative',
           status: job.status as DreamcatcherJobStatus,
-          roundNumber: job.round_number as number,
+          queuedAt: roundMap.get(job.id as string)?.queued_at ?? job.queued_at as string,
+          queueOrderId: roundMap.get(job.id as string)?.id ?? job.id as string,
+          roundNumber: roundMap.get(job.id as string)?.round_number ?? job.round_number as number,
           roundStatus: roundMap.get(job.id as string)?.status,
           generationStatus: Array.isArray(generation) ? generation[0]?.status : generation?.status,
         }

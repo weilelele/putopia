@@ -242,3 +242,11 @@ flowchart TD
 Queue 只显示已经入队或正在设备 Processing 的轮次。设备工作结束即移出 Queue；等待素材、投票中和等待发起者补投不占 Queue，也不计入 Dispatch 的待反馈任务，除非已有正式发布的素材。当前用户通过 My Observations 查看自己在所选设备的进行中记录，并可进入世界详情查看状态。提交成功后直接切换到 My Observations，不整页重载。
 
 每位用户在同一设备还有 waiting_capacity、queued 或 processing 的轮次时，暂不能新建另一条 observation；设备处理结束后即可再提交，不必等 Cosmo 素材或投票。已有世界的后续轮次继续自动回流，可与同一用户较新的记录共同排队，避免旧的全生命周期唯一约束阻塞结算。总队列容量、重复提交去重、24 小时投票、发起者补投及仅素材发布时通知均保留。
+
+### 2026-09-29 · Queue 概览方案 A
+
+Queue 从内容 Tab 移到设备状态和提交按钮下方。默认展示当前 processing 与接下来两条；没有 processing 时展示真实排队顺序最前面的三条。排序遵循当前轮次 queued_at、id；每条可展开完整内容，多于三条可展开全部并收起，空队列只占一行。
+
+内容区保持三个等宽页签：Dispatch / Mine（My Observations）/ Live Chat。游客的 Mine 提供登录入口，不下发私人记录。提交成功进入 Mine；设备工作完成退出 Queue，个人记录继续等待真实素材。素材发布、24 小时投票和发起者通知机制不变。
+
+设备状态采用单行短文案，具体轮次时长与“素材可能更晚”的解释保留在帮助中；不承诺十分钟内收到素材。验证证据见[Queue 迭代记录](../releases/queue-dispatch-separation.md)。
