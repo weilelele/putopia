@@ -23,7 +23,7 @@ import roomStyles from './worlds-room.module.css'
 import playerStyles from './dreamcatcher-live-video.module.css'
 import styles from '../../live-observation-room.module.css'
 
-type RoomTab = 'queue' | 'dispatch' | 'chat'
+type RoomTab = 'queue' | 'dispatch' | 'observations' | 'chat'
 type Detail = { kind: 'dispatch'; investigationId: string }
 
 const STATUS_LABEL: Record<DreamcatcherStatus, string> = {
@@ -125,7 +125,7 @@ export function WorldsLiveRoom({
       }
       setDream('')
       setSubmitOpen(false)
-      setActiveTab('queue')
+      setActiveTab('observations')
       setStatusMessage('Observation accepted by this device.')
       router.refresh()
       } catch { setSubmissionUnknown(true); setStatusMessage('Result unconfirmed. Refresh the queue to check your submission before trying again.') }
@@ -197,7 +197,7 @@ export function WorldsLiveRoom({
 
         <section className={styles.sectionPanel}>
           <ArchiveTabs ariaLabel="Parallax Array room content" activeId={activeTab}
-            items={[{id:'queue',label:'QUEUE'},{id:'dispatch',label:'DISPATCH',count:roomInvestigations.length},{id:'chat',label:'LIVE CHAT'}].map(item=>({...item,panelId:`world-room-${item.id}`}))}
+            items={[{id:'queue',label:'QUEUE',count:selected.queue.length},{id:'dispatch',label:'DISPATCH',count:roomInvestigations.length},...(loggedIn ? [{id:'observations',label:'MY OBSERVATIONS',count:selected.myObservations?.length ?? 0}] : []),{id:'chat',label:'LIVE CHAT'}].map(item=>({...item,panelId:`world-room-${item.id}`}))}
             onChange={id => setActiveTab(id as typeof activeTab)} />
 
           {activeTab === 'queue' ? <div className={styles.queueList} role="tabpanel" id={`world-room-${activeTab}`} aria-labelledby={`world-room-${activeTab}-tab`}>
@@ -214,13 +214,18 @@ export function WorldsLiveRoom({
             {!roomInvestigations.length ? <div className={styles.emptyRoom}>NO SIGNALS AWAITING A COMMUNITY CHOICE</div> : null}
           </div> : null}
 
+          {activeTab === 'observations' && loggedIn ? <div className={styles.queueList} role="tabpanel" id="world-room-observations" aria-labelledby="world-room-observations-tab">
+            {(selected.myObservations ?? []).map(job => <Link className={`${styles.queueItem} ${roomStyles.queueLink}`} key={job.id} href={`/worlds/${encodeURIComponent(job.worldId)}`} prefetch={false}><ChevronRight aria-hidden size={16} /><span><strong>{job.title}</strong><small>{job.roundStatus === 'awaiting_assets' ? 'Device processing complete. Waiting for signals to return.' : 'Open your observation to follow its progress.'}</small></span><span className={styles.queueStatus}>{jobStatus(job)}</span></Link>)}
+            {!selected.myObservations?.length ? <div className={styles.emptyRoom}>NO ONGOING OBSERVATIONS AT THIS LOCATION</div> : null}
+          </div> : null}
+
           {activeTab === 'chat' ? <div role="tabpanel" id={`world-room-${activeTab}`} aria-labelledby={`world-room-${activeTab}-tab`}><DreamcatcherChat key={selected.id} roomId={selected.id} city={selected.city} timeZone={selected.timeZone} /></div> : null}
         </section>
       </div>
 
 
       </div>
-      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}><p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. The duration is predictable, but the room does not show a countdown.</p><p>Your observation joins the queue. When its round finishes and signals arrive, they become available for a 24-hour community vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
+      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}><p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. The duration is predictable, but the room does not show a countdown.</p><p>Your observation leaves the queue when device processing finishes. Follow its progress in My Observations while signals are on their way. When signals arrive, they become available for a 24-hour community vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>You can submit another observation after device processing finishes, even while earlier signals or votes are pending. One new observation may wait for or use this device at a time. Returning rounds keep their place in the same queue. The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
 
       {submitOpen ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Share an observation" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}>{loggedIn ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT DID YOU OBSERVE?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe something you saw, remembered, or experienced…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form> : <div className={styles.dialogBody}><p>Applicant access or above is required to submit to a Parallax Array.</p><Link className={styles.primaryButton} href="/login">LOG IN TO CONTINUE</Link></div>}</ArchiveSheet> : null}
 

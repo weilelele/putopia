@@ -18,7 +18,7 @@ export function roundVoteAccess(input: {
 export function roundLabel(status: string, roundNumber: number, generationStatus?: string): string {
   const labels: Record<string, string> = {
     waiting_capacity: 'WAITING FOR QUEUE SPACE', queued: 'QUEUED', processing: 'PROCESSING',
-    awaiting_assets: generationStatus === 'failed' ? 'SIGNAL DELAYED · NEEDS ATTENTION' : 'RECEIVING SIGNALS',
+    awaiting_assets: generationStatus === 'failed' ? 'SIGNAL DELAYED · NEEDS ATTENTION' : 'DEVICE COMPLETE · AWAITING SIGNALS',
     voting_open: 'COMMUNITY VOTING', awaiting_initiator_feedback: 'WAITING FOR ORIGINAL SUBMITTER',
     settled: 'FEEDBACK RECORDED', cancelled: 'EXPLORATION ENDED',
   }

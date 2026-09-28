@@ -1,3 +1,5 @@
+import { isDeviceQueueEntry } from './dreamcatcher-queue-policy'
+import { createClient } from '@/lib/supabase/server'
 import { parallaxArrayName } from './parallax-brand'
 import { createAdminClient } from '@/lib/supabase/server'
 import { publicDreamcatchers } from '@/lib/dreamcatcher-publication'
@@ -30,12 +32,15 @@ export type DreamcatcherRoom = {
   queueCapacity: number
   cameraImagePath: string
   queue: DreamcatcherJob[]
+  myObservations?: DreamcatcherJob[]
   observedAt: number
 }
 
 const ROOM_PRIORITY = ['kyoto-02', 'tokyo-01', 'london-01', 'mexico-city-03']
 
 export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
+  const client = await createClient()
+  const { data: { user } } = await client.auth.getUser()
   const observedAt = Date.now()
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,8 +78,14 @@ export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
     queueCapacity: room.queue_capacity as number,
     cameraImagePath: (room.camera_image_path as string | null) ?? '/assets/concepts/dreamcatcher-live-feed.png',
     observedAt,
-    queue: (jobs ?? [])
-      .filter((job: { dreamcatcher_id: string }) => job.dreamcatcher_id === room.id)
+    queue: mapJobs(room.id as string).filter(isDeviceQueueEntry),
+    myObservations: user ? mapJobs(room.id as string, user.id) : [],
+  }))
+  return mappedRooms.toSorted((a, b) => ROOM_PRIORITY.indexOf(a.slug) - ROOM_PRIORITY.indexOf(b.slug))
+
+  function mapJobs(roomId: string, userId?: string): DreamcatcherJob[] {
+    return (jobs ?? [])
+      .filter((job: { dreamcatcher_id: string; submitted_by: string }) => job.dreamcatcher_id === roomId && (!userId || job.submitted_by === userId))
       .map((job: Record<string, unknown>) => {
         const world = job.worlds as { name?: string; description?: string; discoverer_name?: string } | null
         const generation = roundMap.get(job.id as string)?.dreamcatcher_generation_requests
@@ -89,7 +100,6 @@ export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
           roundStatus: roundMap.get(job.id as string)?.status,
           generationStatus: Array.isArray(generation) ? generation[0]?.status : generation?.status,
         }
-      }),
-  }))
-  return mappedRooms.toSorted((a, b) => ROOM_PRIORITY.indexOf(a.slug) - ROOM_PRIORITY.indexOf(b.slug))
+      })
+  }
 }
