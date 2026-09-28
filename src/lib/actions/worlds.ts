@@ -153,7 +153,7 @@ export async function submitDreamcatcherWorld(payload: {
     p_user: user.id, p_slug: payload.dreamcatcherSlug, p_name: name,
     p_description: description, p_key: payload.submissionKey,
   })
-  if (error) return { error: error.code === '23505' ? 'You already have an unfinished observation in this Parallax Array.' : error.message, data: null }
+  if (error) return { error: error.code === '23505' ? 'This submission is already recorded. Check My Observations before trying again.' : error.message, data: null }
   const { data: world } = await admin.from('worlds').select('*').eq('id', worldId).single()
   if (!world) return { error: 'Observation accepted. Refresh to see its progress.', data: null }
   const discovererName = profile.display_name?.trim() || 'Operative'

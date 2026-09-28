@@ -164,6 +164,7 @@ export default function WorldDetailPage() {
 
         {roundProgress && <ArchiveCard className="archive-inline-panel">
           <p>{roundLabel(roundProgress.status, roundProgress.roundNumber, roundProgress.generationStatus)}</p>
+          {roundProgress.status === 'awaiting_assets' && <p>Device processing is complete. This observation has left the queue and is waiting for signals to return. We will email you when they are ready.</p>}
           <ArchiveLinkButton href="/worlds/live" variant="ghost">VIEW PARALLAX ARRAY</ArchiveLinkButton>
           {roundProgress.canStop && <ArchiveButton disabled={stopping} onClick={async () => {
             setStopping(true)
