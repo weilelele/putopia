@@ -3,7 +3,7 @@
 Approved copy: five English questions in `src/lib/voyager-intake.ts`.
 
 - `/voyager-path` now has two equal tasks: Initial Voyager Pack and Establish Your Voyager Profile. Either order is allowed.
-- `/quiz` retains its existing intro, one-question-at-a-time layout, progress bar and completion screen. The outer Path task counter and progress bar have been removed; individual DONE states remain. It now collects two organizational choices, country/region, work, and an observation. There is explanatory feedback but no score or pass threshold.
+- `/quiz` retains its existing intro, one-question-at-a-time layout, question progress bar and completion screen. The outer Path task counter and progress bar have been removed; individual DONE states remain. It now collects two organizational choices, country/region, work, and an observation. There is explanatory feedback but no score or pass threshold.
 - United States is the default country; US states/DC and Japan's 47 prefectures are validated. Other requires country and region. Work is free text, including undisclosed work. Sharing is opt-in and unchecked by default.
 - Profile answers are private in `voyager_intake`, accessible only through session-checked server actions. They are not added to publicly readable `voyager_profiles`, analytics events, or logs. Only the observation is shared if requested.
 - Sharing atomically creates a new world in the London (`london-01`, Parallax Array) round pipeline. It creates its own job, first round and generation request. Existing observations are neither overwritten nor treated as completion. One profile submission per user makes retries idempotent.
@@ -14,7 +14,7 @@ Approved copy: five English questions in `src/lib/voyager-intake.ts`.
 
 ## Database rollout
 
-**`supabase/schema_v81.sql` has NOT been applied to production.** Apply after v80 and before deploying these application changes. Confirm London's public registry entry and the existing Dreamcatcher processing pipeline are available. No data backfill, test purchase, or real observation submission was performed during development.
+**`supabase/schema_v81.sql` was applied to production on 2026-09-29**, as migration `voyager_pack_profile_activation_v81`, after v80. Post-migration reads confirmed RLS, service-only execution, no anonymous/authenticated intake reads, and the expected indexes. No profile records were created by verification. Confirm London's public registry entry and the existing Dreamcatcher processing pipeline are available. No data backfill, test purchase, or real observation submission was performed during development.
 
 The migration introduces private intake storage, profile-origin observation jobs, and trusted-server-only save/activation functions. It also revokes browser execution of the legacy ungated membership grant RPC; explicit device/admin grants call that helper only from server-only code.
 
