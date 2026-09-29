@@ -14,6 +14,7 @@ const v59 = await sql('schema_v59.sql')
 const v61 = await sql('schema_v61.sql')
 const v64 = await sql('schema_v64.sql')
 const v71 = await sql('schema_v71.sql')
+const v82 = await sql('schema_v82.sql')
 function functionSql(source, name) {
   const start = source.indexOf(`create or replace function public.${name}()`)
   assert.ok(start >= 0)
@@ -40,6 +41,7 @@ await db.exec(`
   create trigger zz_unit_update before update of status on public.voyager_orders for each row execute function public.manage_device_order_unit_binding();
 `)
 await db.exec(v71)
+await db.exec(v82)
 await db.exec(`
   create trigger auth_profile after insert on auth.users for each row execute function public.handle_new_user();
   create trigger pool after insert or update of listing_quantity, code on public.device_batches for each row execute function public.sync_device_batch_unit_pool();
@@ -77,11 +79,12 @@ await assert.rejects(db.exec("update public.device_batches set code='CHANGED' wh
 const comment = (actor, batch = 'one') => db.query("insert into public.comments(author_id,posted_by_id,subject_type,subject_id,body) values ($1,$2,'device_batch',$3,'NPC reply')", [npc, actor, batch])
 await comment(architect)
 await assert.rejects(comment(human), /administrator/)
-await assert.rejects(comment(architect, 'other'), /must hold/)
+await comment(architect, 'other')
+await db.query("insert into public.comments(author_id,posted_by_id,subject_type,subject_id,body) values ($1,$2,'world','world-1','Unallocated NPC reply')", [npc2, architect])
 await allocate(architect, npc, 'one', false)
 await allocate(architect, npc, 'one', false)
 assert.deepEqual(await counts(), { claimed_quantity: 1, reserved_quantity: 0, allocated_quantity: 0 })
-await assert.rejects(comment(architect), /must hold/)
+await comment(architect)
 assert.equal((await allocate(architect, npc2)).rows[0].code, 'ONE-001')
 await db.query("update public.voyager_orders set status='refunded' where id=$1", [order])
 assert.deepEqual(await counts(), { claimed_quantity: 1, reserved_quantity: 0, allocated_quantity: 1 })
@@ -117,4 +120,4 @@ assert.equal((await db.query("select count(*)::int as n from public.voyager_prof
 await assert.rejects(db.query("update public.voyager_profiles set account_kind='human' where id=$1", [legacy[0][0]]), /cannot be changed/)
 console.log('Legacy NPC import passed: 10 exact identities, active-session abort, preserved roles/IDs/email/login settings, before-state audit and unchanged inventory.')
 await db.close()
-console.log('NPC SQL verification passed: Auth metadata, authorization, idempotent allocate/release, checkout capacity, payment/refund transitions, pool preservation, comment ownership, audit and RLS grants.')
+console.log('NPC SQL verification passed: Auth metadata, authorization, idempotent allocate/release, checkout capacity, payment/refund transitions, pool preservation, all-NPC comment ownership, audit and RLS grants.')

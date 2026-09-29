@@ -7,7 +7,7 @@ import { sendPushToUser } from '@/lib/push/apns'
 import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types/database'
 import { isPublishedChatRoom, readDreamcatcherChat } from '@/lib/dreamcatcher-chat'
 import { CHAT_COOLDOWN_MS, validateChatMessage } from '@/lib/dreamcatcher-chat-model'
-import { getNpcIdentities, npcHasDevice, requireNpcArchitect } from '@/lib/npc-repository'
+import { getAllNpcIdentities, requireNpcArchitect } from '@/lib/npc-repository'
 
 // Path to revalidate when a thread changes (only device threads have a route today)
 function subjectPath(type: CommentSubjectType, id: string): string | null {
@@ -76,16 +76,15 @@ export async function getComments(
   })
 }
 
-// NPC profiles a human architect may post as. Device-batch threads only expose
-// NPCs assigned to that batch; other threads expose device-holding NPCs.
+// Every NPC profile a human architect may post as. Device allocation is an
+// inventory concern and does not limit editorial/comment identities.
 export async function listImpersonatableProfiles(
   subjectType: CommentSubjectType,
-  subjectId: string,
 ): Promise<ImpersonatableProfile[]> {
   if (subjectType === 'dreamcatcher') return []
   try {
     await requireNpcArchitect()
-    const identities = await getNpcIdentities(subjectType === 'device_batch' ? subjectId : undefined)
+    const identities = await getAllNpcIdentities()
     return identities.map((identity) => ({
       id: identity.id,
       display_name: identity.display_name,
@@ -190,15 +189,6 @@ export async function postComment(
       .maybeSingle()
     if (!target) {
       return { error: 'Only NPC identities can be selected for comments.', data: null }
-    }
-    let hasDevice = false
-    try {
-      hasDevice = await npcHasDevice(target.id, subjectType === 'device_batch' ? subjectId : undefined)
-    } catch {
-      return { error: 'Could not verify this NPC identity. Please try again.', data: null }
-    }
-    if (!hasDevice) {
-      return { error: 'This NPC is not assigned to an active device for this discussion.', data: null }
     }
     authorId = target.id
     authorName = target.display_name
