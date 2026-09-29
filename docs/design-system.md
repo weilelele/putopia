@@ -1,5 +1,9 @@
 # Multiverse Collective / Multiverse Console UI 规范
 
+> **2026-09-29 最新更正：** 游客 Dashboard 采用原始大字标 → 140px 图形 Logo → 介绍 → 两个入口的居中纵向布局，取代该页游客态的左上紧凑品牌区；原品牌图片完整等比显示。其他一级页及登录态保留紧凑品牌区。登录态欢迎语按身份区分：Voyager / Architect 显示 WELCOME, VOYAGER，Applicant 及尚未取得成员身份的账户显示 WELCOME, APPLICANT，且不显示已被选中探索的说明。本条取代下方统一 VOYAGER 的旧规则。
+
+> **2026-09-29 Dashboard 游客入口恢复：** 未登录用户在紧凑品牌区下、数字看板前显示原介绍 “We own devices looking into parallel worlds.”，随后并排显示 REQUEST ACCESS（主按钮，`/new`）与 LOG IN（次按钮，`/login`）。窄屏及放大字体允许自然换行。登录后保留 WELCOME, VOYAGER 与身份状态，不显示这组游客入口。原数字看板、Updates、Events 顺序不变。
+
 > **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。五个一级 Tab 在移动端恢复紧凑原图形＋文字 Logo；二级及更深页面无 Logo；桌面/横屏统一侧栏保留品牌，内容区不重复。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 只收录 Intel、Voyager Activated、Established World、Device Update；Events 只收录开放 Vote 与 Signal Tuning。
 
 **影像设计第一原则：照片级真实感。** 设备效果图、场景背景、世界画面与宣传帧首先必须像真实相机拍摄的画面，真实感优先于氛围、风格、构图与制作速度。明显重复纹理、伪文字、不成立的光影／几何或渲染感均须返工或替换，不得作为正式素材发布。执行[图片生成规范与逐图准入检查](device-reference/image-generation-spec.zh.md)。本原则约束影像素材；原始产品结构、UI 母版及界面设计规则分别保持其依据。
