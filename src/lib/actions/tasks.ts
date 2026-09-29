@@ -13,6 +13,7 @@
  * Quiz/intel completion are explicit timestamps; sighting/votes are queried live.
  */
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { VOYAGER_PROFILE_VERSION, isPaidVoyagerPack } from '@/lib/voyager-intake'
 
 export interface ApplicantTaskStatus {
   sighting: boolean
@@ -99,47 +100,23 @@ export async function getApplicantTaskStatus(): Promise<ApplicantTaskStatus> {
 }
 
 export interface VoyagerPathStatus {
-  sighting: boolean
-  quiz: boolean
+  profile: boolean
   pack: boolean
   allDone: boolean
 }
 
-/**
- * Three-step Voyager path status for the signed-in user: sighting + quiz + pack
- * (paid). The three are independent — any order. All three complete = ready for
- * Voyager. `pack` is true if the user has a paid order or is already provisioned.
- */
+/** Two independent tasks: paid Initial Voyager Pack and the new profile. */
 export async function getVoyagerPathStatus(): Promise<VoyagerPathStatus> {
-  const empty: VoyagerPathStatus = { sighting: false, quiz: false, pack: false, allDone: false }
+  const empty = { profile: false, pack: false, allDone: false }
   const uid = await getUserId()
   if (!uid) return empty
   const admin = createAdminClient() as DB
-
-  const { data: profile } = await admin
-    .from('voyager_profiles')
-    .select('task_quiz_at, role')
-    .eq('id', uid)
-    .single()
-  const quiz = !!profile?.task_quiz_at
-
-  const { count: sCount } = await admin
-    .from('worlds')
-    .select('id', { count: 'exact', head: true })
-    .eq('submitted_by', uid)
-  const sighting = (sCount ?? 0) > 0
-
-  // pack: already provisioned (voyager/architect) or has a paid order
-  let pack = profile?.role === 'voyager' || profile?.role === 'architect'
-  if (!pack) {
-    const { count: pCount } = await admin
-      .from('voyager_orders')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', uid)
-      .eq('status', 'paid')
-    pack = (pCount ?? 0) > 0
-  }
-
-  const allDone = sighting && quiz && pack
-  return { sighting, quiz, pack, allDone }
+  const [intake, orders] = await Promise.all([
+    admin.from('voyager_intake').select('version').eq('user_id', uid).maybeSingle(),
+    admin.from('voyager_orders').select('status, product_type').eq('user_id', uid),
+  ])
+  if (intake.error || orders.error) throw new Error('Your path could not be loaded.')
+  const profile = intake.data?.version === VOYAGER_PROFILE_VERSION
+  const pack = (orders.data ?? []).some(isPaidVoyagerPack)
+  return { profile, pack, allDone: profile && pack }
 }

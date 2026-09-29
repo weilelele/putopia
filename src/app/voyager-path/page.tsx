@@ -4,10 +4,11 @@ import styles from './voyager-path.module.css'
 import { BackLink } from '@/components/back-link'
 import { ArchiveButton } from '@/components/archive-button'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { getVoyagerPathStatus } from '@/lib/actions/tasks'
 import type { VoyagerPathStatus } from '@/lib/actions/tasks'
+import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -92,16 +93,6 @@ function ConsoleIcon({ size = 28 }: { size?: number }) {
 }
 
 // Task icons
-function WorldIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.2" />
-      <ellipse cx="9" cy="9" rx="3.5" ry="7.5" stroke="currentColor" strokeWidth="1.2" />
-      <line x1="1.5" y1="9" x2="16.5" y2="9" stroke="currentColor" strokeWidth="1" opacity="0.7" />
-    </svg>
-  )
-}
-
 function SignalIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -141,33 +132,25 @@ function QuizIcon() {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TaskKey    = 'report_sighting' | 'pass_quiz' | 'get_pack'
+type TaskKey    = 'profile' | 'get_pack'
 type ViewStage  = 'applicant' | 'voyager' | 'console'
 type ModalKind  = 'device_seeker' | 'console_locked' | 'signal_locked'
 
 // ─── Task definitions ─────────────────────────────────────────────────────────
-// Three EQUAL, independent steps — any order, no prerequisites. Completing all
-// three (including the $12 pack) unlocks Voyager status. The pack is just one of
-// the three: a user can buy it first, last, or anywhere in between.
-
+// Two independent tasks; either may be completed first.
 const TASKS: {
   key: TaskKey; num: string; label: string; description: string
   href: string; icon: React.ReactNode; accentColor: string; chip?: string
 }[] = [
   {
-    key: 'report_sighting', num: '01', label: 'Report a Sighting',
-    description: 'Document a signal, image, or encounter with a parallel world.',
-    href: '/worlds/submit', icon: <WorldIcon />, accentColor: '#E35205',
-  },
-  {
-    key: 'pass_quiz', num: '02', label: 'Qualify for Active Service',
-    description: 'Complete the field assessment to demonstrate you are ready for active service.',
-    href: '/quiz', icon: <QuizIcon />, accentColor: '#E35205',
-  },
-  {
-    key: 'get_pack', num: '03', label: 'Claim Your Voyager Pack',
-    description: 'Claim Your Voyager Badge, Welcome Letter and digital cohort placement',
+    key: 'get_pack', num: '01', label: 'Claim Your Initial Voyager Pack',
+    description: 'Receive your Voyager Badge, Welcome Letter, and digital cohort placement.',
     href: '/voyager-pack', icon: <WorldPackIcon size={18} />, accentColor: '#E35205', chip: '$12',
+  },
+  {
+    key: 'profile', num: '02', label: 'Establish Your Voyager Profile',
+    description: 'Discover our shared purpose and add your perspective to the Collective.',
+    href: '/quiz', icon: <QuizIcon />, accentColor: '#E35205',
   },
 ]
 
@@ -310,9 +293,9 @@ function PathRail({ allDone, isVoyager, viewedStage, onStageClick, onConsoleClic
   </div>
 }
 
-// ─── APPLICANT stage: three EQUAL parallel tasks → Voyager ────────────────────
-// No prerequisites between tasks. Sighting, Quiz and Pack are peers; finishing
-// all three (in any order) unlocks Voyager status.
+// ─── APPLICANT stage: two independent tasks → Voyager ────────────────────
+// No prerequisites between tasks. Pack and Profile are peers; finishing
+// both tasks (in any order) unlocks Voyager status.
 
 function VoyagerUnlockTrack({
   completed,
@@ -322,7 +305,7 @@ function VoyagerUnlockTrack({
   const green   = '#20D890'
   const orange  = '#E35205'
 
-  // Task node — identical treatment for all three (equal weight).
+  // Task node — identical treatment for both tasks (equal weight).
   const taskNode = (done: boolean, icon: React.ReactNode) => (
     <div style={{
       width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
@@ -335,7 +318,7 @@ function VoyagerUnlockTrack({
       {done ? <CheckIcon size={15} /> : icon}
     </div>
   )
-  // A single equal task card. All three look identical (no order). The card
+  // A single equal task card. Both tasks look identical (no order). The card
   // links to the real task page; a green/DONE state reflects live status.
   const taskCard = (task: typeof TASKS[number]) => {
     const done = completed[task.key]
@@ -373,7 +356,7 @@ function VoyagerUnlockTrack({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {/* three EQUAL tasks — stacked as peers, no connecting spine (no order).
+      {/* two independent tasks — stacked as peers, no connecting spine (no order).
           Progress + unlock are shown in the section header and the path rail,
           so no separate "Voyager Status" summary card here. */}
       {TASKS.map(taskCard)}
@@ -625,27 +608,29 @@ export default function VoyagerPathPage() {
   const [modal, setModal]             = useState<ModalKind | null>(null)
   const [detailItem, setDetailItem]   = useState<BenefitDetail | null>(null)
   const [status, setStatus]           = useState<VoyagerPathStatus | null>(null)
-  // Preview override: /voyager-path?view=applicant forces the Applicant 3-task
+  // Preview override: /voyager-path?view=applicant forces the Applicant 2-task
   // track even for voyager/architect, so the task_gated experience can be QA'd
   // without an applicant account.
   const [forceApplicant, setForceApplicant] = useState(false)
 
-  // Live task state for the signed-in user (sighting · quiz · pack), any order.
+  const [pathError, setPathError] = useState(false)
+  const loadPath = useCallback(async () => {
+    setPathError(false)
+    try { setStatus(await getVoyagerPathStatus()) } catch { setPathError(true) }
+  }, [])
+  // Refresh after authentication resolves as well as on initial navigation.
   useEffect(() => {
-    getVoyagerPathStatus().then(setStatus).catch(() => {})
+    void Promise.resolve().then(loadPath)
     // Read the client-only ?view= override once after mount (avoids a hydration
     // mismatch from reading window during render).
     // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only URL read post-mount
     setForceApplicant(new URLSearchParams(window.location.search).get('view') === 'applicant')
-  }, [])
+  }, [loadPath, user.id])
 
   const completed: Record<TaskKey, boolean> = {
-    report_sighting: status?.sighting ?? false,
-    pass_quiz:       status?.quiz ?? false,
+    profile:        status?.profile ?? false,
     get_pack:        status?.pack ?? false,
   }
-  const completedCount = Object.values(completed).filter(Boolean).length
-  const totalTasks     = TASKS.length
   const allDone        = status?.allDone ?? false
   const isVoyager      = !forceApplicant && (user.role === 'voyager' || user.role === 'architect')
 
@@ -656,6 +641,9 @@ export default function VoyagerPathPage() {
       setViewedStage(stage)
     }
   }
+
+  if (pathError && !isVoyager) return <ArchiveRouteError title="PATH UNAVAILABLE" description="Your progress could not be loaded. Please try again." onRetry={loadPath} />
+  if (!status && !isVoyager) return <ArchiveRouteLoading label="LOADING YOUR PATH" />
 
   return (
     <div className="main pilot-archive-page archive-path-page">
@@ -687,10 +675,8 @@ export default function VoyagerPathPage() {
             <>
               <div className="archive-path-progress-heading">
                 <ArchiveSectionLabel>BECOME A VOYAGER</ArchiveSectionLabel>
-                <span style={{ fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', color: allDone ? 'var(--color-ok)' : 'var(--color-star-dim)' }}>
-                  {allDone ? 'VOYAGER UNLOCKED ✦' : `${completedCount} / ${totalTasks} COMPLETE`}
-                </span>
               </div>
+              <p className="archive-page-intro">Complete both tasks to become a Voyager. You may complete them in either order.</p>
               <VoyagerUnlockTrack completed={completed} />
             </>
           ) : (

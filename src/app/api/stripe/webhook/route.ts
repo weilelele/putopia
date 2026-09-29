@@ -2,7 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/server'
-import { provisionVoyagerMembership } from '@/lib/actions/membership'
+import { provisionVoyagerMembership } from '@/lib/membership-provisioning'
+import { activatePaidVoyagerPath } from '@/lib/voyager-path-membership'
 import { isCheckoutAmountValid } from '@/lib/device-checkout'
 import { sendDeviceOrderStatusNotification } from '@/lib/device-batch-notifications'
 
@@ -141,7 +142,7 @@ async function fulfillCheckoutSession(
   // committed the order before that final step succeeded.
   if (['paid', 'preparing', 'shipped', 'delivered'].includes(order.status)) {
     if (order.user_id) {
-      const provisioned = await provisionVoyagerMembership(order.user_id)
+      const provisioned = await (order.product_type === 'device_batch_claim' ? provisionVoyagerMembership(order.user_id) : activatePaidVoyagerPath(order.user_id))
       if (provisioned.error) throw new Error(provisioned.error)
     }
     if (order.product_type === 'device_batch_claim') {
@@ -249,10 +250,10 @@ async function fulfillCheckoutSession(
   if (updateError) throw updateError
   if (!paidRows?.length) return
 
-  // Both the original membership Pack and a first device claim can activate
-  // Voyager status. The provisioning function is itself idempotent.
+  // Pack purchases activate only after the profile is complete. Device claims
+  // retain their existing membership entitlement. Both paths are idempotent.
   if (userId) {
-    const provisioned = await provisionVoyagerMembership(userId)
+    const provisioned = await (order.product_type === 'device_batch_claim' ? provisionVoyagerMembership(userId) : activatePaidVoyagerPath(userId))
     if (provisioned.error) {
       console.error('[stripe/webhook] membership provisioning failed:', provisioned.error)
       throw new Error(provisioned.error)

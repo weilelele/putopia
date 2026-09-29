@@ -199,7 +199,7 @@ export async function reviewApplication(
       const { data: users } = await admin.auth.admin.listUsers()
       const authUser = users?.users?.find(u => u.email === app.email)
       if (authUser) {
-        const { provisionVoyagerMembership } = await import('@/lib/actions/membership')
+        const { provisionVoyagerMembership } = await import('@/lib/membership-provisioning')
         await provisionVoyagerMembership(authUser.id)
       }
     }
