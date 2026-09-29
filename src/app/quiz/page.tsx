@@ -14,6 +14,7 @@ import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-rou
 export default function QuizPage() {
   const [step, setStep] = useState<'intro' | 'question' | 'result'>('intro')
   const [index, setIndex] = useState(0)
+  const [reviewing, setReviewing] = useState(false)
   const [answers, setAnswers] = useState<VoyagerIntake>({ ...EMPTY_INTAKE })
   const [checking, setChecking] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -51,7 +52,12 @@ export default function QuizPage() {
     if (submittingRef.current) return
     const problem = intakeStepError(answers, index)
     if (problem) { setError(problem); return }
-    if (index < 4) { setIndex(index + 1); return }
+    const currentQuestion = PROFILE_QUESTIONS[index]
+    if ('correctAnswer' in currentQuestion && !reviewing && (index === 0 ? answers.mission : answers.console) !== currentQuestion.correctAnswer) {
+      setReviewing(true)
+      return
+    }
+    if (index < 4) { setReviewing(false); setIndex(index + 1); return }
     submittingRef.current = true
     setSubmitting(true)
     setError('')
@@ -78,7 +84,6 @@ export default function QuizPage() {
   return (
     <div className="main pilot-archive-page archive-quiz-page">
       <div className="archive-quiz-nav">
-        <span>VOYAGER PROFILE</span>
         <ArchiveLinkButton href="/voyager-path" variant="ghost">← BACK</ArchiveLinkButton>
       </div>
       <div className="archive-quiz-shell">
@@ -118,11 +123,12 @@ export default function QuizPage() {
               {'options' in question && <>
                 {question.options.map((label, optionIndex) => {
                   const key = String.fromCharCode(97 + optionIndex)
-                  return <ArchiveButton type="button" variant="secondary" key={key} aria-pressed={selected === key} className={`archive-quiz-option${selected === key ? ' is-selected' : ''}`} onClick={() => update(index === 0 ? { mission: key } : { console: key })}>
-                    <span className="archive-quiz-option__key">{key.toUpperCase()}</span>{label}
+                  const correct = reviewing && key === question.correctAnswer
+                  if (reviewing && key !== selected && !correct) return null
+                  return <ArchiveButton type="button" variant="secondary" key={key} aria-pressed={selected === key} className={`archive-quiz-option${selected === key ? ' is-selected' : ''}`} aria-disabled={reviewing} style={reviewing ? { opacity: 1, ...(correct ? { borderColor: 'var(--color-ok)', color: 'var(--color-ok)' } : {}) } : undefined} onClick={() => { if (!reviewing) update(index === 0 ? { mission: key } : { console: key }) }}>
+                    <span className="archive-quiz-option__key" style={correct ? { borderColor: 'var(--color-ok)', color: 'var(--color-ok)' } : undefined}>{correct ? '✓' : key.toUpperCase()}</span>{label}{correct && <span className="sr-only"> — Correct answer</span>}
                   </ArchiveButton>
                 })}
-                {selected && <p className="archive-page-intro" role="status">{question.feedback}</p>}
               </>}
               {index === 2 && <>
                 <ArchiveField htmlFor="profile-country" label="Country">
@@ -152,7 +158,7 @@ export default function QuizPage() {
             </div>
             {error && <p role="alert" className="archive-page-intro">{error}</p>}
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-              <ArchiveButton type="button" variant="secondary" disabled={submitting} onClick={() => { setError(''); if (index === 0) setStep('intro'); else setIndex(index - 1) }}>BACK</ArchiveButton>
+              <ArchiveButton type="button" variant="secondary" disabled={submitting} onClick={() => { setError(''); setReviewing(false); if (index === 0) setStep('intro'); else setIndex(index - 1) }}>BACK</ArchiveButton>
               <ArchiveButton type="submit" variant="primary" disabled={submitting || !!intakeStepError(answers, index)}>{submitting ? 'SAVING…' : index === 4 ? 'SAVE MY VOYAGER PROFILE' : 'NEXT →'}</ArchiveButton>
             </div>
           </form>
