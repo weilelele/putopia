@@ -7,7 +7,7 @@ import {
   getDeviceCheckoutDetailsForBatch,
 } from '@/lib/device-checkout'
 import { getPublicDeviceBatch } from '@/lib/device-batch-repository'
-import { getStripe } from '@/lib/stripe'
+import { getStripe, isStripeSessionModeMismatch } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
 
@@ -111,6 +111,12 @@ export async function POST(req: NextRequest) {
       )
     }
   } else if (existing.stripe_session_id) {
+    if (isStripeSessionModeMismatch(existing.stripe_session_id, process.env.STRIPE_SECRET_KEY)) {
+      return NextResponse.json({
+        error: 'Your previous checkout was created before the payment mode changed. Please contact the team to release that reservation before trying again.',
+        code: 'CHECKOUT_MODE_CHANGED',
+      }, { status: 409 })
+    }
     try {
       const session = await stripe.checkout.sessions.retrieve(existing.stripe_session_id)
       if (session.status === 'open' && session.url) {
