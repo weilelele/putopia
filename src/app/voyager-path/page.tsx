@@ -1,5 +1,6 @@
 'use client'
 
+import SmartImage from '@/components/smart-image'
 import styles from './voyager-path.module.css'
 import { BackLink } from '@/components/back-link'
 import { ArchiveButton } from '@/components/archive-button'
@@ -262,12 +263,11 @@ function BenefitDetailModal({ item, onClose }: { item: BenefitDetail; onClose: (
 
 // ─── Path Rail (stage bar — full width, arrow connectors) ────────────────────
 
-function PathRail({ allDone, isVoyager, viewedStage, onStageClick, onConsoleClick }: {
+function PathRail({ allDone, isVoyager, viewedStage, onStageClick }: {
   allDone: boolean
   isVoyager: boolean
   viewedStage: ViewStage
   onStageClick: (s: ViewStage) => void
-  onConsoleClick: () => void
 }) {
   const applicantDone = allDone || isVoyager
   return <div className={styles.rail} role="group" aria-label="Your path stages">
@@ -285,11 +285,11 @@ function PathRail({ allDone, isVoyager, viewedStage, onStageClick, onConsoleClic
       <span className={styles.stageStatus}>{isVoyager ? 'CURRENT' : 'PREVIEW'}</span>
     </ArchiveButton>
     <span className={styles.connector} aria-hidden><ArrowIcon size={14} /></span>
-    <ArchiveButton variant="ghost" onClick={onConsoleClick} className={styles.stage}>
-      <span className={styles.stageIcon}><LockIcon size={18} /></span>
+    <Link href="/devices" className={`archive-button archive-button--ghost ${styles.stage}`}>
+      <span className={styles.stageIcon}><SmartImage src="/assets/vi-icon.png" alt="" width={28} height={22} sizes="28px" /></span>
       <span className={styles.stageLabel}>CONSOLE<br />HOLDER</span>
-      <span className={styles.stageStatus}>LOCKED</span>
-    </ArchiveButton>
+      <span className={styles.stageStatus}>PREVIEW</span>
+    </Link>
   </div>
 }
 
@@ -663,7 +663,6 @@ export default function VoyagerPathPage() {
             isVoyager={isVoyager}
             viewedStage={viewedStage}
             onStageClick={handleStageClick}
-            onConsoleClick={() => setModal('console_locked')}
           />
         </section>
 
@@ -673,9 +672,6 @@ export default function VoyagerPathPage() {
             <VoyagerWelcomeBlock onConsoleClick={() => setModal('console_locked')} onSignalClick={() => setModal('signal_locked')} />
           ) : viewedStage === 'applicant' ? (
             <>
-              <div className="archive-path-progress-heading">
-                <ArchiveSectionLabel>BECOME A VOYAGER</ArchiveSectionLabel>
-              </div>
               <p className="archive-page-intro">Complete both tasks to become a Voyager. You may complete them in either order.</p>
               <VoyagerUnlockTrack completed={completed} />
             </>
