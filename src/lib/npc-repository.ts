@@ -21,15 +21,22 @@ export async function npcHasDevice(id: string, batchSlug?: string) {
   return !!data?.length
 }
 
-export async function getNpcIdentities(batchSlug?: string) {
-  const admin = createAdminClient()
-  const { data: profiles, error } = await admin.from('voyager_profiles')
+/** Every managed NPC identity, regardless of device allocation. */
+export async function getAllNpcIdentities() {
+  const { data, error } = await createAdminClient().from('voyager_profiles')
     .select('id, display_name, avatar_url, role, account_kind').eq('account_kind', 'npc').order('display_name')
   if (error) throw new Error('Could not load NPC identities.')
+  return data ?? []
+}
+
+/** NPCs holding an active device, used only by device-allocation management. */
+export async function getNpcIdentities(batchSlug?: string) {
+  const admin = createAdminClient()
+  const profiles = await getAllNpcIdentities()
   let query = admin.from('device_batch_units').select('user_id').in('status', [...NPC_HOLDER_STATUSES])
   if (batchSlug) query = query.eq('batch_slug', batchSlug)
   const { data: units, error: unitError } = await query
   if (unitError) throw new Error('Could not verify NPC devices.')
   const holders = new Set(units?.map((unit) => unit.user_id))
-  return (profiles ?? []).filter((profile) => holders.has(profile.id))
+  return profiles.filter((profile) => holders.has(profile.id))
 }

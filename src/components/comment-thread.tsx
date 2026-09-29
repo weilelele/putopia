@@ -113,8 +113,8 @@ export function CommentThread({
   }, [subjectType, subjectId, reload])
 
   useEffect(() => {
-    if (isArchitect) listImpersonatableProfiles(subjectType, subjectId).then(setIdentities)
-  }, [isArchitect, subjectId, subjectType])
+    if (isArchitect) listImpersonatableProfiles(subjectType).then(setIdentities)
+  }, [isArchitect, subjectType])
 
   // Group replies under their parent for tree rendering. `comments` arrives
   // oldest→newest. We show top-level transmissions newest-first (reverse roots),
