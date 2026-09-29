@@ -14,6 +14,7 @@ import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { formatBatchPrice, type DeviceBatch } from '@/lib/device-batches'
+import { readDeviceCheckoutResult } from '@/lib/device-checkout-response'
 
 const ORANGE = '#E35205'
 
@@ -70,8 +71,6 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ batchSlug: batch.slug }),
       })
-      const result = (await response.json()) as { url?: string; error?: string }
-
       if (response.status === 401) {
         router.push(`/login?redirect=${encodeURIComponent(
           `${window.location.pathname}${window.location.search}`,
@@ -82,6 +81,7 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         router.push('/apply')
         return
       }
+      const result = await readDeviceCheckoutResult(response)
       if (!response.ok || !result.url) {
         throw new Error(result.error ?? 'Could not start secure checkout')
       }

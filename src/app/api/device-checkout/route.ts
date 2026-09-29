@@ -7,7 +7,7 @@ import {
   getDeviceCheckoutDetailsForBatch,
 } from '@/lib/device-checkout'
 import { getPublicDeviceBatch } from '@/lib/device-batch-repository'
-import { getStripe } from '@/lib/stripe'
+import { getStripe, getStripeMode, getStripeSessionMode, stripeSessionModeMismatch } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
 
@@ -111,6 +111,22 @@ export async function POST(req: NextRequest) {
       )
     }
   } else if (existing.stripe_session_id) {
+    if (stripeSessionModeMismatch(existing.stripe_session_id, process.env.STRIPE_SECRET_KEY)) {
+      const sessionMode = getStripeSessionMode(existing.stripe_session_id)
+      const configuredMode = getStripeMode(process.env.STRIPE_SECRET_KEY)
+      console.warn('[device-checkout] saved session mode does not match configured Stripe mode', {
+        orderId: existing.id,
+        sessionMode,
+        configuredMode,
+      })
+      return NextResponse.json(
+        {
+          error: `This pending checkout was started in Stripe ${sessionMode} mode, but the site is currently configured for ${configuredMode} mode. Restore the matching Stripe mode or resolve the previous checkout before trying again.`,
+        },
+        { status: 409 },
+      )
+    }
+
     try {
       const session = await stripe.checkout.sessions.retrieve(existing.stripe_session_id)
       if (session.status === 'open' && session.url) {
