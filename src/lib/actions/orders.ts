@@ -345,7 +345,7 @@ export async function createOrderManually(params: {
 }): Promise<{ error: string | null; orderId?: string }> {
   if (!(await requireArchitect())) return { error: 'Forbidden' }
 
-  const { provisionVoyagerMembership } = await import('@/lib/actions/membership')
+  const { activatePaidVoyagerPath } = await import('@/lib/voyager-path-membership')
   const { getCurrentBatch } = await import('@/lib/actions/membership')
 
   const email = params.email.trim().toLowerCase()
@@ -389,7 +389,7 @@ export async function createOrderManually(params: {
   if (orderErr) return { error: orderErr.message }
 
   // Provision Voyager membership (idempotent)
-  const { error: provErr } = await provisionVoyagerMembership(authUser.id)
+  const { error: provErr } = await activatePaidVoyagerPath(authUser.id)
   if (provErr) return { error: provErr }
 
   revalidatePath('/admin/orders')

@@ -1,8 +1,7 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { logActivity } from '@/lib/actions/activity-events'
+import { provisionVoyagerMembership } from '@/lib/membership-provisioning'
 
 // Label of the batch that new paid Voyagers are auto-assigned to.
 export async function getCurrentBatch(): Promise<string> {
@@ -14,80 +13,6 @@ export async function getCurrentBatch(): Promise<string> {
     .eq('is_current', true)
     .maybeSingle()
   return (data?.label as string | undefined) ?? 'Original Batch'
-}
-
-/**
- * Fired once a payment is confirmed. This is the single entry point the Stripe
- * webhook will call later; it is safe to call directly for testing now.
- *
- * Auto-behaviours, all idempotent:
- *   1. Ensure the Voyager Profile row exists (creating it if needed).
- *   2. Promote role → voyager, assign a member number, stamp member_since,
- *      and join the current batch (atomic, via provision_voyager()).
- *   3. Post a `voyager_activated` event to the Status feed (first time only).
- */
-export async function provisionVoyagerMembership(userId: string): Promise<{
-  error: string | null
-  memberNo?: number
-  batch?: string
-  already?: boolean
-}> {
-  const admin = createAdminClient()
-
-  // 1) Ensure a profile row exists — this is the user's Voyager Profile.
-  const { data: profile } = await admin
-    .from('voyager_profiles')
-    .select('id, display_name, role')
-    .eq('id', userId)
-    .maybeSingle()
-
-  let displayName = profile?.display_name as string | undefined
-  if (!profile) {
-    const { data: u } = await admin.auth.admin.getUserById(userId)
-    const email = u?.user?.email ?? null
-    displayName = email ? email.split('@')[0] : 'Voyager'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: insErr } = await (admin.from('voyager_profiles') as any).insert({
-      id: userId,
-      display_name: displayName,
-      role: 'applicant',
-      experiment_group: Math.random() < 0.5 ? 'direct' : 'task_gated',
-    })
-    if (insErr) return { error: insErr.message }
-  }
-
-  // 2) Atomic promotion: role=voyager, member_no, current batch.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rows, error: rpcErr } = await (admin as any).rpc('provision_voyager', {
-    p_uid: userId,
-  })
-  if (rpcErr) return { error: rpcErr.message }
-  const result = Array.isArray(rows) ? rows[0] : rows
-  const memberNo = result?.member_no as number | undefined
-  const batch = result?.batch_label as string | undefined
-  const already = !!result?.already
-
-  // 3) Status feed — only on first activation. Skip for architects.
-  const existingRole = (profile as { role?: string } | null)?.role
-  if (!already && existingRole !== 'architect') {
-    // target_title encodes the Voyager sub-role.
-    // "Device Seeker" = pack-purchase path (this function).
-    // "World Builder"  = separate flow, wired in when that system is ready.
-    logActivity({
-      actor_id:     userId,
-      actor_name:   displayName ?? 'Voyager',
-      actor_role:   'voyager',
-      event_type:   'voyager_activated',
-      target_id:    userId,
-      target_title: 'Become a new Voyager: World Builder',
-      target_href:  '/voyagers',
-      group_key:    'voyager_activations',
-    })
-  }
-
-  revalidatePath('/voyagers')
-  revalidatePath('/console')
-  return { error: null, memberNo, batch, already }
 }
 
 /**

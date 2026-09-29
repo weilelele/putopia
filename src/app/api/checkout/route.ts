@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getStripe, isStripeConfigured, PACK_PRICE_CENTS } from '@/lib/stripe'
-import { getCurrentBatch, provisionVoyagerMembership } from '@/lib/actions/membership'
+import { getCurrentBatch } from '@/lib/actions/membership'
+import { activatePaidVoyagerPath } from '@/lib/voyager-path-membership'
+import { isPaidVoyagerPack } from '@/lib/voyager-intake'
 import { getPostHogClient } from '@/lib/posthog-server'
 
 export const dynamic = 'force-dynamic'
@@ -14,7 +16,7 @@ const SALES_OPEN = true
 // Auth + gating is handled here so /voyager-pack can be fully public:
 //   0. Sales not open yet → redirect back to /voyager-pack
 //   1. Not logged in      → redirect to /login (returns to /api/checkout)
-//   2. task_gated group   → must complete Applicant tasks first
+//   2. Paid Pack          → return to the two-task path
 //   3. Otherwise          → proceed to Stripe (or mock) checkout
 //
 export async function GET(req: NextRequest) {
@@ -42,6 +44,12 @@ export async function GET(req: NextRequest) {
     .eq('id', user.id)
     .single()
 
+  // A paid Pack is complete even if the member has not finished their profile.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: existingOrders, error: ordersError } = await (admin as any).from('voyager_orders').select('status, product_type').eq('user_id', user.id)
+  if (ordersError) return NextResponse.json({ error: 'Unable to check your Pack. Please try again.' }, { status: 503 })
+  if ((existingOrders ?? []).some(isPaidVoyagerPack)) return NextResponse.redirect(new URL('/voyager-path', req.nextUrl.origin))
+
   // Payment-intent signal: the user clicked "buy" and reached checkout. Captured
   // before the task gate so the dashboard sees attempts that bounce on the gate.
   const ph = getPostHogClient()
@@ -52,7 +60,7 @@ export async function GET(req: NextRequest) {
   })
 
   // No task gate: the pack is a peer step (any-order). Both A/B groups proceed
-  // directly to checkout; sighting/quiz are independent steps on /voyager-path.
+  // directly to checkout; Pack/profile are independent steps on /voyager-path.
   await ph.shutdown()
 
   // ── 3a. MOCK MODE — simulate completed purchase end-to-end ────────────────
@@ -75,17 +83,15 @@ export async function GET(req: NextRequest) {
       .select('id')
       .single()
 
-    if (orderErr) console.error('[checkout/mock] order insert failed:', orderErr.message)
+    if (orderErr) return NextResponse.json({ error: 'Your Pack could not be recorded.' }, { status: 500 })
 
-    const { error: provErr } = await provisionVoyagerMembership(user.id)
+    const { error: provErr } = await activatePaidVoyagerPath(user.id)
     if (provErr) console.error('[checkout/mock] provision failed:', provErr)
 
-    // Land back on the homepage as a freshly-minted Voyager. The profile-
-    // completion nudge (red dot on the avatar) appears there automatically
-    // because a new Voyager has no avatar set yet.
+    // Return to the path: payment completes only the Pack task.
     void order
     return NextResponse.redirect(
-      new URL('/console?welcome=voyager', req.nextUrl.origin),
+      new URL('/voyager-path', req.nextUrl.origin),
     )
   }
 

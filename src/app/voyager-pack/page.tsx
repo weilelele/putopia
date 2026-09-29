@@ -1,3 +1,4 @@
+import { isPaidVoyagerPack } from '@/lib/voyager-intake'
 import { createClient } from '@/lib/supabase/server'
 import { PACK_HTML } from './packHtml'
 import { PackViewTracker } from './pack-view-tracker'
@@ -12,10 +13,10 @@ const SALES_OPEN = true
 // The product page itself is NEVER blocked by an overlay — the only thing that
 // changes between user states is the bottom CTA button. Four states:
 //   buy     — orange, clickable → /api/checkout (Stripe)
-//   tasks   — orange, clickable → /voyager-path (finish prerequisites first)
+//   profile — Pack already paid → /voyager-path (establish profile)
 //   closed  — greyed, click shows a centered "launch pending" dialog
 //   voyager — greyed green, click shows a centered "already active" dialog
-type CtaState = 'buy' | 'tasks' | 'closed' | 'voyager'
+type CtaState = 'buy' | 'profile' | 'closed' | 'voyager'
 
 // Copy for the two states that pop a centered dialog on click.
 const DLG_COPY: Record<'closed' | 'voyager', {
@@ -39,10 +40,10 @@ const DLG_COPY: Record<'closed' | 'voyager', {
 function buildPackHtml(state: CtaState): string {
   if (state === 'buy') return PACK_HTML // default markup — orange Stripe button
 
-  if (state === 'tasks') {
+  if (state === 'profile') {
     return PACK_HTML
       .replace('href="/api/checkout"', 'href="/voyager-path"')
-      .replace("cta:   'Activate Voyager Status'", "cta:   'Complete Tasks to Purchase'")
+      .replace("cta:   'Claim Initial Voyager Pack'", "cta:   'Establish Your Voyager Profile'")
       .replace("price: '$12'", "price: ''")
   }
 
@@ -75,7 +76,7 @@ function buildPackHtml(state: CtaState): string {
   <script>function __packDlg(){document.getElementById('__pkdlg').classList.add('show');}</script>`
 
   return PACK_HTML
-    .replace("cta:   'Activate Voyager Status'", `cta:   '${btnText}'`)
+    .replace("cta:   'Claim Initial Voyager Pack'", `cta:   '${btnText}'`)
     .replace("price: '$12'", "price: ''")
     .replace(
       '<a class="ctabtn" href="/api/checkout">',
@@ -89,6 +90,7 @@ function buildPackHtml(state: CtaState): string {
 // never overlaid; only the CTA button reflects the visitor's state.
 export default async function VoyagerPackPage() {
   let alreadyVoyager  = false
+  let packPaid = false
   let group: string   = 'none'   // experiment group for analytics
 
   try {
@@ -103,9 +105,14 @@ export default async function VoyagerPackPage() {
         .single()
 
       if (profile?.experiment_group) group = profile.experiment_group
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: orders, error: orderError } = await (supabase as any).from('voyager_orders').select('status, product_type').eq('user_id', user.id)
+      if (orderError) throw orderError
+      packPaid = (orders ?? []).some(isPaidVoyagerPack)
+
 
       // The pack is now a peer task: BOTH groups can buy directly, no task gate.
-      // (Sighting/quiz are independent steps on /voyager-path, not prerequisites.)
+      // (Pack/profile are independent steps on /voyager-path, not prerequisites.)
       if (profile?.role === 'voyager' || profile?.role === 'architect') {
         alreadyVoyager = true
       }
@@ -117,6 +124,7 @@ export default async function VoyagerPackPage() {
   // Resolve the single CTA state (priority: voyager → closed → buy).
   let state: CtaState = 'buy'
   if (alreadyVoyager)        state = 'voyager'
+  else if (packPaid)         state = 'profile'
   else if (!SALES_OPEN)      state = 'closed'
 
   return (
