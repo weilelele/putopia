@@ -62,12 +62,13 @@ export type Comment = {
   image_paths: string[]       // up to 3 image URLs attached to this transmission
 }
 
-// A profile an architect may impersonate when posting (voyager / architect only).
+// An NPC profile an architect may publish as.
 export type ImpersonatableProfile = {
   id: string
   display_name: string
   avatar_url: string | null
   role: UserRole
+  account_kind: 'npc'
 }
 
 // ---------- votes ----------

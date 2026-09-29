@@ -4,7 +4,7 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
 import { useState, useEffect, useRef } from 'react'
 import {
-  getAllStories, updateStory, submitStory, publishStory, unpublishStory, deleteStory,
+  getAllStories, updateStory, createStoryAsArchitect, publishStory, unpublishStory, deleteStory,
 } from '@/lib/actions/stories'
 import type { Story } from '@/types/database'
 import { MemberPicker, type MemberValue } from '@/components/member-picker'
@@ -93,7 +93,7 @@ export default function StoriesAdmin() {
     }
     const result = editId
       ? await updateStory(editId, payload)
-      : await submitStory({ ...payload, author_name: payload.author_name || 'Unknown' })
+      : await createStoryAsArchitect(payload)
     setSaving(false)
     if (result?.error) { setMsg({ text: result.error, ok: false }); return }
     setMsg({ text: '保存成功 ✓', ok: true })
@@ -216,7 +216,8 @@ export default function StoriesAdmin() {
               <ArchiveInput style={S.input} value={form.title} onChange={e => set('title', e.target.value)} placeholder="故事标题" />
             </div>
             <MemberPicker
-              label="作者"
+              label="作者 NPC（留空则使用本人身份）"
+              scope="npcs"
               value={form.author_id ? { id: form.author_id, name: form.author_name } : null}
               onChange={setAuthor}
             />

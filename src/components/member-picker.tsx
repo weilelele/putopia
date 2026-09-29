@@ -12,7 +12,7 @@ interface MemberPickerProps {
   value: MemberValue
   onChange: (v: MemberValue) => void
   inputStyle?: React.CSSProperties
-  includeNpcs?: boolean
+  scope?: 'members' | 'npcs'
 }
 
 const ROLE_COLOR: Record<string, string> = {
@@ -20,7 +20,7 @@ const ROLE_COLOR: Record<string, string> = {
   voyager: '#C84406',
 }
 
-export function MemberPicker({ label, value, onChange, inputStyle, includeNpcs = false }: MemberPickerProps) {
+export function MemberPicker({ label, value, onChange, inputStyle, scope = 'members' }: MemberPickerProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Awaited<ReturnType<typeof searchMembers>>>([])
   const [open, setOpen] = useState(false)
@@ -43,11 +43,11 @@ export function MemberPicker({ label, value, onChange, inputStyle, includeNpcs =
 
   const search = useCallback(async (q: string) => {
     setLoading(true)
-    const data = await searchMembers(q, includeNpcs)
+    const data = await searchMembers(q, scope)
     setResults(data)
     setLoading(false)
     setOpen(true)
-  }, [includeNpcs])
+  }, [scope])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -120,7 +120,7 @@ export function MemberPicker({ label, value, onChange, inputStyle, includeNpcs =
           style={baseInput}
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder={includeNpcs ? 'Search members or NPCs by name...' : 'Search members by name...'}
+          placeholder={scope === 'npcs' ? 'Search NPCs by name...' : 'Search members by name...'}
           onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(200,68,6,0.5)' }}
           onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(227,82,5,0.16)' }}
           autoComplete="off"
@@ -147,7 +147,7 @@ export function MemberPicker({ label, value, onChange, inputStyle, includeNpcs =
           )}
           {!loading && results.length === 0 && (
             <div style={{ padding: '8px 12px', color: 'rgba(245,245,245,0.35)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)' }}>
-              {includeNpcs ? 'No members or NPCs found' : 'No members found'}
+              {scope === 'npcs' ? 'No NPCs found' : 'No members found'}
             </div>
           )}
           {!loading && results.map(m => (
