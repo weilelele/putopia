@@ -3,7 +3,7 @@
 Confirmed scope: 50 gray-shell Consoles, US$520 paid in full, three separate shipments. Lead: Ryo Tanaka (interpreting the user's “Real” as the Kyoto architect recommended immediately before selection).
 
 1. Initial Voyager Pack: badge and welcome letter.
-2. Mysterious Widgets: small widgets and components; exact selection pending. An antenna is possible, not guaranteed.
+2. Mysterious Widgets: the Console antenna with smaller widgets and components.
 3. Multiverse Console (Kyoto One Batch).
 
 Dispatch dates, shipping charges, tax treatment, and batch-specific cancellation/return/support terms remain unconfirmed. The public FAQ states these gaps explicitly. Earlier $12 Initial Pack orders remain separate obligations.

@@ -35,8 +35,8 @@ claims or assuming Dreamcatcher processing is ready.
 ## Deployment boundary
 
 For the subsequent operator-led Device release changes, see
-[Device 人工发布过渡方案](device-manual-publication.md). It removes the story
-publication schedule, but intentionally leaves the Worlds queue decision pending.
+[Device 人工发布说明](device-manual-publication.md). Batch content is published manually;
+the former story workflow and publication endpoint have since been removed.
 The paragraph below records the state at the main integration commit.
 
 The previous Preview used temporary disabled Cron registration. The committed

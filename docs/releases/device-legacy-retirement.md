@@ -1,12 +1,13 @@
 # Device legacy retirement
 
+> Historical release record. The former Story Lab implementation has since been removed; current Batch operations use [manual publishing](device-manual-publication.md). Migration details below are historical, not setup requirements.
+
 Date: 2026-09-02. This is a code handoff, not a production deployment record.
 
 ## Canonical interfaces
 
 - `/admin/device-batches`: Device Library configuration and manual publication.
 - `/admin/device-batches/new`: create a persistent Batch draft.
-- `/admin/device-batches/blueprints`: Story Lab review workflow.
 - `/devices`: production Device Library.
 - `/devices/batches/[slug]`: published Batch detail.
 - Claims, My Consoles, orders, fulfillment and Batch discussions remain intact.
@@ -69,7 +70,7 @@ Local `.env.production.local` has empty Supabase values that override configured
 `.env.local` values; neither environment file was changed. Browser checks used
 the development configuration rather than altering the user's settings.
 
-## Production release boundary
+## Production release boundary (historical)
 
 Read-only Vercel inspection confirms the team is now Pro. The old Hobby cron
 restriction is historical, not a current blocker. The production deployment
