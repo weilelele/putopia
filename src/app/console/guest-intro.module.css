@@ -1,0 +1,42 @@
+.intro {
+  max-width: 560px;
+  margin: 24px auto;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.wordmark {
+  width: 85.8%;
+  height: auto;
+}
+
+.symbol {
+  width: 140px;
+  height: auto;
+}
+
+.description {
+  margin: 0 0 20px;
+  color: var(--color-star);
+  font-size: var(--fs-title);
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.actions > a {
+  flex: 1 1 140px;
+  min-width: 0;
+}

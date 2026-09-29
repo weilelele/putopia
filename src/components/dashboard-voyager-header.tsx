@@ -9,8 +9,9 @@ export interface DashboardVoyager { role: string; name: string; avatarUrl: strin
 /** Account summary is dashboard content; profile editing remains in Voyagers. */
 export function DashboardVoyagerHeader({ voyager }: { voyager: DashboardVoyager }) {
   const [deviceOpen, setDeviceOpen] = useState(false)
-  return <section className="dashboard-voyager" aria-label="Your Voyager status">
-    <div className="dashboard-voyager-welcome"><p>WELCOME,</p><h2>VOYAGER</h2>{voyager.role !== 'applicant' && <p className="dashboard-voyager-intro">YOU HAVE BEEN SELECTED TO EXPLORE<br />THE MYSTERIES OF PARALLEL WORLDS.</p>}</div>
+  const isVoyager = voyager.role === 'voyager' || voyager.role === 'architect'
+  return <section className="dashboard-voyager" aria-label="Your membership status">
+    <div className="dashboard-voyager-welcome"><p>WELCOME,</p><h2>{isVoyager ? 'VOYAGER' : 'APPLICANT'}</h2>{isVoyager && <p className="dashboard-voyager-intro">YOU HAVE BEEN SELECTED TO EXPLORE<br />THE MYSTERIES OF PARALLEL WORLDS.</p>}</div>
     <div className="dashboard-voyager-board">
       <div className="dashboard-voyager-identity">
         <span className="dashboard-voyager-avatar">{voyager.avatarUrl ? <SmartImage src={voyager.avatarUrl} alt={voyager.name} width={44} height={44} sizes="44px" /> : <span aria-label={voyager.name}>{voyager.name.slice(0,2).toUpperCase()}</span>}</span>
