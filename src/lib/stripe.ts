@@ -25,3 +25,10 @@ export function isStripeConfigured(): boolean {
     && !!process.env.STRIPE_PRICE_ID
   )
 }
+
+/** A mode change cannot establish whether an old checkout was paid. */
+export function isStripeSessionModeMismatch(sessionId: string, secretKey: string | undefined): boolean {
+  const sessionMode = /^cs_(test|live)_/.exec(sessionId)?.[1]
+  const keyMode = /^(?:sk|rk)_(test|live)_/.exec(secretKey ?? '')?.[1]
+  return !!sessionMode && !!keyMode && sessionMode !== keyMode
+}

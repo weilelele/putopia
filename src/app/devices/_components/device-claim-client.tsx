@@ -2,6 +2,7 @@
 
 import { DevicePurchaseTerms } from './device-purchase-terms'
 import { canClaimDeviceBatch } from '@/lib/device-batches'
+import { parseCheckoutResponse } from '@/lib/checkout-response'
 
 import { Suspense, useState } from 'react'
 import Image from 'next/image'
@@ -70,7 +71,6 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ batchSlug: batch.slug }),
       })
-      const result = (await response.json()) as { url?: string; error?: string }
 
       if (response.status === 401) {
         router.push(`/login?redirect=${encodeURIComponent(
@@ -82,8 +82,9 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
         router.push('/apply')
         return
       }
+      const result = parseCheckoutResponse(await response.text())
       if (!response.ok || !result.url) {
-        throw new Error(result.error ?? 'Could not start secure checkout')
+        throw new Error(result.error ?? 'Secure checkout is temporarily unavailable. Please try again shortly. If this continues, contact the team.')
       }
       window.location.assign(result.url)
     } catch (error) {
