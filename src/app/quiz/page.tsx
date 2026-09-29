@@ -125,7 +125,7 @@ export default function QuizPage() {
                   const key = String.fromCharCode(97 + optionIndex)
                   const correct = reviewing && key === question.correctAnswer
                   if (reviewing && key !== selected && !correct) return null
-                  return <ArchiveButton type="button" variant="secondary" key={key} aria-pressed={selected === key} className={`archive-quiz-option${selected === key ? ' is-selected' : ''}`} aria-disabled={reviewing} style={correct ? { borderColor: 'var(--color-ok)', color: 'var(--color-ok)' } : undefined} onClick={() => { if (!reviewing) update(index === 0 ? { mission: key } : { console: key }) }}>
+                  return <ArchiveButton type="button" variant="secondary" key={key} aria-pressed={selected === key} className={`archive-quiz-option${selected === key ? ' is-selected' : ''}`} aria-disabled={reviewing} style={reviewing ? { opacity: 1, ...(correct ? { borderColor: 'var(--color-ok)', color: 'var(--color-ok)' } : {}) } : undefined} onClick={() => { if (!reviewing) update(index === 0 ? { mission: key } : { console: key }) }}>
                     <span className="archive-quiz-option__key" style={correct ? { borderColor: 'var(--color-ok)', color: 'var(--color-ok)' } : undefined}>{correct ? '✓' : key.toUpperCase()}</span>{label}{correct && <span className="sr-only"> — Correct answer</span>}
                   </ArchiveButton>
                 })}
