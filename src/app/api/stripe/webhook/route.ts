@@ -4,8 +4,9 @@ import { getStripe } from '@/lib/stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 import { provisionVoyagerMembership } from '@/lib/membership-provisioning'
 import { activatePaidVoyagerPath } from '@/lib/voyager-path-membership'
-import { isCheckoutAmountValid } from '@/lib/device-checkout'
+import { isCheckoutAmountValid, toStripeMinorUnits } from '@/lib/device-checkout'
 import { sendDeviceOrderStatusNotification } from '@/lib/device-batch-notifications'
+import { sendMetaPurchase } from '@/lib/meta-capi'
 
 export const dynamic = 'force-dynamic'
 
@@ -101,6 +102,57 @@ async function findOrder(
   return data as StoredOrder | null
 }
 
+async function sendDevicePurchaseToMeta(
+  order: StoredOrder,
+  session: Stripe.Checkout.Session,
+  eventCreatedAt: number,
+  stripeLiveMode: boolean,
+) {
+  if (order.product_type !== 'device_batch_claim') return
+  // Do not let a signed event for a different session reuse an order's event ID.
+  if (!order.stripe_session_id || order.stripe_session_id !== session.id) {
+    throw new Error('Meta Purchase skipped: Stripe session does not match the stored order')
+  }
+  if (!order.amount || order.amount <= 0 || !order.device_batch_slug) {
+    throw new Error('Meta Purchase skipped: paid device order is missing amount or product ID')
+  }
+
+  const details = session.customer_details
+  const shipping = (session as Stripe.Checkout.Session & {
+    shipping_details?: { name?: string | null; address?: Stripe.Address | null }
+    collected_information?: { shipping_details?: { name?: string | null; address?: Stripe.Address | null } }
+  }).shipping_details
+    ?? (session as Stripe.Checkout.Session & {
+      collected_information?: { shipping_details?: { name?: string | null; address?: Stripe.Address | null } }
+    }).collected_information?.shipping_details
+  const address = shipping?.address ?? details?.address
+  const fullName = shipping?.name ?? details?.name ?? null
+  const nameParts = fullName?.trim().split(/\s+/) ?? []
+
+  await sendMetaPurchase({
+    eventId: `device_purchase_${order.id}`,
+    eventTime: eventCreatedAt,
+    value: order.amount / toStripeMinorUnits(1, order.currency),
+    currency: order.currency,
+    contentId: order.device_batch_slug,
+    eventSourceUrl: session.metadata?.meta_event_source_url
+      ?? `${(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org').replace(/\/$/, '')}/devices/claim/success`,
+    email: details?.email ?? session.customer_email ?? order.email,
+    phone: details?.phone ?? null,
+    firstName: nameParts.length ? nameParts[0] : null,
+    lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : null,
+    city: address?.city ?? null,
+    state: address?.state ?? null,
+    postalCode: address?.postal_code ?? null,
+    country: address?.country ?? null,
+    externalId: session.metadata?.user_id ?? order.user_id,
+    clientIpAddress: session.metadata?.meta_client_ip_address,
+    clientUserAgent: session.metadata?.meta_client_user_agent,
+    fbp: session.metadata?.meta_fbp,
+    fbc: session.metadata?.meta_fbc,
+  }, { stripeLiveMode })
+}
+
 async function resolveUserId(
   admin: ReturnType<typeof createAdminClient>,
   session: Stripe.Checkout.Session,
@@ -127,6 +179,8 @@ async function resolveUserId(
 async function fulfillCheckoutSession(
   admin: ReturnType<typeof createAdminClient>,
   session: Stripe.Checkout.Session,
+  eventCreatedAt: number,
+  stripeLiveMode: boolean,
 ) {
   // Delayed payment methods emit `completed` before money has cleared.
   if (session.payment_status === 'unpaid') return
@@ -141,6 +195,7 @@ async function fulfillCheckoutSession(
   // retry idempotent membership provisioning in case an earlier delivery
   // committed the order before that final step succeeded.
   if (['paid', 'preparing', 'shipped', 'delivered'].includes(order.status)) {
+    await sendDevicePurchaseToMeta(order, session, eventCreatedAt, stripeLiveMode)
     if (order.user_id) {
       const provisioned = await (order.product_type === 'device_batch_claim' ? provisionVoyagerMembership(order.user_id) : activatePaidVoyagerPath(order.user_id))
       if (provisioned.error) throw new Error(provisioned.error)
@@ -250,6 +305,16 @@ async function fulfillCheckoutSession(
   if (updateError) throw updateError
   if (!paidRows?.length) return
 
+  // Stripe's signed, paid event is the Purchase source of truth. The ID is
+  // derived from the order, exactly matching the browser Pixel event ID.
+  // Retries reuse that same event ID, allowing Meta to deduplicate them.
+  await sendDevicePurchaseToMeta(
+    { ...order, stripe_session_id: session.id, amount: receivedAmount },
+    session,
+    eventCreatedAt,
+    stripeLiveMode,
+  )
+
   // Pack purchases activate only after the profile is complete. Device claims
   // retain their existing membership entitlement. Both paths are idempotent.
   if (userId) {
@@ -339,6 +404,8 @@ export async function POST(req: NextRequest) {
       await fulfillCheckoutSession(
         admin,
         event.data.object as Stripe.Checkout.Session,
+        event.created,
+        event.livemode,
       )
     }
 

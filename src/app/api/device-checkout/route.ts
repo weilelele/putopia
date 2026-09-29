@@ -215,6 +215,16 @@ export async function POST(req: NextRequest) {
     batch_slug: batch.slug,
     batch_code: batch.code,
     unit_code: reservedUnit.unit_code as string,
+    // Preserve browser match signals before the shopper leaves for Stripe.
+    // They are read only by the signed Stripe webhook and are never exposed
+    // to the checkout page or returned in the API response.
+    meta_fbp: req.cookies.get('_fbp')?.value?.slice(0, 500) ?? '',
+    meta_fbc: req.cookies.get('_fbc')?.value?.slice(0, 500) ?? '',
+    meta_client_ip_address: (req.headers.get('x-real-ip')
+      ?? req.headers.get('x-forwarded-for')?.split(',')[0]
+      ?? '').trim().slice(0, 100),
+    meta_client_user_agent: (req.headers.get('user-agent') ?? '').slice(0, 500),
+    meta_event_source_url: new URL('/devices/claim/success', origin).toString(),
   }
 
   try {
