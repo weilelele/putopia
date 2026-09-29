@@ -1,3 +1,5 @@
+import { DevicePurchaseTracking } from '@/components/device-purchase-tracking'
+import { getDevicePurchaseEvent } from '@/lib/device-purchase-event'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchivePageHeader } from '@/components/archive-page-header'
@@ -23,6 +25,7 @@ export default async function DeviceClaimSuccessPage({ searchParams }: SuccessPa
 
   return (
     <main className="main join-success-page">
+      <DevicePurchaseTracking event={getDevicePurchaseEvent(order)} pending={pending} />
       <div className="join-success-shell">
 
         <ArchiveCard className="join-success-card device-claim-success-card">
