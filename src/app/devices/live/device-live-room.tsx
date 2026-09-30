@@ -18,6 +18,8 @@ import { getDeviceBatchMedia, getDeviceBatchUpdates, getDeviceBatchProgress } fr
 import Link from 'next/link'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { trackDevice } from '@/lib/device-analytics'
+import { SeenFigure } from '../_components/seen-figure'
+import { useDeviceDwell } from '../_components/use-device-dwell'
 import {
   ChevronRight,
   ListFilter,
@@ -100,6 +102,20 @@ export function DeviceLiveRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batch.slug])
 
+  useDeviceDwell(batch.slug)
+
+  // mediaIndex < 0 is the live camera thumbnail; otherwise it indexes materialRecords.
+  function trackMedia(event: string, mediaIndex: number, extra: Record<string, unknown> = {}) {
+    const item = mediaIndex >= 0 ? materialRecords[mediaIndex] : null
+    trackDevice(event, {
+      batch_slug: batch.slug, media_index: mediaIndex,
+      media_kind: item ? item.kind : 'live_camera',
+      media_caption: item ? item.caption : camera?.binding.title ?? null,
+      media_src: item ? item.src : null,
+      ...extra,
+    })
+  }
+
   function chooseBatch(slug: string, via: 'tab' | 'sheet' = 'tab') {
     trackDevice('device_batch_selected', { from_batch_slug: batch.slug, batch_slug: slug, via })
     setSheetOpen(false)
@@ -152,7 +168,8 @@ export function DeviceLiveRoom({
       <div className={styles.workspace}><div className={styles.workspaceMedia}>
       <DeviceGallery
         media={materialRecords}
-        onSelect={(index) => { trackDevice('device_gallery_item_selected', { batch_slug: batch.slug, index }); selectMedia(index) }}
+        onSelect={(index) => { trackMedia('device_gallery_item_selected', index - (camera ? 1 : 0), { from_index: selectedMedia, position: index }); selectMedia(index) }}
+        onVideoPlay={(mediaIndex) => trackMedia('device_video_played', mediaIndex, { surface: 'gallery' })}
         primary={camera ? <CosmoCameraEmbed source={camera} location={batch.location} timeZone={batch.timeZone} /> : undefined}
         primaryLabel={camera?.binding.title}
         selected={selectedMedia}
@@ -219,17 +236,17 @@ export function DeviceLiveRoom({
                 {materialRecords.map((item) => {
                   const [title, ...descriptionParts] = item.caption.split(' · ')
                   const description = descriptionParts.join(' · ')
-                  return <figure className={styles.mediaRecord} key={`${item.src}-${item.caption}`}>
+                  return <SeenFigure className={styles.mediaRecord} key={`${item.src}-${item.caption}`} onSeen={() => trackMedia('device_media_record_seen', materialRecords.indexOf(item))}>
                     <div className={styles.mediaRecordVisual}>
                       {item.kind === 'video'
-                        ? <video controls playsInline poster={item.poster} preload="metadata" src={item.src} />
+                        ? <video controls playsInline poster={item.poster} preload="metadata" src={item.src} onPlay={() => trackMedia('device_video_played', materialRecords.indexOf(item), { surface: 'material_records' })} />
                         : <Image alt={item.alt} height={1200} sizes="(max-width: 767px) calc(100vw - 64px), 34rem" src={item.src} style={{ height: 'auto', width: '100%' }} unoptimized width={1600} />}
                     </div>
                     <figcaption className={styles.mediaRecordCopy}>
                       <strong>{title || item.alt}</strong>
                       <p>{description || item.alt}</p>
                     </figcaption>
-                  </figure>
+                  </SeenFigure>
                 })}
               </div>
             </div>

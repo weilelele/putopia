@@ -129,7 +129,10 @@ event and is the default funnel breakdown.
 | `device_batch_selected` | Batch tab or list row chosen | `from_batch_slug`, `batch_slug`, `via` (`tab` \| `sheet`) |
 | `device_batch_list_opened` / `device_batch_filter_changed` | All-batches sheet / its filter | `batch_slug` / `filter` |
 | `device_tab_changed` | INFO / UPDATES / DISCUSSION tab | `batch_slug`, `tab` |
-| `device_gallery_item_selected` | Gallery thumbnail | `batch_slug`, `index` |
+| `device_gallery_item_selected` | Gallery thumbnail (live camera or image/video) | `batch_slug`, `media_index` (-1 = live camera), `media_kind` (`image` \| `video` \| `live_camera`), `media_caption`, `media_src`, `from_index`, `position` |
+| `device_video_played` | Video started in gallery or material records | `batch_slug`, `media_*` (as above), `surface` (`gallery` \| `material_records`) |
+| `device_media_record_seen` | A material-record image/video scrolled ≥60% into view (once per mount) | `batch_slug`, `media_*` |
+| `device_room_dwell` | Visible seconds on one batch; sent on batch switch, tab hide, or leave. Use instead of `$pageleave` duration, which lumps pushState batch switches into one page | `batch_slug`, `seconds_visible` |
 | `device_faq_opened` | FAQ item expanded | `batch_slug`, `question` |
 | `device_packages_opened` | VIEW PACKAGES | `batch_slug`, `package_count` |
 | `device_field_lead_opened` | Field lead sheet | `lead_name` |
