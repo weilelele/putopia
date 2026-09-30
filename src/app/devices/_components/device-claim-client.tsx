@@ -8,6 +8,8 @@ import { Suspense, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { trackDevice } from '@/lib/device-analytics'
+import { DeviceViewTracker } from '@/components/device-view-tracker'
 import { useAuth } from '@/lib/auth-context'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
@@ -53,6 +55,8 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
   const isApplicant = isAtLeast('applicant')
 
   async function handleClaim() {
+    const base = { batch_slug: batch.slug, price: claimPrice?.amount ?? null, currency: claimPrice?.currency ?? null }
+    trackDevice('device_claim_button_clicked', { ...base, state: !isLoggedIn ? 'login_required' : !isApplicant ? 'apply_required' : 'checkout' })
     if (!isLoggedIn) {
       router.push(`/login?redirect=${encodeURIComponent(
         `${window.location.pathname}${window.location.search}`,
@@ -73,12 +77,14 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
       })
 
       if (response.status === 401) {
+        trackDevice('device_checkout_failed', { ...base, status: 401, reason: 'auth_required' })
         router.push(`/login?redirect=${encodeURIComponent(
           `${window.location.pathname}${window.location.search}`,
         )}`)
         return
       }
       if (response.status === 403) {
+        trackDevice('device_checkout_failed', { ...base, status: 403, reason: 'applicant_required' })
         router.push('/apply')
         return
       }
@@ -86,8 +92,10 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
       if (!response.ok || !result.url) {
         throw new Error(result.error ?? 'Secure checkout is temporarily unavailable. Please try again shortly. If this continues, contact the team.')
       }
+      trackDevice('device_checkout_redirected', base)
       window.location.assign(result.url)
     } catch (error) {
+      trackDevice('device_checkout_failed', { ...base, reason: error instanceof Error ? error.message : 'unknown' })
       setStatus('error')
       setErrMsg(error instanceof Error ? error.message : 'Something went wrong')
     }
@@ -95,6 +103,10 @@ function ClaimPageContent({ batch }: { batch: DeviceBatch }) {
 
   return (
     <div className="main archive-flow-main device-claim-page">
+      <DeviceViewTracker event="device_claim_page_viewed" properties={{
+        batch_slug: batch.slug, batch_status: batch.status, logged_in: isLoggedIn, applicant: isApplicant,
+        checkout_cancelled: searchParams.get('checkout') === 'cancelled',
+      }} />
 
       <div className="archive-flow-content archive-flow-content--wide">
         <div className="archive-flow-back">

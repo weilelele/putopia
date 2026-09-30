@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import { UserRound } from 'lucide-react'
+import { trackDevice } from '@/lib/device-analytics'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import type { DeviceBatchLead } from '@/lib/device-batches'
 import styles from './device-gallery.module.css'
@@ -14,7 +15,7 @@ export function DeviceFieldLead({ lead }: { lead: DeviceBatchLead }) {
     ? <Image src={lead.avatarUrl} alt="" width={44} height={44} unoptimized onError={() => setAvatarFailed(true)} />
     : <span className={styles.leadAvatar} aria-label={`${lead.name} avatar unavailable`}><UserRound aria-hidden size={24} /></span>
   return <>
-    <button className={styles.lead} type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+    <button className={styles.lead} type="button" aria-haspopup="dialog" onClick={() => { trackDevice('device_field_lead_opened', { lead_name: lead.name }); setOpen(true) }}>
       {avatar}
       <strong>{lead.name}</strong>
     </button>

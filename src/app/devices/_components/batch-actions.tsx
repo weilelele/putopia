@@ -7,6 +7,7 @@ import { Bell, BellCheck, X } from 'lucide-react'
 import { ArchiveButton } from '@/components/archive-button'
 import { useAuth } from '@/lib/auth-context'
 import { setMyDeviceBatchFollow } from '@/lib/actions/device-batch-notifications'
+import { trackDevice } from '@/lib/device-analytics'
 import { setBatchFollowed } from '@/lib/device-batch-follows'
 import { useFollowedBatchSlugs } from './use-followed-batches'
 import styles from '../device-batches.module.css'
@@ -32,6 +33,7 @@ export function FollowBatchButton({
   const [message, setMessage] = useState('')
 
   async function toggleFollow() {
+    trackDevice('device_follow_clicked', { batch_slug: slug, next_followed: !followed, logged_in: !!user.id })
     if (!user.id) {
       router.push(`/login?redirect=${encodeURIComponent(
         `${window.location.pathname}${window.location.search}`,
@@ -46,6 +48,7 @@ export function FollowBatchButton({
     const result = await setMyDeviceBatchFollow(slug, next)
     setBusy(false)
     if (result.error) {
+      trackDevice('device_follow_failed', { batch_slug: slug, next_followed: next, error: result.error })
       setBatchFollowed(slug, followed)
       setMessage(result.error)
       setShowConfirmation(true)

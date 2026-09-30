@@ -7,6 +7,7 @@ import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { DEVICE_BATCH_STATUS } from '@/lib/device-batches'
 import { listPublicDeviceBatches } from '@/lib/device-batch-repository'
 import { getMyDeviceConsoles } from '@/lib/actions/orders'
+import { DeviceViewTracker } from '@/components/device-view-tracker'
 import { FollowedBatchList } from '../_components/followed-batch-list'
 import styles from '../device-batches.module.css'
 
@@ -29,6 +30,7 @@ export default async function MyConsolesPage() {
 
   return (
     <main className={`main pilot-archive-page archive-collection-page ${styles.archivePage}`}>
+      <DeviceViewTracker event="device_my_consoles_viewed" properties={{ owned_count: records.length }} />
 
 
 

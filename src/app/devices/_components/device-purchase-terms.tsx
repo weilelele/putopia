@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronRight, Mail } from 'lucide-react'
+import { trackDevice } from '@/lib/device-analytics'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { DEVICE_SUPPORT_EMAIL, KYOTO_PURCHASE_TERMS } from '@/lib/device-purchase-terms'
@@ -16,7 +17,7 @@ export function DevicePurchaseTerms({ slug, compact = false }: { slug: string; c
   return (
     <section className={styles.purchaseInfo} data-compact={compact} aria-label="Purchase information">
       <p className={styles.summary}><strong>Shipping &amp; taxes included</strong>{compact ? null : <span>Preorder</span>}</p>
-      <ArchiveButton className={styles.detailsButton} onClick={() => setOpen(true)} variant="ghost">
+      <ArchiveButton className={styles.detailsButton} onClick={() => { trackDevice('device_purchase_details_opened', { batch_slug: slug, location: compact ? 'room' : 'claim' }); setOpen(true) }} variant="ghost">
         <span>{compact ? 'DETAILS' : 'PURCHASE DETAILS'}</span><ChevronRight aria-hidden size={18} />
       </ArchiveButton>
       {open ? <ArchiveSheet open title="Purchase details" onClose={() => setOpen(false)}>
@@ -24,7 +25,7 @@ export function DevicePurchaseTerms({ slug, compact = false }: { slug: string; c
           <p><strong>Shipping &amp; taxes included.</strong> One Console, three shipments. One payment of $520.</p>
           <p>{KYOTO_PURCHASE_TERMS.cancellation}</p>
           <p>{KYOTO_PURCHASE_TERMS.timing}</p>
-          <a className={styles.supportButton} href={supportHref}>
+          <a className={styles.supportButton} href={supportHref} onClick={() => trackDevice('device_order_support_clicked', { batch_slug: slug })}>
             <Mail aria-hidden size={18} /><span>CONTACT ORDER SUPPORT</span>
           </a>
         </div>
