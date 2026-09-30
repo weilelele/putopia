@@ -95,7 +95,7 @@ export function DeviceLiveRoom({
   const claimState = ownedConsole ? 'owned' : claimHref && remaining !== 0 ? 'open' : canClaimDeviceBatch(batch.status) ? 'sold_out' : 'closed'
   useEffect(() => {
     trackDevice('device_room_viewed', {
-      batch_slug: batch.slug, batch_status: batch.status, claim_state: claimState,
+      batch_slug: batch.slug, batch_status: batch.status, claim_state: claimState, active_tab: activeTab,
       surface: isRoot ? 'devices_index' : 'batch_detail',
     })
     // One view per batch; claim state changes alone are not a new view.
@@ -201,7 +201,11 @@ export function DeviceLiveRoom({
       <section className={styles.sectionPanel}>
         <ArchiveTabs ariaLabel="Device room content" activeId={activeTab}
           items={[{id:'info',label:'INFO'},{id:'updates',label:'UPDATES'},{id:'discussion',label:'DISCUSSION'}].map(item=>({...item,panelId:`device-room-${item.id}`}))}
-          onChange={id => { trackDevice('device_tab_changed', { batch_slug: batch.slug, tab: id }); setActiveTab(id as typeof activeTab) }} />
+          onChange={id => {
+            // Re-clicking the open tab is not a change; only record real switches.
+            if (id !== activeTab) trackDevice('device_tab_changed', { batch_slug: batch.slug, tab: id, from_tab: activeTab })
+            setActiveTab(id as typeof activeTab)
+          }} />
 
         {activeTab === 'info' ? (
           <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
