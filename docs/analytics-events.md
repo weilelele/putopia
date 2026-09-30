@@ -116,7 +116,7 @@ event and is the default funnel breakdown.
 
 | Event | Source | Properties |
 |-------|--------|------------|
-| `device_room_viewed` | `live/device-live-room.tsx`; fires on mount and on every batch switch | `batch_slug`, `batch_status`, `claim_state` (`open` \| `owned` \| `sold_out` \| `closed`), `surface` (`devices_index` \| `batch_detail`) |
+| `device_room_viewed` | `live/device-live-room.tsx`; fires on mount and on every batch switch | `batch_slug`, `batch_status`, `claim_state` (`open` \| `owned` \| `sold_out` \| `closed`), `active_tab` (the tab already showing, restored per batch from the session), `surface` (`devices_index` \| `batch_detail`) |
 | `device_claim_page_viewed` | `_components/device-claim-client.tsx` | `batch_slug`, `batch_status`, `logged_in`, `applicant`, `checkout_cancelled` |
 | `device_claim_success_viewed` | `claim/success/page.tsx`; refires when a pending order becomes confirmed | `batch_slug`, `order_status`, `confirmed`, `pending` |
 | `device_my_consoles_viewed` | `my-consoles/page.tsx` | `owned_count` |
@@ -128,7 +128,7 @@ event and is the default funnel breakdown.
 |-------|---------|------------|
 | `device_batch_selected` | Batch tab or list row chosen | `from_batch_slug`, `batch_slug`, `via` (`tab` \| `sheet`) |
 | `device_batch_list_opened` / `device_batch_filter_changed` | All-batches sheet / its filter | `batch_slug` / `filter` |
-| `device_tab_changed` | INFO / UPDATES / DISCUSSION tab | `batch_slug`, `tab` |
+| `device_tab_changed` | Switch to another INFO / UPDATES / DISCUSSION tab; re-clicking the open tab is ignored | `batch_slug`, `tab`, `from_tab` |
 | `device_gallery_item_selected` | Gallery thumbnail (live camera or image/video) | `batch_slug`, `media_index` (-1 = live camera), `media_kind` (`image` \| `video` \| `live_camera`), `media_caption`, `media_src`, `from_index`, `position` |
 | `device_video_played` | Video started in gallery or material records | `batch_slug`, `media_*` (as above), `surface` (`gallery` \| `material_records`) |
 | `device_media_record_seen` | A material-record image/video scrolled ≥60% into view (once per mount) | `batch_slug`, `media_*` |
