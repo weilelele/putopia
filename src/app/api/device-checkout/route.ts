@@ -7,6 +7,7 @@ import {
   getDeviceCheckoutDetailsForBatch,
 } from '@/lib/device-checkout'
 import { getPublicDeviceBatch } from '@/lib/device-batch-repository'
+import { captureDeviceServerEvent } from '@/lib/device-analytics-server'
 import { getStripe, isStripeSessionModeMismatch } from '@/lib/stripe'
 
 export const dynamic = 'force-dynamic'
@@ -37,7 +38,29 @@ function shippingCountries(): Stripe.Checkout.SessionCreateParams.ShippingAddres
   return (configured?.length ? configured : ['US']) as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[]
 }
 
+type CheckoutTrace = { userId?: string; batchSlug?: string }
+
+// Reports the final outcome of every checkout attempt, whichever branch returned.
 export async function POST(req: NextRequest) {
+  const trace: CheckoutTrace = {}
+  const response = await handleCheckout(req, trace)
+  let error: string | null = null
+  let reused = false
+  if (!response.ok) {
+    error = await response.clone().json().then((body: { error?: string }) => body.error ?? null).catch(() => null)
+  } else {
+    reused = await response.clone().json().then((body: { reused?: boolean }) => body.reused === true).catch(() => false)
+  }
+  await captureDeviceServerEvent(trace.userId, 'device_checkout_result', {
+    batch_slug: trace.batchSlug ?? null,
+    outcome: response.ok ? (reused ? 'session_reused' : 'session_created') : 'failed',
+    status: response.status,
+    error,
+  })
+  return response
+}
+
+async function handleCheckout(req: NextRequest, trace: CheckoutTrace) {
   let body: CheckoutBody
   try {
     body = (await req.json()) as CheckoutBody
@@ -46,6 +69,7 @@ export async function POST(req: NextRequest) {
   }
 
   const batchSlug = typeof body.batchSlug === 'string' ? body.batchSlug.trim() : ''
+  trace.batchSlug = batchSlug.slice(0, 100)
   const batchRecord = await getPublicDeviceBatch(batchSlug)
   if (!batchRecord) {
     return NextResponse.json({ error: 'Batch not found' }, { status: 404 })
@@ -62,6 +86,7 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
   }
+  trace.userId = user.id
 
   const { data: profile } = await supabase
     .from('voyager_profiles')

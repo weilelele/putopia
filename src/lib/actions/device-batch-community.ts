@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { captureDeviceServerEvent } from '@/lib/device-analytics-server'
 
 export type DeviceBatchDecisionOption = {
   detail: string
@@ -332,6 +333,9 @@ export async function postDeviceBatchDiscussion(
     })
     .select('id, created_at, body, image_paths')
     .single()
+  await captureDeviceServerEvent(viewer.userId, error || !data ? 'device_discussion_post_error' : 'device_discussion_posted', {
+    batch_slug: batchSlug, image_count: Math.min(imagePaths.length, 3), error: error?.message ?? null,
+  })
   if (error || !data) return { error: error?.message ?? 'Could not post message.', post: null }
 
   revalidatePath(`/devices/batches/${batchSlug}`)

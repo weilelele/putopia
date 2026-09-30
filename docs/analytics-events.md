@@ -102,6 +102,97 @@ strip's behaviour can be segmented by user type.
 
 ---
 
+## Device pages (`/devices/**`)
+
+Every Device event is prefixed `device_` so the whole chain filters with one
+query. Client events come from [`src/lib/device-analytics.ts`](../src/lib/device-analytics.ts)
+(`trackDevice`, errors swallowed); server events come from
+[`src/lib/device-analytics-server.ts`](../src/lib/device-analytics-server.ts)
+with `distinctId = user.id`. Client events record what the browser **attempted**;
+server events record what **actually happened**. `batch_slug` is on nearly every
+event and is the default funnel breakdown.
+
+### Page views
+
+| Event | Source | Properties |
+|-------|--------|------------|
+| `device_room_viewed` | `live/device-live-room.tsx`; fires on mount and on every batch switch | `batch_slug`, `batch_status`, `claim_state` (`open` \| `owned` \| `sold_out` \| `closed`), `surface` (`devices_index` \| `batch_detail`) |
+| `device_claim_page_viewed` | `_components/device-claim-client.tsx` | `batch_slug`, `batch_status`, `logged_in`, `applicant`, `checkout_cancelled` |
+| `device_claim_success_viewed` | `claim/success/page.tsx`; refires when a pending order becomes confirmed | `batch_slug`, `order_status`, `confirmed`, `pending` |
+| `device_my_consoles_viewed` | `my-consoles/page.tsx` | `owned_count` |
+| `device_discussion_page_viewed` | `batches/[slug]/discussion/page.tsx` | `batch_slug`, `can_post`, `post_count` |
+
+### Interaction (client)
+
+| Event | Trigger | Properties |
+|-------|---------|------------|
+| `device_batch_selected` | Batch tab or list row chosen | `from_batch_slug`, `batch_slug`, `via` (`tab` \| `sheet`) |
+| `device_batch_list_opened` / `device_batch_filter_changed` | All-batches sheet / its filter | `batch_slug` / `filter` |
+| `device_tab_changed` | INFO / UPDATES / DISCUSSION tab | `batch_slug`, `tab` |
+| `device_gallery_item_selected` | Gallery thumbnail | `batch_slug`, `index` |
+| `device_faq_opened` | FAQ item expanded | `batch_slug`, `question` |
+| `device_packages_opened` | VIEW PACKAGES | `batch_slug`, `package_count` |
+| `device_field_lead_opened` | Field lead sheet | `lead_name` |
+| `device_purchase_details_opened` / `device_order_support_clicked` | Purchase details sheet / support mailto | `batch_slug`, `location` |
+| `device_progress_opened` / `device_unit_record_opened` | CHECK MY PROGRESS / OPEN FULL UNIT RECORD | `batch_slug` |
+| `device_follow_clicked` / `device_follow_failed` | FOLLOW toggle / its error | `batch_slug`, `next_followed`, `logged_in` / `error` |
+| `device_discussion_post_submitted` / `device_discussion_post_failed` | Composer submit / failure | `batch_slug`, `has_image`, `length` / `stage` (`upload` \| `post`), `error` |
+
+### Conversion chain
+
+| Event | Source | Properties |
+|-------|--------|------------|
+| `device_claim_cta_clicked` | CLAIM A CONSOLE in the room | `batch_slug`, `location`, `price`, `remaining` |
+| `device_claim_button_clicked` | Claim page button | `batch_slug`, `price`, `currency`, `state` (`login_required` \| `apply_required` \| `checkout`) |
+| `device_checkout_result` | **server**, `api/device-checkout` — every attempt, every branch | `batch_slug`, `outcome` (`session_created` \| `session_reused` \| `failed`), `status`, `error` |
+| `device_checkout_redirected` | Claim page, Stripe URL received, about to leave | `batch_slug`, `price`, `currency` |
+| `device_checkout_failed` | Claim page, checkout rejected | `batch_slug`, `reason`, `status` |
+| `device_follow_saved` / `device_follow_error` | **server**, `setMyDeviceBatchFollow` | `batch_slug`, `followed`, `error` |
+| `device_discussion_posted` / `device_discussion_post_error` | **server**, `postDeviceBatchDiscussion` | `batch_slug`, `image_count`, `error` |
+
+### Funnels to build in PostHog
+
+Create these as Insights → Funnels, conversion window 7 days (Stripe round
+trips and login detours are slow), **breakdown by `batch_slug`**. Client and
+server steps join on `user.id`: the browser is `identify`-ed at login/register,
+so pre-login steps merge into the same person.
+
+1. **Console claim (primary)**
+   1. `device_room_viewed` where `claim_state = open`
+   2. `device_claim_cta_clicked`
+   3. `device_claim_page_viewed`
+   4. `device_claim_button_clicked` where `state = checkout`
+   5. `device_checkout_result` where `outcome` ≠ `failed`
+   6. `device_checkout_redirected`
+   7. `device_claim_success_viewed` where `confirmed = true`
+
+   Read drop-offs as: 2→3 room CTA leakage, 3→4 price/terms hesitation,
+   4→5 server rejection (break down step 5's failures by `error`),
+   6→7 Stripe abandonment. Ground truth for revenue stays in `voyager_orders`;
+   the commerce metrics sync (#201) already reports paid orders.
+2. **Claim gate** — `device_claim_page_viewed` → `device_claim_button_clicked`
+   where `state` is `login_required` or `apply_required` → `device_claim_page_viewed`
+   where `logged_in = true` (measures how many visitors survive the login/apply detour).
+3. **Follow** — `device_room_viewed` → `device_follow_clicked` → `device_follow_saved`.
+4. **Discussion** — `device_tab_changed` where `tab = discussion` →
+   `device_discussion_post_submitted` → `device_discussion_posted`.
+5. **Post-purchase** — `device_claim_success_viewed` where `confirmed = true` →
+   `device_my_consoles_viewed` → `device_progress_opened`.
+
+Checkout failure reasons, as a HogQL insight:
+
+```sql
+SELECT properties.batch_slug AS batch, properties.status AS status,
+       properties.error AS error, count() AS attempts
+FROM events
+WHERE event = 'device_checkout_result' AND properties.outcome = 'failed'
+  AND timestamp > now() - INTERVAL 30 DAY
+GROUP BY batch, status, error
+ORDER BY attempts DESC
+```
+
+---
+
 ## Viewing overall click activity in PostHog
 
 The path-bar events all share the `pathbar_` prefix, so the whole strip can be

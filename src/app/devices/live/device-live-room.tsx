@@ -16,7 +16,8 @@ import { DeviceFieldLead } from '../_components/device-field-lead'
 import mediaStyles from '../_components/device-gallery.module.css'
 import { getDeviceBatchMedia, getDeviceBatchUpdates, getDeviceBatchProgress } from '@/lib/device-batch-content'
 import Link from 'next/link'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { trackDevice } from '@/lib/device-analytics'
 import {
   ChevronRight,
   ListFilter,
@@ -89,7 +90,18 @@ export function DeviceLiveRoom({
     return batches.filter((item) => item.status === filter)
   }, [batches, filter, followedBatchSlugs])
 
-  function chooseBatch(slug: string) {
+  const claimState = ownedConsole ? 'owned' : claimHref && remaining !== 0 ? 'open' : canClaimDeviceBatch(batch.status) ? 'sold_out' : 'closed'
+  useEffect(() => {
+    trackDevice('device_room_viewed', {
+      batch_slug: batch.slug, batch_status: batch.status, claim_state: claimState,
+      surface: isRoot ? 'devices_index' : 'batch_detail',
+    })
+    // One view per batch; claim state changes alone are not a new view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batch.slug])
+
+  function chooseBatch(slug: string, via: 'tab' | 'sheet' = 'tab') {
+    trackDevice('device_batch_selected', { from_batch_slug: batch.slug, batch_slug: slug, via })
     setSheetOpen(false)
     setProgressOpen(false)
     onSelectBatch(slug)
@@ -132,7 +144,7 @@ export function DeviceLiveRoom({
             </button>
           ))}
         </div>
-        <ArchiveButton variant="ghost" aria-label="Open all device batches" className={styles.listButton} onClick={() => setSheetOpen(true)} type="button">
+        <ArchiveButton variant="ghost" aria-label="Open all device batches" className={styles.listButton} onClick={() => { trackDevice('device_batch_list_opened', { batch_slug: batch.slug }); setSheetOpen(true) }} type="button">
           <ListFilter aria-hidden size={20} />
         </ArchiveButton>
       </nav>
@@ -140,7 +152,7 @@ export function DeviceLiveRoom({
       <div className={styles.workspace}><div className={styles.workspaceMedia}>
       <DeviceGallery
         media={materialRecords}
-        onSelect={selectMedia}
+        onSelect={(index) => { trackDevice('device_gallery_item_selected', { batch_slug: batch.slug, index }); selectMedia(index) }}
         primary={camera ? <CosmoCameraEmbed source={camera} location={batch.location} timeZone={batch.timeZone} /> : undefined}
         primaryLabel={camera?.binding.title}
         selected={selectedMedia}
@@ -159,9 +171,9 @@ export function DeviceLiveRoom({
         <ConsolePackages batch={batch} />
         <div className={styles.claimRow}>
           {ownedConsole ? (
-            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => setProgressOpen(true)} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></ArchiveButton>
+            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => { trackDevice('device_progress_opened', { batch_slug: batch.slug }); setProgressOpen(true) }} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></ArchiveButton>
           ) : claimHref && remaining !== 0 ? (
-            <Link className={`${styles.primaryButton} ${styles.claimButton}`} href={claimHref}><span>CLAIM A CONSOLE</span></Link>
+            <Link className={`${styles.primaryButton} ${styles.claimButton}`} href={claimHref} onClick={() => trackDevice('device_claim_cta_clicked', { batch_slug: batch.slug, location: 'room', price: batch.claimPrice?.amount ?? null, remaining })}><span>CLAIM A CONSOLE</span></Link>
           ) : (
             <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} disabled type="button"><span>CLAIMS CLOSED</span></ArchiveButton>
           )}
@@ -172,7 +184,7 @@ export function DeviceLiveRoom({
       <section className={styles.sectionPanel}>
         <ArchiveTabs ariaLabel="Device room content" activeId={activeTab}
           items={[{id:'info',label:'INFO'},{id:'updates',label:'UPDATES'},{id:'discussion',label:'DISCUSSION'}].map(item=>({...item,panelId:`device-room-${item.id}`}))}
-          onChange={id => setActiveTab(id as typeof activeTab)} />
+          onChange={id => { trackDevice('device_tab_changed', { batch_slug: batch.slug, tab: id }); setActiveTab(id as typeof activeTab) }} />
 
         {activeTab === 'info' ? (
           <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
@@ -226,7 +238,7 @@ export function DeviceLiveRoom({
               <section className={styles.progressBlock} aria-label="Batch FAQ">
                 <div className={styles.eyebrow}>BEFORE YOU CLAIM</div>
                 {purchaseFaq.map((item) => (
-                  <details key={item.question} className="mt-4 text-sm">
+                  <details key={item.question} className="mt-4 text-sm" onToggle={(event) => { if (event.currentTarget.open) trackDevice('device_faq_opened', { batch_slug: batch.slug, question: item.question }) }}>
                     <summary>{item.question}</summary>
                     <p className="mt-2 leading-relaxed">{item.answer}</p>
                   </details>
@@ -265,12 +277,12 @@ export function DeviceLiveRoom({
 
             <div className={styles.filterRow}>
               {(['all', 'following', ...DEVICE_BATCH_PHASES] as BatchFilter[]).map((item) => (
-                <ArchiveButton variant="secondary" aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => setFilter(item)} type="button">{item === 'all' || item === 'following' ? item.toUpperCase() : DEVICE_BATCH_STATUS[item].label}</ArchiveButton>
+                <ArchiveButton variant="secondary" aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => { trackDevice('device_batch_filter_changed', { filter: item }); setFilter(item) }} type="button">{item === 'all' || item === 'following' ? item.toUpperCase() : DEVICE_BATCH_STATUS[item].label}</ArchiveButton>
               ))}
             </div>
             <div className={styles.sheetList}>
               {filteredBatches.map((item) => (
-                <ArchiveButton variant="secondary" className={styles.sheetRow} key={item.code} onClick={() => chooseBatch(item.slug)} type="button">
+                <ArchiveButton variant="secondary" className={styles.sheetRow} key={item.code} onClick={() => chooseBatch(item.slug, 'sheet')} type="button">
                   <span className={styles.dot} style={{ background: 'var(--color-nucleus)' }} />
                   <span><strong>{item.name.toUpperCase()}</strong><small>{item.location}</small></span>
                   <span className={styles.sheetStatus}>{item.slug === batch.slug ? 'CURRENT · ' : ''}{DEVICE_BATCH_STATUS[item.status].shortLabel}</span>
@@ -299,7 +311,7 @@ export function DeviceLiveRoom({
                   </div>
                 ))}
               </div>
-              <Link className={styles.primaryButton} href="/devices/my-consoles">OPEN FULL UNIT RECORD</Link>
+              <Link className={styles.primaryButton} href="/devices/my-consoles" onClick={() => trackDevice('device_unit_record_opened', { batch_slug: batch.slug })}>OPEN FULL UNIT RECORD</Link>
             </div>
           </ArchiveSheet>
       ) : null}

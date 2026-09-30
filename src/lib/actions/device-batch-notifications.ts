@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { captureDeviceServerEvent } from '@/lib/device-analytics-server'
 import {
   getAdminDeviceBatch,
   getPublicDeviceBatch,
@@ -60,6 +61,9 @@ export async function setMyDeviceBatchFollow(
       .delete()
       .eq('user_id', user.id)
       .eq('batch_slug', batch.slug)
+    await captureDeviceServerEvent(user.id, error ? 'device_follow_error' : 'device_follow_saved', {
+      batch_slug: batch.slug, followed: !!error, error: error?.message ?? null,
+    })
     return { error: error?.message ?? null, followed: !!error }
   }
 
@@ -71,6 +75,9 @@ export async function setMyDeviceBatchFollow(
       email_enabled: true,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,batch_slug' })
+  await captureDeviceServerEvent(user.id, error ? 'device_follow_error' : 'device_follow_saved', {
+    batch_slug: batch.slug, followed: !error, error: error?.message ?? null,
+  })
   if (error) return { error: error.message, followed: false }
 
   revalidatePath('/devices')

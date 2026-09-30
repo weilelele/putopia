@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { DeviceViewTracker } from '@/components/device-view-tracker'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { BatchDiscussionBoard } from '../../../_components/batch-discussion-board'
 import { getPublicDeviceBatch } from '@/lib/device-batch-repository'
@@ -29,6 +30,7 @@ export default async function DiscussionPage({ params }: DiscussionPageProps) {
   return (
     <main className={`main pilot-archive-page archive-detail-page ${styles.detailPage}`}>
 
+      <DeviceViewTracker event="device_discussion_page_viewed" properties={{ batch_slug: batch.slug, can_post: discussion.canPost, post_count: discussion.posts.length }} />
       <div className={styles.discussionPageShell}>
         <ArchiveLinkButton href={`/devices/batches/${batch.slug}`} variant="ghost">
           ← {batch.code}
