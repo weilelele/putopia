@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
       if (!stripe) throw new Error('Stripe analytics credential unavailable')
       const admin = createAdminClient()
       let scanned = 0, captured = 0, excluded = 0
+      let testOrders = 0, unresolvedOrders = 0
       // Fail closed at the capacity limit; never label a truncated backfill complete.
       for (let offset = 0; ; offset += 100) {
         if (offset >= 2000) throw new Error('Order analytics capacity exceeded; checkpointed backfill required')
@@ -69,9 +70,10 @@ export async function GET(req: NextRequest) {
         for (const order of orders) {
           scanned++
           // Test-mode orders can share the database with production previews.
-          if (!order.stripe_session_id?.startsWith('cs_live_')) { excluded++; continue }
-          const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id)
-          if (!verifiedPaidOrder(order, session)) { excluded++; continue }
+          if (order.stripe_session_id?.startsWith('cs_test_')) { testOrders++; excluded++; continue }
+          if (!order.stripe_session_id?.startsWith('cs_live_')) { unresolvedOrders++; excluded++; continue }
+          const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id, {}, { timeout: 10000, maxNetworkRetries: 1 })
+          if (!verifiedPaidOrder(order, session)) { unresolvedOrders++; excluded++; continue }
           await client.captureImmediate({ distinctId: order.user_id!, event: 'device_purchase_completed',
             uuid: analyticsEventId(order.id), timestamp: new Date(order.paid_at),
             properties: { order_id: order.id, amount_minor: order.amount, currency: order.currency.toUpperCase(), device_batch_slug: order.device_batch_slug,
@@ -81,7 +83,8 @@ export async function GET(req: NextRequest) {
         if (orders.length < 100) break
       }
       await client.captureImmediate({ distinctId: 'marketing-analytics-system', event: 'commerce_analytics_synced', timestamp: checkedAt,
-        properties: { $process_person_profile: false, scanned_orders: scanned, verified_paid_orders: captured, excluded_orders: excluded, coverage_start: '2026-01-01', complete: true } })
+        properties: { $process_person_profile: false, scanned_orders: scanned, verified_paid_orders: captured, excluded_orders: excluded,
+          test_orders: testOrders, unresolved_orders: unresolvedOrders, coverage_confirmed: unresolvedOrders === 0, coverage_start: '2026-01-01', complete: true } })
       results.commerce = 'ok'
       results.verified_paid_orders = captured
     } catch {
