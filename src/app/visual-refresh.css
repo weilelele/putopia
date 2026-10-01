@@ -4469,3 +4469,6 @@ button.world-byline { cursor: pointer; }
 .world-fuzzy span { font-size: var(--fs-label); line-height: 1.5; }
 .world-fuzzy--thumb { padding: 4px; }
 .world-fuzzy--thumb span { font-size: var(--fs-caption); letter-spacing: .04em; color: var(--color-star-dim); }
+.world-row__by { display: block; min-width: 0; max-width: 100%; }
+.world-row__by .world-byline { max-width: 100%; }
+.world-byline__text { min-width: 0; }

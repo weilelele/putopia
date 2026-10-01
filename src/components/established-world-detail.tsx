@@ -146,7 +146,7 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
       </header>
 
       <div className="world-detail__who">
-        <WorldByline byline={byline} avatar={avatar} label="DISCOVERED BY" />
+        <WorldByline byline={byline} avatar={avatar} label={byline.pending ? 'FIRST OBSERVER' : 'DISCOVERED BY'} />
       </div>
 
       <div className="world-detail__summary">

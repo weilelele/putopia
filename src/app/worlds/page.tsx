@@ -46,8 +46,10 @@ async function ObserveFeed() {
   // Phase 1: the newest world that has a photo stands in as "worth watching now".
   const lead = feed.find((w) => w.cover)
   if (lead) lead.featured = true
-  // Lead first, then the rest in order.
-  return <WorldFeed worlds={lead ? [lead, ...feed.filter((w) => w !== lead)] : feed} />
+  // Lead first, then worlds with a photo, then fuzzy signals still waiting for a first observer.
+  const rest = feed.filter((w) => w !== lead)
+  const ordered = [...(lead ? [lead] : []), ...rest.filter((w) => w.cover), ...rest.filter((w) => !w.cover)]
+  return <WorldFeed worlds={ordered} />
 }
 
 function FeedSkeleton() {
