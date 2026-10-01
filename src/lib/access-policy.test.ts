@@ -19,6 +19,7 @@ describe('primary route access policy', () => {
     for (const route of PUBLIC_PRIMARY_ROUTES) expect(isPublicPrimaryRoute(route)).toBe(true)
     expect(allowsUnregisteredViewer('/')).toBe(true)
     expect(allowsUnregisteredViewer('/welcome')).toBe(true)
+    expect(allowsUnregisteredViewer('/privacy')).toBe(true)
   })
 
   it('retains the separate registration gate on supporting listings', () => {

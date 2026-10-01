@@ -1,6 +1,6 @@
 /** Access policy for the five primary product destinations. */
 export const PUBLIC_PRIMARY_ROUTES = ['/console', '/intel', '/devices', '/worlds/live', '/voyagers'] as const
-const PUBLIC_ENTRY_ROUTES = ['/', '/welcome', '/worlds'] as const
+const PUBLIC_ENTRY_ROUTES = ['/', '/welcome', '/worlds', '/privacy'] as const
 
 const REGISTRATION_REQUIRED_ROUTES = [
   '/vote',
