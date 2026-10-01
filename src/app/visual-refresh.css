@@ -4385,7 +4385,7 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .world-row--featured .world-row__thumb { width: 120px; height: 120px; }
 .world-row__info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
 .world-row__id { font-size: var(--fs-caption); letter-spacing: .04em; line-height: 1.5; text-transform: uppercase; color: var(--color-nucleus); }
-.world-row__name { font-size: var(--fs-title); font-weight: 400; color: var(--color-star); line-height: 1.4; overflow-wrap: anywhere; }
+.world-row__name { font-size: var(--fs-title); font-weight: 400; color: var(--color-star); line-height: 1.4; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .world-row__stats { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--fs-caption); letter-spacing: .04em; color: var(--color-star-dim); }
 .world-row__stats strong { color: var(--color-star); font-weight: 700; }
 .world-row__chevron { flex: none; color: var(--color-star-dim); transition: transform 140ms ease; }

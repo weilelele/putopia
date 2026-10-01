@@ -20,7 +20,6 @@ export type FeedWorld = {
   tags: string[]
   seen: number
   anomalies: number
-  discussions: number
   featured?: boolean
 }
 
@@ -59,7 +58,6 @@ function WorldRow({ world, open, onToggle, onReport }: {
         <span className="world-stats">
           <Stat value={world.seen} label="SEEN" />
           <Stat value={world.anomalies} label="ANOMALIES" />
-          <Stat value={world.discussions} label="DISCUSSIONS" />
         </span>
         <Tags tags={world.tags} />
       </div>

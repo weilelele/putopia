@@ -1,7 +1,6 @@
 import { Suspense, cache } from 'react'
 import { getAllWorlds, getDiscovererAvatars } from '@/lib/actions/worlds'
 import { SectionTracker } from '@/components/section-tracker'
-import { getCommentCountsBulk } from '@/lib/actions/comments'
 import { WorldFeed } from '@/components/world-feed'
 import { getFirstObservers, getWorldReportStats } from '@/lib/actions/world-reports'
 import { isFuzzyWorld, isOfficialWorld, worldByline, worldTags } from '@/lib/world-presentation'
@@ -25,9 +24,8 @@ async function ObserveFeed() {
   const worlds = [...(await loadWorlds())].reverse()
   if (!worlds.length) return <div className="archive-empty-state">NO WORLDS TO OBSERVE YET</div>
   const ids = worlds.map((w) => w.id)
-  const [avatars, discussions, stats, observers] = await Promise.all([
+  const [avatars, stats, observers] = await Promise.all([
     getDiscovererAvatars(worlds.map((w) => w.discoverer_id ?? '')).catch(() => ({} as Record<string, string>)),
-    getCommentCountsBulk('world', ids).catch(() => ({} as Record<string, number>)),
     getWorldReportStats(ids).catch(() => ({} as Awaited<ReturnType<typeof getWorldReportStats>>)),
     getFirstObservers(ids).catch(() => ({} as Awaited<ReturnType<typeof getFirstObservers>>)),
   ])
@@ -45,7 +43,6 @@ async function ObserveFeed() {
           tags: worldTags(w, isFuzzyWorld(w.id, observer)),
           seen: stats[w.id]?.seen ?? 0,
           anomalies: stats[w.id]?.anomalies ?? 0,
-          discussions: discussions[w.id] ?? 0,
           featured: i === 0,
         }
       })}
