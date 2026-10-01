@@ -47,14 +47,16 @@ function WorldRow({ world, open, onToggle, onReport }: {
             : <span className="world-fuzzy world-fuzzy--thumb"><span>SIGNAL<br />UNRESOLVED</span></span>}
         </span>
         <span className="world-row__info">
-          <span className="world-row__id">{world.id}</span>
+          <span className="world-row__top">
+            <span className="world-row__id">{world.id}</span>
+            <button type="button" className="world-row__toggle" aria-expanded={open} aria-controls={panelId}
+              aria-label={`${open ? 'Hide' : 'Show'} actions for ${world.name}`} onClick={(e) => { e.stopPropagation(); onToggle() }}>
+              <ChevronDown aria-hidden size={18} className="world-row__chevron" />
+            </button>
+          </span>
           <span className="world-row__name">{world.name}</span>
           <span className="world-row__by" onClick={(e) => e.stopPropagation()}><WorldByline byline={world.byline} avatar={world.avatar} /></span>
         </span>
-        <button type="button" className="world-row__toggle" aria-expanded={open} aria-controls={panelId}
-          aria-label={`${open ? 'Hide' : 'Show'} actions for ${world.name}`} onClick={(e) => { e.stopPropagation(); onToggle() }}>
-          <ChevronDown aria-hidden size={18} className="world-row__chevron" />
-        </button>
       </div>
       <div className="world-row__foot">
         <span className="world-stats">
