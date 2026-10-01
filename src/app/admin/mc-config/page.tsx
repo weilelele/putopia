@@ -187,10 +187,6 @@ export default function McConfigPage() {
         </div>
       </div>
 
-      <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>MC CONFIG</div>
-      </div>
     </div>
   )
 }

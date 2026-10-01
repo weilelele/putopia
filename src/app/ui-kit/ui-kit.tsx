@@ -134,7 +134,7 @@ export function UiKit() {
           {view === 'voyagers' && <ArchiveButton fullWidth variant="primary" onClick={() => { setSource(view); setView('logs') }}>VOYAGER LOGS →</ArchiveButton>}
         </div>
         <div className="uk-nav-preview">
-<PrimaryNavigation variant="bottom" activePath={view === 'dashboard' ? '/console' : view === 'worlds' ? '/worlds/live' : `/${view}`} onNavigate={href => setView(href === '/console' ? 'dashboard' : href === '/worlds/live' ? 'worlds' : href.slice(1))} />
+<PrimaryNavigation variant="bottom" activePath={view === 'dashboard' ? '/console' : view === 'worlds' ? '/worlds' : `/${view}`} onNavigate={href => setView(href === '/console' ? 'dashboard' : href === '/worlds' ? 'worlds' : href.slice(1))} />
 </div>
       </section>
       <section className="uk-section">

@@ -14,13 +14,13 @@ describe('UI navigation contract', () => {
     expect(routeScrollKey('/intel', '?tab=classified')).toBe('/intel?tab=classified')
   })
   it('keeps the same five primary destinations in order', () => {
-    expect(PRIMARY_NAV.map(item => item.href)).toEqual(['/console', '/intel', '/devices', '/worlds/live', '/voyagers'])
+    expect(PRIMARY_NAV.map(item => item.href)).toEqual(['/console', '/intel', '/devices', '/worlds', '/voyagers'])
   })
   it('preserves ownership for deep routes without matching similar prefixes', () => {
     expect(ownerTab('/logs/42')).toBe('/voyagers')
     expect(ownerTab('/profile')).toBe('/voyagers')
-    expect(ownerTab('/worlds/42')).toBe('/worlds/live')
-    expect(ownerTab('/worldflow')).toBe('/worlds/live')
+    expect(ownerTab('/worlds/42')).toBe('/worlds')
+    expect(ownerTab('/worldflow')).toBe('/worlds')
     expect(ownerTab('/devices-unrelated')).toBeNull()
   })
   it('hides global navigation during focused tasks and launch', () => {

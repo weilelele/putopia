@@ -16,6 +16,7 @@ export default async function NpcDetailPage({ params }: { params: Promise<{ id: 
   const profile = creating ? null : await admin.from('voyager_profiles').select('id, display_name, role, bio, avatar_url, location').eq('account_kind', 'npc').eq('id', id).maybeSingle()
   if (profile?.error) throw new Error('Could not load NPC profile')
   if (!creating && !profile?.data) notFound()
+  const grant = creating ? null : await (admin.from('device_access_grants' as never) as ReturnType<typeof admin.from>).select('user_id').eq('user_id', id).maybeSingle()
   const [batches, units] = await Promise.all([
     admin.from('device_batches').select('slug, name, listing_quantity, claimed_quantity, reserved_quantity, allocated_quantity').eq('publication_status', 'published').order('name'),
     creating ? Promise.resolve({ data: [], error: null }) : admin.from('device_batch_units').select('user_id, batch_slug, unit_code').eq('user_id', id).not('allocation_id', 'is', null).eq('status', 'assigned'),
@@ -24,6 +25,6 @@ export default async function NpcDetailPage({ params }: { params: Promise<{ id: 
     <Link href="/admin/npcs" className={styles.back}>← All NPCs</Link>
     <header className={styles.heading}><h1>{creating ? 'Create NPC' : 'Edit NPC'}</h1></header>
     {batches.error || units.error ? <p role="alert">Device information could not load. Please try again.</p> :
-      <NpcEditor key={id} profile={profile?.data ?? undefined} batches={batches.data ?? []} units={units.data ?? []} />}
+      <NpcEditor key={id} profile={profile?.data ?? undefined} batches={batches.data ?? []} units={units.data ?? []} deviceStatus={{ granted: !!grant?.data, available: !grant?.error }} />}
   </section>
 }
