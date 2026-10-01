@@ -94,7 +94,7 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
   const [reportKind, setReportKind] = useState<ReportKind | null>(null)
   const [observed, setObserved] = useState<WorldReportView[]>([])
   const [anomalous, setAnomalous] = useState<WorldReportView[]>([])
-  const [observer, setObserver] = useState<{ id: string; name: string; avatar: string | null } | null>(null)
+  const [observer, setObserver] = useState<{ id: string; name: string; avatar: string | null; image: string | null } | null>(null)
   const [discovererAvatar, setDiscovererAvatar] = useState<string | null>(null)
   const [discussions, setDiscussions] = useState(0)
   const [loaded, setLoaded] = useState(false)
@@ -102,6 +102,8 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
   const tags = worldTags(world, isFuzzyWorld(world.id, observer))
   const summary = firstSentence(world.description)
   const avatar = isOfficialWorld(world.id) ? observer?.avatar ?? null : discovererAvatar
+  // The first observer's photo becomes the world's picture until it has its own.
+  const heroImage = world.image_path ?? observer?.image ?? null
 
   const load = useCallback(async () => {
     const [obs, ano, first] = await Promise.all([
@@ -129,7 +131,9 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
     <>
       {/* The first discoverer's photo leads the page, full width. */}
       <div className="world-detail__hero">
-        {world.image_path && <LazyImage src={world.image_path} alt={name} sizes="(min-width: 768px) 720px, 100vw" style={{ objectFit: 'cover', display: 'block' }} />}
+        {heroImage
+          ? <LazyImage src={heroImage} alt={name} sizes="(min-width: 768px) 720px, 100vw" style={{ objectFit: 'cover', display: 'block' }} />
+          : <div className="world-fuzzy"><strong>FUZZY SIGNAL</strong><span>Nobody has resolved this world yet. Be the first to observe it.</span></div>}
       </div>
 
       <header className="world-detail__title">

@@ -42,7 +42,9 @@ function WorldRow({ world, open, onToggle, onReport }: {
       {/* The whole card toggles; the byline is its own button, so the toggle is a div with a real button for keyboards. */}
       <div className="world-row__main" onClick={onToggle}>
         <span className="world-row__thumb">
-          {world.cover && <LazyImage src={world.cover} sizes="(min-width: 768px) 240px, 40vw" style={{ objectFit: 'cover', display: 'block' }} />}
+          {world.cover
+            ? <LazyImage src={world.cover} sizes="(min-width: 768px) 240px, 40vw" style={{ objectFit: 'cover', display: 'block' }} />
+            : <span className="world-fuzzy world-fuzzy--thumb"><span>SIGNAL<br />UNRESOLVED</span></span>}
         </span>
         <span className="world-row__info">
           <span className="world-row__id">{world.id}</span>

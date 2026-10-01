@@ -4462,3 +4462,10 @@ button.world-byline { cursor: pointer; }
 .world-detail__heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; width: 100%; }
 .world-detail__icon.archive-button { flex: none; width: 44px; min-width: 44px; padding: 0; color: var(--color-star-dim); }
 .world-detail__icon.archive-button:hover { color: var(--color-star); }
+
+/* Fuzzy signal: no photo yet. Flat panel, no effects. */
+.world-fuzzy { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; border: 1px dashed var(--bd-faint); background: var(--bg-panel); color: var(--color-star-dim); }
+.world-fuzzy strong { font-size: var(--fs-title); font-weight: 400; letter-spacing: .04em; color: var(--color-nucleus); }
+.world-fuzzy span { font-size: var(--fs-label); line-height: 1.5; }
+.world-fuzzy--thumb { padding: 4px; }
+.world-fuzzy--thumb span { font-size: var(--fs-caption); letter-spacing: .04em; color: var(--color-star-dim); }

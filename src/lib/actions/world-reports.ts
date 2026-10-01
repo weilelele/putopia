@@ -36,20 +36,22 @@ export async function getWorldReportStats(worldIds: string[]): Promise<Record<st
   return aggregateReportStats((data ?? []) as Pick<Row, 'world_id' | 'kind' | 'author_id'>[])
 }
 
-/** Earliest observer of each world — the "by" for official worlds. */
-export async function getFirstObservers(worldIds: string[]): Promise<Record<string, { id: string; name: string; avatar: string | null }>> {
+/** Earliest observer of each world — the "by" for official worlds — and the photo they submitted. */
+export async function getFirstObservers(worldIds: string[]): Promise<Record<string, { id: string; name: string; avatar: string | null; image: string | null }>> {
   if (!worldIds.length) return {}
   const { table } = reports()
-  const { data, error } = await table.select('world_id, author_id, created_at').in('world_id', worldIds.slice(0, 200))
+  const { data, error } = await table.select('world_id, author_id, image_urls, created_at').in('world_id', worldIds.slice(0, 200))
     .eq('kind', 'observation').eq('is_visible', true).order('created_at', { ascending: true })
   if (error) return {}
-  const first = new Map<string, string>()
-  for (const row of (data ?? []) as { world_id: string; author_id: string }[]) if (!first.has(row.world_id)) first.set(row.world_id, row.author_id)
-  const profiles = await authorProfiles([...first.values()])
-  const out: Record<string, { id: string; name: string; avatar: string | null }> = {}
-  for (const [worldId, authorId] of first) {
-    const p = profiles.get(authorId)
-    if (p) out[worldId] = { id: p.id, name: p.display_name ?? 'Unknown', avatar: avatarOf(p) }
+  const first = new Map<string, { authorId: string; image: string | null }>()
+  for (const row of (data ?? []) as { world_id: string; author_id: string; image_urls: string[] | null }[]) {
+    if (!first.has(row.world_id)) first.set(row.world_id, { authorId: row.author_id, image: row.image_urls?.[0] ?? null })
+  }
+  const profiles = await authorProfiles([...first.values()].map((f) => f.authorId))
+  const out: Record<string, { id: string; name: string; avatar: string | null; image: string | null }> = {}
+  for (const [worldId, f] of first) {
+    const p = profiles.get(f.authorId)
+    if (p) out[worldId] = { id: p.id, name: p.display_name ?? 'Unknown', avatar: avatarOf(p), image: f.image }
   }
   return out
 }

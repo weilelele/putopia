@@ -19,8 +19,7 @@ const loadWorlds = cache(getAllWorlds)
 // ─── Observe feed: established worlds ─────────────────────────────────────────
 
 async function ObserveFeed() {
-  // Newest first (the loader returns oldest first). Phase 1: the newest world
-  // stands in as the key world until a real "featured" flag exists.
+  // Newest first (the loader returns oldest first).
   const worlds = [...(await loadWorlds())].reverse()
   if (!worlds.length) return <div className="archive-empty-state">NO WORLDS TO OBSERVE YET</div>
   const ids = worlds.map((w) => w.id)
@@ -29,25 +28,26 @@ async function ObserveFeed() {
     getWorldReportStats(ids).catch(() => ({} as Awaited<ReturnType<typeof getWorldReportStats>>)),
     getFirstObservers(ids).catch(() => ({} as Awaited<ReturnType<typeof getFirstObservers>>)),
   ])
-  return (
-    <WorldFeed
-      worlds={worlds.map((w, i) => {
-        const observer = observers[w.id] ?? null
-        const byline = worldByline(w, observer)
-        return {
-          id: w.id,
-          name: w.name_en || w.name,
-          cover: w.image_path,
-          byline,
-          avatar: isOfficialWorld(w.id) ? observer?.avatar ?? null : byline.profileId ? avatars[byline.profileId] ?? null : null,
-          tags: worldTags(w, isFuzzyWorld(w.id, observer)),
-          seen: stats[w.id]?.seen ?? 0,
-          anomalies: stats[w.id]?.anomalies ?? 0,
-          featured: i === 0,
-        }
-      })}
-    />
-  )
+  const feed = worlds.map((w) => {
+    const observer = observers[w.id] ?? null
+    const byline = worldByline(w, observer)
+    return {
+      id: w.id,
+      name: w.name_en || w.name,
+      cover: w.image_path ?? observer?.image ?? null,
+      byline,
+      avatar: isOfficialWorld(w.id) ? observer?.avatar ?? null : byline.profileId ? avatars[byline.profileId] ?? null : null,
+      tags: worldTags(w, isFuzzyWorld(w.id, observer)),
+      seen: stats[w.id]?.seen ?? 0,
+      anomalies: stats[w.id]?.anomalies ?? 0,
+      featured: false,
+    }
+  })
+  // Phase 1: the newest world that has a photo stands in as "worth watching now".
+  const lead = feed.find((w) => w.cover)
+  if (lead) lead.featured = true
+  // Lead first, then the rest in order.
+  return <WorldFeed worlds={lead ? [lead, ...feed.filter((w) => w !== lead)] : feed} />
 }
 
 function FeedSkeleton() {
