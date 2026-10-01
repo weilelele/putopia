@@ -4473,3 +4473,6 @@ button.world-byline { cursor: pointer; }
 .world-row__by { display: block; min-width: 0; max-width: 100%; }
 .world-row__by .world-byline { max-width: 100%; }
 .world-byline__text { min-width: 0; }
+.world-report.is-first { border-color: var(--color-nucleus); }
+.world-report__flag { padding: 2px 8px; font-size: var(--fs-caption); letter-spacing: .04em; color: #080C20; background: var(--color-nucleus); }
+.world-detail__notice { margin: 0 0 12px; font-size: var(--fs-label); line-height: 1.6; color: var(--color-star-dim); }

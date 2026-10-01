@@ -14,7 +14,8 @@ import { getDiscovererAvatars } from '@/lib/actions/worlds'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
 import { isFuzzyWorld, isOfficialWorld, worldByline, worldTags } from '@/lib/world-presentation'
 import { useDeviceReporter } from '@/lib/use-device-reporter'
-import { getFirstObservers, getWorldReports } from '@/lib/actions/world-reports'
+import { designateFirstObserver, getFirstObservers, getWorldReports } from '@/lib/actions/world-reports'
+import { useAuth } from '@/lib/auth-context'
 import type { ReportKind, WorldReportView } from '@/lib/world-reports'
 import type { World } from '@/types/database'
 
@@ -25,12 +26,18 @@ function firstSentence(text: string) {
   return (match ? match[0] : text).trim()
 }
 
-function ReportList({ reports, empty }: { reports: WorldReportView[]; empty: string }) {
+function ReportList({ reports, empty, onDesignate }: {
+  reports: WorldReportView[]
+  empty: string
+  /** Architects on a fuzzy official world: designate or clear the first observer. */
+  onDesignate?: (report: WorldReportView) => void
+}) {
   if (!reports.length) return <div className="archive-empty-state">{empty}</div>
   return (
     <ul className="world-reports">
       {reports.map((r) => (
-        <li key={r.id} className="world-report">
+        <li key={r.id} className={`world-report${r.isFirstObserver ? ' is-first' : ''}`}>
+          {r.isFirstObserver && <span className="world-report__flag">FIRST OBSERVER</span>}
           <WorldByline byline={{ name: r.authorName, profileId: r.authorId, pending: false }} avatar={r.authorAvatar} label={r.at} />
           <span>{r.body}</span>
           {!!r.images.length && (
@@ -41,6 +48,11 @@ function ReportList({ reports, empty }: { reports: WorldReportView[]; empty: str
                 </a>
               ))}
             </span>
+          )}
+          {onDesignate && (
+            <ArchiveButton variant="secondary" size="compact" onClick={() => onDesignate(r)}>
+              {r.isFirstObserver ? 'REMOVE FIRST OBSERVER' : 'DESIGNATE FIRST OBSERVER'}
+            </ArchiveButton>
           )}
         </li>
       ))}
@@ -92,6 +104,10 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
   const [infoOpen, setInfoOpen] = useState(false)
   const [tuningOpen, setTuningOpen] = useState(false)
   const [reportKind, setReportKind] = useState<ReportKind | null>(null)
+  const [designating, setDesignating] = useState<WorldReportView | null>(null)
+  const [designateBusy, setDesignateBusy] = useState(false)
+  const [designateError, setDesignateError] = useState('')
+  const { user } = useAuth()
   const [observed, setObserved] = useState<WorldReportView[]>([])
   const [anomalous, setAnomalous] = useState<WorldReportView[]>([])
   const [observer, setObserver] = useState<{ id: string; name: string; avatar: string | null; image: string | null } | null>(null)
@@ -101,6 +117,21 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
   const byline = worldByline(world, observer)
   const tags = worldTags(world, isFuzzyWorld(world.id, observer))
   const summary = firstSentence(world.description)
+  const fuzzy = isFuzzyWorld(world.id, observer)
+  // Only architects see the designation controls, and only on official worlds.
+  const canDesignate = user.role === 'architect' && isOfficialWorld(world.id)
+
+  async function confirmDesignation() {
+    if (!designating) return
+    setDesignateBusy(true); setDesignateError('')
+    try {
+      const result = await designateFirstObserver(world.id, designating.isFirstObserver ? null : designating.id)
+      if (result.error) { setDesignateError(result.error); return }
+      setDesignating(null)
+      await load()
+    } catch { setDesignateError('Result unconfirmed. Refresh to check before trying again.') }
+    finally { setDesignateBusy(false) }
+  }
   const avatar = isOfficialWorld(world.id) ? observer?.avatar ?? null : discovererAvatar
   // The first observer's photo becomes the world's picture until it has its own.
   const heroImage = world.image_path ?? observer?.image ?? null
@@ -167,7 +198,10 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
         ]} />
 
       <div className="world-detail__panel">
-        {tab === 'observed' && <ReportList reports={observed} empty={loaded ? 'NO OBSERVATIONS REPORTED YET' : 'LOADING…'} />}
+        {tab === 'observed' && fuzzy && isOfficialWorld(world.id) && (
+          <p className="world-detail__notice">Observations are reviewed by the team. The first accepted one becomes this world&apos;s first observer, and their photo becomes its picture.</p>
+        )}
+        {tab === 'observed' && <ReportList reports={observed} empty={loaded ? 'NO OBSERVATIONS REPORTED YET' : 'LOADING…'} onDesignate={canDesignate ? setDesignating : undefined} />}
         {tab === 'anomalies' && <ReportList reports={anomalous} empty={loaded ? 'NO ANOMALIES REPORTED YET' : 'LOADING…'} />}
         {tab === 'discussion' && <CommentThread subjectType="world" subjectId={world.id} subjectTitle={name} posthogEvent="world_comment_sent" allowImages />}
       </div>
@@ -177,11 +211,26 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
           <div className="world-info">
             <dl>
               <div><dt>WORLD</dt><dd>{name} · {world.id}</dd></div>
-              <div><dt>FIRST OBSERVED</dt><dd>{observer ? observer.name : 'Not yet observed'}</dd></div>
+              <div><dt>FIRST OBSERVED</dt><dd>{observer ? observer.name : isOfficialWorld(world.id) ? 'Not yet observed' : byline.name}</dd></div>
               <div><dt>DATE</dt><dd>{world.discovery_date}</dd></div>
               <div><dt>TAGS</dt><dd>{tags.join(' · ')}</dd></div>
             </dl>
             <p>{world.description}</p>
+          </div>
+        </ArchiveSheet>
+      )}
+      {designating && (
+        <ArchiveSheet open onClose={() => setDesignating(null)} title={designating.isFirstObserver ? 'Remove first observer' : 'Designate first observer'} busy={designateBusy}>
+          <div className="world-info">
+            <p>
+              {designating.isFirstObserver
+                ? `${designating.authorName} will no longer be this world's first observer, and ${name} returns to a fuzzy signal.`
+                : `${designating.authorName} becomes the first observer of ${name}. Their name appears as "by" and their first photo becomes the world's picture.`}
+            </p>
+            {designateError && <p role="alert">{designateError}</p>}
+            <ArchiveButton variant="primary" fullWidth loading={designateBusy} onClick={() => void confirmDesignation()}>
+              {designating.isFirstObserver ? 'REMOVE' : 'DESIGNATE'}
+            </ArchiveButton>
           </div>
         </ArchiveSheet>
       )}

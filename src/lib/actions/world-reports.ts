@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { requireNpcArchitect } from '@/lib/npc-repository'
 import { getMyDeviceStatus } from '@/lib/actions/device-status'
-import { aggregateReportStats, type ReportKind, type WorldReportStats, type WorldReportView } from '@/lib/world-reports'
+import { aggregateReportStats, validateDesignation, type ReportKind, type WorldReportStats, type WorldReportView } from '@/lib/world-reports'
 
 type Row = { id: string; world_id: string; kind: ReportKind; author_id: string; body: string; image_urls: string[]; created_at: string }
 type Profile = { id: string; display_name: string | null; avatar_url: string | null; role: string }
@@ -36,28 +36,34 @@ export async function getWorldReportStats(worldIds: string[]): Promise<Record<st
   return aggregateReportStats((data ?? []) as Pick<Row, 'world_id' | 'kind' | 'author_id'>[])
 }
 
-/** Earliest observer of each world — the "by" for official worlds — and the photo they submitted. */
+/**
+ * The designated first observer of each world — the "by" for official worlds —
+ * and the photo they submitted. An official world with no designation is a
+ * fuzzy signal. Missing column / table (before schema_v85) reads as "none".
+ */
 export async function getFirstObservers(worldIds: string[]): Promise<Record<string, { id: string; name: string; avatar: string | null; image: string | null }>> {
   if (!worldIds.length) return {}
-  const { table } = reports()
-  const { data, error } = await table.select('world_id, author_id, image_urls, created_at').in('world_id', worldIds.slice(0, 200))
-    .eq('kind', 'observation').eq('is_visible', true).order('created_at', { ascending: true })
+  const { admin, table } = reports()
+  const { data: worlds, error: worldError } = await admin.from('worlds').select('id, first_observer_report_id').in('id', worldIds.slice(0, 200)).not('first_observer_report_id', 'is', null)
+  if (worldError || !worlds?.length) return {}
+  const reportToWorld = new Map(worlds.map((w) => [w.first_observer_report_id as string, w.id as string]))
+  const { data, error } = await table.select('id, author_id, image_urls').in('id', [...reportToWorld.keys()]).eq('is_visible', true)
   if (error) return {}
-  const first = new Map<string, { authorId: string; image: string | null }>()
-  for (const row of (data ?? []) as { world_id: string; author_id: string; image_urls: string[] | null }[]) {
-    if (!first.has(row.world_id)) first.set(row.world_id, { authorId: row.author_id, image: row.image_urls?.[0] ?? null })
-  }
-  const profiles = await authorProfiles([...first.values()].map((f) => f.authorId))
+  const rows = (data ?? []) as { id: string; author_id: string; image_urls: string[] | null }[]
+  const profiles = await authorProfiles(rows.map((r) => r.author_id))
   const out: Record<string, { id: string; name: string; avatar: string | null; image: string | null }> = {}
-  for (const [worldId, f] of first) {
-    const p = profiles.get(f.authorId)
-    if (p) out[worldId] = { id: p.id, name: p.display_name ?? 'Unknown', avatar: avatarOf(p), image: f.image }
+  for (const r of rows) {
+    const p = profiles.get(r.author_id)
+    const worldId = reportToWorld.get(r.id)
+    if (p && worldId) out[worldId] = { id: p.id, name: p.display_name ?? 'Unknown', avatar: avatarOf(p), image: r.image_urls?.[0] ?? null }
   }
   return out
 }
 
 export async function getWorldReports(worldId: string, kind: ReportKind): Promise<WorldReportView[]> {
-  const { table } = reports()
+  const { admin, table } = reports()
+  const { data: worldRow } = await admin.from('worlds').select('first_observer_report_id').eq('id', worldId).maybeSingle()
+  const designatedId = worldRow?.first_observer_report_id ?? null
   const { data, error } = await table.select('id, world_id, kind, author_id, body, image_urls, created_at')
     .eq('world_id', worldId).eq('kind', kind).eq('is_visible', true).order('created_at', { ascending: false }).limit(200)
   if (error) return []
@@ -65,7 +71,7 @@ export async function getWorldReports(worldId: string, kind: ReportKind): Promis
   const profiles = await authorProfiles(rows.map((r) => r.author_id))
   return rows.map((r) => {
     const p = profiles.get(r.author_id)
-    return { id: r.id, kind: r.kind, authorId: r.author_id, authorName: p?.display_name ?? 'Unknown', authorAvatar: avatarOf(p), body: r.body, images: r.image_urls ?? [], at: r.created_at.slice(0, 10) }
+    return { id: r.id, kind: r.kind, authorId: r.author_id, authorName: p?.display_name ?? 'Unknown', authorAvatar: avatarOf(p), body: r.body, images: r.image_urls ?? [], at: r.created_at.slice(0, 10), isFirstObserver: r.id === designatedId }
   })
 }
 
@@ -106,5 +112,31 @@ export async function submitWorldReport(input: {
   if (error) return { error: 'Could not save the report. Please try again.' }
   revalidatePath('/worlds')
   revalidatePath(`/worlds/${input.worldId}`)
+  return { error: null }
+}
+
+/**
+ * Architect only: designate (or, with null, clear) the observation that makes
+ * its author the first observer of an official world. Designating takes the
+ * world out of its fuzzy state; clearing returns it to fuzzy.
+ */
+export async function designateFirstObserver(worldId: string, reportId: string | null): Promise<{ error: string | null }> {
+  try { await requireNpcArchitect() } catch { return { error: 'Architect permission required.' } }
+  const admin = createAdminClient()
+  const { data: world } = await admin.from('worlds').select('id, lifecycle_state').eq('id', worldId).maybeSingle()
+  if (!world) return { error: 'World not found.' }
+  if (reportId !== null) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reportId)) return { error: 'Invalid report.' }
+    const { data: report } = await (admin.from('world_reports' as never) as ReturnType<typeof admin.from>)
+      .select('world_id, kind, is_visible').eq('id', reportId).maybeSingle()
+    const invalid = validateDesignation(world, report as { world_id: string; kind: string; is_visible: boolean } | null)
+    if (invalid) return { error: invalid }
+  } else if (!worldId.startsWith('WLD-')) {
+    return { error: 'Only official worlds have a first observer to designate.' }
+  }
+  const { error } = await admin.from('worlds').update({ first_observer_report_id: reportId } as never).eq('id', worldId)
+  if (error) return { error: 'Could not save. Apply schema_v85 first.' }
+  revalidatePath('/worlds')
+  revalidatePath(`/worlds/${worldId}`)
   return { error: null }
 }
