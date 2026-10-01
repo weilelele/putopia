@@ -8,6 +8,7 @@ import { ArchiveTextarea } from '@/components/archive-input'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { ArchiveSheet } from '@/components/archive-sheet'
+import { WorldsSectionTabs } from '@/components/worlds-section-tabs'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -101,7 +102,7 @@ export function WorldsLiveRoom({
 
   if (!selected) return (
     <main className={`main ${styles.page} ${roomStyles.scrollPage}`} data-route-scroll>
-      <h1 className="sr-only">Worlds</h1><RootBrandHeader><Link className={styles.archiveLink} href="/worlds">ARCHIVE</Link></RootBrandHeader>
+      <h1 className="sr-only">Worlds</h1><RootBrandHeader /><WorldsSectionTabs active="explore" />
       <section className={styles.sectionPanel}><div className={styles.emptyRoom}>NO PARALLAX ARRAYS PUBLISHED<br />Please check back later. Existing worlds remain in the archive.</div></section>
     </main>
   )
@@ -162,7 +163,8 @@ export function WorldsLiveRoom({
     <main className={`main ${styles.page} ${roomStyles.scrollPage}`} data-route-scroll>
       <h1 className="sr-only">Worlds</h1>
 
-      <RootBrandHeader><ArchiveLinkButton href="/worlds" variant="ghost" aria-label="Archive — explore all Worlds">ARCHIVE <ChevronRight aria-hidden size={18} /></ArchiveLinkButton></RootBrandHeader>
+      <RootBrandHeader />
+      <WorldsSectionTabs active="explore" />
       <nav className={`${styles.objectNav} ${roomStyles.navigation}`} aria-label="Parallax Array locations">
         <ArchiveTabs mode="filter" ariaLabel="Parallax Array location" activeId={selected.slug}
           items={rooms.map(room=>({id:room.slug,label:room.city.toUpperCase()}))} onChange={chooseRoom} />

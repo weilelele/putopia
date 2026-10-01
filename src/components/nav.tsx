@@ -109,7 +109,7 @@ const navLinks = [
   { href: '/logs',     label: 'VOYAGER LOGS',   icon: <LogsIcon /> },
   { href: '/voyagers', label: 'VOYAGERS',       icon: <VoyagersIcon /> },
   { href: '/vote',     label: 'VOTING HUB',     icon: <VoteIcon /> },
-  { href: '/worlds/live', label: 'WORLDS',       icon: <WorldsIcon /> },
+  { href: '/worlds', label: 'WORLDS',       icon: <WorldsIcon /> },
 ]
 
 export function Nav() {
@@ -147,8 +147,8 @@ export function Nav() {
       {/* Nav Items */}
       <div className="py-1 overflow-y-auto">
         {navLinks.map(({ href, label, icon }) => {
-          const isActive = href === '/worlds/live'
-            ? pathname.startsWith('/worlds')
+          const isActive = href === '/worlds'
+            ? pathname.startsWith('/worlds') || pathname.startsWith('/signal')
             : pathname === href || pathname.startsWith(href + '/')
           const isGuest = user.role === 'guest'
           const linkHref = isGuest ? `/login?redirect=${href}` : href
