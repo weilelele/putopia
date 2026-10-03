@@ -7,6 +7,7 @@ import { activatePaidVoyagerPath } from '@/lib/voyager-path-membership'
 import { isCheckoutAmountValid, toStripeMinorUnits } from '@/lib/device-checkout'
 import { sendDeviceOrderStatusNotification } from '@/lib/device-batch-notifications'
 import { sendMetaPurchase } from '@/lib/meta-capi'
+import { isIOSNativeApp } from '@/lib/app-platform'
 
 export const dynamic = 'force-dynamic'
 
@@ -109,6 +110,8 @@ async function sendDevicePurchaseToMeta(
   stripeLiveMode: boolean,
 ) {
   if (order.product_type !== 'device_batch_claim') return
+  // Purchases made inside the iOS app are never shared with advertising platforms.
+  if (isIOSNativeApp(session.metadata?.meta_client_user_agent ?? '')) return
   // Do not let a signed event for a different session reuse an order's event ID.
   if (!order.stripe_session_id || order.stripe_session_id !== session.id) {
     throw new Error('Meta Purchase skipped: Stripe session does not match the stored order')

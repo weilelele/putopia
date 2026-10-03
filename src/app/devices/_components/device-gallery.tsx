@@ -11,7 +11,8 @@ export function DeviceMediaImage(props: ImageProps) {
   return <NextImage {...props} onError={() => setFailedSrc(props.src)} />
 }
 
-export function DeviceGallery({ primary, primaryLabel, media, selected, onSelect }: {
+export function DeviceGallery({ primary, primaryLabel, media, selected, onSelect, onVideoPlay }: {
+  onVideoPlay?: (index: number) => void
   primary?: ReactNode
   primaryLabel?: string
   media: DeviceBatchMedia[]
@@ -31,7 +32,7 @@ export function DeviceGallery({ primary, primaryLabel, media, selected, onSelect
     {item ? <>
       <div className={styles.frame}>
         {item.kind === 'video'
-          ? <video key={item.src} src={item.src} poster={item.poster} controls playsInline preload="metadata" />
+          ? <video key={item.src} src={item.src} poster={item.poster} controls playsInline preload="metadata" onPlay={() => onVideoPlay?.(itemIndex)} />
           : <DeviceMediaImage src={item.src} alt={item.alt || item.caption} fill sizes="(max-width: 767px) 100vw, 1000px" unoptimized />}
       </div>
     </> : null}

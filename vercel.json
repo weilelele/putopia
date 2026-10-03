@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/marketing-analytics",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/analytics/snapshot",
       "schedule": "0 9 * * *"
     },
