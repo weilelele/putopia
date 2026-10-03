@@ -1,5 +1,7 @@
 # Device Updates, gallery and Field Lead
 
+Current editorial requirements: [Batch 基础信息概述](./device-batch-overview.zh.md). Maintain basic Info and publish Updates manually; the technical phases below do not require story chapters or Story Lab review.
+
 ## Content contract
 
 - `updates` is the ordered list of field reports, newest first. Each report has a stable ID, descriptive date, title, text and optional image/video attachments. Editors can reorder reports explicitly; dates do not schedule publication.
