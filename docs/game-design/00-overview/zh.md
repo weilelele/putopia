@@ -8,7 +8,7 @@ Multiverse Collective 是一个**叙事驱动的角色扮演式社区平台**，
 
 - **载体**：Next.js 16 + Supabase 的 Web 应用，桌面端为侧边导航、移动端为底部导航。
 - **风格**：纯橙 + 深空蓝 + 等宽 Courier Prime 字体，整体是一种"复古终端 / HUD 控制台"质感。
-- **口号**：*"Building better worlds, together." / "Explore parallel worlds."*
+- **口号**：*"EXPLORING PARALLEL WORLDS, TOGETHER"*
 
 ## 2. 核心虚构（世界观）
 
