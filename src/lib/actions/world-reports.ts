@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { requireNpcArchitect } from '@/lib/npc-repository'
+import { getAllWorlds } from '@/lib/actions/worlds'
+import { orderFeed } from '@/lib/world-feed-order'
 import { getMyDeviceStatus } from '@/lib/actions/device-status'
 import { aggregateReportStats, validateDesignation, type ReportKind, type WorldReportStats, type WorldReportView } from '@/lib/world-reports'
 
@@ -139,4 +141,11 @@ export async function designateFirstObserver(worldId: string, reportId: string |
   revalidatePath('/worlds')
   revalidatePath(`/worlds/${worldId}`)
   return { error: null }
+}
+
+/** World ids in the Observe list's order — what swiping on a world page walks through. */
+export async function getObserveOrder(): Promise<string[]> {
+  const worlds = [...(await getAllWorlds())].reverse()
+  const observers = await getFirstObservers(worlds.map((w) => w.id)).catch(() => ({} as Awaited<ReturnType<typeof getFirstObservers>>))
+  return orderFeed(worlds, (w) => !!(w.image_path ?? observers[w.id]?.image)).map((w) => w.id)
 }

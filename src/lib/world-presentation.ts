@@ -12,17 +12,17 @@
 export const FUZZY_TAG = 'FUZZY SIGNAL'
 
 /**
- * What a world actually contains, not its genre: the product treats every world
+ * What a world actually contains, not its genre (names kept short so a card's tags stay on one row): the product treats every world
  * as real, so there is no sci-fi / fantasy. Matched against name + description.
  */
 const THEMES: { tag: string; words: RegExp }[] = [
-  { tag: 'EXTRATERRESTRIAL', words: /\b(alien|aliens|extraterrestrial|space|spaceship|planet|interstellar|orbit|star|stars|moon|cosmos|void)\b/i },
+  { tag: 'ALIEN', words: /\b(alien|aliens|extraterrestrial|space|spaceship|planet|interstellar|orbit|star|stars|moon|cosmos|void)\b/i },
   { tag: 'RUINS', words: /\b(abandoned|ruins?|derelict|empty|collapsed|mineshaft|overgrown|deserted|left behind|forgotten|disused)\b/i },
-  { tag: 'WILDERNESS', words: /\b(forest|mountains?|desert|field|fields|trees?|rocks?|sand|valley|cliff|cave|jungle|meadow|snow)\b/i },
+  { tag: 'WILD', words: /\b(forest|mountains?|desert|field|fields|trees?|rocks?|sand|valley|cliff|cave|jungle|meadow|snow)\b/i },
   { tag: 'WATERS', words: /\b(lake|sea|ocean|river|waves?|shore|beach|rain|island|harbou?r|flood)\b/i },
   { tag: 'CITY', words: /\b(city|street|streets|supermarket|station|building|buildings|train|market|apartment|mall|office|road|neon)\b/i },
   { tag: 'MACHINES', words: /\b(android|robots?|machines?|engine|device|devices|clock|computer|electric|mechanical|drone)\b/i },
-  { tag: 'LIFEFORMS', words: /\b(creatures?|animals?|birds?|fish|cats?|dogs?|people|residents|child|children|girl|boy|pixie|insects?)\b/i },
+  { tag: 'BEINGS', words: /\b(creatures?|animals?|birds?|fish|cats?|dogs?|people|residents|child|children|girl|boy|pixie|insects?)\b/i },
 ]
 export const WORLD_TAGS = THEMES.map((t) => t.tag)
 
