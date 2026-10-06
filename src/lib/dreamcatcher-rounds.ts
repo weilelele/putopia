@@ -17,7 +17,7 @@ export interface RoundRecord {
   opened_at: string | null
   closes_at: string | null
 }
-type WorldRow = { id: string; name: string; discoverer_name: string; discoverer_id: string | null; vote_scope: 'self' | 'all' | 'voters'; lifecycle_state: string }
+type WorldRow = { id: string; name: string; description: string | null; discoverer_name: string; discoverer_id: string | null; vote_scope: 'self' | 'all' | 'voters'; lifecycle_state: string }
 type TaskRow = { id: string; thread_id: string; prompt: string | null }
 type ResponseRow = { task_id: string; user_id: string; selected_asset_id: string }
 type AssetRow = PublicSignalAsset & { task_id: string }
@@ -61,11 +61,16 @@ export async function getRoundInvestigations(viewer: RoundViewer, worldId?: stri
     const taskIds = batch.map(r => r.task_id).filter((id): id is string => !!id)
     const worldIds = [...new Set(batch.map(r => r.world_id))]
     const [worlds, tasks, assets, responses] = await Promise.all([
-      readRows<WorldRow>((from, to) => admin.from('worlds').select('id,name,discoverer_name,discoverer_id,vote_scope,lifecycle_state').in('id', worldIds).order('id').range(from, to)),
+      readRows<WorldRow>((from, to) => admin.from('worlds').select('id,name,description,discoverer_name,discoverer_id,vote_scope,lifecycle_state').in('id', worldIds).order('id').range(from, to)),
       readRows<TaskRow>((from, to) => admin.from('signal_tasks').select('id,thread_id,prompt').in('id', taskIds).eq('is_published', true).order('id').range(from, to)),
       readRows<AssetRow>((from, to) => admin.from('signal_task_assets').select('id,task_id,media,processed_url,display_url,asset_role,display_order').in('task_id', taskIds).eq('is_selected', true).order('display_order').order('id').range(from, to)),
       readRows<ResponseRow>((from, to) => admin.from('signal_responses').select('task_id,user_id,selected_asset_id').in('task_id', taskIds).order('id').range(from, to)),
     ])
+    const creatorIds = [...new Set(worlds.map(w => w.discoverer_id).filter((id): id is string => !!id))]
+    const creators = creatorIds.length ? await readRows<{ id: string; display_name: string | null; avatar_url: string | null }>(
+      (from, to) => admin.from('voyager_profiles').select('id,display_name,avatar_url').in('id', creatorIds).order('id').range(from, to),
+    ) : []
+    const creatorMap = new Map(creators.map(person => [person.id, person]))
     const worldMap = new Map(worlds.map(w => [w.id, w]))
     const taskMap = new Map(tasks.map(t => [t.id, t]))
     const assetMap = groupByTask(assets)
@@ -84,7 +89,9 @@ export async function getRoundInvestigations(viewer: RoundViewer, worldId?: stri
       let inv = investigations.get(w.id)
       if (!inv) {
         inv = {
-          id: task.thread_id, worldId: w.id, title: w.name, discovererName: w.discoverer_name,
+          id: task.thread_id, worldId: w.id, title: w.name, description: w.description,
+          discovererName: creatorMap.get(w.discoverer_id ?? '')?.display_name?.trim() || w.discoverer_name,
+          discovererAvatar: creatorMap.get(w.discoverer_id ?? '')?.avatar_url ?? null,
           type: 'visual_match', voteScope: w.vote_scope, canParticipate: false, lockReason: null,
           days: [], searching: null, dreamcatcherId: r.dreamcatcher_id, roundBased: true,
         }

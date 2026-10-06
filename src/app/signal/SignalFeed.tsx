@@ -1,5 +1,7 @@
 'use client'
 
+import { PublisherIdentity } from '@/components/news-content'
+import { SignalDescription, SignalVotingRules } from '@/components/signal-description'
 import { useState, useEffect } from 'react'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveButton } from '@/components/archive-button'
@@ -126,6 +128,8 @@ export function InvestigationCard({
         </div>
       </div>
 
+      <PublisherIdentity name={investigation.discovererName || 'Unknown creator'} avatar={investigation.discovererAvatar} />
+
       {/* Architect preview: this day hasn't revealed to members yet. */}
       {current && !current.revealed && (
         <div style={{ fontSize: 'var(--fs-caption)', color: '#E8A020', letterSpacing: '0.05em', marginBottom: 10 }}>
@@ -140,6 +144,8 @@ export function InvestigationCard({
         <TaskCard
           key={current.task.id}
           task={current.task}
+          description={investigation.description}
+          roundBased={investigation.roundBased}
           canParticipate={current!.task.canRespond ?? investigation.canParticipate}
           lockReason={investigation.lockReason}
           onFiled={onFiled}
@@ -234,7 +240,7 @@ const TYPE_HINT: Record<string, string> = {
   audio_match: 'Which sound comes from the same world as the reference?',
 }
 
-function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicSignalTask; canParticipate: boolean; lockReason?: string | null; onFiled: () => void }) {
+function TaskCard({ task, description, roundBased, canParticipate, lockReason, onFiled }: { task: PublicSignalTask; description?: string | null; roundBased?: boolean; canParticipate: boolean; lockReason?: string | null; onFiled: () => void }) {
   const [pick, setPick] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -278,11 +284,10 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
 
   return (
     <ArchiveCard className="signal-task-card">
-      {task.initiatorOnly && <p>Voting ended without responses. Only the original submitter can choose a signal to start the next round.</p>}
       {/* Prompt spans the full width — the response count moved to the footer. */}
-      <p style={{ fontSize: 14.5, margin: '0 0 14px', lineHeight: 1.6, color: 'rgba(245,245,245,0.88)' }}>
+      {roundBased ? <SignalDescription description={description} /> : <p style={{ fontSize: 14.5, margin: '0 0 14px', lineHeight: 1.6, color: 'rgba(245,245,245,0.88)' }}>
         {task.prompt || TYPE_HINT[task.type] || 'Make your judgment.'}
-      </p>
+      </p>}
 
       {main && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
@@ -321,6 +326,8 @@ function TaskCard({ task, canParticipate, lockReason, onFiled }: { task: PublicS
           )
         })}
       </div>
+
+      {roundBased && <SignalVotingRules initiatorOnly={task.initiatorOnly} />}
 
       {/* Footer — status on the left, response count anchored bottom-right. */}
       <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>

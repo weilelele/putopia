@@ -297,7 +297,7 @@ async function notifyReply(args: {
         <p style="margin:0 0 12px;color:#cfd2e0;">${escapeHtml(args.replierName)} replied to your transmission on ${escapeHtml(where)}:</p>
         <blockquote style="border-left:2px solid #E85D04;margin:0 0 20px;padding:8px 16px;color:#cfd2e0;white-space:pre-wrap;">${escapeHtml(snippet)}</blockquote>
         <a href="${link}" style="display:inline-block;background:#FF6B35;color:#0A0E27;text-decoration:none;padding:10px 20px;font-weight:700;letter-spacing:0.1em;font-size:13px;">VIEW THE THREAD</a>
-        <p style="margin:24px 0 0;color:#6b7088;font-size:11px;">— BUILDING BETTER WORLDS, TOGETHER.</p>
+        <p style="margin:24px 0 0;color:#6b7088;font-size:11px;">— EXPLORING PARALLEL WORLDS, TOGETHER</p>
       </div>`
     const plain = `${greetName},\n\n${args.replierName} replied to your transmission on ${where}:\n\n"${snippet}"\n\nView the thread: ${link}\n\n— Multiverse Collective`
 

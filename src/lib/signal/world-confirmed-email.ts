@@ -172,7 +172,7 @@ function buildHtml(worldId: string, worldName: string, copy: WorldCopy, optionUr
     <a href="${SITE}/worlds/${worldId}" style="display:inline-block;padding:14px 32px;font-size:11px;font-weight:700;letter-spacing:0.2em;color:#0A0E27;text-decoration:none;text-transform:uppercase;">${cta}</a>
   </td></tr></table>
 </td></tr>
-<tr><td style="padding-top:24px;"><p style="margin:0;font-size:9px;color:#2A3A5A;text-align:center;line-height:1.8;letter-spacing:0.05em;">BUILDING BETTER WORLDS, TOGETHER.<br/><a href="${SITE}" style="color:#4A5570;text-decoration:none;">multiverseco.org</a></p></td></tr>
+<tr><td style="padding-top:24px;"><p style="margin:0;font-size:9px;color:#2A3A5A;text-align:center;line-height:1.8;letter-spacing:0.05em;">EXPLORING PARALLEL WORLDS, TOGETHER<br/><a href="${SITE}" style="color:#4A5570;text-decoration:none;">multiverseco.org</a></p></td></tr>
 </table></td></tr></table></body></html>`
 }
 
