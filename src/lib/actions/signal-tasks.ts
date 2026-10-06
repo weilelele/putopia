@@ -853,6 +853,8 @@ export interface PublicInvestigation {
   worldId: string | null
   title: string                   // world name
   discovererName: string | null
+  discovererAvatar?: string | null
+  description?: string | null
   type: SignalTaskType
   voteScope: WorldVoteScope
   canParticipate: boolean         // this viewer may vote on THIS world (doc 2.1)
@@ -1183,6 +1185,8 @@ export async function listInvestigations(): Promise<InvestigationSummary[]> {
 
 /** Resolve a set of world ids → { id: { name, discoverer_name } }. */
 interface WorldMeta {
+  description: string | null
+  discoverer_avatar?: string | null
   name: string
   discoverer_name: string | null
   discoverer_id: string | null
@@ -1194,11 +1198,20 @@ async function worldMetaMap(admin: DB, ids: (string | null)[]): Promise<Map<stri
   const unique = [...new Set(ids.filter(Boolean))] as string[]
   const m = new Map<string, WorldMeta>()
   if (!unique.length) return m
-  const { data } = await admin.from('worlds').select('id, name, discoverer_name, discoverer_id, vote_scope, scan_until').in('id', unique)
+  const { data } = await admin.from('worlds').select('id, name, description, discoverer_name, discoverer_id, vote_scope, scan_until').in('id', unique)
+  const creatorIds = [...new Set((data ?? []).map((w: WorldMeta) => w.discoverer_id).filter(Boolean))]
+  const { data: creators } = creatorIds.length
+    ? await admin.from('voyager_profiles').select('id, display_name, avatar_url').in('id', creatorIds)
+    : { data: [] }
+  const creatorMap = new Map<string, { display_name: string | null; avatar_url: string | null }>(
+    (creators ?? []).map((person: { id: string; display_name: string | null; avatar_url: string | null }) => [person.id, person]),
+  )
   for (const w of (data ?? []) as (WorldMeta & { id: string })[]) {
     m.set(w.id, {
       name: w.name,
-      discoverer_name: w.discoverer_name,
+      description: w.description,
+      discoverer_name: creatorMap.get(w.discoverer_id ?? '')?.display_name?.trim() || w.discoverer_name,
+      discoverer_avatar: creatorMap.get(w.discoverer_id ?? '')?.avatar_url ?? null,
       discoverer_id: w.discoverer_id,
       vote_scope: (w.vote_scope as WorldVoteScope) ?? 'all',
       scan_until: w.scan_until ?? null,
@@ -1577,6 +1590,8 @@ function buildInvestigation(
     worldId: thread.world_id,
     title: wm?.name || thread.title || 'Investigation',
     discovererName: wm?.discoverer_name ?? null,
+    discovererAvatar: wm?.discoverer_avatar ?? null,
+    description: wm?.description ?? null,
     type: thread.type,
     voteScope,
     canParticipate: can,

@@ -9,7 +9,8 @@ const opened = '2020-01-01T00:00:00Z'
 const closed = '2020-01-02T00:00:00Z'
 const records = {
   dreamcatcher_rounds: [{id:'round',world_id:'world',dreamcatcher_id:'room',initiator_id:'owner',round_number:2,status:'voting_open',task_id:'task',opened_at:opened,closes_at:closed}],
-  worlds: [{id:'world',name:'Dream',discoverer_name:'Owner',discoverer_id:'changed-owner',vote_scope:'voters',lifecycle_state:'syncing'}],
+  worlds: [{id:'world',name:'Dream',description:'A long original dream description, preserved beyond the short title.\nA second line.',discoverer_name:'Owner',discoverer_id:'changed-owner',vote_scope:'voters',lifecycle_state:'syncing'}],
+  voyager_profiles: [{id:'changed-owner',display_name:'Current nickname',avatar_url:'https://example.com/avatar.webp'}],
   signal_tasks: [{id:'task',thread_id:'thread',prompt:'Choose a signal'}],
   signal_task_assets: [{id:'asset',task_id:'task',media:'image',processed_url:'https://example.com/image.webp',display_url:null,asset_role:'option',display_order:0}],
   signal_responses: [] as {task_id:string;user_id:string;selected_asset_id:string}[],
@@ -40,6 +41,10 @@ describe('public round feed boundaries',()=>{
   })
   it('preserves read-only history and does not serialize internal identifiers',async()=>{
     const rows=await getRoundInvestigations(null,'world',true)
+    expect(rows[0].description).toBe(records.worlds[0].description)
+    expect(rows[0].discovererName).toBe('Current nickname')
+    expect(rows[0].discovererAvatar).toBe('https://example.com/avatar.webp')
+    expect(rows[0]).not.toHaveProperty('discoverer_id')
     expect(rows[0].days[0].task.closed).toBe(true)
     expect(rows[0].days[0].task.canRespond).toBe(false)
     expect(rows[0].days[0].task.assets[0]).not.toHaveProperty('task_id')
