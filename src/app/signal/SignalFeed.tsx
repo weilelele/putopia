@@ -37,7 +37,7 @@ export function InvestigationFeed({ initial }: { initial: InvestigationFeedData 
         {/* header */}
 
         <div className="signal-feed-header">
-          <ArchiveLinkButton href="/worlds" variant="ghost">← WORLD RECORDS</ArchiveLinkButton>
+          <ArchiveLinkButton href="/worlds/live" variant="ghost">← EXPLORE</ArchiveLinkButton>
           <div className="signal-feed-title-row">
             <ArchivePageHeader title="SIGNAL" accent="DISPATCH" />
             <ArchiveButton type="submit" variant="secondary"

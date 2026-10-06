@@ -165,10 +165,6 @@ function IntelPageContent() {
         </>}
       </div>
 
-      <div className="footer-bar archive-footer-bar">
-        <div className="tag">MULTIVERSE COLLECTIVE</div>
-        <div>LAST UPDATED: {intel[0] ? new Date(intel[0].timestamp).toLocaleDateString() : '—'}</div>
-      </div>
 
       {isAtLeast('architect') && (
         <ArchiveButton

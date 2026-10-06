@@ -163,10 +163,6 @@ export default function BatchDemoPage() {
         )}
       </section>
 
-      <div className="footer-bar" style={{ marginTop: '2rem' }}>
-        <div className="tag">— BATCH SELECTOR DEMO</div>
-        <div>VOYAGER REGISTRY</div>
-      </div>
     </div>
   )
 }

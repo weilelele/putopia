@@ -28,6 +28,20 @@ export async function getAllWorlds() {
   return getAllWorldsCached()
 }
 
+/** Avatars for world discoverers. Like the member profile sheet, only Voyagers
+ *  and Architects expose an avatar; everyone else falls back to initials. */
+export async function getDiscovererAvatars(ids: string[]): Promise<Record<string, string>> {
+  const unique = [...new Set(ids.filter(Boolean))].slice(0, 100)
+  if (!unique.length) return {}
+  const admin = createAdminClient()
+  const { data } = await admin.from('voyager_profiles').select('id, avatar_url, role').in('id', unique)
+  const out: Record<string, string> = {}
+  for (const row of data ?? []) {
+    if (row.avatar_url && (row.role === 'voyager' || row.role === 'architect')) out[row.id] = row.avatar_url
+  }
+  return out
+}
+
 /** Community pipeline: worlds still in flight — Raw Imagination (proposed) and
  *  Signal Tuning (picked | syncing). Established (stable) worlds come from
  *  getAllWorlds. */

@@ -77,10 +77,6 @@ export default function ApplyPage() {
           </ArchiveCard>
           <div className="archive-status-note">PENDING ARCHITECT REVIEW</div>
         </div>
-        <div className="footer-bar archive-footer-bar">
-          <div className="tag">MULTIVERSE COLLECTIVE</div>
-          <div>APPLICATION</div>
-        </div>
       </div>
     )
   }
@@ -182,10 +178,6 @@ export default function ApplyPage() {
         </form>
       </div>
 
-      <div className="footer-bar archive-footer-bar">
-        <div className="tag">MULTIVERSE COLLECTIVE</div>
-        <div>APPLICATION</div>
-      </div>
     </div>
   )
 }

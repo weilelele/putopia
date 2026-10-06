@@ -168,10 +168,6 @@ export function VotingHub({ votes, myResponses, tallies }: Props) {
         </>
       )}
 
-      <div className="footer-bar archive-footer-bar">
-        <div className="tag">MULTIVERSE COLLECTIVE</div>
-        <div>VOTING HUB</div>
-      </div>
 
       {showCreate && (
         <CreateVoteModal

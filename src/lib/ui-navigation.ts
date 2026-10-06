@@ -3,14 +3,14 @@ export const PRIMARY_NAV = [
   { href: '/console', label: 'DASHBOARD', title: 'Dashboard', icon: 'LayoutDashboard' },
   { href: '/intel', label: 'INTEL', title: 'Intel', icon: 'FileText' },
   { href: '/devices', label: 'DEVICES', title: 'Devices', icon: 'DeviceMark' },
-  { href: '/worlds/live', label: 'WORLDS', title: 'Worlds', icon: 'Globe' },
+  { href: '/worlds', label: 'WORLDS', title: 'Worlds', icon: 'Globe' },
   { href: '/voyagers', label: 'VOYAGERS', title: 'Voyagers', icon: 'Users' },
 ] as const
 export function ownerTab(path: string): string | null {
   if (path === '/console') return '/console'
   if (/^\/(intel|vote)(\/|$)/.test(path)) return '/intel'
   if (/^\/devices(\/|$)/.test(path)) return '/devices'
-  if (/^\/(worlds|worldflow|signal)(\/|$)/.test(path)) return '/worlds/live'
+  if (/^\/(worlds|worldflow|signal)(\/|$)/.test(path)) return '/worlds'
   if (/^\/(voyagers|profile|logs|voyager-path)(\/|$)/.test(path)) return '/voyagers'
   return null
 }
@@ -35,7 +35,6 @@ export function routeLabel(path: string): string {
   path = path.split(/[?#]/)[0]
   if (path === '/logs') return 'Voyager Logs'
   if (path === '/profile') return 'My Profile'
-  if (path === '/worlds') return 'World Archive'
   return PRIMARY_NAV.find(item => item.href === path)?.title ?? 'previous page'
 }
 export function safeAppPath(value: string | null, origin: string): string | null {

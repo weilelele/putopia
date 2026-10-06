@@ -4,6 +4,7 @@ import { useState, type ReactNode, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArchiveButton } from '@/components/archive-button'
 import { saveNpc, setNpcDevice, uploadNpcAvatar } from '@/lib/actions/npcs'
+import { setDeviceGrant } from '@/lib/actions/device-status'
 import { NPC_ROLE_OPTIONS, type NpcProfileInput } from '@/lib/npc-model'
 import type { UserRole } from '@/types/database'
 import styles from './npcs.module.css'
@@ -12,7 +13,7 @@ type Profile = { id: string; display_name: string; role: UserRole; bio: string |
 type Batch = { slug: string; name: string; listing_quantity: number; claimed_quantity: number; reserved_quantity: number; allocated_quantity?: number }
 type Unit = { user_id: string | null; batch_slug: string; unit_code: string }
 
-export function NpcEditor({ profile, batches, units }: { profile?: Profile; batches: Batch[]; units: Unit[] }) {
+export function NpcEditor({ profile, batches, units, deviceStatus }: { profile?: Profile; batches: Batch[]; units: Unit[]; deviceStatus: { granted: boolean; available: boolean } }) {
   const router = useRouter()
   const [input, setInput] = useState<NpcProfileInput>({ displayName: profile?.display_name ?? '', role: profile?.role ?? 'guest', bio: profile?.bio ?? '', avatarUrl: profile?.avatar_url ?? '', location: profile?.location ?? '' })
   const [busy, setBusy] = useState(false)
@@ -77,6 +78,13 @@ export function NpcEditor({ profile, batches, units }: { profile?: Profile; batc
         <div className={styles.actions}><ArchiveButton type="submit" disabled={busy}>{busy ? 'Saving…' : profile ? 'Save profile' : 'Create NPC'}</ArchiveButton></div>
       </fieldset>
     </form>
+    {profile && <section className={styles.devices}>
+      <h3>Device status · {deviceStatus.granted ? 'Has device' : 'No device'}</h3>
+      <p className={styles.hint}>Controls whether this NPC can report observations and anomalies in Worlds. It is separate from the batch allocation below, which only configures devices.</p>
+      {deviceStatus.available
+        ? <ArchiveButton variant={deviceStatus.granted ? 'secondary' : 'primary'} disabled={busy} onClick={() => run(() => setDeviceGrant(profile.id, !deviceStatus.granted), deviceStatus.granted ? 'Device status removed.' : 'Device status granted.')}>{deviceStatus.granted ? 'Remove device status' : 'Grant device status'}</ArchiveButton>
+        : <p role="alert">Device status is not available yet. Apply schema_v83 first.</p>}
+    </section>}
     {profile && <section className={styles.devices}>
       <h3>Devices · {units.length}</h3>
       {units.map((unit) => <div key={unit.unit_code} className={styles.unit}>
