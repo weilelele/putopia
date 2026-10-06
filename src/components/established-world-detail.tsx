@@ -136,11 +136,11 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
 
   useEffect(() => { void Promise.resolve().then(load).catch(() => setLoaded(true)) }, [load])
 
-  // The tuning-process entry only exists for worlds that actually went through tuning.
+  // The tuning-process entry only exists once tuning is complete, i.e. the world has a final form.
   useEffect(() => {
     let live = true
     getArchiveReel(world.id)
-      .then((r) => { if (live && (r.finalAssets.length || r.days.some((d) => d.winner))) setTuningReel(r) })
+      .then((r) => { if (live && r.finalAssets.length > 0) setTuningReel(r) })
       .catch(() => {})
     return () => { live = false }
   }, [world.id])
