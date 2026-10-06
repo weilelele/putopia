@@ -11,6 +11,7 @@ import {
   createRedditConversionId,
   sendRedditConversion,
 } from '@/lib/reddit-capi'
+import { isIOSNativeRequest } from '@/lib/app-platform-server'
 
 export async function submitApplication(
   application: ApplicationInsert,
@@ -118,13 +119,16 @@ export async function submitApplication(
     }
   }
 
-  const redditConversionId = createRedditConversionId()
-  await sendRedditConversion({
-    trackingType: 'LEAD',
-    conversionId: redditConversionId,
-    clickId: tracking?.redditClickId,
-    email: normalizedEmail,
-  })
+  // Sign-ups inside the iOS app are never shared with advertising platforms.
+  const redditConversionId = await isIOSNativeRequest() ? undefined : createRedditConversionId()
+  if (redditConversionId) {
+    await sendRedditConversion({
+      trackingType: 'LEAD',
+      conversionId: redditConversionId,
+      clickId: tracking?.redditClickId,
+      email: normalizedEmail,
+    })
+  }
 
   return {
     error: null,

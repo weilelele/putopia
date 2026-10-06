@@ -4,6 +4,7 @@ import { ArchiveTextarea, ArchiveInput } from '@/components/archive-input'
 import { useState, type FormEvent } from 'react'
 import Image from 'next/image'
 import { Image as ImageIcon, Paperclip, Send } from 'lucide-react'
+import { trackDevice } from '@/lib/device-analytics'
 import { ArchiveButton } from '@/components/archive-button'
 import {
   postDeviceBatchDiscussion,
@@ -36,6 +37,7 @@ export function BatchDiscussionBoard({
       return
     }
 
+    trackDevice('device_discussion_post_submitted', { batch_slug: batch.slug, has_image: !!attachment, length: trimmedMessage.length })
     setPosting(true)
     setStatusMessage('')
     const imagePaths: string[] = []
@@ -49,6 +51,7 @@ export function BatchDiscussionBoard({
       const result = await upload.json() as { error?: string; path?: string }
       if (!upload.ok || !result.path) {
         setPosting(false)
+        trackDevice('device_discussion_post_failed', { batch_slug: batch.slug, stage: 'upload', error: result.error ?? 'upload_failed' })
         setStatusMessage(result.error ?? 'Could not upload the image.')
         return
       }
@@ -58,6 +61,7 @@ export function BatchDiscussionBoard({
     const result = await postDeviceBatchDiscussion(batch.slug, trimmedMessage, imagePaths)
     setPosting(false)
     if (result.error || !result.post) {
+      trackDevice('device_discussion_post_failed', { batch_slug: batch.slug, stage: 'post', error: result.error ?? 'post_failed' })
       setStatusMessage(result.error ?? 'Could not post the message.')
       return
     }

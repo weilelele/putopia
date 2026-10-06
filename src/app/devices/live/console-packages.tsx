@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
+import { trackDevice } from '@/lib/device-analytics'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import type { DeviceBatch, DeviceBatchMedia, DistributionStage } from '@/lib/device-batches'
@@ -40,7 +41,7 @@ export function ConsolePackages({ batch }: { batch: DeviceBatch }) {
   return <>
     <div className={styles.overview}>
       <h3>{count} {count === 1 ? 'PACKAGE' : 'PACKAGES'}</h3>
-      <ArchiveButton ref={trigger} variant="ghost" className={styles.explore} onClick={() => setOpen(true)} aria-haspopup="dialog">
+      <ArchiveButton ref={trigger} variant="ghost" className={styles.explore} onClick={() => { trackDevice('device_packages_opened', { batch_slug: batch.slug, package_count: count }); setOpen(true) }} aria-haspopup="dialog">
         VIEW PACKAGES <ArrowRight aria-hidden size={20} />
       </ArchiveButton>
     </div>

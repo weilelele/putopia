@@ -14,14 +14,14 @@ const DETAILS: Record<string, string> = {
   'Audio Collection': 'Receive and send sound.',
 }
 
-export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
+export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunction[]; heroVideo?: { src: string; poster?: string } }) {
   const [guideOpen, setGuideOpen] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
   const currentImage = CONSOLE_HERO.images[imageIndex]
   const imageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (CONSOLE_HERO.images.length < 2 || guideOpen) return
+    if (heroVideo || CONSOLE_HERO.images.length < 2 || guideOpen) return
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
     let visible = false
     const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting })
@@ -31,7 +31,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
       setImageIndex(index => (index + 1) % CONSOLE_HERO.images.length)
     }, CONSOLE_HERO.intervalMs)
     return () => { window.clearInterval(timer); observer.disconnect() }
-  }, [guideOpen])
+  }, [guideOpen, heroVideo])
 
   const groups = [
     { title: 'Confirmed', functions: mcFunctions.filter(fn => fn.status === 'active'), confirmed: true },
@@ -40,7 +40,9 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
 
   return (
     <section className={styles.panel} aria-label="About the Multiverse Console">
-      <div className={styles.device} ref={imageRef} tabIndex={0} aria-label="Console slideshow; pauses while focused">
+      {heroVideo ? <div className={`${styles.device} ${styles.deviceVideo}`} aria-label="Multiverse Console preview video">
+        <video className={styles.deviceImage} src={heroVideo.src} poster={heroVideo.poster} autoPlay muted loop playsInline preload="metadata" />
+      </div> : <div className={styles.device} ref={imageRef} tabIndex={0} aria-label="Console slideshow; pauses while focused">
         <SmartImage
           src={currentImage.src}
           alt={currentImage.alt}
@@ -50,7 +52,7 @@ export function McConsolePanel({ mcFunctions }: { mcFunctions: McFunction[] }) {
           preload={imageIndex === 0}
           className={styles.deviceImage}
         />
-      </div>
+      </div>}
       <header className={styles.heading}>
         <h2 className={styles.sectionTitle}>Multiverse<br />Console</h2>
         <p>Our collective&apos;s exclusive device. Own it to unlock exploration of parallel worlds.</p>
