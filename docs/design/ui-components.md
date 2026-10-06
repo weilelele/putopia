@@ -232,7 +232,7 @@ MemberRow：头像 → 姓名 + 角色/短简介 → 可选一个目标。点击
 
 **游客参与动作（硬性规则）。** 投票、上报、评论等需要账号的参与按钮，对未登录用户**保持可点击**，点击后打开统一的 `AuthPromptSheet`（[auth-prompt-sheet.tsx](../../src/components/auth-prompt-sheet.tsx)）：一句说明 + 主按钮 REGISTER + 次按钮 LOG IN，两者都带 `redirect` 回到当前页。不要把游客的按钮置灰，也不要每个页面各写一套「Log in to…」。已登录但无权限的用户才使用禁用态，并写明原因。新增参与动作时先复用该组件，评审时检查。
 
-**Signal vote 弹窗的信息顺序**（[signal-vote-sheet.tsx](../../src/app/worlds/live/signal-vote-sheet.tsx)）：轮次 · 状态 · 剩余时间 → 世界标题（与描述重复时省略）→ 原始描述（长文 5 行折叠）→ 问题 → 2 列选项 → 底部固定行动栏（一句提示 + 唯一主按钮）。规则说明（36 小时、至少一人响应）常驻在选项下方，不做折叠；投票结果提示只出现在当前弹窗或页面状态区，打开新弹窗时清除，避免旧提示残留。
+**Signal vote 弹窗的信息顺序**（[signal-vote-sheet.tsx](../../src/app/worlds/live/signal-vote-sheet.tsx)）：轮次 · 状态 · 剩余时间 → 世界标题（与描述重复时省略）→ 原始描述（长文 5 行折叠）→ 问题 → 2 列选项 → 底部固定行动栏（一句提示 + 唯一主按钮）。规则说明（36 小时、至少一人响应）常驻在选项下方，不做折叠；投票成功后弹窗直接关闭，不再显示「Signal recorded…」类成功文案（暂时去掉）；错误提示只出现在当前弹窗内，打开新弹窗时清除，避免残留。
 
 ### C17 · CommentThread / Composer
 

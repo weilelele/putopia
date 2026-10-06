@@ -159,7 +159,6 @@ export function WorldsLiveRoom({
       }
       setDetail(null)
       setPendingChoice('')
-      setStatusMessage(dispatchDay.task.initiatorOnly ? 'Signal recorded. The next round is returning to this Parallax Array.' : 'Signal recorded. Voting remains open for the full 36-hour window.')
       router.refresh()
       } catch { setSubmissionUnknown(true); setVoteError('Result unconfirmed. Refresh the queue to check your signal before trying again.') }
     })
