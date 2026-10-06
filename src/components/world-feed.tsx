@@ -37,10 +37,10 @@ function WorldRow({ world, open, onToggle, onReport }: {
 }) {
   const panelId = `world-actions-${world.id}`
   return (
-    <li className={`world-row${world.featured ? ' world-row--featured' : ''}${open ? ' is-open' : ''}`}>
+    <li className={`world-row${world.featured ? ' world-row--featured' : ''}${open ? ' is-open' : ''}`} onClick={onToggle}>
       {world.featured && <div className="world-row__flag">WORTH WATCHING NOW</div>}
-      {/* The whole card toggles; the byline is its own button, so the toggle is a div with a real button for keyboards. */}
-      <div className="world-row__main" onClick={onToggle}>
+      {/* The whole card toggles except the avatar + name (their own entry) and the action row; a real button serves keyboards. */}
+      <div className="world-row__main">
         <span className="world-row__thumb">
           {world.cover
             ? <LazyImage src={world.cover} sizes="(min-width: 768px) 240px, 40vw" style={{ objectFit: 'cover', display: 'block' }} />
@@ -66,7 +66,7 @@ function WorldRow({ world, open, onToggle, onReport }: {
         <Tags tags={world.tags} />
       </div>
       {open && (
-        <div className="world-actions world-row__actions" id={panelId}>
+        <div className="world-actions world-row__actions" id={panelId} onClick={(e) => e.stopPropagation()}>
           <ArchiveButton variant="secondary" size="compact" onClick={() => onReport('observation')}>REPORT OBSERVATION</ArchiveButton>
           <ArchiveButton variant="secondary" size="compact" onClick={() => onReport('anomaly')}>REPORT ANOMALY</ArchiveButton>
           <Link className="archive-button archive-button--primary archive-button--compact world-actions__lead" href={`/worlds/${encodeURIComponent(world.id)}`} prefetch={false}>MORE INFO →</Link>

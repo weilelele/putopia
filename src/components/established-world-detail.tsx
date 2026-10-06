@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { History, Info } from 'lucide-react'
 import { LazyImage } from '@/components/lazy-image'
 import { ArchiveButton } from '@/components/archive-button'
@@ -14,8 +15,9 @@ import { getDiscovererAvatars } from '@/lib/actions/worlds'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
 import { isFuzzyWorld, isOfficialWorld, worldByline, worldTags } from '@/lib/world-presentation'
 import { useDeviceReporter } from '@/lib/use-device-reporter'
-import { designateFirstObserver, getFirstObservers, getWorldReports } from '@/lib/actions/world-reports'
+import { designateFirstObserver, getFirstObservers, getObserveOrder, getWorldReports } from '@/lib/actions/world-reports'
 import { useAuth } from '@/lib/auth-context'
+import { useSwipe } from '@/lib/use-swipe'
 import type { ReportKind, WorldReportView } from '@/lib/world-reports'
 import type { World } from '@/types/database'
 
@@ -99,6 +101,8 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
   const [designateBusy, setDesignateBusy] = useState(false)
   const [designateError, setDesignateError] = useState('')
   const { user } = useAuth()
+  const router = useRouter()
+  const [order, setOrder] = useState<string[]>([])
   const [observed, setObserved] = useState<WorldReportView[]>([])
   const [anomalous, setAnomalous] = useState<WorldReportView[]>([])
   const [observer, setObserver] = useState<{ id: string; name: string; avatar: string | null; image: string | null } | null>(null)
@@ -135,6 +139,22 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
   }, [world.id])
 
   useEffect(() => { void Promise.resolve().then(load).catch(() => setLoaded(true)) }, [load])
+
+  // Swiping left/right walks the Observe list, with no on-screen hint.
+  useEffect(() => {
+    let live = true
+    getObserveOrder().then((ids) => { if (live) setOrder(ids) }).catch(() => {})
+    return () => { live = false }
+  }, [])
+  const at = order.indexOf(world.id)
+  const neighbours = { prev: at > 0 ? order[at - 1] : null, next: at >= 0 && at < order.length - 1 ? order[at + 1] : null }
+  useEffect(() => {
+    for (const id of [neighbours.prev, neighbours.next]) if (id) router.prefetch(`/worlds/${encodeURIComponent(id)}`)
+  }, [neighbours.prev, neighbours.next, router])
+  useSwipe((direction) => {
+    const target = neighbours[direction]
+    if (target) router.push(`/worlds/${encodeURIComponent(target)}`)
+  })
 
   // The tuning-process entry only exists once tuning is complete, i.e. the world has a final form.
   useEffect(() => {

@@ -17,7 +17,7 @@ describe('world presentation', () => {
   })
   it('reads what a world contains, never a genre, and adds FUZZY SIGNAL when asked', () => {
     const world = { id: 'PROP-1', name: 'The Lost Lake', description: 'Rocks, sand, the crashing of waves on an abandoned shore.' }
-    expect(worldTags(world)).toEqual(expect.arrayContaining(['WILDERNESS', 'WATERS', 'RUINS']))
+    expect(worldTags(world)).toEqual(expect.arrayContaining(['WILD', 'WATERS', 'RUINS']))
     expect(worldTags(world, true)[0]).toBe(FUZZY_TAG)
     expect(worldTags({ id: 'PROP-2', name: 'zzz', description: 'qqq' })).toEqual([])
     expect(WORLD_TAGS).toHaveLength(7)

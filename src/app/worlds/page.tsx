@@ -3,6 +3,7 @@ import { getAllWorlds, getDiscovererAvatars } from '@/lib/actions/worlds'
 import { SectionTracker } from '@/components/section-tracker'
 import { WorldFeed } from '@/components/world-feed'
 import { getFirstObservers, getWorldReportStats } from '@/lib/actions/world-reports'
+import { orderFeed } from '@/lib/world-feed-order'
 import { isFuzzyWorld, isOfficialWorld, worldByline, worldTags } from '@/lib/world-presentation'
 import { WorldsSectionTabs } from '@/components/worlds-section-tabs'
 import { ArchiveCard } from '@/components/archive-card'
@@ -43,12 +44,9 @@ async function ObserveFeed() {
       featured: false,
     }
   })
-  // Phase 1: the newest world that has a photo stands in as "worth watching now".
-  const lead = feed.find((w) => w.cover)
-  if (lead) lead.featured = true
-  // Lead first, then worlds with a photo, then fuzzy signals still waiting for a first observer.
-  const rest = feed.filter((w) => w !== lead)
-  const ordered = [...(lead ? [lead] : []), ...rest.filter((w) => w.cover), ...rest.filter((w) => !w.cover)]
+  // The newest world that has a photo leads (stand-in for a real "featured" flag).
+  const ordered = orderFeed(feed, (w) => !!w.cover)
+  if (ordered[0]?.cover) ordered[0].featured = true
   return <WorldFeed worlds={ordered} />
 }
 
