@@ -61,21 +61,11 @@ function ReportList({ reports, empty, onDesignate }: {
 }
 
 /** Tuning history: the signal chosen each day, ending in the final form. Loaded on demand. */
-function TuningProcessSheet({ worldId, onClose }: { worldId: string; onClose: () => void }) {
-  const [reel, setReel] = useState<ArchiveReel | null>(null)
-  useEffect(() => {
-    let live = true
-    getArchiveReel(worldId)
-      .then((r) => { if (live) setReel(r) })
-      .catch(() => { if (live) setReel({ days: [], finalAssets: [], lockedAt: null }) })
-    return () => { live = false }
-  }, [worldId])
+function TuningProcessSheet({ reel, onClose }: { reel: ArchiveReel; onClose: () => void }) {
   const days = (reel?.days ?? []).filter((d) => d.winner)
   return (
     <ArchiveSheet open onClose={onClose} title="Tuning process">
       <div className="world-tuning">
-        {reel === null && <p>LOADING…</p>}
-        {reel && !days.length && !reel.finalAssets.length && <p>No tuning history was recorded for this world.</p>}
         {days.map((d) => (
           <figure key={d.dayIndex} className="world-tuning__step">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -83,7 +73,7 @@ function TuningProcessSheet({ worldId, onClose }: { worldId: string; onClose: ()
             <figcaption>DAY {d.dayIndex + 1}{d.dispatchAt ? ` · ${d.dispatchAt.slice(0, 10)}` : ''}</figcaption>
           </figure>
         ))}
-        {reel?.finalAssets.map((f) => (
+        {reel.finalAssets.map((f) => (
           <figure key={f.id} className="world-tuning__step world-tuning__step--final">
             {f.media === 'video'
               ? <video src={f.url} poster={f.posterUrl ?? undefined} autoPlay loop muted playsInline />
@@ -103,6 +93,7 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
   const [tab, setTab] = useState<Tab>('observed')
   const [infoOpen, setInfoOpen] = useState(false)
   const [tuningOpen, setTuningOpen] = useState(false)
+  const [tuningReel, setTuningReel] = useState<ArchiveReel | null>(null)
   const [reportKind, setReportKind] = useState<ReportKind | null>(null)
   const [designating, setDesignating] = useState<WorldReportView | null>(null)
   const [designateBusy, setDesignateBusy] = useState(false)
@@ -145,6 +136,15 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
 
   useEffect(() => { void Promise.resolve().then(load).catch(() => setLoaded(true)) }, [load])
 
+  // The tuning-process entry only exists once tuning is complete, i.e. the world has a final form.
+  useEffect(() => {
+    let live = true
+    getArchiveReel(world.id)
+      .then((r) => { if (live && r.finalAssets.length > 0) setTuningReel(r) })
+      .catch(() => {})
+    return () => { live = false }
+  }, [world.id])
+
   useEffect(() => {
     if (!world.discoverer_id || isOfficialWorld(world.id)) return
     let live = true
@@ -171,7 +171,7 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
         <span className="world-row__id">{world.id}</span>
         <div className="world-detail__heading">
           <h1>{name}</h1>
-          <ArchiveButton variant="ghost" size="compact" className="world-detail__icon" aria-label="View tuning process" onClick={() => setTuningOpen(true)}><History aria-hidden size={22} /></ArchiveButton>
+          {tuningReel && <ArchiveButton variant="ghost" size="compact" className="world-detail__icon" aria-label="View tuning process" onClick={() => setTuningOpen(true)}><History aria-hidden size={22} /></ArchiveButton>}
         </div>
         <span className="world-tags">{tags.map((t) => <span key={t} className="world-tag">{t}</span>)}</span>
       </header>
@@ -234,7 +234,7 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
           </div>
         </ArchiveSheet>
       )}
-      {tuningOpen && <TuningProcessSheet worldId={world.id} onClose={() => setTuningOpen(false)} />}
+      {tuningOpen && tuningReel && <TuningProcessSheet reel={tuningReel} onClose={() => setTuningOpen(false)} />}
       {reportKind && (
         <WorldReportSheet key={reportKind} open kind={reportKind} worldId={world.id} worldName={name} canReport={canReport}
           onClose={() => setReportKind(null)}
