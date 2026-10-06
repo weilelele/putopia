@@ -1,6 +1,7 @@
 'use client'
 import { PublisherIdentity } from '@/components/news-content'
-import { SignalDescription, SignalVotingRules } from '@/components/signal-description'
+import { AuthPromptSheet } from '@/components/auth-prompt-sheet'
+import { SignalVoteSheet } from './signal-vote-sheet'
 import { deviceQueueOrder } from '@/lib/dreamcatcher-queue-policy'
 import { roundLabel } from '@/lib/dreamcatcher-round-model'
 import { RootBrandHeader } from '@/components/root-brand-header'
@@ -15,7 +16,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import { Check, ChevronRight, CircleHelp, Clock3 } from 'lucide-react'
+import { ChevronRight, CircleHelp, Clock3 } from 'lucide-react'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { submitDreamcatcherWorld } from '@/lib/actions/worlds'
 import { submitSignalResponse, type PublicInvestigation } from '@/lib/actions/signal-tasks'
@@ -77,6 +78,8 @@ export function WorldsLiveRoom({
   const [submissionUnknown, setSubmissionUnknown] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [pendingChoice, setPendingChoice] = useState('')
+  const [voteError, setVoteError] = useState('')
+  const [authPromptOpen, setAuthPromptOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const selected = rooms.find((room) => room.slug === selectedSlug) ?? rooms[0]
   const [now, setNow] = useState(rooms[0]?.observedAt ?? 0)
@@ -146,18 +149,18 @@ export function WorldsLiveRoom({
 
   function confirmSignal() {
     if (!dispatchDay || !pendingChoice || isPending || submissionUnknown) return
+    setVoteError('')
     startTransition(async () => {
       try {
       const result = await submitSignalResponse(dispatchDay.task.id, pendingChoice)
       if (!result.ok) {
-        setStatusMessage(result.error ?? 'Could not record this signal.')
+        setVoteError(result.error ?? 'Could not record this signal.')
         return
       }
       setDetail(null)
       setPendingChoice('')
-      setStatusMessage(dispatchDay.task.initiatorOnly ? 'Signal recorded. The next round is returning to this Parallax Array.' : 'Signal recorded. Voting remains open for the full 36-hour window.')
       router.refresh()
-      } catch { setSubmissionUnknown(true); setStatusMessage('Result unconfirmed. Refresh the queue to check your submission before trying again.') }
+      } catch { setSubmissionUnknown(true); setVoteError('Result unconfirmed. Refresh the queue to check your signal before trying again.') }
     })
   }
 
@@ -230,7 +233,7 @@ export function WorldsLiveRoom({
             {roomInvestigations.map((investigation) => {
               const day = investigation.days.findLast((item) => !item.task.closed) ?? investigation.days.at(-1)
               const options = day?.task.assets.filter((asset) => asset.asset_role === 'option') ?? []
-              return <ArchiveButton variant="secondary" className={styles.dispatchItem} key={investigation.id} onClick={() => { setPendingChoice(day?.task.mySelection ?? ''); setDetail({ kind: 'dispatch', investigationId: investigation.id }) }} type="button"><span className={styles.dispatchMosaic}>{options.slice(0, 4).map((asset) => asset.display_url || asset.processed_url ? <Image alt="" height={80} key={asset.id} src={asset.display_url ?? asset.processed_url!} width={80} unoptimized /> : null)}</span><span className={styles.dispatchCopy}><span className={styles.eyebrow}>ROUND {(day?.dayIndex ?? 0) + 1} · {options.length} SIGNALS</span><strong>{investigation.title}</strong><PublisherIdentity name={investigation.discovererName || 'Unknown creator'} avatar={investigation.discovererAvatar} />{day?.task.mySelection || day?.task.initiatorOnly || day?.task.closed ? <small>{day?.task.mySelection ? 'CHOICE RECORDED' : day?.task.initiatorOnly ? 'WAITING FOR ORIGINAL SUBMITTER' : 'ROUND CLOSED'}</small> : null}</span><ChevronRight aria-hidden size={18} /></ArchiveButton>
+              return <ArchiveButton variant="secondary" className={styles.dispatchItem} key={investigation.id} onClick={() => { setStatusMessage(''); setVoteError(''); setPendingChoice(day?.task.mySelection ?? ''); setDetail({ kind: 'dispatch', investigationId: investigation.id }) }} type="button"><span className={styles.dispatchMosaic}>{options.slice(0, 4).map((asset) => asset.display_url || asset.processed_url ? <Image alt="" height={80} key={asset.id} src={asset.display_url ?? asset.processed_url!} width={80} unoptimized /> : null)}</span><span className={styles.dispatchCopy}><span className={styles.eyebrow}>ROUND {(day?.dayIndex ?? 0) + 1} · {options.length} SIGNALS</span><strong>{investigation.title}</strong><PublisherIdentity name={investigation.discovererName || 'Unknown creator'} avatar={investigation.discovererAvatar} />{day?.task.mySelection || day?.task.initiatorOnly || day?.task.closed ? <small>{day?.task.mySelection ? 'CHOICE RECORDED' : day?.task.initiatorOnly ? 'WAITING FOR ORIGINAL SUBMITTER' : 'ROUND CLOSED'}</small> : null}</span><ChevronRight aria-hidden size={18} /></ArchiveButton>
             })}
             {!roomInvestigations.length ? <div className={styles.emptyRoom}>NO SIGNALS AWAITING A COMMUNITY CHOICE</div> : null}
           </div> : null}
@@ -252,7 +255,11 @@ export function WorldsLiveRoom({
 
       {submitOpen ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Share an observation" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}>{loggedIn ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT DID YOU OBSERVE?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe something you saw, remembered, or experienced…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form> : <div className={styles.dialogBody}><p>Applicant access or above is required to submit to a Parallax Array.</p><Link className={styles.primaryButton} href="/login">LOG IN TO CONTINUE</Link></div>}</ArchiveSheet> : null}
 
-      {detail ? <ArchiveSheet open onClose={() => setDetail(null)} title="Observation details" dirty={!submissionUnknown && !!pendingChoice && !dispatchDay?.task.mySelection} busy={isPending}><div className={styles.dreamDetailBody}>{dispatchDay ? <><SignalDescription description={dispatch?.description} /><div className={styles.signalCandidateGrid}>{dispatchDay.task.assets.filter((asset) => asset.asset_role === 'option').map((asset, index) => <ArchiveButton variant="ghost" aria-label={`Select signal ${index + 1}`} aria-pressed={pendingChoice === asset.id} className={styles.signalCandidate} disabled={!!dispatchDay.task.mySelection || dispatchDay.task.closed || dispatchDay.task.canRespond === false} key={asset.id} onClick={() => setPendingChoice(asset.id)} type="button">{asset.processed_url && asset.media === 'video' ? <video autoPlay loop muted playsInline poster={asset.display_url ?? undefined} preload="metadata" src={asset.processed_url} /> : asset.display_url || asset.processed_url ? <Image alt="" fill src={(asset.display_url ?? asset.processed_url)!} unoptimized /> : null}<span>SIGNAL {String(index + 1).padStart(2, '0')}</span>{pendingChoice === asset.id ? <Check aria-hidden className={styles.signalCheck} size={20} /> : null}</ArchiveButton>)}</div><ArchiveButton variant="primary" className={styles.primaryButton} disabled={!pendingChoice || !!dispatchDay.task.mySelection || dispatchDay.task.closed || dispatchDay.task.canRespond === false || isPending || submissionUnknown} onClick={confirmSignal} type="button">{dispatchDay.task.mySelection ? 'SIGNAL RECORDED' : 'CONFIRM SIGNAL'}</ArchiveButton><SignalVotingRules initiatorOnly={dispatchDay.task.initiatorOnly} />{statusMessage && <p role="status" className={styles.formStatus}>{statusMessage}</p>}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check signal</ArchiveButton>}</> : <p>This vote has closed. Open the world record to review its history.</p>}</div></ArchiveSheet> : null}
+      {detail && dispatch ? <SignalVoteSheet investigation={dispatch} day={dispatchDay} loggedIn={loggedIn} pendingChoice={pendingChoice}
+        onChoose={setPendingChoice} onConfirm={confirmSignal} onRequireAuth={() => setAuthPromptOpen(true)} onClose={() => setDetail(null)}
+        busy={isPending} error={voteError} unknown={submissionUnknown} /> : null}
+      <AuthPromptSheet open={authPromptOpen} onClose={() => setAuthPromptOpen(false)} redirect="/worlds/live"
+        message="Voting is open to registered members. Create a free account to cast your signal and follow how the vote turns out." />
     </main>
   )
 }
