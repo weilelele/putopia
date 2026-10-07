@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { captureDeviceServerEvent } from '@/lib/device-analytics-server'
+import { withoutHiddenComments } from '@/lib/moderation'
 
 export type DeviceBatchDecisionOption = {
   detail: string
@@ -27,6 +28,7 @@ export type DeviceBatchDiscussionPost = {
   id: string
   imageSources: string[]
   initials: string
+  mine: boolean
   replyCount: number
   role: string
   timestamp: string
@@ -267,17 +269,18 @@ export async function getDeviceBatchDiscussion(
     .order('created_at', { ascending: false })
     .limit(400)
 
-  const authorIds = [...new Set((rows ?? []).map((row: { author_id: string | null }) => row.author_id).filter(Boolean))]
+  const visibleRows = await withoutHiddenComments((rows ?? []) as { id: string; author_id: string | null; parent_id: string | null }[]) as typeof rows
+  const authorIds = [...new Set((visibleRows ?? []).map((row: { author_id: string | null }) => row.author_id).filter(Boolean))]
   const { data: profiles } = authorIds.length
     ? await admin.from('voyager_profiles').select('id, display_name, role').in('id', authorIds as string[])
     : { data: [] }
   const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
   const replyCounts = new Map<string, number>()
-  for (const row of rows ?? []) {
+  for (const row of visibleRows ?? []) {
     if (row.parent_id) replyCounts.set(row.parent_id, (replyCounts.get(row.parent_id) ?? 0) + 1)
   }
 
-  const posts = (rows ?? [])
+  const posts = (visibleRows ?? [])
     .filter((row: { parent_id: string | null }) => !row.parent_id)
     .map((row: {
       author_id: string | null
@@ -295,6 +298,7 @@ export async function getDeviceBatchDiscussion(
         id: row.id,
         imageSources: row.image_paths ?? [],
         initials: initials(author),
+        mine: !!viewer && row.author_id === viewer.userId,
         replyCount: replyCounts.get(row.id) ?? 0,
         role: profile?.role === 'architect' ? 'ARCHITECT' : 'HOLDER',
         timestamp: row.created_at,
@@ -348,6 +352,7 @@ export async function postDeviceBatchDiscussion(
       id: data.id,
       imageSources: data.image_paths ?? [],
       initials: initials(viewer.displayName),
+      mine: true,
       replyCount: 0,
       role: viewer.role === 'architect' ? 'ARCHITECT' : 'HOLDER',
       timestamp: data.created_at,

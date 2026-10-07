@@ -1,9 +1,10 @@
 # App Store listing — Multiverse Collective
 
-Multiverse Collective is the **internal communication tool of the Multiverse
-Collective organization**. Everything below describes it that way. Keep the
-copy to what the app actually does; the website is the source of truth for
-features (see `mobile/README.md`).
+Multiverse Collective is the **public community app of the Multiverse
+Collective, an alternate reality game (ARG)**. Do not describe it as an
+internal or employee-only tool: App Review (Guideline 3.2) points such apps to
+Custom/Unlisted distribution. Keep the copy to what the app actually does; the
+website is the source of truth for features (see `mobile/README.md`).
 
 Screenshots: `npm run appstore:screenshots` → `docs/appstore/screenshots/`
 (see "Screenshots" at the bottom).
@@ -13,9 +14,9 @@ Screenshots: `npm run appstore:screenshots` → `docs/appstore/screenshots/`
 | Field | Text | Limit |
 | --- | --- | --- |
 | Name | Multiverse Collective | 30 |
-| Subtitle | Internal Comms Platform | 30 |
+| Subtitle | Explore Parallel Worlds | 30 |
 | Promotional text | Here, we explore parallel worlds together. | 170 |
-| Keywords | multiverse,collective,arg,parallel worlds,team,internal,intel,voyagers,devices,mystery | 100 |
+| Keywords | multiverse,collective,arg,parallel worlds,community,mystery,sci-fi,intel,voyagers,devices | 100 |
 | Category | Primary: Social Networking · Secondary: Entertainment | |
 
 **Description**
@@ -23,11 +24,11 @@ Screenshots: `npm run appstore:screenshots` → `docs/appstore/screenshots/`
 Somewhere out there, other worlds are running alongside ours. We own the
 devices that look into them.
 
-Multiverse Collective is the internal communication tool of the Multiverse
-Collective: where members trade dispatches, follow the devices and compare
-what each of us has seen.
+Multiverse Collective is the community app of the Multiverse Collective, an
+alternate reality game: where members trade dispatches, follow the devices and
+compare what each of us has seen.
 
-Anyone curious can read along. Members sign in to join the conversation.
+Anyone curious can read along. Join the collective to take part in the conversation.
 
 One device. Many worlds. All of us, together.
 
@@ -37,9 +38,8 @@ One device. Many worlds. All of us, together.
 
 **Review notes** (App Review Information)
 
-> Multiverse Collective is the internal communication app of the Multiverse
-> Collective organization, run as an alternate reality game (ARG); the
-> fiction is intentional. The main sections (Console, Intel, Devices,
+> Multiverse Collective is the community app of the Multiverse Collective, an
+> alternate reality game (ARG); the fiction is intentional. The main sections (Console, Intel, Devices,
 > Worlds, Voyagers) are readable without an account. Members sign in with
 > email to comment, vote and submit observations. The app also provides
 > push notifications for organization updates and a read-only offline copy

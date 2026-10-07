@@ -7,6 +7,7 @@ import { sendPushToUser } from '@/lib/push/apns'
 import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types/database'
 import { isPublishedChatRoom, readDreamcatcherChat } from '@/lib/dreamcatcher-chat'
 import { CHAT_COOLDOWN_MS, validateChatMessage } from '@/lib/dreamcatcher-chat-model'
+import { withoutHiddenComments } from '@/lib/moderation'
 import { getAllNpcIdentities, requireNpcArchitect } from '@/lib/npc-repository'
 
 // Path to revalidate when a thread changes (only device threads have a route today)
@@ -46,7 +47,7 @@ export async function getComments(
     .order('created_at', { ascending: true })
     .limit(400)
 
-  const comments = (data ?? []) as Comment[]
+  const comments = await withoutHiddenComments((data ?? []) as Comment[])
   if (comments.length === 0) return comments
 
   // Enrich with each author's CURRENT profile so avatars/names stay live, and

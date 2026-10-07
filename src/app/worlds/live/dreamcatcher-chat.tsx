@@ -3,6 +3,7 @@
 import { ArchiveTextarea } from '@/components/archive-input'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ArchiveButton } from '@/components/archive-button'
+import { ReportBlockActions } from '@/components/report-block-actions'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { useAuth } from '@/lib/auth-context'
 import { deleteComment, postComment } from '@/lib/actions/comments'
@@ -143,6 +144,8 @@ export function DreamcatcherChat({ roomId, city, timeZone }: { roomId: string; c
               <ArchiveButton variant="secondary" disabled={deleting} onClick={remove}>{deleting ? 'DELETING…' : 'DELETE'}</ArchiveButton>
             </div> : <ArchiveButton variant="ghost" onClick={() => setDeleteId(message.id)}>DELETE</ArchiveButton>
           : null}
+          <ReportBlockActions target={{ kind: 'comment', id: message.id }} authorName={message.author_name} isOwn={!!user.id && message.author_id === user.id}
+            onChanged={() => setRefresh((value) => value + 1)} />
         </li>)}
       </ol> : null}
       <div className={styles.chatPagination}>

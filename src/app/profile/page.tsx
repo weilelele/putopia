@@ -13,6 +13,7 @@ import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
+import { BlockedMembersCard, DeleteAccountCard } from './account-safety'
 import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 
 // ── helpers (mirrors /voyagers) ─────────────────────────────────────────────
@@ -377,6 +378,9 @@ export default function ProfilePage() {
         </div>
       </ArchiveCard>
       )}
+
+      <BlockedMembersCard />
+      <DeleteAccountCard />
     </div>
   )
 }
