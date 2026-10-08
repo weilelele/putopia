@@ -37,9 +37,6 @@ export default async function DeviceBatchAdminPage({
           a private draft, then use PUBLISH LIVE when ready. Dates never publish content automatically.
         </p>
         <div className={styles.pageHeaderActions}>
-          <ArchiveLinkButton href="/admin/device-batches/blueprints" variant="secondary">
-            STORY LAB
-          </ArchiveLinkButton>
           <ArchiveLinkButton href="/admin/device-batches/new">
             CREATE BATCH
           </ArchiveLinkButton>

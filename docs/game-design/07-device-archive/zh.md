@@ -1,7 +1,7 @@
 # 07 · 设备档案（Device Archive）
 
-> 新版批次探索、申领、可配置阶段发放与持有者等待体验，见
-> [`../../product/device-batch-experience.zh.md`](../../product/device-batch-experience.zh.md)。
+> 当前 Batch 基础介绍、购买信息和手动 Updates 规范，见
+> [Batch 基础信息概述](../../product/device-batch-overview.zh.md)。
 > 本文以下内容仍用于记录当前产品现状。
 
 ## 1. 定位
