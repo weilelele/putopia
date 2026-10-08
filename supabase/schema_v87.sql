@@ -39,3 +39,7 @@ create policy "service role full access on content_reports"
   on public.content_reports for all to service_role using (true) with check (true);
 create policy "service role full access on user_blocks"
   on public.user_blocks for all to service_role using (true) with check (true);
+
+-- New tables get no default privileges here; the server actions use service_role.
+grant select, insert, update, delete on public.content_reports to service_role;
+grant select, insert, update, delete on public.user_blocks     to service_role;
