@@ -2,6 +2,7 @@ import 'server-only'
 
 import { createAdminClient } from '@/lib/supabase/server'
 import { CHAT_PAGE_SIZE, isChatRoomId, makeChatPage, type ChatCursor } from '@/lib/dreamcatcher-chat-model'
+import { withoutHiddenComments } from '@/lib/moderation'
 import type { Comment } from '@/types/database'
 
 export async function isPublishedChatRoom(id: string): Promise<boolean> {
@@ -24,5 +25,6 @@ export async function readDreamcatcherChat(id: string, cursor: ChatCursor | null
   if (cursor) query = query.or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`)
   const { data, error } = await query
   if (error) throw new Error('Could not load messages.')
-  return makeChatPage((data ?? []) as Comment[])
+  const page = makeChatPage((data ?? []) as Comment[])
+  return { ...page, messages: await withoutHiddenComments(page.messages) }
 }

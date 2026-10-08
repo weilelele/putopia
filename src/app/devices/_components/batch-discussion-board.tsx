@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Image as ImageIcon, Paperclip, Send } from 'lucide-react'
 import { trackDevice } from '@/lib/device-analytics'
 import { ArchiveButton } from '@/components/archive-button'
+import { ReportBlockActions } from '@/components/report-block-actions'
 import {
   postDeviceBatchDiscussion,
   type DeviceBatchDiscussionPost,
@@ -146,6 +147,12 @@ export function BatchDiscussionBoard({
               <span className={styles.discussionReplyCount}>
                 {post.replyCount} REPLIES
               </span>
+              <ReportBlockActions target={{ kind: 'comment', id: post.id }} authorName={post.author} isOwn={post.mine}
+                onChanged={(change) => {
+                  // A report hides just this post; a block hides every post by that member, so reload.
+                  if (change === 'report') setPosts((current) => current.filter((p) => p.id !== post.id))
+                  else window.location.reload()
+                }} />
             </div>
           </article>
         ))}

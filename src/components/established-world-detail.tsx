@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { History, Info } from 'lucide-react'
+import { ReportBlockActions } from '@/components/report-block-actions'
 import { LazyImage } from '@/components/lazy-image'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
@@ -28,12 +29,15 @@ function firstSentence(text: string) {
   return (match ? match[0] : text).trim()
 }
 
-function ReportList({ reports, empty, onDesignate }: {
+function ReportList({ reports, empty, onDesignate, onChanged }: {
   reports: WorldReportView[]
   empty: string
+  /** Called after a report or block so the list reloads without the hidden posts. */
+  onChanged: () => void
   /** Architects on a fuzzy official world: designate or clear the first observer. */
   onDesignate?: (report: WorldReportView) => void
 }) {
+  const { user } = useAuth()
   if (!reports.length) return <div className="archive-empty-state">{empty}</div>
   return (
     <ul className="world-reports">
@@ -51,6 +55,8 @@ function ReportList({ reports, empty, onDesignate }: {
               ))}
             </span>
           )}
+          <ReportBlockActions target={{ kind: 'world_report', id: r.id }} authorName={r.authorName} isOwn={!!user.id && user.id === r.authorId}
+            onChanged={onChanged} />
           {onDesignate && (
             <ArchiveButton variant="secondary" size="compact" onClick={() => onDesignate(r)}>
               {r.isFirstObserver ? 'REMOVE FIRST OBSERVER' : 'DESIGNATE FIRST OBSERVER'}
@@ -221,8 +227,8 @@ export function EstablishedWorldDetail({ world }: { world: World }) {
         {tab === 'observed' && fuzzy && isOfficialWorld(world.id) && (
           <p className="world-detail__notice">Observations are reviewed by the team. The first accepted one becomes this world&apos;s first observer, and their photo becomes its picture.</p>
         )}
-        {tab === 'observed' && <ReportList reports={observed} empty={loaded ? 'NO OBSERVATIONS REPORTED YET' : 'LOADING…'} onDesignate={canDesignate ? setDesignating : undefined} />}
-        {tab === 'anomalies' && <ReportList reports={anomalous} empty={loaded ? 'NO ANOMALIES REPORTED YET' : 'LOADING…'} />}
+        {tab === 'observed' && <ReportList reports={observed} empty={loaded ? 'NO OBSERVATIONS REPORTED YET' : 'LOADING…'} onDesignate={canDesignate ? setDesignating : undefined} onChanged={() => void load()} />}
+        {tab === 'anomalies' && <ReportList reports={anomalous} empty={loaded ? 'NO ANOMALIES REPORTED YET' : 'LOADING…'} onChanged={() => void load()} />}
         {tab === 'discussion' && <CommentThread subjectType="world" subjectId={world.id} subjectTitle={name} posthogEvent="world_comment_sent" allowImages />}
       </div>
 

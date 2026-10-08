@@ -5,6 +5,7 @@ import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { requireNpcArchitect } from '@/lib/npc-repository'
 import { getAllWorlds } from '@/lib/actions/worlds'
 import { orderFeed } from '@/lib/world-feed-order'
+import { withoutHiddenWorldReports } from '@/lib/moderation'
 import { getMyDeviceStatus } from '@/lib/actions/device-status'
 import { aggregateReportStats, validateDesignation, type ReportKind, type WorldReportStats, type WorldReportView } from '@/lib/world-reports'
 
@@ -51,7 +52,7 @@ export async function getFirstObservers(worldIds: string[]): Promise<Record<stri
   const reportToWorld = new Map(worlds.map((w) => [w.first_observer_report_id as string, w.id as string]))
   const { data, error } = await table.select('id, author_id, image_urls').in('id', [...reportToWorld.keys()]).eq('is_visible', true)
   if (error) return {}
-  const rows = (data ?? []) as { id: string; author_id: string; image_urls: string[] | null }[]
+  const rows = await withoutHiddenWorldReports((data ?? []) as { id: string; author_id: string; image_urls: string[] | null }[])
   const profiles = await authorProfiles(rows.map((r) => r.author_id))
   const out: Record<string, { id: string; name: string; avatar: string | null; image: string | null }> = {}
   for (const r of rows) {
@@ -69,7 +70,7 @@ export async function getWorldReports(worldId: string, kind: ReportKind): Promis
   const { data, error } = await table.select('id, world_id, kind, author_id, body, image_urls, created_at')
     .eq('world_id', worldId).eq('kind', kind).eq('is_visible', true).order('created_at', { ascending: false }).limit(200)
   if (error) return []
-  const rows = (data ?? []) as Row[]
+  const rows = await withoutHiddenWorldReports((data ?? []) as Row[])
   const profiles = await authorProfiles(rows.map((r) => r.author_id))
   return rows.map((r) => {
     const p = profiles.get(r.author_id)
