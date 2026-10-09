@@ -410,6 +410,12 @@ export type StoryPublicationRow = {
 export type Database = {
   public: {
     Tables: {
+      npc_voice_profiles: {
+        Row: { user_id: string; instructions: string; updated_by: string; updated_at: string }
+        Insert: { user_id: string; instructions: string; updated_by: string; updated_at?: string }
+        Update: { instructions?: string; updated_by?: string; updated_at?: string }
+        Relationships: []
+      }
       activity_events: {
         Row: {
           id: string

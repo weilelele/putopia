@@ -7,7 +7,7 @@ let _stripe: Stripe | null = null
 
 export function isStripeSecretKey(value: string | undefined): value is string {
   if (!value) return false
-  return /^(?:sk|rk)_(?:test|live)_[A-Za-z0-9_]+$/.test(value)
+  return /^(?:(?:sk|rk)_(?:test|live)|rkcs_test)_[A-Za-z0-9_]+$/.test(value)
 }
 
 /** Returns a Stripe client, or null when keys are not configured yet (mock mode). */
@@ -29,6 +29,6 @@ export function isStripeConfigured(): boolean {
 /** A mode change cannot establish whether an old checkout was paid. */
 export function isStripeSessionModeMismatch(sessionId: string, secretKey: string | undefined): boolean {
   const sessionMode = /^cs_(test|live)_/.exec(sessionId)?.[1]
-  const keyMode = /^(?:sk|rk)_(test|live)_/.exec(secretKey ?? '')?.[1]
+  const keyMode = /^(?:sk|rk|rkcs)_(test|live)_/.exec(secretKey ?? '')?.[1]
   return !!sessionMode && !!keyMode && sessionMode !== keyMode
 }

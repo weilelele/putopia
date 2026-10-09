@@ -658,7 +658,7 @@ function SignInGateModal({ title, signInHref, onClose }: { title: string; signIn
 
 // ─── Page client ──────────────────────────────────────────────────────────────
 
-export function FeedProtoClient({ entries, embedded = false, hideHeader = false, leadSlot, packHref = '/voyager-pack', canVote = true, signInHref = '/login' }: { entries: FeedEntry[]; embedded?: boolean; hideHeader?: boolean; leadSlot?: ReactNode; packHref?: string; canVote?: boolean; signInHref?: string }) {
+export function FeedProtoClient({ entries, embedded = false, hideHeader = false, leadSlot, packHref = '/voyager-initiation', canVote = true, signInHref = '/login' }: { entries: FeedEntry[]; embedded?: boolean; hideHeader?: boolean; leadSlot?: ReactNode; packHref?: string; canVote?: boolean; signInHref?: string }) {
   // Track the specific vote that was clicked — every vote must open its own
   // options, not the first vote's.
   const [activeVote, setActiveVote] = useState<VoteCard | null>(null)

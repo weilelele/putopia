@@ -1,5 +1,7 @@
 'use client'
 
+import { publicMemberBio } from '@/lib/public-member-bio'
+import { memberInitials } from '@/lib/member-initials'
 import { useEffect, useState } from 'react'
 import { ArchiveSheet } from './archive-sheet'
 import { ArchiveButton } from './archive-button'
@@ -19,6 +21,7 @@ function publicLink(value: string | null): string | null {
 export function MemberProfileSheet({ profileId, onClose }: { profileId: string; onClose: () => void }) {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined)
   const [failed, setFailed] = useState(false)
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null)
   const [retry, setRetry] = useState(0)
   useEffect(() => {
     let active = true
@@ -41,14 +44,14 @@ export function MemberProfileSheet({ profileId, onClose }: { profileId: string; 
       : profile === null ? <p>This member profile is no longer available.</p>
       : <div className={styles.profile}>
         <div className={styles.identity}>
-          {avatar
+          {avatar && failedAvatar !== avatar
             // eslint-disable-next-line @next/next/no-img-element
-            ? <img className={styles.avatar} src={avatar} alt="" />
-            : <span className={styles.avatar} aria-hidden>{profile.display_name.slice(0, 2).toUpperCase()}</span>}
+            ? <img className={styles.avatar} src={avatar} alt="" onError={() => setFailedAvatar(avatar)} />
+            : <span className={styles.avatar} aria-hidden>{memberInitials(profile.display_name)}</span>}
           <div><h3>{profile.display_name}</h3><p className={styles.role}>{profile.role}</p>{profile.batch_label && <p className={styles.meta}>{profile.batch_label}</p>}</div>
         </div>
         {profile.location && <p className={styles.meta}>{profile.location}</p>}
-        {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
+        {profile.bio && <p className={styles.bio}>{publicMemberBio(profile.bio)}</p>}
         <dl className={styles.stats}>
           <div><dt>Observation days</dt><dd>{profile.observation_days}</dd></div>
           <div><dt>Worlds discovered</dt><dd>{profile.worlds_discovered}</dd></div>

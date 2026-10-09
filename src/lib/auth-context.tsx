@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
+import { accessRole as parseAccessRole } from '@/lib/digital-access'
 import type { UserRole } from '@/types/database'
 import { allowsUnregisteredViewer, routeWithSearch } from '@/lib/access-policy'
 
@@ -18,6 +19,7 @@ export interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser
+  accessRole: UserRole
   isAtLeast: (role: UserRole) => boolean
   logout: () => Promise<void>
   loading: boolean
@@ -34,6 +36,7 @@ const GUEST: AuthUser = { role: 'guest' }
 
 const AuthContext = createContext<AuthContextType>({
   user: GUEST,
+  accessRole: 'guest',
   isAtLeast: () => false,
   logout: async () => {},
   loading: true,
@@ -41,10 +44,14 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser>(GUEST)
+  const [accessRole, setAccessRole] = useState<UserRole>('guest')
+  const requestVersion = useRef(0)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   const loadProfile = useCallback(async (userId: string, email?: string) => {
+    const version = ++requestVersion.current
+    setAccessRole('guest')
     const supabase = createClient()
     const { data, error } = await supabase
       .from('voyager_profiles')
@@ -52,6 +59,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('id', userId)
       .single()
 
+    // No role fallback on missing migration, RPC failure or account switch.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (supabase as any).rpc('effective_access_role')
+    if (version !== requestVersion.current) return
+    setAccessRole(result.error ? 'applicant' : parseAccessRole(result.data, true))
     setUser({
       id: userId,
       role: data?.role ?? 'applicant',
@@ -81,8 +93,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        loadProfile(session.user.id, session.user.email).finally(() => setLoading(false))
+        loadProfile(session.user.id, session.user.email).catch(() => setAccessRole('guest')).finally(() => setLoading(false))
       } else {
+        requestVersion.current++
+        setAccessRole('guest')
         setUser(GUEST)
         setLoading(false)
       }
@@ -91,8 +105,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setLoading(true)
-        loadProfile(session.user.id, session.user.email).finally(() => setLoading(false))
+        setAccessRole('guest')
+        loadProfile(session.user.id, session.user.email).catch(() => setAccessRole('guest')).finally(() => setLoading(false))
       } else {
+        requestVersion.current++
+        setAccessRole('guest')
         setUser(GUEST)
         setLoading(false)
       }
@@ -121,11 +138,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const isAtLeast = useCallback((role: UserRole) => {
-    return ROLE_LEVELS[user.role] >= ROLE_LEVELS[role]
-  }, [user.role])
+    if (loading && ROLE_LEVELS[role] >= 2) return false
+    return ROLE_LEVELS[accessRole] >= ROLE_LEVELS[role]
+  }, [accessRole, loading])
 
   return (
-    <AuthContext.Provider value={{ user, isAtLeast, logout, loading }}>
+    <AuthContext.Provider value={{ user, accessRole, isAtLeast, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )

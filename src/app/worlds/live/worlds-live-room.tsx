@@ -23,12 +23,11 @@ import { submitSignalResponse, type PublicInvestigation } from '@/lib/actions/si
 import type { DreamcatcherJob, DreamcatcherRoom, DreamcatcherStatus } from '@/lib/dreamcatchers'
 import { isDreamcatcherWorking, type DreamcatcherLiveVideoLibrary } from '@/lib/dreamcatcher-live'
 import { DreamcatcherLiveVideo } from './dreamcatcher-live-video'
-import { DreamcatcherChat } from './dreamcatcher-chat'
 import roomStyles from './worlds-room.module.css'
 import playerStyles from './dreamcatcher-live-video.module.css'
 import styles from '../../live-observation-room.module.css'
 
-type RoomTab = 'dispatch' | 'observations' | 'chat'
+type RoomTab = 'dispatch' | 'observations'
 type Detail = { kind: 'dispatch'; investigationId: string }
 
 const STATUS_LABEL: Record<DreamcatcherStatus, string> = {
@@ -67,8 +66,8 @@ export function WorldsLiveRoom({
   const router = useRouter()
   const [selectedSlug, setSelectedSlug] = useSessionPreference('mc:view:worlds:room', rooms[0]?.slug ?? '')
   const [savedTab, setActiveTab] = useSessionPreference<RoomTab>('mc:view:worlds:tab', 'dispatch')
-  // Older sessions may still hold the removed Queue tab.
-  const activeTab = ['dispatch', 'observations', 'chat'].includes(savedTab) ? savedTab : 'dispatch'
+  // Older sessions may still hold the removed Queue or Chat tabs.
+  const activeTab = ['dispatch', 'observations'].includes(savedTab) ? savedTab : 'dispatch'
   const [queueExpanded, setQueueExpanded] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
@@ -225,7 +224,7 @@ export function WorldsLiveRoom({
         <section className={styles.sectionPanel}>
           <div className={roomStyles.contentTabs}>
             <ArchiveTabs ariaLabel="Parallax Array room content" activeId={activeTab}
-              items={[{id:'dispatch',label:'DISPATCH'},{id:'observations',label:'MINE'},{id:'chat',label:'LIVE CHAT'}].map(item=>({...item,panelId:`world-room-${item.id}`}))}
+              items={[{id:'dispatch',label:'DISPATCH'},{id:'observations',label:'MINE'}].map(item=>({...item,panelId:`world-room-${item.id}`}))}
               onChange={id => setActiveTab(id as RoomTab)} />
           </div>
 
@@ -245,7 +244,6 @@ export function WorldsLiveRoom({
             {!selected.myObservations?.length ? <div className={styles.emptyRoom}>NO ONGOING OBSERVATIONS AT THIS LOCATION</div> : null}
           </div> : null}
 
-          {activeTab === 'chat' ? <div role="tabpanel" id={`world-room-${activeTab}`} aria-labelledby={`world-room-${activeTab}-tab`}><DreamcatcherChat key={selected.id} roomId={selected.id} city={selected.city} timeZone={selected.timeZone} /></div> : null}
         </section>
       </div>
 

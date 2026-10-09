@@ -15,7 +15,7 @@ export function DashboardVoyagerHeader({ voyager }: { voyager: DashboardVoyager 
     <div className="dashboard-voyager-board">
       <div className="dashboard-voyager-identity">
         <span className="dashboard-voyager-avatar">{voyager.avatarUrl ? <SmartImage src={voyager.avatarUrl} alt={voyager.name} width={44} height={44} sizes="44px" /> : <span aria-label={voyager.name}>{voyager.name.slice(0,2).toUpperCase()}</span>}</span>
-        <span className="dashboard-voyager-name">{voyager.name}</span><ArchiveLinkButton href="/voyager-path" variant="ghost"><span><strong>{voyager.role.toUpperCase()}</strong><span>VIEW YOUR PATH</span></span><ArrowRight aria-hidden size={18} /></ArchiveLinkButton>
+        <span className="dashboard-voyager-name">{voyager.name}</span><ArchiveLinkButton href="/voyager-initiation" variant="ghost"><span><strong>{voyager.role.toUpperCase()}</strong><span>VOYAGER INITIATION</span></span><ArrowRight aria-hidden size={18} /></ArchiveLinkButton>
       </div>
       <div className="dashboard-voyager-metrics">
         <ArchiveLinkButton href="/signal" variant="ghost" className="dashboard-voyager-dispatch"><span>SIGNAL DISPATCH</span><span><strong>{voyager.awaitingYou ?? '—'}</strong> awaiting you</span></ArchiveLinkButton>

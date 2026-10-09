@@ -1,11 +1,10 @@
 'use client'
-import { DevicePurchaseTerms } from '../_components/device-purchase-terms'
-import { KYOTO_PURCHASE_FAQ } from '@/lib/device-purchase-terms'
-import { ConsolePackages } from './console-packages'
+import { deviceBatchIntroduction, deviceBatchMilestone } from '@/lib/device-membership-copy'
 import { RootBrandHeader } from '@/components/root-brand-header'
 import consoleStyles from '@/components/mc-console-panel.module.css'
 import { ArchiveTabs } from '@/components/archive-tabs'
 import { ArchiveButton } from '@/components/archive-button'
+import { DeviceClaimPanel, type DeviceClaimAccess } from '../_components/device-claim-panel'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { ArchiveSheet } from '@/components/archive-sheet'
@@ -25,7 +24,6 @@ import {
   ListFilter,
 } from 'lucide-react'
 import styles from '../../live-observation-room.module.css'
-import { BatchDiscussionBoard } from '../_components/batch-discussion-board'
 import { FollowBatchButton } from '../_components/batch-actions'
 import { useFollowedBatchSlugs } from '../_components/use-followed-batches'
 import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
@@ -33,25 +31,19 @@ import type { DeviceCameraSource } from '@/lib/device-camera'
 import {
   DEVICE_BATCH_STATUS,
   DEVICE_BATCH_PHASES,
-  canClaimDeviceBatch,
-  formatBatchPrice,
-  getBatchClaimHref,
-  getBatchRemainingQuantity,
   type DeviceBatch,
   type DeviceBatchStatus,
 } from '@/lib/device-batches'
-import type { DeviceBatchDiscussionPost } from '@/lib/actions/device-batch-community'
 import type { DeviceConsoleRecord } from '@/lib/actions/orders'
 
-type ContentTab = 'info' | 'updates' | 'discussion'
+type ContentTab = 'info' | 'updates'
 type BatchFilter = 'all' | 'following' | DeviceBatchStatus
 
 export function DeviceLiveRoom({
   batch,
   batches,
-  canPost,
-  discussionPosts,
   ownedConsole,
+  claimAccess,
   camera,
   onSelectBatch,
   introduction,
@@ -60,28 +52,23 @@ export function DeviceLiveRoom({
   onSelectBatch: (slug: string) => void
   batch: DeviceBatch
   batches: DeviceBatch[]
-  canPost: boolean
-  discussionPosts: DeviceBatchDiscussionPost[]
   ownedConsole: DeviceConsoleRecord | null
+  claimAccess: DeviceClaimAccess
   camera?: DeviceCameraSource | null
 }) {
   const pathname = usePathname()
   const [isRoot] = useState(pathname === '/devices')
   const followedBatchSlugs = useFollowedBatchSlugs()
-  const [activeTab, setActiveTab] = useSessionPreference<ContentTab>(`mc:view:devices:${batch.slug}:tab`, 'info')
+  const [savedTab, setActiveTab] = useSessionPreference<ContentTab>(`mc:view:devices:${batch.slug}:tab`, 'info')
+  const activeTab = savedTab === 'updates' ? 'updates' : 'info'
   const [sheetOpen, setSheetOpen] = useState(false)
   const [filter, setFilter] = useSessionPreference<BatchFilter>('mc:view:devices:filter:v2', 'all')
   const [progressOpen, setProgressOpen] = useState(false)
-  const formattedPrice = batch.claimPrice ? formatBatchPrice(batch.claimPrice) : ''
-  const priceAmount = formattedPrice.slice(0, formattedPrice.lastIndexOf(' '))
   const progress = getDeviceBatchProgress(batch)
-  const remaining = getBatchRemainingQuantity(batch)
-  const claimHref = getBatchClaimHref(batch)
   const currentStage = progress.find((stage) => stage.status === 'current')?.label ?? (progress.every((stage) => stage.status === 'completed') ? 'COMPLETE' : 'AWAITING NEXT STAGE')
   const materialRecords = getDeviceBatchMedia(batch)
   const updates = getDeviceBatchUpdates(batch)
-  const purchaseFaq = batch.slug === 'kyoto-one' ? KYOTO_PURCHASE_FAQ : batch.faq ?? []
-  const nextMilestone = batch.slug === 'kyoto-one' ? 'Confirm dispatch dates for all three packages.' : batch.nextMilestone
+  const nextMilestone = deviceBatchMilestone(batch)
   const [gallerySelection, setGallerySelection] = useState({ slug: batch.slug, index: 0 })
   const selectedMedia = gallerySelection.slug === batch.slug ? gallerySelection.index : 0
   const selectMedia = (index: number) => setGallerySelection({ slug: batch.slug, index })
@@ -92,7 +79,7 @@ export function DeviceLiveRoom({
     return batches.filter((item) => item.status === filter)
   }, [batches, filter, followedBatchSlugs])
 
-  const claimState = ownedConsole ? 'owned' : claimHref && remaining !== 0 ? 'open' : canClaimDeviceBatch(batch.status) ? 'sold_out' : 'closed'
+  const claimState = ownedConsole ? 'owned' : 'check_entitlement'
   useEffect(() => {
     trackDevice('device_room_viewed', {
       batch_slug: batch.slug, batch_status: batch.status, claim_state: claimState, active_tab: activeTab,
@@ -176,31 +163,13 @@ export function DeviceLiveRoom({
       />
 
       </div><div className={styles.workspaceDetails}>
-      {(canClaimDeviceBatch(batch.status) && batch.claimPrice) || ownedConsole ? <section className={`${styles.sectionPanel} ${styles.compactClaimPanel}`} aria-labelledby="claim-heading">
-        <div className={styles.paymentHeader}>
-          <h2 id="claim-heading">CONSOLE CLAIM</h2>
-          {batch.claimPrice ? <div className={styles.paymentPrice}><strong>{priceAmount}</strong><span>{batch.claimPrice.currency.toUpperCase()} / CONSOLE{batch.slug === 'kyoto-one' ? ' · PREORDER' : ''}</span></div> : null}
-        </div>
-        <div className={styles.claimCounts}>
-          <div><span>BATCH TOTAL</span><strong>{batch.inventory?.listingQuantity ?? batch.holders.length}</strong></div>
-          <div><span>REMAINING</span><strong>{remaining ?? 0}</strong></div>
-        </div>
-        <ConsolePackages batch={batch} />
-        <div className={styles.claimRow}>
-          {ownedConsole ? (
-            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => { trackDevice('device_progress_opened', { batch_slug: batch.slug }); setProgressOpen(true) }} type="button"><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></ArchiveButton>
-          ) : claimHref && remaining !== 0 ? (
-            <Link className={`${styles.primaryButton} ${styles.claimButton}`} href={claimHref} onClick={() => trackDevice('device_claim_cta_clicked', { batch_slug: batch.slug, location: 'room', price: batch.claimPrice?.amount ?? null, remaining })}><span>CLAIM A CONSOLE</span></Link>
-          ) : (
-            <ArchiveButton variant="primary" className={`${styles.primaryButton} ${styles.claimButton}`} disabled type="button"><span>CLAIMS CLOSED</span></ArchiveButton>
-          )}
-        </div>
-        <DevicePurchaseTerms compact slug={batch.slug} />
-      </section> : null}
+      <DeviceClaimPanel key={batch.slug} batch={batch} access={claimAccess} ownedProgress={ownedConsole ? (
+        <ArchiveButton variant="primary" fullWidth className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => { trackDevice('device_progress_opened', { batch_slug: batch.slug }); setProgressOpen(true) }}><span>CHECK MY PROGRESS</span><strong>{ownedConsole.unitCode}</strong></ArchiveButton>
+      ) : undefined} />
 
       <section className={styles.sectionPanel}>
         <ArchiveTabs ariaLabel="Device room content" activeId={activeTab}
-          items={[{id:'info',label:'INFO'},{id:'updates',label:'UPDATES'},{id:'discussion',label:'DISCUSSION'}].map(item=>({...item,panelId:`device-room-${item.id}`}))}
+          items={[{id:'info',label:'INFO'},{id:'updates',label:'UPDATES'}].map(item=>({...item,panelId:`device-room-${item.id}`}))}
           onChange={id => {
             // Re-clicking the open tab is not a change; only record real switches.
             if (id !== activeTab) trackDevice('device_tab_changed', { batch_slug: batch.slug, tab: id, from_tab: activeTab })
@@ -210,7 +179,7 @@ export function DeviceLiveRoom({
         {activeTab === 'info' ? (
           <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
             <h2 className={styles.infoTitle}>{batch.name}</h2>
-            <p className={styles.intro}>{batch.summary}</p>
+            <p className={styles.intro}>{deviceBatchIntroduction(batch)}</p>
             <div className={styles.infoActions}>
               <FollowBatchButton batchName={batch.name} compact prominence="secondary" slug={batch.slug} />
             </div>
@@ -229,10 +198,11 @@ export function DeviceLiveRoom({
 
             <div className={styles.facts}>
               <div className={styles.fact}><span>LOCATION</span><strong>{batch.location}</strong></div>
-              <div className={styles.fact}><span>CONFIRMED UNITS</span><strong>{(batch.inventory?.listingQuantity ?? batch.holders.length) || 'PENDING'}</strong></div>
+              <div className={styles.fact}><span>CONFIRMED UNITS</span><strong>{batch.inventory?.listingQuantity ?? 'NOT CONFIRMED'}</strong></div>
               <div className={styles.fact}><span>FIELD LEAD</span><DeviceFieldLead key={batch.slug} lead={batch.lead} /></div>
               <div className={styles.fact}><span>NEXT MILESTONE</span><strong>{nextMilestone}</strong></div>
             </div>
+
 
             <div className={styles.mediaSection}>
               <div className={styles.mediaSectionHeader}><h3>MATERIAL RECORDS</h3></div>
@@ -255,23 +225,6 @@ export function DeviceLiveRoom({
               </div>
             </div>
 
-            {purchaseFaq.length ? (
-              <section className={styles.progressBlock} aria-label="Batch FAQ">
-                <div className={styles.eyebrow}>BEFORE YOU CLAIM</div>
-                {purchaseFaq.map((item) => (
-                  <details key={item.question} className="mt-4 text-sm" onToggle={(event) => { if (event.currentTarget.open) trackDevice('device_faq_opened', { batch_slug: batch.slug, question: item.question }) }}>
-                    <summary>{item.question}</summary>
-                    <p className="mt-2 leading-relaxed">{item.answer}</p>
-                  </details>
-                ))}
-              </section>
-            ) : null}
-          </div>
-        ) : null}
-
-        {activeTab === 'discussion' ? (
-          <div className={styles.panelBody} role="tabpanel" id={`device-room-${activeTab}`} aria-labelledby={`device-room-${activeTab}-tab`}>
-            <BatchDiscussionBoard key={batch.slug} batch={batch} canPost={canPost} initialPosts={discussionPosts} />
           </div>
         ) : null}
 

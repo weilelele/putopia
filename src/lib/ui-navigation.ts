@@ -11,7 +11,7 @@ export function ownerTab(path: string): string | null {
   if (/^\/(intel|vote)(\/|$)/.test(path)) return '/intel'
   if (/^\/devices(\/|$)/.test(path)) return '/devices'
   if (/^\/(worlds|worldflow|signal)(\/|$)/.test(path)) return '/worlds'
-  if (/^\/(voyagers|profile|logs|voyager-path)(\/|$)/.test(path)) return '/voyagers'
+  if (/^\/(voyagers|profile|logs|voyager-path|voyager-initiation)(\/|$)/.test(path)) return '/voyagers'
   return null
 }
 export function isPrimaryRoute(path: string) { return PRIMARY_NAV.some(item => item.href === path) }
@@ -25,6 +25,7 @@ export function hasGlobalNavigation(path: string) {
   return path === '/login' || path === '/register' || ownerTab(path) !== null && !/^\/(vote|signal|worlds\/submit|devices\/claim)(\/|$)/.test(path)
 }
 export function fallbackRoute(path: string): string {
+  if (/^\/(voyager-initiation|voyager-path)(\/|$)/.test(path)) return '/console'
   if (/^\/logs\//.test(path)) return '/logs'
   if (/^\/intel\//.test(path)) return '/intel'
   if (/^\/worlds\//.test(path) && path !== '/worlds/live') return '/worlds'
@@ -35,6 +36,7 @@ export function routeLabel(path: string): string {
   path = path.split(/[?#]/)[0]
   if (path === '/logs') return 'Voyager Logs'
   if (path === '/profile') return 'My Profile'
+  if (path === '/voyager-initiation') return 'Voyager Initiation'
   return PRIMARY_NAV.find(item => item.href === path)?.title ?? 'previous page'
 }
 export function safeAppPath(value: string | null, origin: string): string | null {

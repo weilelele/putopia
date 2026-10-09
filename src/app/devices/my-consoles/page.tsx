@@ -6,8 +6,10 @@ import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import { DEVICE_BATCH_STATUS } from '@/lib/device-batches'
 import { listPublicDeviceBatches } from '@/lib/device-batch-repository'
+import { getMyConsoleShipments } from '@/lib/actions/device-supply'
 import { getMyDeviceConsoles } from '@/lib/actions/orders'
 import { DeviceViewTracker } from '@/components/device-view-tracker'
+import { DevicePurchaseTerms } from '../_components/device-purchase-terms'
 import { FollowedBatchList } from '../_components/followed-batch-list'
 import styles from '../device-batches.module.css'
 
@@ -19,9 +21,10 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function MyConsolesPage() {
-  const [batches, consoles] = await Promise.all([
+  const [batches, consoles, shipments] = await Promise.all([
     listPublicDeviceBatches(),
     getMyDeviceConsoles(),
+    getMyConsoleShipments(),
   ])
   const records = consoles.flatMap((record) => {
     const batch = batches.find((candidate) => candidate.slug === record.order.device_batch_slug)
@@ -49,7 +52,11 @@ export default async function MyConsolesPage() {
         <ArchiveSectionLabel>CLAIMED BATCHES</ArchiveSectionLabel>
         <div className={styles.ownedBatchList}>
           {records.map(({ batch, record }) => {
-            const displayStages = record.packs.length
+            const isInitiation = record.order.product_type === 'initiation_console_claim'
+            const shipment = shipments.find(s => s.orderId === record.order.id)
+            const displayStages = isInitiation
+              ? (shipment ? [{ stage_id: 'initiation-3', label: 'Initiation Pack 3 · Console', expected_window: shipment.scheduledMonth, status: shipment.status === 'dispatched' ? 'shipped' : shipment.status }] : [])
+              : record.packs.length
               ? record.packs
               : batch.distributionStages.map((stage, index) => ({
                   expected_window: stage.window,
@@ -97,15 +104,19 @@ export default async function MyConsolesPage() {
                   </div>
                   <div>
                     <span>FINAL DISPATCH</span>
-                    <strong>{batch.estimatedCompletion.replace('Estimated final dispatch: ', '')}</strong>
+                    <strong>{isInitiation ? shipment?.scheduledMonth ?? 'NOT CONFIRMED' : batch.estimatedCompletion.replace('Estimated final dispatch: ', '')}</strong>
                   </div>
                 </div>
+
+                {record.order.product_type === 'device_batch_claim' && batch.slug === 'kyoto-one' ? <DevicePurchaseTerms slug={batch.slug} /> : null}
 
                 <div className={styles.ownedTimeline}>
                   <div className={styles.ownedTimelineHeading}>
                     <Package aria-hidden size={16} />
                     DISTRIBUTION RECORD
                   </div>
+                  {isInitiation ? <p>The Console travels in Initiation Pack 3. <Link href="/voyager-initiation">View all four packages</Link>{shipment?.trackingUrl ? <> · <a href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">Track shipment</a></> : null}</p> : null}
+                  {isInitiation && !shipment ? <p>Shipment details are not available yet.</p> : null}
                   <ol>
                     {displayStages.map((stage, index) => {
                       const completed = stage.status === 'delivered'

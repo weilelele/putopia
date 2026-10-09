@@ -68,7 +68,7 @@ export async function getMyDeviceOrderBySession(
     .select('*')
     .eq('user_id', user.id)
     .eq('stripe_session_id', sessionId)
-    .eq('product_type', 'device_batch_claim')
+    .in('product_type', ['device_batch_claim', 'initiation_console_claim'])
     .maybeSingle()
 
   const order = (data as VoyagerOrder | null) ?? null
@@ -110,7 +110,7 @@ export async function getMyDeviceConsoles(): Promise<DeviceConsoleRecord[]> {
   const { data: orderRows } = await (supabase.from('voyager_orders') as any)
     .select('*')
     .eq('user_id', user.id)
-    .eq('product_type', 'device_batch_claim')
+    .in('product_type', ['device_batch_claim', 'initiation_console_claim'])
     .in('status', ['paid', 'preparing', 'shipped', 'delivered'])
     .order('created_at', { ascending: false })
   const orders = (orderRows as VoyagerOrder[] | null) ?? []
@@ -196,7 +196,7 @@ export async function getAllOrders(): Promise<AdminOrder[]> {
     .order('created_at', { ascending: false })
   const orders = (data as AdminOrder[]) ?? []
   const deviceOrderIds = orders
-    .filter((order) => order.product_type === 'device_batch_claim')
+    .filter((order) => ['device_batch_claim', 'initiation_console_claim'].includes(order.product_type))
     .map((order) => order.id)
   if (!deviceOrderIds.length) return orders
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -247,6 +247,7 @@ export async function updateOrderFulfillment(
     .maybeSingle()
   if (currentOrderError) return { error: currentOrderError.message }
   if (!currentOrder) return { error: 'Order not found' }
+  if (currentOrder.product_type === 'initiation_console_claim') return { error: 'Use the Initiation fulfillment workflow for this Console claim.' }
   if (updates.status !== undefined && updates.status !== currentOrder.status) {
     if (updates.status === 'shipped') patch.shipped_at = new Date().toISOString()
     if (updates.status === 'delivered') patch.delivered_at = new Date().toISOString()

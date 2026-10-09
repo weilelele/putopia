@@ -1,0 +1,161 @@
+.page { background: var(--color-deep); }
+.content { width: 100%; max-width: 960px; margin: 0 auto; padding-bottom: 32px; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 24px 0 36px; }
+.eyebrow { margin: 0 0 12px; font-size: var(--fs-label); color: var(--color-nucleus); }
+.introduction h1 { font-size: 40px; line-height: 1.08; font-weight: 700; margin: 0; }
+.lede { font-size: var(--fs-body); line-height: 1.5; margin: 16px 0 0; max-width: 340px; color: var(--color-star-dim); }
+.join { align-self: center; min-width: 0; overflow-wrap: anywhere; }
+.become { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; min-height: 60px; padding: 16px; font-size: var(--fs-label); letter-spacing: 0; }
+.price { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+/* Incomplete calibration opens the flow; completed calibration is status only. */
+.calibration { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 28px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--color-nucleus); font-size: var(--fs-caption); line-height: 1.5; }
+.calibrationState { display: inline-flex; align-items: center; gap: 6px; color: var(--color-star-dim); white-space: nowrap; }
+.calibrationState svg { flex-shrink: 0; }
+.delivery { margin-top: 32px; }
+.delivery h2 { margin: 0 0 12px; font-size: var(--fs-label); color: var(--color-nucleus); text-transform: uppercase; }
+.delivery p { margin: 0 0 8px; font-size: var(--fs-body); line-height: 1.5; }
+.delivery .textLink { font-size: var(--fs-label); }
+.seats { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin: 0 0 20px; }
+.seats > div { padding: 0 20px; border-left: 1px solid var(--bd-faint); }
+.seats > div:first-child { padding-left: 0; border-left: 0; }
+.seats dt { color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }
+.seats dd { margin: 4px 0 0; color: var(--color-nucleus); font-size: 36px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.error { font-size: var(--fs-label); line-height: 1.5; margin-top: 12px; }
+.section { border-top: 1px solid var(--bd-faint); padding: 28px 0; }
+.sectionHeading { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.sectionHeading :is(h2, h3) { color: var(--color-nucleus); font-size: var(--fs-title); font-weight: 700; margin: 0; text-transform: uppercase; }
+.sectionHeading p { font-size: var(--fs-caption); line-height: 1.5; color: var(--color-star-dim); margin: 0; }
+.packs { list-style: none; margin: 0; padding: 0; }
+.pack { display: grid; grid-template-columns: minmax(0, .6fr) minmax(0, 1.4fr); gap: 12px; }
+.packImage { position: relative; aspect-ratio: 3 / 2; align-self: start; margin-bottom: 24px; overflow: hidden; }
+.packImage img { object-fit: cover; }
+.packCopy { min-width: 0; position: relative; padding: 0 0 28px 12px; border-left: 1px solid var(--color-nucleus); }
+.packCopy::before { content: ''; position: absolute; width: 9px; height: 9px; left: -5px; top: 5px; background: var(--color-nucleus); border: 1px solid var(--color-nucleus); border-radius: 50%; }
+.planned .packCopy::before { background: var(--color-deep); }
+.pack:last-child .packCopy { padding-bottom: 0; }
+.packageNumber { color: var(--color-nucleus); font-size: var(--fs-caption); margin: 0 0 6px; line-height: 1.5; }
+.packCopy :is(h3, h4) { font-size: var(--fs-body); line-height: 1.3; font-weight: 700; margin: 0 0 8px; overflow-wrap: anywhere; }
+.packCopy > p:last-child { margin: 0; font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
+.benefit { display: grid; gap: 20px; }
+.benefitImage { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
+.benefitImage img { object-fit: cover; }
+.benefitCopy h3 { font-size: var(--fs-h3); line-height: 1.2; font-weight: 700; margin: 0 0 12px; }
+.benefitCopy p { color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.5; margin: 0 0 12px; }
+.benefitCopy a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-nucleus); font-size: var(--fs-body); font-weight: 700; text-decoration: none; }
+.benefitCopy a:hover { text-decoration: underline; }
+.content a:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.calibrationDialog :global(.archive-quiz-shell) { padding: 0; }
+.calibrationDialog :global(.archive-page-header__title) { font-size: var(--fs-h3); }
+.calibrationDialog :global(.archive-quiz-option) { font-size: var(--fs-body); }
+.calibrationDialog :global(.archive-quiz-prompt) { padding: 16px; }
+.calibrationDialog :global(.archive-card) { background: var(--color-deep); }
+@media (min-width: 768px) {
+  .hero { grid-template-columns: minmax(0, 1fr) minmax(260px, .9fr); gap: 24px; padding: 32px 0 48px; }
+  .introduction h1 { font-size: 48px; }
+  .sectionHeading { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 24px; }
+  .sectionHeading p { text-align: right; }
+  .pack { grid-template-columns: minmax(0, .65fr) minmax(0, 1.35fr); gap: 16px; }
+  .packCopy { padding-left: 16px; }
+  .packCopy :is(h3, h4) { font-size: var(--fs-title); }
+  .packCopy > p:last-child { font-size: var(--fs-body); }
+  .benefit { grid-template-columns: 1fr 1fr; gap: 28px; align-items: center; }
+}
+@media (min-width: 1100px) {
+  .hero { grid-template-columns: 1fr 340px; gap: 48px; }
+  .introduction h1 { font-size: 64px; }
+  .section { padding: 36px 0; }
+  .sectionHeading :is(h2, h3) { font-size: var(--fs-h3); }
+  .pack { grid-template-columns: 260px minmax(0, 1fr); gap: 20px; }
+  .packCopy { padding-left: 20px; }
+  .packCopy :is(h3, h4) { font-size: var(--fs-h3); }
+  .packageNumber { font-size: var(--fs-label); }
+  .benefitCopy h3 { font-size: var(--fs-h2); }
+}
+
+.seatLabel { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.seatLabel strong { color: var(--color-nucleus); font-weight: 700; }
+.batchInfo { display: inline-grid; place-items: center; position: relative; padding: 0; border: 0; background: transparent; color: var(--color-star-dim); cursor: pointer; }
+.batchInfo::before { content: ""; position: absolute; width: 44px; height: 44px; }
+.batchInfo:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 4px; }
+
+.paymentTerms { margin: 0 0 12px; color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }
+
+@media (min-width: 768px) {
+  .benefit { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); }
+}
+
+.notice { font-size: var(--fs-body); line-height: 1.5; margin: 0 0 16px; }
+.memberStatus { color: var(--color-nucleus); font-size: var(--fs-title); font-weight: 700; }
+.textLink { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: var(--fs-body); color: var(--color-nucleus); }
+.shipmentStatus { text-transform: capitalize; font-size: var(--fs-body); line-height: 1.5; margin: 0; }
+
+.become > span:first-child { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+
+/* Original portrait contact sheet: 1.87× the image area of the 3:2 packs. */
+.consolePack .packImage { display: block; aspect-ratio: 1122 / 1402; overflow: visible; }
+.consolePack .packImage img { object-fit: contain; }
+.consolePack .packCopy > p:not(.packageNumber):not(.shipmentStatus) { margin: 0; font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
+.consolePack .textLink { flex-wrap: wrap; }
+
+.legacyPrice { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; }
+.legacyPrice s { color: var(--color-star-dim); font-size: var(--fs-title); }
+.legacyPrice strong { color: var(--color-nucleus); font-size: var(--fs-h2); margin-left: 6px; }
+.discountInfo { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--color-star-dim); cursor: pointer; }
+.discountInfo:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 2px; }
+.packCopy .packAccess { font-size: var(--fs-caption); color: var(--color-nucleus); }
+
+/* Reframe the original portrait photograph around the full letter and badge. */
+.initialPack .packImage { aspect-ratio: 1; }
+.initialPack .packImage img { object-position: center bottom; }
+
+/* Development comparison: benefits first, one checkout at the end of the page. */
+.bottomPayment .join { max-width: 560px; margin-inline: auto; }
+
+/* Benefits-first experiment: three chapters and a single featured Console pack. */
+.benefitsTitle { margin: 0; padding: 28px 0; border-top: 1px solid var(--bd-faint); font-size: var(--fs-h2); line-height: 1.15; font-weight: 700; }
+.benefitsTitle + .section { border-top: 0; padding-top: 0; }
+.chapter { display: block; margin-bottom: 8px; font: inherit; }
+.benefitsFirst .consolePack { position: relative; isolation: isolate; margin-bottom: 28px; }
+.benefitsFirst .consolePack::before { content: ''; position: absolute; inset: -12px -8px; z-index: -1; background: var(--color-nucleus); border: 1px solid var(--color-nucleus); pointer-events: none; }
+.benefitsFirst .consolePack .packImage { margin-bottom: 0; }
+.benefitsFirst .consolePack .packCopy { padding-bottom: 0; color: var(--color-deep); border-color: var(--color-deep); }
+.benefitsFirst .consolePack .packCopy::before { background: var(--color-deep); border-color: var(--color-deep); }
+.benefitsFirst .consolePack .packCopy > p,
+.benefitsFirst .consolePack .packCopy > p:not(.packageNumber):not(.shipmentStatus),
+.benefitsFirst .consolePack h4,
+.benefitsFirst .consolePack .textLink { color: var(--color-deep); }
+.benefitsFirst .consolePack .textLink { font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.benefitsFirst .consolePack a:focus-visible { outline-color: var(--color-deep); }
+.consoleCardLink { position: absolute; inset: -12px -8px; z-index: 1; }
+.benefitsFirst .consolePack .packImage,
+.benefitsFirst .consolePack .textLink { position: relative; z-index: 2; }
+.benefitsFirst .consolePack h4 { font-size: var(--fs-title); }
+@media (min-width: 768px) {
+  .benefitsTitle { padding-block: 36px; font-size: var(--fs-h1); }
+  .benefitsFirst .consolePack::before { inset: -16px -12px; }
+  .consoleCardLink { inset: -16px -12px; }
+  .benefitsFirst .consolePack { margin-block: 16px 44px; }
+  .benefitsFirst .consolePack h4 { font-size: var(--fs-h3); }
+}
+
+.faqItem { border-bottom: 1px solid var(--bd-faint); }
+.faqItem summary { padding: 16px 0; min-height: 44px; cursor: pointer; font-size: var(--fs-body); font-weight: 700; color: var(--color-star); }
+.faqItem summary:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.faqItem[open] summary { color: var(--color-nucleus); }
+.faqItem p { margin: 0 0 20px; font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
+
+.standardPrice { margin: 16px 0 12px; color: var(--color-nucleus); font-size: var(--fs-h1); font-weight: 700; line-height: 1.1; }
+.calibrationAction { width: 100%; min-height: 44px; padding: 0 0 12px; border: 0; border-bottom: 1px solid var(--color-nucleus); background: transparent; color: var(--color-star); text-align: left; cursor: pointer; font-family: inherit; }
+.calibrationAction:hover, .calibrationAction:hover .calibrationState { color: var(--color-nucleus); }
+.calibrationAction:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 4px; }
+
+/* Keep the compact member queue directly under the right-hand count. */
+.seats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.seats > div:last-child { padding: 0 0 0 24px; min-width: 0; }
+.seats dd.memberQueue { margin: 8px 0 0; font-size: var(--fs-caption); font-weight: 400; line-height: 1.4; }
+
+.seats > div:first-child { padding-right: 8px; }
+
+/* Reference: the divider sits about 32px below the overlapping portrait row. */
+.benefitsFirst .hero { padding-bottom: 32px; }
+.benefitsFirst .seats { margin-bottom: 0; }

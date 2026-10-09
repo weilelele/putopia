@@ -1,10 +1,11 @@
 'use server'
 
-import { revalidatePath, unstable_cache } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { IntelInsert, IntelUpdate } from '@/types/database'
 import { logActivity } from './activity-events'
 import { validateNoticeTiming } from '@/lib/intel-notice'
+import { getMyDigitalAccessRole } from './digital-access'
 import { requirePublishingArchitect, resolvePublishingIdentity } from '@/lib/publishing-identity'
 
 function revalidateIntel(id: string) {
@@ -14,14 +15,9 @@ function revalidateIntel(id: string) {
   revalidatePath('/console')
 }
 
-// Public intel (unclassified) — accessible to all including guests.
-// Enriched with publisher_avatar_url so cards can show the author avatar.
-//
-// Reads only classified=false rows, so it uses the admin client (no per-user
-// data) and is cached 60 s — both required to run inside unstable_cache, which
-// forbids cookie access. Cuts 2 DB queries off every console load.
-const getPublicIntelCached = unstable_cache(
-  async () => {
+// Public records are read fresh: a later classification change must not leave
+// the old article body in a cross-user server cache.
+async function readPublicIntel() {
     const admin = createAdminClient()
     const { data: items } = await admin
       .from('intel')
@@ -45,22 +41,20 @@ const getPublicIntelCached = unstable_cache(
       ...i,
       publisher_avatar_url: i.publisher_id ? (avatarMap[i.publisher_id] ?? null) : null,
     }))
-  },
-  ['public-intel'],
-  { revalidate: 60 },
-)
+}
 
 export async function getPublicIntel() {
-  return getPublicIntelCached()
+  return readPublicIntel()
 }
 
 // All intel visible to current user — RLS controls classified access
 export async function getAllIntel() {
   const supabase = await createClient()
-  const { data: items } = await supabase
-    .from('intel')
-    .select('*')
-    .order('timestamp', { ascending: false })
+  const role = await getMyDigitalAccessRole().catch(() => 'guest')
+  let query = supabase.from('intel').select('*')
+  if (role !== 'voyager' && role !== 'architect') query = query.eq('classified', false)
+  const { data: items, error } = await query.order('timestamp', { ascending: false })
+  if (error) throw new Error('Intel could not be loaded.')
 
   if (!items?.length) return []
 
@@ -82,11 +76,10 @@ export async function getAllIntel() {
 
 export async function getIntelById(id: string) {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('intel')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const role = await getMyDigitalAccessRole().catch(() => 'guest')
+  let query = supabase.from('intel').select('*').eq('id', id)
+  if (role !== 'voyager' && role !== 'architect') query = query.eq('classified', false)
+  const { data } = await query.maybeSingle()
 
   if (!data) return null
   const publisher = data.publisher_id ? await supabase.from('voyager_profiles').select('avatar_url').eq('id',data.publisher_id).maybeSingle() : {data:null}

@@ -1,6 +1,7 @@
+import { getDeviceClaimSupply } from '@/lib/actions/device-supply'
+import { getInitiationSnapshot } from '@/lib/actions/initiation'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { McConsolePanel } from '@/components/mc-console-panel'
-import { getDeviceBatchDiscussion } from '@/lib/actions/device-batch-community'
 import { getMyDeviceConsoles } from '@/lib/actions/orders'
 import { getDeviceCameraSource } from '@/lib/device-camera-source'
 import type { DeviceBatch } from '@/lib/device-batches'
@@ -10,18 +11,17 @@ export async function DeviceRooms({ batches, initialSlug }: {
   batches: DeviceBatch[]
   initialSlug: string
 }) {
-  const [discussions, consoles, mcFunctions] = await Promise.all([
-    Promise.all(batches.map((batch) => getDeviceBatchDiscussion(batch.slug))),
+  const [consoles, mcFunctions, initiation] = await Promise.all([
     getMyDeviceConsoles(),
     getMcFunctions(),
+    getInitiationSnapshot(),
   ])
-  const rooms = batches.map((batch, index) => ({
+  const rooms = await Promise.all(batches.map(async (batch) => ({
     batch,
+    claimAccess: { status: initiation.status, consoleClaim: initiation.consoleClaim, legacyPackPurchased: initiation.legacyPackPurchased, supplyStatus: await getDeviceClaimSupply(batch.slug) },
     camera: getDeviceCameraSource(batch),
-    canPost: discussions[index].canPost,
-    discussionPosts: discussions[index].posts,
     ownedConsole: consoles.find((console) => console.order.device_batch_slug === batch.slug) ?? null,
-  }))
+  })))
 
   return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} introduction={<McConsolePanel key="console-introduction" mcFunctions={mcFunctions} heroVideo={{ src: '/assets/device-reel.mp4', poster: '/assets/device-reel-poster.jpg' }} />} />
 }

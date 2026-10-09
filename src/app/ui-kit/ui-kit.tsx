@@ -11,6 +11,7 @@ import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveTabs } from '@/components/archive-tabs'
+import { DialogExamples } from './dialog-examples'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { UpdateTimeline, EventRail } from '@/components/dashboard-content'
 import { PrimaryNavigation } from '@/components/primary-navigation'
@@ -40,7 +41,7 @@ export function UiKit() {
   }
   return <main className="uk-root">
     <header className="uk-header">
-<h1>UI Kit · 2.3</h1>
+<h1>UI Kit · 2.4</h1>
 <p>Current implementation reference. All examples use local fixture data and shared product components.</p>
 <Link href="https://multiverse-ui-guide.pufflele.chatgpt.site/?doc=interactions">Read the interaction specification</Link>
 </header>
@@ -161,8 +162,9 @@ export function UiKit() {
 </ArchiveSheet>{deleted && <p role="status">Sample record deleted. No product data was changed.</p>}
       <section className="uk-section" id="shell-01">
 <h2>SHELL-01 · Modal and draft</h2>
-<p>Focus stays in the sheet. Escape, close and backdrop protect an edited draft.</p>
-<ArchiveButton onClick={() => setSheet(true)}>Open edit sheet</ArchiveButton>
+<DialogExamples />
+<p>Focus stays in the dialog. Escape, close and backdrop protect an edited draft.</p>
+<ArchiveButton onClick={() => setSheet(true)}>Open edit dialog</ArchiveButton>
 <ArchiveSheet open={sheet} onClose={() => { setSheet(false); setDraftName('') }} title="Edit display name" dirty={!!draftName.trim()}>
 <ArchiveField htmlFor="kit-sheet-name" label="DISPLAY NAME">
 <ArchiveInput id="kit-sheet-name" value={draftName} onChange={event => setDraftName(event.target.value)} />

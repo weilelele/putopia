@@ -1,6 +1,8 @@
 'use client'
+import { publicMemberBio } from '@/lib/public-member-bio'
 import { RootBrandHeader } from '@/components/root-brand-header'
 import { ArchiveInput, ArchiveTextarea } from '@/components/archive-input'
+import { memberInitials as getInitials } from '@/lib/member-initials'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -48,9 +50,6 @@ function accentColor(name: string): string {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
   return ACCENT_COLORS[Math.abs(hash) % ACCENT_COLORS.length]
-}
-function getInitials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
 function formatJoinDate(iso: string): string {
   return new Date(iso).toISOString().slice(0, 10)
@@ -454,7 +453,7 @@ function VoyagerCard({
             {voyager.location && <p>{voyager.location}</p>}
             {voyager.batch_label && <p>{voyager.batch_label}</p>}</div>
         </div>
-        {voyager.bio && <p className="voyager-profile-bio">{voyager.bio}</p>}
+        {voyager.bio && <p className="voyager-profile-bio">{publicMemberBio(voyager.bio)}</p>}
         <dl className="voyager-profile-stats">
           <div><dt>Observation days</dt><dd>{voyager.observation_days}</dd></div>
           <div><dt>Worlds discovered</dt><dd>{voyager.worlds_discovered}</dd></div>

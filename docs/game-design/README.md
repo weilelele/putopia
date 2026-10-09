@@ -1,5 +1,7 @@
 # Multiverse Collective — 玩法设计文档 / Game Design Document
 
+> **2026-10-04 · 商业化命名 / Commercial positioning:** [Voyager Initiation（中文）](./10-commerce/zh.md) / [English](./10-commerce/en.md) 记录新的 $520 入会方案、首批 100 席、三类权益及对外话术；旧 $12 机制仅作历史记录，新方案尚不代表已上线。 / The new positioning is documented, not a live rollout.
+
 > **2026-09-27 · Worlds 整合迭代 / Worlds integration:** [Dreamcatcher 梦境循环设计（中文）](../product/worlds-dreamcatcher-loop.zh.md)记录上报、队列、Cosmo、Dispatch 和连续 Round 的统一目标、现有缺口及分阶段改造计划。02/03 中与其冲突的历史描述不再作为新流程要求；新循环实现和生产状态见发布记录。 / This specification defines the proposed unified loop and rollout; conflicting legacy descriptions in 02/03 do not govern the new flow, whose implementation and production status are tracked in the release notes.
 
 > 本目录是 **Multiverse Collective（原 Putopia Collective）** 的完整玩法设计文档（GDD）。
@@ -41,7 +43,7 @@
 | 07 | 设备档案 / Device Archive | [`07-device-archive/`](./07-device-archive/) |
 | 08 | 多元宇宙控制台 / Multiverse Console | [`08-multiverse-console/`](./08-multiverse-console/) |
 | 09 | 社区与社交 / Community & Social | [`09-community-social/`](./09-community-social/) |
-| 10 | 商业化：航行者礼包 / Commerce: Voyager Pack | [`10-commerce/`](./10-commerce/) |
+| 10 | 商业化：Voyager Initiation / Commerce: Voyager Initiation | [`10-commerce/`](./10-commerce/) |
 | 11 | 获客与引导 / Onboarding & Acquisition | [`11-onboarding-acquisition/`](./11-onboarding-acquisition/) |
 | 12 | 后台与运营 / Admin & Operations | [`12-admin-ops/`](./12-admin-ops/) |
 

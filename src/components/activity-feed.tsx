@@ -1,5 +1,6 @@
 'use client'
 
+import { publicMemberBio } from '@/lib/public-member-bio'
 import { ArchiveButton } from '@/components/archive-button'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -372,7 +373,7 @@ export function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile
         {/* Bio */}
         {profile.bio && (
           <div style={{ padding: '14px 18px', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.65 }}>
-            {profile.bio}
+            {publicMemberBio(profile.bio)}
           </div>
         )}
 
