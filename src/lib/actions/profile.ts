@@ -5,6 +5,7 @@ import { AVATAR_MAX_BYTES, validateAvatar, validateProfileUpdate } from '@/lib/p
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { VoyagerProfileUpdate } from '@/types/database'
+import { visibleMemberProfiles } from '@/lib/member-visibility'
 import { upsertLoopsContact } from '@/lib/loops'
 
 export async function syncLoopsRegistration(
@@ -88,7 +89,7 @@ export async function getAllVoyagers() {
     .in('role', ['voyager', 'architect'])
     .order('joined_at', { ascending: true })
 
-  return data ?? []
+  return visibleMemberProfiles(data ?? [])
 }
 
 export async function getVoyagerById(id: string) {
@@ -98,7 +99,7 @@ export async function getVoyagerById(id: string) {
     .select('*')
     .eq('id', id)
     .single()
-  return data ?? null
+  return data ? (await visibleMemberProfiles([data]))[0] ?? null : null
 }
 
 // Architect-only: reassign a voyager's batch (writes past RLS via service role).
@@ -151,20 +152,25 @@ export async function getMemberProfile(id: string) {
     .select('id, display_name, avatar_url, role, account_kind, bio, location, batch_label, joined_at, observation_days, worlds_discovered, social_x, social_instagram, social_linkedin')
     .eq('id', id).maybeSingle()
   if (error) throw new Error('Member profile could not be loaded.')
-  return data
+  return data ? (await visibleMemberProfiles([data]))[0] ?? null : null
 }
 
 /** Read-only display milestone; never grants a role or changes entitlement. */
-export async function getMyProfileStages(): Promise<{ consoleBound: boolean }> {
+export async function getMyProfileStages(): Promise<{ consoleBound: boolean; accessRole: import('@/types/database').UserRole }> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError && authError.name !== 'AuthSessionMissingError') throw new Error('Your session could not be verified.')
-  if (!user) return { consoleBound: false }
-  // The shared predicate also verifies active payment entitlement. Merely having
-  // an assigned Unit must not preserve Holder status after a refund or dispute.
-  // Ownership always comes from the verified session, never caller input.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (createAdminClient() as any).rpc('has_bound_console', { p_user: user.id })
-  if (error || typeof data !== 'boolean') throw new Error('Your Console binding status could not be loaded.')
-  return { consoleBound: data }
+  if (!user) return { consoleBound: false, accessRole: 'guest' }
+  // Keep the display milestone separate from effective digital membership.
+  // A stored profile role is not proof of an active entitlement.
+  const [binding, access] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (createAdminClient() as any).rpc('has_bound_console', { p_user: user.id }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).rpc('effective_access_role'),
+  ])
+  if (binding.error || typeof binding.data !== 'boolean' || access.error || !['guest', 'applicant', 'voyager', 'architect'].includes(access.data)) {
+    throw new Error('Your membership and Console status could not be loaded.')
+  }
+  return { consoleBound: binding.data, accessRole: access.data }
 }

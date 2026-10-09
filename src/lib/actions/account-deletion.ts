@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
 import { deleteLoopsContact } from '@/lib/loops'
 import { DEVICE_SUPPORT_EMAIL } from '@/lib/device-purchase-terms'
 import {
@@ -31,10 +32,20 @@ export async function deleteMyAccount(confirmation: string): Promise<Result> {
   if (!user) return { error: 'Sign in again to delete your account.' }
 
   const admin = createAdminClient()
-  const { data: profile } = await admin.from('voyager_profiles').select('role').eq('id', user.id).maybeSingle()
-  if (profile?.role === 'architect') {
+  const { data: profile, error: profileError } = await admin.from('voyager_profiles').select('role').eq('id', user.id).maybeSingle()
+  if (profileError || !profile) return { error: 'Your account could not be verified. Please try again.' }
+  if (profile.role === 'architect') {
     return { error: `Architect accounts are handed over by the team first. Email ${DEVICE_SUPPORT_EMAIL}.` }
   }
+
+  // Hide the account before any destructive cleanup. Retained membership/order
+  // records still occupy their historical seat; deletion never releases inventory.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: visibilityError } = await (admin as any).from('account_deletions')
+    .upsert({ user_id: user.id }, { onConflict: 'user_id', ignoreDuplicates: true })
+  if (visibilityError) return { error: 'Account deletion could not be started. Please try again.' }
+  revalidatePath('/voyager-initiation')
+  revalidatePath('/voyagers')
 
   // 1. Content ------------------------------------------------------------------
   const comments = admin.from('comments' as never) as ReturnType<typeof admin.from>

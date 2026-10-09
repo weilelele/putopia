@@ -11,12 +11,12 @@ import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
 import { BackLink } from '@/components/back-link'
 import { AVATAR_MAX_BYTES } from '@/lib/profile-validation'
-import type { VoyagerProfile, VoyagerProfileUpdate } from '@/types/database'
+import type { VoyagerProfile, VoyagerProfileUpdate, UserRole } from '@/types/database'
 import styles from './profile.module.css'
 
 export type ProfileServices = {
   load: () => Promise<VoyagerProfile | null>
-  stages: () => Promise<{ consoleBound: boolean }>
+  stages: () => Promise<{ consoleBound: boolean; accessRole: UserRole }>
   save: (updates: VoyagerProfileUpdate) => Promise<{ error: string | null }>
   upload: (data: FormData) => Promise<{ error: string | null; url: string | null }>
   logout: () => Promise<void>
@@ -43,6 +43,7 @@ export function ProfileView({ services, accountSafety }: { services: ProfileServ
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [bound, setBound] = useState<boolean | null>(null)
+  const [accessRole, setAccessRole] = useState<UserRole | null>(null)
   const [stageError, setStageError] = useState(false)
   const [selected, setSelected] = useState<Stage | null>(null)
   const [avatar, setAvatar] = useState<File | null>(null)
@@ -54,8 +55,8 @@ export function ProfileView({ services, accountSafety }: { services: ProfileServ
 
   const loadStages = useCallback(async () => {
     setStageError(false)
-    try { setBound((await services.stages()).consoleBound) }
-    catch { setBound(null); setStageError(true) }
+    try { const stages = await services.stages(); setBound(stages.consoleBound); setAccessRole(stages.accessRole) }
+    catch { setBound(null); setAccessRole(null); setStageError(true) }
   }, [services])
 
   const load = useCallback(async () => {
@@ -76,7 +77,7 @@ export function ProfileView({ services, accountSafety }: { services: ProfileServ
     return () => URL.revokeObjectURL(preview)
   }, [preview])
 
-  const member = profile?.role === 'voyager' || profile?.role === 'architect'
+  const member = accessRole === 'voyager' || accessRole === 'architect'
   const current: Stage = bound ? 'holder' : member ? 'voyager' : 'applicant'
   const activeStage = selected ?? current
   const detail = stages.find(stage => stage.id === activeStage)!
@@ -146,7 +147,7 @@ export function ProfileView({ services, accountSafety }: { services: ProfileServ
             : <span>{profile.display_name.slice(0, 2).toUpperCase()}</span>}
         </div>
         <div className={styles.identityText}>
-          <p className={styles.eyebrow}>{profile.role === 'architect' ? 'ARCHITECT' : stages.find(stage => stage.id === current)!.label.toUpperCase()}{member && profile.batch_label ? ` · ${profile.batch_label}` : ''}</p>
+          <p className={styles.eyebrow}>{accessRole === 'architect' ? 'ARCHITECT' : stages.find(stage => stage.id === current)!.label.toUpperCase()}{member && profile.batch_label ? ` · ${profile.batch_label}` : ''}</p>
           <div className={styles.nameRow}><h2>{profile.display_name}</h2><ArchiveButton variant="ghost" onClick={() => { setForm(editFields(profile)); setAvatar(null); setPreview(null); setMessage(null); setEditing(true) }} aria-label="Edit profile"><Pencil size={16} /> EDIT</ArchiveButton></div>
           <p className={styles.hint}>Just your identity in the collective.</p>
         </div>
@@ -174,8 +175,8 @@ export function ProfileView({ services, accountSafety }: { services: ProfileServ
         <div className={styles.permissions} id="profile-permissions" role="region" aria-labelledby={`profile-stage-${activeStage}`} aria-live="polite">
           <p>{detail.description}</p>
           <ul>{detail.permissions.map(permission => <li key={permission}>{permission}</li>)}</ul>
-          {activeStage === 'holder' && stageError && <p className={styles.hint}>Device binding could not be verified.</p>}
-          {stageError && <ArchiveButton variant="ghost" onClick={() => void loadStages()}>RETRY DEVICE STATUS</ArchiveButton>}
+          {stageError && <p className={styles.hint}>Membership and device status could not be verified.</p>}
+          {stageError && <ArchiveButton variant="ghost" onClick={() => void loadStages()}>RETRY ACCESS STATUS</ArchiveButton>}
           {activeStage === 'holder' && bound && <Link className={styles.textLink} href="/devices/my-consoles">MY CONSOLES <ArrowRight size={16} /></Link>}
         </div>
       </section>

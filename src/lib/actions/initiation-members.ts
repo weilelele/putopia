@@ -1,5 +1,6 @@
 'use server'
 
+import { visibleMemberProfiles } from '@/lib/member-visibility'
 import { createAdminClient } from '@/lib/supabase/server'
 import { INITIATION_BATCH, type InitiationPublicMember } from '@/lib/initiation-types'
 
@@ -16,10 +17,11 @@ export async function getInitiationPublicMembers(): Promise<InitiationPublicMemb
       .eq('batch', INITIATION_BATCH).eq('active', true)
       .order('created_at', { ascending: true }).order('user_id', { ascending: true })
     if (error) return []
-    return (data ?? []).map((row: { voyager_profiles: { id: string; display_name: string | null; avatar_url: string | null } }) => ({
-      id: row.voyager_profiles.id,
-      displayName: row.voyager_profiles.display_name?.trim() || 'Voyager',
-      avatarUrl: row.voyager_profiles.avatar_url,
+    const profiles = await visibleMemberProfiles<{ id: string; display_name: string | null; avatar_url: string | null }>((data ?? []).map((row: { voyager_profiles: { id: string; display_name: string | null; avatar_url: string | null } }) => row.voyager_profiles))
+    return profiles.map(profile => ({
+      id: profile.id,
+      displayName: profile.display_name?.trim() || 'Voyager',
+      avatarUrl: profile.avatar_url,
     }))
   } catch { return [] }
 }

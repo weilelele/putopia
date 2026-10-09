@@ -16,7 +16,7 @@ export function ProfilePreview({ mode }: { mode: 'applicant' | 'voyager' | 'hold
     }
     return {
       load: async () => profile,
-      stages: async () => ({ consoleBound: mode === 'holder' }),
+      stages: async () => ({ consoleBound: mode === 'holder', accessRole: profile.role }),
       save: async () => ({ error: null }),
       upload: async data => {
         const file = data.get('avatar')
