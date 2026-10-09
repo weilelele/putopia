@@ -27,6 +27,11 @@ function formatDate(iso: string) {
 }
 
 export default function IntelDetailPage() {
+  const { user, accessRole, loading } = useAuth()
+  return <IntelDetailContent key={`${user.id ?? 'guest'}:${accessRole}:${loading}`} />
+}
+
+function IntelDetailContent() {
   const params = useParams()
   const id = params?.id as string
   const { user } = useAuth()

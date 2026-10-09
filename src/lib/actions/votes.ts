@@ -2,21 +2,11 @@
 
 import { revalidatePath, unstable_cache } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import type { Vote, UserRole, VoteInsert, VoteResponseInsert } from '@/types/database'
+import type { Vote, VoteInsert, VoteResponseInsert } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
+import { normalizeVoteScope, voteSubmissionError, validAnonymousVoteToken } from '@/lib/digital-access'
+import { getMyDigitalAccessRole } from './digital-access'
 import { logActivity } from './activity-events'
-
-// Converts legacy single-string scope (pre-schema_v8) to UserRole[]
-function normalizeScope(scope: unknown): UserRole[] {
-  if (Array.isArray(scope)) return scope as UserRole[]
-  switch (scope) {
-    case 'public':
-    case 'applicant': return ['applicant', 'voyager', 'architect']
-    case 'voyager':   return ['voyager', 'architect']
-    case 'architect': return ['architect']
-    default:          return ['applicant', 'voyager', 'architect']
-  }
-}
 
 // All votes visible to everyone (scope controls who can participate, not who can view)
 // Cached 30 s — the vote list is identical for every viewer and loads on the console.
@@ -29,7 +19,7 @@ const getAllVotesCached = unstable_cache(
       .order('created_at', { ascending: false })
 
     if (error) throw new Error('Votes could not be loaded')
-    return (data ?? []).map((v) => ({ ...v, scope: normalizeScope(v.scope) })) as Vote[]
+    return (data ?? []).map((v) => ({ ...v, scope: normalizeVoteScope(v.scope) })) as Vote[]
   },
   ['all-votes'],
   { revalidate: 30 },
@@ -108,31 +98,27 @@ export async function submitVoteResponse(response: Omit<VoteResponseInsert, 'use
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Fetch display_name + role + vote question in parallel
-  let voterName: string | null = null
-  let voterRole = 'voyager'
-  let voteQuestion: string | null = null
-
-  const fetches: Promise<void>[] = []
-
-  if (user) {
-    fetches.push(
-      supabase.from('voyager_profiles').select('display_name, role').eq('id', user.id).single()
-        .then(({ data: p }) => { voterName = p?.display_name ?? null; voterRole = p?.role ?? 'voyager' }) as Promise<void>
-    )
+  let effectiveRole
+  try { effectiveRole = await getMyDigitalAccessRole() } catch { return { error: 'Member access could not be verified.' } }
+  if (!user && !validAnonymousVoteToken(anonToken)) return { error: 'A valid anonymous voting token is required.' }
+  const { data: vote, error: voteError } = await createAdminClient().from('votes').select('*').eq('id', response.vote_id).single()
+  if (voteError || !vote) return { error: 'Vote could not be found.' }
+  const validation = voteSubmissionError(vote, effectiveRole, response.selected_options, Date.now())
+  if (validation) return { error: validation }
+  if (vote.device_batch_slug) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const batchAccess = await (supabase as any).rpc('can_vote_in_device_batch', { p_batch: vote.device_batch_slug })
+    if (batchAccess.error || batchAccess.data !== true) return { error: 'Only confirmed holders can vote in this Batch.' }
   }
-  // Use admin client so RLS never silently swallows the title fetch
-  const adminForTitle = createAdminClient()
-  fetches.push(
-    adminForTitle.from('votes').select('title').eq('id', response.vote_id).single()
-      .then(({ data: v }) => { voteQuestion = (v as { title?: string } | null)?.title ?? null }) as Promise<void>
-  )
-  await Promise.all(fetches)
-
+  const profile = user ? await supabase.from('voyager_profiles').select('display_name,role').eq('id', user.id).single() : { data: null }
+  const voterName = profile.data?.display_name ?? null
+  const voterRole = profile.data?.role ?? 'guest'
+  const voteQuestion = vote.title
   const insert: VoteResponseInsert = {
-    ...response,
+    vote_id: vote.id,
+    selected_options: response.selected_options,
     user_id: user?.id ?? null,
-    anon_token: user ? null : (anonToken ?? null),
+    anon_token: user ? null : anonToken!,
     voter_name: voterName,
   }
 

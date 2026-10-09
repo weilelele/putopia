@@ -17,18 +17,10 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveCard } from '@/components/archive-card'
 import Link from 'next/link'
-import { createClientDataCache } from '@/lib/client-data-cache'
 import { PrimaryTabLoading } from '@/components/primary-tab-loading'
 import { NoticeStatus } from '@/components/notice-status'
 
 type FilterTab = 'all' | 'public' | 'classified'
-
-type IntelPageData = {
-  intel: IntelWithAvatar[]
-  commentCounts: Record<string, number>
-}
-
-const intelPageCache = createClientDataCache<IntelPageData>(5 * 60_000)
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -45,7 +37,7 @@ function ClassifiedWall() {
         This content is classified. Access restricted to Voyager and above.
       </p>
       <ArchiveLinkButton
-        href="/voyager-pack"
+        href="/voyager-initiation"
         variant="primary"
       >
         BECOME A VOYAGER
@@ -92,13 +84,17 @@ export default function IntelPage() {
 }
 
 function IntelPageContent() {
+  const { user, accessRole, loading } = useAuth()
+  return <IntelPageData key={`${user.id ?? 'guest'}:${accessRole}:${loading}`} />
+}
+
+function IntelPageData() {
   const { isAtLeast } = useAuth()
-  const cached = intelPageCache.peek()
-  const [intel, setIntel] = useState<IntelWithAvatar[]>(() => cached?.intel ?? [])
+  const [intel, setIntel] = useState<IntelWithAvatar[]>([])
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>(
-    () => cached?.commentCounts ?? {},
+    {},
   )
-  const [loading, setLoading] = useState(!cached)
+  const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   // Deep-link support: /intel?tab=classified opens the Classified tab directly
@@ -108,17 +104,17 @@ function IntelPageContent() {
     tabParam === 'classified' || tabParam === 'public' ? tabParam : 'all',
   )
 
-  const loadIntel = useCallback(async (force = false) => {
+  const loadIntel = useCallback(async () => {
     setLoading(true)
     setLoadError(false)
     try {
-      const next = await intelPageCache.load(async () => {
+      const next = await (async () => {
         const items = await getAllIntel() as IntelWithAvatar[]
         const counts = items.length > 0
           ? await getCommentCountsBulk('intel', items.map((entry) => entry.id))
           : {}
         return { intel: items, commentCounts: counts }
-      }, force)
+      })()
       setIntel(next.intel)
       setCommentCounts(next.commentCounts)
     } catch {
@@ -138,7 +134,7 @@ function IntelPageContent() {
 
   const showClassifiedWall = activeFilter === 'classified' && !isAtLeast('voyager')
 
-  if (loading && !cached) return <PrimaryTabLoading kind="collection" />
+  if (loading) return <PrimaryTabLoading kind="collection" />
 
   return (
     <div className="main pilot-archive-page archive-collection-page archive-intel-page" data-route-scroll>
@@ -160,7 +156,7 @@ function IntelPageContent() {
           {visibleIntel[0] && <IntelCard lead entry={visibleIntel[0]} commentCount={commentCounts[visibleIntel[0].id] ?? 0} />}
           {visibleIntel.length > 1 && <section aria-labelledby="recent-intel"><h2 id="recent-intel" className="archive-list-heading">RECENT</h2>{visibleIntel.slice(1).map(entry => <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />)}</section>}
           {loading && <p role="status">Loading intel…</p>}
-          {loadError && <div role="alert"><p>Intel could not be loaded.</p><ArchiveButton variant="secondary" onClick={() => void loadIntel(true)}>Retry</ArchiveButton></div>}
+          {loadError && <div role="alert"><p>Intel could not be loaded.</p><ArchiveButton variant="secondary" onClick={() => void loadIntel()}>Retry</ArchiveButton></div>}
           {!loading && !loadError && !visibleIntel.length && <p>No intel in this category yet.</p>}
         </>}
       </div>
@@ -180,7 +176,7 @@ function IntelPageContent() {
       {showCreate && (
         <CreateIntelModal
           onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); void loadIntel(true) }}
+          onCreated={() => { setShowCreate(false); void loadIntel() }}
           existingItems={intel}
         />
       )}

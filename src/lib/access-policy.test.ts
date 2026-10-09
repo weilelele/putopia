@@ -10,7 +10,7 @@ import {
 describe('primary route access policy', () => {
   it('opens every primary tab and the recorded-world archive to guests and incomplete registrations', () => {
     expect(PUBLIC_PRIMARY_ROUTES).toEqual(['/console', '/intel', '/devices', '/worlds', '/voyagers'])
-    for (const route of [...PUBLIC_PRIMARY_ROUTES, '/worlds/live']) {
+    for (const route of [...PUBLIC_PRIMARY_ROUTES, '/worlds/live', '/voyager-initiation', '/voyager-path']) {
       for (const path of [route, `${route}/`]) {
         expect(allowsUnregisteredViewer(path)).toBe(true)
         expect(requiresRegistration(path)).toBe(false)

@@ -24,8 +24,8 @@ type Props = {
 
 type FilterTab = 'all' | 'public' | 'classified'
 
-// A vote is "classified" if applicants cannot participate (scope excludes 'applicant')
-const isClassified = (v: Vote) => !v.scope.includes('applicant')
+// Explicit guest/public participation belongs in the public filter.
+const isClassified = (v: Vote) => !v.scope.includes('applicant') && !v.scope.includes('guest')
 
 // ─── Classified wall ──────────────────────────────────────────────────────────
 function ClassifiedWall() {
@@ -36,7 +36,7 @@ function ClassifiedWall() {
         This content is classified. Access restricted to Voyager and above.
       </p>
       <ArchiveLinkButton
-        href="/voyager-pack"
+        href="/voyager-initiation"
         variant="primary"
       >
         BECOME A VOYAGER

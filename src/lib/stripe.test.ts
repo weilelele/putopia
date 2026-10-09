@@ -6,6 +6,8 @@ describe('Stripe configuration validation', () => {
     expect(isStripeSecretKey('sk_live_example123')).toBe(true)
     expect(isStripeSecretKey('sk_test_example123')).toBe(true)
     expect(isStripeSecretKey('rk_live_example123')).toBe(true)
+    expect(isStripeSecretKey('rkcs_test_example123')).toBe(true)
+    expect(isStripeSecretKey('rkcs_live_example123')).toBe(false)
   })
 
   it('rejects placeholders and publishable keys', () => {

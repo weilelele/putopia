@@ -19,6 +19,8 @@ describe('UI navigation contract', () => {
   it('preserves ownership for deep routes without matching similar prefixes', () => {
     expect(ownerTab('/logs/42')).toBe('/voyagers')
     expect(ownerTab('/profile')).toBe('/voyagers')
+    expect(ownerTab('/voyager-initiation')).toBe('/voyagers')
+    expect(hasGlobalNavigation('/voyager-initiation')).toBe(true)
     expect(ownerTab('/worlds/42')).toBe('/worlds')
     expect(ownerTab('/worldflow')).toBe('/worlds')
     expect(ownerTab('/devices-unrelated')).toBeNull()
@@ -34,6 +36,10 @@ describe('UI navigation contract', () => {
     expect(ownerTab('/login')).toBeNull()
     expect(ownerTab('/register')).toBeNull()
     expect(fallbackRoute('/login')).toBe('/console')
+  })
+  it('returns Initiation and old path links to Dashboard', () => {
+    expect(fallbackRoute('/voyager-initiation')).toBe('/console')
+    expect(fallbackRoute('/voyager-path')).toBe('/console')
   })
   it('gives deep links stable parents and rejects external return targets', () => {
     expect(fallbackRoute('/logs/42')).toBe('/logs')

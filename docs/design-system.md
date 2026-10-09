@@ -1,5 +1,7 @@
 # Multiverse Collective / Multiverse Console UI 规范
 
+> **2026-10-09 弹窗更正（用户已选定）：** 手机与宽屏均默认使用独立居中的 Dialog，不再使用底部上拉 Sheet。统一采用无围框深蓝面板、左上短橙线、右上关闭、紧凑标题；遮罩覆盖底部 Tab 栏并阻止背景交互。短说明、带按钮、成员详情和长文共享同一外壳，高度由内容决定。正式尺寸、接口与示例见 [C24](design/ui-components.md#c24--独立-dialog) 和 [选定参考](design/reference/dialogs-20261009/README.md)。本条取代所有“手机默认 BottomSheet”的旧规则。
+
 > **2026-09-29 最新更正：** 游客 Dashboard 采用原始大字标 → 140px 图形 Logo → 介绍 → 两个入口的居中纵向布局，取代该页游客态的左上紧凑品牌区；原品牌图片完整等比显示。其他一级页及登录态保留紧凑品牌区。登录态欢迎语按身份区分：Voyager / Architect 显示 WELCOME, VOYAGER，Applicant 及尚未取得成员身份的账户显示 WELCOME, APPLICANT，且不显示已被选中探索的说明。本条取代下方统一 VOYAGER 的旧规则。
 
 > **2026-09-29 Dashboard 游客入口恢复：** 未登录用户在紧凑品牌区下、数字看板前显示原介绍 “We own devices looking into parallel worlds.”，随后并排显示 REQUEST ACCESS（主按钮，`/new`）与 LOG IN（次按钮，`/login`）。窄屏及放大字体允许自然换行。登录后保留 WELCOME, VOYAGER 与身份状态，不显示这组游客入口。原数字看板、Updates、Events 顺序不变。
@@ -8,7 +10,7 @@
 
 **影像设计第一原则：照片级真实感。** 设备效果图、场景背景、世界画面与宣传帧首先必须像真实相机拍摄的画面，真实感优先于氛围、风格、构图与制作速度。明显重复纹理、伪文字、不成立的光影／几何或渲染感均须返工或替换，不得作为正式素材发布。执行[图片生成规范与逐图准入检查](device-reference/image-generation-spec.zh.md)。本原则约束影像素材；原始产品结构、UI 母版及界面设计规则分别保持其依据。
 
-版本：2.3 · 2026-09-09 · 全站改版的权威入口。
+版本：2.4 · 2026-10-09 · 全站改版的权威入口。
 
 > **本文件是唯一权威设计规范。** 配套文档属于同一套规范。本文件定义设计标准；预览分支已迁移共享组件和一批页面，具体改动与验收范围见 [实现进度](design/implementation/README.md)。不能将共享样式覆盖等同于所有页面已完整验收。
 >

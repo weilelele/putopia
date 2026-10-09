@@ -2,8 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
-import { captureDeviceServerEvent } from '@/lib/device-analytics-server'
-import { withoutHiddenComments } from '@/lib/moderation'
 
 export type DeviceBatchDecisionOption = {
   detail: string
@@ -45,16 +43,6 @@ export type DeviceBatchDecisionAdminOption = {
   code: string
   name: string
   slug: string
-}
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'MC'
 }
 
 async function getViewer(batchSlug: string): Promise<Viewer | null> {
@@ -164,10 +152,10 @@ export async function castDeviceBatchVote(
     return { error: 'Choose a valid option.' }
   }
 
-  // Server-side holder verification is authoritative; the admin write allows a
-  // holder to revise their response until the decision closes.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (admin.from('vote_responses') as any)
+  // Keep the verified JWT on the write so DB scope/holder/ownership checks apply.
+  // The narrow batch-response UPDATE policy permits revisions before closing.
+  const client = await createClient()
+  const { error } = await client.from('vote_responses')
     .upsert({
       vote_id: voteId,
       user_id: viewer.userId,
@@ -256,106 +244,17 @@ export async function closeDeviceBatchDecision(
 }
 
 export async function getDeviceBatchDiscussion(
-  batchSlug: string,
+  _batchSlug: string,
 ): Promise<{ canPost: boolean; posts: DeviceBatchDiscussionPost[] }> {
-  const admin = createAdminClient()
-  const viewer = await getViewer(batchSlug)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rows } = await (admin.from('comments') as any)
-    .select('id, created_at, author_name, body, parent_id, image_paths, author_id')
-    .eq('subject_type', 'device_batch')
-    .eq('subject_id', batchSlug)
-    .eq('is_visible', true)
-    .order('created_at', { ascending: false })
-    .limit(400)
-
-  const visibleRows = await withoutHiddenComments((rows ?? []) as { id: string; author_id: string | null; parent_id: string | null }[]) as typeof rows
-  const authorIds = [...new Set((visibleRows ?? []).map((row: { author_id: string | null }) => row.author_id).filter(Boolean))]
-  const { data: profiles } = authorIds.length
-    ? await admin.from('voyager_profiles').select('id, display_name, role').in('id', authorIds as string[])
-    : { data: [] }
-  const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
-  const replyCounts = new Map<string, number>()
-  for (const row of visibleRows ?? []) {
-    if (row.parent_id) replyCounts.set(row.parent_id, (replyCounts.get(row.parent_id) ?? 0) + 1)
-  }
-
-  const posts = (visibleRows ?? [])
-    .filter((row: { parent_id: string | null }) => !row.parent_id)
-    .map((row: {
-      author_id: string | null
-      author_name: string
-      body: string
-      created_at: string
-      id: string
-      image_paths: string[] | null
-    }) => {
-      const profile = row.author_id ? profileById.get(row.author_id) : null
-      const author = profile?.display_name ?? row.author_name
-      return {
-        author,
-        body: row.body,
-        id: row.id,
-        imageSources: row.image_paths ?? [],
-        initials: initials(author),
-        mine: !!viewer && row.author_id === viewer.userId,
-        replyCount: replyCounts.get(row.id) ?? 0,
-        role: profile?.role === 'architect' ? 'ARCHITECT' : 'HOLDER',
-        timestamp: row.created_at,
-      }
-    })
-
-  return { canPost: !!viewer?.canParticipate, posts }
+  void _batchSlug // Retain the old action signature for cached clients.
+  return { canPost: false, posts: [] }
 }
 
 export async function postDeviceBatchDiscussion(
-  batchSlug: string,
-  body: string,
-  imagePaths: string[] = [],
+  _batchSlug: string,
+  _body: string,
+  _imagePaths?: string[],
 ): Promise<{ error: string | null; post: DeviceBatchDiscussionPost | null }> {
-  const viewer = await getViewer(batchSlug)
-  if (!viewer) return { error: 'Sign in to post.', post: null }
-  if (!viewer.canParticipate) {
-    return { error: 'Only confirmed holders can post to this Batch.', post: null }
-  }
-  const text = body.trim()
-  if (!text && imagePaths.length === 0) {
-    return { error: 'Write a message or attach an image.', post: null }
-  }
-
-  const admin = createAdminClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (admin.from('comments') as any)
-    .insert({
-      subject_type: 'device_batch',
-      subject_id: batchSlug,
-      author_id: viewer.userId,
-      author_name: viewer.displayName,
-      author_avatar_url: null,
-      body: text || 'Shared an image with this Batch.',
-      image_paths: imagePaths.slice(0, 3),
-    })
-    .select('id, created_at, body, image_paths')
-    .single()
-  await captureDeviceServerEvent(viewer.userId, error || !data ? 'device_discussion_post_error' : 'device_discussion_posted', {
-    batch_slug: batchSlug, image_count: Math.min(imagePaths.length, 3), error: error?.message ?? null,
-  })
-  if (error || !data) return { error: error?.message ?? 'Could not post message.', post: null }
-
-  revalidatePath(`/devices/batches/${batchSlug}`)
-  revalidatePath(`/devices/batches/${batchSlug}/discussion`)
-  return {
-    error: null,
-    post: {
-      author: viewer.displayName,
-      body: data.body,
-      id: data.id,
-      imageSources: data.image_paths ?? [],
-      initials: initials(viewer.displayName),
-      mine: true,
-      replyCount: 0,
-      role: viewer.role === 'architect' ? 'ARCHITECT' : 'HOLDER',
-      timestamp: data.created_at,
-    },
-  }
+  void [_batchSlug, _body, _imagePaths] // Reject cached clients without reading or writing data.
+  return { error: 'Device Discussion has closed. Existing records are preserved.', post: null }
 }
