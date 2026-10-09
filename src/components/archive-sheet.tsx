@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { ArchiveButton } from './archive-button'
 /** Native dialog supplies modal focus containment, background inertness and focus return. */
-export function ArchiveSheet({ open, onClose, title, dirty = false, busy = false, className, headerless = false, footer, size = 'default', children }: { open: boolean; onClose: () => void; title: string; dirty?: boolean; busy?: boolean; children: ReactNode; className?: string; headerless?: boolean; footer?: ReactNode; size?: 'default' | 'wide' }) {
+export function ArchiveSheet({ open, onClose, title, dirty = false, busy = false, className, headerless = false, footer, size = 'default', children }: { open: boolean; onClose: () => void; title: string; dirty?: boolean; busy?: boolean; children: ReactNode; className?: string; headerless?: boolean; footer?: ReactNode; size?: 'default' | 'wide' | 'fullscreen' }) {
   const titleId = useId()
   const keepEditing = useRef<HTMLButtonElement>(null)
   const closeButton = useRef<HTMLButtonElement>(null)

@@ -4489,3 +4489,11 @@ button.world-byline { cursor: pointer; }
 .world-report.is-first { border-color: var(--color-nucleus); }
 .world-report__flag { padding: 2px 8px; font-size: var(--fs-caption); letter-spacing: .04em; color: #080C20; background: var(--color-nucleus); }
 .world-detail__notice { margin: 0 0 12px; font-size: var(--fs-label); line-height: 1.6; color: var(--color-star-dim); }
+
+/* Focused multi-step flows take over the viewport after their introduction. */
+.archive-sheet--fullscreen { inset: 0; width: 100%; max-width: none; height: 100dvh; max-height: none; margin: 0; border-radius: 0; }
+.archive-sheet--fullscreen > header { padding-top: max(24px, env(safe-area-inset-top)); }
+.archive-sheet--fullscreen .archive-sheet__close { top: max(8px, env(safe-area-inset-top)); }
+.archive-sheet--fullscreen > .archive-sheet__body { flex: 1; width: 100%; padding: 24px 20px max(32px, env(safe-area-inset-bottom)); }
+.archive-sheet--fullscreen .archive-quiz-shell { max-width: 720px; margin-inline: auto; }
+@media (min-width: 768px) { .archive-sheet--fullscreen > .archive-sheet__body { padding-top: 48px; } }

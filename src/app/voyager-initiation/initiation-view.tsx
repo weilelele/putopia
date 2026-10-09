@@ -60,6 +60,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
   const [calibrated, setCalibrated] = useState(snapshot.calibrated)
   const [dialog, setDialog] = useState<'calibration' | 'batch' | 'initiated' | 'legacy-discount' | null>(null)
   const [busy, setBusy] = useState(false)
+  const [calibrationStarted, setCalibrationStarted] = useState(false)
   const [quizBusy, setQuizBusy] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [error, setError] = useState('')
@@ -221,8 +222,8 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
       </section>
     </div>
 
-    <ArchiveSheet size="wide" headerless open={dialog === 'calibration'} onClose={() => { setDialog(null); setDirty(false) }} title="Signal Calibration" busy={quizBusy} dirty={dirty} className={styles.calibrationDialog}>
-      {dialog === 'calibration' && <VoyagerProfileQuiz calibration services={quizServices} onComplete={completed} onReturn={() => setDialog(null)} onBusyChange={setQuizBusy} onDirtyChange={setDirty} />}
+    <ArchiveSheet size={calibrationStarted ? 'fullscreen' : 'wide'} headerless open={dialog === 'calibration'} onClose={() => { setDialog(null); setDirty(false); setCalibrationStarted(false) }} title="Signal Calibration" busy={quizBusy} dirty={dirty} className={styles.calibrationDialog}>
+      {dialog === 'calibration' && <VoyagerProfileQuiz calibration services={quizServices} onComplete={completed} onReturn={() => { setDialog(null); setCalibrationStarted(false) }} onStart={() => setCalibrationStarted(true)} onBusyChange={setQuizBusy} onDirtyChange={setDirty} />}
     </ArchiveSheet>
     <ArchiveSheet headerless open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">
       <p>Members who previously paid $12 for the Initial Pack receive a $120 discount on Voyager Initiation.</p>

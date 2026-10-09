@@ -397,3 +397,7 @@ Dashboard 顶部数字看板使用 ArchiveStatStrip，保留原统计口径与�
 ### RootBrandHeader
 
 仅用于五个 Tab 的一级页。原图形与原字标等比显示，图形宽 28px、字标宽 108–120px，首行最小 56px。右侧 children 保留当前页面操作；二级页不渲染组件。侧栏可见时隐藏内容区品牌，无操作的品牌行同时移除占位。
+
+### Signal Calibration 全屏流程例外（2026-10-09）
+
+用户确认：开始前介绍使用独立 Dialog；点击 START CALIBRATION 后使用 ArchiveSheet 的 `size="fullscreen"` 接管整个视口，隐藏背景页面及导航。保留关闭、未保存退出确认和保存中保护。完成后返回原 Initiation 页面。此项只适用于多步骤校准流程，普通提示和编辑弹窗保持原尺寸。

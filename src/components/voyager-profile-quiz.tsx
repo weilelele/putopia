@@ -17,10 +17,11 @@ export type VoyagerQuizServices = {
 }
 const defaultServices: VoyagerQuizServices = { load: getVoyagerIntake, save: saveVoyagerIntake }
 
-export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, onBusyChange, onDirtyChange, services = defaultServices }: {
+export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, onStart, onBusyChange, onDirtyChange, services = defaultServices }: {
   calibration?: boolean
   onComplete?: () => void
   onReturn?: () => void
+  onStart?: () => void
   onBusyChange?: (busy: boolean) => void
   onDirtyChange?: (dirty: boolean) => void
   services?: VoyagerQuizServices
@@ -118,7 +119,7 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
             <ArchivePageHeader title={calibration ? "SIGNAL" : "ESTABLISH YOUR"} accent={calibration ? "CALIBRATION" : "VOYAGER PROFILE"} />
             <p className="archive-page-intro">{calibration ? "Complete your calibration before joining." : "Discover our shared purpose and add your perspective to the Collective."}</p>
             <p className="archive-page-intro">5 questions</p>
-            <ArchiveButton onClick={() => setStep('question')} variant="primary">{calibration ? "START CALIBRATION →" : "BEGIN MY PROFILE →"}</ArchiveButton>
+            <ArchiveButton onClick={() => { setStep('question'); onStart?.() }} variant="primary">{calibration ? "START CALIBRATION →" : "BEGIN MY PROFILE →"}</ArchiveButton>
           </div>
         ) : step === 'result' ? (
           <ArchiveCard className="archive-quiz-state">
