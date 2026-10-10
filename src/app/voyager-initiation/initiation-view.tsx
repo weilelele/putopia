@@ -225,7 +225,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
     <ArchiveSheet size={calibrationStarted ? 'fullscreen' : 'wide'} headerless open={dialog === 'calibration'} onClose={() => { setDialog(null); setDirty(false); setCalibrationStarted(false) }} title="Signal Calibration" busy={quizBusy} dirty={dirty} className={styles.calibrationDialog}>
       {dialog === 'calibration' && <VoyagerProfileQuiz calibration services={quizServices} onComplete={completed} onReturn={() => { setDialog(null); setCalibrationStarted(false) }} onStart={() => setCalibrationStarted(true)} onBusyChange={setQuizBusy} onDirtyChange={setDirty} />}
     </ArchiveSheet>
-    <ArchiveSheet headerless open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">
+    <ArchiveSheet open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">
       <p>Members who previously paid $12 for the Initial Pack receive a $120 discount on Voyager Initiation.</p>
       <p>Complete your Initiation for $400 instead of $520.</p>
     </ArchiveSheet>

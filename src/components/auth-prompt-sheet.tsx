@@ -19,10 +19,11 @@ export function AuthPromptSheet({
 }) {
   const query = `?redirect=${encodeURIComponent(redirect)}`
   return (
-    <ArchiveSheet open={open} onClose={onClose} title={title}>
-      <p style={{ margin: 0, fontSize: 'var(--fs-body)', lineHeight: 1.6, color: 'var(--color-star-dim)' }}>{message}</p>
+    <ArchiveSheet open={open} onClose={onClose} title={title} footer={<div className="archive-sheet__actions">
       <ArchiveLinkButton href={`/register${query}`} variant="primary">REGISTER</ArchiveLinkButton>
       <ArchiveLinkButton href={`/login${query}`} variant="secondary">I ALREADY HAVE AN ACCOUNT · LOG IN</ArchiveLinkButton>
+    </div>}>
+      <p style={{ margin: 0, fontSize: 'var(--fs-body)', lineHeight: 1.6, color: 'var(--color-star-dim)' }}>{message}</p>
     </ArchiveSheet>
   )
 }

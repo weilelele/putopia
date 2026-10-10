@@ -2,6 +2,9 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { ArchiveSheet } from '@/components/archive-sheet'
+import { MemberProfileContent } from '@/components/member-profile-content'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { MessageSquare, Radio } from 'lucide-react'
 import Link from 'next/link'
 import { WorldPoster } from '@/components/world-poster'
@@ -508,106 +511,23 @@ function VoteModal({ vote, onClose }: { vote: VoteCard; onClose: () => void }) {
 
 // ─── Voyager intro modal ──────────────────────────────────────────────────────
 
-function fmtDate(iso?: string | null) {
-  if (!iso) return ''
-  return new Date(iso).toISOString().slice(0, 10).replace(/-/g, '.')
-}
+
 
 function VoyagerIntroModal({ person, onClose }: { person: Person; onClose: () => void }) {
   const [profile, setProfile] = useState<VoyagerProfile | null>(null)
   const [loading, setLoading] = useState(!!person.id)
-
+  const [failed, setFailed] = useState(false)
   useEffect(() => {
     if (!person.id) return
     let live = true
-    getVoyagerById(person.id).then(p => { if (live) { setProfile(p); setLoading(false) } })
+    getVoyagerById(person.id).then(p => { if (live) { setProfile(p); setLoading(false) } }).catch(() => { if (live) { setFailed(true); setLoading(false) } })
     return () => { live = false }
   }, [person.id])
-
-  const isArch = profile?.role === 'architect'
-  const accent = isArch ? ORANGE : LORANGE
-  const name = profile?.display_name ?? person.name
-  const initials = (name ?? '').slice(0, 2).toUpperCase()
-  const avatar = profile?.avatar_url ?? person.avatar ?? null
-
-  const socials = ([
-    profile?.social_x && { label: 'X', href: profile.social_x },
-    profile?.social_instagram && { label: 'INSTAGRAM', href: profile.social_instagram },
-    profile?.social_linkedin && { label: 'LINKEDIN', href: profile.social_linkedin },
-  ].filter(Boolean)) as { label: string; href: string }[]
-
-  return (
-    <div
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(5,8,18,0.82)', backdropFilter: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-    >
-      <div style={{ background: '#0F1430', border: `1px solid ${accent}59`, borderRadius: 6, width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', fontFamily: 'var(--font-mono)' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid rgba(227,82,5,0.14)', background: '#090D1A' }}>
-          <span style={{ color: 'rgba(245,245,245,0.55)', fontSize: FS_CAPTION, letterSpacing: '0.16em' }}>VOYAGER PROFILE</span>
-          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '2px 6px' }}>✕</button>
-        </div>
-
-        {/* Identity */}
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '20px 18px 16px' }}>
-          <div style={{
-            width: 72, height: 72, borderRadius: '50%', flexShrink: 0, overflow: 'hidden',
-            border: `2px solid ${accent}55`, background: avatar ? 'transparent' : `${accent}18`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent, fontSize: '1.4rem', fontWeight: 700,
-          }}>
-            {avatar
-              ? <SmartImage src={avatar} alt={name} sizes="72px" width={72} height={72} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : initials}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: 4 }}>
-              <span style={{ fontSize: FS_LABEL, fontWeight: 700, color: '#F5F5F5', letterSpacing: '0.04em' }}>{name}</span>
-              <span style={{ fontSize: FS_CAPTION, padding: '2px 7px', border: `1px solid ${accent}55`, color: accent, letterSpacing: '0.15em', background: `${accent}0D` }}>
-                {isArch ? 'ARCHITECT' : 'VOYAGER'}
-              </span>
-            </div>
-            {profile?.batch_label && <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)', letterSpacing: '0.1em', marginBottom: 2 }}>{profile.batch_label}</div>}
-            {profile?.location && <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>{profile.location}</div>}
-            {profile?.joined_at && <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.25)', marginTop: 2 }}>joined {fmtDate(profile.joined_at)}</div>}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div style={{ display: 'flex', borderTop: '1px solid rgba(227,82,5,0.1)', borderBottom: '1px solid rgba(227,82,5,0.1)', margin: '0 18px' }}>
-          <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#C84406', textShadow: 'none' }}>{profile?.observation_days ?? '—'}</div>
-            <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: 2 }}>OBS DAYS</div>
-          </div>
-          <div style={{ width: 1, background: 'rgba(227,82,5,0.1)' }} />
-          <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: GREEN, textShadow: 'none' }}>{profile?.worlds_discovered ?? '—'}</div>
-            <div style={{ fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.3)', letterSpacing: '0.1em', marginTop: 2 }}>WORLDS</div>
-          </div>
-        </div>
-
-        {/* Bio */}
-        {loading
-          ? <div style={{ padding: '14px 18px', fontSize: FS_CAPTION, color: 'rgba(245,245,245,0.35)' }}>Loading profile…</div>
-          : profile?.bio && <div style={{ padding: '14px 18px', fontSize: FS_LABEL, color: 'rgba(245,245,245,0.55)', lineHeight: 1.65 }}>{profile.bio}</div>}
-
-        {/* Footer: socials + proceed */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 18px', borderTop: '1px solid rgba(227,82,5,0.1)' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {socials.map(s => (
-              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: FS_CAPTION, letterSpacing: '0.15em', color: 'rgba(245,245,245,0.35)', border: '1px solid rgba(227,82,5,0.2)', padding: '3px 8px', textDecoration: 'none' }}>
-                {s.label} ↗
-              </a>
-            ))}
-          </div>
-          <Link href="/voyagers" onClick={onClose}
-            style={{ fontSize: FS_CAPTION, letterSpacing: '0.12em', color: ORANGE, border: '1px solid rgba(227,82,5,0.45)', padding: '6px 14px', textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}>
-            SEE ALL →
-          </Link>
-        </div>
-      </div>
-    </div>
-  )
+  return <ArchiveSheet open title="Voyager profile" onClose={onClose} footer={<ArchiveLinkButton href="/voyagers" variant="secondary" fullWidth onClick={onClose}>See all Voyagers</ArchiveLinkButton>}>
+    {loading ? <p role="status">Loading profile…</p> : failed ? <p role="alert">Profile could not be loaded. Close and try again.</p>
+      : person.id && !profile ? <p>This member profile is no longer available.</p>
+      : <MemberProfileContent profile={profile ?? { display_name: person.name, avatar_url: person.avatar, role: 'voyager' }} />}
+  </ArchiveSheet>
 }
 
 // ─── Voyager gate modal — shown when a non-Voyager taps gated intel / a vote ──
