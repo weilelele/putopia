@@ -1,6 +1,7 @@
 'use client'
 
-import { publicMemberBio } from '@/lib/public-member-bio'
+import { MemberProfileContent } from './member-profile-content'
+import { ArchiveLinkButton } from './archive-link-button'
 import { ArchiveButton } from '@/components/archive-button'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -21,9 +22,7 @@ function relTs(iso: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toISOString().slice(0, 10).replace(/-/g, '.')
-}
+
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
@@ -298,121 +297,9 @@ function CollapseGroup({ events, accent, summary }: { events: ActivityEvent[]; a
 
 export function VoyagerQuickView({ profile, onClose }: { profile: VoyagerProfile | null; onClose: () => void }) {
   if (!profile) return null
-
-  const initials = profile.display_name.slice(0, 2).toUpperCase()
-  const isArch   = profile.role === 'architect'
-  const accent   = isArch ? '#E35205' : '#FF8A5C'
-
-  const socials = [
-    profile.social_x         && { label: 'X',        href: profile.social_x },
-    profile.social_instagram && { label: 'INSTAGRAM', href: profile.social_instagram },
-    profile.social_linkedin  && { label: 'LINKEDIN',  href: profile.social_linkedin },
-  ].filter(Boolean) as { label: string; href: string }[]
-
-  return (
-    <ArchiveSheet open title="Voyager profile" onClose={onClose}>
-        {/* Header */}
-
-
-        {/* Identity block */}
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '20px 18px 16px' }}>
-          <div style={{
-            width: 72, height: 72, borderRadius: '50%', flexShrink: 0, overflow: 'hidden',
-            border: `2px solid ${accent}55`, background: profile.avatar_url ? 'transparent' : `${accent}18`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: accent, fontSize: '1.4rem', fontWeight: 700,
-          }}>
-            {profile.avatar_url
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={profile.avatar_url} alt={profile.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : initials}
-          </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '4px' }}>
-              <span style={{ fontSize: 'var(--fs-label)', fontWeight: 700, color: '#F5F5F5', letterSpacing: '0.04em' }}>
-                {profile.display_name}
-              </span>
-              <span style={{ fontSize: 'var(--fs-caption)', padding: '2px 7px', border: `1px solid ${accent}55`, color: accent, letterSpacing: '0.15em', background: `${accent}0D` }}>
-                {isArch ? 'ARCHITECT' : 'VOYAGER'}
-              </span>
-            </div>
-            {profile.batch_label && (
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', marginBottom: '2px' }}>
-                {profile.batch_label}
-              </div>
-            )}
-            {profile.location && (
-              <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)' }}>
-                {profile.location}
-              </div>
-            )}
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', marginTop: '2px' }}>
-              joined {formatDate(profile.joined_at)}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div style={{ display: 'flex', borderTop: '1px solid rgba(227,82,5,0.1)', borderBottom: '1px solid rgba(227,82,5,0.1)', margin: '0 18px' }}>
-          <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#E35205', textShadow: 'none' }}>
-              {profile.observation_days}
-            </div>
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', marginTop: '2px' }}>OBS DAYS</div>
-          </div>
-          <div style={{ width: 1, background: 'rgba(227,82,5,0.1)' }} />
-          <div style={{ flex: 1, textAlign: 'center', padding: '12px 0' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#20D890', textShadow: 'none' }}>
-              {profile.worlds_discovered}
-            </div>
-            <div style={{ fontSize: 'var(--fs-caption)', color: 'rgba(245,245,245,0.55)', letterSpacing: '0.1em', marginTop: '2px' }}>WORLDS</div>
-          </div>
-        </div>
-
-        {/* Bio */}
-        {profile.bio && (
-          <div style={{ padding: '14px 18px', fontSize: 'var(--fs-label)', color: 'rgba(245,245,245,0.55)', lineHeight: 1.65 }}>
-            {publicMemberBio(profile.bio)}
-          </div>
-        )}
-
-        {/* Footer: socials + See All */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderTop: '1px solid rgba(227,82,5,0.1)' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {socials.map(s => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontSize: 'var(--fs-caption)', letterSpacing: '0.15em', color: 'rgba(245,245,245,0.55)',
-                  border: '1px solid rgba(227,82,5,0.2)', padding: '3px 8px', textDecoration: 'none',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(245,245,245,0.65)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(245,245,245,0.35)')}
-              >
-                {s.label} ↗
-              </a>
-            ))}
-          </div>
-          <Link
-            href="/voyagers"
-            onClick={onClose}
-            style={{
-              fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: '#E35205',
-              border: '1px solid rgba(227,82,5,0.45)', padding: '6px 14px',
-              textDecoration: 'none', flexShrink: 0,
-            }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(227,82,5,0.08)')}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
-          >
-            SEE ALL →
-          </Link>
-        </div>
-      </ArchiveSheet>
-  )
+  return <ArchiveSheet open title="Voyager profile" onClose={onClose} footer={<ArchiveLinkButton href="/voyagers" variant="secondary" fullWidth onClick={onClose}>See all Voyagers</ArchiveLinkButton>}>
+    <MemberProfileContent profile={profile} />
+  </ArchiveSheet>
 }
 
 // ─── Loading modal placeholder ────────────────────────────────────────────────

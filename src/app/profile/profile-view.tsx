@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Camera, Check, Compass, LockKeyhole, LogOut, Orbit, Pencil } from 'lucide-react'
 import { ArchiveSheet } from '@/components/archive-sheet'
@@ -38,6 +38,7 @@ function editFields(profile: VoyagerProfile) {
 }
 
 export function ProfileView({ services, accountSafety }: { services: ProfileServices; accountSafety?: ReactNode }) {
+  const formId = useId()
   const [profile, setProfile] = useState<VoyagerProfile | null>(null)
   const [form, setForm] = useState<ReturnType<typeof editFields> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -180,9 +181,8 @@ export function ProfileView({ services, accountSafety }: { services: ProfileServ
           {activeStage === 'holder' && bound && <Link className={styles.textLink} href="/devices/my-consoles">MY CONSOLES <ArrowRight size={16} /></Link>}
         </div>
       </section>
-      <ArchiveSheet open={editing} headerless title="Edit profile" dirty={dirty} busy={saving} onClose={() => { setEditing(false); setForm(editFields(profile)); setAvatar(null); setPreview(null); setMessage(null) }}>
-        <h2 className={styles.editorTitle}>EDIT PROFILE</h2>
-      <form className={styles.edit} onSubmit={event => { event.preventDefault(); void save() }}>
+      <ArchiveSheet open={editing} title="Edit profile" footer={<div className="archive-sheet__actions"><ArchiveButton form={formId} type="submit" disabled={!dirty || saving}>{saving ? 'SAVING…' : 'SAVE CHANGES'}</ArchiveButton></div>} dirty={dirty} busy={saving} onClose={() => { setEditing(false); setForm(editFields(profile)); setAvatar(null); setPreview(null); setMessage(null) }}>
+      <form id={formId} className={styles.edit} onSubmit={event => { event.preventDefault(); void save() }}>
         <fieldset disabled={saving}>
           <div className={styles.editAvatar}>
         <button className={styles.avatar} type="button" disabled={saving} onClick={() => fileRef.current?.click()} aria-label="Change profile photo">
@@ -209,7 +209,7 @@ export function ProfileView({ services, accountSafety }: { services: ProfileServ
               {(['social_x', 'social_instagram', 'social_linkedin'] as const).map(key => <ArchiveField key={key} htmlFor={`profile-${key}`} label={key === 'social_x' ? 'X / TWITTER' : key.replace('social_', '').toUpperCase()}><ArchiveInput id={`profile-${key}`} type="url" maxLength={500} placeholder="https://" value={form[key]} onChange={event => setField(key, event.target.value)} /></ArchiveField>)}
             </div>
           </details>}
-          <div className={styles.saveRow}><p role="status">{message}</p><ArchiveButton type="submit" variant="secondary" disabled={!dirty || saving}>{saving ? 'SAVING…' : 'SAVE CHANGES'}</ArchiveButton></div>
+          <p role="status">{message}</p>
         </fieldset>
       </form>
       </ArchiveSheet>

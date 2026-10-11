@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveButton } from '@/components/archive-button'
-import profileStyles from '@/components/member-profile-sheet.module.css'
+import { MemberProfileContent } from '@/components/member-profile-content'
+import { ProfilePreview } from '@/app/dev/profile/preview'
 
 const sections = [
   ['Before you begin', 'Find a quiet place and give yourself time to look. Small details are often easier to notice when you are not rushing.'],
@@ -26,6 +27,7 @@ export function DialogExamples() {
       <ArchiveButton variant="secondary" onClick={() => setExample('profile')}>Member details</ArchiveButton>
       <ArchiveButton variant="secondary" onClick={() => setExample('reading')}>Long reading</ArchiveButton>
     </div>
+    <details id="profile-migration"><summary>Product profile editor · local fixture</summary><ProfilePreview mode="voyager" /></details>
     {continued && <p role="status">Example completed. No navigation or purchase occurred.</p>}
     <ArchiveSheet open={example === 'info'} title="Initiated places" onClose={close}>
       <p>Includes purchased, gifted, and story-character places.</p>
@@ -37,13 +39,8 @@ export function DialogExamples() {
       <p>Complete Voyager Initiation before claiming a Console.</p><p>You can return here after joining.</p>
     </ArchiveSheet>
     <ArchiveSheet open={example === 'profile'} title="Voyager profile" onClose={close}>
-      <div className={profileStyles.profile}>
-        <div className={profileStyles.identity}><span className={profileStyles.avatar} aria-hidden>AM</span><div><h3>Alex Morgan</h3><p>Voyager · S26</p><p>London, UK</p></div></div>
-        <p className={profileStyles.meta}>Illustrative profile · fictional sample</p>
-        <p className={profileStyles.bio}>I collect small observations from unfamiliar places. Interested in sound, weather, and the stories people leave behind.</p>
-        <dl className={profileStyles.stats}><div><dt>Observation days</dt><dd>128</dd></div><div><dt>Worlds discovered</dt><dd>3</dd></div></dl>
-        <p>Usually listening before speaking. Currently exploring how cities change after dark.</p>
-      </div>
+      <p>Illustrative profile · fictional sample</p>
+      <MemberProfileContent profile={{ display_name: 'Alex Morgan', role: 'voyager', batch_label: 'S26', location: 'London, UK', bio: 'I collect small observations from unfamiliar places. Interested in sound, weather, and the stories people leave behind.', observation_days: 128, worlds_discovered: 3 }} />
     </ArchiveSheet>
     <ArchiveSheet open={example === 'reading'} title="Observation guide" onClose={close} footer={<ArchiveButton fullWidth onClick={close}>Done</ArchiveButton>}>
       <p>A few notes for your next observation.</p>
