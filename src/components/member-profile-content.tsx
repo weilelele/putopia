@@ -31,7 +31,6 @@ export function MemberProfileContent({ profile }: { profile: PublicProfile }) {
         : <span className={styles.avatar} aria-hidden>{memberInitials(profile.display_name)}</span>}
       <div><h3>{profile.display_name}</h3>{profile.role && <p className={styles.role}>{profile.role}</p>}{profile.batch_label && <p className={styles.meta}>{profile.batch_label}</p>}</div>
     </div>
-    {profile.account_kind === 'npc' && <p className={styles.meta}>Official fictional NPC</p>}
     {profile.location && <p className={styles.meta}>{profile.location}</p>}
     {profile.bio && <p className={styles.bio}>{publicMemberBio(profile.bio)}</p>}
     <dl className={styles.stats}>
