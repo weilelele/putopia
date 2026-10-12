@@ -16,7 +16,7 @@ import { CommentThread } from '@/components/comment-thread'
 import { InvestigationCard } from '@/app/signal/SignalFeed'
 import { LazyImage } from '@/components/lazy-image'
 import { WorldScanHero } from '@/components/world-scan-hero'
-import { ArchiveReelView } from '@/components/archive-reel'
+import { EstablishedWorldDetail } from '@/components/established-world-detail'
 import { worldScanState, scanComplete } from '@/lib/signal/scan'
 import { resolveWorldScan } from '@/lib/signal/scan-resolve'
 import { ArchiveButton } from '@/components/archive-button'
@@ -33,7 +33,7 @@ export default function WorldDetailPage() {
   const id = params?.id as string
   const { user } = useAuth()
   const backHref = '/worlds'
-  const backLabel = '← WORLD RECORDS'
+  const backLabel = '← WORLDS'
 
   const [world, setWorld] = useState<World | null | undefined>(undefined)
   const [inv, setInv] = useState<WorldInvestigationData | null>(null)
@@ -151,7 +151,7 @@ export default function WorldDetailPage() {
   const isEstablished = world.lifecycle_state === 'stable'
 
   return (
-    <main className="main pilot-archive-page archive-detail-page">
+    <main className="main pilot-archive-page archive-detail-page world-detail">
 
 
 
@@ -185,9 +185,7 @@ export default function WorldDetailPage() {
             onComplete={refreshAll}
             onRetry={isOwner ? openRetry : undefined}
           />
-        ) : isEstablished ? (
-          <ArchiveReelView world={world} />
-        ) : investigation ? (
+        ) : isEstablished ? null : investigation ? (
           <div style={{ marginBottom: '1.75rem' }}>
             {/* World title — relocated here from the (dropped) hero */}
             <div style={{ marginBottom: '1.1rem' }}>
@@ -283,6 +281,7 @@ export default function WorldDetailPage() {
           </ArchiveCard>
         )}
 
+        {isEstablished && !scanning && !scanFailed ? <EstablishedWorldDetail world={world} /> : <>
         {/* Meta bar */}
         <ArchiveCard className="archive-world-meta">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>
@@ -331,12 +330,9 @@ export default function WorldDetailPage() {
 
         {/* Transmissions */}
         <CommentThread subjectType="world" subjectId={world.id} subjectTitle={displayName} posthogEvent="world_comment_sent" allowImages />
+        </>}
       </div>
 
-      <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>MULTIVERSE COLLECTIVE</div>
-      </div>
     </main>
   )
 }

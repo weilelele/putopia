@@ -127,7 +127,7 @@ export function buildVoyagerPackEmail(opts: { name?: string }): { subject: strin
     <a href="${SITE}/console" style="display:inline-block;padding:14px 32px;font-size:11px;font-weight:700;letter-spacing:0.2em;color:#0A0E27;text-decoration:none;text-transform:uppercase;">[ RETURN TO COLLECTIVE ]</a>
   </td></tr></table>
 </td></tr>
-<tr><td style="padding-top:24px;"><p style="margin:0;font-size:10px;color:#2A3A5A;text-align:center;line-height:1.8;letter-spacing:0.05em;">BUILDING BETTER WORLDS, TOGETHER.<br/><a href="${SITE}" style="color:#4A5570;text-decoration:none;">multiverseco.org</a></p></td></tr>
+<tr><td style="padding-top:24px;"><p style="margin:0;font-size:10px;color:#2A3A5A;text-align:center;line-height:1.8;letter-spacing:0.05em;">EXPLORING PARALLEL WORLDS, TOGETHER<br/><a href="${SITE}" style="color:#4A5570;text-decoration:none;">multiverseco.org</a></p></td></tr>
 </table></td></tr></table></body></html>`
 
   const text = [
@@ -143,7 +143,7 @@ export function buildVoyagerPackEmail(opts: { name?: string }): { subject: strin
     '',
     `Return to Collective: ${SITE}/console`,
     '',
-    'BUILDING BETTER WORLDS, TOGETHER.',
+    'EXPLORING PARALLEL WORLDS, TOGETHER',
     'multiverseco.org',
   ].join('\n')
 

@@ -55,7 +55,7 @@ export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunc
       </div>}
       <header className={styles.heading}>
         <h2 className={styles.sectionTitle}>Multiverse<br />Console</h2>
-        <p>Our collective&apos;s exclusive device. Own it to unlock exploration of parallel worlds.</p>
+        <p>Our collective&apos;s device for exploring parallel worlds. Voyager Initiation includes a Console claim entitlement; allocation and delivery follow your member record.</p>
       </header>
       <nav className={styles.exploreActions} aria-label="Explore the collective">
         <ArchiveLinkButton href="/intel" variant="primary" fullWidth className={styles.missions}>
@@ -69,7 +69,7 @@ export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunc
         </ArchiveLinkButton>
       </nav>
       <button className={styles.guideButton} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog">Explore the function <Plus size={20} aria-hidden /></button>
-      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="Console functions" className={styles.functionModal}>
+      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="Console functions" >
         {mcFunctions.length ? groups.map(group => <section className={styles.group} key={group.title} aria-label={group.title}>
           <h3>{group.title}</h3>
           {group.functions.length ? <ul>{group.functions.map(fn => <li key={fn.id}>

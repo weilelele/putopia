@@ -174,10 +174,6 @@ export default function LogsPage() {
         })}
       </div>
 
-      <div className="footer-bar" style={{ marginTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>MULTIVERSE COLLECTIVE</div>
-      </div>
     </main>
   )
 }

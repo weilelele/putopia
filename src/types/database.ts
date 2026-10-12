@@ -205,11 +205,12 @@ export type World = {
   scan_resolved_at: string | null // outcome (success/failure email) settled at this ts; null = pending
   dreamcatcher_id: string | null // owning Parallax Array; queue state lives in dreamcatcher_jobs
   is_test: boolean            // test-console world; excluded from public listings
+  first_observer_report_id: string | null // architect-designated first observation (null = fuzzy official world)
   created_at: string
 }
 
 // lifecycle_state / vote_scope / submitted_by / submitted_at have DB defaults — optional on insert
-export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'vote_scope' | 'submitted_by' | 'submitted_at' | 'scan_until' | 'scan_resolved_at' | 'dreamcatcher_id' | 'is_test'> & {
+export type WorldInsert = Omit<World, 'created_at' | 'lifecycle_state' | 'vote_scope' | 'submitted_by' | 'submitted_at' | 'scan_until' | 'scan_resolved_at' | 'dreamcatcher_id' | 'is_test' | 'first_observer_report_id'> & {
   lifecycle_state?: WorldLifecycle
   vote_scope?: WorldVoteScope
   submitted_by?: string | null
@@ -343,6 +344,12 @@ export type StoryUpdate = Partial<Pick<
 export type Database = {
   public: {
     Tables: {
+      npc_voice_profiles: {
+        Row: { user_id: string; instructions: string; updated_by: string; updated_at: string }
+        Insert: { user_id: string; instructions: string; updated_by: string; updated_at?: string }
+        Update: { instructions?: string; updated_by?: string; updated_at?: string }
+        Relationships: []
+      }
       activity_events: {
         Row: {
           id: string

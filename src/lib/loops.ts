@@ -47,3 +47,22 @@ export async function upsertLoopsContact(input: LoopsContact): Promise<void> {
     console.error('[loops] upsertLoopsContact threw', e)
   }
 }
+
+/** Removes a contact from the Loops list (used when a member deletes their account). */
+export async function deleteLoopsContact(email: string): Promise<void> {
+  const key = process.env.LOOPS_API_KEY
+  if (!key) {
+    console.warn('[loops] LOOPS_API_KEY not set — skipping delete', email)
+    return
+  }
+  try {
+    const res = await fetch(`${LOOPS_API}/contacts/delete`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    if (!res.ok && res.status !== 404) console.error('[loops] delete failed', res.status, await res.text().catch(() => ''))
+  } catch (e) {
+    console.error('[loops] deleteLoopsContact threw', e)
+  }
+}

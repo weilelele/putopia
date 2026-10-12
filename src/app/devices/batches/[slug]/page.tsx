@@ -1,3 +1,4 @@
+import { deviceBatchIntroduction } from '@/lib/device-membership-copy'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { DeviceRooms } from '../../_components/device-rooms'
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: BatchDetailPageProps): Promis
 
   return {
     title: `${batch.name} — Device Live Room`,
-    description: batch.summary,
+    description: deviceBatchIntroduction(batch),
   }
 }
 

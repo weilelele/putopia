@@ -10,7 +10,7 @@ discussing) inside a coherent sci-fi fiction and an identity-progression system,
 
 - **Stack**: Next.js 16 + Supabase web app. Desktop = sidebar nav; mobile = bottom nav.
 - **Aesthetic**: pure orange + deep-space blue + monospace Courier Prime — a retro-terminal / HUD-console feel.
-- **Tagline**: *"Building better worlds, together." / "Explore parallel worlds."*
+- **Tagline**: *"EXPLORING PARALLEL WORLDS, TOGETHER"*
 
 ## 2. Core fiction (worldbuilding)
 

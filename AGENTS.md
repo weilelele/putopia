@@ -26,6 +26,11 @@ rules to keep front of mind:
   brand colors, gradients, glow/shadows, blur/glass, CRT effects, or decorative
   HUD elements. Run `npm run design:check` before requesting review.
 
+- **Independent dialogs.** Phone and desktop use the shared `ArchiveSheet` as a
+  centered Dialog, never a bottom sheet. Follow `docs/design/ui-components.md`
+  C24; use its `footer` and `size` API instead of overriding the modal shell.
+  Verify short, action, profile and long-content examples at `/ui-kit#shell-01`.
+
 # Deployments & preview environments
 
 `main` is the production trunk. Work happens on `feat/*` (human), `claude/*`

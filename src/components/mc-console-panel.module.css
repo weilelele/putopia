@@ -13,10 +13,6 @@
 .deviceImage { display: block; width: 100%; height: 100%; object-fit: contain; }
 .guideButton { display: flex; align-items: center; gap: var(--s-3); min-height: 44px; width: 100%; margin-top: var(--s-1); padding: var(--s-2) 0; border: 0; border-bottom: 1px solid var(--bd-faint); background: transparent; color: var(--color-nucleus); font: inherit; font-size: var(--fs-body); text-align: left; cursor: pointer; }
 .guideButton:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
-.functionModal.functionModal { width: min(440px, calc(100% - 32px)); max-height: calc(100dvh - 48px); margin: auto; border: 1px solid var(--bd-faint); border-radius: 8px; background: var(--color-deep); color: var(--color-star); font-family: var(--font-mono); }
-.functionModal.functionModal > header { padding: 12px 16px 0 24px; border: 0; }
-.functionModal.functionModal > header h2 { font-size: var(--fs-title); margin: 0; }
-.functionModal.functionModal > :global(.archive-sheet__body) { display: block; padding: 12px 24px 24px; }
 .group + .group { border-top: 1px solid var(--color-nucleus); margin-top: var(--s-4); padding-top: var(--s-4); }
 .group h3 { margin: 0 0 var(--s-3); color: var(--color-nucleus); font-size: var(--fs-body); text-transform: uppercase; font-weight: 400; }
 .group ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-4); }

@@ -4,17 +4,19 @@ import { useState, type ReactNode, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArchiveButton } from '@/components/archive-button'
 import { saveNpc, setNpcDevice, uploadNpcAvatar } from '@/lib/actions/npcs'
-import { NPC_ROLE_OPTIONS, type NpcProfileInput } from '@/lib/npc-model'
+import { setDeviceGrant } from '@/lib/actions/device-status'
+import { NPC_ROLE_OPTIONS, type NpcProfileInput, type NpcInitiationState } from '@/lib/npc-model'
 import type { UserRole } from '@/types/database'
 import styles from './npcs.module.css'
 
-type Profile = { id: string; display_name: string; role: UserRole; bio: string | null; avatar_url: string | null; location: string | null }
+type Profile = { id: string; display_name: string; role: UserRole; bio: string | null; avatar_url: string | null; location: string | null; batch_label: string }
 type Batch = { slug: string; name: string; listing_quantity: number; claimed_quantity: number; reserved_quantity: number; allocated_quantity?: number }
 type Unit = { user_id: string | null; batch_slug: string; unit_code: string }
 
-export function NpcEditor({ profile, batches, units }: { profile?: Profile; batches: Batch[]; units: Unit[] }) {
+export function NpcEditor({ profile, batches, units, memberBatches, initiation, deviceStatus }: { profile?: Profile; batches: Batch[]; units: Unit[]; memberBatches: string[]; initiation: NpcInitiationState; deviceStatus: { granted: boolean; available: boolean } }) {
   const router = useRouter()
-  const [input, setInput] = useState<NpcProfileInput>({ displayName: profile?.display_name ?? '', role: profile?.role ?? 'guest', bio: profile?.bio ?? '', avatarUrl: profile?.avatar_url ?? '', location: profile?.location ?? '' })
+  const [input, setInput] = useState<NpcProfileInput>({ displayName: profile?.display_name ?? '', role: profile?.role ?? 'guest', bio: profile?.bio ?? '', avatarUrl: profile?.avatar_url ?? '', location: profile?.location ?? '', batchLabel: profile?.batch_label ?? '', grantNote: '' })
+  const [draftId, setDraftId] = useState<string | null>(profile?.id ?? null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [batchSlug, setBatchSlug] = useState('')
@@ -35,7 +37,8 @@ export function NpcEditor({ profile, batches, units }: { profile?: Profile; batc
   async function submit(event: FormEvent) {
     event.preventDefault()
     await run(async () => {
-      const result = await saveNpc(profile?.id ?? null, input)
+      const result = await saveNpc(draftId, input)
+      if (result.id) setDraftId(result.id)
       if (!result.error && !profile && result.id) router.replace(`/admin/npcs/${result.id}`)
       return result
     }, 'Profile saved.')
@@ -54,6 +57,25 @@ export function NpcEditor({ profile, batches, units }: { profile?: Profile; batc
           </select>
           <small className={styles.hint}>Controls how this character is identified. NPC accounts remain managed by architects and cannot sign in.</small>
         </NpcField>
+        <NpcField htmlFor={`${prefix}-member-batch`} label="Voyager member batch">
+          <select id={`${prefix}-member-batch`} required value={input.batchLabel} aria-describedby={`${prefix}-member-batch-help`} onChange={(e) => setInput({ ...input, batchLabel: e.target.value })}>
+            <option value="" disabled>Choose a member batch</option>
+            {memberBatches.map((label) => <option key={label} value={label}>{label}</option>)}
+          </select>
+          <small id={`${prefix}-member-batch-help`} className={styles.hint}>
+            {profile ? `Saved batch: ${profile.batch_label}. ` : 'Select the intended cohort explicitly. '}
+            S26 registration uses one of the 100 member places. It creates no payment, shipment or Console entitlement. Registered NPCs cannot leave S26 without management review.
+          </small>
+        </NpcField>
+        <p role="status">
+          S26: {initiation.occupied} / {initiation.capacity} places occupied.
+          {' '}{initiation.member ? `Registered (${initiation.member.source}, ${initiation.member.active ? 'active' : 'inactive — place retained'}).` : 'Not registered.'}
+          {!initiation.member && initiation.occupied >= initiation.capacity && ' S26 is full.'}
+        </p>
+        {input.batchLabel === 'S26' && !initiation.member && <NpcField htmlFor={`${prefix}-grant-note`} label="S26 grant audit note">
+          <textarea id={`${prefix}-grant-note`} required maxLength={1000} rows={3} value={input.grantNote} onChange={(e) => setInput({ ...input, grantNote: e.target.value })} />
+          <small className={styles.hint}>Saving registers this NPC as a granted member and reserves one place. Explain the approval for this grant.</small>
+        </NpcField>}
         <NpcField htmlFor={`${prefix}-bio`} label="Bio"><textarea id={`${prefix}-bio`} maxLength={2000} rows={3} value={input.bio} onChange={(e) => setInput({ ...input, bio: e.target.value })} /></NpcField>
         <NpcField htmlFor={`${prefix}-location`} label="Location"><input id={`${prefix}-location`} maxLength={120} value={input.location} onChange={(e) => setInput({ ...input, location: e.target.value })} /></NpcField>
         <NpcField htmlFor={`${prefix}-avatar`} label="Avatar URL (HTTPS)"><input id={`${prefix}-avatar`} type="url" value={input.avatarUrl} onChange={(e) => setInput({ ...input, avatarUrl: e.target.value })} /></NpcField>
@@ -77,6 +99,13 @@ export function NpcEditor({ profile, batches, units }: { profile?: Profile; batc
         <div className={styles.actions}><ArchiveButton type="submit" disabled={busy}>{busy ? 'Saving…' : profile ? 'Save profile' : 'Create NPC'}</ArchiveButton></div>
       </fieldset>
     </form>
+    {profile && <section className={styles.devices}>
+      <h3>Device status · {deviceStatus.granted ? 'Has device' : 'No device'}</h3>
+      <p className={styles.hint}>Controls whether this NPC can report observations and anomalies in Worlds. It is separate from the batch allocation below, which only configures devices.</p>
+      {deviceStatus.available
+        ? <ArchiveButton variant={deviceStatus.granted ? 'secondary' : 'primary'} disabled={busy} onClick={() => run(() => setDeviceGrant(profile.id, !deviceStatus.granted), deviceStatus.granted ? 'Device status removed.' : 'Device status granted.')}>{deviceStatus.granted ? 'Remove device status' : 'Grant device status'}</ArchiveButton>
+        : <p role="alert">Device status is not available yet. Apply schema_v83 first.</p>}
+    </section>}
     {profile && <section className={styles.devices}>
       <h3>Devices · {units.length}</h3>
       {units.map((unit) => <div key={unit.unit_code} className={styles.unit}>

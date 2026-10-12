@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 }
 
 const CONTACT = 'voyagers@multiverseco.org'
-const UPDATED = 'October 1, 2026'
+const UPDATED = 'October 8, 2026'
 
 const sections: { title: string; body: React.ReactNode }[] = [
   {
@@ -15,7 +15,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
     body: (
       <p>
         Multiverse Collective (“we”, “us”) runs the Multiverse Collective website and iOS app,
-        the internal communication platform of the Multiverse Collective organization. This
+        the community platform of the Multiverse Collective, an alternate reality game. This
         policy applies to the website at multiverseco.org and to the iOS app, which displays
         that website. Questions: <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
       </p>
@@ -78,6 +78,17 @@ const sections: { title: string; body: React.ReactNode }[] = [
     ),
   },
   {
+    title: 'Reporting, blocking and moderation',
+    body: (
+      <p>
+        Under any post in discussions, chat and world reports you can choose Report, which
+        hides the post for you and sends it to our team, or Block, which hides that member&rsquo;s
+        posts from you. We review reports within 24 hours and remove content that breaks the
+        rules. Blocked members are listed in My Profile, where you can unblock them.
+      </p>
+    ),
+  },
+  {
     title: 'Retention and your choices',
     body: (
       <>
@@ -86,10 +97,17 @@ const sections: { title: string; body: React.ReactNode }[] = [
           needed to run the service, resolve disputes and meet legal obligations.
         </p>
         <p>
-          You can turn off push notifications in iOS Settings at any time. To access, correct
-          or delete your account and personal data, or to opt out of advertising measurement,
-          email <a href={`mailto:${CONTACT}`}>{CONTACT}</a> from the address on your account and we
-          will respond within 30 days.
+          You can delete your account at any time in the app or website under My Profile →
+          Delete my account. This removes your profile, sign-in, comments, chat messages, world
+          reports, uploaded images, votes, notification settings and mailing-list entry. Order
+          and shipping records are kept without a link to your account because we need them
+          for fulfilment, tax and accounting. If you still hold a device, it stays registered
+          to a deleted account. You can turn off push notifications in iOS Settings at any time.
+        </p>
+        <p>
+          To access or correct your data, or to opt out of advertising measurement on the
+          website, email <a href={`mailto:${CONTACT}`}>{CONTACT}</a> from the address on your
+          account and we will respond within 30 days.
         </p>
       </>
     ),

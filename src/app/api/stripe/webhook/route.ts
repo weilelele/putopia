@@ -8,6 +8,7 @@ import { isCheckoutAmountValid, toStripeMinorUnits } from '@/lib/device-checkout
 import { sendDeviceOrderStatusNotification } from '@/lib/device-batch-notifications'
 import { sendMetaPurchase } from '@/lib/meta-capi'
 import { isIOSNativeApp } from '@/lib/app-platform'
+import { handleInitiationWebhook } from '@/lib/initiation-webhook'
 
 export const dynamic = 'force-dynamic'
 
@@ -400,6 +401,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    if (await handleInitiationWebhook(event, stripe)) {
+      await completeWebhookEvent(admin, event.id)
+      return NextResponse.json({ received: true })
+    }
     if (
       event.type === 'checkout.session.completed'
       || event.type === 'checkout.session.async_payment_succeeded'

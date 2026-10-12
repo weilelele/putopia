@@ -1,22 +1,7 @@
-import { canClaimDeviceBatch } from '@/lib/device-batches'
-import { notFound, redirect } from 'next/navigation'
-import { DeviceClaimClient } from '../_components/device-claim-client'
-import { getPublicDeviceBatch } from '@/lib/device-batch-repository'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-export default async function ClaimPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ batch?: string | string[] }>
-}) {
-  const query = await searchParams
-  const slug = typeof query.batch === 'string' ? query.batch : null
-  if (!slug) redirect('/devices')
-  const batch = await getPublicDeviceBatch(slug)
-
-  if (!batch) notFound()
-  if (!canClaimDeviceBatch(batch.status)) redirect(`/devices/batches/${batch.slug}`)
-
-  return <DeviceClaimClient batch={batch} />
+// Legacy claim links now enter the same Device entitlement flow, without checkout.
+export default async function ClaimPage({ searchParams }: { searchParams: Promise<{ batch?: string | string[] }> }) {
+  const { batch } = await searchParams
+  redirect(typeof batch === 'string' && batch ? `/devices/batches/${encodeURIComponent(batch)}` : '/devices')
 }

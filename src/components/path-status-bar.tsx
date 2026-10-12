@@ -85,13 +85,13 @@ export function PathStatusBar({
 
         {diagTop}
 
-        <Link href="/voyager-path" title="View your path" style={{ ...cell, flex: 1, minWidth: 0 }} {...hov}
+        <Link href="/voyager-initiation" title="Voyager Initiation" style={{ ...cell, flex: 1, minWidth: 0 }} {...hov}
           onClick={() => posthog.capture('pathbar_view_path_clicked', { role: user.role })}
         >
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: idColor, boxShadow: 'none', flexShrink: 0 }} />
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.25 }}>
             <span style={{ fontSize: 'var(--fs-label)', color: idColor, letterSpacing: '0.14em', fontWeight: 700, whiteSpace: 'nowrap' }}>{idLabel}</span>
-            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em', marginTop: 3, whiteSpace: 'nowrap' }}>VIEW YOUR PATH</span>
+            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)', letterSpacing: '0.08em', marginTop: 3, whiteSpace: 'nowrap' }}>VOYAGER INITIATION</span>
           </span>
         </Link>
       </div>

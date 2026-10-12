@@ -248,10 +248,6 @@ export default function StoryPage() {
       </form>
       </div>
 
-      <div className="footer-bar" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-        <div className="tag">— BUILDING BETTER WORLDS, TOGETHER.</div>
-        <div>MULTIVERSE COLLECTIVE</div>
-      </div>
     </main>
   )
 }

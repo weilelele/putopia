@@ -3,13 +3,16 @@
 import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getNpcIdentities, requireNpcArchitect } from '@/lib/npc-repository'
-import { validateNpcProfile, type NpcProfileInput } from '@/lib/npc-model'
+import { getNpcIdentities, getNpcMemberBatches, getNpcInitiationState, saveNpcProfileRecord, requireNpcArchitect } from '@/lib/npc-repository'
+import { validateNpcProfile, validateNpcMemberBatch, validateNpcRegistration, type NpcProfileInput } from '@/lib/npc-model'
 
 function refreshNpcs() {
   revalidatePath('/admin/npcs')
   revalidatePath('/admin/npcs/[id]', 'page')
   revalidatePath('/devices', 'layout')
+  revalidatePath('/voyagers')
+  revalidatePath('/admin/voyagers')
+  revalidatePath('/voyager-initiation')
 }
 
 export async function listNpcIdentities(batchSlug?: string) {
@@ -20,16 +23,19 @@ export async function listNpcIdentities(batchSlug?: string) {
 }
 
 export async function saveNpc(id: string | null, input: NpcProfileInput) {
+  let recoveryId = id
   try {
-    await requireNpcArchitect()
+    const actorId = await requireNpcArchitect()
     const invalid = validateNpcProfile(input)
     if (invalid) return { error: invalid }
+    if (id !== null && (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))) return { error: 'Select a valid NPC.' }
+    const batchError = validateNpcMemberBatch(input.batchLabel, await getNpcMemberBatches())
+    if (batchError) return { error: batchError }
     const admin = createAdminClient()
-    // Preflight migration availability before creating an Auth identity.
-    const { error: schemaError } = await admin.from('voyager_profiles').select('account_kind').limit(1)
-    if (schemaError) return { error: 'NPC setup is not available yet. Apply schema_v71 first.' }
+    // Fail closed before creating Auth if v87 or roster reads are unavailable.
+    const registrationError = validateNpcRegistration(input, await getNpcInitiationState(actorId, id))
+    if (registrationError) return { error: registrationError }
     let npcId = id
-    let created = false
     if (!npcId) {
       const { data, error } = await admin.auth.admin.createUser({
         email: `npc-${randomUUID()}@npc.invalid`,
@@ -41,25 +47,17 @@ export async function saveNpc(id: string | null, input: NpcProfileInput) {
       })
       if (error || !data.user) return { error: error?.message ?? 'Could not create NPC.' }
       npcId = data.user.id
-      created = true
+      recoveryId = npcId
     }
-    // role is administrator-managed and deliberately excluded from the
-    // self-service VoyagerProfileUpdate type.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (admin.from('voyager_profiles') as any).update({
-      display_name: input.displayName.trim(), role: input.role, bio: input.bio.trim() || null,
-      avatar_url: input.avatarUrl.trim() || null, location: input.location.trim() || null,
-    }).eq('id', npcId).eq('account_kind', 'npc').select('id').single()
+    const { data, error } = await saveNpcProfileRecord(actorId, npcId, input)
     if (error || !data) {
-      if (created) {
-        const { error: cleanupError } = await admin.auth.admin.deleteUser(npcId)
-        if (cleanupError) return { error: `NPC profile could not be saved. Incomplete account ${npcId} needs administrator cleanup.` }
-      }
-      return { error: 'Could not save NPC profile.' }
+      // A transport failure can follow a committed roster write. Never delete
+      // this identity or release its seat; expose its ID for safe retry/review.
+      return { error: error?.message ?? 'Save result is unconfirmed. Reload this NPC before retrying.', id: npcId }
     }
     refreshNpcs()
     return { error: null, id: npcId }
-  } catch (error) { return { error: error instanceof Error ? error.message : 'Could not save NPC.' } }
+  } catch (error) { return { error: error instanceof Error ? error.message : 'Could not save NPC.', id: recoveryId } }
 }
 
 export async function setNpcDevice(id: string, batchSlug: string, allocate: boolean) {

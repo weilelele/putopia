@@ -15,12 +15,12 @@ export function DevicePurchaseTerms({ slug, compact = false }: { slug: string; c
   if (slug !== 'kyoto-one') return null
 
   return (
-    <section className={styles.purchaseInfo} data-compact={compact} aria-label="Purchase information">
-      <p className={styles.summary}><strong>Shipping &amp; taxes included</strong>{compact ? null : <span>Preorder</span>}</p>
-      <ArchiveButton className={styles.detailsButton} onClick={() => { trackDevice('device_purchase_details_opened', { batch_slug: slug, location: compact ? 'room' : 'claim' }); setOpen(true) }} variant="ghost">
-        <span>{compact ? 'DETAILS' : 'PURCHASE DETAILS'}</span><ChevronRight aria-hidden size={18} />
+    <section className={styles.purchaseInfo} data-compact={compact} aria-label="Historical order terms">
+      <p className={styles.summary}><strong>Original Kyoto One order terms</strong></p>
+      <ArchiveButton className={styles.detailsButton} onClick={() => { trackDevice('device_purchase_details_opened', { batch_slug: slug, location: 'order_record' }); setOpen(true) }} variant="ghost">
+        <span>ORIGINAL ORDER DETAILS</span><ChevronRight aria-hidden size={18} />
       </ArchiveButton>
-      {open ? <ArchiveSheet open title="Purchase details" onClose={() => setOpen(false)}>
+      {open ? <ArchiveSheet open title="Original order terms" onClose={() => setOpen(false)}>
         <div className={styles.terms}>
           <p><strong>Shipping &amp; taxes included.</strong> One Console, three shipments. One payment of $520.</p>
           <p>{KYOTO_PURCHASE_TERMS.cancellation}</p>

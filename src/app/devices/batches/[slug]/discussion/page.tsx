@@ -1,51 +1,6 @@
-import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
-import { DeviceViewTracker } from '@/components/device-view-tracker'
-import { ArchiveLinkButton } from '@/components/archive-link-button'
-import { BatchDiscussionBoard } from '../../../_components/batch-discussion-board'
-import { getPublicDeviceBatch } from '@/lib/device-batch-repository'
-import { getDeviceBatchDiscussion } from '@/lib/actions/device-batch-community'
-import styles from '../../../device-batches.module.css'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-type DiscussionPageProps = {
-  params: Promise<{ slug: string }>
-}
-
-export async function generateMetadata({ params }: DiscussionPageProps): Promise<Metadata> {
+export default async function DiscussionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const batch = await getPublicDeviceBatch(slug)
-  return {
-    title: batch ? `Discussion · ${batch.name}` : 'Discussion not found',
-  }
-}
-
-export default async function DiscussionPage({ params }: DiscussionPageProps) {
-  const { slug } = await params
-  const batch = await getPublicDeviceBatch(slug)
-  if (!batch) notFound()
-  const discussion = await getDeviceBatchDiscussion(slug)
-
-  return (
-    <main className={`main pilot-archive-page archive-detail-page ${styles.detailPage}`}>
-
-      <DeviceViewTracker event="device_discussion_page_viewed" properties={{ batch_slug: batch.slug, can_post: discussion.canPost, post_count: discussion.posts.length }} />
-      <div className={styles.discussionPageShell}>
-        <ArchiveLinkButton href={`/devices/batches/${batch.slug}`} variant="ghost">
-          ← {batch.code}
-        </ArchiveLinkButton>
-        <header className={styles.discussionPageHeader}>
-          <span>PUBLIC BATCH BOARD</span>
-          <h1>Discussion</h1>
-          <p>{batch.name}</p>
-        </header>
-        <BatchDiscussionBoard
-          batch={batch}
-          canPost={discussion.canPost}
-          initialPosts={discussion.posts}
-        />
-      </div>
-    </main>
-  )
+  redirect(`/devices/batches/${encodeURIComponent(slug)}`)
 }

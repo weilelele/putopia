@@ -3,6 +3,17 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { markQuizPassed } from '@/lib/actions/tasks'
 
+async function requireQuizAdministrator() {
+  const client = await createClient()
+  const { data: { user }, error: authError } = await client.auth.getUser()
+  if (authError || !user) throw new Error('Administrator access required.')
+  const { data: profile, error } = await client.from('voyager_profiles')
+    .select('role,account_kind').eq('id', user.id).single()
+  if (error || profile?.role !== 'architect' || profile.account_kind !== 'human') {
+    throw new Error('Administrator access required.')
+  }
+}
+
 // ─── Public types (no answer_key) ────────────────────────────────────────────
 
 export type QuizOption = { key: string; label: string }
@@ -82,6 +93,7 @@ export async function submitQuizAnswers(
 export async function adminGetQuizQuestions(
   quizId = 'applicant-baseline-v1',
 ): Promise<QuizQuestionAdmin[]> {
+  await requireQuizAdministrator()
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('quiz_questions')
@@ -96,6 +108,7 @@ export async function adminGetQuizQuestions(
 export async function adminCreateQuestion(
   q: Omit<QuizQuestionAdmin, 'id'>,
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireQuizAdministrator()
   const supabase = createAdminClient()
   const { error } = await supabase
     .from('quiz_questions')
@@ -107,6 +120,7 @@ export async function adminUpdateQuestion(
   id: string,
   patch: Partial<Omit<QuizQuestionAdmin, 'id'>>,
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireQuizAdministrator()
   const supabase = createAdminClient()
   const { error } = await supabase
     .from('quiz_questions')
@@ -118,6 +132,7 @@ export async function adminUpdateQuestion(
 export async function adminDeleteQuestion(
   id: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireQuizAdministrator()
   const supabase = createAdminClient()
   const { error } = await supabase
     .from('quiz_questions')
@@ -131,6 +146,7 @@ export async function adminReorderQuestions(
   quizId: string,
   orderedIds: string[],   // full ordered list of IDs
 ): Promise<{ ok: boolean }> {
+  await requireQuizAdministrator()
   const supabase = createAdminClient()
   const updates = orderedIds.map((id, idx) =>
     supabase

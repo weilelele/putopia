@@ -32,6 +32,6 @@ export async function saveVoyagerIntake(raw: unknown): Promise<{ ok: boolean; er
     return { ok: false, error: 'Your profile could not be saved. Please try again. If the Parallax Array is unavailable, you can save without sharing.' }
   }
   if (data.activated) await recordVoyagerPathActivation(user.id)
-  for (const path of ['/quiz', '/voyager-path', '/worlds', '/worlds/live']) revalidatePath(path)
+  for (const path of ['/quiz', '/voyager-path', '/voyager-initiation', '/worlds', '/worlds/live']) revalidatePath(path)
   return { ok: true, activated: data.activated, worldId: data.worldId }
 }

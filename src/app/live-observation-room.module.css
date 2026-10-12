@@ -1184,7 +1184,14 @@
   display: block;
 }
 
+.dispatchCopy :global(.news-publisher) {
+  margin-top: var(--s-2);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+
 .dispatchCopy strong {
+  overflow-wrap: anywhere;
   color: var(--color-star);
   font-size: var(--fs-label);
   font-weight: 400;
@@ -1193,7 +1200,7 @@
 
 .dispatchCopy small {
   margin-top: var(--s-1);
-  color: var(--color-star-deep);
+  color: var(--color-star-dim);
   font-size: var(--fs-caption);
   line-height: 1.4;
 }
@@ -1382,7 +1389,7 @@
 .dreamDetailBody {
   display: grid;
   gap: var(--s-4);
-  padding: var(--s-4) var(--s-4) calc(var(--s-6) + env(safe-area-inset-bottom));
+  padding: 0 0 var(--s-4);
 }
 
 .dreamDetailBody > p {

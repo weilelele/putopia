@@ -1,4 +1,7 @@
 'use client'
+import { PublisherIdentity } from '@/components/news-content'
+import { AuthPromptSheet } from '@/components/auth-prompt-sheet'
+import { SignalVoteSheet } from './signal-vote-sheet'
 import { deviceQueueOrder } from '@/lib/dreamcatcher-queue-policy'
 import { roundLabel } from '@/lib/dreamcatcher-round-model'
 import { RootBrandHeader } from '@/components/root-brand-header'
@@ -8,23 +11,23 @@ import { ArchiveTextarea } from '@/components/archive-input'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { ArchiveSheet } from '@/components/archive-sheet'
+import { WorldsSectionTabs } from '@/components/worlds-section-tabs'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import { Check, ChevronRight, CircleHelp, Clock3 } from 'lucide-react'
+import { ChevronRight, CircleHelp, Clock3 } from 'lucide-react'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { submitDreamcatcherWorld } from '@/lib/actions/worlds'
 import { submitSignalResponse, type PublicInvestigation } from '@/lib/actions/signal-tasks'
 import type { DreamcatcherJob, DreamcatcherRoom, DreamcatcherStatus } from '@/lib/dreamcatchers'
 import { isDreamcatcherWorking, type DreamcatcherLiveVideoLibrary } from '@/lib/dreamcatcher-live'
 import { DreamcatcherLiveVideo } from './dreamcatcher-live-video'
-import { DreamcatcherChat } from './dreamcatcher-chat'
 import roomStyles from './worlds-room.module.css'
 import playerStyles from './dreamcatcher-live-video.module.css'
 import styles from '../../live-observation-room.module.css'
 
-type RoomTab = 'dispatch' | 'observations' | 'chat'
+type RoomTab = 'dispatch' | 'observations'
 type Detail = { kind: 'dispatch'; investigationId: string }
 
 const STATUS_LABEL: Record<DreamcatcherStatus, string> = {
@@ -63,8 +66,8 @@ export function WorldsLiveRoom({
   const router = useRouter()
   const [selectedSlug, setSelectedSlug] = useSessionPreference('mc:view:worlds:room', rooms[0]?.slug ?? '')
   const [savedTab, setActiveTab] = useSessionPreference<RoomTab>('mc:view:worlds:tab', 'dispatch')
-  // Older sessions may still hold the removed Queue tab.
-  const activeTab = ['dispatch', 'observations', 'chat'].includes(savedTab) ? savedTab : 'dispatch'
+  // Older sessions may still hold the removed Queue or Chat tabs.
+  const activeTab = ['dispatch', 'observations'].includes(savedTab) ? savedTab : 'dispatch'
   const [queueExpanded, setQueueExpanded] = useState(false)
   const [infoOpen, setInfoOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
@@ -74,6 +77,8 @@ export function WorldsLiveRoom({
   const [submissionUnknown, setSubmissionUnknown] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [pendingChoice, setPendingChoice] = useState('')
+  const [voteError, setVoteError] = useState('')
+  const [authPromptOpen, setAuthPromptOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const selected = rooms.find((room) => room.slug === selectedSlug) ?? rooms[0]
   const [now, setNow] = useState(rooms[0]?.observedAt ?? 0)
@@ -101,7 +106,7 @@ export function WorldsLiveRoom({
 
   if (!selected) return (
     <main className={`main ${styles.page} ${roomStyles.scrollPage}`} data-route-scroll>
-      <h1 className="sr-only">Worlds</h1><RootBrandHeader><Link className={styles.archiveLink} href="/worlds">ARCHIVE</Link></RootBrandHeader>
+      <h1 className="sr-only">Worlds</h1><RootBrandHeader /><WorldsSectionTabs active="explore" />
       <section className={styles.sectionPanel}><div className={styles.emptyRoom}>NO PARALLAX ARRAYS PUBLISHED<br />Please check back later. Existing worlds remain in the archive.</div></section>
     </main>
   )
@@ -143,18 +148,18 @@ export function WorldsLiveRoom({
 
   function confirmSignal() {
     if (!dispatchDay || !pendingChoice || isPending || submissionUnknown) return
+    setVoteError('')
     startTransition(async () => {
       try {
       const result = await submitSignalResponse(dispatchDay.task.id, pendingChoice)
       if (!result.ok) {
-        setStatusMessage(result.error ?? 'Could not record this signal.')
+        setVoteError(result.error ?? 'Could not record this signal.')
         return
       }
       setDetail(null)
       setPendingChoice('')
-      setStatusMessage(dispatchDay.task.initiatorOnly ? 'Signal recorded. The next round is returning to this Parallax Array.' : 'Signal recorded. Voting remains open for the full 24-hour window.')
       router.refresh()
-      } catch { setSubmissionUnknown(true); setStatusMessage('Result unconfirmed. Refresh the queue to check your submission before trying again.') }
+      } catch { setSubmissionUnknown(true); setVoteError('Result unconfirmed. Refresh the queue to check your signal before trying again.') }
     })
   }
 
@@ -162,7 +167,8 @@ export function WorldsLiveRoom({
     <main className={`main ${styles.page} ${roomStyles.scrollPage}`} data-route-scroll>
       <h1 className="sr-only">Worlds</h1>
 
-      <RootBrandHeader><ArchiveLinkButton href="/worlds" variant="ghost" aria-label="Archive — explore all Worlds">ARCHIVE <ChevronRight aria-hidden size={18} /></ArchiveLinkButton></RootBrandHeader>
+      <RootBrandHeader />
+      <WorldsSectionTabs active="explore" />
       <nav className={`${styles.objectNav} ${roomStyles.navigation}`} aria-label="Parallax Array locations">
         <ArchiveTabs mode="filter" ariaLabel="Parallax Array location" activeId={selected.slug}
           items={rooms.map(room=>({id:room.slug,label:room.city.toUpperCase()}))} onChange={chooseRoom} />
@@ -218,7 +224,7 @@ export function WorldsLiveRoom({
         <section className={styles.sectionPanel}>
           <div className={roomStyles.contentTabs}>
             <ArchiveTabs ariaLabel="Parallax Array room content" activeId={activeTab}
-              items={[{id:'dispatch',label:'DISPATCH'},{id:'observations',label:'MINE'},{id:'chat',label:'LIVE CHAT'}].map(item=>({...item,panelId:`world-room-${item.id}`}))}
+              items={[{id:'dispatch',label:'DISPATCH'},{id:'observations',label:'MINE'}].map(item=>({...item,panelId:`world-room-${item.id}`}))}
               onChange={id => setActiveTab(id as RoomTab)} />
           </div>
 
@@ -226,7 +232,7 @@ export function WorldsLiveRoom({
             {roomInvestigations.map((investigation) => {
               const day = investigation.days.findLast((item) => !item.task.closed) ?? investigation.days.at(-1)
               const options = day?.task.assets.filter((asset) => asset.asset_role === 'option') ?? []
-              return <ArchiveButton variant="secondary" className={styles.dispatchItem} key={investigation.id} onClick={() => { setPendingChoice(day?.task.mySelection ?? ''); setDetail({ kind: 'dispatch', investigationId: investigation.id }) }} type="button"><span className={styles.dispatchMosaic}>{options.slice(0, 4).map((asset) => asset.display_url || asset.processed_url ? <Image alt="" height={80} key={asset.id} src={asset.display_url ?? asset.processed_url!} width={80} unoptimized /> : null)}</span><span className={styles.dispatchCopy}><span className={styles.eyebrow}>SIGNAL DISPATCH · ROUND {(day?.dayIndex ?? 0) + 1}</span><strong>{investigation.title}</strong><small>{day?.task.mySelection ? 'CHOICE RECORDED' : day?.task.initiatorOnly ? 'WAITING FOR ORIGINAL SUBMITTER' : day?.task.closed ? 'ROUND CLOSED' : `${options.length} SIGNALS · 24-HOUR VOTE`}</small></span><ChevronRight aria-hidden size={18} /></ArchiveButton>
+              return <ArchiveButton variant="secondary" className={styles.dispatchItem} key={investigation.id} onClick={() => { setStatusMessage(''); setVoteError(''); setPendingChoice(day?.task.mySelection ?? ''); setDetail({ kind: 'dispatch', investigationId: investigation.id }) }} type="button"><span className={styles.dispatchMosaic}>{options.slice(0, 4).map((asset) => asset.display_url || asset.processed_url ? <Image alt="" height={80} key={asset.id} src={asset.display_url ?? asset.processed_url!} width={80} unoptimized /> : null)}</span><span className={styles.dispatchCopy}><span className={styles.eyebrow}>ROUND {(day?.dayIndex ?? 0) + 1} · {options.length} SIGNALS</span><strong>{investigation.title}</strong><PublisherIdentity name={investigation.discovererName || 'Unknown creator'} avatar={investigation.discovererAvatar} />{day?.task.mySelection || day?.task.initiatorOnly || day?.task.closed ? <small>{day?.task.mySelection ? 'CHOICE RECORDED' : day?.task.initiatorOnly ? 'WAITING FOR ORIGINAL SUBMITTER' : 'ROUND CLOSED'}</small> : null}</span><ChevronRight aria-hidden size={18} /></ArchiveButton>
             })}
             {!roomInvestigations.length ? <div className={styles.emptyRoom}>NO SIGNALS AWAITING A COMMUNITY CHOICE</div> : null}
           </div> : null}
@@ -238,17 +244,20 @@ export function WorldsLiveRoom({
             {!selected.myObservations?.length ? <div className={styles.emptyRoom}>NO ONGOING OBSERVATIONS AT THIS LOCATION</div> : null}
           </div> : null}
 
-          {activeTab === 'chat' ? <div role="tabpanel" id={`world-room-${activeTab}`} aria-labelledby={`world-room-${activeTab}-tab`}><DreamcatcherChat key={selected.id} roomId={selected.id} city={selected.city} timeZone={selected.timeZone} /></div> : null}
         </section>
       </div>
 
 
       </div>
-      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}><p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. Signals can take longer to arrive; a device round does not guarantee signals within that time.</p><p>Your observation leaves the queue when device processing finishes. Follow its progress in My Observations while signals are on their way. When signals arrive, they become available for a 24-hour community vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>You can submit another observation after device processing finishes, even while earlier signals or votes are pending. One new observation may wait for or use this device at a time. Returning rounds keep their place in the same queue. The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
+      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}><p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. Signals can take longer to arrive; a device round does not guarantee signals within that time.</p><p>Your observation leaves the queue when device processing finishes. Follow its progress in My Observations while signals are on their way. When signals arrive, they become available for a 36-hour community vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>You can submit another observation after device processing finishes, even while earlier signals or votes are pending. One new observation may wait for or use this device at a time. Returning rounds keep their place in the same queue. The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
 
       {submitOpen ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Share an observation" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}>{loggedIn ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT DID YOU OBSERVE?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe something you saw, remembered, or experienced…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form> : <div className={styles.dialogBody}><p>Applicant access or above is required to submit to a Parallax Array.</p><Link className={styles.primaryButton} href="/login">LOG IN TO CONTINUE</Link></div>}</ArchiveSheet> : null}
 
-      {detail ? <ArchiveSheet open onClose={() => setDetail(null)} title="Observation details" dirty={!submissionUnknown && !!pendingChoice && !dispatchDay?.task.mySelection} busy={isPending}><div className={styles.dreamDetailBody}>{dispatchDay ? <><p>{dispatchDay.task.initiatorOnly ? 'The 24-hour vote ended without responses. Only the original submitter can now choose a signal to start the next round.' : 'Voting stays open for 24 hours. At least one response is needed to continue.'}</p><p>{dispatchDay.task.prompt ?? 'Which video signal feels most true to this world?'}</p><div className={styles.signalCandidateGrid}>{dispatchDay.task.assets.filter((asset) => asset.asset_role === 'option').map((asset, index) => <ArchiveButton variant="ghost" aria-label={`Select signal ${index + 1}`} aria-pressed={pendingChoice === asset.id} className={styles.signalCandidate} disabled={!!dispatchDay.task.mySelection || dispatchDay.task.closed || dispatchDay.task.canRespond === false} key={asset.id} onClick={() => setPendingChoice(asset.id)} type="button">{asset.processed_url && asset.media === 'video' ? <video autoPlay loop muted playsInline preload="metadata" src={asset.processed_url} /> : asset.display_url || asset.processed_url ? <Image alt="" fill src={(asset.display_url ?? asset.processed_url)!} unoptimized /> : null}<span>SIGNAL {String(index + 1).padStart(2, '0')}</span>{pendingChoice === asset.id ? <Check aria-hidden className={styles.signalCheck} size={20} /> : null}</ArchiveButton>)}</div><ArchiveButton variant="primary" className={styles.primaryButton} disabled={!pendingChoice || !!dispatchDay.task.mySelection || dispatchDay.task.closed || dispatchDay.task.canRespond === false || isPending || submissionUnknown} onClick={confirmSignal} type="button">{dispatchDay.task.mySelection ? 'SIGNAL RECORDED' : 'CONFIRM SIGNAL'}</ArchiveButton>{statusMessage && <p role="status" className={styles.formStatus}>{statusMessage}</p>}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check signal</ArchiveButton>}</> : <p>This vote has closed. Open the world record to review its history.</p>}</div></ArchiveSheet> : null}
+      {detail && dispatch ? <SignalVoteSheet investigation={dispatch} day={dispatchDay} loggedIn={loggedIn} pendingChoice={pendingChoice}
+        onChoose={setPendingChoice} onConfirm={confirmSignal} onRequireAuth={() => setAuthPromptOpen(true)} onClose={() => setDetail(null)}
+        busy={isPending} error={voteError} unknown={submissionUnknown} /> : null}
+      <AuthPromptSheet open={authPromptOpen} onClose={() => setAuthPromptOpen(false)} redirect="/worlds/live"
+        message="Voting is open to registered members. Create a free account to cast your signal and follow how the vote turns out." />
     </main>
   )
 }

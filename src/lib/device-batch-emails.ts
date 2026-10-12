@@ -69,7 +69,7 @@ function emailShell(opts: {
           </table>
         </td></tr>
         <tr><td style="padding:18px 0 0;color:rgba(245,245,245,.35);font-size:12px;line-height:1.6;">
-          ${escapeHtml(opts.footer ?? 'Building better worlds, together.')}
+          ${escapeHtml(opts.footer ?? 'EXPLORING PARALLEL WORLDS, TOGETHER')}
         </td></tr>
       </table>
     </td></tr>

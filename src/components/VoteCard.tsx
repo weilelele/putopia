@@ -45,7 +45,7 @@ function formatDate(iso: string | null) {
 }
 
 export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initialSelections, tally: initialTally }: Props) {
-  const { user } = useAuth()
+  const { user, accessRole, loading: accessLoading } = useAuth()
   const [selected, setSelected] = useState<string[]>(initialSelections)
   const [voted, setVoted] = useState(initialHasVoted)
   const [tally, setTally] = useState(initialTally)
@@ -63,9 +63,15 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
   useEffect(() => { setSelected(initialSelections) }, [initialSelections])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const isActive = vote.is_active
-  const hasPermission = vote.scope.includes(user.role as UserRole)
-  const canVote = hasPermission && isActive && !voted
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!vote.ends_at) return
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [vote.ends_at])
+  const isActive = vote.is_active && (!vote.ends_at || Date.parse(vote.ends_at) > now)
+  const hasPermission = vote.scope.includes(accessRole)
+  const canVote = !accessLoading && hasPermission && isActive && !voted
 
   const totalVotes = Object.values(tally).reduce((s, n) => s + n, 0)
 
@@ -84,7 +90,11 @@ export function VoteCard({ vote, hasVoted: initialHasVoted, mySelections: initia
     if (selected.length === 0 || submitting) return
     setSubmitting(true)
     setError(null)
-    const result = await submitVoteResponse({ vote_id: vote.id, selected_options: selected, anon_token: null })
+    let anonToken: string | undefined
+    if (!user.id) {
+      try { anonToken = localStorage.getItem('putopia-anon-id') ?? crypto.randomUUID(); localStorage.setItem('putopia-anon-id', anonToken) } catch { setError('Allow local storage to cast a guest vote.'); setSubmitting(false); return }
+    }
+    const result = await submitVoteResponse({ vote_id: vote.id, selected_options: selected, anon_token: null }, anonToken)
     if (result.error) {
       setError(result.error)
       setSubmitting(false)

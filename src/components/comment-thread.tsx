@@ -1,5 +1,6 @@
 'use client'
 
+import { ReportBlockActions } from '@/components/report-block-actions'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSelect, ArchiveTextarea, ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useMemo, useRef } from 'react'
@@ -201,6 +202,8 @@ export function CommentThread({
               {deleting === c.id ? 'Deleting…' : 'Delete'}
             </ArchiveButton>}
           </div>}
+          <ReportBlockActions target={{ kind: 'comment', id: c.id }} authorName={c.author_name} isOwn={!!user.id && c.author_id === user.id}
+            onChanged={() => setReload((n) => n + 1)} />
         </article>
 
         {replyTo === c.id && !isGuest && (

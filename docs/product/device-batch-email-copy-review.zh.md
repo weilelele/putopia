@@ -9,7 +9,7 @@
 - 发件人：`Multiverse Collective`
 - Reply-to：`voyagers@multiverseco.org`
 - 顶部：Multiverse Collective wordmark
-- 默认页脚：`Building better worlds, together.`
+- 默认页脚：`EXPLORING PARALLEL WORLDS, TOGETHER`
 - Batch 链接：`/devices/batches/{BATCH_SLUG}`
 
 ## 1. Batch 重大进展
@@ -148,7 +148,7 @@
 
 **Footer**
 
-`Building better worlds, together.`
+`EXPLORING PARALLEL WORLDS, TOGETHER`
 
 ## 5. 开始备货
 
@@ -181,7 +181,7 @@
 
 **Footer**
 
-`Building better worlds, together.`
+`EXPLORING PARALLEL WORLDS, TOGETHER`
 
 ## 6. 包裹发出
 
@@ -216,7 +216,7 @@
 
 **Footer**
 
-`Building better worlds, together.`
+`EXPLORING PARALLEL WORLDS, TOGETHER`
 
 ## 7. 包裹签收
 
@@ -250,7 +250,7 @@
 
 **Footer**
 
-`Building better worlds, together.`
+`EXPLORING PARALLEL WORLDS, TOGETHER`
 
 ## 8. 支付失败
 
@@ -283,7 +283,7 @@
 
 **Footer**
 
-`Building better worlds, together.`
+`EXPLORING PARALLEL WORLDS, TOGETHER`
 
 ## 9. 退款完成
 
@@ -316,4 +316,4 @@
 
 **Footer**
 
-`Building better worlds, together.`
+`EXPLORING PARALLEL WORLDS, TOGETHER`
