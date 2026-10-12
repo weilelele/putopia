@@ -38,9 +38,6 @@ export default async function DeviceBatchAdminPage({
         </p>
         <div className={styles.pageHeaderActions}>
           <ArchiveLinkButton href="/admin/device-supply" variant="secondary">S26 DEVICE SUPPLY</ArchiveLinkButton>
-          <ArchiveLinkButton href="/admin/device-batches/blueprints" variant="secondary">
-            STORY LAB
-          </ArchiveLinkButton>
           <ArchiveLinkButton href="/admin/device-batches/new">
             CREATE BATCH
           </ArchiveLinkButton>
