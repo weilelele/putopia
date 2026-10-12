@@ -12,6 +12,8 @@ import SmartImage from '@/components/smart-image'
 import { UpdateTimeline, EventRail } from '@/components/dashboard-content'
 import { PwaInstallNudge } from '@/components/pwa-install-nudge'
 import { SectionTracker } from '@/components/section-tracker'
+import { MissionBoard } from '@/components/mission-board'
+import { canAccessMissionBoard } from '@/lib/mission-board'
 export default function ConsoleClient({ initial }: { initial: Awaited<ReturnType<typeof getDashboard>> }) {
   const scrollContainer = useRef<HTMLElement>(null)
   const [data,setData] = useState(initial)
@@ -34,6 +36,7 @@ export default function ConsoleClient({ initial }: { initial: Awaited<ReturnType
     </section>}
     {data.voyager ? <DashboardVoyagerHeader voyager={data.voyager} /> : <DashboardStats stats={data.stats} />}
     {!data.voyager && data.errors.includes('Statistics') && <div className="archive-inline-notice" role="status"><p>The latest counts could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry counts</ArchiveButton></div>}
+    {data.voyager && !canAccessMissionBoard(data.voyager.role) && <MissionBoard unlocked={false} />}
     <div className="dashboard-content-grid"><section aria-labelledby="updates-heading"><div className="dashboard-section-heading"><h2 id="updates-heading">Updates</h2><span>Latest {data.updates.length}</span></div>
       {updatesIncomplete && <div className="archive-inline-notice" role="status"><p>Some updates could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry updates</ArchiveButton></div>}
       {data.updates.length ? <UpdateTimeline updates={data.updates} /> : !updatesIncomplete && <p>No updates have been published yet.</p>}
