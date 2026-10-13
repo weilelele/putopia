@@ -75,11 +75,11 @@ const stripe = {
 // Deny every dependency except this allowlist; prevents accidental external I/O.
 const stubs = {
   'server-only': {}, 'next/server': { NextResponse: { json: (body, init) => ({ body, status: init?.status ?? 200 }) } },
-  '@/lib/supabase/server': { createAdminClient: () => admin, createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: 'buyer', email: 'fixture@example.test' } } }) } }) },
+  '@/lib/supabase/server': { createAdminClient: () => admin, createClient: async () => ({ rpc: async name => { check(name, 'effective_access_role'); return { data: 'voyager', error: null } }, auth: { getUser: async () => ({ data: { user: { id: 'buyer', email: 'fixture@example.test' } } }) } }) },
   '@/lib/stripe': { getStripe: () => stripe }, '@/lib/initiation-config': { initiationConfigurationError: () => null },
   'node:crypto': {}, 'next/cache': {}, '@/lib/profile-validation': {}, '@/lib/loops': {},
 }
-const allowed = new Set(['src/lib/initiation-types.ts', 'src/lib/initiation-checkout-policy.ts', 'src/lib/initiation-payment.ts',
+const allowed = new Set(['src/lib/member-visibility.ts', 'src/lib/initiation-types.ts', 'src/lib/initiation-checkout-policy.ts', 'src/lib/initiation-payment.ts',
   'src/lib/initiation-reconciliation.ts', 'src/lib/initiation-capture-policy.ts', 'src/lib/actions/profile.ts',
   'src/lib/initiation-webhook.ts', 'src/lib/initiation-expiry.ts', 'src/app/api/initiation-checkout/route.ts', 'src/app/voyager-initiation/navigation.ts'])
 function load(relative) {
@@ -187,7 +187,7 @@ stripe.paymentIntents.capture = capture
 await handleInitiationWebhook(event('checkout.session.completed'), stripe)
 check(calls.filter(c => c.capture).length, 1)
 check(calls.some(c => c.rpc === 'complete_initiation'), true)
-// The profile milestone must use the authoritative bound predicate, including revocation.
+// The profile milestone must use the authoritative bound predicate, independently of digital access.
 const { getMyProfileStages } = load('src/lib/actions/profile.ts')
 const originalRpc = admin.rpc
 for (const bound of [true, false]) {
@@ -198,9 +198,9 @@ for (const bound of [true, false]) {
   check((await getMyProfileStages()).consoleBound, bound)
 }
 admin.rpc = async () => ({ data: null, error: { code: 'unavailable' } })
-await rejects(() => getMyProfileStages(), /binding status/)
+await rejects(() => getMyProfileStages(), /membership and Console status/)
 admin.rpc = async () => ({ data: 'true', error: null })
-await rejects(() => getMyProfileStages(), /binding status/)
+await rejects(() => getMyProfileStages(), /membership and Console status/)
 admin.rpc = originalRpc
 // Installed Stripe SDK verifies locally generated HMAC signatures, with no API client request.
 const sdk = new Stripe('sk_test_offline_fixture')
