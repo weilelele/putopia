@@ -14,7 +14,7 @@
 
 ## Migration / activation
 
-`supabase/schema_v99.sql` is additive, transactional and includes tables, indexes, policies, an invoker view, a private Storage bucket and schema-cache notification. `supabase/schema_v100.sql` adds immutable creator attribution and NPC policies; old entries retain authorship and modification timestamps. Requires earlier profile/registration/NPC migrations. **Not applied to production or any remote database.** No branch pushed or deployed.
+`supabase/schema_v99.sql` is additive, transactional and includes tables, indexes, policies, an invoker view, a private Storage bucket and schema-cache notification. `supabase/schema_v100.sql` adds immutable creator attribution and NPC policies; old entries retain authorship and modification timestamps. Requires earlier profile/registration/NPC migrations. **Not applied to production or any remote database.** The release remains blocked pending mobile recovery QA and isolated Supabase integration; see `preflight-20261014.md`.
 
 Apply v99 followed by v100 before shipping these routes to real members. The current shared backend has not received this migration, so the real Feed read displays its retry/error state. Members and Logs were verified against existing read-only data. Do not seed the production feed with QA fixtures.
 
@@ -25,7 +25,7 @@ The implementation is ready for migration review; live Supabase Auth → PostgRE
 - Production build passed.
 - TypeScript passed.
 - Full ESLint: 0 errors, existing repository warnings remain; new scoped files pass.
-- Vitest: 83 files / 637 tests passed.
+- Vitest: 84 files / 662 tests passed.
 - Design checker passed, including explicit inspection of untracked new UI files.
 - 41 isolated in-memory PostgreSQL assertions passed: reader/publisher/ownership, migration backfill, NPC identity/creator ownership, human impersonation denial, forged author, nested reply denial, likes, private storage, cascade deletion and account deletion.
 - Browser 390×844 / 320×540: production component with local service adapter exercised post creation, detail route, reply, edit, Applicant dialog, and unregistered denial. The adapter does not call live mutation services. 320px member layout has no horizontal overflow; desktop Logs checked at 1440×1024.
