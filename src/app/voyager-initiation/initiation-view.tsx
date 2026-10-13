@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CircleAlert, Check } from 'lucide-react'
 import SmartImage from '@/components/smart-image'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { MemberStrip } from './member-strip'
+import { ConsoleCarousel } from './console-carousel'
 import type { InitiationPublicMember, InitiationSnapshot } from '@/lib/initiation-types'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
@@ -147,13 +148,13 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : legacy ? 'CONTINUE INITIATION' : soldOut ? 'FULLY CLAIMED' : 'INITIATE'}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
-          {legacy && !availability.checkoutOpen && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
+          {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
             <h2>Delivery</h2>
             <p>Contiguous US only.<br />Shipping &amp; taxes included.</p>
             <Link className={styles.textLink} href="/terms/initiation">Delivery &amp; aftercare <ArrowRight size={18} aria-hidden /></Link>
           </section>
-          {!availability.checkoutOpen && !legacy && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
+          {!availability.checkoutOpen && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
           </>}
           {error && <p className={styles.error} role="alert">{error}</p>}
         </div>
@@ -180,8 +181,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
             const shipment = shipments.find(item => item.position === index + 1)
             const deviceHref = consoleClaim.batch ? `/devices/batches/${consoleClaim.batch.slug}` : consoleDevicePath(source, consoleClaim.href)
             return <li key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''}`}>
-              {pack.featured && paymentAtBottom && <Link href={deviceHref} className={styles.consoleCardLink} aria-label="Explore Multiverse Console on Device" />}
-              {pack.featured ? <Link href={deviceHref} className={styles.packImage} aria-label="Explore Multiverse Console on Device"><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 260px, 42vw" /></Link> : <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 320px, (min-width: 768px) 240px, 42vw" preload={index === 0} /></div>}
+              {!pack.featured && <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 320px, (min-width: 768px) 240px, 42vw" preload={index === 0} /></div>}
               <div className={styles.packCopy}>
                 <p className={styles.packageNumber}>Package {index + 1}<span> · {shipment?.scheduledMonth ? new Date(`${shipment.scheduledMonth}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : pack.dispatch}</span></p>
                 <PackHeading>{pack.title}</PackHeading>
@@ -190,15 +190,26 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
                 <p>{pack.description}</p>
                 {shipment ? shipment.status !== 'planned' && <p className={styles.shipmentStatus}>{shipment.status}</p> : initiated ? <p className={styles.shipmentStatus}>Progress unavailable</p> : null}
                 {shipment?.trackingUrl && <a className={styles.textLink} href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">Track delivery <ArrowRight size={18} aria-hidden /></a>}
-                {pack.featured && <Link className={styles.textLink} href={deviceHref}>{consoleClaim.claimed ? 'View your batch' : paymentAtBottom ? 'Explore the Console' : 'Explore Device'} <ArrowRight size={18} aria-hidden /></Link>}
               </div>
+              {pack.featured && <>
+                <ConsoleCarousel suspended={dialog !== null} />
+                <Link className={styles.consoleExplore} href={deviceHref}>{consoleClaim.claimed ? 'View your batch' : 'Explore the Console'} <ArrowRight size={22} aria-hidden /></Link>
+              </>}
             </li>
           })}
         </ol>
       </section>}
 
+      <section className={styles.section} aria-labelledby="mission-benefit-title">
+        <div className={styles.sectionHeading}><BenefitHeading id="mission-benefit-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Mission Board</BenefitHeading></div>
+        <div className={styles.benefit}>
+          <div className={`${styles.benefitImage} ${styles.missionImage}`}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
+          <div className={styles.benefitCopy}><h3>Your next assignment awaits.</h3><p>Unlock the Collective’s internal Mission Board. Take on emergency observations, attempt contact across worlds, and explore unknown frequencies.</p><Link href={snapshot.userId ? '/console#mission-board' : '/login?redirect=%2Fconsole%23mission-board'}>Explore the Mission Board <ArrowRight size={20} aria-hidden /></Link></div>
+        </div>
+      </section>
+
       <section className={styles.section} aria-labelledby="intel-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Classified Intel</BenefitHeading></div>
+        <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Classified Intel</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents asking: How long has the Collective existed? Who were the first Voyagers? What did they discover?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
           <div className={styles.benefitCopy}><h3>Beyond the public archive.</h3><p>Explore the Collective’s history and hidden work through classified records and new field briefings.</p><Link href="/intel?tab=classified">Explore intel <ArrowRight size={20} aria-hidden /></Link></div>
@@ -206,7 +217,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
       </section>
 
       <section className={styles.section} aria-labelledby="participation-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="participation-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}{paymentAtBottom ? 'Shape the Collective' : 'Participate'}</BenefitHeading></div>
+        <div className={styles.sectionHeading}><BenefitHeading id="participation-title">{paymentAtBottom && <span className={styles.chapter}>04</span>}{paymentAtBottom ? 'Shape the Collective' : 'Participate'}</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/participation-questions.png" alt="Proposed decisions on physical maps and dossiers: Which world next? How many new Voyagers? Reveal our device locations? Investigate a new antenna organization?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
           <div className={styles.benefitCopy}><h3>Help shape what comes next.</h3><p>Take part in member-only votes and get priority access to world-record activities. The questions pictured are proposals; current opportunities appear in the voting hub.</p><Link href="/vote?tab=classified">Explore member votes <ArrowRight size={20} aria-hidden /></Link></div>

@@ -39,6 +39,7 @@
 .benefit { display: grid; gap: 20px; }
 .benefitImage { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
 .benefitImage img { object-fit: cover; }
+.missionImage img { object-fit: contain; }
 .benefitCopy h3 { font-size: var(--fs-h3); line-height: 1.2; font-weight: 700; margin: 0 0 12px; }
 .benefitCopy p { color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.5; margin: 0 0 12px; }
 .benefitCopy a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-nucleus); font-size: var(--fs-body); font-weight: 700; text-decoration: none; }
@@ -91,12 +92,6 @@
 
 .become > span:first-child { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 
-/* Original portrait contact sheet: 1.87× the image area of the 3:2 packs. */
-.consolePack .packImage { display: block; aspect-ratio: 1122 / 1402; overflow: visible; }
-.consolePack .packImage img { object-fit: contain; }
-.consolePack .packCopy > p:not(.packageNumber):not(.shipmentStatus) { margin: 0; font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
-.consolePack .textLink { flex-wrap: wrap; }
-
 .legacyPrice { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; }
 .legacyPrice s { color: var(--color-star-dim); font-size: var(--fs-title); }
 .legacyPrice strong { color: var(--color-nucleus); font-size: var(--fs-h2); margin-left: 6px; }
@@ -115,27 +110,22 @@
 .benefitsTitle { margin: 0; padding: 28px 0; border-top: 1px solid var(--bd-faint); font-size: var(--fs-h2); line-height: 1.15; font-weight: 700; }
 .benefitsTitle + .section { border-top: 0; padding-top: 0; }
 .chapter { display: block; margin-bottom: 8px; font: inherit; }
-.benefitsFirst .consolePack { position: relative; isolation: isolate; margin-bottom: 28px; }
-.benefitsFirst .consolePack::before { content: ''; position: absolute; inset: -12px -8px; z-index: -1; background: var(--color-nucleus); border: 1px solid var(--color-nucleus); pointer-events: none; }
-.benefitsFirst .consolePack .packImage { margin-bottom: 0; }
-.benefitsFirst .consolePack .packCopy { padding-bottom: 0; color: var(--color-deep); border-color: var(--color-deep); }
-.benefitsFirst .consolePack .packCopy::before { background: var(--color-deep); border-color: var(--color-deep); }
-.benefitsFirst .consolePack .packCopy > p,
-.benefitsFirst .consolePack .packCopy > p:not(.packageNumber):not(.shipmentStatus),
-.benefitsFirst .consolePack h4,
-.benefitsFirst .consolePack .textLink { color: var(--color-deep); }
-.benefitsFirst .consolePack .textLink { font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
-.benefitsFirst .consolePack a:focus-visible { outline-color: var(--color-deep); }
-.consoleCardLink { position: absolute; inset: -12px -8px; z-index: 1; }
-.benefitsFirst .consolePack .packImage,
-.benefitsFirst .consolePack .textLink { position: relative; z-index: 2; }
-.benefitsFirst .consolePack h4 { font-size: var(--fs-title); }
+.consolePack { display: block; margin: 8px 0 28px; background: var(--color-nucleus); color: var(--color-deep); }
+.consolePack .packCopy { padding: 20px 16px; border: 0; }
+.consolePack .packCopy::before { display: none; }
+.consolePack .packCopy :is(h3, h4) { max-width: 12ch; font-size: var(--fs-h2); line-height: 1.15; margin-bottom: 16px; }
+.consolePack .packCopy > p { color: var(--color-deep); }
+.consolePack .packCopy > p:not(.packageNumber):not(.packAccess) { margin: 0; font-size: var(--fs-body); line-height: 1.5; }
+.consolePack .textLink { color: var(--color-deep); }
+.consoleExplore { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 12px 16px; color: var(--color-deep); font-size: var(--fs-body); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.consoleExplore svg { flex-shrink: 0; }
+.consolePack a:focus-visible { outline-color: var(--color-deep); outline-offset: -4px; }
 @media (min-width: 768px) {
   .benefitsTitle { padding-block: 36px; font-size: var(--fs-h1); }
-  .benefitsFirst .consolePack::before { inset: -16px -12px; }
-  .consoleCardLink { inset: -16px -12px; }
-  .benefitsFirst .consolePack { margin-block: 16px 44px; }
-  .benefitsFirst .consolePack h4 { font-size: var(--fs-h3); }
+  .consolePack { margin-block: 16px 44px; }
+  .consolePack .packCopy { padding: 28px 24px; }
+  .consolePack .packCopy :is(h3, h4) { font-size: var(--fs-h1); }
+  .consoleExplore { padding: 16px 24px; font-size: var(--fs-title); }
 }
 
 .faqItem { border-bottom: 1px solid var(--bd-faint); }

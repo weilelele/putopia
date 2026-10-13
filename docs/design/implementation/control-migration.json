@@ -28,10 +28,6 @@
     "controls": 41
   },
   {
-    "file": "src/app/admin/device-batches/blueprints/story-blueprint-browser.tsx",
-    "controls": 34
-  },
-  {
     "file": "src/app/admin/device-batches/new/new-batch-form.tsx",
     "controls": 8
   },

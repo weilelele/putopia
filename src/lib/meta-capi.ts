@@ -83,15 +83,23 @@ type MetaPurchaseSendOptions = {
   /** Stripe's signed event livemode flag; test codes are never sent for live events. */
   stripeLiveMode: boolean
   fetchImpl?: typeof fetch
+  /** Explicit configuration keeps pure tests independent of process.env. */
+  config?: { accessToken?: string; datasetId?: string; apiVersion?: string; testEventCode?: string }
 }
 
 export async function sendMetaPurchase(input: MetaPurchaseInput, options: MetaPurchaseSendOptions) {
-  const token = process.env.META_CAPI_ACCESS_TOKEN?.trim()
+  const config = options.config ?? {
+    accessToken: process.env.META_CAPI_ACCESS_TOKEN,
+    datasetId: process.env.META_DATASET_ID,
+    apiVersion: process.env.META_CAPI_API_VERSION,
+    testEventCode: process.env.META_CAPI_TEST_EVENT_CODE,
+  }
+  const token = config.accessToken?.trim()
   if (!token) throw new Error('Meta CAPI is not configured: META_CAPI_ACCESS_TOKEN is missing')
 
-  const datasetId = process.env.META_DATASET_ID?.trim() || META_DATASET_ID
+  const datasetId = config.datasetId?.trim() || META_DATASET_ID
   if (!/^\d+$/.test(datasetId)) throw new Error('Meta CAPI dataset ID is invalid')
-  const apiVersion = process.env.META_CAPI_API_VERSION?.trim() || 'v25.0'
+  const apiVersion = config.apiVersion?.trim() || 'v25.0'
   if (!/^v\d+\.\d+$/.test(apiVersion)) throw new Error('Meta CAPI API version is invalid')
 
   const endpoint = new URL(`https://graph.facebook.com/${apiVersion}/${datasetId}/events`)
@@ -103,7 +111,10 @@ export async function sendMetaPurchase(input: MetaPurchaseInput, options: MetaPu
 
   // A dedicated code is an explicit Test Events opt-in. The Stripe signed
   // livemode flag is an additional guard that prevents it reaching production.
-  const testEventCode = process.env.META_CAPI_TEST_EVENT_CODE?.trim()
+  const testEventCode = config.testEventCode?.trim()
+  if (!options.stripeLiveMode && !testEventCode) {
+    throw new Error('Meta CAPI test events require a test event code')
+  }
   if (!options.stripeLiveMode && testEventCode) {
     payload.test_event_code = testEventCode
   }
@@ -113,6 +124,7 @@ export async function sendMetaPurchase(input: MetaPurchaseInput, options: MetaPu
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(payload),
     cache: 'no-store',
+    signal: AbortSignal.timeout(10_000),
   })
   if (!response.ok) {
     // Do not include Meta's response body or request URL: both may contain
@@ -120,7 +132,7 @@ export async function sendMetaPurchase(input: MetaPurchaseInput, options: MetaPu
     throw new Error(`Meta CAPI Purchase request failed with HTTP ${response.status}`)
   }
 
-  const result = await response.json() as { events_received?: number; messages?: string[] }
+  const result = await response.json() as { events_received?: number; fbtrace_id?: string }
   if (result.events_received !== 1) {
     throw new Error('Meta CAPI did not confirm receipt of the Purchase event')
   }
