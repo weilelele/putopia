@@ -4,6 +4,8 @@
 > 审计范围：`/devices/live`、`/worlds/live` 的 390 × 844 竖屏流程，以及 `codex/device-batch-backend-live` 已完成的 Device Batch 产品与后台能力。  
 > 结论性质：产品、体验、数据闭环与运营上线准备度审计；不代表完整的安全或 WCAG 合规认证。
 
+> 历史审计：本文保留当时的功能与缺口记录。当前 Batch 内容规范以 [Batch 基础信息概述](./device-batch-overview.zh.md) 为准，Story Lab、完整故事与两轮审核不再属于内容工作要求。
+
 ## 一、总体结论
 
 ### 2026-08-12 P0 实施进展
@@ -17,7 +19,7 @@
 
 两个观察室的视觉方向已经成立，但它们目前仍然是**与真实产品平行存在的交互原型**，距离上线最大的缺口不是继续打磨画面，而是把它们接到已经存在的真实系统上。
 
-- Device 的底层产品能力已经相当完整：Batch 持久化、草稿/发布/版本、库存、Stripe 付款、实体 Unit 绑定、Pack 履约、订单后台、关注与邮件、持有者讨论、批次投票、My Consoles、故事审核与内容排期都已有基础。
+- Device 的底层产品能力已经相当完整：Batch 持久化、草稿/发布/版本、库存、Stripe 付款、实体 Unit 绑定、Pack 履约、订单后台、关注与邮件、持有者讨论、批次投票、My Consoles 都已有基础。
 - Device Live Room 当前没有使用这些能力。Batch、价格、库存、Shipment、Updates、Discussion、媒体和 Claim 都是页面内静态数据；Claim 按钮也没有进入真实购买流程。
 - Worlds 已经存在一条真实链路：提交 World → 6–8 小时 Signal Scanning → Signal Tuning / Dispatch → 用户选择 → 多日搜索 → Archive。Live Room 当前又定义了一条“Dreamcatcher 8–10 分钟处理、50 人排队、选择后重新入队”的新链路，但没有后台状态机。
 - 因此，上线前最重要的产品决策是：**Dreamcatcher 是现有 Worlds / Signal Dispatch 的新入口和叙事外壳，还是一套新的独立玩法。** 推荐前者。否则团队会长期维护两套含义相近但时间、状态和数据完全不同的世界生成系统。
@@ -31,8 +33,7 @@
 - 草稿与公开内容分离；
 - 乐观锁 revision，防止多人后台互相覆盖；
 - 发布版本记录；
-- 创建新 Batch 与 Story Lab；
-- 完整故事先行、两道人工 Review Gate、内容排期、上游故事变化后自动 Needs Re-review。
+- 创建新 Batch。
 
 ### 2.2 申领、库存与付款
 
@@ -280,7 +281,6 @@ Dreamcatcher 不另造一套世界数据库，而是成为现有 World Pipeline 
 - 自上次离开后；
 - 未读与通知；
 - 事件驱动的镜头/Update/Chat/Archive 同步；
-- Story Workflow 已批准内容自动进入发布计划；
 - 关键事件回放与多机位属于后续增强。
 
 ## 七、审计步骤与健康度
