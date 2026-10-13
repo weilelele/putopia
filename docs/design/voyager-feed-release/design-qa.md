@@ -58,3 +58,8 @@ Automated validation: 83 Vitest files / 637 tests, including 12 recovery/deadlin
 8. Real sign-out/account switch clears old-account draft keys; storage-disabled/full browser reports unavailable persistence. Esc/backdrop dirty protection, focus restoration, text enlargement, keyboard visibility, dialog footer and fixed Share control remain usable.
 
 Release recommendation: preparation/review may proceed; production release requires the browser acceptance above, isolated Supabase/Auth/Storage integration, and v97→v98 migration verification. No remote migrations, production QA writes, push, or deployment performed in this revision.
+
+
+### 2026-10-14 browser recovery follow-up
+
+The historical URL-policy blocker below is resolved after the user manually refreshed the HTTP tab. Latest mobile fixture scenarios and screenshots are recorded in [preflight follow-up](preflight-20261014.md#browser-recovery-and-mobile-verification--follow-up). Simulated mobile interaction passed; physical phone keyboard/safe-area and real isolated Supabase integration remain unverified.

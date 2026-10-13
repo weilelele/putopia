@@ -1,6 +1,6 @@
 # Voyager Feed release preflight — 2026-10-14
 
-Status: **HOLD for mobile recovery QA and isolated Supabase integration**. No production migration or production release has been performed.
+Status: **HOLD for isolated Supabase integration and physical-phone acceptance**. Simulated mobile recovery QA now passed (follow-up below). No production migration or production release has been performed.
 
 ## Changes and integration
 
@@ -45,3 +45,25 @@ No production data was modified during this preflight.
 - Vitest: 84 files, 662 tests passed.
 - `npm run design:check -- --base origin/main`: passed across committed new and changed UI.
 - `git diff --check`: passed.
+
+## Browser recovery and mobile verification — follow-up
+
+User manually refreshed the existing tab; browser control now reads the intended HTTP document. The preview-access blocker is resolved. Verified production Feed component through the local service adapter at 390×844 and 320×540:
+
+- Save draft and close → reload → restore → publish preserved the original text.
+- Feed → detail → reply → success count updated; return to feed worked.
+- Applicant liked/replied, edited/deleted its own reply; other users' content had no ownership menu.
+- Applicant publish dialog has one paragraph, no decorative icon, and Voyager Initiation link.
+- Guest and unregistered detail state contained zero Feed articles and showed the compact request/login gate.
+- Architect selected NPC, attached a local PNG, saved/reopened the draft, saw missing-file guidance and disabled POST, reselected the image and published with NPC attribution.
+- Timeout before write: result lookup retained the uncertain state, draft survived reload with locked text/identity, retry produced exactly one matching post.
+- Timeout after write: result confirmation produced exactly one matching post. Reply timeout-after-write also confirmed successfully and cleared its input.
+- Explicit rejection retained editable text; closing opened Discard your changes confirmation.
+- Read failure displayed Retry; retry after restoring normal mode returned all five fixture posts.
+- 320px document width equalled viewport width (no horizontal overflow). Browser error log was empty at completion. Viewport override reset afterward.
+
+Evidence: `qa-permission-20261014.png`, `qa-guest-320-20261014.png`, `qa-image-draft-320-20261014.png`, `qa-timeout-recovery-20261014.png`, `qa-feed-mobile-20261014.png`.
+
+Scope: simulated mobile viewport and fixture service faults, not a physical phone, OS-level airplane mode, or real Supabase network transport. Production Auth logout/account-switch draft erasure has pure-test coverage but was not exercised by signing the user's real account out. The fixture role selector does not prove that boundary. Physical keyboard/safe-area and isolated Supabase integration remain release gates.
+
+PR #225 CI (typecheck/lint/build) and Vercel preview passed at commit 1dc55f8. This follow-up changes only QA documentation and screenshots.

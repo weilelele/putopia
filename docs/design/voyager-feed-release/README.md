@@ -57,3 +57,8 @@ See `design-qa.md` for a scoped compliance assessment and outstanding acceptance
 ## 2026-10-14 recovery completion
 
 Session draft recovery, bounded network waits, owner-only result lookup, and compact guest gate are implemented. See the dated audit section in `design-qa.md` for exact behavior, fixture failure modes, automated results and the manual mobile matrix. Browser verification of this revision was blocked by the browser tool's URL security policy; prior screenshots are historical. Preparation can proceed, but this is not approval to deploy without the remaining mobile and staging checks.
+
+
+## Mobile follow-up completed
+
+The user refreshed the HTTP preview and the browser-access blocker is resolved. Latest fixture-based mobile QA at 390×844 / 320×540 passed publishing, detail/reply, Applicant permissions and own-content management, compact guest/unregistered gates, NPC image publishing, saved-image draft recovery, timeout-before/after result handling, explicit rejection and read retry. See `preflight-20261014.md` for exact evidence and limitations. Physical-phone and isolated real Supabase checks remain pending; no production migration has been applied.
