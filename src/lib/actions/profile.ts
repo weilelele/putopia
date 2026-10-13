@@ -83,12 +83,13 @@ export async function uploadAvatar(formData: FormData) {
 
 export async function getAllVoyagers() {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('voyager_profiles')
     .select('*')
     .in('role', ['voyager', 'architect'])
     .order('joined_at', { ascending: true })
 
+  if (error) throw new Error('The Voyager registry could not be loaded.')
   return visibleMemberProfiles(data ?? [])
 }
 

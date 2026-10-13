@@ -45,3 +45,11 @@ describe('primary route access policy', () => {
     expect(routeWithSearch('/worlds/live', '?mode=queue')).toBe('/worlds/live?mode=queue')
   })
 })
+
+// Feed detail renders its own registration gate; server actions and RLS protect content.
+describe('Voyager feed detail gate', () => {
+  it('allows the shell while content remains protected', () => {
+    expect(allowsUnregisteredViewer('/voyagers/posts/20000000-0000-4000-8000-000000000001')).toBe(true)
+    expect(allowsUnregisteredViewer('/voyagers/posts/x/edit')).toBe(false)
+  })
+})
