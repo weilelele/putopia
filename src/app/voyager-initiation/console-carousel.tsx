@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import SmartImage from '@/components/smart-image'
 import styles from './console-carousel.module.css'
 
@@ -13,12 +13,11 @@ const slides = [
 
 export function ConsoleCarousel({ suspended }: { suspended: boolean }) {
   const [active, setActive] = useState(0)
-  const [paused, setPaused] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const loaded = useRef(new Set<number>())
 
   useEffect(() => {
-    if (paused || suspended) return
+    if (suspended) return
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
     let visible = false
     const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting }, { threshold: 0.5 })
@@ -28,7 +27,7 @@ export function ConsoleCarousel({ suspended }: { suspended: boolean }) {
       setActive(index => loaded.current.has((index + 1) % slides.length) ? (index + 1) % slides.length : index)
     }, 6000)
     return () => { window.clearInterval(timer); observer.disconnect() }
-  }, [active, paused, suspended])
+  }, [active, suspended])
 
   function move(delta: number) {
     setActive(index => (index + delta + slides.length) % slides.length)
@@ -43,7 +42,6 @@ export function ConsoleCarousel({ suspended }: { suspended: boolean }) {
       </div>)}
     </div>
     <div className={styles.controls}>
-      <button className={styles.pause} type="button" onClick={() => setPaused(value => !value)} aria-label={paused ? 'Resume automatic slideshow' : 'Pause automatic slideshow'}>{paused ? <Play size={16} aria-hidden /> : <Pause size={16} aria-hidden />}</button>
       <button className={styles.previous} type="button" onClick={() => move(-1)} aria-label="Previous Console photograph"><ChevronLeft size={20} aria-hidden /></button>
       <button className={styles.next} type="button" onClick={() => move(1)} aria-label="Next Console photograph"><ChevronRight size={20} aria-hidden /></button>
     </div>
