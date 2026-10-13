@@ -1,19 +1,19 @@
 .carousel { position: relative; color: var(--color-star); background: var(--color-deep); }
 .frame { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
 .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 180ms ease; }
-.slide img { object-fit: contain; }
+.slide img { object-fit: cover; }
 .image { position: absolute; inset: 0; }
-/* Show only y=712..1402 of the original 1122×1402 contact sheet. */
-.detailsCrop { position: absolute; top: 50%; width: 100%; aspect-ratio: 1122 / 690; transform: translateY(-50%); overflow: hidden; }
+/* Cover the 3:2 frame with y=712..1402 of the 1122×1402 contact sheet. */
+.detailsCrop { position: absolute; top: 0; left: 50%; width: 108.405797%; height: 100%; transform: translateX(-50%); overflow: hidden; }
 .detailsCrop img { top: auto !important; bottom: 0; height: 203.188406% !important; object-fit: fill; }
 .active { opacity: 1; }
 .controls { position: absolute; inset: 0; pointer-events: none; }
-.controls button { position: absolute; display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: var(--color-deep); color: inherit; cursor: pointer; pointer-events: auto; }
+.controls button { position: absolute; display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: inherit; opacity: .55; cursor: pointer; pointer-events: auto; }
 .previous, .next { top: 50%; transform: translateY(-50%); }
 .previous { left: 8px; }
 .next { right: 8px; }
-.controls button:hover { color: var(--color-nucleus); }
-.controls button:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: -3px; }
+.controls button:hover { opacity: 1; }
+.controls button:focus-visible { opacity: 1; outline: 2px solid var(--color-nucleus); outline-offset: -3px; }
 @media (prefers-reduced-motion: reduce) {
   .slide { transition: none; }
 }
