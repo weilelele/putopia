@@ -16,6 +16,7 @@ export function allowsUnregisteredViewer(pathname: string): boolean {
   return isPublicPrimaryRoute(pathname)
     || PUBLIC_ENTRY_ROUTES.some((route) => pathname === route || pathname === `${route}/`)
     // Public reading routes only; do not include submission or account pages.
+    || /^\/voyagers\/posts\/[^/]+$/.test(path)
     || /^\/intel\/[^/]+$/.test(path)
     || (/^\/worlds\/[^/]+$/.test(path) && path !== '/worlds/submit')
     || /^\/devices\/batches\/[^/]+(?:\/discussion)?$/.test(path)

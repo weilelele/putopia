@@ -1,5 +1,6 @@
 'use client'
 
+import { draftStorage, syncFeedDraftAccount } from '@/lib/feed-recovery'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   const loadProfile = useCallback(async (userId: string, email?: string) => {
+    syncFeedDraftAccount(draftStorage(), userId)
     const version = ++requestVersion.current
     setAccessRole('guest')
     const supabase = createClient()
@@ -95,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         loadProfile(session.user.id, session.user.email).catch(() => setAccessRole('guest')).finally(() => setLoading(false))
       } else {
+        syncFeedDraftAccount(draftStorage(), null)
         requestVersion.current++
         setAccessRole('guest')
         setUser(GUEST)
@@ -108,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAccessRole('guest')
         loadProfile(session.user.id, session.user.email).catch(() => setAccessRole('guest')).finally(() => setLoading(false))
       } else {
+        syncFeedDraftAccount(draftStorage(), null)
         requestVersion.current++
         setAccessRole('guest')
         setUser(GUEST)

@@ -32,3 +32,26 @@ final result: passed
 ## Device public entry release · 2026-09-25
 
 Complete device photographs automatically cycle every 6 seconds without controls, preserving all three displays. Image configuration lives in src/lib/console-hero.ts. Mobile 390×844 browser checks confirmed automatic image changes, unchanged scroll position when switching locations and using browser back, and guest access to Intel, Worlds and Voyagers. Classified content and write actions retain authorization. World archive fill-image layout was fixed. See docs/audits/guest-access-2026-09-25.md for remaining guest restrictions.
+
+## Voyager feed prototype — 2026-10-12
+
+Latest scoped report: [Voyager feed QA](docs/design/voyager-feed-prototype/design-qa.md).
+Source: first user-selected Voyager concept. Mobile 390×844, narrow/short 320px and desktop verified in the in-app browser. Author/role interactions and draft protection checked with local sample data. Combined visual evidence and explicit production boundaries are recorded in the linked report.
+
+final result: passed
+
+## Voyager feed prototype v2 — 2026-10-13
+
+Latest scoped report: [Voyager feed v2 QA](docs/design/voyager-feed-prototype/design-qa.md). Current code has compact 15/20 feed typography, post-detail navigation, floating POST, Applicant permission dialog and a guest/unregistered feed gate. ESLint, TypeScript, 10 permission tests and design checks passed. Browser security policy blocked preview inspection; previous screenshots apply only to v1. Current rendered verification remains pending.
+
+final result: blocked
+
+## Voyager feed v2 mobile follow-up — 2026-10-13
+
+Browser access restored. Requested mobile prototype flows verified at 390×844 and 320×540; fixed return focus and floating POST overlapping REPLY. See the [updated scoped report](docs/design/voyager-feed-prototype/design-qa.md) and v2 screenshots. Core local flows passed; real-phone keyboard acceptance and cross-route history caveat are documented.
+
+## Voyagers production integration — 2026-10-13
+
+Formal Feed, Members and Logs integration is implemented. [Release QA](docs/design/voyager-feed-release/design-qa.md) distinguishes passed UI/isolated SQL checks from pending live activation. Full build, TypeScript, 621 tests and 24 isolated SQL assertions pass. The v97 migration has not been applied to the shared production database; live Feed verification remains blocked until that step. No deployment performed.
+
+final result: blocked (live Feed activation only)

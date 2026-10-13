@@ -77,7 +77,7 @@
 | Intel | 右上 Voting Hub → 分类筛选 → 最新 Intel 重点内容 → Recent 轻列表 |
 | Devices | 右上 Archive → 批次选择 → 实际媒体 → 当前行动 → 内容 Tabs |
 | Worlds | 右上 Archive → 房间选择 → 实际媒体与状态 → 当前行动 → 内容 Tabs |
-| Voyagers | 右上 My Profile → 原数字看板 → Architects → Voyager Batches / 成员 → 底部主按钮 Voyager Logs |
+| Voyagers | 右上 My Profile → FEED / MEMBERS / LOGS；默认 FEED，成员统计、Architects 和批次目录放入 MEMBERS，长文放入 LOGS |
 | 二级列表 / 详情 / 任务 | 实际返回上下文 + 可见标题 → 内容；无 Logo |
 
 页面内容左右 16px，顶部 16px，必要操作行最小 44px。二级/任务栏内容最小高 56px，标题 24px/700（正文上下文可用 20px/700）。长文、200% 字体放大允许增高。默认随正文滚动，安全区由平台适配一次。
@@ -349,3 +349,13 @@ Latest revision: use three complete static device photographs (Kyoto star screen
 ### Device automatic slideshow · 2026-09-25
 
 Latest user revision replaces the manual image controls with automatic whole-image changes every 6 seconds. No arrows, counter or separate switching bar. Configure image sources, dimensions, alternative text and interval in `src/lib/console-hero.ts`; one image remains static. Keep the fixed frame and uncropped images. Pause while offscreen, hidden, hovered, keyboard-focused, the function dialog is open, or reduced motion is requested.
+
+### Voyager Feed · 2026-10-13
+
+Feed 默认展示紧凑图文动态：15px/20px 正文、40px 头像、8px 内容间距；右下 POST 常驻，详情页回复操作左对齐并给悬浮按钮留出空间。点击正文、图片或回复数进入独立帖子详情路由。Voyager / Architect 可以发帖，已完成注册的 Applicant 可以点赞和回复；任何身份只可编辑、删除自己的内容。游客及未完成注册账户不下发任何 Feed 内容，显示与 Dashboard 一致的品牌、Request Access / Log In 入口。Applicant 点击 POST 使用居中 ArchiveSheet，文案仅保留成为 Voyager 才能发布的说明，主按钮为 Voyager Initiation；删除以 “As an Applicant” 开头的说明段。
+
+Feed NPC publishing 补充：已注册的 human Architect 发帖时可选择本人或现有 NPC；默认本人，回复仍用本人身份。显示作者与实际发布者分离，NPC 帖子仍仅由实际发布者编辑、删除，其他 Architect 无越权编辑权限。发帖后作者不可变更。
+
+Feed 分享入口修订（用户确认）：右下浮动入口使用「＋ Share an update」，52px 高、16px/400、橙底深蓝字、单个右上 10px 切角。复用 ArchiveButton 并作此入口的局部尺寸与表面变体；仅裁切背景，保留完整键盘焦点轮廓。编辑器提示为 “What’s happening in your world?”，最终提交仍为 POST。权限说明不添加装饰图标。
+
+2026-10-14 已确认补充：Feed 游客只保留紧凑页头品牌，不再显示正文内的大字标、图形 Logo 或品牌介绍标语；居中显示 Join the conversation、简短说明和 Request Access / Log In。Feed 文字与身份选择使用账户/任务隔离的 sessionStorage 草稿，24 小时失效；未确认提交保留请求编号直到明确处理，刷新后恢复前提示。原始图片不持久化，恢复时提示重新选择；已提交图片重试校验内容摘要。

@@ -1,0 +1,106 @@
+.page { width: 100%; height: 100dvh; overflow-y: auto; background: var(--color-deep); color: var(--color-star); font-family: var(--font-mono), monospace; font-size: var(--fs-body); line-height: 1.5; }
+.page button, .page select, .page textarea { font: inherit; }
+.page button { cursor: pointer; }
+.page button:disabled { cursor: not-allowed; }
+.page button:focus-visible, .page select:focus-visible, .page textarea:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.lab { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; padding: 4px 12px; background: var(--color-void); font-size: var(--fs-caption); border-bottom: 1px solid var(--bd-faint); }
+.lab label { display: flex; align-items: center; gap: 8px; }
+.lab select { background: var(--color-deep); color: var(--color-star); padding: 4px 8px; min-height: 44px; border: 1px solid var(--bd-faint); }
+.lab button { display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.content { max-width: 600px; margin: 0 auto; padding: 0 16px 156px; }
+.header { display: flex; align-items: center; justify-content: space-between; min-height: 56px; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.brand img { object-fit: contain; height: auto; }
+.profileLink { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: var(--fs-caption) !important; }
+.tabs { display: flex; border-bottom: 1px solid var(--bd-faint); }
+.tabs button { flex: 1; min-height: 52px; position: relative; }
+.tabs button[aria-current] { color: var(--color-nucleus); }
+.tabs button[aria-current]::after { content: ''; position: absolute; bottom: 0; left: 24%; right: 24%; height: 2px; background: var(--color-nucleus); }
+.composer { padding: 0; }
+.composerRow { display: flex; gap: 12px; align-items: flex-start; }
+.avatar { width: 40px; height: 40px; flex: 0 0 40px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-void); }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.composer textarea { resize: vertical; width: 100%; min-height: 56px; background: transparent; color: var(--color-star); border: 0; padding: 0; }
+.composer textarea::placeholder { color: var(--color-star-dim); }
+.composerActions { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.composerActions small { font-size: var(--fs-caption); color: var(--color-star-dim); }
+.iconButton { grid-column: 3; grid-row: 1; min-width: 36px; } .composerActions small { grid-column: 2; } .composerActions .clear { grid-column: 3 / 5; }
+.composerActions > :last-child { grid-column: 4; grid-row: 1; width: 64px; min-width: 0; padding-inline: 8px; }
+.composerActions small, .replyComposer small, .page small { font-size: var(--fs-caption); color: var(--color-star-dim); }
+.iconButton { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+.clear { font-size: var(--fs-caption) !important; min-height: 44px; }
+.attachment { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0; grid-column: 2 / 5; }
+.attachment img { width: 120px; max-height: 90px; object-fit: cover; }
+.post, .reply { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 8px; padding: 12px 0 4px; border-bottom: 1px solid var(--bd-faint); }
+.avatarLink { align-self: start; min-height: 44px; min-width: 44px; display: flex; justify-content: flex-start; }
+.postMain { min-width: 0; }
+.postHeader { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 6px; min-height: 20px; padding-right: 26px; position: relative; }
+.postHeader > .iconButton { position: absolute; right: -8px; top: -12px; }
+.identity { text-align: left; line-height: 20px !important; font-size: 15px !important; }
+.identity strong { font-weight: 700; }
+.timestamp { font-size: var(--fs-caption); color: var(--color-star-dim); line-height: 20px; }
+.body { white-space: pre-wrap; overflow-wrap: anywhere; margin: 2px 0 8px; font-size: 15px; line-height: 20px; letter-spacing: 0; }
+.postLink { display: block; color: var(--color-star); text-decoration: none; }
+.postLink:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.photo { width: 100%; aspect-ratio: 1.8; object-fit: cover; }
+.postActions { display: flex; align-items: center; gap: 28px; }
+.postActions button, .postActions a { display: flex; align-items: center; gap: 8px; min-height: 44px; min-width: 48px; font-size: var(--fs-caption); color: var(--color-star); text-decoration: none; }
+.postActions button[aria-pressed=true] { color: var(--color-nucleus); }
+.invitation { padding: 20px 0; border-bottom: 1px solid var(--bd-faint); }
+.invitation p { margin-bottom: 6px; }
+.invitation small { display: block; margin-bottom: 12px; }
+.notice { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; font-size: var(--fs-label); color: var(--color-nucleus); }
+.notice button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.bottom { position: fixed; z-index: 10; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; background: var(--color-deep); border-top: 1px solid var(--bd-faint); padding-bottom: env(safe-area-inset-bottom); }
+.bottom button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-width: 0; width: 20%; max-width: 120px; min-height: 72px; font-size: var(--fs-caption); position: relative; }
+.bottom button[aria-current] { color: var(--color-nucleus); }
+.bottom button[aria-current]::before { content: ''; position: absolute; top: 0; width: 28px; height: 2px; background: var(--color-nucleus); }
+.deviceMark { display: grid; place-items: center; height: 22px; width: 28px; }
+.deviceMark img { width: 28px; height: auto; }
+.section { padding: 24px 0; }
+.section h2 { font-size: var(--fs-title); margin-bottom: 8px; }
+.section > p { color: var(--color-star-dim); margin-bottom: 24px; }
+.member { display: flex; width: 100%; align-items: center; gap: 12px; text-align: left; padding: 16px 0; border-bottom: 1px solid var(--bd-faint); }
+.member > span:nth-child(2) { flex: 1; }
+.member strong, .member small { display: block; }
+.log { text-align: left; padding: 20px 0; border-bottom: 1px solid var(--bd-faint); }
+.log h3 { font-size: var(--fs-title); margin: 12px 0; }
+.log > span { display: flex; gap: 12px; align-items: center; margin-top: 20px; }
+.detailHeader { display: flex; align-items: center; gap: 16px; min-height: 56px; position: sticky; top: 0; z-index: 5; background: var(--color-deep); border-bottom: 1px solid var(--bd-faint); }
+.detailHeader h1 { font-size: var(--fs-title); font-weight: 700; }
+.detailPost { padding-top: 20px; }
+.detailPost .postMain { display: contents; }
+.detailPost .postHeader, .detailRole { grid-column: 2; }
+.detailRole { font-size: var(--fs-caption); color: var(--color-star-dim); margin-top: -12px; }
+.detailPost .body, .detailPost .photo, .detailPost .postActions { grid-column: 1 / -1; }
+.detailPost .body { font-size: var(--fs-body); line-height: 24px; margin: 8px 0; }
+.replyHeading { display: flex; gap: 8px; padding: 16px 0 8px; font-size: var(--fs-body); }
+.replyHeading span { color: var(--color-star-dim); font-weight: 400; }
+.replyComposer { padding: 16px 0; border-bottom: 1px solid var(--bd-faint); }
+.replyComposer label { display: block; margin-bottom: 8px; font-size: var(--fs-label); }
+.replyComposer textarea { min-height: 72px; height: 72px; }
+.replyComposer > div { display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px 12px; margin-top: 8px; padding-right: 112px; }
+.replyComposer > div > :last-child { order: -1; }
+.replyComposer small { font-size: var(--fs-caption); color: var(--color-star-dim); }
+.floatingPost { position: fixed; z-index: 20; right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); }
+.gate { display: flex; flex-direction: column; justify-content: center; min-height: calc(100dvh - 200px); max-width: 480px; margin: 0 auto; padding: 32px 0; }
+.gateDescription { text-align: center; font-size: var(--fs-label); line-height: 20px; color: var(--color-star-dim); margin: 0 0 24px; }
+.permission { display: flex; flex-direction: column; gap: 16px; }
+.permission small { font-size: var(--fs-caption); color: var(--color-star-dim); }
+@media (prefers-reduced-motion: no-preference) { .thread { animation: enterPost 140ms ease-out; } @keyframes enterPost { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } } }
+.menu { display: flex; flex-direction: column; gap: 12px; }
+.profile { display: flex; flex-direction: column; gap: 16px; }
+.empty { padding: 36px 0; }
+.desktopRail { display: none; }
+@media (max-width: 359px) { .header { gap: 4px; } .brand img:last-child { width: 100px; } .profileLink { gap: 3px; } .bottom button { width: 19%; } .bottom button:first-child { width: 24%; } .bottom button > span:last-child { overflow-wrap: anywhere; } .composerActions { margin-left: 0; } }
+@media (min-width: 768px) { .content { margin-left: calc(200px + (100% - 800px) / 2); } .desktopRail { display: flex; position: fixed; top: 90px; left: 32px; width: 180px; flex-direction: column; gap: 28px; } .desktopRail p { color: var(--color-star-dim); font-size: var(--fs-label); } .desktopRail > span:not(.brand) { color: var(--color-nucleus); } .header > .brand { visibility: hidden; } .bottom { left: 32px; right: auto; top: 300px; bottom: auto; width: 180px; flex-direction: column; border-top: 0; } .bottom button { width: 100%; max-width: none; flex-direction: row; justify-content: flex-start; gap: 14px; min-height: 56px; padding-left: 14px; } .bottom button[aria-current]::before { top: 16px; left: 0; width: 2px; height: 24px; } }
+
+@media (min-width: 768px) { .floatingPost { right: 32px; bottom: 24px; } }
+
+/* Clip only the orange surface so the keyboard focus outline remains intact. */
+.floatingPost:global(.archive-button.archive-button--primary) { min-height: 52px; max-width: calc(100vw - 32px); padding: 12px 20px; gap: 10px; border: 0; border-radius: 0; background: transparent; text-transform: none; }
+.floatingPost::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--color-nucleus); clip-path: polygon(0 0, calc(100% - var(--archive-notch, 10px)) 0, 100% var(--archive-notch, 10px), 100% 100%, 0 100%); }
+.floatingPost > svg { flex-shrink: 0; }
+
+.gate { min-height: min(50dvh, 360px); max-width: 400px; padding: 32px 0; }
+.gate h2 { font-size: var(--fs-title); line-height: 1.4; text-align: center; margin-bottom: 12px; }
