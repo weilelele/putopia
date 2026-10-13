@@ -1,11 +1,13 @@
 import { initiationShippingCountries } from '@/lib/initiation-checkout-policy'
 import { deviceSourcePath } from '@/app/voyager-initiation/navigation'
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import type Stripe from 'stripe'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
 import { initiationConfigurationError } from '@/lib/initiation-config'
 import { INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT, INITIATION_PRODUCT } from '@/lib/initiation-types'
+import { captureInitiationMetaAttribution } from '@/lib/initiation-meta-attribution'
 
 export const dynamic = 'force-dynamic'
 /** Authenticated POST only. All purchase facts are resolved on the server. */
@@ -49,6 +51,13 @@ export async function POST(request: Request) {
     // This fixed reservation expiry and idempotency key survive retries/timeouts.
     const expiresAt = Math.floor(new Date(order.expires_at).getTime() / 1000)
     if (expiresAt < Math.floor(Date.now() / 1000) + 30 * 60) return NextResponse.json({ error: 'Your checkout reservation needs reconciliation. Please contact support.' }, { status: 409 })
+    const cookieStore = await cookies()
+    const attribution = captureInitiationMetaAttribution(request.headers, name => cookieStore.get(name)?.value, origin)
+    // Preserve the first checkout's browser attribution across retries and races.
+    // Saving before Stripe creation also covers a webhook winning session binding.
+    const { error: attributionError } = await admin.from('initiation_orders').update({ meta_attribution: attribution })
+      .eq('id', order.id).eq('status', 'pending').is('stripe_session_id', null).eq('meta_attribution', '{}')
+    if (attributionError) throw attributionError
     const sourceQuery = order.device_source ? `&from=${encodeURIComponent(order.device_source)}` : ''
     const session = await stripe.checkout.sessions.create({
       mode: 'payment', ui_mode: 'hosted_page', payment_method_types: ['card'],

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { buildMetaPurchasePayload, sendMetaPurchase, type MetaPurchaseInput } from './meta-capi'
 
 const purchase: MetaPurchaseInput = {
@@ -19,7 +19,7 @@ const purchase: MetaPurchaseInput = {
   fbc: 'fb.1.123.click-id',
 }
 
-afterEach(() => vi.unstubAllEnvs())
+const config = { accessToken: 'test-token', testEventCode: 'TEST123' }
 
 describe('Meta CAPI Purchase', () => {
   it('builds the standard server Purchase and hashes matching identifiers', async () => {
@@ -54,37 +54,58 @@ describe('Meta CAPI Purchase', () => {
   })
 
   it('adds Test Events code only for an explicitly configured Stripe test event', async () => {
-    vi.stubEnv('META_CAPI_ACCESS_TOKEN', 'test-token')
-    vi.stubEnv('META_CAPI_TEST_EVENT_CODE', 'TEST123')
     const fetchImpl = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       expect(init?.body).toContain('"test_event_code":"TEST123"')
+      expect(init?.signal).toBeInstanceOf(AbortSignal)
       return new Response(JSON.stringify({ events_received: 1 }), { status: 200 })
     })
 
-    await sendMetaPurchase(purchase, { stripeLiveMode: false, fetchImpl })
+    await sendMetaPurchase(purchase, { stripeLiveMode: false, fetchImpl, config })
     expect(fetchImpl).toHaveBeenCalledOnce()
   })
 
   it('never includes Test Events code on a live Stripe event', async () => {
-    vi.stubEnv('META_CAPI_ACCESS_TOKEN', 'test-token')
-    vi.stubEnv('META_CAPI_TEST_EVENT_CODE', 'TEST123')
     const fetchImpl = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       expect(init?.body).not.toContain('test_event_code')
       return new Response(JSON.stringify({ events_received: 1 }), { status: 200 })
     })
 
-    await sendMetaPurchase(purchase, { stripeLiveMode: true, fetchImpl })
+    await sendMetaPurchase(purchase, { stripeLiveMode: true, fetchImpl, config })
     expect(fetchImpl).toHaveBeenCalledOnce()
   })
 
+  it('never sends a Stripe test purchase as an ordinary production event without a test code', async () => {
+    const fetchImpl = vi.fn()
+    await expect(sendMetaPurchase(purchase, {
+      stripeLiveMode: false, fetchImpl, config: { accessToken: 'test-token' },
+    })).rejects.toThrow('test events require a test event code')
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
   it('fails visibly if Meta CAPI is not configured or rejects the event', async () => {
-    await expect(sendMetaPurchase(purchase, { stripeLiveMode: true })).rejects.toThrow(
+    await expect(sendMetaPurchase(purchase, { stripeLiveMode: true, config: {} })).rejects.toThrow(
       'META_CAPI_ACCESS_TOKEN is missing',
     )
-    vi.stubEnv('META_CAPI_ACCESS_TOKEN', 'test-token')
     await expect(sendMetaPurchase(purchase, {
       stripeLiveMode: true,
+      config,
       fetchImpl: async () => new Response('{}', { status: 400 }),
     })).rejects.toThrow('HTTP 400')
+  })
+
+  it('requires explicit API acknowledgement of exactly one Purchase', async () => {
+    for (const result of [{}, { events_received: 0 }, { events_received: 2 }]) {
+      await expect(sendMetaPurchase(purchase, {
+        stripeLiveMode: true, config,
+        fetchImpl: async () => new Response(JSON.stringify(result), { status: 200 }),
+      })).rejects.toThrow('did not confirm receipt')
+    }
+  })
+
+  it('keeps Meta response bodies and credentials out of request errors', async () => {
+    await expect(sendMetaPurchase(purchase, {
+      stripeLiveMode: true, config,
+      fetchImpl: async () => new Response('private customer data and test-token', { status: 401 }),
+    })).rejects.toThrow(/^Meta CAPI Purchase request failed with HTTP 401$/)
   })
 })
