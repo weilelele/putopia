@@ -39,6 +39,7 @@
 .benefit { display: grid; gap: 20px; }
 .benefitImage { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
 .benefitImage img { object-fit: cover; }
+.missionImage img { object-fit: contain; }
 .benefitCopy h3 { font-size: var(--fs-h3); line-height: 1.2; font-weight: 700; margin: 0 0 12px; }
 .benefitCopy p { color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.5; margin: 0 0 12px; }
 .benefitCopy a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-nucleus); font-size: var(--fs-body); font-weight: 700; text-decoration: none; }

@@ -197,8 +197,16 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
         </ol>
       </section>}
 
+      <section className={styles.section} aria-labelledby="mission-benefit-title">
+        <div className={styles.sectionHeading}><BenefitHeading id="mission-benefit-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Mission Board</BenefitHeading></div>
+        <div className={styles.benefit}>
+          <div className={`${styles.benefitImage} ${styles.missionImage}`}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
+          <div className={styles.benefitCopy}><h3>Your next assignment awaits.</h3><p>Unlock the Collective’s internal Mission Board. Take on emergency observations, attempt contact across worlds, and explore unknown frequencies.</p><Link href={snapshot.userId ? '/console#mission-board' : '/login?redirect=%2Fconsole%23mission-board'}>Explore the Mission Board <ArrowRight size={20} aria-hidden /></Link></div>
+        </div>
+      </section>
+
       <section className={styles.section} aria-labelledby="intel-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Classified Intel</BenefitHeading></div>
+        <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Classified Intel</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents asking: How long has the Collective existed? Who were the first Voyagers? What did they discover?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
           <div className={styles.benefitCopy}><h3>Beyond the public archive.</h3><p>Explore the Collective’s history and hidden work through classified records and new field briefings.</p><Link href="/intel?tab=classified">Explore intel <ArrowRight size={20} aria-hidden /></Link></div>
@@ -206,7 +214,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
       </section>
 
       <section className={styles.section} aria-labelledby="participation-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="participation-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}{paymentAtBottom ? 'Shape the Collective' : 'Participate'}</BenefitHeading></div>
+        <div className={styles.sectionHeading}><BenefitHeading id="participation-title">{paymentAtBottom && <span className={styles.chapter}>04</span>}{paymentAtBottom ? 'Shape the Collective' : 'Participate'}</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/participation-questions.png" alt="Proposed decisions on physical maps and dossiers: Which world next? How many new Voyagers? Reveal our device locations? Investigate a new antenna organization?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
           <div className={styles.benefitCopy}><h3>Help shape what comes next.</h3><p>Take part in member-only votes and get priority access to world-record activities. The questions pictured are proposals; current opportunities appear in the voting hub.</p><Link href="/vote?tab=classified">Explore member votes <ArrowRight size={20} aria-hidden /></Link></div>
