@@ -1,0 +1,52 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
+import SmartImage from '@/components/smart-image'
+import styles from './console-carousel.module.css'
+
+const slides = [
+  { src: '/assets/kyoto-one-20260910/01-warehouse-hero.png', alt: 'Multiverse Console on a workshop table, displaying a starry parallel world' },
+  { src: '/assets/voyager-initiation/console-multiview-portrait.png', alt: 'Console details: front, rear, side display and control dial in the Kyoto workshop' },
+  { src: '/assets/q1-20260910/01-robot-library.png', alt: 'Multiverse Console displaying a robot in an overgrown library' },
+]
+
+export function ConsoleCarousel({ suspended }: { suspended: boolean }) {
+  const [active, setActive] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const root = useRef<HTMLDivElement>(null)
+  const loaded = useRef(new Set<number>())
+
+  useEffect(() => {
+    if (paused || suspended) return
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const hover = window.matchMedia('(hover: hover)')
+    let visible = false
+    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting }, { threshold: 0.5 })
+    if (root.current) observer.observe(root.current)
+    const timer = window.setInterval(() => {
+      if (!visible || document.hidden || motion.matches || root.current?.matches(':focus-within') || (hover.matches && root.current?.matches(':hover'))) return
+      setActive(index => loaded.current.has((index + 1) % slides.length) ? (index + 1) % slides.length : index)
+    }, 6000)
+    return () => { window.clearInterval(timer); observer.disconnect() }
+  }, [paused, suspended])
+
+  function move(delta: number) {
+    setPaused(true)
+    setActive(index => (index + delta + slides.length) % slides.length)
+  }
+
+  return <div ref={root} className={styles.carousel} role="region" aria-roledescription="carousel" aria-label="Multiverse Console photographs">
+    <div className={styles.frame}>
+      {slides.map((slide, index) => <div key={slide.src} className={`${styles.slide} ${index === active ? styles.active : ''}`} aria-hidden={index !== active}>
+        <SmartImage src={slide.src} alt={slide.alt} sizes="(min-width: 1200px) 960px, (min-width: 768px) calc(100vw - 320px), calc(100vw - 64px)" preload onLoad={() => { loaded.current.add(index) }} />
+      </div>)}
+    </div>
+    <div className={styles.controls}>
+      <button type="button" onClick={() => setPaused(value => !value)} aria-label={paused ? 'Resume automatic slideshow' : 'Pause automatic slideshow'}>{paused ? <Play size={16} aria-hidden /> : <Pause size={16} aria-hidden />}</button>
+      <span className={styles.count} aria-live={paused ? 'polite' : 'off'} aria-atomic="true">{active + 1} / {slides.length}</span>
+      <button type="button" onClick={() => move(-1)} aria-label="Previous Console photograph"><ChevronLeft size={20} aria-hidden /></button>
+      <button type="button" onClick={() => move(1)} aria-label="Next Console photograph"><ChevronRight size={20} aria-hidden /></button>
+    </div>
+  </div>
+}

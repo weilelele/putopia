@@ -1,0 +1,13 @@
+.carousel { color: var(--color-star); background: var(--color-deep); }
+.frame { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
+.slide { position: absolute; inset: 0; opacity: 0; transition: opacity 180ms ease; }
+.slide img { object-fit: contain; }
+.active { opacity: 1; }
+.controls { display: flex; align-items: center; gap: 4px; padding: 0 8px; }
+.controls button { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.controls button:hover { color: var(--color-nucleus); }
+.controls button:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: -3px; }
+.count { flex: 1; font-size: var(--fs-caption); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  .slide { transition: none; }
+}
