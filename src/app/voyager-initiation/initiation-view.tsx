@@ -148,13 +148,13 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : legacy ? 'CONTINUE INITIATION' : soldOut ? 'FULLY CLAIMED' : 'INITIATE'}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
-          {legacy && !availability.checkoutOpen && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
+          {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
             <h2>Delivery</h2>
             <p>Contiguous US only.<br />Shipping &amp; taxes included.</p>
             <Link className={styles.textLink} href="/terms/initiation">Delivery &amp; aftercare <ArrowRight size={18} aria-hidden /></Link>
           </section>
-          {!availability.checkoutOpen && !legacy && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
+          {!availability.checkoutOpen && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
           </>}
           {error && <p className={styles.error} role="alert">{error}</p>}
         </div>
