@@ -5,6 +5,7 @@ import { INITIATION_PRODUCT } from '@/lib/initiation-types'
 import { initiationCaptureDecision } from '@/lib/initiation-capture-policy'
 import { validateInitiationPayment, verifiedInitiationShipping, type InitiationPaymentEvidence } from '@/lib/initiation-payment'
 import { isInitiationShippingRegion } from '@/lib/initiation-checkout-policy'
+import { sendPendingInitiationMetaPurchases } from '@/lib/initiation-meta-purchases'
 
 /** Re-fetch Stripe state on every attempt, including retries after an ambiguous capture. */
 export async function reconcileInitiationSession(sessionId: string, stripe: Stripe): Promise<'paid' | 'released' | 'pending'> {
@@ -90,5 +91,15 @@ export async function reconcileInitiationSession(sessionId: string, stripe: Stri
     p_order: order.id, p_session: session.id, p_user: order.user_id, p_intent: intent.id, p_shipping: shipping,
   })
   if (completeError) throw completeError
+  // complete_initiation can succeed while retaining payment_review/refunded.
+  const { data: completed, error: completedError } = await admin.from('initiation_orders').select('status').eq('id', order.id).single()
+  if (completedError) throw completedError
+  if (completed?.status !== 'paid') return 'pending'
+  try {
+    await sendPendingInitiationMetaPurchases(admin, stripe, { orderId: order.id, limit: 1 })
+  } catch {
+    // Payment/entitlements remain committed; the persistent outbox is retried by cron.
+    console.error('[initiation-meta] Purchase delivery deferred to the outbox retry')
+  }
   return 'paid'
 }

@@ -11,6 +11,7 @@ import { isIOSNativeApp } from '@/lib/app-platform'
 import { handleInitiationWebhook } from '@/lib/initiation-webhook'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 type StoredOrder = {
   id: string
