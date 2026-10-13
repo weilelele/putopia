@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CircleAlert, Check } from 'lucide-react'
 import SmartImage from '@/components/smart-image'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { MemberStrip } from './member-strip'
+import { ConsoleCarousel } from './console-carousel'
 import type { InitiationPublicMember, InitiationSnapshot } from '@/lib/initiation-types'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
@@ -180,8 +181,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
             const shipment = shipments.find(item => item.position === index + 1)
             const deviceHref = consoleClaim.batch ? `/devices/batches/${consoleClaim.batch.slug}` : consoleDevicePath(source, consoleClaim.href)
             return <li key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''}`}>
-              {pack.featured && paymentAtBottom && <Link href={deviceHref} className={styles.consoleCardLink} aria-label="Explore Multiverse Console on Device" />}
-              {pack.featured ? <Link href={deviceHref} className={styles.packImage} aria-label="Explore Multiverse Console on Device"><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 260px, 42vw" /></Link> : <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 320px, (min-width: 768px) 240px, 42vw" preload={index === 0} /></div>}
+              {!pack.featured && <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 320px, (min-width: 768px) 240px, 42vw" preload={index === 0} /></div>}
               <div className={styles.packCopy}>
                 <p className={styles.packageNumber}>Package {index + 1}<span> · {shipment?.scheduledMonth ? new Date(`${shipment.scheduledMonth}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : pack.dispatch}</span></p>
                 <PackHeading>{pack.title}</PackHeading>
@@ -190,8 +190,11 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
                 <p>{pack.description}</p>
                 {shipment ? shipment.status !== 'planned' && <p className={styles.shipmentStatus}>{shipment.status}</p> : initiated ? <p className={styles.shipmentStatus}>Progress unavailable</p> : null}
                 {shipment?.trackingUrl && <a className={styles.textLink} href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">Track delivery <ArrowRight size={18} aria-hidden /></a>}
-                {pack.featured && <Link className={styles.textLink} href={deviceHref}>{consoleClaim.claimed ? 'View your batch' : paymentAtBottom ? 'Explore the Console' : 'Explore Device'} <ArrowRight size={18} aria-hidden /></Link>}
               </div>
+              {pack.featured && <>
+                <ConsoleCarousel suspended={dialog !== null} />
+                <Link className={styles.consoleExplore} href={deviceHref}>{consoleClaim.claimed ? 'View your batch' : 'Explore the Console'} <ArrowRight size={22} aria-hidden /></Link>
+              </>}
             </li>
           })}
         </ol>
