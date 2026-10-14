@@ -8,9 +8,9 @@ export type FeedDatabase = { public: Omit<Database['public'], 'Tables' | 'Views'
         Relationships: []
       }
       voyager_feed_likes: {
-        Row: { entry_id: string; user_id: string }
-        Insert: { entry_id: string; user_id: string }
-        Update: Record<string, never>
+        Row: { entry_id: string; user_id: string; direction: number }
+        Insert: { entry_id: string; user_id: string; direction?: number }
+        Update: { direction?: number }
         Relationships: []
       }
 

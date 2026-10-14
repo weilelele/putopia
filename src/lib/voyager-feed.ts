@@ -4,7 +4,7 @@ export type FeedViewer = { id: string; account_kind?: 'human' | 'npc'; role: Use
 export type FeedEntry = {
   id: string; author_id: string; parent_id: string | null; body: string; image_path: string | null
   created_at: string; updated_at: string; display_name: string; avatar_url: string | null
-  can_manage?: boolean; author_role: UserRole; like_count: number; reply_count: number; liked: boolean
+  can_manage?: boolean; author_role: UserRole; like_count: number; reply_count: number; liked: boolean; down_count: number; downvoted: boolean
 }
 export type FeedCursor = { created_at: string; id: string }
 export type FeedPage = { viewer: FeedViewer | null; entries: FeedEntry[]; next: FeedCursor | null; locked: boolean; post?: FeedEntry | null }
@@ -32,4 +32,11 @@ export function validateFeedCursor(cursor?: FeedCursor): FeedCursor | undefined 
 
 export function canPublishAsNpc(viewer: FeedViewer | null): boolean {
   return canReadVoyagerFeed(viewer) && viewer?.role === 'architect' && viewer.account_kind === 'human'
+}
+
+export type FeedVote = -1 | 0 | 1
+export function withFeedVote(entry: FeedEntry, vote: FeedVote): FeedEntry {
+  return { ...entry, liked: vote === 1, downvoted: vote === -1,
+    like_count: Math.max(0, entry.like_count + Number(vote === 1) - Number(entry.liked)),
+    down_count: Math.max(0, (entry.down_count ?? 0) + Number(vote === -1) - Number(entry.downvoted ?? false)) }
 }
