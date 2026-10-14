@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canPublishAsNpc, canReadVoyagerFeed, canPublishVoyagerFeed, canManageFeedEntry, validateFeedBody, validateFeedCursor, validFeedId, type FeedViewer } from './voyager-feed'
+import { canPublishAsNpc, canReadVoyagerFeed, canPublishVoyagerFeed, canManageFeedEntry, validateFeedBody, validateFeedCursor, validFeedId, withFeedVote, type FeedEntry, type FeedViewer } from './voyager-feed'
 const id = '10000000-0000-4000-8000-000000000001'
 const viewer = (role: FeedViewer['role'], registered = true): FeedViewer => ({ id, role, registered_at: registered ? '2026-10-13T00:00:00Z' : null, display_name: 'Test', avatar_url: null })
 describe('Voyager feed authorization', () => {
@@ -42,5 +42,23 @@ describe('NPC publishing eligibility', () => {
   })
   it.each(['guest','applicant','voyager'] as const)('rejects %s even when human', role => {
     expect(canPublishAsNpc({...viewer(role), account_kind:'human'})).toBe(false)
+  })
+})
+
+describe('feed votes', () => {
+  const entry: FeedEntry = { id, author_id:id, parent_id:null, body:'Hello', image_path:null,
+    created_at:'2026-10-14T00:00:00Z', updated_at:'2026-10-14T00:00:00Z',
+    display_name:'Test', avatar_url:null, author_role:'voyager',
+    like_count:5, down_count:2, reply_count:0, liked:false, downvoted:false }
+  it('switches and cancels without changing other users votes', () => {
+    const up = withFeedVote(entry, 1)
+    expect(up).toMatchObject({like_count:6,down_count:2,liked:true,downvoted:false})
+    const down = withFeedVote(up, -1)
+    expect(down).toMatchObject({like_count:5,down_count:3,liked:false,downvoted:true})
+    expect(withFeedVote(down, 0)).toEqual(entry)
+  })
+  it.each([-1,0,1] as const)('does not count repeated absolute vote %s twice', vote => {
+    const once = withFeedVote(entry, vote)
+    expect(withFeedVote(once, vote)).toEqual(once)
   })
 })

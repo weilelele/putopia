@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Heart, ImagePlus, Plus, MessageCircle, MoreHorizontal, UserRound, X } from 'lucide-react'
+import { ArrowLeft, ThumbsUp, ThumbsDown, ImagePlus, Plus, MessageCircle, MoreHorizontal, UserRound, X } from 'lucide-react'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -14,7 +14,7 @@ import { useAuth } from '@/lib/auth-context'
 import { boundedFeedRequest, readFeedDraft, writeFeedDraft, type FeedDraft } from '@/lib/feed-recovery'
 import { getRouteScrollContainer } from '@/lib/route-scroll-container'
 import * as liveFeed from '@/lib/actions/voyager-feed'
-import { canPublishVoyagerFeed, canPublishAsNpc, canManageFeedEntry, type FeedEntry, type FeedPage } from '@/lib/voyager-feed'
+import { withFeedVote, canPublishVoyagerFeed, canPublishAsNpc, canManageFeedEntry, type FeedEntry, type FeedPage } from '@/lib/voyager-feed'
 import { VoyagerHeader } from './voyager-header'
 import guestStyles from '../console/guest-intro.module.css'
 import s from './feed.module.css'
@@ -278,11 +278,12 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
     closeModal(); setNotice('Content deleted.')
     if (modal.entry.id === postId) { writeFeedDraft(draftKey, null); router.replace(baseHref) } else await load()
   })
-  const like = (entry: FeedEntry) => run(async () => {
-    const result = await call(services.setVoyagerLike(entry.id, !entry.liked))
+  const vote = (entry: FeedEntry, direction: -1 | 1) => run(async () => {
+    const next = (direction === 1 ? entry.liked : entry.downvoted) ? 0 : direction
+    const result = await call(services.setVoyagerVote(entry.id, next))
     if (!alive.current) return
     if (result.error) { setError(result.error); return }
-    const update = (value: FeedEntry): FeedEntry => value.id === entry.id ? { ...value, liked: !entry.liked, like_count: Math.max(0, value.like_count + (entry.liked ? -1 : 1)) } : value
+    const update = (value: FeedEntry): FeedEntry => value.id === entry.id ? withFeedVote(value, next) : value
     setPage(current => current ? { ...current, entries: current.entries.map(update), post: current.post ? update(current.post) : current.post } : current)
   })
   const closeModal = () => { setModal(null); setImage(null); setError(''); requestAnimationFrame(() => dialogTrigger.current?.focus({ preventScroll: true })) }
@@ -293,7 +294,7 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
       {(entry.can_manage ?? canManageFeedEntry(viewer, entry.author_id)) && <button className={s.iconButton} aria-label={`Options for your ${entry.parent_id ? 'reply' : 'post'}`} onClick={event => { dialogTrigger.current = event.currentTarget; setError(''); setModal({ type: 'menu', entry }) }}><MoreHorizontal size={18} /></button>}</div>
       {detail && <small className={s.detailRole}>{entry.author_role.toUpperCase()}</small>}
       {!entry.parent_id && !detail ? <Link id={`feed-${entry.id}`} className={s.postLink} href={`${baseHref}/posts/${entry.id}`} onClick={() => remember(entry.id)} aria-label={`Read post by ${entry.display_name}: ${entry.body}`}><p className={s.body}>{entry.body}</p>{entry.image_path &&  <img className={s.photo} src={mediaSource(entry)} alt={`Image shared by ${entry.display_name}`} loading="lazy" />}</Link> : <><p className={s.body}>{entry.body}</p>{entry.image_path &&  <img className={s.photo} src={mediaSource(entry)} alt={`Image shared by ${entry.display_name}`} />}</>}
-      <div className={s.postActions}><button disabled={busy} aria-pressed={entry.liked} aria-label={`${entry.liked ? 'Unlike' : 'Like'} ${entry.display_name}'s ${entry.parent_id ? 'reply' : 'post'}`} onClick={() => void like(entry)}><Heart size={18} fill={entry.liked ? 'currentColor' : 'none'} /><span>{entry.like_count}</span></button>{!entry.parent_id && (detail ? <button aria-label="Write a reply" onClick={() => document.getElementById('feed-reply')?.focus()}><MessageCircle size={18} /><span>{entry.reply_count}</span></button> : <Link href={`${baseHref}/posts/${entry.id}`} onClick={() => remember(entry.id)} aria-label={`View ${entry.reply_count} replies to ${entry.display_name}'s post`}><MessageCircle size={18} /><span>{entry.reply_count}</span></Link>)}</div>
+      <div className={s.postActions}><button disabled={busy} aria-pressed={Boolean(entry.liked)} title="Upvote" aria-label={`${entry.liked ? 'Remove ' : ''}upvote ${entry.display_name}'s ${entry.parent_id ? 'reply' : 'post'}`} onClick={() => void vote(entry, 1)}><ThumbsUp size={18} fill={entry.liked ? 'currentColor' : 'none'} aria-hidden="true" /><span>{entry.like_count ?? 0}</span></button><button disabled={busy} aria-pressed={Boolean(entry.downvoted)} title="Downvote" aria-label={`${entry.downvoted ? 'Remove ' : ''}downvote ${entry.display_name}'s ${entry.parent_id ? 'reply' : 'post'}`} onClick={() => void vote(entry, -1)}><ThumbsDown size={18} fill={entry.downvoted ? 'currentColor' : 'none'} aria-hidden="true" /><span>{entry.down_count ?? 0}</span></button>{!entry.parent_id && (detail ? <button aria-label="Write a reply" onClick={() => document.getElementById('feed-reply')?.focus()}><MessageCircle size={18} /><span>{entry.reply_count}</span></button> : <Link href={`${baseHref}/posts/${entry.id}`} onClick={() => remember(entry.id)} aria-label={`View ${entry.reply_count} replies to ${entry.display_name}'s post`}><MessageCircle size={18} /><span>{entry.reply_count}</span></Link>)}</div>
     </div>
   </article>
   const recoveryPrompt = recovery && <section className={s.recovery} aria-label="Saved draft"><p>{recovery.draft.pending ? 'An earlier publishing result is still unconfirmed.' : 'You have a saved draft.'} Saved {new Date(recovery.draft.updated).toLocaleString()}.</p>{confirmDiscard && <p>Discarding this draft does not cancel or delete a post that may already have been published. You will lose its result-checking reference.</p>}{recovery.kind === 'edit' && recovery.draft.original !== (modal && 'entry' in modal ? modal.entry.body : '') && <p>The published content changed since this draft. Review it before saving.</p>}<div><ArchiveButton onClick={recoverDraft}>RESTORE DRAFT</ArchiveButton><ArchiveButton variant="secondary" onClick={discardRecovery}>{confirmDiscard ? 'CONFIRM DISCARD' : 'DISCARD DRAFT'}</ArchiveButton></div></section>

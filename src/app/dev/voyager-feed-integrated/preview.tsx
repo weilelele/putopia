@@ -14,10 +14,11 @@ let selectedRole = 'voyager'
 let fault = 'none'
 let hydrated = false
 function persistFixtures() { try { sessionStorage.setItem('feed-qa-entries',JSON.stringify({entries,creators:[...creators]})) } catch {} }
-let entries: FeedEntry[] = [{id:'20000000-0000-4000-8000-000000000001',author_id:'10000000-0000-4000-8000-000000000004',parent_id:null,body:'The same shoreline, a different sky. Anyone else notice this today?',image_path:'/prototypes/voyager-feed/coast-v1.png',created_at:'2026-10-13T01:00:00Z',updated_at:'2026-10-13T01:00:00Z',display_name:'Ryo Tanaka',avatar_url:'/prototypes/voyager-feed/ryo-v1.png',author_role:'architect',like_count:8,reply_count:0,liked:false}]
+let entries: FeedEntry[] = [{id:'20000000-0000-4000-8000-000000000001',author_id:'10000000-0000-4000-8000-000000000004',parent_id:null,body:'The same shoreline, a different sky. Anyone else notice this today?',image_path:'/prototypes/voyager-feed/coast-v1.png',created_at:'2026-10-13T01:00:00Z',updated_at:'2026-10-13T01:00:00Z',display_name:'Ryo Tanaka',avatar_url:'/prototypes/voyager-feed/ryo-v1.png',author_role:'architect',like_count:8,reply_count:0,liked:false,down_count:0,downvoted:false}]
 const npc = {id:'10000000-0000-4000-8000-000000000006',display_name:'Maren (test identity)',avatar_url:null}
 const creators = new Map<string,string>()
 const media = new Map<string,string>()
+const downSets = new Map<string,Set<string>>()
 const likeSets = new Map<string,Set<string>>()
 function createServices(role: string): typeof LiveFeed {
  const current = () => viewers[role]
@@ -28,7 +29,7 @@ function createServices(role: string): typeof LiveFeed {
     if (!hydrated) { hydrated=true; try { const saved=JSON.parse(sessionStorage.getItem('feed-qa-entries')??'null'); if(saved) { entries=saved.entries; for(const [id,actor] of saved.creators)creators.set(id,actor) } } catch {} }
     if (fault === 'read-error') throw new Error('Simulated network read failure')
     const viewer = current(); const locked = !canReadVoyagerFeed(viewer)
-    return { viewer, locked, entries:locked ? [] : entries.filter(e=>e.parent_id === (postId ?? null)).map(e=>({...e,can_manage:(creators.get(e.id) ?? e.author_id)===viewer!.id,liked:likeSets.get(e.id)?.has(viewer!.id) ?? false})),next:null,post:locked ? null : (()=>{const p=entries.find(e=>e.id===postId); return p ? {...p,can_manage:(creators.get(p.id)??p.author_id)===viewer!.id}:null})() }
+    return { viewer, locked, entries:locked ? [] : entries.filter(e=>e.parent_id === (postId ?? null)).map(e=>({...e,can_manage:(creators.get(e.id) ?? e.author_id)===viewer!.id,liked:likeSets.get(e.id)?.has(viewer!.id) ?? false,downvoted:downSets.get(e.id)?.has(viewer!.id) ?? false})),next:null,post:locked ? null : (()=>{const p=entries.find(e=>e.id===postId); return p ? {...p,liked:likeSets.get(p.id)?.has(viewer!.id) ?? false,downvoted:downSets.get(p.id)?.has(viewer!.id) ?? false,can_manage:(creators.get(p.id)??p.author_id)===viewer!.id}:null})() }
   },
   async createVoyagerPost(form) {
     const viewer = current(), parent = form.get('parentId') as string | null, id = form.get('id') as string
@@ -40,7 +41,7 @@ function createServices(role: string): typeof LiveFeed {
     creators.set(id,viewer!.id)
     const image=form.get('image'); const now=new Date().toISOString()
     if (image instanceof File) media.set(id,URL.createObjectURL(image))
-    entries.unshift({id,author_id:identity.id,parent_id:parent,body:String(form.get('body')),image_path:image instanceof File ? 'local':null,created_at:now,updated_at:now,display_name:identity.display_name,avatar_url:null,author_role:viewer!.role,like_count:0,reply_count:0,liked:false})
+    entries.unshift({id,author_id:identity.id,parent_id:parent,body:String(form.get('body')),image_path:image instanceof File ? 'local':null,created_at:now,updated_at:now,display_name:identity.display_name,avatar_url:null,author_role:viewer!.role,like_count:0,reply_count:0,liked:false,down_count:0,downvoted:false})
     entries=entries.map(e=>e.id===parent ? {...e,reply_count:e.reply_count+1}:e)
     persistFixtures()
     if (fault==='timeout-after') return new Promise<Awaited<ReturnType<typeof LiveFeed.createVoyagerPost>>>(()=>{})
@@ -48,6 +49,15 @@ function createServices(role: string): typeof LiveFeed {
   },
   async editVoyagerPost(id,body) { if (!entries.some(e=>e.id===id && (creators.get(e.id)??e.author_id)===current()?.id)) return {error:'Not the author.'}; entries=entries.map(e=>e.id===id?{...e,body,updated_at:new Date().toISOString()}:e);persistFixtures();return {error:null} },
   async deleteVoyagerPost(id) { const entry=entries.find(e=>e.id===id); if(!entry || (creators.get(entry.id)??entry.author_id)!==current()?.id)return {error:'Not the author.'}; entries=entries.filter(e=>e.id!==id && e.parent_id!==id).map(e=>e.id===entry.parent_id?{...e,reply_count:e.reply_count-1}:e); persistFixtures();return {error:null} },
+  async setVoyagerVote(id,vote) {
+    const actor=current(); if (!actor?.registered_at) return {error:'Register or log in to participate.'}
+    const ups=likeSets.get(id)??new Set<string>(), downs=downSets.get(id)??new Set<string>(); const upBefore=ups.has(actor.id), downBefore=downs.has(actor.id)
+    if(vote===1)ups.add(actor.id);else ups.delete(actor.id)
+    if(vote===-1)downs.add(actor.id);else downs.delete(actor.id)
+    likeSets.set(id,ups);downSets.set(id,downs)
+    entries=entries.map(e=>e.id===id?{...e,like_count:e.like_count+Number(vote===1)-Number(upBefore),down_count:(e.down_count??0)+Number(vote===-1)-Number(downBefore)}:e)
+    return {error:null}
+  },
   async setVoyagerLike(id,liked) { const set=likeSets.get(id)??new Set<string>(); const before=set.has(current()!.id);if(liked)set.add(current()!.id);else set.delete(current()!.id);likeSets.set(id,set);entries=entries.map(e=>e.id===id?{...e,like_count:e.like_count+(before===liked?0:liked?1:-1)}:e);return {error:null} },
 }
 }

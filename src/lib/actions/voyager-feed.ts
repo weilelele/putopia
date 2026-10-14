@@ -132,3 +132,16 @@ export async function setVoyagerLike(id: string, liked: boolean): Promise<Result
     return { error: null }
   } catch { return { error: 'Your reaction could not be confirmed. Please retry.' } }
 }
+
+/** Set an absolute vote so retries do not toggle twice. PK enforces one vote per user/post. */
+export async function setVoyagerVote(id: string, vote: number): Promise<Result> {
+  try {
+    const { db, viewer } = await feedSession()
+    if (!validFeedId(id) || ![-1,0,1].includes(vote) || !canReadVoyagerFeed(viewer) || !viewer) return { error: 'Register or log in to participate.' }
+    const result = vote === 0
+      ? await db.from('voyager_feed_likes').delete().eq('entry_id', id).eq('user_id', viewer.id)
+      : await db.from('voyager_feed_likes').upsert({ entry_id: id, user_id: viewer.id, direction: vote }, { onConflict: 'entry_id,user_id' })
+    if (result.error) return { error: 'Your vote could not be saved. Please retry.' }
+    return { error: null }
+  } catch { return { error: 'Your vote could not be confirmed. Please retry.' } }
+}
