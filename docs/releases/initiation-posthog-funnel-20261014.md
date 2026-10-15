@@ -30,3 +30,5 @@ The database outbox intentionally has no client policies: anon/authenticated hav
 ## Ad attribution follow-up
 
 `campaign_id`, `adset_id`, `ad_id` remain exact numeric strings (maximum 30 digits), and `placement` is a safe bounded platform label. These fields identify the latest explicit Meta ad click, captured on every initial landing and router transition, then retained as one group in sessionStorage across login and the Track 1 path from the homepage to Initiation. A new link containing ad fields replaces the group rather than combining IDs from different clicks; invalid template values are dropped. These fields coexist with the original first-touch UTM semantics, and the checkout stores them in the existing analytics context for server delivery. Ad-level reports must match actual IDs, never infer an ad from a UTM label. No new database migration is required.
+
+The authenticated homepage redirect also preserves its existing query string when sending a visitor to `/welcome`. Otherwise the server would remove the ad tags before the browser could capture them; the anonymous `/new` path already preserved these tags. Destination and access rules are unchanged.
