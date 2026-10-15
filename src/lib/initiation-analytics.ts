@@ -24,7 +24,8 @@ export function sanitizeInitiationAnalytics(input: unknown): InitiationAnalytics
 }
 
 export function initiationAnalyticsProperties(kind: InitiationOrderKind, context: unknown = {}) {
-  const { disabled: _disabled, ...safe } = sanitizeInitiationAnalytics(context)
+  const safe = sanitizeInitiationAnalytics(context)
+  delete safe.disabled
   return {
     ...safe, page_version: INITIATION_PAGE_VERSION, batch: 'S26', order_kind: kind,
     payable_amount: kind === 'legacy_upgrade' ? 400 : 520,
