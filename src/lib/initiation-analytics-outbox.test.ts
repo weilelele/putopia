@@ -49,13 +49,13 @@ describe('durable PostHog Initiation outcomes', () => {
     expect(deps.send).toHaveBeenCalledWith(expect.objectContaining({ properties: expect.objectContaining({ reused: true }) }))
   })
   it('retries missing acknowledgement and HTTP failures', async () => {
-    for (const response of [new Response('{}'), new Response('{"status":0}'), new Response('{}', { status: 503 })]) {
+    for (const response of [new Response('{}'), new Response('{"status":0}'), new Response('{"status":"Error"}'), new Response('{}', { status: 503 })]) {
       await expect(sendInitiationPostHog({ uuid: claim.event_uuid, event: claim.event, distinct_id: 'user1', timestamp: claim.event_time, properties: {} },
         { NEXT_PUBLIC_POSTHOG_KEY: 'test' }, vi.fn(async () => response))).rejects.toThrow('acknowledge')
     }
   })
-  it('accepts an explicit ingestion receipt and sends a stable UUID', async () => {
-    const fetcher = vi.fn<typeof fetch>(async () => new Response('{"status":1}'))
+  it.each([1, 'Ok'])('accepts ingestion receipt %s and sends a stable UUID', async status => {
+    const fetcher = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ status })))
     await sendInitiationPostHog({ uuid: claim.event_uuid, event: claim.event, distinct_id: 'user1', timestamp: claim.event_time, properties: {} }, { NEXT_PUBLIC_POSTHOG_KEY: 'test' }, fetcher)
     expect(JSON.parse(fetcher.mock.calls[0][1]!.body as string)).toMatchObject({ uuid: claim.event_uuid, distinct_id: 'user1' })
   })

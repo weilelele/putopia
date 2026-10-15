@@ -87,7 +87,7 @@ export async function sendInitiationPostHog(input: Parameters<InitiationAnalytic
     body: JSON.stringify({ api_key: key, ...input }), signal: AbortSignal.timeout(5000), redirect: 'error' })
   if (!response.ok) throw new Error('Analytics did not acknowledge delivery')
   const receipt = await response.json().catch(() => null)
-  if (receipt?.status !== 1) throw new Error('Analytics did not acknowledge delivery')
+  if (receipt?.status !== 1 && receipt?.status !== 'Ok') throw new Error('Analytics did not acknowledge delivery')
 }
 
 type Admin = ReturnType<typeof import('./supabase/server').createAdminClient>
