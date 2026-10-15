@@ -26,6 +26,7 @@ export function useInitiationAnalytics({ kind, userId, internal, environment, el
   const capture = (event: string, extra: Record<string, unknown> = {}) => {
     try {
       if (userId && posthog.get_distinct_id() !== userId) posthog.identify(userId)
+      else if (!userId && posthog.get_property('$user_id')) posthog.reset()
       posthog.capture(event, { ...initiationAnalyticsProperties(kind, getContext()),
         is_internal_qa: internal || getContext().is_internal_qa === true, is_test: environment !== 'production', source: 'client', ...extra })
     } catch { /* Analytics cannot prevent navigation or checkout. */ }
@@ -60,8 +61,11 @@ export function useInitiationAnalytics({ kind, userId, internal, environment, el
     observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] })
     const resize = new ResizeObserver(update)
     resize.observe(element)
+    const scrollRoot = getRouteScrollContainer(element.closest<HTMLElement>('main'))
+    const intersection = new IntersectionObserver(update, { root: scrollRoot === document.scrollingElement ? null : scrollRoot, threshold: [0, 0.5, 1] })
+    intersection.observe(element)
     update()
-    return () => { gate.dispose(); observer.disconnect(); resize.disconnect(); document.removeEventListener('scroll', update, true)
+    return () => { gate.dispose(); observer.disconnect(); resize.disconnect(); intersection.disconnect(); document.removeEventListener('scroll', update, true)
       document.removeEventListener('visibilitychange', update); window.removeEventListener('resize', update); window.removeEventListener('focus', update); window.removeEventListener('blur', update) }
     // Capture reads the current tier; each tier is observed once in this route visit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
