@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createPriceExposureGate, initiationAnalyticsProperties, initiationNextStep, sanitizeInitiationAnalytics, visiblePriceRatio } from './initiation-analytics'
+import { createPriceExposureGate, initiationAdContext, initiationAnalyticsProperties, initiationNextStep, sanitizeInitiationAnalytics, visiblePriceRatio } from './initiation-analytics'
 
 describe('Initiation price exposure', () => {
   const setup = () => {
@@ -52,5 +52,18 @@ describe('Initiation analytics facts', () => {
     expect(initiationNextStep('guest', true)).toBe('login')
     expect(initiationNextStep('unpaid', false)).toBe('calibration')
     expect(initiationNextStep('legacy_pack', true)).toBe('checkout')
+  })
+  it('preserves exact Meta IDs as strings without numeric precision loss', () => {
+    expect(sanitizeInitiationAnalytics({ campaign_id: '120253708880830237', adset_id: '120253708881010237', ad_id: '120253708881030237', placement: 'Instagram_Stories' }))
+      .toEqual({ campaign_id: '120253708880830237', adset_id: '120253708881010237', ad_id: '120253708881030237', placement: 'Instagram_Stories' })
+  })
+  it('retains the same ad through login but replaces the entire group on a new click', () => {
+    const first = { campaign_id: '1201', adset_id: '1202', ad_id: '1203', placement: 'Facebook_Feed' }
+    expect(initiationAdContext({}, first)).toEqual(first)
+    expect(initiationAdContext({ ad_id: '2203' }, first)).toEqual({ ad_id: '2203' })
+  })
+  it('rejects templates, numeric inputs, oversized IDs and private placement strings', () => {
+    expect(sanitizeInitiationAnalytics({ campaign_id: '{{campaign.id}}', adset_id: 1202, ad_id: '1'.repeat(31), placement: 'private@example.com' })).toEqual({})
+    expect(initiationAdContext({ ad_id: '{{ad.id}}' }, { ad_id: '1203' })).toEqual({})
   })
 })

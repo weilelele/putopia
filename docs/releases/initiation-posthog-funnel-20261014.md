@@ -23,6 +23,10 @@ Reports must start at this release and exclude `is_test=true` and `is_internal_q
 
 ## Validation
 
-`npm run design:check`, TypeScript, lint, all 688 application tests, production build, and the isolated v102 PostgreSQL harness (27 assertions) pass. The new application tests cover continuous exposure, lifecycle cancellation, mobile/desktop clipping, the legacy payable amount, property whitelisting, CTA branching, captured-payment evidence, refund races, stable retry UUID/time, claim loss and ingestion receipt validation.
+`npm run design:check`, TypeScript, lint, all 691 application tests, production build, and the isolated v102 PostgreSQL harness (27 assertions) pass. The new application tests cover continuous exposure, lifecycle cancellation, mobile/desktop clipping, the legacy payable amount, property whitelisting, CTA branching, captured-payment evidence, refund races, stable retry UUID/time, claim loss and ingestion receipt validation.
 
 The database outbox intentionally has no client policies: anon/authenticated have no grants, service role alone can queue, claim and finish. All new functions use security invoker and a fixed search path.
+
+## Ad attribution follow-up
+
+`campaign_id`, `adset_id`, `ad_id` remain exact numeric strings (maximum 30 digits), and `placement` is a safe bounded platform label. These fields identify the latest explicit Meta ad click, captured on every initial landing and router transition, then retained as one group in sessionStorage across login and the Track 1 path from the homepage to Initiation. A new link containing ad fields replaces the group rather than combining IDs from different clicks; invalid template values are dropped. These fields coexist with the original first-touch UTM semantics, and the checkout stores them in the existing analytics context for server delivery. Ad-level reports must match actual IDs, never infer an ad from a UTM label. No new database migration is required.
