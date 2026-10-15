@@ -93,7 +93,7 @@ export async function proxy(request: NextRequest) {
   // existing campaign URLs never need to change.
   if (pathname === '/') {
     if (user) {
-      return NextResponse.redirect(new URL('/welcome', request.url))
+      return NextResponse.redirect(new URL(routeWithSearch('/welcome', request.nextUrl.search), request.url))
     }
     const qs = request.nextUrl.searchParams.toString()
     if (qs) {
