@@ -6,6 +6,7 @@ import { initiationCaptureDecision } from '@/lib/initiation-capture-policy'
 import { validateInitiationPayment, verifiedInitiationShipping, type InitiationPaymentEvidence } from '@/lib/initiation-payment'
 import { isInitiationShippingRegion } from '@/lib/initiation-checkout-policy'
 import { sendPendingInitiationMetaPurchases } from '@/lib/initiation-meta-purchases'
+import { sendPendingInitiationAnalytics } from '@/lib/initiation-analytics-outbox'
 
 /** Re-fetch Stripe state on every attempt, including retries after an ambiguous capture. */
 export async function reconcileInitiationSession(sessionId: string, stripe: Stripe): Promise<'paid' | 'released' | 'pending'> {
@@ -101,5 +102,7 @@ export async function reconcileInitiationSession(sessionId: string, stripe: Stri
     // Payment/entitlements remain committed; the persistent outbox is retried by cron.
     console.error('[initiation-meta] Purchase delivery deferred to the outbox retry')
   }
+  try { await sendPendingInitiationAnalytics(admin, stripe, { orderId: order.id, limit: 2 }) }
+  catch { console.warn('[initiation-analytics] Paid analytics deferred to the outbox retry') }
   return 'paid'
 }

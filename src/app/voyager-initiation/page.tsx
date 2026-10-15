@@ -13,5 +13,5 @@ export const metadata: Metadata = {
 
 export default async function VoyagerInitiationPage({ searchParams }: { searchParams: Promise<{ checkout?: string; from?: string }> }) {
   const [snapshot, query, members] = await Promise.all([getInitiationSnapshot(), searchParams, getInitiationPublicMembers()])
-  return <InitiationView snapshot={snapshot} members={members} deviceSource={deviceSourcePath(query.from)} checkoutCanceled={query.checkout === 'canceled'} beginCheckout={beginVoyagerInitiation} />
+  return <InitiationView snapshot={snapshot} members={members} deviceSource={deviceSourcePath(query.from)} checkoutCanceled={query.checkout === 'canceled'} beginCheckout={beginVoyagerInitiation} analyticsEnvironment={process.env.VERCEL_ENV ?? 'unknown'} />
 }
