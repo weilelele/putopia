@@ -3,7 +3,7 @@ import type Stripe from 'stripe'
 import { retryInitiationAnalytics, sendInitiationPostHog, type InitiationAnalyticsClaim, type InitiationAnalyticsDependencies, type InitiationAnalyticsOrder } from './initiation-analytics-outbox'
 
 const order: InitiationAnalyticsOrder = { id: 'order1', user_id: 'user1', status: 'paid', order_kind: 'standard', amount: 52000, currency: 'usd', stripe_livemode: true,
-  stripe_session_id: 'cs_1', stripe_payment_intent: 'pi_1', paid_at: '2026-10-14T00:00:00Z', analytics_context: { environment: 'production', utm_source: 'email', email: 'never-send@example.com' } }
+  stripe_session_id: 'cs_1', stripe_payment_intent: 'pi_1', paid_at: '2026-10-14T00:00:00Z', analytics_context: { environment: 'production', utm_source: 'email', ad_id: '120253708881030237', email: 'never-send@example.com' } }
 const claim: InitiationAnalyticsClaim = { order_id: 'order1', event: 'initiation_purchase_completed', event_uuid: '00000000-0000-4000-8000-000000000001', event_time: order.paid_at!, claim_token: 'token', attempt_count: 1, reused: false }
 const session = { id: 'cs_1', mode: 'payment', livemode: true, status: 'complete', payment_status: 'paid', amount_total: 52000, currency: 'usd', payment_intent: 'pi_1',
   metadata: { product_type: 'voyager_initiation', order_id: 'order1', user_id: 'user1', order_kind: 'standard' } } as unknown as Stripe.Checkout.Session
@@ -17,7 +17,7 @@ describe('durable PostHog Initiation outcomes', () => {
   it('requires captured payment plus paid database state and emits no customer fields', async () => {
     const deps = setup(); expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
     expect(deps.send).toHaveBeenCalledWith(expect.objectContaining({ uuid: claim.event_uuid, distinct_id: 'user1', timestamp: claim.event_time,
-      properties: expect.objectContaining({ payable_amount: 520, payment_status: 'paid', is_test: false }) }))
+      properties: expect.objectContaining({ payable_amount: 520, payment_status: 'paid', is_test: false, ad_id: '120253708881030237' }) }))
     expect(JSON.stringify((deps.send as ReturnType<typeof vi.fn>).mock.calls)).not.toContain('never-send')
   })
   it.each(['requires_capture', 'processing', 'canceled'])('authorization-only %s cannot emit Purchase', async status => {

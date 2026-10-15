@@ -5,6 +5,7 @@ import posthog from 'posthog-js'
 import { getFirstTouch } from '@/lib/utm'
 import { getRouteScrollContainer } from '@/lib/route-scroll-container'
 import { createPriceExposureGate, initiationAnalyticsProperties, sanitizeInitiationAnalytics, visiblePriceRatio, type InitiationAnalyticsContext } from '@/lib/initiation-analytics'
+import { captureInitiationAdAttribution } from '@/lib/initiation-attribution-client'
 import type { InitiationOrderKind } from '@/lib/initiation-types'
 
 export function useInitiationAnalytics({ kind, userId, internal, environment, eligible, modalOpen }: {
@@ -18,7 +19,8 @@ export function useInitiationAnalytics({ kind, userId, internal, environment, el
     if (!context.current) {
       let utm = {}
       try { utm = getFirstTouch() } catch { /* Storage may be unavailable. */ }
-      context.current = sanitizeInitiationAnalytics({ ...utm, page_visit_id: crypto.randomUUID(),
+      const adContext = captureInitiationAdAttribution()
+      context.current = sanitizeInitiationAnalytics({ ...utm, ...adContext, page_visit_id: crypto.randomUUID(),
         is_internal_qa: internal || new URLSearchParams(location.search).get('qa') === '1', disabled: posthog.has_opted_out_capturing() })
     }
     return context.current

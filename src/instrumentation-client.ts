@@ -1,5 +1,6 @@
 import posthog from 'posthog-js'
 import { captureFirstTouch, getFirstTouch } from '@/lib/utm'
+import { captureInitiationAdAttribution } from '@/lib/initiation-attribution-client'
 
 if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
@@ -10,6 +11,7 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
   })
 
   captureFirstTouch()
+  captureInitiationAdAttribution()
 
   const utm = getFirstTouch()
   const hasUtm = Object.values(utm).some(v => v !== null)
@@ -27,6 +29,7 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
 
 export function onRouterTransitionStart(url: string) {
   if (window.location.hostname !== 'localhost') {
+    captureInitiationAdAttribution(new URL(url, window.location.origin).search)
     posthog.capture('$pageview', { $current_url: window.location.origin + url })
   }
 }
