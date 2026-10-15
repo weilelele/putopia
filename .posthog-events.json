@@ -1,0 +1,82 @@
+[
+  {
+    "event": "initiation_scroll_depth",
+    "description": "Once per visit at 25/50/75/90/100 percent of route content reached in the actual scroll container",
+    "file": "src/app/voyager-initiation/use-initiation-engagement.ts"
+  },
+  {
+    "event": "initiation_section_viewed",
+    "description": "Section visible continuously for one second; half the smaller of viewport or section",
+    "file": "src/app/voyager-initiation/use-initiation-engagement.ts"
+  },
+  {
+    "event": "initiation_section_dwell",
+    "description": "Active dwell deltas every ten seconds and lifecycle exits; pauses for hidden, unfocused, modal or idle states",
+    "file": "src/app/voyager-initiation/use-initiation-engagement.ts"
+  },
+  {
+    "event": "calibration_started",
+    "description": "Start five-question calibration, with opaque attempt ID",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_question_viewed",
+    "description": "Question displayed, including back navigation",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_question_interacted",
+    "description": "First interaction with each question per attempt, no answer values",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_question_submitted",
+    "description": "Valid next/submit attempt; review flag and elapsed wall time",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_answer_review_shown",
+    "description": "Knowledge question correction displayed",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_question_back",
+    "description": "Return to previous question or introduction",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_validation_failed",
+    "description": "Validation failed without answer or error text",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_save_started",
+    "description": "Saving completed questionnaire",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_save_failed",
+    "description": "Save rejected or network/server failed; no raw error",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_completed",
+    "description": "Save acknowledged, never emitted merely for loading already-complete state",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_exited",
+    "description": "Attempt exited by close/navigation with last question and completion status",
+    "file": "src/components/voyager-profile-quiz.tsx"
+  },
+  {
+    "event": "calibration_opened",
+    "description": "Calibration intro opened from status, CTA or preflight",
+    "file": "src/app/voyager-initiation/initiation-view.tsx"
+  },
+  {
+    "event": "calibration_closed",
+    "description": "Explicit close, includes started/completed flags",
+    "file": "src/app/voyager-initiation/initiation-view.tsx"
+  }
+]

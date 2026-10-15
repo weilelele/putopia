@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useEffectEvent } from 'react'
 import { getVoyagerIntake, saveVoyagerIntake } from '@/lib/actions/voyager-intake'
 import { EMPTY_INTAKE, PROFILE_QUESTIONS, US_STATES, JAPAN_PREFECTURES, intakeStepError, type VoyagerIntake } from '@/lib/voyager-intake'
 import { ArchiveButton } from '@/components/archive-button'
@@ -17,7 +17,8 @@ export type VoyagerQuizServices = {
 }
 const defaultServices: VoyagerQuizServices = { load: getVoyagerIntake, save: saveVoyagerIntake }
 
-export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, onStart, onBusyChange, onDirtyChange, services = defaultServices }: {
+export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, onStart, onBusyChange, onDirtyChange, onAnalytics, services = defaultServices }: {
+  onAnalytics?: (event: string, properties: Record<string, unknown>) => void
   calibration?: boolean
   onComplete?: () => void
   onReturn?: () => void
@@ -37,6 +38,35 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
   const [error, setError] = useState('')
   const [worldId, setWorldId] = useState<string | null>(null)
   const submittingRef = useRef(false)
+  const telemetry = useRef({ attempt: '', index: 0, started: 0, questionStarted: 0, submitted: false, ended: false, touched: new Set<number>() })
+  function report(event: string, extra: Record<string, unknown> = {}) {
+    try { onAnalytics?.(event, { calibration_attempt_id: telemetry.current.attempt, question_number: telemetry.current.index + 1, quiz_version: 'voyager-profile-v1', ...extra }) } catch { /* Telemetry cannot block calibration. */ }
+  }
+  const exit = useEffectEvent(() => {
+    const t = telemetry.current
+    if (!t.attempt || t.ended) return
+    t.ended = true
+    report('calibration_exited', { completed: t.submitted, elapsed_ms: Math.round(performance.now() - t.started) })
+  })
+  useEffect(() => {
+    const onLeave = () => exit()
+    window.addEventListener('pagehide', onLeave)
+    return () => { window.removeEventListener('pagehide', onLeave); exit() }
+  }, [])
+  function showQuestion(nextIndex: number) {
+    telemetry.current.index = nextIndex
+    telemetry.current.questionStarted = performance.now()
+    setIndex(nextIndex)
+    report('calibration_question_viewed')
+  }
+  function start() {
+    const t = telemetry.current
+    if (!t.attempt) {
+      t.attempt = crypto.randomUUID(); t.started = performance.now()
+      report('calibration_started')
+    }
+    setStep('question'); showQuestion(0); onStart?.()
+  }
   const questionHeading = useRef<HTMLHeadingElement>(null)
 
   const load = useCallback(async () => {
@@ -58,6 +88,10 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
   }, [index, step])
 
   function update(patch: Partial<VoyagerIntake>) {
+    if (!telemetry.current.touched.has(index)) {
+      telemetry.current.touched.add(index)
+      report('calibration_question_interacted')
+    }
     onDirtyChange?.(true)
     setAnswers(previous => ({ ...previous, ...patch }))
     setError('')
@@ -66,25 +100,31 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
   async function next() {
     if (submittingRef.current) return
     const problem = intakeStepError(answers, index)
-    if (problem) { setError(problem); return }
+    if (problem) { report('calibration_validation_failed'); setError(problem); return }
+    report('calibration_question_submitted', { reviewing, elapsed_ms: Math.round(performance.now() - telemetry.current.questionStarted) })
     const currentQuestion = PROFILE_QUESTIONS[index]
     if ('correctAnswer' in currentQuestion && !reviewing && (index === 0 ? answers.mission : answers.console) !== currentQuestion.correctAnswer) {
+      report('calibration_answer_review_shown')
       setReviewing(true)
       return
     }
-    if (index < 4) { setReviewing(false); setIndex(index + 1); return }
+    if (index < 4) { setReviewing(false); showQuestion(index + 1); return }
+    report('calibration_save_started')
     submittingRef.current = true
     setSubmitting(true)
     onBusyChange?.(true)
     setError('')
     try {
       const result = await services.save(answers)
-      if (!result.ok) { setError(result.error ?? 'Please try again.'); return }
+      if (!result.ok) { report('calibration_save_failed', { reason: 'rejected' }); setError(result.error ?? 'Please try again.'); return }
+      telemetry.current.submitted = true
+      report('calibration_completed', { elapsed_ms: Math.round(performance.now() - telemetry.current.started) })
       setWorldId(result.worldId ?? null)
       setStep('result')
       onDirtyChange?.(false)
       onComplete?.()
     } catch {
+      report('calibration_save_failed', { reason: 'network_or_server' })
       setError('Your profile could not be saved. Your answers are still here; please try again.')
     } finally {
       submittingRef.current = false
@@ -119,7 +159,7 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
             <ArchivePageHeader title={calibration ? "SIGNAL" : "ESTABLISH YOUR"} accent={calibration ? "CALIBRATION" : "VOYAGER PROFILE"} />
             <p className="archive-page-intro">{calibration ? "Complete your calibration before joining." : "Discover our shared purpose and add your perspective to the Collective."}</p>
             <p className="archive-page-intro">5 questions</p>
-            <ArchiveButton onClick={() => { setStep('question'); onStart?.() }} variant="primary">{calibration ? "START CALIBRATION →" : "BEGIN MY PROFILE →"}</ArchiveButton>
+            <ArchiveButton onClick={start} variant="primary">{calibration ? "START CALIBRATION →" : "BEGIN MY PROFILE →"}</ArchiveButton>
           </div>
         ) : step === 'result' ? (
           <ArchiveCard className="archive-quiz-state">
@@ -130,7 +170,7 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
             {calibration ? <ArchiveButton onClick={onReturn}>RETURN TO INITIATION →</ArchiveButton> : <a href="/voyager-initiation" className="archive-button archive-button--primary">RETURN TO INITIATION →</a>}
           </ArchiveCard>
         ) : (
-          <form className="archive-quiz-question" onSubmit={event => { event.preventDefault(); void next() }}>
+          <form className="archive-quiz-question ph-no-capture ph-mask" onSubmit={event => { event.preventDefault(); void next() }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
               <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--color-star-dim)' }}>{String(index + 1).padStart(2, '0')} / 05 — {question.label}</span>
               <div className="progress-track" role="progressbar" aria-label="Voyager profile progress" aria-valuemin={0} aria-valuemax={5} aria-valuenow={index + 1} style={{ flex: 1, minWidth: 32 }}>
@@ -179,7 +219,7 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
             </div>
             {error && <p role="alert" className="archive-page-intro">{error}</p>}
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-              <ArchiveButton type="button" variant="secondary" disabled={submitting} onClick={() => { setError(''); setReviewing(false); if (index === 0) setStep('intro'); else setIndex(index - 1) }}>BACK</ArchiveButton>
+              <ArchiveButton type="button" variant="secondary" disabled={submitting} onClick={() => { setError(''); setReviewing(false); report('calibration_question_back'); if (index === 0) setStep('intro'); else showQuestion(index - 1) }}>BACK</ArchiveButton>
               <ArchiveButton type="submit" variant="primary" disabled={submitting || !!intakeStepError(answers, index)}>{submitting ? 'SAVING…' : index === 4 ? (calibration ? 'COMPLETE CALIBRATION' : 'SAVE MY VOYAGER PROFILE') : 'NEXT →'}</ArchiveButton>
             </div>
           </form>
