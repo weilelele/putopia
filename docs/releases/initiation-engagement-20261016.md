@@ -13,3 +13,9 @@ Use `is_test=false` and `is_internal_qa=false` for production reporting. Filter 
 ## Payment audit
 
 Production read-only inspection found the analytics trigger installed and no pending analytics outbox rows. Four live orders were canceled; the latest was 2026-10-13, before the October 14 tracking release. No captured customer purchase exists to use as production delivery proof. Existing outbox tests cover capture-only evidence, refund races, deduplication UUIDs, lease loss, retry and ingestion acknowledgements. No live charge or production webhook replay was performed.
+
+## Validation
+
+Design check, TypeScript, lint (zero errors; existing warnings), 694 unit tests and production build passed. The isolated browser fixture passed at 390×844 and 1440×1000: all five questions, incorrect-answer review, successful save/exit, depth milestones and dwell events. Explicit events contain neither work nor observation sentinel answers. Browser assertions observe SDK capture calls locally; they do not claim production ingestion. See `scripts/verification/initiation-engagement-browser.mjs`.
+
+The older `initiation-offline.mjs` harness is incompatible with current checkout imports (`next/headers`) and was not counted as passing. Current pure outbox tests and read-only production schema/queue inspection are the payment audit evidence; no new real-money transaction was attempted.
