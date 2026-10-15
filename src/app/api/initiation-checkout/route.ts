@@ -8,6 +8,8 @@ import { getStripe } from '@/lib/stripe'
 import { initiationConfigurationError } from '@/lib/initiation-config'
 import { INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT, INITIATION_PRODUCT } from '@/lib/initiation-types'
 import { captureInitiationMetaAttribution } from '@/lib/initiation-meta-attribution'
+import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
+import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
 
 export const dynamic = 'force-dynamic'
 /** Authenticated POST only. All purchase facts are resolved on the server. */
@@ -44,8 +46,14 @@ export async function POST(request: Request) {
     if (error || !order) return NextResponse.json({ error: 'Checkout is unavailable. Check calibration, existing orders, and seat availability on Initiation.' }, { status: 409 })
     if (order.stripe_session_id) {
       const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id)
-      if (session.metadata?.order_id !== order.id || session.metadata?.user_id !== user.id || session.metadata?.order_kind !== order.order_kind) throw new Error('Checkout binding mismatch')
-      if (session.status === 'open' && session.url) return NextResponse.json({ url: session.url })
+      if (!validInitiationAnalyticsSession(order, session)) throw new Error('Checkout binding mismatch')
+      if (session.status === 'open' && session.url && new URL(session.url).protocol === 'https:') {
+        try {
+          await queueInitiationCheckoutAnalytics(admin, order.id, true)
+          await sendPendingInitiationAnalytics(admin, stripe, { orderId: order.id, limit: 2 })
+        } catch { console.warn('[initiation-analytics] Checkout analytics deferred') }
+        return NextResponse.json({ url: session.url })
+      }
       return NextResponse.json({ error: 'Your previous payment is being reconciled. Return to Initiation for its status.' }, { status: 409 })
     }
     // This fixed reservation expiry and idempotency key survive retries/timeouts.
@@ -58,6 +66,15 @@ export async function POST(request: Request) {
     const { error: attributionError } = await admin.from('initiation_orders').update({ meta_attribution: attribution })
       .eq('id', order.id).eq('status', 'pending').is('stripe_session_id', null).eq('meta_attribution', '{}')
     if (attributionError) throw attributionError
+    try {
+      const analyticsContext = sanitizeInitiationAnalytics(body?.analytics)
+      const { data: profile, error: profileError } = await admin.from('voyager_profiles').select('role').eq('id', user.id).maybeSingle()
+      const { error: analyticsError } = await admin.from('initiation_orders').update({ analytics_context: {
+        ...analyticsContext, is_internal_qa: analyticsContext.is_internal_qa === true || profile?.role === 'architect' || !!profileError || !profile,
+        environment: process.env.VERCEL_ENV ?? 'unknown',
+      } }).eq('id', order.id).is('stripe_session_id', null).eq('analytics_context', '{}')
+      if (analyticsError) throw analyticsError
+    } catch { console.warn('[initiation-analytics] Attribution could not be saved; unknown environment remains excluded') }
     const sourceQuery = order.device_source ? `&from=${encodeURIComponent(order.device_source)}` : ''
     const session = await stripe.checkout.sessions.create({
       mode: 'payment', ui_mode: 'hosted_page', payment_method_types: ['card'],
@@ -73,8 +90,12 @@ export async function POST(request: Request) {
       success_url: `${origin}/join/success?product=initiation&session_id={CHECKOUT_SESSION_ID}${sourceQuery}`,
       cancel_url: `${origin}/voyager-initiation?checkout=canceled${sourceQuery}`,
     }, { idempotencyKey: `initiation:${order.id}` })
+    if (!validInitiationAnalyticsSession({ ...order, stripe_session_id: session.id }, session) || session.status !== 'open'
+      || !session.url || new URL(session.url).protocol !== 'https:') throw new Error('Checkout binding mismatch')
     const { error: bindError } = await admin.from('initiation_orders').update({ stripe_session_id: session.id }).eq('id', order.id).is('stripe_session_id', null)
     if (bindError) throw bindError
+    try { await sendPendingInitiationAnalytics(admin, stripe, { orderId: order.id, limit: 2 }) }
+    catch { console.warn('[initiation-analytics] Checkout analytics deferred to the outbox') }
     return NextResponse.json({ url: session.url })
   } catch (error) {
     console.error('[initiation-checkout] Checkout could not be created:', error instanceof Error ? error.message : 'unknown')

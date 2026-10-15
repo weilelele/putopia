@@ -14,6 +14,8 @@ import { VoyagerProfileQuiz, type VoyagerQuizServices } from '@/components/voyag
 import styles from './initiation.module.css'
 import { INITIATION_FAQ } from './faq'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
+import { useInitiationAnalytics } from './use-initiation-analytics'
+import { initiationNextStep } from '@/lib/initiation-analytics'
 
 const SOURCE_KEY = 'mc:initiation:device-source'
 const subscribeToSource = () => () => {}
@@ -48,9 +50,10 @@ export type InitiationViewProps = {
   beginCheckout: () => Promise<InitiationCheckoutResult>
   quizServices?: VoyagerQuizServices
   paymentPlacement?: 'top' | 'bottom'
+  analyticsEnvironment?: string
 }
 
-export function InitiationView({ snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom' }: InitiationViewProps) {
+export function InitiationView({ snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown' }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -72,9 +75,12 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
   const granted = status === 'granted'
   const legacy = status === 'legacy_pack'
   const soldOut = availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity)
+  const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind: legacy ? 'legacy_upgrade' : 'standard', userId: snapshot.userId,
+    internal: snapshot.role === 'architect', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null })
 
   async function become() {
     if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
+    captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status, calibrated) })
     setError('')
     if (status === 'guest') { window.location.assign(initiationLoginPath(source)); return }
     if (!calibrated) { setDialog('calibration'); return }
@@ -88,7 +94,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
       } else if (result.status === 'unauthenticated') {
         window.location.assign(initiationLoginPath(source))
       } else if (result.status === 'ready') {
-        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from: source }) })
+        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from: source, analytics: analyticsContext() }) })
         const data = await response.json()
         if (response.status === 401) {
           window.location.assign(initiationLoginPath(source))
@@ -135,9 +141,9 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
             <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
           </> : <>
           {!paymentAtBottom && seatSummary}
-          {legacy && <div className={styles.legacyPrice}><s aria-label="Original price: 520 dollars">$520</s><button type="button" className={styles.discountInfo} aria-label="About your $120 Initial Pack member discount" aria-haspopup="dialog" onClick={() => setDialog('legacy-discount')}><CircleAlert size={17} aria-hidden /></button><strong>$400</strong></div>}
+          {legacy && <div className={styles.legacyPrice}><s aria-label="Original price: 520 dollars">$520</s><button type="button" className={styles.discountInfo} aria-label="About your $120 Initial Pack member discount" aria-haspopup="dialog" onClick={() => setDialog('legacy-discount')}><CircleAlert size={17} aria-hidden /></button><strong ref={priceRef}>$400</strong></div>}
           {legacy && <p className={styles.paymentTerms}>Special price for $12 Initial Pack members.</p>}
-          {!legacy && <p className={styles.standardPrice}>$520</p>}
+          {!legacy && <p ref={priceRef} className={styles.standardPrice}>$520</p>}
           <p className={styles.paymentTerms}>Pay once. No recurring membership fee.</p>
           <p className={styles.paymentTerms}>Your card is authorized first. We charge after delivery-region verification; an unsupported address cancels the authorization. A temporary bank hold may appear.</p>
           {calibrated ? <div className={styles.calibration} role="status" aria-live="polite">
