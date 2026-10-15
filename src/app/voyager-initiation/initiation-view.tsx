@@ -14,6 +14,7 @@ import { VoyagerProfileQuiz, type VoyagerQuizServices } from '@/components/voyag
 import styles from './initiation.module.css'
 import { INITIATION_FAQ } from './faq'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
+import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
 
@@ -78,19 +79,26 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
   const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind: legacy ? 'legacy_upgrade' : 'standard', userId: snapshot.userId,
     internal: snapshot.role === 'architect', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null })
 
+  const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null)
+
+  function openCalibration(entry: string) {
+    captureAnalytics('calibration_opened', { entry_point: entry })
+    setDialog('calibration')
+  }
+
   async function become() {
     if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
     captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status, calibrated) })
     setError('')
     if (status === 'guest') { window.location.assign(initiationLoginPath(source)); return }
-    if (!calibrated) { setDialog('calibration'); return }
+    if (!calibrated) { openCalibration('initiate'); return }
     inFlight.current = true
     setBusy(true)
     try {
       const result = await beginCheckout()
       if (result.status === 'calibration_required') {
         setCalibrated(false)
-        setDialog('calibration')
+        openCalibration('checkout_preflight')
       } else if (result.status === 'unauthenticated') {
         window.location.assign(initiationLoginPath(source))
       } else if (result.status === 'ready') {
@@ -124,7 +132,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
           </dl>
   )
   const joinPanel = (
-        <div className={styles.join}>
+        <div data-initiation-section="payment" className={styles.join}>
           {checkoutCanceled && !initiated && !granted && <p className={styles.notice} role="status">You returned from checkout without completing it. Your saved calibration remains available. Payment status below comes from your order records.</p>}
           {snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
           {snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{paymentMessages[snapshot.paymentStatus]}</p>}
@@ -148,7 +156,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
           <p className={styles.paymentTerms}>Your card is authorized first. We charge after delivery-region verification; an unsupported address cancels the authorization. A temporary bank hold may appear.</p>
           {calibrated ? <div className={styles.calibration} role="status" aria-live="polite">
             <span>Signal Calibration</span><span className={styles.calibrationState}><Check size={17} aria-hidden />Complete</span>
-          </div> : <button type="button" className={`${styles.calibration} ${styles.calibrationAction}`} aria-haspopup="dialog" onClick={() => setDialog('calibration')}>
+          </div> : <button type="button" className={`${styles.calibration} ${styles.calibrationAction}`} aria-haspopup="dialog" onClick={() => openCalibration('status')}>
             <span>Signal Calibration</span><span className={styles.calibrationState}>Not completed <ArrowRight size={17} aria-hidden /></span>
           </button>}
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
@@ -167,9 +175,9 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
   )
 
   return <main className={`main ${styles.page} ${paymentAtBottom ? styles.benefitsFirst : ''}`} data-route-scroll>
-    <div className={styles.content}>
+    <div ref={contentRef} className={styles.content}>
       <Link href="/console" className="archive-back-link"><ArrowLeft aria-hidden size={20} />Back to Dashboard</Link>
-      <header className={styles.hero}>
+      <header data-initiation-section="intro" className={styles.hero}>
         <div className={styles.introduction}>
           <p className={styles.eyebrow}>{initiated || granted ? 'Your membership' : legacy ? 'Your legacy membership' : 'Become a Voyager'}</p>
           <h1>Voyager<br />Initiation</h1>
@@ -186,7 +194,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
           {packs.map((pack, index) => {
             const shipment = shipments.find(item => item.position === index + 1)
             const deviceHref = consoleClaim.batch ? `/devices/batches/${consoleClaim.batch.slug}` : consoleDevicePath(source, consoleClaim.href)
-            return <li key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''}`}>
+            return <li data-initiation-section={`pack_${index + 1}`} key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''}`}>
               {!pack.featured && <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 320px, (min-width: 768px) 240px, 42vw" preload={index === 0} /></div>}
               <div className={styles.packCopy}>
                 <p className={styles.packageNumber}>Package {index + 1}<span> · {shipment?.scheduledMonth ? new Date(`${shipment.scheduledMonth}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : pack.dispatch}</span></p>
@@ -206,7 +214,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
         </ol>
       </section>}
 
-      <section className={styles.section} aria-labelledby="mission-benefit-title">
+      <section data-initiation-section="mission_board" className={styles.section} aria-labelledby="mission-benefit-title">
         <div className={styles.sectionHeading}><BenefitHeading id="mission-benefit-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Mission Board</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={`${styles.benefitImage} ${styles.missionImage}`}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
@@ -214,7 +222,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
         </div>
       </section>
 
-      <section className={styles.section} aria-labelledby="intel-title">
+      <section data-initiation-section="intel" className={styles.section} aria-labelledby="intel-title">
         <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Classified Intel</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents asking: How long has the Collective existed? Who were the first Voyagers? What did they discover?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
@@ -222,7 +230,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
         </div>
       </section>
 
-      <section className={styles.section} aria-labelledby="participation-title">
+      <section data-initiation-section="participation" className={styles.section} aria-labelledby="participation-title">
         <div className={styles.sectionHeading}><BenefitHeading id="participation-title">{paymentAtBottom && <span className={styles.chapter}>04</span>}{paymentAtBottom ? 'Shape the Collective' : 'Participate'}</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/participation-questions.png" alt="Proposed decisions on physical maps and dossiers: Which world next? How many new Voyagers? Reveal our device locations? Investigate a new antenna organization?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
@@ -231,7 +239,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
       </section>
       </section>
       {paymentAtBottom && <section className={`${styles.section} ${styles.bottomPayment}`} aria-label="Voyager Initiation checkout">{joinPanel}</section>}
-      <section className={styles.section} aria-labelledby="initiation-faq-title">
+      <section data-initiation-section="faq" className={styles.section} aria-labelledby="initiation-faq-title">
         <div className={styles.sectionHeading}><h2 id="initiation-faq-title">FAQ</h2></div>
         {INITIATION_FAQ.map(item => <details key={item.question} className={styles.faqItem}>
           <summary>{item.question}</summary><p>{item.answer}</p>
@@ -239,8 +247,8 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
       </section>
     </div>
 
-    <ArchiveSheet size={calibrationStarted ? 'fullscreen' : 'wide'} headerless open={dialog === 'calibration'} onClose={() => { setDialog(null); setDirty(false); setCalibrationStarted(false) }} title="Signal Calibration" busy={quizBusy} dirty={dirty} className={styles.calibrationDialog}>
-      {dialog === 'calibration' && <VoyagerProfileQuiz calibration services={quizServices} onComplete={completed} onReturn={() => { setDialog(null); setCalibrationStarted(false) }} onStart={() => setCalibrationStarted(true)} onBusyChange={setQuizBusy} onDirtyChange={setDirty} />}
+    <ArchiveSheet size={calibrationStarted ? 'fullscreen' : 'wide'} headerless open={dialog === 'calibration'} onClose={() => { captureAnalytics('calibration_closed', { started: calibrationStarted, completed: calibrated }); setDialog(null); setDirty(false); setCalibrationStarted(false) }} title="Signal Calibration" busy={quizBusy} dirty={dirty} className={styles.calibrationDialog}>
+      {dialog === 'calibration' && <VoyagerProfileQuiz calibration onAnalytics={captureAnalytics} services={quizServices} onComplete={completed} onReturn={() => { setDialog(null); setCalibrationStarted(false) }} onStart={() => setCalibrationStarted(true)} onBusyChange={setQuizBusy} onDirtyChange={setDirty} />}
     </ArchiveSheet>
     <ArchiveSheet open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">
       <p>Members who previously paid $12 for the Initial Pack receive a $120 discount on Voyager Initiation.</p>
