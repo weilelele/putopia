@@ -4,7 +4,7 @@ Date: 2026-09-23
 
 ## Scope and evidence limit
 
-The production admin route redirected to `/login`, and the local admin route did the same, so the authenticated editor could not be captured in this audit run. Blocker evidence: `/Users/will/Sites/putopia/docs/audits/device-batch-admin-login-blocked.jpg`. This is therefore a static consumer audit of the editor, published Batch shape, public Devices surfaces, claim flow, owned-console records, dashboard/newsletter feeds, and notification actions. It is not a screenshot-based UX audit of the authenticated admin screen.
+The production admin route redirected to `/login`, and the local admin route did the same, so the authenticated editor could not be captured in this audit run. Blocker evidence: [Device Batch admin login redirect](./device-batch-admin-login-blocked.jpg). This is therefore a static consumer audit of the editor, published Batch shape, public Devices surfaces, claim flow, owned-console records, dashboard/newsletter feeds, and notification actions. It is not a screenshot-based UX audit of the authenticated admin screen.
 
 ## Confirmed changes after owner review
 
