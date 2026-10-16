@@ -23,5 +23,5 @@ export async function DeviceRooms({ batches, initialSlug }: {
     ownedConsole: consoles.find((console) => console.order.device_batch_slug === batch.slug) ?? null,
   })))
 
-  return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} introduction={<McConsolePanel key="console-introduction" mcFunctions={mcFunctions} heroVideo={{ src: '/assets/device-reel.mp4', poster: '/assets/device-reel-poster.jpg' }} />} />
+  return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} introduction={<McConsolePanel key="console-introduction" mcFunctions={mcFunctions} heroVideo={{ src: '/assets/device-reel-v2-20261016.mp4', poster: '/assets/device-reel-v2-20261016-poster.jpg' }} />} />
 }
