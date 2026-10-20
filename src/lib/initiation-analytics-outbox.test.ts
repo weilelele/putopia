@@ -14,6 +14,14 @@ function setup(patch: Partial<InitiationAnalyticsDependencies> = {}) {
     retrieveIntent: vi.fn(async () => intent), send: vi.fn(async () => {}), now: () => Date.parse('2026-10-14T00:01:00Z'), ...patch }
 }
 describe('durable PostHog Initiation outcomes', () => {
+  it.each([['legacy_upgrade', 40000], ['initial', 4800], ['initial_upgrade', 50000]] as const)('delivers %s with exact paid amount without changing event identity', async (kind, amount) => {
+    const deps = setup({ loadOrder: async () => ({ ...order, order_kind: kind, amount }),
+      retrieveSession: async () => ({ ...session, amount_total: amount, metadata: { ...session.metadata, order_kind: kind } }),
+      retrieveIntent: async () => ({ ...intent, amount, amount_received: amount, metadata: { ...intent.metadata, order_kind: kind } }) })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
+    expect(deps.send).toHaveBeenCalledWith(expect.objectContaining({ uuid: claim.event_uuid, event: 'initiation_purchase_completed',
+      properties: expect.objectContaining({ order_kind: kind, payable_amount: amount / 100, amount_minor: amount }) }))
+  })
   it('requires captured payment plus paid database state and emits no customer fields', async () => {
     const deps = setup(); expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
     expect(deps.send).toHaveBeenCalledWith(expect.objectContaining({ uuid: claim.event_uuid, distinct_id: 'user1', timestamp: claim.event_time,

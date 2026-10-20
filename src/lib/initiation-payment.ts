@@ -1,4 +1,5 @@
-import { INITIATION_AMOUNT, INITIATION_PRODUCT, INITIATION_UPGRADE_AMOUNT, type InitiationOrderKind } from './initiation-types'
+import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
+import { initiationOffer } from './initiation-offers'
 
 export interface InitiationPaymentEvidence {
   status: string | null
@@ -21,8 +22,8 @@ export function validateInitiationPayment(e: InitiationPaymentEvidence, order: {
   stripe_livemode: boolean; order_kind: InitiationOrderKind; amount: number; currency: string; id: string; user_id: string; stripe_session_id: string | null; price_id: string; product_id: string
 }): boolean {
   return e.livemode === order.stripe_livemode && e.status === 'complete' && e.paymentStatus === 'paid' && e.mode === 'payment'
-    && e.orderKind === order.order_kind && (order.order_kind === 'standard' || order.order_kind === 'legacy_upgrade')
-    && order.amount === (order.order_kind === 'legacy_upgrade' ? INITIATION_UPGRADE_AMOUNT : INITIATION_AMOUNT)
+    && e.orderKind === order.order_kind && !!initiationOffer(order.order_kind)
+    && order.amount === initiationOffer(order.order_kind)?.amount
     && e.amount === order.amount && e.currency === 'usd' && order.currency === 'usd'
     && e.productType === INITIATION_PRODUCT && e.userId === order.user_id && e.orderId === order.id
     && (!order.stripe_session_id || order.stripe_session_id === e.sessionId)

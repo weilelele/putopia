@@ -12,11 +12,13 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { VoyagerProfileQuiz, type VoyagerQuizServices } from '@/components/voyager-profile-quiz'
 import styles from './initiation.module.css'
-import { INITIATION_FAQ } from './faq'
+import { INITIATION_FAQ, INITIATION_BUNDLE_FAQ } from './faq'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
+import { initiationOffer } from '@/lib/initiation-offers'
+import bundleStyles from './purchase-bundles.module.css'
 
 const SOURCE_KEY = 'mc:initiation:device-source'
 const subscribeToSource = () => () => {}
@@ -48,13 +50,14 @@ export type InitiationViewProps = {
   snapshot: InitiationSnapshot
   deviceSource?: string | null
   checkoutCanceled?: boolean
-  beginCheckout: () => Promise<InitiationCheckoutResult>
+  beginCheckout: (bundle?: 'initial' | 'complete') => Promise<InitiationCheckoutResult>
+  initialBundle?: 'initial' | 'complete'
   quizServices?: VoyagerQuizServices
   paymentPlacement?: 'top' | 'bottom'
   analyticsEnvironment?: string
 }
 
-export function InitiationView({ snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown' }: InitiationViewProps) {
+export function InitiationView({ snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, initialBundle = 'complete', quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown' }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -75,8 +78,13 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
   const initiated = status === 'initiated'
   const granted = status === 'granted'
   const legacy = status === 'legacy_pack'
-  const soldOut = availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity)
-  const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind: legacy ? 'legacy_upgrade' : 'standard', userId: snapshot.userId,
+  const initialMember = status === 'initial_pack'
+  const bundlesEnabled = !!snapshot.bundlesEnabled
+  const [selectedBundle, setSelectedBundle] = useState<'initial' | 'complete'>(legacy || initialMember ? 'complete' : initialBundle)
+  const kind = legacy ? 'legacy_upgrade' : initialMember ? 'initial_upgrade' : bundlesEnabled && selectedBundle === 'initial' ? 'initial' : 'standard'
+  const price = initiationOffer(kind)!.amount / 100
+  const soldOut = !initialMember && (availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity))
+  const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind, userId: snapshot.userId,
     internal: snapshot.role === 'architect', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null })
 
   const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null)
@@ -90,22 +98,22 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
     if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
     captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status, calibrated) })
     setError('')
-    if (status === 'guest') { window.location.assign(initiationLoginPath(source)); return }
+    if (status === 'guest') { window.location.assign(initiationLoginPath(source, bundlesEnabled ? selectedBundle : undefined)); return }
     if (!calibrated) { openCalibration('initiate'); return }
     inFlight.current = true
     setBusy(true)
     try {
-      const result = await beginCheckout()
+      const result = await beginCheckout(bundlesEnabled ? selectedBundle : undefined)
       if (result.status === 'calibration_required') {
         setCalibrated(false)
         openCalibration('checkout_preflight')
       } else if (result.status === 'unauthenticated') {
-        window.location.assign(initiationLoginPath(source))
+        window.location.assign(initiationLoginPath(source, bundlesEnabled ? selectedBundle : undefined))
       } else if (result.status === 'ready') {
-        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from: source, analytics: analyticsContext() }) })
+        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from: source, analytics: analyticsContext(), ...(bundlesEnabled ? { bundle: selectedBundle } : {}) }) })
         const data = await response.json()
         if (response.status === 401) {
-          window.location.assign(initiationLoginPath(source))
+          window.location.assign(initiationLoginPath(source, bundlesEnabled ? selectedBundle : undefined))
         } else if (response.ok && typeof data.url === 'string' && new URL(data.url).protocol === 'https:') {
           window.location.assign(data.url)
         } else {
@@ -151,7 +159,28 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
           {!paymentAtBottom && seatSummary}
           {legacy && <div className={styles.legacyPrice}><s aria-label="Original price: 520 dollars">$520</s><button type="button" className={styles.discountInfo} aria-label="About your $120 Initial Pack member discount" aria-haspopup="dialog" onClick={() => setDialog('legacy-discount')}><CircleAlert size={17} aria-hidden /></button><strong ref={priceRef}>$400</strong></div>}
           {legacy && <p className={styles.paymentTerms}>Special price for $12 Initial Pack members.</p>}
-          {!legacy && <p ref={priceRef} className={styles.standardPrice}>$520</p>}
+          {initialMember && <>
+            <p className={styles.memberStatus}>Your Initial Pack membership</p>
+            <p className={styles.paymentTerms}>Your member access and first two Packs are already included. Add Multiverse Console and the fourth delivery.</p>
+          </>}
+          {bundlesEnabled && !legacy && !initialMember && <div className={bundleStyles.purchase}>
+            <h2 className={bundleStyles.title}>Choose your bundle.</h2>
+            <p className={bundleStyles.description}>Both include Voyager membership: classified intel, member-only votes and publishing in the Voyager Feed.</p>
+            <fieldset className={bundleStyles.options} disabled={busy}>
+              <legend className="sr-only">Voyager bundle</legend>
+              {(['initial', 'complete'] as const).map(bundle => <label key={bundle} className={bundleStyles.option}>
+                <input type="radio" name="initiation-bundle" value={bundle} checked={selectedBundle === bundle} onChange={() => {
+                  setSelectedBundle(bundle)
+                  captureAnalytics('initiation_bundle_selected', { bundle, order_kind: bundle === 'initial' ? 'initial' : 'standard', payable_amount: bundle === 'initial' ? 48 : 520, amount_minor: bundle === 'initial' ? 4800 : 52000 })
+                }} />
+                <span><span className={bundleStyles.optionHeading}><strong>{bundle === 'initial' ? 'Initial Voyager Pack' : 'Complete Voyager Pack'}</strong><strong>${bundle === 'initial' ? '48' : '520'}</strong></span>
+                  <span className={bundleStyles.detail}>{bundle === 'initial' ? 'Welcome letter, member badge and Mysterious Widgets.' : 'Everything in Initial, plus Multiverse Console and the fourth delivery.'}</span>
+                  <span className={bundleStyles.note}>{bundle === 'initial' ? 'Add Console + the fourth delivery later for $500.' : 'All four Packs. Save $28 compared with joining and upgrading separately.'}</span>
+                </span>
+              </label>)}
+            </fieldset>
+          </div>}
+          {!legacy && <p ref={priceRef} className={bundlesEnabled ? bundleStyles.selectedPrice : styles.standardPrice}>{bundlesEnabled ? 'One-time payment · ' : ''}${price}</p>}
           <p className={styles.paymentTerms}>Pay once. No recurring membership fee.</p>
           <p className={styles.paymentTerms}>Your card is authorized first. We charge after delivery-region verification; an unsupported address cancels the authorization. A temporary bank hold may appear.</p>
           {calibrated ? <div className={styles.calibration} role="status" aria-live="polite">
@@ -160,7 +189,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
             <span>Signal Calibration</span><span className={styles.calibrationState}>Not completed <ArrowRight size={17} aria-hidden /></span>
           </button>}
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
-            <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : legacy ? 'CONTINUE INITIATION' : soldOut ? 'FULLY CLAIMED' : 'INITIATE'}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
+            <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : legacy ? 'CONTINUE INITIATION' : soldOut ? 'FULLY CLAIMED' : bundlesEnabled ? `CONTINUE · $${price}` : 'INITIATE'}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
@@ -168,7 +197,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
             <p>Contiguous US only.<br />Shipping &amp; taxes included.</p>
             <Link className={styles.textLink} href="/terms/initiation">Delivery &amp; aftercare <ArrowRight size={18} aria-hidden /></Link>
           </section>
-          {!availability.checkoutOpen && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
+          {!(kind === 'initial' ? snapshot.initialCheckoutOpen : availability.checkoutOpen) && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
           </>}
           {error && <p className={styles.error} role="alert">{error}</p>}
         </div>
@@ -179,7 +208,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
       <Link href="/console" className="archive-back-link"><ArrowLeft aria-hidden size={20} />Back to Dashboard</Link>
       <header data-initiation-section="intro" className={styles.hero}>
         <div className={styles.introduction}>
-          <p className={styles.eyebrow}>{initiated || granted ? 'Your membership' : legacy ? 'Your legacy membership' : 'Become a Voyager'}</p>
+          <p className={styles.eyebrow}>{initiated || granted || initialMember ? 'Your membership' : legacy ? 'Your legacy membership' : 'Become a Voyager'}</p>
           <h1>Voyager<br />Initiation</h1>
           <p className={styles.lede}>One initiation. A lasting place in the Collective.</p>
         </div>
@@ -199,7 +228,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
               <div className={styles.packCopy}>
                 <p className={styles.packageNumber}>Package {index + 1}<span> · {shipment?.scheduledMonth ? new Date(`${shipment.scheduledMonth}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : pack.dispatch}</span></p>
                 <PackHeading>{pack.title}</PackHeading>
-                {legacy && index < 2 && <p className={styles.packAccess}>Included in Initial Pack</p>}
+                {(legacy || initialMember) && index < 2 && <p className={styles.packAccess}>Included in Initial Pack</p>}
                 {pack.featured && consoleClaim.claimed && <p className={styles.packAccess}>{consoleClaim.batch?.name ?? 'Batch details unavailable'}</p>}
                 <p>{pack.description}</p>
                 {shipment ? shipment.status !== 'planned' && <p className={styles.shipmentStatus}>{shipment.status}</p> : initiated ? <p className={styles.shipmentStatus}>Progress unavailable</p> : null}
@@ -237,11 +266,15 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
           <div className={styles.benefitCopy}><h3>Help shape what comes next.</h3><p>Take part in member-only votes and get priority access to world-record activities. The questions pictured are proposals; current opportunities appear in the voting hub.</p><Link href="/vote?tab=classified">Explore member votes <ArrowRight size={20} aria-hidden /></Link></div>
         </div>
       </section>
+      {bundlesEnabled && <section className={styles.section} aria-labelledby="feed-benefit-title">
+        <div className={styles.sectionHeading}><BenefitHeading id="feed-benefit-title">{paymentAtBottom && <span className={styles.chapter}>05</span>}Voyager Feed</BenefitHeading></div>
+        <div className={styles.benefitCopy}><h3>Your voice belongs here.</h3><p>Publish updates in the Voyager Feed and join conversations with fellow members.</p></div>
+      </section>}
       </section>
       {paymentAtBottom && <section className={`${styles.section} ${styles.bottomPayment}`} aria-label="Voyager Initiation checkout">{joinPanel}</section>}
       <section data-initiation-section="faq" className={styles.section} aria-labelledby="initiation-faq-title">
         <div className={styles.sectionHeading}><h2 id="initiation-faq-title">FAQ</h2></div>
-        {INITIATION_FAQ.map(item => <details key={item.question} className={styles.faqItem}>
+        {(bundlesEnabled ? INITIATION_BUNDLE_FAQ : INITIATION_FAQ).map(item => <details key={item.question} className={styles.faqItem}>
           <summary>{item.question}</summary><p>{item.answer}</p>
         </details>)}
       </section>

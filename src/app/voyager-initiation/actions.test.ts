@@ -5,6 +5,16 @@ vi.mock('@/lib/actions/initiation', () => ({ getInitiationSnapshot: getSnapshot 
 import { beginVoyagerInitiation } from './actions'
 
 describe('Voyager Initiation server preflight', () => {
+  it('uses Initial availability independently while preserving full-price checkout', async () => {
+    const state = { ...fixture('calibrated'), initialCheckoutOpen: true }
+    getSnapshot.mockResolvedValue(state)
+    expect((await beginVoyagerInitiation('initial')).status).toBe('ready')
+    expect((await beginVoyagerInitiation('complete')).status).toBe('not_open')
+  })
+  it('allows a paid Initial member to upgrade using the same seat', async () => {
+    getSnapshot.mockResolvedValue({ ...fixture('calibrated'), status: 'initial_pack', availability: { ...fixture('calibrated').availability, checkoutOpen: true, remaining: 0 } })
+    expect((await beginVoyagerInitiation('complete')).status).toBe('ready')
+  })
   beforeEach(() => vi.clearAllMocks())
   it('requires a verified account', async () => {
     getSnapshot.mockResolvedValue(fixture('guest'))

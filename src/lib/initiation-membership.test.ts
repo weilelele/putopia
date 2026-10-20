@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { initiationMemberStatus, parseInitiationAvailability } from './initiation-membership'
 describe('explicit Initiation roster and paid entitlements', () => {
+  it('recognizes paid Initial membership without inventing a Console entitlement', () => {
+    expect(initiationMemberStatus(false, { source: 'paid', active: true }, false, true)).toBe('initial_pack')
+    expect(initiationMemberStatus(false, { source: 'paid', active: false }, false, true)).toBe('unpaid')
+  })
   it('recognizes granted NPC membership without inventing payment entitlement', () => expect(initiationMemberStatus(false, { source: 'granted', active: true }, false)).toBe('granted'))
   it('does not infer membership from missing roster or historical Pack', () => {
     expect(initiationMemberStatus(false, null, false)).toBe('unpaid')

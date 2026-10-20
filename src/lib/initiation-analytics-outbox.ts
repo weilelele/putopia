@@ -1,6 +1,7 @@
 import type Stripe from 'stripe'
 import { initiationAnalyticsProperties } from './initiation-analytics'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
+import { initiationOffer } from './initiation-offers'
 
 export type InitiationAnalyticsClaim = {
   order_id: string; event: 'initiation_checkout_started' | 'initiation_purchase_completed'
@@ -42,7 +43,7 @@ export async function retryInitiationAnalytics(deps: InitiationAnalyticsDependen
     }
     try {
       const order = await deps.loadOrder(claim.order_id)
-      const expected = order?.order_kind === 'standard' ? 52000 : order?.order_kind === 'legacy_upgrade' ? 40000 : null
+      const expected = initiationOffer(order?.order_kind)?.amount
       if (!order || !expected || order.amount !== expected || order.currency !== 'usd' || !order.stripe_session_id
         || !Number.isFinite(Date.parse(claim.event_time)) || !/^[0-9a-f-]{36}$/i.test(claim.event_uuid)) throw new Error('Invalid analytics binding')
       if (order.analytics_context?.disabled === true) return await finish({ status: 'skipped', last_error: null })

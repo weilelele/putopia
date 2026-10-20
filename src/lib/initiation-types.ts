@@ -1,5 +1,5 @@
 /** Public, serializable A/B contract. Roles never establish payment. */
-export type InitiationStatus = 'guest' | 'unpaid' | 'legacy_pack' | 'initiated' | 'granted' | 'unknown'
+export type InitiationStatus = 'guest' | 'unpaid' | 'legacy_pack' | 'initial_pack' | 'initiated' | 'granted' | 'unknown'
 export type InitiationPaymentStatus = 'none' | 'pending' | 'paid' | 'payment_failed' | 'canceled' | 'refunded' | 'disputed' | 'payment_review' | 'unknown'
 export interface InitiationShipment {
   position: number
@@ -21,12 +21,15 @@ export interface InitiationSnapshot {
   consoleClaim: { eligible: boolean; claimed: boolean; href: string | null; batch?: { slug: string; name: string } | null }
   offer?: { kind: InitiationOrderKind; amount: number; currency: 'usd' }
   legacyPackPurchased: boolean
+  initialPackPurchased?: boolean
+  bundlesEnabled?: boolean
+  initialCheckoutOpen?: boolean
   paymentStatus: InitiationPaymentStatus
   error: string | null
 }
 export const INITIATION_PRODUCT = 'voyager_initiation'
 export const INITIATION_BATCH = 'S26'
-export type InitiationOrderKind = 'standard' | 'legacy_upgrade'
+export type InitiationOrderKind = 'standard' | 'legacy_upgrade' | 'initial' | 'initial_upgrade'
 export const INITIATION_UPGRADE_AMOUNT = 40000
 export const INITIATION_AMOUNT = 52000
 export const INITIATION_CAPACITY = 100

@@ -1,6 +1,7 @@
 import type Stripe from 'stripe'
 import { isIOSNativeApp } from './app-platform'
-import { INITIATION_AMOUNT, INITIATION_PRODUCT, INITIATION_UPGRADE_AMOUNT, type InitiationOrderKind } from './initiation-types'
+import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
+import { initiationOffer } from './initiation-offers'
 import { sendMetaPurchase, type MetaPurchaseInput } from './meta-capi'
 import type { InitiationMetaAttribution } from './initiation-meta-attribution'
 
@@ -57,8 +58,7 @@ export function buildInitiationMetaPurchase(
   order: InitiationMetaOrder, claim: InitiationMetaClaim, session: Stripe.Checkout.Session,
 ): MetaPurchaseInput {
   if (order.status !== 'paid') throw new PurchaseValidationError('Order is not paid')
-  const expectedAmount = order.order_kind === 'standard' ? INITIATION_AMOUNT
-    : order.order_kind === 'legacy_upgrade' ? INITIATION_UPGRADE_AMOUNT : null
+  const expectedAmount = initiationOffer(order.order_kind)?.amount
   const paidAt = Date.parse(order.paid_at ?? '')
   const eventAt = Date.parse(claim.event_time)
   if (claim.order_id !== order.id || claim.event_id !== `initiation_purchase_${order.id}`

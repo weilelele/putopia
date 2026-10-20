@@ -1,4 +1,5 @@
 import type { InitiationOrderKind, InitiationStatus } from './initiation-types'
+import { initiationOffer } from './initiation-offers'
 
 export const INITIATION_PAGE_VERSION = 'initiation-bottom-payment-v2-20261014'
 export const INITIATION_UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as const
@@ -47,8 +48,8 @@ export function initiationAnalyticsProperties(kind: InitiationOrderKind, context
   delete safe.disabled
   return {
     ...safe, page_version: INITIATION_PAGE_VERSION, batch: 'S26', order_kind: kind,
-    payable_amount: kind === 'legacy_upgrade' ? 400 : 520,
-    amount_minor: kind === 'legacy_upgrade' ? 40000 : 52000, currency: 'USD',
+    payable_amount: (initiationOffer(kind)?.amount ?? 0) / 100,
+    amount_minor: initiationOffer(kind)?.amount ?? 0, currency: 'USD',
   }
 }
 
