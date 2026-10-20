@@ -10,4 +10,3 @@
 .optionHeading { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-3); font-size: var(--fs-body); line-height: 1.4; }
 .detail { display: block; margin-top: var(--s-3); font-size: var(--fs-body); line-height: 1.5; }
 .note { display: block; margin-top: var(--s-2); color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }
-.selectedPrice { margin: var(--s-5) 0 var(--s-3); color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }

@@ -2,7 +2,7 @@
 
 Reference: the approved mock discussed on October 18–20, and the existing benefits-first `/voyager-initiation`. The preceding four Packs, Mission Board, Intel and participation remain in their original order. Purchase differences appear only in the final checkout area. No removed hero note, fourth-delivery footer sentence or mock-payment notice is added to the real page.
 
-The original Initiation layout, Courier Prime, photos/carousel, ArchiveButton and calibration dialog remain. The purchase selector uses only existing deep-blue/orange/off-white tokens: 16px option padding, 12px gap, 16px labels/content, 12px notes and thin borders. Pointer selection adds one orange border; keyboard-visible focus retains a separate outline. Existing checkout authorization/shipping/calibration copy remains because the real payment flow still requires it.
+The original Initiation layout, Courier Prime, photos/carousel, ArchiveButton and calibration dialog remain. The purchase selector uses only existing deep-blue/orange/off-white tokens: 16px option padding, 12px gap, 16px labels/content, 12px notes and thin borders. Pointer selection adds one orange border; keyboard-visible focus retains a separate outline. Shipping and calibration controls remain. The duplicate selected-price line and the long card-authorization paragraph were removed after review; the payment summary retains only “Pay once. No recurring membership fee.” Price exposure tracking observes the selected option price, or the upgrade CTA for an Initial member.
 
 Verified with the real Initiation component and development-only fixtures using dummy loopback service settings:
 
@@ -14,6 +14,6 @@ Verified with the real Initiation component and development-only fixtures using 
 - Feature-off calibrated fixture has no bundle radio controls and retains the original `INITIATE` CTA.
 - Browser viewport override was reset after verification. Screenshot files were reopened and inspected before committing.
 
-Screenshots: `phone-390.png`, `phone-320.png`, `desktop.png`. These contain only local synthetic fixture data. The 390px screenshot shows the purchase selector and beginning of its existing checkout flow; the primary CTA is reachable by normal vertical scrolling. No production payment or claim was exercised.
+Screenshots (before the subsequent copy-only cleanup): `phone-390.png`, `phone-320.png`, `desktop.png`. These contain only local synthetic fixture data. The 390px screenshot shows the purchase selector and beginning of its existing checkout flow; the primary CTA is reachable by normal vertical scrolling. No production payment or claim was exercised.
 
-Differences from the earlier standalone mock: Complete remains the default to preserve the existing $520 entry path. Real calibration, authorization and delivery-region notices remain instead of the mock confirmation dialog. Live Stripe E2E and a real-phone branch-preview review remain release checks; screenshot QA does not establish full accessibility conformance.
+Differences from the earlier standalone mock: Complete remains the default to preserve the existing $520 entry path. Real calibration and delivery controls remain instead of the mock confirmation dialog. Live Stripe E2E and a real-phone branch-preview review remain release checks; screenshot QA does not establish full accessibility conformance.

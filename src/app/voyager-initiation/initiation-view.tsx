@@ -173,23 +173,22 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
                   setSelectedBundle(bundle)
                   captureAnalytics('initiation_bundle_selected', { bundle, order_kind: bundle === 'initial' ? 'initial' : 'standard', payable_amount: bundle === 'initial' ? 48 : 520, amount_minor: bundle === 'initial' ? 4800 : 52000 })
                 }} />
-                <span><span className={bundleStyles.optionHeading}><strong>{bundle === 'initial' ? 'Initial Voyager Pack' : 'Complete Voyager Pack'}</strong><strong>${bundle === 'initial' ? '48' : '520'}</strong></span>
+                <span><span className={bundleStyles.optionHeading}><strong>{bundle === 'initial' ? 'Initial Voyager Pack' : 'Complete Voyager Pack'}</strong><strong ref={selectedBundle === bundle ? priceRef : undefined}>${bundle === 'initial' ? '48' : '520'}</strong></span>
                   <span className={bundleStyles.detail}>{bundle === 'initial' ? 'Welcome letter, member badge and Mysterious Widgets.' : 'Everything in Initial, plus Multiverse Console and the fourth delivery.'}</span>
                   <span className={bundleStyles.note}>{bundle === 'initial' ? 'Add Console + the fourth delivery later for $500.' : 'All four Packs. Save $28 compared with joining and upgrading separately.'}</span>
                 </span>
               </label>)}
             </fieldset>
           </div>}
-          {!legacy && <p ref={priceRef} className={bundlesEnabled ? bundleStyles.selectedPrice : styles.standardPrice}>{bundlesEnabled ? 'One-time payment · ' : ''}${price}</p>}
+          {!legacy && !bundlesEnabled && <p ref={priceRef} className={styles.standardPrice}>${price}</p>}
           <p className={styles.paymentTerms}>Pay once. No recurring membership fee.</p>
-          <p className={styles.paymentTerms}>Your card is authorized first. We charge after delivery-region verification; an unsupported address cancels the authorization. A temporary bank hold may appear.</p>
           {calibrated ? <div className={styles.calibration} role="status" aria-live="polite">
             <span>Signal Calibration</span><span className={styles.calibrationState}><Check size={17} aria-hidden />Complete</span>
           </div> : <button type="button" className={`${styles.calibration} ${styles.calibrationAction}`} aria-haspopup="dialog" onClick={() => openCalibration('status')}>
             <span>Signal Calibration</span><span className={styles.calibrationState}>Not completed <ArrowRight size={17} aria-hidden /></span>
           </button>}
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
-            <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : legacy ? 'CONTINUE INITIATION' : soldOut ? 'FULLY CLAIMED' : bundlesEnabled ? `CONTINUE · $${price}` : 'INITIATE'}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
+            <span ref={bundlesEnabled && initialMember ? priceRef : undefined}>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : legacy ? 'CONTINUE INITIATION' : soldOut ? 'FULLY CLAIMED' : bundlesEnabled ? `CONTINUE · $${price}` : 'INITIATE'}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
