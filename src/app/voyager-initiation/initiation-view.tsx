@@ -175,7 +175,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
                 }} />
                 <span><span className={bundleStyles.optionHeading}><strong>{bundle === 'initial' ? 'Initial Voyager Pack' : 'Complete Voyager Pack'}</strong><strong ref={selectedBundle === bundle ? priceRef : undefined}>${bundle === 'initial' ? '48' : '520'}</strong></span>
                   <span className={bundleStyles.detail}>{bundle === 'initial' ? 'Welcome letter, member badge and Mysterious Widgets.' : 'Everything in Initial, plus Multiverse Console and the fourth delivery.'}</span>
-                  <span className={bundleStyles.note}>{bundle === 'initial' ? 'Add Console + the fourth delivery later for $500.' : 'All four Packs. Save $28 compared with joining and upgrading separately.'}</span>
+                  {bundle === 'initial' && <span className={bundleStyles.note}>Console claimed separately. Add Console + the fourth delivery later for $500.</span>}
                 </span>
               </label>)}
             </fieldset>
