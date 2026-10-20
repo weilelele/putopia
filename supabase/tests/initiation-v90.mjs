@@ -45,6 +45,11 @@ create policy responses_insert_own on vote_responses for insert with check(user_
 grant all on voyager_profiles,intel,votes,vote_responses to anon,authenticated;
 `)
 for (const version of [83,85,90,87,88,89,91,94]) await db.exec(await fs.readFile(new URL(`../${({83:'schema_v83_initiation.sql',85:'schema_v85_initiation_roster.sql',87:'schema_v87_npc_initiation.sql'})[version] ?? `schema_v${version}.sql`}`,import.meta.url),'utf8'))
+// Run the full historical $520/$400 contract against the bundle migration too.
+if (process.argv[3] === '--bundles') {
+ await db.exec('create table public.voyager_feed_entries(parent_id uuid)')
+ await db.exec(await fs.readFile(new URL('../schema_v103.sql',import.meta.url),'utf8'))
+}
 assert.equal((await db.query('select count(*)::int as n from initiation_shipments')).rows[0].n,0)
 const uid = n => `10000000-0000-0000-0000-${String(n).padStart(12,'0')}`
 const query = async (sql, params=[]) => (await db.query(sql,params)).rows

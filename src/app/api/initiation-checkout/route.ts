@@ -6,7 +6,8 @@ import type Stripe from 'stripe'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
 import { initiationConfigurationError } from '@/lib/initiation-config'
-import { INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT, INITIATION_PRODUCT } from '@/lib/initiation-types'
+import { INITIATION_PRODUCT } from '@/lib/initiation-types'
+import { initiationOffer, resolveInitiationOffer } from '@/lib/initiation-offers'
 import { captureInitiationMetaAttribution } from '@/lib/initiation-meta-attribution'
 import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
 import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
@@ -28,12 +29,21 @@ export async function POST(request: Request) {
     const admin = createAdminClient() as any
     const { data: legacyId, error: legacyError } = await admin.rpc('eligible_legacy_initiation_order', { p_user: user.id })
     if (legacyError) throw legacyError
-    const kind = legacyId ? 'legacy_upgrade' : 'standard'
+    const body = await request.json().catch(() => null)
+    const bundlesEnabled = process.env.INITIATION_BUNDLES_ENABLED === 'true'
+    let initialId: string | null = null
+    if (bundlesEnabled) {
+      const initial = await admin.rpc('eligible_initial_initiation_order', { p_user: user.id })
+      if (initial.error) throw initial.error
+      initialId = initial.data
+    }
+    const kind = resolveInitiationOffer(body?.bundle, { legacy: !!legacyId, initial: !!initialId, bundlesEnabled })
+    if (!kind) return NextResponse.json({ error: 'This bundle is not available for your account. Refresh Initiation.' }, { status: 409 })
     const offerConfigError = initiationConfigurationError(kind)
     if (offerConfigError) return NextResponse.json({ error: offerConfigError }, { status: 503 })
-    const priceId = kind === 'legacy_upgrade' ? process.env.STRIPE_INITIATION_UPGRADE_PRICE_ID! : process.env.STRIPE_INITIATION_PRICE_ID!
-    const amount = kind === 'legacy_upgrade' ? INITIATION_UPGRADE_AMOUNT : INITIATION_AMOUNT
-    const body = await request.json().catch(() => null)
+    const offer = initiationOffer(kind)!
+    const priceId = process.env[offer.priceEnv]!
+    const amount = offer.amount
     const deviceSource = deviceSourcePath(typeof body?.from === 'string' ? body.from : null)
     const productId = process.env.STRIPE_INITIATION_PRODUCT_ID!
     const { data: batch, error: batchError } = await admin.from('initiation_batches').select('stripe_livemode').eq('label', 'S26').single()
@@ -88,7 +98,7 @@ export async function POST(request: Request) {
       custom_text: { shipping_address: { message: 'Delivery to the contiguous United States (48 states and Washington, DC) only. Shipping and applicable taxes are included.' }, submit: { message: 'Your card is authorized first. We charge only after delivery-region verification; unsupported addresses have the authorization canceled. A temporary bank hold may appear.' }, terms_of_service_acceptance: { message: `I accept the [Initiation terms](${process.env.INITIATION_TERMS_URL}).` } },
       expires_at: expiresAt,
       success_url: `${origin}/join/success?product=initiation&session_id={CHECKOUT_SESSION_ID}${sourceQuery}`,
-      cancel_url: `${origin}/voyager-initiation?checkout=canceled${sourceQuery}`,
+      cancel_url: `${origin}/voyager-initiation?checkout=canceled${sourceQuery}${kind === 'initial' ? '&bundle=initial' : ''}`,
     }, { idempotencyKey: `initiation:${order.id}` })
     if (!validInitiationAnalyticsSession({ ...order, stripe_session_id: session.id }, session) || session.status !== 'open'
       || !session.url || new URL(session.url).protocol !== 'https:') throw new Error('Checkout binding mismatch')

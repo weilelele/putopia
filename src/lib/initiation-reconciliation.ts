@@ -67,6 +67,11 @@ export async function reconcileInitiationSession(sessionId: string, stripe: Stri
       if (legacy.error) throw legacy.error
       if (!legacy.data || legacy.data !== order.legacy_order_id) decision = 'cancel_authorization'
     }
+    if (decision === 'capture' && order.order_kind === 'initial_upgrade') {
+      const initial = await admin.rpc('eligible_initial_initiation_order', { p_user: order.user_id })
+      if (initial.error) throw initial.error
+      if (!initial.data || initial.data !== order.initial_order_id) decision = 'cancel_authorization'
+    }
     if (decision === 'cancel_authorization') {
       intent = await stripe.paymentIntents.cancel(intent.id, {}, { idempotencyKey: `initiation:cancel:${order.id}` })
       if (intent.status !== 'canceled' || intent.amount_received !== 0) throw new Error('Authorization cancellation requires reconciliation')

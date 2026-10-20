@@ -78,5 +78,10 @@
     "event": "calibration_closed",
     "description": "Explicit close, includes started/completed flags",
     "file": "src/app/voyager-initiation/initiation-view.tsx"
+  },
+  {
+    "event": "initiation_bundle_selected",
+    "description": "Explicit Initial or Complete selection; server still resolves eligibility. Includes order_kind, payable_amount and amount_minor. Existing initiation funnel event names and Purchase identities remain unchanged.",
+    "file": "src/app/voyager-initiation/initiation-view.tsx"
   }
 ]

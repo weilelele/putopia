@@ -43,6 +43,13 @@ function dependencies(patch: Partial<InitiationMetaOrder> = {}) {
 }
 
 describe('Initiation paid Purchase payload', () => {
+  it.each([['initial', 4800], ['initial_upgrade', 50000]] as const)('reports the captured %s amount with the existing deduplication identity', (kind, amount) => {
+    const payload = buildInitiationMetaPurchase({ ...order, order_kind: kind, amount }, claim,
+      { ...session, amount_total: amount, metadata: { ...session.metadata, order_kind: kind } })
+    expect(payload.value).toBe(amount / 100)
+    expect(payload.eventId).toBe(claim.event_id)
+    expect(payload.contentId).toBe('voyager_initiation')
+  })
   it('uses real checkout details and the fixed outbox identity/time for $520', () => {
     expect(buildInitiationMetaPurchase(order, claim, session)).toMatchObject({
       eventId: claim.event_id, eventTime: Math.floor(Date.parse(paidAt) / 1000), value: 520, currency: 'USD',

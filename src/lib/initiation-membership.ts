@@ -1,9 +1,10 @@
 import type { InitiationStatus } from './initiation-types'
 
 /** Roster membership is separate from the paid fulfillment entitlement. */
-export function initiationMemberStatus(paidEntitlementActive: boolean, member: { source: 'paid' | 'granted'; active: boolean } | null, legacyPackPurchased: boolean): InitiationStatus {
+export function initiationMemberStatus(paidEntitlementActive: boolean, member: { source: 'paid' | 'granted'; active: boolean } | null, legacyPackPurchased: boolean, initialPackPurchased = false): InitiationStatus {
   if (paidEntitlementActive) return 'initiated'
   if (member?.active && member.source === 'granted') return 'granted'
+  if (member?.active && member.source === 'paid' && initialPackPurchased) return 'initial_pack'
   if (member?.active && member.source === 'paid') return 'unknown' // inconsistent payment/entitlement read
   return legacyPackPurchased ? 'legacy_pack' : 'unpaid'
 }

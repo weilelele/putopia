@@ -4,8 +4,9 @@ import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { initiationMemberStatus, parseInitiationAvailability } from '@/lib/initiation-membership'
 import { initiationClaimResult } from '@/lib/initiation-claim'
 import { initiationConfigurationError } from '@/lib/initiation-config'
-import { INITIATION_BATCH, INITIATION_CAPACITY, INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT, type InitiationSnapshot, type InitiationPaymentStatus, type InitiationShipment, type InitiationConsoleClaimResult } from '@/lib/initiation-types'
+import { INITIATION_BATCH, INITIATION_CAPACITY, type InitiationSnapshot, type InitiationPaymentStatus, type InitiationShipment, type InitiationConsoleClaimResult } from '@/lib/initiation-types'
 import { VOYAGER_PROFILE_VERSION } from '@/lib/voyager-intake'
+import { initiationOffer } from '@/lib/initiation-offers'
 
 /** No caller-supplied user ID. Failures are unknown, never unpaid or zero seats. */
 export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
@@ -14,6 +15,7 @@ export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
     availability: { batch: INITIATION_BATCH, capacity: INITIATION_CAPACITY, initiated: null, checkoutOpen: false, reason: initiationConfigurationError() },
     shipments: [], consoleClaim: { eligible: false, claimed: false, href: null },
     legacyPackPurchased: false, paymentStatus: 'unknown', error: null,
+    bundlesEnabled: process.env.INITIATION_BUNDLES_ENABLED === 'true', initialPackPurchased: false,
   }
   try {
     const client = await createClient()
@@ -37,30 +39,32 @@ export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
       if (!supply.open) snapshot.availability.reason = 'Initiation checkout is not open yet.'
       else if (supply.remaining <= 0) snapshot.availability.reason = 'All S26 seats are currently allocated or reserved.'
     }
+    snapshot.initialCheckoutOpen = !!snapshot.bundlesEnabled && !!supply?.open && (supply?.remaining ?? 0) > 0 && !initiationConfigurationError('initial')
     if (!user) return snapshot
     const results = await Promise.all([
       admin.from('voyager_profiles').select('role').eq('id', user.id).single(),
       admin.from('voyager_intake').select('version').eq('user_id', user.id).maybeSingle(),
       admin.rpc('eligible_legacy_initiation_order', { p_user: user.id }),
-      admin.from('initiation_orders').select('id,status').eq('user_id', user.id).order('created_at', { ascending: false }),
+      admin.from('initiation_orders').select('id,status,order_kind,amount').eq('user_id', user.id).order('created_at', { ascending: false }),
       admin.from('initiation_entitlements').select('order_id,active,console_claimed_at,console_order_id').eq('user_id', user.id).maybeSingle(),
       admin.from('initiation_shipments').select('id,position,title,scheduled_month,status,tracking_url,legacy_order_id').eq('user_id', user.id).order('scheduled_month'),
-      admin.from('initiation_members').select('source,active').eq('user_id', user.id).maybeSingle(),
+      admin.from('initiation_members').select('source,active,order_id').eq('user_id', user.id).maybeSingle(),
     ])
     if (results.slice(0, 3).some(result => result.error)) throw new Error('Profile or historical orders could not be loaded.')
     const [profile, intake, legacy, orders, entitlement, shipments, member] = results.map(result => result.data)
     snapshot.role = profile.role
     snapshot.calibrated = intake?.version === VOYAGER_PROFILE_VERSION
     snapshot.legacyPackPurchased = !!legacy
-    const kind = legacy ? 'legacy_upgrade' : 'standard'
-    snapshot.offer = { kind, amount: legacy ? INITIATION_UPGRADE_AMOUNT : INITIATION_AMOUNT, currency: 'usd' }
+    snapshot.initialPackPurchased = !!orders?.some((o: { id: string; status: string; order_kind: string; amount: number }) => o.order_kind === 'initial' && o.amount === 4800 && o.status === 'paid' && member?.active && member.order_id === o.id)
+    const kind = legacy ? 'legacy_upgrade' : snapshot.initialPackPurchased ? 'initial_upgrade' : 'standard'
+    snapshot.offer = { kind, amount: initiationOffer(kind)!.amount, currency: 'usd' }
     const offerConfig = initiationConfigurationError(kind)
     if (supply) {
-      snapshot.availability.checkoutOpen = supply.open && supply.remaining > 0 && !offerConfig
-      snapshot.availability.reason = !supply.open ? 'Initiation checkout is not open yet.' : supply.remaining <= 0 ? 'All S26 seats are currently allocated or reserved.' : offerConfig
+      snapshot.availability.checkoutOpen = supply.open && (supply.remaining > 0 || !!snapshot.initialPackPurchased) && !offerConfig
+      snapshot.availability.reason = !supply.open ? 'Initiation checkout is not open yet.' : supply.remaining <= 0 && !snapshot.initialPackPurchased ? 'All S26 seats are currently allocated or reserved.' : offerConfig
     }
     const newRecordsUnavailable = results.slice(3).some(result => result.error)
-    snapshot.status = newRecordsUnavailable ? 'unknown' : initiationMemberStatus(!!entitlement?.active, member, snapshot.legacyPackPurchased)
+    snapshot.status = newRecordsUnavailable ? 'unknown' : initiationMemberStatus(!!entitlement?.active, member, snapshot.legacyPackPurchased, snapshot.initialPackPurchased)
     snapshot.membershipSource = newRecordsUnavailable ? null : member?.source ?? null
     snapshot.paymentStatus = (newRecordsUnavailable ? 'unknown' : orders[0]?.status ?? 'none') as InitiationPaymentStatus
     snapshot.shipments = [
@@ -85,6 +89,10 @@ export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
       snapshot.availability.reason = 'Your granted S26 membership is already registered. It is not a payment or a Console claim entitlement.'
     }
     if (entitlement?.active) snapshot.availability.checkoutOpen = false
+    if (entitlement && !entitlement.active && snapshot.initialPackPurchased) {
+      snapshot.availability.checkoutOpen = false
+      snapshot.availability.reason = 'Your previous Console order requires review before another upgrade. Your Initial Pack membership is retained.'
+    }
     return snapshot
   } catch {
     snapshot.status = 'unknown'

@@ -10,8 +10,10 @@ export function initiationReturnPath(deviceSource: string | null): string {
   return source ? `/voyager-initiation?from=${encodeURIComponent(source)}` : '/voyager-initiation'
 }
 
-export function initiationLoginPath(deviceSource: string | null): string {
-  return `/login?redirect=${encodeURIComponent(initiationReturnPath(deviceSource))}`
+export function initiationLoginPath(deviceSource: string | null, bundle?: 'initial' | 'complete'): string {
+  const path = initiationReturnPath(deviceSource)
+  const target = bundle ? `${path}${path.includes('?') ? '&' : '?'}bundle=${bundle}` : path
+  return `/login?redirect=${encodeURIComponent(target)}`
 }
 
 export function consoleDevicePath(source: string | null, entitlementHref: string | null): string {
