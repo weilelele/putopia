@@ -1,3 +1,4 @@
+import { INITIATION_PRICES, INITIATION_PRICING_VERSION } from '@/lib/initiation-pricing'
 import { initiationShippingCountries } from '@/lib/initiation-checkout-policy'
 import { deviceSourcePath } from '@/app/voyager-initiation/navigation'
 import { NextResponse } from 'next/server'
@@ -6,7 +7,7 @@ import type Stripe from 'stripe'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
 import { initiationConfigurationError } from '@/lib/initiation-config'
-import { INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT, INITIATION_PRODUCT } from '@/lib/initiation-types'
+import { INITIATION_PRODUCT } from '@/lib/initiation-types'
 import { captureInitiationMetaAttribution } from '@/lib/initiation-meta-attribution'
 import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
 import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
@@ -28,12 +29,16 @@ export async function POST(request: Request) {
     const admin = createAdminClient() as any
     const { data: legacyId, error: legacyError } = await admin.rpc('eligible_legacy_initiation_order', { p_user: user.id })
     if (legacyError) throw legacyError
-    const kind = legacyId ? 'legacy_upgrade' : 'standard'
+    const body = await request.json().catch(() => null)
+    if (body?.bundle !== undefined && !['initial', 'standard'].includes(body.bundle)) return NextResponse.json({ error: 'Choose a valid bundle.' }, { status: 400 })
+    const { data: initialId, error: initialError } = await admin.rpc('eligible_initial_initiation_order', { p_user: user.id })
+    if (initialError) throw initialError
+    if ((legacyId || initialId) && body?.bundle === 'initial') return NextResponse.json({ error: 'Your Initial Pack is already owned. Choose the upgrade.' }, { status: 409 })
+    const kind = legacyId || initialId ? 'legacy_upgrade' : body?.bundle === 'initial' ? 'initial' : 'standard'
     const offerConfigError = initiationConfigurationError(kind)
     if (offerConfigError) return NextResponse.json({ error: offerConfigError }, { status: 503 })
-    const priceId = kind === 'legacy_upgrade' ? process.env.STRIPE_INITIATION_UPGRADE_PRICE_ID! : process.env.STRIPE_INITIATION_PRICE_ID!
-    const amount = kind === 'legacy_upgrade' ? INITIATION_UPGRADE_AMOUNT : INITIATION_AMOUNT
-    const body = await request.json().catch(() => null)
+    const priceId = process.env[INITIATION_PRICES[kind].priceEnv]!
+    const amount = INITIATION_PRICES[kind].amount
     const deviceSource = deviceSourcePath(typeof body?.from === 'string' ? body.from : null)
     const productId = process.env.STRIPE_INITIATION_PRODUCT_ID!
     const { data: batch, error: batchError } = await admin.from('initiation_batches').select('stripe_livemode').eq('label', 'S26').single()
@@ -42,8 +47,9 @@ export async function POST(request: Request) {
     if (price.livemode !== batch.stripe_livemode || !price.active || price.type !== 'one_time' || price.unit_amount !== amount || price.currency !== 'usd' || price.product !== productId || price.tax_behavior !== 'inclusive') {
       return NextResponse.json({ error: 'The dedicated Initiation price is not ready.' }, { status: 503 })
     }
-    const { data: order, error } = await admin.rpc('reserve_initiation', { p_user: user.id, p_price: priceId, p_product: productId, p_kind: kind, p_device_source: deviceSource })
+    const { data: order, error } = await admin.rpc('reserve_initiation_v2', { p_user: user.id, p_price: priceId, p_product: productId, p_kind: kind, p_device_source: deviceSource })
     if (error || !order) return NextResponse.json({ error: 'Checkout is unavailable. Check calibration, existing orders, and seat availability on Initiation.' }, { status: 409 })
+    if (order.amount !== amount || order.pricing_version !== INITIATION_PRICING_VERSION) throw new Error('Reserved quote does not match the current bundle')
     if (order.stripe_session_id) {
       const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id)
       if (!validInitiationAnalyticsSession(order, session)) throw new Error('Checkout binding mismatch')
@@ -81,7 +87,7 @@ export async function POST(request: Request) {
       automatic_tax: { enabled: false }, allow_promotion_codes: false,
       line_items: [{ price: order.price_id, quantity: 1 }],
       client_reference_id: user.id, customer_email: user.email,
-      metadata: { product_type: INITIATION_PRODUCT, order_kind: order.order_kind, order_id: order.id, user_id: user.id, batch: 'S26', capture_policy: 'contiguous_us_manual_v1' },
+      metadata: { product_type: INITIATION_PRODUCT, order_kind: order.order_kind, order_id: order.id, user_id: user.id, batch: 'S26', pricing_version: order.pricing_version, capture_policy: 'contiguous_us_manual_v1' },
       payment_intent_data: { capture_method: 'manual', metadata: { product_type: INITIATION_PRODUCT, order_kind: order.order_kind, order_id: order.id } },
       shipping_address_collection: { allowed_countries: initiationShippingCountries(process.env.INITIATION_SHIPPING_COUNTRIES)! as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[] },
       consent_collection: { terms_of_service: 'required' },

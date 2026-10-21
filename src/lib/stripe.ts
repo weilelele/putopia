@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 
-// The $12 pack, in cents. Shipping is included (US-only).
-export const PACK_PRICE_CENTS = 1200
+// Current Initial bundle; historical receipts use their saved amount.
+export { INITIAL_PACK_AMOUNT as PACK_PRICE_CENTS } from './initiation-pricing'
 
 let _stripe: Stripe | null = null
 

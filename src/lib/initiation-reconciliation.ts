@@ -63,9 +63,9 @@ export async function reconcileInitiationSession(sessionId: string, stripe: Stri
     }, intentId!, shipping)
     let decision = decide()
     if (decision === 'capture' && order.order_kind === 'legacy_upgrade') {
-      const legacy = await admin.rpc('eligible_legacy_initiation_order', { p_user: order.user_id })
+      const legacy = await admin.rpc(order.initial_order_id ? 'eligible_initial_initiation_order' : 'eligible_legacy_initiation_order', { p_user: order.user_id })
       if (legacy.error) throw legacy.error
-      if (!legacy.data || legacy.data !== order.legacy_order_id) decision = 'cancel_authorization'
+      if (!legacy.data || legacy.data !== (order.initial_order_id ?? order.legacy_order_id)) decision = 'cancel_authorization'
     }
     if (decision === 'cancel_authorization') {
       intent = await stripe.paymentIntents.cancel(intent.id, {}, { idempotencyKey: `initiation:cancel:${order.id}` })

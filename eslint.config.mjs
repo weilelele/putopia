@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
+    "output/**",
+    "sites/**/out/**",
+    "sites/**/.next/**",
+    "sites/**/dist/**",
     "build/**",
     "next-env.d.ts",
     // Build output — flat config doesn't read .gitignore, so generated/compiled

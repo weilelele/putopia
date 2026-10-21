@@ -1,3 +1,4 @@
+import { INITIATION_PRICES, INITIATION_PRICING_VERSION } from '../../src/lib/initiation-pricing.ts'
 // Read-only metadata audit. Never prints keys, URLs, identities, or Stripe IDs.
 import fs from 'node:fs/promises'
 import { parseEnv } from 'node:util'
@@ -7,6 +8,7 @@ const result = {
   stripeMode: /^(?:sk|rk)_test_/.test(env.STRIPE_SECRET_KEY ?? '') ? 'test' : /^(?:sk|rk)_live_/.test(env.STRIPE_SECRET_KEY ?? '') ? 'live' : 'missing/unknown',
   supabaseIsolation: env.NEXT_PUBLIC_SUPABASE_URL?.includes('oxwfnmcwovxnrvagxzdz') ? 'shared-production' : 'unverified',
   mongoIsolation: 'unverified', webhookSecret: env.STRIPE_WEBHOOK_SECRET ? 'present; mode/endpoint binding unverified' : 'missing',
+  currentPricingVersion: env.INITIATION_PRICING_VERSION === INITIATION_PRICING_VERSION,
   localCheckoutEnabled: env.INITIATION_CHECKOUT_ENABLED === 'true',
   localPolicyApproved: env.INITIATION_TERMS_APPROVED === 'true' && env.INITIATION_FULFILLMENT_POLICY_APPROVED === 'true',
 }
@@ -14,7 +16,7 @@ if (process.argv.includes('--remote-read-only')) {
   // Stripe requests restricted to test-mode metadata GETs.
   if (result.stripeMode === 'test') {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY, { timeout: 10000, maxNetworkRetries: 0 })
-    for (const [kind, key, amount] of [['standard', 'STRIPE_INITIATION_PRICE_ID', 52000], ['upgrade', 'STRIPE_INITIATION_UPGRADE_PRICE_ID', 40000]]) {
+    for (const [kind, key, amount] of Object.entries(INITIATION_PRICES).map(([kind, offer]) => [kind, offer.priceEnv, offer.amount])) {
       try {
         const price = await stripe.prices.retrieve(env[key])
         result[`${kind}PriceVerified`] = !price.livemode && price.active && price.unit_amount === amount && price.currency === 'usd' && price.type === 'one_time' && price.tax_behavior === 'inclusive' && price.product === env.STRIPE_INITIATION_PRODUCT_ID

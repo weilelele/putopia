@@ -15,6 +15,7 @@ export default async function JoinSuccessPage({ searchParams }: { searchParams: 
       ? 'Log in to view your payment and fulfillment records.'
       : paid ? 'Your Initiation payment is confirmed. Your four Pack records and Console entitlement are available in Initiation.'
       : snapshot.paymentStatus === 'refunded' || snapshot.paymentStatus === 'disputed' ? 'Your payment has been refunded or is under review. Please view your records for the current entitlement status.'
+      : snapshot.legacyPackPurchased && snapshot.paymentStatus === 'paid' ? 'Your Initial Voyager Pack payment is confirmed. Your first two Pack records are available in Initiation. Console + Pack 4 can be added later for $460.'
       : snapshot.legacyPackPurchased ? 'Your Initial Pack membership includes the first two Packs. Your upgrade payment has not been confirmed; check Initiation for its status.'
       : 'Your payment has not yet been confirmed. Returning from checkout does not activate membership. Check Initiation for the latest status.')}</p>
     <ArchiveLinkButton href={snapshot.userId ? returnPath : `/login?redirect=${encodeURIComponent(returnPath)}`} fullWidth variant="primary">{snapshot.userId ? 'VIEW INITIATION' : 'LOG IN'}</ArchiveLinkButton>

@@ -21,3 +21,9 @@ describe('Initiation Device return intent', () => {
     expect(new URL(login.searchParams.get('redirect')!, login.origin).searchParams.get('from')).toBe(source)
   })
 })
+
+// The chosen price survives login instead of silently falling back to Initial.
+it('preserves a Complete selection and safe device context through login', () => {
+  expect(decodeURIComponent(initiationLoginPath('/devices/batches/kyoto-one', 'standard'))).toContain('bundle=standard')
+  expect(initiationReturnPath(null, 'initial')).toBe('/voyager-initiation?bundle=initial')
+})

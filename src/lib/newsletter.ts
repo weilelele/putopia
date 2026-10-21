@@ -463,11 +463,11 @@ export const CTA_DIRECT = `
         </td>
         <td class="stack pack-pad" style="vertical-align:middle;padding:24px 24px 24px 22px;">
           <div style="font-size:12px;letter-spacing:0.24em;color:#FF8C5A;margin-bottom:13px;font-family:'Space Mono',monospace;">◈ INITIAL VOYAGER PACK ◈</div>
-          <div style="font-size:17px;font-weight:700;letter-spacing:0.05em;color:#FFFFFF;margin-bottom:16px;line-height:1.32;font-family:'Space Mono',monospace;">YOUR VOYAGER STATUS IS READY.</div>
+          <div style="font-size:17px;font-weight:700;letter-spacing:0.05em;color:#FFFFFF;margin-bottom:16px;line-height:1.32;font-family:'Space Mono',monospace;">INITIAL $38 · COMPLETE $488</div>
           <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Physical Badge</div>
           <div style="margin-bottom:7px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Access Card</div>
-          <div style="margin-bottom:20px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Full Network Access</div>
-          <a href="https://www.multiverseco.org/voyager-pack${UTM}&amp;utm_content=direct"
+          <div style="margin-bottom:20px;font-size:13px;color:#CBCEDF;letter-spacing:0.03em;font-family:'Space Mono',monospace;">— Voyager Member Access</div>
+          <a href="https://www.multiverseco.org/voyager-initiation${UTM}&amp;utm_content=direct"
              style="display:block;text-align:center;background:#FF6B35;color:#0A0E27;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;">
             [ ACTIVATE NOW &rarr; ]
           </a>
@@ -490,14 +490,14 @@ export const CTA_TASK_GATED = `
           <div style="font-size:12px;letter-spacing:0.24em;color:#E8A020;margin-bottom:13px;font-family:'Space Mono',monospace;">◈ YOUR PATH TO VOYAGER ◈</div>
           <div style="font-size:17px;font-weight:700;letter-spacing:0.05em;color:#FFFFFF;margin-bottom:16px;line-height:1.32;font-family:'Space Mono',monospace;">ACTIVATE YOUR VOYAGER STATUS.</div>
           <div style="font-size:13px;color:#CBCEDF;line-height:1.75;margin-bottom:20px;font-family:'Space Mono',monospace;">
-            Complete the Collective&#39;s field assessment tasks to unlock the Initial Voyager Pack.
+            Choose Initial Voyager Pack for $38 or Complete Voyager Pack for $488. Initial members, including historical $12 buyers, can add Console + Pack 4 for $460.
           </div>
-          <a href="https://www.multiverseco.org/voyager-pack${UTM}&amp;utm_content=task_gated"
+          <a href="https://www.multiverseco.org/voyager-initiation${UTM}&amp;utm_content=task_gated"
              style="display:block;text-align:center;background:#1C1708;color:#E8A020;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.16em;text-decoration:none;padding:14px;border:1px solid #B98620;">
             [ VIEW VOYAGER PACK &rarr; ]
           </a>
           <div style="text-align:center;font-size:13px;letter-spacing:0.04em;color:#9094AC;margin-top:13px;font-family:'Space Mono',monospace;">
-            Pack unlocks upon completing your field assessment.
+            One-time purchase. No recurring membership fee.
           </div>
         </td>
       </tr>
