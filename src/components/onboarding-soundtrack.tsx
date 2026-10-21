@@ -1,11 +1,9 @@
 'use client'
 
-import { createContext, useContext, useRef, type ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 import { ArchiveButton } from '@/components/archive-button'
 import { useBriefingSound } from '@/hooks/use-briefing-sound'
-
-const SoundtrackContext = createContext<ReturnType<typeof useBriefingSound> | null>(null)
 
 /** Keep one shared music player alive while the registration steps change. */
 export function OnboardingSoundtrack({ children }: { children: ReactNode }) {
@@ -13,19 +11,8 @@ export function OnboardingSoundtrack({ children }: { children: ReactNode }) {
   const sound = useBriefingSound(root)
 
   return (
-    <SoundtrackContext.Provider value={sound}>
-      <div ref={root}>{children}</div>
-    </SoundtrackContext.Provider>
-  )
-}
-
-/** A quiet control in the content flow, below the video rather than over it. */
-export function OnboardingSoundControl() {
-  const sound = useContext(SoundtrackContext)
-  if (!sound) return null
-
-  return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+    <div ref={root}>
+      {children}
       <ArchiveButton
         variant="ghost"
         data-sound-toggle
@@ -34,6 +21,10 @@ export function OnboardingSoundControl() {
         title={sound.on ? 'Turn music off' : 'Turn music on'}
         onClick={sound.toggle}
         style={{
+          position: 'fixed',
+          top: 'max(12px, env(safe-area-inset-top))',
+          right: 16,
+          zIndex: 10000,
           width: 44,
           height: 44,
           padding: 0,
