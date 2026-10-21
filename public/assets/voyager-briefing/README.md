@@ -4,8 +4,7 @@ Media for the first-visit Voyager Initiation briefing (`src/app/voyager-initiati
 
 | File | Source |
 | --- | --- |
-| console-real-1.mp4 / .jpg | `public/assets/device-reel.mp4` 9.5–16.5s — real footage of the physical Console |
-| console-real-2.mp4 | `public/assets/device-reel.mp4` 19–26s — real footage |
+| console-real.mp4 / .jpg | `public/assets/device-reel.mp4` 9.5–26s — real footage of the physical Console, from empty dial to a tuned-in world |
 | console-tuning.mp4 | `public/assets/device-reel-v2-20261016.mp4` 4.9–7.4s + 9.95–12.5s |
 | console-fairy.mp4 | `output/console-imagery/2026-10-16-fairy-full-regenerated/fairy-full-regenerated-v1-final20s.mp4` 4–10s |
 | console-starry.mp4 | `output/console-imagery/2026-10-16-world-tuning-v2/world-C-starry-v3-tuning-fix-final.mp4` 5–11s |
