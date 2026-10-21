@@ -14,7 +14,7 @@ import { ArchiveField } from '@/components/archive-field'
 import { ArchiveButton } from '@/components/archive-button'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 import { DEVICE_REEL } from '@/lib/device-reel'
-import { OnboardingSoundtrack } from '@/components/onboarding-soundtrack'
+import { OnboardingSoundControl, OnboardingSoundtrack } from '@/components/onboarding-soundtrack'
 
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v3'
@@ -363,6 +363,7 @@ function AnimatedCard({ exiting, children }: { exiting: boolean; children: React
 ───────────────────────────────────────────────────── */
 function VideoSection({ src }: { src: string }) {
   return (
+    <div style={{ width: '100%' }}>
     <div style={{ width: '100%', position: 'relative', overflow: 'hidden' }}>
 
       {/* ── Video ── */}
@@ -443,6 +444,8 @@ function VideoSection({ src }: { src: string }) {
         animation: 'videoFlicker 8s infinite',
       }} />
 
+    </div>
+      <OnboardingSoundControl />
     </div>
   )
 }
