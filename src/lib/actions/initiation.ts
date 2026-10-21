@@ -4,7 +4,7 @@ import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { initiationMemberStatus, parseInitiationAvailability } from '@/lib/initiation-membership'
 import { initiationClaimResult } from '@/lib/initiation-claim'
 import { initiationConfigurationError } from '@/lib/initiation-config'
-import { INITIATION_BATCH, INITIATION_CAPACITY, INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT, type InitiationSnapshot, type InitiationPaymentStatus, type InitiationShipment, type InitiationConsoleClaimResult } from '@/lib/initiation-types'
+import { INITIATION_BATCH, INITIATION_CAPACITY, INITIAL_PACK_AMOUNT, INITIATION_UPGRADE_AMOUNT, type InitiationSnapshot, type InitiationPaymentStatus, type InitiationShipment, type InitiationConsoleClaimResult } from '@/lib/initiation-types'
 import { VOYAGER_PROFILE_VERSION } from '@/lib/voyager-intake'
 
 /** No caller-supplied user ID. Failures are unknown, never unpaid or zero seats. */
@@ -46,18 +46,20 @@ export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
       admin.from('initiation_entitlements').select('order_id,active,console_claimed_at,console_order_id').eq('user_id', user.id).maybeSingle(),
       admin.from('initiation_shipments').select('id,position,title,scheduled_month,status,tracking_url,legacy_order_id').eq('user_id', user.id).order('scheduled_month'),
       admin.from('initiation_members').select('source,active').eq('user_id', user.id).maybeSingle(),
+      admin.rpc('eligible_initial_initiation_order', { p_user: user.id }),
     ])
     if (results.slice(0, 3).some(result => result.error)) throw new Error('Profile or historical orders could not be loaded.')
-    const [profile, intake, legacy, orders, entitlement, shipments, member] = results.map(result => result.data)
+    const [profile, intake, legacy, orders, entitlement, shipments, member, initial] = results.map(result => result.data)
     snapshot.role = profile.role
     snapshot.calibrated = intake?.version === VOYAGER_PROFILE_VERSION
-    snapshot.legacyPackPurchased = !!legacy
-    const kind = legacy ? 'legacy_upgrade' : 'standard'
-    snapshot.offer = { kind, amount: legacy ? INITIATION_UPGRADE_AMOUNT : INITIATION_AMOUNT, currency: 'usd' }
+    snapshot.legacyPackPurchased = !!legacy || !!initial
+    snapshot.ownsSeat = !!member
+    const kind = snapshot.legacyPackPurchased ? 'legacy_upgrade' : 'initial'
+    snapshot.offer = { kind, amount: snapshot.legacyPackPurchased ? INITIATION_UPGRADE_AMOUNT : INITIAL_PACK_AMOUNT, currency: 'usd' }
     const offerConfig = initiationConfigurationError(kind)
     if (supply) {
-      snapshot.availability.checkoutOpen = supply.open && supply.remaining > 0 && !offerConfig
-      snapshot.availability.reason = !supply.open ? 'Initiation checkout is not open yet.' : supply.remaining <= 0 ? 'All S26 seats are currently allocated or reserved.' : offerConfig
+      snapshot.availability.checkoutOpen = supply.open && (supply.remaining > 0 || !!initial) && !offerConfig
+      snapshot.availability.reason = !supply.open ? 'Initiation checkout is not open yet.' : supply.remaining <= 0 && !initial ? 'All S26 seats are currently allocated or reserved.' : offerConfig
     }
     const newRecordsUnavailable = results.slice(3).some(result => result.error)
     snapshot.status = newRecordsUnavailable ? 'unknown' : initiationMemberStatus(!!entitlement?.active, member, snapshot.legacyPackPurchased)
@@ -84,7 +86,10 @@ export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
       snapshot.availability.checkoutOpen = false
       snapshot.availability.reason = 'Your granted S26 membership is already registered. It is not a payment or a Console claim entitlement.'
     }
-    if (entitlement?.active) snapshot.availability.checkoutOpen = false
+    if (entitlement) {
+      snapshot.availability.checkoutOpen = false
+      if (!entitlement.active) snapshot.availability.reason = 'Your earlier Console payment needs review. Please contact support before another upgrade.'
+    }
     return snapshot
   } catch {
     snapshot.status = 'unknown'

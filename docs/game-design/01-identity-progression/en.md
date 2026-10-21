@@ -1,3 +1,5 @@
+> October 21, 2026: Current offers are Initial $38, Complete $488, and upgrade $460 for all Initial buyers. The former $12/A-B task purchase paths below are historical; see the commerce specification.
+
 # 01 · Identity & Progression
 
 ## 1. Positioning

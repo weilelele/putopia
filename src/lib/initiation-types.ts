@@ -1,3 +1,5 @@
+import type { InitiationOrderKind } from './initiation-pricing'
+export { INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT, INITIAL_PACK_AMOUNT, type InitiationOrderKind } from './initiation-pricing'
 /** Public, serializable A/B contract. Roles never establish payment. */
 export type InitiationStatus = 'guest' | 'unpaid' | 'legacy_pack' | 'initiated' | 'granted' | 'unknown'
 export type InitiationPaymentStatus = 'none' | 'pending' | 'paid' | 'payment_failed' | 'canceled' | 'refunded' | 'disputed' | 'payment_review' | 'unknown'
@@ -20,15 +22,13 @@ export interface InitiationSnapshot {
   shipments: InitiationShipment[]
   consoleClaim: { eligible: boolean; claimed: boolean; href: string | null; batch?: { slug: string; name: string } | null }
   offer?: { kind: InitiationOrderKind; amount: number; currency: 'usd' }
+  ownsSeat?: boolean
   legacyPackPurchased: boolean
   paymentStatus: InitiationPaymentStatus
   error: string | null
 }
 export const INITIATION_PRODUCT = 'voyager_initiation'
 export const INITIATION_BATCH = 'S26'
-export type InitiationOrderKind = 'standard' | 'legacy_upgrade'
-export const INITIATION_UPGRADE_AMOUNT = 40000
-export const INITIATION_AMOUNT = 52000
 export const INITIATION_CAPACITY = 100
 
 export interface InitiationConsoleClaimResult {

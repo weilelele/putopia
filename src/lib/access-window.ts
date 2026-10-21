@@ -19,7 +19,7 @@
 /** Length of the granted glimpse, in seconds (5 minutes). */
 export const VISIBLE_SECONDS = 300
 /** Price of the Initial Pack, surfaced only at the code prompt / pack page. */
-export const PRICE_LABEL = '$12'
+export { initialPackPriceLabel as PRICE_LABEL } from './initiation-pricing'
 /** Estimated fulfilment time, for honest disclosure copy + waiting-period comms. */
 export const FULFILL_WEEKS_EST = 4
 

@@ -1,5 +1,7 @@
 'use client'
 
+import { INITIATION_PRICES, initiationPriceLabel } from '@/lib/initiation-pricing'
+
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, CircleAlert, Check } from 'lucide-react'
@@ -44,6 +46,7 @@ const packs = [
 
 export type InitiationCheckoutResult = { status: 'ready' | 'calibration_required' | 'not_open' | 'unauthenticated'; message: string }
 export type InitiationViewProps = {
+  initialBundle?: 'initial' | 'standard'
   members?: InitiationPublicMember[]
   snapshot: InitiationSnapshot
   deviceSource?: string | null
@@ -54,7 +57,7 @@ export type InitiationViewProps = {
   analyticsEnvironment?: string
 }
 
-export function InitiationView({ snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown' }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown' }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -64,6 +67,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
   }, [deviceSource])
   const [calibrated, setCalibrated] = useState(snapshot.calibrated)
   const [dialog, setDialog] = useState<'calibration' | 'batch' | 'initiated' | 'legacy-discount' | null>(null)
+  const [bundle, setBundle] = useState<'initial' | 'standard'>(initialBundle)
   const [busy, setBusy] = useState(false)
   const [calibrationStarted, setCalibrationStarted] = useState(false)
   const [quizBusy, setQuizBusy] = useState(false)
@@ -75,8 +79,9 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
   const initiated = status === 'initiated'
   const granted = status === 'granted'
   const legacy = status === 'legacy_pack'
-  const soldOut = availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity)
-  const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind: legacy ? 'legacy_upgrade' : 'standard', userId: snapshot.userId,
+  const kind = legacy ? 'legacy_upgrade' : bundle
+  const soldOut = !snapshot.ownsSeat && (availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity))
+  const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind, userId: snapshot.userId,
     internal: snapshot.role === 'architect', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null })
 
   const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null)
@@ -90,7 +95,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
     if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
     captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status, calibrated) })
     setError('')
-    if (status === 'guest') { window.location.assign(initiationLoginPath(source)); return }
+    if (status === 'guest') { window.location.assign(initiationLoginPath(source, bundle)); return }
     if (!calibrated) { openCalibration('initiate'); return }
     inFlight.current = true
     setBusy(true)
@@ -100,12 +105,12 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
         setCalibrated(false)
         openCalibration('checkout_preflight')
       } else if (result.status === 'unauthenticated') {
-        window.location.assign(initiationLoginPath(source))
+        window.location.assign(initiationLoginPath(source, bundle))
       } else if (result.status === 'ready') {
-        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from: source, analytics: analyticsContext() }) })
+        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bundle: legacy ? 'standard' : bundle, from: source, analytics: analyticsContext() }) })
         const data = await response.json()
         if (response.status === 401) {
-          window.location.assign(initiationLoginPath(source))
+          window.location.assign(initiationLoginPath(source, bundle))
         } else if (response.ok && typeof data.url === 'string' && new URL(data.url).protocol === 'https:') {
           window.location.assign(data.url)
         } else {
@@ -149,18 +154,31 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
             <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
           </> : <>
           {!paymentAtBottom && seatSummary}
-          {legacy && <div className={styles.legacyPrice}><s aria-label="Original price: 520 dollars">$520</s><button type="button" className={styles.discountInfo} aria-label="About your $120 Initial Pack member discount" aria-haspopup="dialog" onClick={() => setDialog('legacy-discount')}><CircleAlert size={17} aria-hidden /></button><strong ref={priceRef}>$400</strong></div>}
-          {legacy && <p className={styles.paymentTerms}>Special price for $12 Initial Pack members.</p>}
-          {!legacy && <p ref={priceRef} className={styles.standardPrice}>$520</p>}
+          <p className={styles.eyebrow}>Your initiation</p>
+          <h2 className={styles.purchaseTitle}>{legacy ? 'Complete your packs.' : 'Choose your bundle.'}</h2>
+          {legacy ? <p className={styles.paymentTerms}>Add the remaining two packs. Your existing Voyager membership stays with you.</p> : <div className={styles.sharedBenefits}>
+            <p>Voyager membership comes with either bundle.</p>
+          </div>}
+          <fieldset className={styles.bundleChoices} disabled={busy}>
+            <legend className="sr-only">{legacy ? 'Your Voyager upgrade' : 'Choose a Voyager bundle'}</legend>
+            {(legacy ? ['legacy_upgrade'] as const : ['initial', 'standard'] as const).map(option => <label className={`${styles.bundleCard} ${kind === option ? styles.bundleSelected : ''}`} key={option}>
+              <input type="radio" name="voyager-bundle" value={option} aria-labelledby={`bundle-name-${option} bundle-price-${option}`} aria-describedby={`bundle-detail-${option}${option !== 'standard' ? ` bundle-note-${option}` : ''}`} checked={kind === option} onChange={() => { if (option !== 'legacy_upgrade') setBundle(option) }} />
+              <span className={styles.bundleCopy}>
+                <span className={styles.bundleHeading}><span id={`bundle-name-${option}`}>{INITIATION_PRICES[option].name}</span><strong id={`bundle-price-${option}`}>{initiationPriceLabel(option)}</strong></span>
+                <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? 'Welcome letter, member badge and Mysterious Widgets.' : option === 'standard' ? 'Everything in Initial, plus Multiverse Console and the fourth delivery.' : 'One Multiverse Console and the fourth delivery.'}</span>
+                {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? 'Console claimed separately. Add Console + the fourth delivery later for $460.' : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
+              </span>
+            </label>)}
+          </fieldset>
+          <p ref={priceRef} className={styles.selectionSummary} aria-live="polite">Selected: {INITIATION_PRICES[kind].name}</p>
           <p className={styles.paymentTerms}>Pay once. No recurring membership fee.</p>
-          <p className={styles.paymentTerms}>Your card is authorized first. We charge after delivery-region verification; an unsupported address cancels the authorization. A temporary bank hold may appear.</p>
           {calibrated ? <div className={styles.calibration} role="status" aria-live="polite">
             <span>Signal Calibration</span><span className={styles.calibrationState}><Check size={17} aria-hidden />Complete</span>
           </div> : <button type="button" className={`${styles.calibration} ${styles.calibrationAction}`} aria-haspopup="dialog" onClick={() => openCalibration('status')}>
             <span>Signal Calibration</span><span className={styles.calibrationState}>Not completed <ArrowRight size={17} aria-hidden /></span>
           </button>}
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
-            <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : legacy ? 'CONTINUE INITIATION' : soldOut ? 'FULLY CLAIMED' : 'INITIATE'}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
+            <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : soldOut ? 'FULLY CLAIMED' : `${legacy ? 'UPGRADE' : 'CONTINUE'} · ${initiationPriceLabel(kind)}`}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
@@ -179,7 +197,7 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
       <Link href="/console" className="archive-back-link"><ArrowLeft aria-hidden size={20} />Back to Dashboard</Link>
       <header data-initiation-section="intro" className={styles.hero}>
         <div className={styles.introduction}>
-          <p className={styles.eyebrow}>{initiated || granted ? 'Your membership' : legacy ? 'Your legacy membership' : 'Become a Voyager'}</p>
+          <p className={styles.eyebrow}>{initiated || granted ? 'Your membership' : legacy ? 'Your Initial membership' : 'Become a Voyager'}</p>
           <h1>Voyager<br />Initiation</h1>
           <p className={styles.lede}>One initiation. A lasting place in the Collective.</p>
         </div>
@@ -251,15 +269,15 @@ export function InitiationView({ snapshot, members = [], deviceSource = null, ch
       {dialog === 'calibration' && <VoyagerProfileQuiz calibration onAnalytics={captureAnalytics} services={quizServices} onComplete={completed} onReturn={() => { setDialog(null); setCalibrationStarted(false) }} onStart={() => setCalibrationStarted(true)} onBusyChange={setQuizBusy} onDirtyChange={setDirty} />}
     </ArchiveSheet>
     <ArchiveSheet open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">
-      <p>Members who previously paid $12 for the Initial Pack receive a $120 discount on Voyager Initiation.</p>
-      <p>Complete your Initiation for $400 instead of $520.</p>
+      <p>All Initial Pack members, including historical $12 buyers, can add Console + Pack 4 for $460.</p>
+      <p>Your first two packs remain separate. The upgrade is a fixed additional payment, not a subtraction of your earlier payment.</p>
     </ArchiveSheet>
     <ArchiveSheet open={dialog === 'initiated'} onClose={() => setDialog(null)} title="Initiated places">
       <p>Includes purchased, gifted, and story-character places.</p>
     </ArchiveSheet>
     <ArchiveSheet open={dialog === 'batch'} onClose={() => setDialog(null)} title="Batch S26">
       <p>S26 is the first Voyager Initiation release, limited to 100 seats.</p>
-      <p>All S26 Voyagers share four dispatches: October, November and December 2026, then January 2027. This schedule follows the batch, regardless of when you join.</p>
+      <p>Complete Pack includes four dispatches; Initial includes the first two. The planned S26 dispatch months are: October, November and December 2026, then January 2027. This schedule follows the batch, regardless of when you join.</p>
       <p>Further batches may open later with their own availability and dispatch schedules.</p>
     </ArchiveSheet>
 

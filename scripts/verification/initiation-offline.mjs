@@ -13,20 +13,20 @@ const check = (value, expected) => { assert.deepEqual(value, expected); checks++
 const rejects = async (fn, pattern) => { await assert.rejects(fn, pattern); checks++ }
 const environment = {
   NEXT_PUBLIC_SITE_URL: 'https://sandbox.example.test',
-  STRIPE_INITIATION_PRICE_ID: 'price_standard', STRIPE_INITIATION_UPGRADE_PRICE_ID: 'price_upgrade',
+  STRIPE_INITIATION_INITIAL_PRICE_ID: 'price_initial', STRIPE_INITIATION_PRICE_ID: 'price_standard', STRIPE_INITIATION_UPGRADE_PRICE_ID: 'price_upgrade',
   STRIPE_INITIATION_PRODUCT_ID: 'prod_init', INITIATION_SHIPPING_COUNTRIES: 'US',
   INITIATION_TERMS_URL: 'https://sandbox.example.test/terms/initiation',
 }
-let order, calls, legacy, price, session, expiredOrders, intent
+let initial, order, calls, legacy, price, session, expiredOrders, intent
 function reset() {
-  order = { id: 'order', user_id: 'buyer', order_kind: 'standard', amount: 52000, currency: 'usd',
+  order = { pricing_version: 'voyager-bundles-v1', id: 'order', user_id: 'buyer', order_kind: 'standard', amount: 48800, currency: 'usd',
     stripe_livemode: false, stripe_session_id: null, price_id: 'price_standard', product_id: 'prod_init',
     status: 'pending', expires_at: new Date(Date.now() + 3600000).toISOString() }
-  calls = []; legacy = null; expiredOrders = []
-  intent = { id: 'pi_offline', status: 'succeeded', capture_method: 'automatic', amount: 52000, amount_received: 52000, amount_capturable: 0, currency: 'usd', livemode: false, metadata: { product_type: 'voyager_initiation', order_kind: 'standard', order_id: 'order' } }
-  price = { active: true, type: 'one_time', unit_amount: 52000, currency: 'usd', product: 'prod_init', tax_behavior: 'inclusive', livemode: false }
+  calls = []; legacy = null; initial = null; expiredOrders = []
+  intent = { id: 'pi_offline', status: 'succeeded', capture_method: 'automatic', amount: 48800, amount_received: 48800, amount_capturable: 0, currency: 'usd', livemode: false, metadata: { product_type: 'voyager_initiation', order_kind: 'standard', order_id: 'order' } }
+  price = { active: true, type: 'one_time', unit_amount: 48800, currency: 'usd', product: 'prod_init', tax_behavior: 'inclusive', livemode: false }
   session = { id: 'cs_test_offline', status: 'complete', payment_status: 'paid', livemode: false, mode: 'payment',
-    amount_total: 52000, currency: 'usd', payment_intent: 'pi_offline', url: 'https://checkout.stripe.com/offline',
+    amount_total: 48800, currency: 'usd', payment_intent: 'pi_offline', url: 'https://checkout.stripe.com/offline',
     metadata: { product_type: 'voyager_initiation', order_kind: 'standard', order_id: 'order', user_id: 'buyer' },
     collected_information: { shipping_details: { name: 'Offline Fixture', address: { line1: '1 Fixture', country: 'US', state: 'CA' } } } }
 }
@@ -54,11 +54,11 @@ const admin = {
   },
   async rpc(name, args) {
     calls.push({ rpc: name, args })
-    return { data: name === 'eligible_legacy_initiation_order' ? legacy : name === 'reserve_initiation' ? { ...order } : null, error: null }
+    return { data: name === 'eligible_legacy_initiation_order' ? legacy : name === 'eligible_initial_initiation_order' ? initial : name === 'reserve_initiation_v2' ? { ...order } : null, error: null }
   },
 }
 const stripe = {
-  charges: { retrieve: async () => ({ id: 'ch_offline', payment_intent: intent.id, amount: 52000, amount_refunded: 13000, currency: 'usd' }) },
+  charges: { retrieve: async () => ({ id: 'ch_offline', payment_intent: intent.id, amount: 48800, amount_refunded: 12200, currency: 'usd' }) },
   prices: { retrieve: async () => price },
   paymentIntents: {
     retrieve: async () => intent,
@@ -68,7 +68,7 @@ const stripe = {
   checkout: { sessions: {
     retrieve: async () => session,
     list: async () => ({ data: [session], has_more: false }),
-    create: async (params, options) => { calls.push({ create: params, options }); return session },
+    create: async (params, options) => { calls.push({ create: params, options }); return { ...session, status: 'open' } },
     listLineItems: async () => ({ has_more: false, data: [{ price: { id: order.price_id, product: order.product_id }, quantity: 1 }] }),
   } },
 }
@@ -77,9 +77,12 @@ const stubs = {
   'server-only': {}, 'next/server': { NextResponse: { json: (body, init) => ({ body, status: init?.status ?? 200 }) } },
   '@/lib/supabase/server': { createAdminClient: () => admin, createClient: async () => ({ rpc: async name => { check(name, 'effective_access_role'); return { data: 'voyager', error: null } }, auth: { getUser: async () => ({ data: { user: { id: 'buyer', email: 'fixture@example.test' } } }) } }) },
   '@/lib/stripe': { getStripe: () => stripe }, '@/lib/initiation-config': { initiationConfigurationError: () => null },
+  'next/headers': { cookies: async () => ({ get: () => undefined }) },
+  '@/lib/initiation-meta-attribution': { captureInitiationMetaAttribution: () => ({}) },
+  '@/lib/initiation-meta-purchases': { sendPendingInitiationMetaPurchases: async () => ({}) },
   'node:crypto': {}, 'next/cache': {}, '@/lib/profile-validation': {}, '@/lib/loops': {},
 }
-const allowed = new Set(['src/lib/member-visibility.ts', 'src/lib/initiation-types.ts', 'src/lib/initiation-checkout-policy.ts', 'src/lib/initiation-payment.ts',
+const allowed = new Set(['src/lib/initiation-pricing.ts', 'src/lib/initiation-analytics.ts', 'src/lib/initiation-analytics-outbox.ts', 'src/lib/member-visibility.ts', 'src/lib/initiation-types.ts', 'src/lib/initiation-checkout-policy.ts', 'src/lib/initiation-payment.ts',
   'src/lib/initiation-reconciliation.ts', 'src/lib/initiation-capture-policy.ts', 'src/lib/actions/profile.ts',
   'src/lib/initiation-webhook.ts', 'src/lib/initiation-expiry.ts', 'src/app/api/initiation-checkout/route.ts', 'src/app/voyager-initiation/navigation.ts'])
 function load(relative) {
@@ -92,14 +95,15 @@ function load(relative) {
     const dependency = name.startsWith('@/') ? `src/${name.slice(2)}.ts` : path.relative(root, path.resolve(path.dirname(filename), `${name}.ts`))
     return load(dependency)
   }
-  vm.runInNewContext(output, { exports: loaded.exports, require, process: { env: environment }, URL, Date, console: { error() {} } }, { filename })
+  vm.runInNewContext(output, { exports: loaded.exports, require, process: { env: environment }, URL, Date, console: { error() {}, warn() {} } }, { filename })
   return loaded.exports
 }
+stubs['@/lib/initiation-analytics-outbox'] = { validInitiationAnalyticsSession: load('src/lib/initiation-analytics-outbox.ts').validInitiationAnalyticsSession, queueInitiationCheckoutAnalytics: async () => {}, sendPendingInitiationAnalytics: async () => {} }
 const { POST } = load('src/app/api/initiation-checkout/route.ts')
 const { handleInitiationWebhook } = load('src/lib/initiation-webhook.ts')
 const { reconcileInitiationExpiry } = load('src/lib/initiation-expiry.ts')
 const event = type => ({ type, data: { object: session } })
-const request = (origin = environment.NEXT_PUBLIC_SITE_URL) => ({ headers: { get: () => origin }, json: async () => ({ amount: 1, kind: 'legacy_upgrade', user_id: 'attacker', from: 'https://evil.test' }) })
+const request = (origin = environment.NEXT_PUBLIC_SITE_URL, bundle) => ({ headers: { get: () => origin }, json: async () => ({ bundle, amount: 1, kind: 'legacy_upgrade', user_id: 'attacker', from: 'https://evil.test' }) })
 reset()
 check((await POST(request('https://evil.test'))).status, 403)
 check(calls.length, 0)
@@ -111,16 +115,26 @@ check(created.create.shipping_address_collection.allowed_countries.join(','), 'U
 check(created.create.automatic_tax.enabled, false)
 check(created.create.allow_promotion_codes, false)
 check(created.options.idempotencyKey, 'initiation:order')
-check(calls.find(c => c.rpc === 'reserve_initiation').args.p_device_source, null)
+check(calls.find(c => c.rpc === 'reserve_initiation_v2').args.p_device_source, null)
 session.status = 'open'
 check((await POST(request())).status, 200)
 check(calls.filter(c => c.create).length, 1)
-reset(); legacy = 'old_paid_pack'; order.order_kind = 'legacy_upgrade'; order.amount = price.unit_amount = 40000; order.price_id = 'price_upgrade'
+reset(); legacy = 'old_paid_pack'; order.order_kind = 'legacy_upgrade'; order.amount = price.unit_amount = 46000; order.price_id = 'price_upgrade'; session.amount_total = 46000; session.metadata.order_kind = 'legacy_upgrade'
 check((await POST(request())).status, 200)
 check(calls.find(c => c.create).create.line_items[0].price, 'price_upgrade')
+// Current Initial uses its dedicated Price; ownership is resolved server-side.
+reset(); order.order_kind = session.metadata.order_kind = 'initial'; order.amount = price.unit_amount = session.amount_total = 3800; order.price_id = 'price_initial'
+check((await POST(request(undefined, 'initial'))).status, 200)
+check(calls.find(c => c.create).create.line_items[0].price, 'price_initial')
+reset(); initial = 'initial_paid'; order.order_kind = session.metadata.order_kind = 'legacy_upgrade'; order.amount = price.unit_amount = session.amount_total = 46000; order.initial_order_id = initial; order.price_id = 'price_upgrade'
+check((await POST(request(undefined, 'standard'))).status, 200)
+check(calls.find(c => c.rpc === 'reserve_initiation_v2').args.p_kind, 'legacy_upgrade')
+reset(); legacy = 'old12';check((await POST(request(undefined, 'initial'))).status,409)
+check(calls.some(c => c.create),false)
+reset();check((await POST(request(undefined, 'attacker_discount'))).status,400)
 reset(); price.livemode = true
 check((await POST(request())).status, 503)
-check(calls.some(c => c.rpc === 'reserve_initiation'), false)
+check(calls.some(c => c.rpc === 'reserve_initiation_v2'), false)
 reset(); session.payment_status = 'unpaid'
 await handleInitiationWebhook(event('checkout.session.completed'), stripe)
 check(calls.length, 0)
@@ -150,7 +164,7 @@ check(order.status, 'pending') // Current successful Stripe state wins over a st
 check(calls.some(c => c.rpc === 'complete_initiation'), true)
 for (const [type, reason] of [['charge.refunded', 'refunded'], ['charge.dispute.created', 'disputed']]) {
   reset(); await handleInitiationWebhook(event(type), stripe)
-  if (type === 'charge.refunded') check(JSON.parse(JSON.stringify(calls.find(c => c.rpc === 'record_initiation_refund').args)), { p_intent: intent.id, p_amount: 52000, p_refunded: 13000 })
+  if (type === 'charge.refunded') check(JSON.parse(JSON.stringify(calls.find(c => c.rpc === 'record_initiation_refund').args)), { p_intent: intent.id, p_amount: 48800, p_refunded: 12200 })
   else check(calls.find(c => c.rpc === 'hold_initiation_payment').args.p_reason, reason)
 }
 reset(); expiredOrders = [{ id: order.id, user_id: order.user_id, stripe_session_id: null }]
@@ -162,22 +176,31 @@ intent.status = 'canceled'; intent.amount_received = 0
 check(await reconcileInitiationExpiry(stripe), 1)
 check(order.status, 'canceled')
 // Actual reconciliation function: manual authorization captures once, then grants.
-reset(); session.payment_status = 'unpaid'; intent.capture_method = 'manual'; intent.status = 'requires_capture'; intent.amount_received = 0; intent.amount_capturable = 52000
+reset(); session.payment_status = 'unpaid'; intent.capture_method = 'manual'; intent.status = 'requires_capture'; intent.amount_received = 0; intent.amount_capturable = 48800
 await handleInitiationWebhook(event('checkout.session.completed'), stripe)
 check(calls.filter(c => c.capture).length, 1)
 check(calls.find(c => c.capture).options.idempotencyKey, 'initiation:capture:order')
 check(calls.some(c => c.rpc === 'complete_initiation'), true)
 await handleInitiationWebhook(event('checkout.session.completed'), stripe)
 check(calls.filter(c => c.capture).length, 1)
-reset(); session.payment_status = 'unpaid'; intent.capture_method = 'manual'; intent.status = 'requires_capture'; intent.amount_received = 0; intent.amount_capturable = 52000
+reset(); session.payment_status = 'unpaid'; intent.capture_method = 'manual'; intent.status = 'requires_capture'; intent.amount_received = 0; intent.amount_capturable = 48800
 session.collected_information.shipping_details.address.state = 'AK'
 await handleInitiationWebhook(event('checkout.session.completed'), stripe)
 check(calls.some(c => c.capture), false)
 check(calls.some(c => c.rpc === 'complete_initiation'), false)
 check(order.status, 'canceled')
 check(intent.amount_received, 0)
+// Revoked Initial qualification is rechecked before capture for both generations.
+for (const source of ['legacy_order_id', 'initial_order_id']) {
+ reset(); order.order_kind = session.metadata.order_kind = intent.metadata.order_kind = 'legacy_upgrade'; order[source] = 'revoked_source'; order.amount = session.amount_total = price.unit_amount = intent.amount = intent.amount_capturable = 46000; order.price_id = 'price_upgrade'
+ session.payment_status = 'unpaid'; intent.capture_method = 'manual'; intent.status = 'requires_capture'; intent.amount_received = 0
+ await handleInitiationWebhook(event('checkout.session.completed'), stripe)
+ check(calls.some(c => c.capture), false)
+ check(calls.some(c => c.cancel), true)
+ check(order.status, 'canceled')
+}
 // Lost capture response: leave the hold intact, then reconcile success on retry.
-reset(); session.payment_status = 'unpaid'; intent.capture_method = 'manual'; intent.status = 'requires_capture'; intent.amount_received = 0; intent.amount_capturable = 52000
+reset(); session.payment_status = 'unpaid'; intent.capture_method = 'manual'; intent.status = 'requires_capture'; intent.amount_received = 0; intent.amount_capturable = 48800
 const capture = stripe.paymentIntents.capture
 stripe.paymentIntents.capture = async (...args) => { await capture(...args); throw new Error('simulated timeout after capture') }
 await rejects(() => handleInitiationWebhook(event('checkout.session.completed'), stripe), /simulated timeout/)

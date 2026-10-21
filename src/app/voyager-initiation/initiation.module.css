@@ -149,3 +149,19 @@
 /* Reference: the divider sits about 32px below the overlapping portrait row. */
 .benefitsFirst .hero { padding-bottom: 32px; }
 .benefitsFirst .seats { margin-bottom: 0; }
+
+.purchaseTitle { font-size: var(--fs-h2); font-weight: 700; line-height: 1.2; margin: 0 0 var(--s-4); }
+.sharedBenefits { margin-bottom: var(--s-5); }
+.sharedBenefits p { margin: 0; color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.5; }
+.sharedBenefits p:first-child { color: var(--color-star); margin-bottom: var(--s-2); }
+.bundleChoices { display: grid; gap: var(--s-3); min-width: 0; margin: 0; padding: 0; border: 0; }
+.bundleCard { display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-4); border: 1px solid var(--color-star-dim); cursor: pointer; }
+.bundleCard.bundleSelected { border-color: var(--color-nucleus); background: var(--color-void); }
+.bundleCard:has(input:focus-visible) { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+.bundleCard input { width: 20px; height: 20px; margin-top: 3px; flex-shrink: 0; accent-color: var(--color-nucleus); }
+.bundleCopy { display: grid; gap: var(--s-2); min-width: 0; flex: 1; }
+.bundleHeading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: var(--s-3); font-size: var(--fs-body); line-height: 1.4; font-weight: 700; }
+.bundleHeading strong { font-size: var(--fs-h3); white-space: nowrap; color: var(--color-star); }
+.bundleDetail { font-size: var(--fs-body); line-height: 1.5; }
+.bundleNote { color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }
+.selectionSummary { margin: var(--s-5) 0 var(--s-3); color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }

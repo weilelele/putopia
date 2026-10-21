@@ -4,6 +4,7 @@ import type { InitiationStatus } from './initiation-types'
 export function initiationMemberStatus(paidEntitlementActive: boolean, member: { source: 'paid' | 'granted'; active: boolean } | null, legacyPackPurchased: boolean): InitiationStatus {
   if (paidEntitlementActive) return 'initiated'
   if (member?.active && member.source === 'granted') return 'granted'
+  if (legacyPackPurchased) return 'legacy_pack'
   if (member?.active && member.source === 'paid') return 'unknown' // inconsistent payment/entitlement read
   return legacyPackPurchased ? 'legacy_pack' : 'unpaid'
 }

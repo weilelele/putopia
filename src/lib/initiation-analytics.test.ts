@@ -40,9 +40,9 @@ describe('Initiation price exposure', () => {
   })
 })
 describe('Initiation analytics facts', () => {
-  it('reports actual legacy $400, never the struck original $520', () => {
-    expect(initiationAnalyticsProperties('legacy_upgrade')).toMatchObject({ payable_amount: 400, amount_minor: 40000, order_kind: 'legacy_upgrade', currency: 'USD' })
-    expect(initiationAnalyticsProperties('standard')).toMatchObject({ payable_amount: 520, amount_minor: 52000 })
+  it('reports current $460 upgrades and $488 Complete prices', () => {
+    expect(initiationAnalyticsProperties('legacy_upgrade')).toMatchObject({ payable_amount: 460, amount_minor: 46000, order_kind: 'legacy_upgrade', currency: 'USD' })
+    expect(initiationAnalyticsProperties('standard')).toMatchObject({ payable_amount: 488, amount_minor: 48800 })
   })
   it('whitelists campaign labels and drops personal data and spoofed pricing', () => {
     expect(sanitizeInitiationAnalytics({ utm_source: 'email', utm_campaign: 'p1-initiation-20261014', utm_content: 'person@example.com', email: 'private@example.com', amount: 1, address: 'hidden', calibration: 'answer' }))

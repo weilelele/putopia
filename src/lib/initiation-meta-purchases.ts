@@ -1,6 +1,7 @@
+import { isInitiationOrderAmount } from './initiation-pricing'
 import type Stripe from 'stripe'
 import { isIOSNativeApp } from './app-platform'
-import { INITIATION_AMOUNT, INITIATION_PRODUCT, INITIATION_UPGRADE_AMOUNT, type InitiationOrderKind } from './initiation-types'
+import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
 import { sendMetaPurchase, type MetaPurchaseInput } from './meta-capi'
 import type { InitiationMetaAttribution } from './initiation-meta-attribution'
 
@@ -8,6 +9,7 @@ export type InitiationMetaOrder = {
   id: string
   user_id: string
   status: string
+  pricing_version?: string | null
   order_kind: InitiationOrderKind
   amount: number
   currency: string
@@ -57,8 +59,6 @@ export function buildInitiationMetaPurchase(
   order: InitiationMetaOrder, claim: InitiationMetaClaim, session: Stripe.Checkout.Session,
 ): MetaPurchaseInput {
   if (order.status !== 'paid') throw new PurchaseValidationError('Order is not paid')
-  const expectedAmount = order.order_kind === 'standard' ? INITIATION_AMOUNT
-    : order.order_kind === 'legacy_upgrade' ? INITIATION_UPGRADE_AMOUNT : null
   const paidAt = Date.parse(order.paid_at ?? '')
   const eventAt = Date.parse(claim.event_time)
   if (claim.order_id !== order.id || claim.event_id !== `initiation_purchase_${order.id}`
@@ -66,7 +66,7 @@ export function buildInitiationMetaPurchase(
     throw new PurchaseValidationError('Purchase identity is invalid')
   }
   const intentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id
-  if (!expectedAmount || order.amount !== expectedAmount || order.currency !== 'usd'
+  if (!isInitiationOrderAmount(order) || order.currency !== 'usd'
     || !order.stripe_session_id || order.stripe_session_id !== session.id
     || !order.stripe_payment_intent || order.stripe_payment_intent !== intentId
     || session.livemode !== order.stripe_livemode || session.mode !== 'payment'
@@ -199,7 +199,7 @@ export function createInitiationMetaStore(admin: AdminClient): InitiationMetaSto
     },
     async loadOrder(orderId) {
       const { data, error } = await db.from('initiation_orders')
-        .select('id,user_id,status,order_kind,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,meta_attribution')
+        .select('id,user_id,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,meta_attribution')
         .eq('id', orderId).maybeSingle().abortSignal(AbortSignal.timeout(5000))
       if (error) throw error
       return data

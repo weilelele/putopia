@@ -1,3 +1,4 @@
+import { isInitiationOrderAmount } from './initiation-pricing'
 import type Stripe from 'stripe'
 import { initiationAnalyticsProperties } from './initiation-analytics'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
@@ -9,6 +10,7 @@ export type InitiationAnalyticsClaim = {
 export type InitiationAnalyticsOrder = {
   id: string; user_id: string; status: string; order_kind: InitiationOrderKind; amount: number; currency: string
   stripe_livemode: boolean; stripe_session_id: string | null; stripe_payment_intent: string | null; paid_at: string | null
+  pricing_version?: string | null
   analytics_context: Record<string, unknown> | null
 }
 export type InitiationAnalyticsUpdate = {
@@ -42,8 +44,7 @@ export async function retryInitiationAnalytics(deps: InitiationAnalyticsDependen
     }
     try {
       const order = await deps.loadOrder(claim.order_id)
-      const expected = order?.order_kind === 'standard' ? 52000 : order?.order_kind === 'legacy_upgrade' ? 40000 : null
-      if (!order || !expected || order.amount !== expected || order.currency !== 'usd' || !order.stripe_session_id
+      if (!order || !isInitiationOrderAmount(order) || order.currency !== 'usd' || !order.stripe_session_id
         || !Number.isFinite(Date.parse(claim.event_time)) || !/^[0-9a-f-]{36}$/i.test(claim.event_uuid)) throw new Error('Invalid analytics binding')
       if (order.analytics_context?.disabled === true) return await finish({ status: 'skipped', last_error: null })
       const purchase = claim.event === 'initiation_purchase_completed'
@@ -62,7 +63,7 @@ export async function retryInitiationAnalytics(deps: InitiationAnalyticsDependen
         if (!current || current.status !== 'paid') return await finish({ status: 'skipped', last_error: 'Order is no longer paid' })
       }
       await deps.send({ uuid: claim.event_uuid, event: claim.event, distinct_id: order.user_id, timestamp: claim.event_time,
-        properties: { ...initiationAnalyticsProperties(order.order_kind, order.analytics_context), source: 'server', order_id: order.id,
+        properties: { ...initiationAnalyticsProperties(order.order_kind, order.analytics_context, order.amount), pricing_version: order.pricing_version ?? 'legacy-v1', source: 'server', order_id: order.id,
           is_internal_qa: order.analytics_context?.is_internal_qa === true,
           is_test: !order.stripe_livemode || order.analytics_context?.environment !== 'production',
           ...(purchase ? { payment_status: 'paid' } : { reused: claim.reused }) } })
@@ -102,7 +103,7 @@ export function sendPendingInitiationAnalytics(admin: Admin, stripe: Stripe, opt
       return data ?? []
     },
     async loadOrder(id) {
-      const { data, error } = await db.from('initiation_orders').select('id,user_id,status,order_kind,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,analytics_context')
+      const { data, error } = await db.from('initiation_orders').select('id,user_id,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,analytics_context')
         .eq('id', id).maybeSingle().abortSignal(AbortSignal.timeout(5000))
       if (error) throw error
       return data

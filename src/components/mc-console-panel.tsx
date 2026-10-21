@@ -55,7 +55,7 @@ export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunc
       </div>}
       <header className={styles.heading}>
         <h2 className={styles.sectionTitle}>Multiverse<br />Console</h2>
-        <p>Our collective&apos;s device for exploring parallel worlds. Voyager Initiation includes a Console claim entitlement; allocation and delivery follow your member record.</p>
+        <p>Our collective&apos;s device for exploring parallel worlds. Complete Pack ($488) or an Initial-member upgrade ($460) includes a Console claim; allocation and delivery follow your member record.</p>
       </header>
       <nav className={styles.exploreActions} aria-label="Explore the collective">
         <ArchiveLinkButton href="/intel" variant="primary" fullWidth className={styles.missions}>

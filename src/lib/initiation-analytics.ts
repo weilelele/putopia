@@ -1,6 +1,7 @@
+import { INITIATION_PRICES, INITIATION_PRICING_VERSION } from './initiation-pricing'
 import type { InitiationOrderKind, InitiationStatus } from './initiation-types'
 
-export const INITIATION_PAGE_VERSION = 'initiation-bottom-payment-v2-20261014'
+export const INITIATION_PAGE_VERSION = 'voyager-bundles-v1-20261021'
 export const INITIATION_UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as const
 export const INITIATION_AD_KEYS = ['campaign_id', 'adset_id', 'ad_id', 'placement'] as const
 export type InitiationAnalyticsContext = Partial<Record<typeof INITIATION_UTM_KEYS[number], string>> & {
@@ -42,13 +43,13 @@ export function initiationAdContext(incoming: Record<string, unknown>, stored: u
   return result
 }
 
-export function initiationAnalyticsProperties(kind: InitiationOrderKind, context: unknown = {}) {
+export function initiationAnalyticsProperties(kind: InitiationOrderKind, context: unknown = {}, amount: number = INITIATION_PRICES[kind].amount) {
   const safe = sanitizeInitiationAnalytics(context)
   delete safe.disabled
   return {
     ...safe, page_version: INITIATION_PAGE_VERSION, batch: 'S26', order_kind: kind,
-    payable_amount: kind === 'legacy_upgrade' ? 400 : 520,
-    amount_minor: kind === 'legacy_upgrade' ? 40000 : 52000, currency: 'USD',
+    payable_amount: amount / 100,
+    amount_minor: amount, currency: 'USD', pricing_version: INITIATION_PRICING_VERSION,
   }
 }
 
