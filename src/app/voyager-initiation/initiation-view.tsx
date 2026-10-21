@@ -19,6 +19,8 @@ import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navi
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
+import { InitiationBriefing } from './briefing/initiation-briefing'
+import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, shouldAutoOpenBriefing, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 
 const SOURCE_KEY = 'mc:initiation:device-source'
 const subscribeToSource = () => () => {}
@@ -26,6 +28,14 @@ function readDeviceSource() {
   try { return deviceSourcePath(sessionStorage.getItem(SOURCE_KEY)) } catch { return null }
 }
 const emptyDeviceSource = () => null
+// '' = nothing stored yet; 'server' and 'unavailable' never auto-open (no way to remember a dismissal).
+function readBriefingStore() {
+  try { return localStorage.getItem(BRIEFING_STORAGE_KEY) ?? '' } catch { return 'unavailable' }
+}
+const serverBriefingStore = () => 'server'
+function writeBriefingStore(outcome: BriefingOutcome, page: number) {
+  try { localStorage.setItem(BRIEFING_STORAGE_KEY, briefingRecord(outcome, page)) } catch { /* Storage is a convenience only. */ }
+}
 
 
 const paymentMessages = {
@@ -55,9 +65,12 @@ export type InitiationViewProps = {
   quizServices?: VoyagerQuizServices
   paymentPlacement?: 'top' | 'bottom'
   analyticsEnvironment?: string
+  regions?: BriefingRegion[]
+  /** Value of `?briefing=`; `1` opens the briefing on arrival. */
+  briefingParam?: string
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown' }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -80,22 +93,28 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const granted = status === 'granted'
   const legacy = status === 'legacy_pack'
   const kind = legacy ? 'legacy_upgrade' : bundle
+  const storedBriefing = useSyncExternalStore(subscribeToSource, readBriefingStore, serverBriefingStore)
+  const [briefing, setBriefing] = useState<'idle' | 'replay' | 'link' | 'dismissed'>(() => briefingLinkOpens(snapshot.status, briefingParam) ? 'link' : 'idle')
+  const briefingAuto = storedBriefing !== 'server' && storedBriefing !== 'unavailable'
+    && shouldAutoOpenBriefing({ status, paymentStatus: snapshot.paymentStatus, checkoutCanceled, stored: storedBriefing || null })
+  const briefingOpen = briefing === 'replay' || briefing === 'link' || (briefing === 'idle' && briefingAuto)
   const soldOut = !snapshot.ownsSeat && (availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity))
   const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind, userId: snapshot.userId,
-    internal: snapshot.role === 'architect', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null })
+    internal: snapshot.role === 'architect', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
 
-  const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null)
+  const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null || briefingOpen)
 
   function openCalibration(entry: string) {
     captureAnalytics('calibration_opened', { entry_point: entry })
     setDialog('calibration')
   }
 
-  async function become() {
+  async function become(override?: 'initial' | 'standard', surface: 'page' | 'brief' = 'page') {
     if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
-    captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status, calibrated) })
+    const chosen = override ?? bundle
+    captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status, calibrated), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
     setError('')
-    if (status === 'guest') { window.location.assign(initiationLoginPath(source, bundle)); return }
+    if (status === 'guest') { window.location.assign(initiationLoginPath(source, chosen)); return }
     if (!calibrated) { openCalibration('initiate'); return }
     inFlight.current = true
     setBusy(true)
@@ -105,12 +124,12 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         setCalibrated(false)
         openCalibration('checkout_preflight')
       } else if (result.status === 'unauthenticated') {
-        window.location.assign(initiationLoginPath(source, bundle))
+        window.location.assign(initiationLoginPath(source, chosen))
       } else if (result.status === 'ready') {
-        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bundle: legacy ? 'standard' : bundle, from: source, analytics: analyticsContext() }) })
+        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bundle: legacy ? 'standard' : chosen, from: source, analytics: analyticsContext() }) })
         const data = await response.json()
         if (response.status === 401) {
-          window.location.assign(initiationLoginPath(source, bundle))
+          window.location.assign(initiationLoginPath(source, chosen))
         } else if (response.ok && typeof data.url === 'string' && new URL(data.url).protocol === 'https:') {
           window.location.assign(data.url)
         } else {
@@ -126,6 +145,20 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       setBusy(false)
     }
   }
+
+  function closeBriefing(outcome: BriefingOutcome, page: number) {
+    writeBriefingStore(outcome, page)
+    setBriefing('dismissed')
+  }
+  function chooseFromBriefing(offer: BriefingOffer['id'], page: number) {
+    closeBriefing('chose_offer', page)
+    const choice = offer === 'initial' || offer === 'standard' ? offer : undefined
+    if (choice) setBundle(choice)
+    void become(choice, 'brief')
+  }
+  const briefingUnavailable = status === 'unknown' ? 'Records are unavailable right now. Please try again later.'
+    : soldOut ? `${availability.batch} is fully claimed.`
+    : !availability.checkoutOpen && status !== 'guest' ? (availability.reason ?? 'Checkout is not open yet.') : null
 
   const paymentAtBottom = paymentPlacement === 'bottom' && !initiated && !granted
   const BenefitHeading = paymentAtBottom ? 'h3' : 'h2'
@@ -199,6 +232,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           <p className={styles.eyebrow}>{initiated || granted ? 'Your membership' : legacy ? 'Your Initial membership' : 'Become a Voyager'}</p>
           <h1>Voyager<br />Initiation</h1>
           <p className={styles.lede}>One initiation. A lasting place in the Collective.</p>
+          {briefingAudience(status) && <button type="button" className={styles.textLink} aria-haspopup="dialog" onClick={() => setBriefing('replay')}>Watch the briefing <ArrowRight size={18} aria-hidden /></button>}
         </div>
         {paymentAtBottom ? seatSummary : joinPanel}
       </header>
@@ -264,6 +298,9 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       </section>
     </div>
 
+    {briefingOpen && <InitiationBriefing trigger={briefing === 'idle' ? 'auto' : briefing === 'link' ? 'link' : 'replay'} members={members} regions={regions}
+      seats={{ batch: availability.batch, capacity: availability.capacity, initiated: availability.initiated }} offers={briefingOffers(status)}
+      busy={busy} unavailable={briefingUnavailable} capture={captureAnalytics} onChoose={chooseFromBriefing} onClose={closeBriefing} />}
     <ArchiveSheet size={calibrationStarted ? 'fullscreen' : 'wide'} headerless open={dialog === 'calibration'} onClose={() => { captureAnalytics('calibration_closed', { started: calibrationStarted, completed: calibrated }); setDialog(null); setDirty(false); setCalibrationStarted(false) }} title="Signal Calibration" busy={quizBusy} dirty={dirty} className={styles.calibrationDialog}>
       {dialog === 'calibration' && <VoyagerProfileQuiz calibration onAnalytics={captureAnalytics} services={quizServices} onComplete={completed} onReturn={() => { setDialog(null); setCalibrationStarted(false) }} onStart={() => setCalibrationStarted(true)} onBusyChange={setQuizBusy} onDirtyChange={setDirty} />}
     </ArchiveSheet>
