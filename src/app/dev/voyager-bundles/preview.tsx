@@ -102,7 +102,6 @@ export function VoyagerBundlesPreview() {
               </span>
             </label>)}
           </fieldset>
-          <p className={styles.selectionSummary} aria-live="polite">Selected: {bundle.name}</p>
           <ArchiveButton fullWidth className={styles.checkout} onClick={() => setConfirmation(true)}>CONTINUE · ${bundle.price}<ArrowRight size={20} aria-hidden /></ArchiveButton>
           <p className={styles.caption}>Pay once. No recurring membership fee.</p>
           <button type="button" className={styles.memberToggle} onClick={() => setMember(value => !value)}>{member ? '← View bundles' : 'Already a Voyager? Upgrade · $460'}{!member && <ArrowRight size={16} aria-hidden />}</button>

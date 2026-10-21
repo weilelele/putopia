@@ -1,6 +1,6 @@
 import { INITIATION_PRICES, INITIATION_PRICING_VERSION } from '@/lib/initiation-pricing'
 import { initiationShippingCountries } from '@/lib/initiation-checkout-policy'
-import { deviceSourcePath } from '@/app/voyager-initiation/navigation'
+import { deviceSourcePath, initiationReturnPath } from '@/app/voyager-initiation/navigation'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import type Stripe from 'stripe'
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       custom_text: { shipping_address: { message: 'Delivery to the contiguous United States (48 states and Washington, DC) only. Shipping and applicable taxes are included.' }, submit: { message: 'Your card is authorized first. We charge only after delivery-region verification; unsupported addresses have the authorization canceled. A temporary bank hold may appear.' }, terms_of_service_acceptance: { message: `I accept the [Initiation terms](${process.env.INITIATION_TERMS_URL}).` } },
       expires_at: expiresAt,
       success_url: `${origin}/join/success?product=initiation&session_id={CHECKOUT_SESSION_ID}${sourceQuery}`,
-      cancel_url: `${origin}/voyager-initiation?checkout=canceled${sourceQuery}`,
+      cancel_url: `${origin}${initiationReturnPath(order.device_source, order.order_kind === 'initial' ? 'initial' : 'standard')}&checkout=canceled`,
     }, { idempotencyKey: `initiation:${order.id}` })
     if (!validInitiationAnalyticsSession({ ...order, stripe_session_id: session.id }, session) || session.status !== 'open'
       || !session.url || new URL(session.url).protocol !== 'https:') throw new Error('Checkout binding mismatch')

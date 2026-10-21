@@ -164,13 +164,12 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             {(legacy ? ['legacy_upgrade'] as const : ['initial', 'standard'] as const).map(option => <label className={`${styles.bundleCard} ${kind === option ? styles.bundleSelected : ''}`} key={option}>
               <input type="radio" name="voyager-bundle" value={option} aria-labelledby={`bundle-name-${option} bundle-price-${option}`} aria-describedby={`bundle-detail-${option}${option !== 'standard' ? ` bundle-note-${option}` : ''}`} checked={kind === option} onChange={() => { if (option !== 'legacy_upgrade') setBundle(option) }} />
               <span className={styles.bundleCopy}>
-                <span className={styles.bundleHeading}><span id={`bundle-name-${option}`}>{INITIATION_PRICES[option].name}</span><strong id={`bundle-price-${option}`}>{initiationPriceLabel(option)}</strong></span>
+                <span className={styles.bundleHeading}><span id={`bundle-name-${option}`}>{INITIATION_PRICES[option].name}</span><strong ref={kind === option ? priceRef : undefined} id={`bundle-price-${option}`}>{initiationPriceLabel(option)}</strong></span>
                 <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? 'Welcome letter, member badge and Mysterious Widgets.' : option === 'standard' ? 'Everything in Initial, plus Multiverse Console and the fourth delivery.' : 'One Multiverse Console and the fourth delivery.'}</span>
                 {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? 'Console claimed separately. Add Console + the fourth delivery later for $460.' : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
               </span>
             </label>)}
           </fieldset>
-          <p ref={priceRef} className={styles.selectionSummary} aria-live="polite">Selected: {INITIATION_PRICES[kind].name}</p>
           <p className={styles.paymentTerms}>Pay once. No recurring membership fee.</p>
           {calibrated ? <div className={styles.calibration} role="status" aria-live="polite">
             <span>Signal Calibration</span><span className={styles.calibrationState}><Check size={17} aria-hidden />Complete</span>
