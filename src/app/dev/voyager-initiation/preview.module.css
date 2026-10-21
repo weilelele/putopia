@@ -1,0 +1,5 @@
+.notice { padding: var(--s-4); color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; border-bottom: 1px solid var(--bd-faint); }
+.notice p { margin: 0; }
+.notice nav { display: flex; flex-wrap: wrap; gap: var(--s-4); }
+.notice a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-nucleus); }
+.notice a:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
