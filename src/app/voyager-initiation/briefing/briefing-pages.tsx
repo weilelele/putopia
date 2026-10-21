@@ -15,11 +15,10 @@ const MEDIA = '/assets/voyager-briefing'
 const ORANGE = '227,82,5'
 const STAR = '245,245,245'
 
-/* 1 · The device: static, then a slow lamp over a loop of Console films (two are real footage). */
+/* 1 · The device: static, then a slow lamp over a loop of Console films (one is real footage). */
 const CONSOLE_CLIPS = [
-  { src: `${MEDIA}/console-real-1.mp4`, poster: `${MEDIA}/console-real-1.jpg` },
+  { src: `${MEDIA}/console-real.mp4`, poster: `${MEDIA}/console-real.jpg` },
   { src: `${MEDIA}/console-tuning.mp4` },
-  { src: `${MEDIA}/console-real-2.mp4` },
   { src: `${MEDIA}/console-fairy.mp4` },
   { src: `${MEDIA}/console-starry.mp4` },
 ]
@@ -65,8 +64,10 @@ export function DevicePage({ state }: { state: PageState }) {
     scene.loop(t => { if (snowing && t - last >= 40) { last = t; drawSnow(buffer, image, ctx, w, h, t) } })
     scene.later(() => { cv.style.transition = 'opacity .16s ease'; cv.style.opacity = '0' }, 1400)
     scene.later(() => { snowing = false; ctx.clearRect(0, 0, w, h) }, 1650)
-    // Each time the lamp goes fully dark (one animation iteration, every 3s) the film cuts to a different
-    // clip at a random moment. The next cut is prepared while the light is on, so it is already seeked.
+    // Each time the lamp goes fully dark (one animation iteration, every 3s) the film cuts to the next clip
+    // of a shuffled deck, at a random moment. Every clip plays once per round and a new round never starts
+    // with the clip on screen, so a clip only returns after all the others. The next cut is prepared while
+    // the light is on, so it is already seeked.
     clips.forEach(video => { video.loop = true })
     const randomMoment = (video: HTMLVideoElement) => {
       const length = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 5
@@ -78,9 +79,20 @@ export function DevicePage({ state }: { state: PageState }) {
     }
     let current: HTMLVideoElement | null = null
     let upcoming: HTMLVideoElement | null = null
+    let deck: HTMLVideoElement[] = []
+    const draw = () => {
+      if (!deck.length) {
+        deck = [...clips]
+        for (let i = deck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [deck[i], deck[j]] = [deck[j], deck[i]]
+        }
+        if (deck[0] === current) deck.push(deck.shift()!)
+      }
+      return deck.shift()!
+    }
     const prepare = () => {
-      const options = clips.filter(video => video !== current)
-      const next = options[Math.floor(Math.random() * options.length)]
+      const next = draw()
       upcoming = next
       attachVideo(next)
       whenReady(next, () => { if (upcoming === next) { try { next.currentTime = randomMoment(next) } catch { /* seek not ready */ } } })
@@ -94,7 +106,7 @@ export function DevicePage({ state }: { state: PageState }) {
       if (previous && previous !== next) releaseVideo(previous)
       prepare()
     }
-    upcoming = clips[Math.floor(Math.random() * clips.length)]
+    upcoming = draw()
     attachVideo(upcoming)
     const first = upcoming
     whenReady(first, () => { if (upcoming === first) { try { first.currentTime = randomMoment(first) } catch { /* seek not ready */ } } })
@@ -102,7 +114,7 @@ export function DevicePage({ state }: { state: PageState }) {
     return () => clips.forEach(releaseVideo)
   })
   return <BriefingPage state={state} className={s.p1} label="The device">
-    <div ref={film} className={s.film} role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: hands holding a real Console, a dial tuned to a robot library, a forest fairy and a starry hillside.">
+    <div ref={film} className={s.film} role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: hands tuning a real Console into a world, a dial tuned to a robot library, a forest fairy and a starry hillside.">
       {CONSOLE_CLIPS.map(clip => <video key={clip.src} data-src={clip.src} poster={clip.poster} muted playsInline preload="auto" />)}
       <span ref={lamp} className={s.lamp} />
       <canvas ref={canvas} className={s.fx} />
