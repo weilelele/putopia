@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  BRIEFING_PAGES, BRIEFING_VERSION, briefingAudience, briefingOffers, briefingRecord, briefingRegions, briefingSeats,
+  BRIEFING_PAGES, BRIEFING_VERSION, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, briefingRegions, briefingSeats,
   clampBriefingPage, readBriefingRecord, shouldAutoOpenBriefing,
 } from './initiation-briefing'
 
@@ -19,6 +19,14 @@ describe('Voyager briefing audience', () => {
     expect(shouldAutoOpenBriefing({ ...base, paymentStatus: 'pending' })).toBe(false)
     expect(shouldAutoOpenBriefing({ ...base, status: 'initiated' })).toBe(false)
     expect(shouldAutoOpenBriefing({ ...base, stored: 'not json' })).toBe(true)
+  })
+
+  it('opens from the direct link only for the same audience', () => {
+    expect(briefingLinkOpens('guest', '1')).toBe(true)
+    expect(briefingLinkOpens('legacy_pack', '1')).toBe(true)
+    expect(briefingLinkOpens('unpaid', undefined)).toBe(false)
+    expect(briefingLinkOpens('unpaid', 'yes')).toBe(false)
+    expect(briefingLinkOpens('initiated', '1')).toBe(false)
   })
 
   it('stores a bounded, versioned record', () => {

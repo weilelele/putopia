@@ -9,7 +9,7 @@ import { ClassifiedPage, CollectivePage, DevicePage, FrontLinePage, JoinPage, Me
 import s from './briefing.module.css'
 
 export type BriefingProps = {
-  trigger: 'auto' | 'replay'
+  trigger: 'auto' | 'replay' | 'link'
   members: InitiationPublicMember[]
   seats: { batch: string; capacity: number; initiated: number | null }
   regions: BriefingRegion[]
