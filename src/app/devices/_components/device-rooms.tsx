@@ -4,6 +4,7 @@ import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { McConsolePanel } from '@/components/mc-console-panel'
 import { getMyDeviceConsoles } from '@/lib/actions/orders'
 import { getDeviceCameraSource } from '@/lib/device-camera-source'
+import { DEVICE_REEL } from '@/lib/device-reel'
 import type { DeviceBatch } from '@/lib/device-batches'
 import { DeviceRoomSwitcher } from './device-room-switcher'
 
@@ -23,5 +24,5 @@ export async function DeviceRooms({ batches, initialSlug }: {
     ownedConsole: consoles.find((console) => console.order.device_batch_slug === batch.slug) ?? null,
   })))
 
-  return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} introduction={<McConsolePanel key="console-introduction" mcFunctions={mcFunctions} heroVideo={{ src: '/assets/device-reel-v2-20261016.mp4', poster: '/assets/device-reel-v2-20261016-poster.jpg' }} />} />
+  return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} introduction={<McConsolePanel key="console-introduction" mcFunctions={mcFunctions} heroVideo={DEVICE_REEL} />} />
 }

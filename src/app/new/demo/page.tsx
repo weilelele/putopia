@@ -16,8 +16,9 @@ import { ArchiveInput } from '@/components/archive-input'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { WorldChoiceCards } from '@/components/flame-slider'
 import { HudField } from '@/components/hud-field'
+import { DEVICE_REEL } from '@/lib/device-reel'
 
-const VIDEO_SRC = '/assets/device-reel.mp4'
+const VIDEO_SRC = DEVICE_REEL.src
 
 type Step = 'q1' | 'q2' | 'q3' | 'cta'
 
