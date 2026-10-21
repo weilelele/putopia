@@ -56,6 +56,7 @@ describe('purchased Pack delivery progress', () => {
     const snapshot = fixture('upgraded')
     snapshot.status = 'unknown'
     expect(initiationPackProgress(snapshot)).toMatchObject({ included: 0, pending: null })
+    expect(initiationPackProgress(snapshot).packs.some(pack => pack.label === 'Access paused' || pack.claimable)).toBe(false)
     expect(initiationPackProgress(fixture('granted'))).toMatchObject({ included: 0, pending: null })
   })
 })

@@ -14,7 +14,7 @@ export function initiationPackProgress(snapshot: InitiationSnapshot) {
   const packs = [1, 2, 3, 4].map(position => {
     const shipment = snapshot.shipments.find(item => item.position === position)
     const included = complete || (initial && position <= 2)
-    const paymentPaused = !included && !!shipment && shipment.status !== 'delivered'
+    const paymentPaused = !included && !!shipment && shipment.status !== 'delivered' && ['refunded', 'disputed', 'payment_review'].includes(snapshot.paymentStatus)
     const awaitingActivation = initial && position > 2 && !shipment
     const claimable = complete && snapshot.consoleClaim.eligible && position === 3 && shipment?.status === 'planned' && !snapshot.consoleClaim.claimed
     const label = shipment?.status === 'delivered' ? shipmentLabels.delivered
