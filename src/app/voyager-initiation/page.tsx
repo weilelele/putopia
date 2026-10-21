@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description: 'Become a Voyager. Physical packs, classified intel and a place in the Collective.',
 }
 
-export default async function VoyagerInitiationPage({ searchParams }: { searchParams: Promise<{ checkout?: string; from?: string; bundle?: string }> }) {
+export default async function VoyagerInitiationPage({ searchParams }: { searchParams: Promise<{ checkout?: string; from?: string; bundle?: string; briefing?: string }> }) {
   const [snapshot, query, members, batches] = await Promise.all([getInitiationSnapshot(), searchParams, getInitiationPublicMembers(), listPublicDeviceBatches().catch(() => [])])
-  return <InitiationView initialBundle={query.bundle === 'standard' ? 'standard' : 'initial'} snapshot={snapshot} members={members} deviceSource={deviceSourcePath(query.from)} checkoutCanceled={query.checkout === 'canceled'} beginCheckout={beginVoyagerInitiation} analyticsEnvironment={process.env.VERCEL_ENV ?? 'unknown'} regions={briefingRegions(batches)} />
+  return <InitiationView initialBundle={query.bundle === 'standard' ? 'standard' : 'initial'} snapshot={snapshot} members={members} deviceSource={deviceSourcePath(query.from)} checkoutCanceled={query.checkout === 'canceled'} beginCheckout={beginVoyagerInitiation} analyticsEnvironment={process.env.VERCEL_ENV ?? 'unknown'} regions={briefingRegions(batches)} briefingParam={query.briefing} />
 }

@@ -81,7 +81,7 @@
   },
   {
     "event": "initiation_brief_opened",
-    "description": "First-visit Voyager briefing opened over /voyager-initiation; trigger auto (first visit) or replay (Watch the briefing)",
+    "description": "Voyager briefing opened over /voyager-initiation; trigger auto (first visit), replay (Watch the briefing) or link (?briefing=1)",
     "file": "src/app/voyager-initiation/briefing/initiation-briefing.tsx"
   },
   {

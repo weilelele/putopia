@@ -17,6 +17,11 @@ export function briefingAudience(status: InitiationStatus): boolean {
   return status === 'guest' || status === 'unpaid' || status === 'legacy_pack'
 }
 
+/** `/voyager-initiation?briefing=1` opens the briefing on demand for the same audience, even if it was seen before. */
+export function briefingLinkOpens(status: InitiationStatus, value: string | undefined): boolean {
+  return value === '1' && briefingAudience(status)
+}
+
 /** Opens automatically once per browser and version, never over a payment outcome. */
 export function shouldAutoOpenBriefing(input: {
   status: InitiationStatus
