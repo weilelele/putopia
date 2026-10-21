@@ -6,7 +6,7 @@
 .sharedBenefits { margin-bottom: var(--s-5); }
 .sharedBenefits p { margin: 0; color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.5; }
 .sharedBenefits p.sharedTitle { color: var(--color-star); margin-bottom: var(--s-2); }
-.bundleList { display: grid; gap: var(--s-3); padding: 0; margin: 0; border: 0; min-width: 0; }
+.bundleList { display: grid; gap: var(--s-3); padding: 0; margin: 0 0 var(--s-5); border: 0; min-width: 0; }
 .bundle { display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-4); border: 1px solid var(--color-star-dim); cursor: pointer; }
 .bundle.selected { border-color: var(--color-nucleus); background: var(--color-void); }
 .bundle:has(input:focus-visible) { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
@@ -16,7 +16,6 @@
 .bundleHeading strong { font-size: var(--fs-h3); white-space: nowrap; color: var(--color-star); }
 .bundleDetail { font-size: var(--fs-body); line-height: 1.5; }
 .bundleNote { color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }
-.selectionSummary { margin: var(--s-5) 0 var(--s-3); color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }
 .total { display: flex; justify-content: space-between; gap: var(--s-4); align-items: baseline; margin: var(--s-5) 0 var(--s-4); font-size: var(--fs-body); }
 .total strong { font-size: var(--fs-h2); font-weight: 700; color: var(--color-nucleus); }
 .checkout { display: flex; justify-content: space-between; gap: var(--s-4); min-height: 60px; font-size: var(--fs-body); }

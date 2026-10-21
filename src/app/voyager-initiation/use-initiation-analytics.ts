@@ -11,7 +11,7 @@ import type { InitiationOrderKind } from '@/lib/initiation-types'
 export function useInitiationAnalytics({ kind, userId, internal, environment, eligible, modalOpen }: {
   kind: InitiationOrderKind; userId: string | null; internal: boolean; environment: string; eligible: boolean; modalOpen: boolean
 }) {
-  const priceRef = useRef<HTMLParagraphElement>(null)
+  const priceRef = useRef<HTMLElement>(null)
   const context = useRef<InitiationAnalyticsContext | null>(null)
   const pageCaptured = useRef(false)
   const exposed = useRef(new Set<InitiationOrderKind>())

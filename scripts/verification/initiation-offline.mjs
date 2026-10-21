@@ -110,6 +110,7 @@ check(calls.length, 0)
 check((await POST(request())).status, 200)
 let created = calls.find(c => c.create)
 check(created.create.line_items[0].price, 'price_standard')
+check(created.create.cancel_url, `${environment.NEXT_PUBLIC_SITE_URL}/voyager-initiation?bundle=standard&checkout=canceled`)
 check(created.create.client_reference_id, 'buyer')
 check(created.create.shipping_address_collection.allowed_countries.join(','), 'US')
 check(created.create.automatic_tax.enabled, false)
@@ -122,10 +123,12 @@ check(calls.filter(c => c.create).length, 1)
 reset(); legacy = 'old_paid_pack'; order.order_kind = 'legacy_upgrade'; order.amount = price.unit_amount = 46000; order.price_id = 'price_upgrade'; session.amount_total = 46000; session.metadata.order_kind = 'legacy_upgrade'
 check((await POST(request())).status, 200)
 check(calls.find(c => c.create).create.line_items[0].price, 'price_upgrade')
+check(calls.find(c => c.create).create.cancel_url, `${environment.NEXT_PUBLIC_SITE_URL}/voyager-initiation?bundle=standard&checkout=canceled`)
 // Current Initial uses its dedicated Price; ownership is resolved server-side.
 reset(); order.order_kind = session.metadata.order_kind = 'initial'; order.amount = price.unit_amount = session.amount_total = 3800; order.price_id = 'price_initial'
 check((await POST(request(undefined, 'initial'))).status, 200)
 check(calls.find(c => c.create).create.line_items[0].price, 'price_initial')
+check(calls.find(c => c.create).create.cancel_url, `${environment.NEXT_PUBLIC_SITE_URL}/voyager-initiation?bundle=initial&checkout=canceled`)
 reset(); initial = 'initial_paid'; order.order_kind = session.metadata.order_kind = 'legacy_upgrade'; order.amount = price.unit_amount = session.amount_total = 46000; order.initial_order_id = initial; order.price_id = 'price_upgrade'
 check((await POST(request(undefined, 'standard'))).status, 200)
 check(calls.find(c => c.rpc === 'reserve_initiation_v2').args.p_kind, 'legacy_upgrade')
