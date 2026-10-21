@@ -6,6 +6,7 @@ import { hasGlobalNavigation } from '@/lib/ui-navigation'
 import { PrimaryNavigation } from './primary-navigation'
 import SmartImage from './smart-image'
 import { ArchiveButton } from './archive-button'
+import { REQUEST_ACCESS_HREF } from '@/lib/request-access'
 export function Sidebar() {
   const path = usePathname()
   const { user, loading, logout } = useAuth()
@@ -17,7 +18,7 @@ export function Sidebar() {
     <div className="sidebar-auth">
       {loading ? <p className="sidebar-auth-name">VERIFYING ACCESS</p> : <><div className="sidebar-identity">{!guest && <span className="sidebar-avatar">{user.avatarUrl ? <SmartImage src={user.avatarUrl} alt="" width={36} height={36} sizes="36px" /> : (user.name ?? 'Voyager').slice(0,2).toUpperCase()}</span>}<div><span className="sidebar-auth-name">{guest ? 'WELCOME, EXPLORER' : user.name ?? 'Voyager'}</span><span className="sidebar-auth-role">{user.role.toUpperCase()}</span></div></div>
       <div className="sidebar-account-actions"><Link className="sidebar-auth-btn" href={guest ? '/login' : '/voyagers'}>{guest ? 'LOG IN' : 'ACCOUNT'}</Link>{!guest && <ArchiveButton variant="ghost" onClick={() => logout()}>LOG OUT</ArchiveButton>}</div>
-      {guest && <Link href="/new" className="sidebar-apply">REQUEST ACCESS</Link>}</>}
+      {guest && <Link href={REQUEST_ACCESS_HREF} className="sidebar-apply">REQUEST ACCESS</Link>}</>}
     </div>
   </aside>
 }

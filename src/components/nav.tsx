@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context'
 import type { AuthUser } from '@/lib/auth-context'
 import { RoleBadge } from './role-badge'
 import SmartImage from './smart-image'
+import { REQUEST_ACCESS_HREF } from '@/lib/request-access'
 
 const RadarIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -225,7 +226,7 @@ export function Nav() {
       {user.role === 'guest' && (
         <div style={{ margin: '0 10px 12px' }}>
           <Link
-            href="/new"
+            href={REQUEST_ACCESS_HREF}
             style={{
               display: 'block', textAlign: 'center',
               fontSize: 'var(--fs-caption)', letterSpacing: '0.15em',

@@ -18,6 +18,11 @@ import { DEVICE_REEL } from '@/lib/device-reel'
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v3'
 
+/* REQUEST ACCESS buttons land on ?step=cta with no questions answered, so the
+   variant's "Yes, it's you." reply would answer nothing — open plainly instead. */
+const DIRECT_AFFIRM_LINE1 = 'Join the Multiverse Collective.'
+const DIRECT_INVITATION   = 'Leave your email below to apply for your seat.'
+
 /* ─── Email Providers ────────────────────────────── */
 const EMAIL_PROVIDERS: Record<string, { name: string; url: string }> = {
   'gmail.com':      { name: 'Gmail',        url: 'https://mail.google.com/mail/' },
@@ -154,10 +159,12 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     const normalizedEmail = email.trim().toLowerCase()
     const result = await submitApplication({
       email:                normalizedEmail,
-      reason:               urgencyToReason(urgency),
-      location:             worldText,
+      // REQUEST ACCESS buttons open ?step=cta directly, so the questions may be
+      // unanswered — store nulls rather than a fake "urgency 0" reading.
+      reason:               urgencyTouched ? urgencyToReason(urgency) : 'Request access (questions skipped)',
+      location:             worldText || null,
       console_interest:     consoleInterest || null,
-      join_urgency:         urgency,
+      join_urgency:         urgencyTouched ? urgency : null,
       utm_source:           utm.utm_source,
       utm_medium:           utm.utm_medium,
       utm_campaign:         utm.utm_campaign,
@@ -183,7 +190,8 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
       fbclid:       utm.fbclid       ?? undefined,
       console_interest: consoleInterest,
       world_selected: emotion,
-      urgency_value: urgency,
+      urgency_value: urgencyTouched ? urgency : undefined,
+      questions_skipped: !urgencyTouched,
       onboarding_version: ONBOARDING_VERSION,
       onboarding_variant: v.key,
     })
@@ -314,9 +322,9 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
                   onSubmit={handleSubmit}
                   showConfirm={showConfirm}
                   awaitClick={awaitClick}
-                  affirmLine1={v.affirmLine1}
-                  affirmLine2={v.affirmLine2}
-                  invitation={v.ctaInvitation}
+                  affirmLine1={initStep === 'cta' ? DIRECT_AFFIRM_LINE1 : v.affirmLine1}
+                  affirmLine2={initStep === 'cta' ? '' : v.affirmLine2}
+                  invitation={initStep === 'cta' ? DIRECT_INVITATION : v.ctaInvitation}
                   ctaLabel={v.ctaLabel}
                   submitError={submitError}
                 />
@@ -587,7 +595,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
         }}>
           {affirmLine1}
         </p>
-        <p style={{
+        {affirmLine2 && <p style={{
           fontFamily: 'var(--font-body)', fontWeight: 500,
           fontSize: 'var(--fs-body)', lineHeight: 1.6,
           color: 'var(--color-star-dim)', margin: 0,
@@ -596,7 +604,7 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
           transition: 'opacity 0.45s ease, transform 0.45s ease',
         }}>
           {affirmLine2}
-        </p>
+        </p>}
       </div>
 
       {/* Invitation + form — fades in after affirmation */}

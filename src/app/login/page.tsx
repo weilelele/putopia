@@ -9,6 +9,7 @@ import posthog from 'posthog-js'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
+import { REQUEST_ACCESS_HREF } from '@/lib/request-access'
 
 export default function LoginPage() {
   return (
@@ -95,7 +96,7 @@ function LoginPageContent() {
         </form>
 
         <div className="pilot-login-access">
-          <ArchiveLinkButton fullWidth href="/new">
+          <ArchiveLinkButton fullWidth href={REQUEST_ACCESS_HREF}>
             REQUEST ACCESS
           </ArchiveLinkButton>
         </div>
