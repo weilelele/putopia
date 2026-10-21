@@ -78,5 +78,25 @@
     "event": "calibration_closed",
     "description": "Explicit close, includes started/completed flags",
     "file": "src/app/voyager-initiation/initiation-view.tsx"
+  },
+  {
+    "event": "initiation_brief_opened",
+    "description": "First-visit Voyager briefing opened over /voyager-initiation; trigger auto (first visit) or replay (Watch the briefing)",
+    "file": "src/app/voyager-initiation/briefing/initiation-briefing.tsx"
+  },
+  {
+    "event": "initiation_brief_page_viewed",
+    "description": "Briefing page shown; page_index 1-9, page_id, via open/next/back/tap/swipe/key/skip",
+    "file": "src/app/voyager-initiation/briefing/initiation-briefing.tsx"
+  },
+  {
+    "event": "initiation_brief_detail_opened",
+    "description": "Briefing detail opened: member_profile, pack_1-4 or learn_more",
+    "file": "src/app/voyager-initiation/briefing/initiation-briefing.tsx"
+  },
+  {
+    "event": "initiation_brief_closed",
+    "description": "Briefing dismissed; outcome closed/completed/learn_more/chose_offer, last_page, max_page, elapsed_ms. An offer choice continues as initiation_cta_clicked with surface=brief",
+    "file": "src/app/voyager-initiation/briefing/initiation-briefing.tsx"
   }
 ]
