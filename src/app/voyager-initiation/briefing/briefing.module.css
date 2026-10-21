@@ -32,6 +32,7 @@
   pointer-events: none;
 }
 .top > * { pointer-events: auto; }
+.topEnd { display: flex; align-items: center; }
 .iconButton { width: 44px; height: 44px; display: grid; place-items: center; background: none; border: 0; color: var(--color-star); cursor: pointer; }
 .skip { min-height: 44px; padding: 0 12px; background: none; border: 0; color: var(--color-star); font: inherit; font-size: var(--fs-label); letter-spacing: .04em; opacity: .8; cursor: pointer; }
 .skip:hover { opacity: 1; }
