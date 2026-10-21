@@ -5,7 +5,7 @@ import { ArrowRight, ChevronLeft, Volume2, VolumeX, X } from 'lucide-react'
 import { BRIEFING_PAGES, clampBriefingPage, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 import type { InitiationPublicMember } from '@/lib/initiation-types'
 import type { PageState } from './briefing-kit'
-import { useBriefingSound } from './briefing-sound'
+import { useBriefingSound } from '@/hooks/use-briefing-sound'
 import { ClassifiedPage, CollectivePage, DevicePage, FrontLinePage, JoinPage, MembersPage, PacksPage, RecruitingPage, VotesPage } from './briefing-pages'
 import s from './briefing.module.css'
 
