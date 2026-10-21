@@ -2,18 +2,17 @@
 
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react'
 import { ArrowRight, ChevronLeft, Volume2, VolumeX, X } from 'lucide-react'
-import { BRIEFING_PAGES, clampBriefingPage, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
+import { BRIEFING_PAGES, clampBriefingPage, type BriefingOffer, type BriefingOutcome } from '@/lib/initiation-briefing'
 import type { InitiationPublicMember } from '@/lib/initiation-types'
 import type { PageState } from './briefing-kit'
 import { useBriefingSound } from './briefing-sound'
-import { ClassifiedPage, CollectivePage, DevicePage, FrontLinePage, JoinPage, MembersPage, PacksPage, RecruitingPage, VotesPage } from './briefing-pages'
+import { ClassifiedPage, CollectivePage, DevicePage, JoinPage, MembersPage, PacksPage, RecruitingPage, VotesPage } from './briefing-pages'
 import s from './briefing.module.css'
 
 export type BriefingProps = {
   trigger: 'auto' | 'replay' | 'link'
   members: InitiationPublicMember[]
   seats: { batch: string; capacity: number; initiated: number | null }
-  regions: BriefingRegion[]
   offers: BriefingOffer[]
   busy: boolean
   unavailable: string | null
@@ -28,7 +27,7 @@ const LAST = BRIEFING_PAGES.length - 1
 const LEAVE_MS = 260
 
 /** First-visit briefing over /voyager-initiation. Mounted only while open; a native modal dialog keeps the page and app chrome inert behind it. */
-export function InitiationBriefing({ trigger, members, seats, regions, offers, busy, unavailable, capture, onChoose, onClose }: BriefingProps) {
+export function InitiationBriefing({ trigger, members, seats, offers, busy, unavailable, capture, onChoose, onClose }: BriefingProps) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [nav, setNav] = useState<NavState>(() => ({ page: 0, leaving: -1, dir: 1, visits: BRIEFING_PAGES.map((_, i) => i === 0 ? 1 : 0), maxPage: 0 }))
   const openedAt = useRef(0)
@@ -109,15 +108,14 @@ export function InitiationBriefing({ trigger, members, seats, regions, offers, b
         <RecruitingPage state={state(3)} batch={seats.batch} capacity={seats.capacity} initiated={seats.initiated} />
         <ClassifiedPage state={state(4)} />
         <VotesPage state={state(5)} />
-        <FrontLinePage state={state(6)} regions={regions} />
-        <PacksPage state={state(7)} onPack={index => capture('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[7], topic: `pack_${index + 1}` })} />
-        <JoinPage state={state(8)} offers={offers} busy={busy} unavailable={unavailable}
+        <PacksPage state={state(6)} onPack={index => capture('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[6], topic: `pack_${index + 1}` })} />
+        <JoinPage state={state(7)} offers={offers} busy={busy} unavailable={unavailable}
           onChoose={offer => onChoose(offer, nav.page)}
-          onLearnMore={() => { capture('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[8], topic: 'learn_more' }); close('learn_more') }} />
+          onLearnMore={() => { capture('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[LAST], topic: 'learn_more' }); close('learn_more') }} />
       </div>
       <div className={s.top}>
         {first
-          ? <button type="button" className={s.iconButton} aria-label="Close briefing" onClick={() => close('closed')}><X size={20} aria-hidden /></button>
+          ? <button type="button" className={s.iconButton} aria-label="Close briefing and go to the dashboard" onClick={() => close('exited')}><X size={20} aria-hidden /></button>
           : <button type="button" className={s.iconButton} aria-label="Previous page" onClick={() => go(nav.page - 1, 'back')}><ChevronLeft size={22} aria-hidden /></button>}
         <div className={s.topEnd}>
           <button type="button" className={s.iconButton} data-sound-toggle aria-label={sound.on ? 'Turn music off' : 'Turn music on'}

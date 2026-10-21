@@ -1,4 +1,3 @@
-import { canClaimDeviceBatch, type DeviceBatchStatus, DEVICE_BATCH_PHASES } from './device-batches'
 import type { InitiationPaymentStatus, InitiationStatus } from './initiation-types'
 import { INITIATION_PRICES, type InitiationOrderKind } from './initiation-pricing'
 
@@ -8,8 +7,8 @@ export const BRIEFING_STORAGE_KEY = 'mc:initiation:briefing'
 
 export const BRIEFING_PAGES = [
   'brief_01_device', 'brief_02_collective', 'brief_03_members', 'brief_04_recruiting', 'brief_05_classified',
-  'brief_06_votes', 'brief_07_console', 'brief_08_packs', 'brief_09_join',
-] as const
+  'brief_06_votes', 'brief_08_packs', 'brief_09_join',
+] as const // Ids stay stable for analytics; brief_07_console (the front line) was removed 2026-10-22.
 export type BriefingPageId = typeof BRIEFING_PAGES[number]
 
 /** People who still decide whether to join. Members, granted accounts and unreadable records never get it. */
@@ -35,7 +34,7 @@ export function shouldAutoOpenBriefing(input: {
 }
 
 export type BriefingRecord = { version: string; outcome: BriefingOutcome; page: number }
-export type BriefingOutcome = 'closed' | 'skipped' | 'completed' | 'learn_more' | 'chose_offer'
+export type BriefingOutcome = 'closed' | 'exited' | 'skipped' | 'completed' | 'learn_more' | 'chose_offer'
 
 export function readBriefingRecord(raw: string | null): BriefingRecord | null {
   if (!raw) return null
@@ -103,23 +102,6 @@ export function briefingOffers(status: InitiationStatus): BriefingOffer[] {
     id: 'standard', label: 'COMPLETE', title: INITIATION_PRICES.standard.name, price: dollars('standard'),
     points: [membership, 'All four packs', 'Your own Multiverse Console'], note: saving > 0 ? `Save $${saving} versus upgrading later.` : 'Pay once. No recurring fee.', recommended: true,
   }]
-}
-
-export type BriefingRegion = { name: string; open: boolean; phase: number; phases: number; phaseLabel: string }
-
-const PHASE_LABEL: Record<DeviceBatchStatus, string> = { searching: 'Searching', claiming: 'Claiming', pack_one: 'Pack 1', pack_two: 'Pack 2', console: 'Console' }
-
-/** Public batch facts only: city, whether a claim is open, and the published phase. */
-export function briefingRegions(batches: { location: string; status: DeviceBatchStatus }[], limit = 5): BriefingRegion[] {
-  const seen = new Set<string>()
-  const regions: BriefingRegion[] = []
-  for (const batch of batches) {
-    const name = (batch.location.split(',')[0] ?? '').trim().toUpperCase()
-    if (!name || seen.has(name)) continue
-    seen.add(name)
-    regions.push({ name, open: canClaimDeviceBatch(batch.status), phase: DEVICE_BATCH_PHASES.indexOf(batch.status) + 1, phases: DEVICE_BATCH_PHASES.length, phaseLabel: PHASE_LABEL[batch.status] })
-  }
-  return regions.sort((a, b) => Number(b.open) - Number(a.open)).slice(0, limit)
 }
 
 /** Seats for the recruiting ring; an unknown count shows the ring without taken seats. */

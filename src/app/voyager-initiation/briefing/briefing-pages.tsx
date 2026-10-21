@@ -6,7 +6,7 @@ import SmartImage from '@/components/smart-image'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import { MemberProfileSheet } from '@/components/member-profile-sheet'
 import { memberInitials } from '@/lib/member-initials'
-import { briefingSeats, type BriefingOffer, type BriefingRegion } from '@/lib/initiation-briefing'
+import { briefingSeats, type BriefingOffer } from '@/lib/initiation-briefing'
 import type { InitiationPublicMember } from '@/lib/initiation-types'
 import { BriefingPage, Headline, Kicker, attachVideo, clamp, ease, easeOut, fitCanvas, lerp, releaseVideo, rise, useScene, type PageState } from './briefing-kit'
 import s from './briefing.module.css'
@@ -436,46 +436,6 @@ export function VotesPage({ state }: { state: PageState }) {
         </li>
       })}
     </ul>
-  </BriefingPage>
-}
-
-/* 7 · The front line: the Console film and each region's published phase. */
-const GLYPHS = '█▓▒░#%&@$*'
-
-export function FrontLinePage({ state, regions }: { state: PageState; regions: BriefingRegion[] }) {
-  const video = useRef<HTMLVideoElement>(null)
-  const list = useRef<HTMLUListElement>(null)
-  useScene(state.active, (scene, reduced) => {
-    const reel = video.current!
-    if (!reduced) { attachVideo(reel); void reel.play().catch(() => {}) }
-    const locked = Array.from(list.current?.querySelectorAll<HTMLElement>('[data-scramble]') ?? [])
-    if (!reduced) scene.every(() => locked.forEach(el => {
-      const text = el.dataset.scramble ?? ''
-      el.textContent = Array.from(text).map(c => Math.random() < .35 ? GLYPHS[Math.floor(Math.random() * GLYPHS.length)] : c).join('')
-    }), 120)
-    return () => { releaseVideo(reel); locked.forEach(el => { el.textContent = el.dataset.scramble ?? '' }) }
-  })
-  return <BriefingPage state={state} className={s.p7} label="The front line">
-    <video ref={video} className={s.reel} data-src={`${MEDIA}/console-reel.mp4`} poster="/assets/device-reel-v2-20261016-poster.jpg" muted playsInline loop preload="auto"
-      aria-label="A hand turns the dial of a Multiverse Console until a parallel world appears on its screen" />
-    <div className={`${s.copy} ${s.p7Panel}`}>
-      <Kicker text="THE FRONT LINE" />
-      <Headline text="Above all, a Console of your own." base={600} />
-    </div>
-    {regions.length > 0 && <ul ref={list} className={s.regions} aria-label="Console regions">
-      {regions.map((region, k) => <li key={region.name} className={region.open ? undefined : s.locked} style={{ '--k': k } as CSSProperties}>
-        <div className={s.regionRow}><b>{region.name}</b>
-          {region.open ? <span className={`${s.regionState} ${s.regionOpen}`}>OPEN TO CLAIM</span>
-            : <span className={s.regionState} data-scramble="CLASSIFIED" aria-label="Classified">CLASSIFIED</span>}
-        </div>
-        {region.open && <>
-          <div className={s.phases} style={{ '--phases': region.phases } as CSSProperties} aria-hidden>
-            {Array.from({ length: region.phases }, (_, i) => <i key={i} data-done={i < region.phase - 1 || undefined} data-now={i === region.phase - 1 || undefined} />)}
-          </div>
-          <span className={s.meta}>Phase {region.phase} of {region.phases} · {region.phaseLabel}</span>
-        </>}
-      </li>)}
-    </ul>}
   </BriefingPage>
 }
 
