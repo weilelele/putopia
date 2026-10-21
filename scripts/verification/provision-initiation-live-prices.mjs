@@ -7,7 +7,8 @@ const key=process.env.STRIPE_SECRET_KEY;
 if (!key?.startsWith('sk_live_')) throw new Error('Live-mode Stripe credential is required; no changes made');
 const stripe=new Stripe(key,{maxNetworkRetries:1,timeout:15000});
 const product=await stripe.products.retrieve(process.argv[3]);
-if(product.deleted||!product.active||!product.livemode||product.metadata.product_type!=='voyager_initiation') throw new Error('Dedicated live Initiation product mismatch');
+// The existing production product has no metadata; verify its actual catalog identity.
+if(product.deleted||!product.active||!product.livemode||product.name!=='Voyager Initiation') throw new Error('Dedicated live Initiation product mismatch');
 const prices={};
 for (const [kind,offer] of Object.entries(INITIATION_PRICES)) {
  const lookup=`voyager_initiation_${kind}_inclusive_${INITIATION_PRICING_VERSION}`;
