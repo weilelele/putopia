@@ -15,6 +15,7 @@
 ───────────────────────────────────────────────────── */
 
 import type { OnboardingVariantRow } from '@/types/database'
+import { DEVICE_REEL } from '@/lib/device-reel'
 
 export interface OnboardingCopy {
   /* Headlines, by question position in the live flow:
@@ -52,7 +53,7 @@ export const FALLBACK_COPY: OnboardingCopy = {
   affirmLine2:   "You are the Voyager we've been looking for.",
   ctaInvitation: 'Leave your email below to apply for your seat in our collective and secure your Multiverse Console.',
   ctaLabel:      'CONFIRM MY VOYAGER IDENTITY',
-  videoQ1:       '/assets/device-reel.mp4',
+  videoQ1:       DEVICE_REEL.src,
   videoQ2:       '',   // blank = continue the previous step's video
   videoCta:      '',
 }

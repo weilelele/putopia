@@ -13,6 +13,7 @@ import { submitApplication } from '@/lib/actions/applications'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveButton } from '@/components/archive-button'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
+import { DEVICE_REEL } from '@/lib/device-reel'
 
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v3'
@@ -366,6 +367,8 @@ function VideoSection({ src }: { src: string }) {
       {/* ── Video ── */}
       <video
         src={src}
+        poster={src === DEVICE_REEL.src ? DEVICE_REEL.poster : undefined}
+        preload="metadata"
         autoPlay muted loop playsInline
         style={{
           width: '100%', display: 'block',
