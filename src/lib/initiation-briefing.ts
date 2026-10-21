@@ -50,6 +50,28 @@ export function briefingRecord(outcome: BriefingOutcome, page: number): string {
   return JSON.stringify({ version: BRIEFING_VERSION, outcome, page: Math.max(0, Math.min(BRIEFING_PAGES.length - 1, Math.trunc(page))) })
 }
 
+/** Background theme: an original 96 s loop (scripts/audio/briefing-theme.py), on by default and started by the first gesture. */
+export const BRIEFING_THEME = { src: '/assets/voyager-briefing/briefing-theme.mp3', loopSeconds: 96, volume: .6 } as const
+export const BRIEFING_SOUND_KEY = 'mc:initiation:briefing-sound'
+
+/** Sound stays on unless this browser turned it off; unreadable storage keeps the default. */
+export function briefingSoundOn(stored: string | null): boolean {
+  return stored !== 'off'
+}
+
+/**
+ * Seconds to loop inside a decoded theme. Some decoders keep the MP3 encoder's leading silence, so the loop starts at the
+ * first audible sample (the theme never starts silent) and runs exactly `loopSeconds`, ignoring trailing padding.
+ */
+export function briefingLoopWindow(samples: ArrayLike<number>, sampleRate: number, loopSeconds: number): { start: number; end: number } {
+  const duration = samples.length / sampleRate
+  const search = Math.min(samples.length, Math.round(sampleRate * .25))
+  let first = 0
+  while (first < search && Math.abs(samples[first]) < 1e-4) first++
+  const start = first < search ? first / sampleRate : 0
+  return { start, end: Math.min(duration, start + loopSeconds) }
+}
+
 export function clampBriefingPage(page: number): number {
   return Math.max(0, Math.min(BRIEFING_PAGES.length - 1, Math.trunc(page)))
 }
