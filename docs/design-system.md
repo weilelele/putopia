@@ -359,3 +359,9 @@ Feed NPC publishing 补充：已注册的 human Architect 发帖时可选择本�
 Feed 分享入口修订（用户确认）：右下浮动入口使用「＋ Share an update」，52px 高、16px/400、橙底深蓝字、单个右上 10px 切角。复用 ArchiveButton 并作此入口的局部尺寸与表面变体；仅裁切背景，保留完整键盘焦点轮廓。编辑器提示为 “What’s happening in your world?”，最终提交仍为 POST。权限说明不添加装饰图标。
 
 2026-10-14 已确认补充：Feed 游客只保留紧凑页头品牌，不再显示正文内的大字标、图形 Logo 或品牌介绍标语；居中显示 Join the conversation、简短说明和 Request Access / Log In。Feed 文字与身份选择使用账户/任务隔离的 sessionStorage 草稿，24 小时失效；未确认提交保留请求编号直到明确处理，刷新后恢复前提示。原始图片不持久化，恢复时提示重新选择；已提交图片重试校验内容摘要。
+
+### Voyager Initiation 首访简报 · 2026-10-21
+
+用户确认的例外：未付费访客（游客、Applicant、$12 老用户）首次进入 `/voyager-initiation` 时，自动弹出全屏 9 页简报（`src/app/voyager-initiation/briefing/`）。每页是独立构图，允许叙事型动效：进场动画之后持续播放（灯光 3 秒明灭、视频循环、成员头像淡入淡出、座位环缓慢旋转、手电光在档案问题间移动、提案轮流展开），以及画布绘制的电视雪花、冲击波和柔边手电光。这些动效只用于该简报，不推广到其他页面；颜色仍限于橙、深空蓝与灰白，字体仍为 Courier Prime。系统开启「减少动态」时显示静态画面。
+
+结构：顶部左侧返回/关闭、右侧 Skip；右下角紧凑 NEXT（44px 高）；最后一页隐藏 NEXT，由两个付费选项卡片（与结算区同一组价格与选项）和 Learn more 承担动作。点屏幕左右侧、左右滑动、键盘方向键都可翻页。关闭、Skip 后到最后一页、Learn more 或选择付费项都会在本浏览器记住，之后不再自动弹出；页面 intro 区的「Watch the briefing」可随时重看。成员页只使用公开的 S26 成员头像与昵称，点击打开现有成员资料弹窗；设备地区页使用已发布 Batch 的城市与阶段，未开放地区显示 CLASSIFIED。

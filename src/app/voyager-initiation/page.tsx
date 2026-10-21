@@ -4,6 +4,8 @@ import { getInitiationSnapshot } from '@/lib/actions/initiation'
 import { InitiationView } from './initiation-view'
 import { beginVoyagerInitiation } from './actions'
 import { deviceSourcePath } from './navigation'
+import { listPublicDeviceBatches } from '@/lib/device-batch-repository'
+import { briefingRegions } from '@/lib/initiation-briefing'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
@@ -12,6 +14,6 @@ export const metadata: Metadata = {
 }
 
 export default async function VoyagerInitiationPage({ searchParams }: { searchParams: Promise<{ checkout?: string; from?: string; bundle?: string }> }) {
-  const [snapshot, query, members] = await Promise.all([getInitiationSnapshot(), searchParams, getInitiationPublicMembers()])
-  return <InitiationView initialBundle={query.bundle === 'standard' ? 'standard' : 'initial'} snapshot={snapshot} members={members} deviceSource={deviceSourcePath(query.from)} checkoutCanceled={query.checkout === 'canceled'} beginCheckout={beginVoyagerInitiation} analyticsEnvironment={process.env.VERCEL_ENV ?? 'unknown'} />
+  const [snapshot, query, members, batches] = await Promise.all([getInitiationSnapshot(), searchParams, getInitiationPublicMembers(), listPublicDeviceBatches().catch(() => [])])
+  return <InitiationView initialBundle={query.bundle === 'standard' ? 'standard' : 'initial'} snapshot={snapshot} members={members} deviceSource={deviceSourcePath(query.from)} checkoutCanceled={query.checkout === 'canceled'} beginCheckout={beginVoyagerInitiation} analyticsEnvironment={process.env.VERCEL_ENV ?? 'unknown'} regions={briefingRegions(batches)} />
 }
