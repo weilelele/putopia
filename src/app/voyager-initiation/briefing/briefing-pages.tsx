@@ -53,8 +53,7 @@ export function DevicePage({ state }: { state: PageState }) {
     const cv = canvas.current!, light = lamp.current!
     clips.forEach(video => { releaseVideo(video); delete video.dataset.show })
     delete light.dataset.on
-    if (reduced) { clips[0].dataset.show = ''; cv.style.opacity = '0'; return }
-    attachVideo(clips[0])
+    if (reduced) { attachVideo(clips[0]); clips[0].dataset.show = ''; cv.style.opacity = '0'; return }
     cv.style.transition = ''
     cv.style.opacity = '1'
     const { ctx, w, h } = fitCanvas(cv)
@@ -66,27 +65,44 @@ export function DevicePage({ state }: { state: PageState }) {
     scene.loop(t => { if (snowing && t - last >= 40) { last = t; drawSnow(buffer, image, ctx, w, h, t) } })
     scene.later(() => { cv.style.transition = 'opacity .16s ease'; cv.style.opacity = '0' }, 1400)
     scene.later(() => { snowing = false; ctx.clearRect(0, 0, w, h) }, 1650)
-    let index = 0
-    const showNext = () => {
-      const current = clips[index % clips.length]
-      index++
-      const upcoming = clips[index % clips.length]
-      attachVideo(current)
-      clips.forEach(video => { if (video === current) video.dataset.show = ''; else delete video.dataset.show })
-      scene.later(() => { clips.forEach(video => { if (video !== current && video !== upcoming) releaseVideo(video) }); attachVideo(upcoming) }, 700)
-      try { current.currentTime = 0 } catch { /* metadata not loaded yet */ }
-      void current.play().catch(() => {})
-      let finished = false
-      const next = () => { if (finished) return; finished = true; showNext() }
-      scene.listen(current, 'ended', next)
-      const seconds = Number.isFinite(current.duration) && current.duration > 0 ? current.duration : 6
-      scene.later(() => { if (current.ended || current.paused) next() }, seconds * 1000 + 1200)
+    // Each time the lamp goes fully dark (one animation iteration, every 3s) the film cuts to a different
+    // clip at a random moment. The next cut is prepared while the light is on, so it is already seeked.
+    clips.forEach(video => { video.loop = true })
+    const randomMoment = (video: HTMLVideoElement) => {
+      const length = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 5
+      return .3 + Math.random() * Math.max(.1, length - 1.1)
     }
-    scene.later(() => { showNext(); light.dataset.on = '' }, 1600)
+    const whenReady = (video: HTMLVideoElement, fn: () => void) => {
+      if (video.readyState >= 1) fn()
+      else video.addEventListener('loadedmetadata', () => { if (scene.alive()) fn() }, { once: true })
+    }
+    let current: HTMLVideoElement | null = null
+    let upcoming: HTMLVideoElement | null = null
+    const prepare = () => {
+      const options = clips.filter(video => video !== current)
+      const next = options[Math.floor(Math.random() * options.length)]
+      upcoming = next
+      attachVideo(next)
+      whenReady(next, () => { if (upcoming === next) { try { next.currentTime = randomMoment(next) } catch { /* seek not ready */ } } })
+    }
+    const cut = () => {
+      const next = upcoming ?? clips[0]
+      const previous = current
+      current = next
+      clips.forEach(video => { if (video === next) video.dataset.show = ''; else delete video.dataset.show })
+      void next.play().catch(() => {})
+      if (previous && previous !== next) releaseVideo(previous)
+      prepare()
+    }
+    upcoming = clips[Math.floor(Math.random() * clips.length)]
+    attachVideo(upcoming)
+    const first = upcoming
+    whenReady(first, () => { if (upcoming === first) { try { first.currentTime = randomMoment(first) } catch { /* seek not ready */ } } })
+    scene.later(() => { cut(); light.dataset.on = ''; scene.listen(light, 'animationiteration', cut) }, 1600)
     return () => clips.forEach(releaseVideo)
   })
   return <BriefingPage state={state} className={s.p1} label="The device">
-    <div ref={film} className={s.film} role="img" aria-label="Under a slow, pulsing light: hands hold a real Multiverse Console as messages and worlds appear on its screen, followed by Consoles tuned to a robot library, a forest fairy and a starry hillside.">
+    <div ref={film} className={s.film} role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: hands holding a real Console, a dial tuned to a robot library, a forest fairy and a starry hillside.">
       {CONSOLE_CLIPS.map(clip => <video key={clip.src} data-src={clip.src} poster={clip.poster} muted playsInline preload="auto" />)}
       <span ref={lamp} className={s.lamp} />
       <canvas ref={canvas} className={s.fx} />
@@ -453,7 +469,7 @@ export function FrontLinePage({ state, regions }: { state: PageState; regions: B
 
 /* 8 · Packs: the Console leads; tap any month to see that pack. */
 const PACKS = [
-  { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', short: 'Initial Pack', image: `${MEDIA}/pack-1.jpg`, alt: 'A welcome letter and Voyager badge on a desk', description: 'Welcome letter and exclusive member badge. A physical invitation into the Collective.' },
+  { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', short: 'Initial Pack', image: `${MEDIA}/pack-1.jpg`, focus: '50% 75%', alt: 'A welcome letter and Voyager badge on a desk', description: 'Welcome letter and exclusive member badge. A physical invitation into the Collective.' },
   { month: 'NOV', meta: 'PACK 2 · NOV 2026', title: 'Mysterious Widgets', short: 'Widgets', image: `${MEDIA}/pack-2.jpg`, alt: 'A metal cube, brass cylinder and dark mineral on a wooden desk', description: 'Small widgets that strengthen and amplify signals.' },
   { month: 'DEC', meta: 'PACK 3 · DEC 2026', title: 'Multiverse Console', short: 'Console', image: `${MEDIA}/console-workshop.jpg`, alt: 'A Multiverse Console on a workshop bench, its screen showing a parallel world', description: 'Your own device for exploring and interacting with parallel worlds.' },
   { month: 'JAN', meta: 'PACK 4 · JAN 2027', title: 'A Fourth Delivery', short: 'Fourth delivery', image: `${MEDIA}/pack-4.jpg`, alt: 'A sealed envelope awaiting its reveal', description: 'A future shipment for this cohort. Contents to be announced.' },
@@ -468,14 +484,16 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
       <Headline text="Four packs come to your door." />
     </div>
     <div className={s.gut}>
-      <div className={s.packHero}>
-        <span key={pack.image} className={s.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 460px) 430px, 92vw" preload /></span>
+      <div className={s.packCard}>
+        <div className={s.packHero}>
+          <span key={pack.image} className={s.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 460px) 430px, 92vw" preload style={pack.focus ? { objectPosition: pack.focus } : undefined} /></span>
+        </div>
         <div className={s.packCaption} aria-live="polite"><span>{pack.meta}</span><b>{pack.title}</b><p>{pack.description}</p></div>
       </div>
       <div className={s.packStrip}>
         {PACKS.map((item, k) => <button key={item.month} type="button" className={s.packThumb} aria-pressed={selected === k} style={{ '--k': k } as CSSProperties}
           onClick={() => { setSelected(k); onPack(k) }}>
-          <SmartImage src={item.image} alt="" sizes="96px" width={96} height={96} preload />
+          <SmartImage src={item.image} alt="" sizes="96px" width={96} height={96} preload style={item.focus ? { objectPosition: item.focus } : undefined} />
           <span>{item.month}</span><b>{item.short}</b>
         </button>)}
       </div>
