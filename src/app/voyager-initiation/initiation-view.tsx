@@ -4,6 +4,7 @@ import { INITIATION_PRICES, initiationPriceLabel } from '@/lib/initiation-pricin
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, ArrowRight, CircleAlert, Check } from 'lucide-react'
 import SmartImage from '@/components/smart-image'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -20,7 +21,7 @@ import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
 import { InitiationBriefing } from './briefing/initiation-briefing'
-import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, shouldAutoOpenBriefing, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
+import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, shouldAutoOpenBriefing, type BriefingOffer, type BriefingOutcome } from '@/lib/initiation-briefing'
 
 const SOURCE_KEY = 'mc:initiation:device-source'
 const subscribeToSource = () => () => {}
@@ -65,12 +66,11 @@ export type InitiationViewProps = {
   quizServices?: VoyagerQuizServices
   paymentPlacement?: 'top' | 'bottom'
   analyticsEnvironment?: string
-  regions?: BriefingRegion[]
   /** Value of `?briefing=`; `1` opens the briefing on arrival. */
   briefingParam?: string
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', briefingParam }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -94,6 +94,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const legacy = status === 'legacy_pack'
   const kind = legacy ? 'legacy_upgrade' : bundle
   const storedBriefing = useSyncExternalStore(subscribeToSource, readBriefingStore, serverBriefingStore)
+  const router = useRouter()
   const [briefing, setBriefing] = useState<'idle' | 'replay' | 'link' | 'dismissed'>(() => briefingLinkOpens(snapshot.status, briefingParam) ? 'link' : 'idle')
   const briefingAuto = storedBriefing !== 'server' && storedBriefing !== 'unavailable'
     && shouldAutoOpenBriefing({ status, paymentStatus: snapshot.paymentStatus, checkoutCanceled, stored: storedBriefing || null })
@@ -148,6 +149,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
 
   function closeBriefing(outcome: BriefingOutcome, page: number) {
     writeBriefingStore(outcome, page)
+    // The first page's close button leaves Initiation for the dashboard; the briefing stays up until the route changes.
+    if (outcome === 'exited') { router.push('/console'); return }
     setBriefing('dismissed')
   }
   function chooseFromBriefing(offer: BriefingOffer['id'], page: number) {
@@ -298,7 +301,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       </section>
     </div>
 
-    {briefingOpen && <InitiationBriefing trigger={briefing === 'idle' ? 'auto' : briefing === 'link' ? 'link' : 'replay'} members={members} regions={regions}
+    {briefingOpen && <InitiationBriefing trigger={briefing === 'idle' ? 'auto' : briefing === 'link' ? 'link' : 'replay'} members={members}
       seats={{ batch: availability.batch, capacity: availability.capacity, initiated: availability.initiated }} offers={briefingOffers(status)}
       busy={busy} unavailable={briefingUnavailable} capture={captureAnalytics} onChoose={chooseFromBriefing} onClose={closeBriefing} />}
     <ArchiveSheet size={calibrationStarted ? 'fullscreen' : 'wide'} headerless open={dialog === 'calibration'} onClose={() => { captureAnalytics('calibration_closed', { started: calibrationStarted, completed: calibrated }); setDialog(null); setDirty(false); setCalibrationStarted(false) }} title="Signal Calibration" busy={quizBusy} dirty={dirty} className={styles.calibrationDialog}>

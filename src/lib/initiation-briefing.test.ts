@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  BRIEFING_PAGES, BRIEFING_VERSION, briefingAudience, briefingLoopWindow, briefingSoundOn, briefingLinkOpens, briefingOffers, briefingRecord, briefingRegions, briefingSeats,
+  BRIEFING_PAGES, BRIEFING_VERSION, briefingAudience, briefingLoopWindow, briefingSoundOn, briefingLinkOpens, briefingOffers, briefingRecord, briefingSeats,
   clampBriefingPage, readBriefingRecord, shouldAutoOpenBriefing,
 } from './initiation-briefing'
 
@@ -46,19 +46,6 @@ describe('Voyager briefing content', () => {
     const upgrade = briefingOffers('legacy_pack')
     expect(upgrade).toHaveLength(1)
     expect(upgrade[0]).toMatchObject({ id: 'legacy_upgrade', price: 460, title: 'Console + Pack 4' })
-  })
-
-  it('lists open regions first with their published phase', () => {
-    const regions = briefingRegions([
-      { location: 'Shanghai, China', status: 'searching' },
-      { location: 'Kyoto, Japan', status: 'claiming' },
-      { location: 'Kyoto restoration room', status: 'searching' },
-      { location: 'Kyoto, Japan', status: 'searching' },
-      { location: '', status: 'searching' },
-    ])
-    expect(regions.map(r => [r.name, r.open, r.phase])).toEqual([['KYOTO', true, 2], ['SHANGHAI', false, 1], ['KYOTO RESTORATION ROOM', false, 1]])
-    expect(regions[0].phaseLabel).toBe('Claiming')
-    expect(briefingRegions(Array.from({ length: 9 }, (_, i) => ({ location: `City ${i}`, status: 'searching' as const }))).length).toBe(5)
   })
 
   it('never invents seat counts', () => {
