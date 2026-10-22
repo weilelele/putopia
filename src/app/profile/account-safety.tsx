@@ -29,21 +29,19 @@ export function BlockedMembersCard() {
     setMembers((current) => (current ?? []).filter((m) => m.id !== id))
   }
 
+  if (members === null || members.length === 0) return null
+
   return (
     <ArchiveCard className={styles.card}>
       <ArchiveSectionLabel>BLOCKED MEMBERS</ArchiveSectionLabel>
-      {members === null ? <p className={styles.note}>Loading…</p> : members.length === 0 ? (
-        <p className={styles.note}>You have not blocked anyone. Use Block under a member&rsquo;s post to hide their content.</p>
-      ) : (
-        <ul className={styles.list}>
-          {members.map((m) => (
-            <li key={m.id}>
-              <span>{m.name}</span>
-              <ArchiveButton size="compact" variant="secondary" loading={busyId === m.id} onClick={() => unblock(m.id)}>UNBLOCK</ArchiveButton>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className={styles.list}>
+        {members.map((m) => (
+          <li key={m.id}>
+            <span>{m.name}</span>
+            <ArchiveButton size="compact" variant="secondary" loading={busyId === m.id} onClick={() => unblock(m.id)}>UNBLOCK</ArchiveButton>
+          </li>
+        ))}
+      </ul>
       {error && <p className={styles.error} role="alert">{error}</p>}
     </ArchiveCard>
   )
