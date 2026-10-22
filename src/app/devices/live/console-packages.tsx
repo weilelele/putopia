@@ -8,6 +8,7 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import type { DeviceBatch, DeviceBatchMedia, DistributionStage } from '@/lib/device-batches'
 import styles from './console-packages.module.css'
+import { ANTENNA } from '@/lib/antenna-copy'
 
 function packageImage(batch: DeviceBatch, stage: DistributionStage): DeviceBatchMedia | undefined {
   if (batch.slug === 'kyoto-one' && stage.id === 'components-pack') return undefined
@@ -25,7 +26,7 @@ function packageImage(batch: DeviceBatch, stage: DistributionStage): DeviceBatch
 
 const packageTeasers: Record<string, string> = {
   'initial-voyager-pack': 'A badge and a letter to begin your journey.',
-  'components-pack': 'Your Console antenna, accompanied by smaller widgets and components.',
+  'components-pack': `${ANTENNA.firstMention}. ${ANTENNA.briefingDescription} ${ANTENNA.requirement}`,
   console: 'A window into worlds you have yet to discover.',
 }
 

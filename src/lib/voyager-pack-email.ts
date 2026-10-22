@@ -109,7 +109,7 @@ export function buildVoyagerPackEmail(opts: { name?: string }): { subject: strin
   <p style="margin:0 0 22px 0;font-size:11px;letter-spacing:0.3em;color:#4A5570;text-transform:uppercase;">// Voyager confirmed</p>
   <h1 style="margin:0 0 18px 0;font-size:24px;font-weight:700;letter-spacing:0.08em;color:#F5F5F5;line-height:1.3;">YOU ARE NOW<br/>A MULTIVERSE VOYAGER</h1>
   <p style="margin:0 0 18px 0;font-size:15px;line-height:1.8;color:#A8B6CE;">${greet}your Initial Voyager Pack is confirmed. Welcome aboard.</p>
-  <p style="margin:0 0 26px 0;font-size:15px;line-height:1.8;color:#A8B6CE;">The physical items&mdash;the welcome letter, your metal Voyager badge, and the classified component parts&mdash;are currently in assembly. We will initiate shipment with the very first batch and notify you.</p>
+  <p style="margin:0 0 26px 0;font-size:15px;line-height:1.8;color:#A8B6CE;">Your physical packs include the welcome letter, your metal Voyager badge, and Antenna for Multiverse Console&mdash;an emblem of the Collective and a decorative collectible. The Antenna must be installed on a Multiverse Console to receive signals. Initial Voyager Pack does not include the Console. View your records for dispatch updates.</p>
 
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px 0;"><tr><td align="center">
     <img src="${PACK_IMG}" width="210" alt="Initial Voyager Pack" style="display:block;width:210px;max-width:62%;height:auto;border:1px solid #1E2840;"/>
@@ -133,7 +133,7 @@ export function buildVoyagerPackEmail(opts: { name?: string }): { subject: strin
   const text = [
     `${greet}your Initial Voyager Pack is confirmed. Welcome aboard.`,
     '',
-    'The physical items—the welcome letter, your metal Voyager badge, and the classified component parts—are currently in assembly. We will initiate shipment with the very first batch and notify you.',
+    'Your physical packs include the welcome letter, your metal Voyager badge, and Antenna for Multiverse Console—an emblem of the Collective and a decorative collectible. The Antenna must be installed on a Multiverse Console to receive signals. Initial Voyager Pack does not include the Console. View your records for dispatch updates.',
     '',
     'WHAT YOU HAVE UNLOCKED',
     ...PERKS.map((p) => (p.href ? `- ${p.title}: ${p.desc} (${p.cta}: ${SITE}${p.href})` : `- ${p.title}: ${p.desc}`)),

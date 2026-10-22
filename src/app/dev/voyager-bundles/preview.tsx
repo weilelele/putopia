@@ -1,6 +1,7 @@
 'use client'
 
 import { INITIATION_PRICES } from '@/lib/initiation-pricing'
+import { ANTENNA } from '@/lib/antenna-copy'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -14,7 +15,7 @@ import styles from './preview.module.css'
 
 const packs = [
   { title: 'Initial Voyager Pack', month: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'Welcome letter and Voyager badge', description: 'Welcome letter and exclusive member badge. A physical invitation into the Collective.' },
-  { title: 'Mysterious Widgets', month: 'Nov 2026', image: '/assets/voyager-initiation/mysterious-widgets.png', alt: 'A metal cube, brass cylinder and dark mineral', description: 'Small widgets that strengthen and amplify signals.' },
+  { title: ANTENNA.firstMention, month: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
   { title: 'Multiverse Console', month: 'Dec 2026', image: '', alt: '', description: 'Your own device for exploring and interacting with parallel worlds.' },
   { title: 'A Fourth Delivery', month: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'A future shipment for this cohort. Contents to be announced.' },
 ]
@@ -26,7 +27,7 @@ const benefits = [
 ]
 
 const bundles = {
-  initial: { name: 'Initial Voyager Pack', price: INITIATION_PRICES.initial.amount / 100, detail: 'Welcome letter, member badge and Mysterious Widgets.', note: 'Console claimed separately. Add Console + the fourth delivery later for $460.' },
+  initial: { name: 'Initial Voyager Pack', price: INITIATION_PRICES.initial.amount / 100, detail: 'Welcome letter, member badge and Antenna for Multiverse Console.', note: 'Console not included. Antenna requires installation on a Console. Add Console + Pack 4 later for $460.' },
   complete: { name: 'Complete Voyager Pack', price: INITIATION_PRICES.standard.amount / 100, detail: 'Everything in Initial, plus Multiverse Console and the fourth delivery.', note: '' },
   upgrade: { name: 'Console + Fourth Delivery', price: INITIATION_PRICES.legacy_upgrade.amount / 100, detail: 'One Multiverse Console and the fourth delivery.', note: 'For existing Voyagers who already have the Initial Pack.' },
 } as const
@@ -64,7 +65,7 @@ export function VoyagerBundlesPreview() {
             {pack.image && <div className={original.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 260px, 42vw" preload={index === 0} /></div>}
             <div className={original.packCopy}>
               <p className={original.packageNumber}>Package {index + 1} · {pack.month}</p>
-              <h4>{pack.title}</h4><p>{pack.description}</p>
+              <h4>{pack.title}</h4>{index === 1 && <p><strong>{ANTENNA.packTagline}</strong></p>}<p>{pack.description}</p>
             </div>
             {index === 2 && <ConsoleCarousel suspended={confirmation} />}
           </li>)}
@@ -123,7 +124,7 @@ export function VoyagerBundlesPreview() {
       <p className={styles.confirmDescription}>{bundle.detail}</p>
       <ul className={styles.confirmList}>
         {selected !== 'upgrade' && <li><Check size={16} aria-hidden />Voyager member access</li>}
-        {selected !== 'upgrade' && <li><Check size={16} aria-hidden />Welcome letter, member badge & Mysterious Widgets</li>}
+        {selected !== 'upgrade' && <li><Check size={16} aria-hidden />Welcome letter, member badge & Antenna</li>}
         {selected !== 'initial' && <li><Check size={16} aria-hidden />Multiverse Console + fourth delivery</li>}
       </ul>
       <div className={styles.total}><span>One-time payment</span><strong>${bundle.price}</strong></div>

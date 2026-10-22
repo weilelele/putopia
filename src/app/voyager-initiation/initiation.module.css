@@ -29,6 +29,8 @@
 .pack { display: grid; grid-template-columns: minmax(0, .6fr) minmax(0, 1.4fr); gap: 12px; }
 .packImage { position: relative; aspect-ratio: 3 / 2; align-self: start; margin-bottom: 24px; overflow: hidden; }
 .packImage img { object-fit: cover; }
+.antennaPack { grid-template-columns: minmax(0, 1fr); }
+.antennaPack .packImage { margin-bottom: 0; }
 .packCopy { min-width: 0; position: relative; padding: 0 0 28px 12px; border-left: 1px solid var(--color-nucleus); }
 .packCopy::before { content: ''; position: absolute; width: 9px; height: 9px; left: -5px; top: 5px; background: var(--color-nucleus); border: 1px solid var(--color-nucleus); border-radius: 50%; }
 .planned .packCopy::before { background: var(--color-deep); }
@@ -36,6 +38,7 @@
 .packageNumber { color: var(--color-nucleus); font-size: var(--fs-caption); margin: 0 0 6px; line-height: 1.5; }
 .packCopy :is(h3, h4) { font-size: var(--fs-body); line-height: 1.3; font-weight: 700; margin: 0 0 8px; overflow-wrap: anywhere; }
 .packCopy > p:last-child { margin: 0; font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
+.packCopy .antennaCopy { margin: 0 0 var(--s-3); font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
 .benefit { display: grid; gap: 20px; }
 .benefitImage { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
 .benefitImage img { object-fit: cover; }
