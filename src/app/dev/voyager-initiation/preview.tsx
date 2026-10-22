@@ -27,5 +27,5 @@ export function InitiationPreview({ name, deviceSource, paymentPlacement, briefi
       return { ok: true }
     },
   }
-  return <InitiationView snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS} briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource} quizServices={services} beginCheckout={async () => ({ status: 'not_open', message: 'Fixture only. No payment session has been created.' })} />
+  return <InitiationView snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS} briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource} quizServices={services} startGuestSession={async () => ({ error: null })} beginCheckout={async () => ({ status: 'not_open', message: 'Fixture only. No payment session has been created.' })} />
 }

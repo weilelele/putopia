@@ -13,13 +13,13 @@ import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
 import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
 
 export const dynamic = 'force-dynamic'
-/** Authenticated POST only. All purchase facts are resolved on the server. */
+/** Authenticated POST only (anonymous checkout sessions included). All purchase facts are resolved on the server. */
 export async function POST(request: Request) {
   const configError = initiationConfigurationError()
   if (configError) return NextResponse.json({ error: configError }, { status: 503 })
   const origin = new URL(process.env.NEXT_PUBLIC_SITE_URL!).origin
   if (request.headers.get('origin') !== origin) return NextResponse.json({ error: 'Invalid checkout origin.' }, { status: 403 })
-  const client = await createClient()
+  const client = await createClient({ allowAnonymous: true })
   const { data: { user } } = await client.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Please log in before checkout.' }, { status: 401 })
   const stripe = getStripe()!

@@ -27,7 +27,7 @@ export default function RegisterPage() {
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+      if (!session || session.user.is_anonymous) {
         router.replace('/')
       } else {
         setChecking(false)

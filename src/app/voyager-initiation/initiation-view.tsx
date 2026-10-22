@@ -22,6 +22,9 @@ import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
 import { InitiationBriefing } from './briefing/initiation-briefing'
+import { ConfirmGuestEmail } from './confirm-guest-email'
+import type { GuestClaimNotice } from '@/lib/guest-checkout'
+import { createClient } from '@/lib/supabase/client'
 import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, shouldAutoOpenBriefing, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 
 const SOURCE_KEY = 'mc:initiation:device-source'
@@ -30,6 +33,7 @@ function readDeviceSource() {
   try { return deviceSourcePath(sessionStorage.getItem(SOURCE_KEY)) } catch { return null }
 }
 const emptyDeviceSource = () => null
+const startGuestCheckout = () => createClient().auth.signInAnonymously()
 // '' = nothing stored yet; 'server' and 'unavailable' never auto-open (no way to remember a dismissal).
 function readBriefingStore() {
   try { return localStorage.getItem(BRIEFING_STORAGE_KEY) ?? '' } catch { return 'unavailable' }
@@ -65,14 +69,18 @@ export type InitiationViewProps = {
   checkoutCanceled?: boolean
   beginCheckout: () => Promise<InitiationCheckoutResult>
   quizServices?: VoyagerQuizServices
+  /** Starts the anonymous checkout session for a guest; fixtures pass a no-op. */
+  startGuestSession?: () => Promise<{ error: unknown }>
   paymentPlacement?: 'top' | 'bottom'
   analyticsEnvironment?: string
   regions?: BriefingRegion[]
   /** Value of `?briefing=`; `1` opens the briefing on arrival. */
   briefingParam?: string
+  /** Outcome of claiming a guest purchase after login (`?claim=`). */
+  claimNotice?: { code: GuestClaimNotice; message: string } | null
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, startGuestSession = startGuestCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam, claimNotice = null }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -85,6 +93,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const inFlight = useRef(false)
+  // A guest who taps Pay gets an anonymous checkout session; the email is confirmed after payment.
+  const [guestSession, setGuestSession] = useState(false)
   const { availability, status, shipments, consoleClaim } = snapshot
   const initiated = status === 'initiated'
   const granted = status === 'granted'
@@ -104,12 +114,18 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   async function become(override?: 'initial' | 'standard', surface: 'page' | 'brief' = 'page') {
     if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
     const chosen = override ?? bundle
-    captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
+    // Guests continue directly to checkout with an anonymous session.
+    captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status === 'guest' ? 'unpaid' : status), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
     setError('')
-    if (status === 'guest') { window.location.assign(initiationLoginPath(source, chosen)); return }
     inFlight.current = true
     setBusy(true)
     try {
+      if (status === 'guest' && !guestSession) {
+        const { error: sessionError } = await startGuestSession()
+        // Anonymous sign-ins disabled or failing: fall back to the login page.
+        if (sessionError) { window.location.assign(initiationLoginPath(source, chosen)); return }
+        setGuestSession(true)
+      }
       const result = await beginCheckout()
       if (result.status === 'unauthenticated') {
         window.location.assign(initiationLoginPath(source, chosen))
@@ -157,8 +173,11 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             <div><dt className={styles.seatLabel}><span>INITIATED</span><button type="button" className={styles.batchInfo} aria-label="About initiated places" aria-haspopup="dialog" onClick={() => setDialog('initiated')}><CircleAlert size={15} aria-hidden /></button></dt><dd aria-label={availability.initiated === null ? 'Count not yet available' : undefined}>{availability.initiated ?? '—'}</dd><dd className={styles.memberQueue}><MemberStrip members={members} /></dd></div>
           </dl>
   )
+  const paymentStarted = initiated || legacy || ['paid', 'pending', 'payment_review'].includes(snapshot.paymentStatus)
   const joinPanel = (
         <div data-initiation-section="payment" className={styles.join}>
+          {claimNotice && <p className={styles.notice} role="status">{claimNotice.message}{claimNotice.code === 'failed' && <> <a className={styles.textLink} href="/api/initiation-claim">Try again</a></>}</p>}
+          {snapshot.anonymous && paymentStarted && <div className={styles.notice}><ConfirmGuestEmail /></div>}
           {checkoutCanceled && !initiated && !granted && <p className={styles.notice} role="status">You returned from checkout without completing it. Payment status below comes from your order records.</p>}
           {snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
           {snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{paymentMessages[snapshot.paymentStatus]}</p>}
@@ -195,6 +214,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : soldOut ? 'FULLY CLAIMED' : `${legacy ? 'UPGRADE' : 'CONTINUE'} · ${initiationPriceLabel(kind)}`}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
+          {(status === 'guest' || snapshot.anonymous) && !paymentStarted && <Link className={styles.textLink} href={initiationLoginPath(source, bundle)}>Already a Voyager? Log in <ArrowRight size={18} aria-hidden /></Link>}
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
             <h2>Delivery</h2>

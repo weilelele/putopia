@@ -14,6 +14,8 @@ export interface InitiationShipment {
 }
 export interface InitiationSnapshot {
   userId: string | null
+  /** Signed in with an anonymous checkout session; the email is not confirmed yet. */
+  anonymous: boolean
   role: string
   calibrated: boolean
   status: InitiationStatus
