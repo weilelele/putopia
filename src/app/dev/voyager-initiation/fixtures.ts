@@ -17,7 +17,7 @@ export function fixture(name: FixtureName): InitiationSnapshot {
     paymentStatus: name === 'unknown' ? 'unknown' : name === 'pending' ? 'pending' : name === 'payment_failed' ? 'payment_failed' : name === 'refunded' ? 'refunded' : name === 'canceled' ? 'canceled' : name === 'disputed' ? 'disputed' : name === 'payment_review' ? 'payment_review' : initiated || name === 'initial_pack' ? 'paid' : 'none',
     error: name === 'unknown' ? 'Your Initiation records are temporarily unavailable. Please try again.' : null,
     shipments: [
-      ...(initiated ? ['Initial Voyager Pack', 'Mysterious Widgets', 'Multiverse Console', 'A Fourth Delivery'].map((title, i) => ({ id: `fixture-${i}`, position: i + 1, title, scheduledMonth: ['2026-10', '2026-11', '2026-12', '2027-01'][i], status: (['delivered', 'dispatched', 'preparing', 'planned'] as const)[i], trackingUrl: null, source: 'initiation' as const })) : []),
+      ...(initiated ? ['Initial Voyager Pack', 'Antenna', 'Multiverse Console', 'A Fourth Delivery'].map((title, i) => ({ id: `fixture-${i}`, position: i + 1, title, scheduledMonth: ['2026-10', '2026-11', '2026-12', '2027-01'][i], status: (['delivered', 'dispatched', 'preparing', 'planned'] as const)[i], trackingUrl: null, source: 'initiation' as const })) : []),
       ...(legacy && !initiated ? [1, 2].map((position) => ({ id: `fixture-legacy-${position}`, position, title: `Initiation Pack ${position}`, scheduledMonth: position === 1 ? '2026-10' : '2026-11', status: 'planned' as const, trackingUrl: null, source: 'legacy_pack' as const })) : []),
     ],
   }

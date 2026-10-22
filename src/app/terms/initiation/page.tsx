@@ -14,7 +14,7 @@ export default function InitiationTermsPage() {
       <article className={styles.doc}>
         <Link href="/voyager-initiation">← VOYAGER INITIATION</Link>
         <h1>DELIVERY &amp; AFTERCARE</h1>
-        <p className={styles.updated}>Updated October 21, 2026</p>
+        <p className={styles.updated}>Updated October 22, 2026</p>
 
         <section>
           <h2>YOUR INITIATION</h2>
@@ -25,10 +25,11 @@ export default function InitiationTermsPage() {
           <h2>S26 PACKS</h2>
           <ul>
             <li>Package 1 — October 2026</li>
-            <li>Package 2 — November 2026</li>
+            <li>Package 2 · Antenna for Multiverse Console — November 2026</li>
             <li>Package 3 · Multiverse Console — December 2026</li>
             <li>Package 4 — January 2027</li>
           </ul>
+          <p>The Antenna is a collectible emblem of the Collective and a decorative receiving accessory. It must be installed on a Multiverse Console to receive signals. The {initiationPriceLabel('initial')} Initial Voyager Pack does not include the Console. Antenna images show design studies; final appearance and quantity are to be confirmed.</p>
           <p>Initial purchases include Packages 1–2; upgrades add Packages 3–4; Complete includes all four. These are scheduled dispatch months, rather than arrival dates. Existing Initial Pack members’ first two packs follow this same schedule and have not shipped yet.</p>
           <p>Claim your Console on the Devices page after completing Initiation. S26 does not assign a device batch: choose any published batch with available capacity. Confirming a claim reserves your selected batch. Console Holder access begins after you receive the device and bind it to your account. To request a change before shipment, contact voyagers@multiverseco.org; changes are subject to availability. Once shipped, the batch cannot be changed. The Console is Package 3, a single delivery. If no device is available, you will need to wait for availability.</p>
         </section>

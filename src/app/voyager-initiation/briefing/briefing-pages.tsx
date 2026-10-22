@@ -3,6 +3,7 @@
 import { useRef, useState, type CSSProperties } from 'react'
 import { ArrowRight, Check } from 'lucide-react'
 import SmartImage from '@/components/smart-image'
+import { ANTENNA } from '@/lib/antenna-copy'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import { MemberProfileSheet } from '@/components/member-profile-sheet'
 import { memberInitials } from '@/lib/member-initials'
@@ -482,7 +483,7 @@ export function FrontLinePage({ state, regions }: { state: PageState; regions: B
 /* 8 · Packs: the Console leads; tap any month to see that pack. */
 const PACKS = [
   { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', short: 'Initial Pack', image: `${MEDIA}/pack-1.jpg`, focus: '50% 75%', alt: 'A welcome letter and Voyager badge on a desk', description: 'Welcome letter and exclusive member badge. A physical invitation into the Collective.' },
-  { month: 'NOV', meta: 'PACK 2 · NOV 2026', title: 'Mysterious Widgets', short: 'Widgets', image: `${MEDIA}/pack-2.jpg`, alt: 'A metal cube, brass cylinder and dark mineral on a wooden desk', description: 'Small widgets that strengthen and amplify signals.' },
+  { month: 'NOV', meta: 'PACK 2 · NOV 2026', title: ANTENNA.firstMention, short: ANTENNA.name, image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
   { month: 'DEC', meta: 'PACK 3 · DEC 2026', title: 'Multiverse Console', short: 'Console', image: `${MEDIA}/console-workshop.jpg`, alt: 'A Multiverse Console on a workshop bench, its screen showing a parallel world', description: 'Your own device for exploring and interacting with parallel worlds.' },
   { month: 'JAN', meta: 'PACK 4 · JAN 2027', title: 'A Fourth Delivery', short: 'Fourth delivery', image: `${MEDIA}/pack-4.jpg`, alt: 'A sealed envelope awaiting its reveal', description: 'A future shipment for this cohort. Contents to be announced.' },
 ]
@@ -497,10 +498,10 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
     </div>
     <div className={s.gut}>
       <div className={s.packCard}>
-        <div className={s.packHero}>
+        <div className={`${s.packHero} ${selected === 1 ? s.antennaHero : ''}`}>
           <span key={pack.image} className={s.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 460px) 430px, 92vw" preload style={pack.focus ? { objectPosition: pack.focus } : undefined} /></span>
         </div>
-        <div className={s.packCaption} aria-live="polite"><span>{pack.meta}</span><b>{pack.title}</b><p>{pack.description}</p></div>
+        <div className={s.packCaption} aria-live="polite"><span>{pack.meta}</span><b>{pack.title}</b>{selected === 1 && <p><strong>{ANTENNA.packTagline}</strong></p>}<p>{pack.description}</p></div>
       </div>
       <div className={s.packStrip}>
         {PACKS.map((item, k) => <button key={item.month} type="button" className={s.packThumb} aria-pressed={selected === k} style={{ '--k': k } as CSSProperties}

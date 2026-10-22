@@ -190,6 +190,7 @@
 .p8Copy { padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
 .packCard { margin-top: 18px; background: var(--color-void); }
 .packHero { position: relative; overflow: hidden; aspect-ratio: 3 / 2; background: #000; }
+.antennaHero { aspect-ratio: 16 / 9; }
 [data-active] .packCard { animation: reveal 900ms cubic-bezier(.7,0,.2,1) backwards 350ms; }
 @keyframes reveal { from { clip-path: inset(18% 18% 18% 18%); opacity: .2; } }
 .packImage { position: absolute; inset: 0; animation: fade .4s ease both; }

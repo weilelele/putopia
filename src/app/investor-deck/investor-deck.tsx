@@ -449,7 +449,7 @@ export default function InvestorDeck() {
                 number="07"
                 eyebrow="AN EXPANDABLE UNIVERSE"
                 title={t('New worlds can arrive as physical objects.', '新的世界，可以通过新的实体物件到来。')}
-                intro={t('Each replaceable antenna is a physical key: insert it, tune the signal, and enter its world.', '每一根可更换天线都是一把实体钥匙：插入、调谐，然后进入它所对应的世界。')}
+                intro={t('Antenna for Multiverse Console: an emblem of the Collective and a decorative collectible. Installed on the Console, it receives a particular category of parallel-world signals. Discover what comes through, together.', 'Antenna for Multiverse Console：组织的信物与装饰性收藏物。必须安装在 Console 上接收特定品类的平行世界信号，共同探索其中未知。')}
               />
               <div
                 id="antenna-world-preview"
@@ -463,8 +463,8 @@ export default function InvestorDeck() {
                   fill
                   sizes="(orientation: landscape) 62vw, 100vw"
                   alt={t(
-                    `${selectedAntenna.antenna.en} opening ${selectedAntenna.world.en}`,
-                    `${selectedAntenna.antenna.zh}正在开启${selectedAntenna.world.zh}`,
+                    `Concept study: ${selectedAntenna.antenna.en} with the imagined world ${selectedAntenna.world.en}`,
+                    `概念示意：${selectedAntenna.antenna.zh}与构想世界${selectedAntenna.world.zh}`,
                   )}
                 />
                 <span className={styles.antennaNoise} aria-hidden="true" />
@@ -493,7 +493,7 @@ export default function InvestorDeck() {
                   ))}
                 </div>
                 <div className={styles.expansionNotes}>
-                  <p><strong>{t('Physical DLC', '实体 DLC')}</strong>{t('New antennas create a recurring path into new parallel worlds.', '新的天线，持续打开新的平行世界。')}</p>
+                  <p><strong>{t('Future physical DLC', '未来实体 DLC')}</strong>{t('Concept studies illustrate future content expansion; they do not specify Pack 2 contents.', '概念示意用于探索未来内容扩展，不代表 Pack 2 的实际交付内容。')}</p>
                   <p><strong>{t('Organization Token', '组织 Token')}</strong>{t('Meaningful observations can be recognized and rewarded.', '有价值的观测与上报，可以得到组织反馈。')}</p>
                 </div>
               </div>

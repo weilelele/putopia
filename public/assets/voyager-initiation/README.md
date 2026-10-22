@@ -1,5 +1,11 @@
 # Voyager Initiation imagery
 
+## Current Pack 2 illustration · 2026-10-22
+
+`antenna-still-life-v1.jpg` replaces the mysterious-components illustration in current sales pages and briefing. Built-in ImageGen arranged the three user-selected brass, ivory/silver and navy/orange Antenna concept designs on a walnut desk, without the Console. The low umbrella caps retain their concentric detail; insertion stems are mostly obscured. The illustration depicts design studies, not three promised items or selectable finishes. Final appearance and quantity remain unconfirmed. Full reference hashes, prompts and visual review: [generation record](../../../docs/product/antenna-media-20261022.md).
+
+The older files and prompts below remain historical provenance and must not be relabeled as Antenna photographs.
+
 Generated with built-in Image Gen on 2026-10-04. These are conceptual illustrations, not photographs of confirmed shipment contents. Both outputs are 1536 × 1024, opaque. No reference images were attached to the generation calls; art direction was informed by the selected page mock.
 
 ## Fourth delivery
