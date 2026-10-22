@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'The dedicated Initiation price is not ready.' }, { status: 503 })
     }
     const { data: order, error } = await admin.rpc('reserve_initiation_v2', { p_user: user.id, p_price: priceId, p_product: productId, p_kind: kind, p_device_source: deviceSource })
-    if (error || !order) return NextResponse.json({ error: 'Checkout is unavailable. Check calibration, existing orders, and seat availability on Initiation.' }, { status: 409 })
+    if (error || !order) return NextResponse.json({ error: 'Checkout is unavailable. Check existing orders and seat availability on Initiation.' }, { status: 409 })
     if (order.amount !== amount || order.pricing_version !== INITIATION_PRICING_VERSION) throw new Error('Reserved quote does not match the current bundle')
     if (order.stripe_session_id) {
       const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id)

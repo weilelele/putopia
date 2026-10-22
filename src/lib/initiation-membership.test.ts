@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { initiationMemberStatus, parseInitiationAvailability } from './initiation-membership'
+import { initiationMemberStatus, initiationPurchaseKind, parseInitiationAvailability } from './initiation-membership'
+describe('confirmed bundle display', () => {
+  const initial = { id: 'initial', status: 'paid', order_kind: 'initial' }
+  const upgrade = { id: 'upgrade', status: 'paid', order_kind: 'legacy_upgrade' }
+  it('keeps Initial during a pending or canceled upgrade', () => {
+    for (const status of ['pending', 'canceled']) expect(initiationPurchaseKind([{ ...upgrade, status }, initial], null, initial.id)).toBe('initial')
+  })
+  it('binds the label to the paid entitlement order, not the latest row', () => {
+    expect(initiationPurchaseKind([{ id: 'newer', status: 'canceled', order_kind: 'standard' }, upgrade, initial], { active: true, order_id: upgrade.id }, initial.id)).toBe('legacy_upgrade')
+    expect(initiationPurchaseKind([{ ...upgrade, order_kind: 'standard' }], { active: true, order_id: upgrade.id }, null)).toBe('standard')
+  })
+  it('does not label an unconfirmed or refunded order as Complete', () => {
+    expect(initiationPurchaseKind([{ ...upgrade, status: 'pending' }], { active: true, order_id: upgrade.id }, null)).toBeNull()
+    expect(initiationPurchaseKind([upgrade], { active: false, order_id: upgrade.id }, null)).toBeNull()
+    expect(initiationPurchaseKind([upgrade], { active: false, order_id: upgrade.id }, initial.id)).toBe('initial')
+  })
+})
 describe('explicit Initiation roster and paid entitlements', () => {
   it('recognizes granted NPC membership without inventing payment entitlement', () => expect(initiationMemberStatus(false, { source: 'granted', active: true }, false)).toBe('granted'))
   it('does not infer membership from missing roster or historical Pack', () => {

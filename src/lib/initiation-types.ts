@@ -18,6 +18,8 @@ export interface InitiationSnapshot {
   calibrated: boolean
   status: InitiationStatus
   membershipSource?: 'paid' | 'granted' | null
+  /** Kind of the confirmed purchase, never a pending checkout. */
+  purchaseKind?: InitiationOrderKind | null
   availability: { remaining?: number | null; paid?: number | null; granted?: number | null; batch: string; capacity: number; initiated: number | null; checkoutOpen: boolean; reason: string | null }
   shipments: InitiationShipment[]
   consoleClaim: { eligible: boolean; claimed: boolean; href: string | null; batch?: { slug: string; name: string } | null }

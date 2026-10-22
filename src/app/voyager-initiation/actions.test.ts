@@ -10,16 +10,20 @@ describe('Voyager Initiation server preflight', () => {
     getSnapshot.mockResolvedValue(fixture('guest'))
     expect((await beginVoyagerInitiation()).status).toBe('unauthenticated')
   })
-  it('requires server-saved calibration', async () => {
-    getSnapshot.mockResolvedValue(fixture('unpaid'))
-    expect((await beginVoyagerInitiation()).status).toBe('calibration_required')
+  it('allows checkout before completing calibration', async () => {
+    const state = fixture('unpaid')
+    state.availability.checkoutOpen = true
+    getSnapshot.mockResolvedValue(state)
+    expect(state.calibrated).toBe(false)
+    expect((await beginVoyagerInitiation()).status).toBe('ready')
   })
   it.each(['initiated', 'unknown', 'sold_out'] as const)('does not send %s into checkout', async state => {
     getSnapshot.mockResolvedValue(fixture(state))
     expect((await beginVoyagerInitiation()).status).toBe('not_open')
   })
-  it('allows calibrated legacy members to use explicitly enabled upgrade checkout', async () => {
+  it('allows legacy members to upgrade without calibration', async () => {
     const state = fixture('legacy_pack')
+    state.calibrated = false
     state.availability.checkoutOpen = true
     getSnapshot.mockResolvedValue(state)
     expect((await beginVoyagerInitiation()).status).toBe('ready')

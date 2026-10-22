@@ -9,6 +9,7 @@ import { BottomNav } from '@/components/bottom-nav'
 import { ScrollRestorer } from '@/components/scroll-restorer'
 import { PwaProvider } from '@/components/pwa-provider'
 import { AdPixels } from '@/components/ad-pixels'
+import { SiteCalibrationReminder } from '@/components/site-calibration-reminder'
 
 const courierPrime = localFont({
   src: [
@@ -63,6 +64,7 @@ export default function RootLayout({
               {children}
             </div>
             <BottomNav />
+            <Suspense fallback={null}><SiteCalibrationReminder environment={process.env.VERCEL_ENV ?? 'unknown'} /></Suspense>
           </AuthProvider>
         </PwaProvider>
       </body>

@@ -16,8 +16,8 @@ const PREVIEW_REGIONS = briefingRegions([
 ])
 
 /** Development-only state. All calibration writes remain in this component. */
-export function InitiationPreview({ name, deviceSource, paymentPlacement, briefingParam }: { name: FixtureName; deviceSource?: string; paymentPlacement?: 'top' | 'bottom'; briefingParam?: string }) {
-  const snapshot = fixture(name)
+export function InitiationPreview({ name, deviceSource, paymentPlacement, briefingParam, calibrationIncomplete = false }: { name: FixtureName; deviceSource?: string; paymentPlacement?: 'top' | 'bottom'; briefingParam?: string; calibrationIncomplete?: boolean }) {
+  const snapshot = { ...fixture(name), ...(calibrationIncomplete ? { calibrated: false } : {}) }
   const [completed, setCompleted] = useState(snapshot.calibrated)
   const services: VoyagerQuizServices = {
     load: async () => ({ userId: snapshot.userId, completed }),
@@ -27,5 +27,5 @@ export function InitiationPreview({ name, deviceSource, paymentPlacement, briefi
       return { ok: true }
     },
   }
-  return <InitiationView snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS} briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource} quizServices={services} beginCheckout={async () => ({ status: completed ? 'not_open' : 'calibration_required', message: 'Fixture only. No payment session has been created.' })} />
+  return <InitiationView snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS} briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource} quizServices={services} beginCheckout={async () => ({ status: 'not_open', message: 'Fixture only. No payment session has been created.' })} />
 }
