@@ -1,5 +1,7 @@
 -- Anonymous checkout sessions (Supabase anonymous sign-ins).
--- NOT APPLIED. Apply before enabling "Allow anonymous sign-ins" in Supabase Auth.
+-- Applied to production oxwfnmcwovxnrvagxzdz on 2026-10-23; verified 234 write guards,
+-- 6 member-read guards and 3 storage guards, and a rolled-back role simulation.
+-- Apply before enabling "Allow anonymous sign-ins" in Supabase Auth.
 --
 -- A guest who taps Pay on /voyager-initiation gets an anonymous Auth user so
 -- calibration and the seat reservation have a real user id. Anonymous JWTs use

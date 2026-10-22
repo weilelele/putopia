@@ -1,5 +1,6 @@
 -- Claim an anonymous (pay-first) Initiation purchase into a registered account.
--- NOT APPLIED. Requires schema_v108 (anonymous checkout sessions), v103 and v107.
+-- Applied to production oxwfnmcwovxnrvagxzdz on 2026-10-23 (after v108); verified the column, grants and guard definition.
+-- Requires schema_v108 (anonymous checkout sessions), v103 and v107.
 --
 -- A guest who already has an account can pay without logging in. After they
 -- log in, the app proves the same browser held the anonymous session (signed
