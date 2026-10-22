@@ -65,7 +65,7 @@ export function VoyagerBundlesPreview() {
             {pack.image && <div className={original.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 260px, 42vw" preload={index === 0} /></div>}
             <div className={original.packCopy}>
               <p className={original.packageNumber}>Package {index + 1} · {pack.month}</p>
-              <h4>{pack.title}</h4>{index === 1 && <p><strong>{ANTENNA.packTagline}</strong></p>}<p>{pack.description}</p>
+              <h4>{pack.title}</h4><p>{pack.description}</p>
             </div>
             {index === 2 && <ConsoleCarousel suspended={confirmation} />}
           </li>)}

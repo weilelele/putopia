@@ -501,7 +501,7 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
         <div className={`${s.packHero} ${selected === 1 ? s.antennaHero : ''}`}>
           <span key={pack.image} className={s.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 460px) 430px, 92vw" preload style={pack.focus ? { objectPosition: pack.focus } : undefined} /></span>
         </div>
-        <div className={s.packCaption} aria-live="polite"><span>{pack.meta}</span><b>{pack.title}</b>{selected === 1 && <p><strong>{ANTENNA.packTagline}</strong></p>}<p>{pack.description}</p></div>
+        <div className={s.packCaption} aria-live="polite"><span>{pack.meta}</span><b>{pack.title}</b><p>{pack.description}</p></div>
       </div>
       <div className={s.packStrip}>
         {PACKS.map((item, k) => <button key={item.month} type="button" className={s.packThumb} aria-pressed={selected === k} style={{ '--k': k } as CSSProperties}
