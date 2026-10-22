@@ -14,9 +14,7 @@
 
 ### Pack 2 简介（用户随后确认的精简版）
 
-购买页与 briefing 的 Pack 2 仅保留以下两段，第一段加粗：
-
-**A token of the Collective. A connection to the unknown.**
+购买页与 briefing 的 Pack 2 仅保留以下正文（2026-10-23 用户删除原加粗信物标语）：
 
 Installed on your Console, it receives a particular category of signals from parallel worlds. We are still learning what those signals contain. Explore them together.
 

@@ -235,7 +235,6 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
                 <PackHeading>{pack.title}</PackHeading>
                 {legacy && index < 2 && <p className={styles.packAccess}>Included in Initial Pack</p>}
                 {pack.featured && consoleClaim.claimed && <p className={styles.packAccess}>{consoleClaim.batch?.name ?? 'Batch details unavailable'}</p>}
-                {index === 1 && <p className={styles.antennaCopy}><strong>{ANTENNA.packTagline}</strong></p>}
                 <p className={index === 1 ? styles.antennaCopy : undefined}>{pack.description}</p>
                 {shipment ? shipment.status !== 'planned' && <p className={styles.shipmentStatus}>{shipment.status}</p> : initiated ? <p className={styles.shipmentStatus}>Progress unavailable</p> : null}
                 {shipment?.trackingUrl && <a className={styles.textLink} href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">Track delivery <ArrowRight size={18} aria-hidden /></a>}
