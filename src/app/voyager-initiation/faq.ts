@@ -1,9 +1,11 @@
 import { initiationPriceLabel } from '@/lib/initiation-pricing'
+import { ANTENNA } from '@/lib/antenna-copy'
 
 export const INITIATION_FAQ = [
   { question: 'Is this a subscription?', answer: `No. Initial Voyager Pack is ${initiationPriceLabel('initial')} and Complete Voyager Pack is ${initiationPriceLabel('standard')}, paid once with no recurring membership fee.` },
   { question: 'When will my card be charged?', answer: 'Your card is authorized first. We charge after delivery-region verification; an unsupported address cancels the authorization. A temporary bank hold may appear.' },
-  { question: 'What is the difference between the bundles?', answer: 'Both include Voyager member access, classified Intel, member votes and Feed participation. Initial includes Packs 1–2: the welcome letter, badge and Mysterious Widgets. Complete includes all four packs, including the Multiverse Console and Pack 4.' },
+  { question: 'What is the difference between the bundles?', answer: `Both include Voyager member access, classified Intel, member votes and Feed participation. Initial includes Packs 1–2: the welcome letter, badge and ${ANTENNA.firstMention}. The ${initiationPriceLabel('initial')} Initial Voyager Pack does not include the Console. Complete includes all four packs, including the Multiverse Console and Pack 4.` },
+  { question: 'What is the Antenna?', answer: `${ANTENNA.firstMention}. ${ANTENNA.description} ${ANTENNA.requirement} ${ANTENNA.initialExclusion} The image shows design studies; final appearance and quantity are to be confirmed.` },
   { question: 'Can I add a Console later?', answer: `Yes. All Initial Pack members can add Console + Pack 4 for ${initiationPriceLabel('legacy_upgrade')}. This includes historical $12 buyers. At current prices, $38 plus $460 totals $498; buying Complete for $488 saves $10. The upgrade is a fixed additional payment, not an automatic credit of your earlier payment.` },
   { question: 'How do I claim a Console?', answer: 'Complete and the Console + Pack 4 upgrade include one Console claim, with no additional device payment. Initial alone does not. Choose an available batch on Devices. If a batch is full, choose another available batch or wait; your unclaimed entitlement is preserved.' },
   { question: 'Can I change my Console batch?', answer: 'You can request a batch change before your Console ships, subject to availability. Once shipped, the batch cannot be changed. Console Holder access begins after you receive and bind your Console to your account.' },

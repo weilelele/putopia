@@ -1,0 +1,26 @@
+{
+  "tool": "built-in image_gen",
+  "constraint": "at most 5 reference images; two-step composition preserves all three selected designs",
+  "step1": {
+    "prompt": "Use case: compositing / product-mockup. Create one photorealistic 3:2 landscape editorial still-life photograph for the Pack 2 Antenna product illustration.\nInputs 1-3 are original Multiverse Console structural reference only, NOT objects to include. Inputs 4-5 are TWO approved shallow mushroom-cap ANTENNA DESIGN REFERENCES: brass with concentric grooves; ivory with silver rim and concentric grooves. This is stage one; include these TWO ONLY.\nExtract ONLY each antenna accessory from images 4,5, removing the Console from the composition entirely. Preserve their very flat umbrella cap shapes, refined rolled/beveled rims, concentric ring engravings, finish and palette faithfully. These are two finish studies of the same collectible antenna, not complete receiving machines. They are palm-size, not plates, buttons, coins, loudspeakers, coasters or organic mushrooms.\nArrange the two standalone antenna objects tastefully on a warm medium-dark walnut desktop in a close triangular grouping, one lying cap-up in front, another slightly behind with one at a modest oblique angle resting physically against its neighbour so the caps' profiles and tactile surfaces can be appreciated. Top caps dominate; small under-cap insertion stems remain mostly occluded behind cap edges rather than turned into visible tall pedestal feet. No invented electronics, plugs, lights, screens, controls or wires. Do not show mounting engineering or exploded sections. Real physical contacts, realistic scale, correct shadows.\nNatural soft side daylight, comfortably bright exposure, honest brushed brass and fine silver material grain, smooth satin enamel. Quiet analog collectible / organization emblem aesthetic. Table has believable nonrepeating wood grain; background uncluttered walnut continuation. All two objects fully in frame, grouped in central 75% of image width and 70% of height; enough breathing room for square crop. Slight overhead 3/4 product camera view, detailed surfaces and engravings in focus. No extra objects, no device, no hands, no labels, no letters, no typography, no watermark, no glow or sci-fi effects. Photograph not CGI, no oversharpening or extreme bokeh.",
+    "references": [
+      "/Users/will/Sites/putopia/docs/device-reference/originals/01-latest-front-left.jpg",
+      "/Users/will/Sites/putopia/docs/device-reference/originals/02-front-right-render.jpg",
+      "/Users/will/Sites/putopia/docs/device-reference/originals/03-rear-render.jpg",
+      "/Users/will/Sites/putopia/output/console-imagery/2026-10-22-antenna-token/01-brass-token-v2.png",
+      "/Users/will/Sites/putopia/output/console-imagery/2026-10-22-antenna-token/02-ivory-silver-v2.png"
+    ],
+    "output": "/Users/will/.codex/generated_images/01a1624d-5310-7ed0-abea-46225f4d5235/exec-d917b8fe-0759-43a1-89c4-3a0c397c98fb.png"
+  },
+  "step2": {
+    "prompt": "Use case: compositing. Input images 1-3 are the original Console structure references for product context ONLY. Do not include the Console. Input 4 is the EDIT TARGET: a photoreal still life of the brass and ivory standalone antenna caps on a walnut desk. Input 5 is the remaining deep navy / orange-edged Antenna DESIGN REFERENCE on top of a Console.\nKeep the two existing brass and ivory antennas and their materials and design from image 4. Add exactly ONE standalone navy antenna extracted from image 5, discarding its Console completely. Recompose into a tasteful close triangular cluster of all THREE standalone antennas on the same walnut tabletop. Keep the refined shallow umbrella cap silhouette, concentric grooves and thin orange rim of navy antenna exactly like image 5. Navy at foreground-right, ivory foreground-left, brass angled behind them resting physically against a neighbour. All objects fully visible enough to identify their surfaces; no heavy overlap. Caps have discreet short insertion stems mostly hidden behind their edges. Do not expose speculative connection engineering, do not add tall pedestal stands, plates, wires, screens, machinery or lights.\nFrame slightly wider than image 4: central cluster occupies ~75% width and ~65% height so square crop can retain all three objects. Same coherent natural side daylight, true material reflections and contact shadows, warm real non-repeating walnut grain, sharp readable products, no excessive blur, no HDR or CGI look. 3:2 landscape. No labels, words, new logos, text, props, people, packaging or Console. Only three collectible Antenna objects.",
+    "references": [
+      "/Users/will/Sites/putopia/docs/device-reference/originals/01-latest-front-left.jpg",
+      "/Users/will/Sites/putopia/docs/device-reference/originals/02-front-right-render.jpg",
+      "/Users/will/Sites/putopia/docs/device-reference/originals/03-rear-render.jpg",
+      "/Users/will/.codex/generated_images/01a1624d-5310-7ed0-abea-46225f4d5235/exec-d917b8fe-0759-43a1-89c4-3a0c397c98fb.png",
+      "/Users/will/Sites/putopia/output/console-imagery/2026-10-22-antenna-token/03-navy-orange-v2.png"
+    ],
+    "output": "/Users/will/.codex/generated_images/01a1624d-5310-7ed0-abea-46225f4d5235/exec-168903fd-54c6-4f4e-b3c7-e2f9c32f680e.png"
+  }
+}
