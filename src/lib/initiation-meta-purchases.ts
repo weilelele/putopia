@@ -1,4 +1,4 @@
-import { isInitiationOrderAmount } from './initiation-pricing'
+import { INITIATION_PRICES, isInitiationOrderAmount } from './initiation-pricing'
 import type Stripe from 'stripe'
 import { isIOSNativeApp } from './app-platform'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
@@ -90,6 +90,10 @@ export function buildInitiationMetaPurchase(
     value: order.amount / 100,
     currency: 'USD',
     contentId: INITIATION_PRODUCT,
+    contentName: INITIATION_PRICES[order.order_kind].name,
+    orderId: order.id,
+    orderKind: order.order_kind,
+    pricingVersion: order.pricing_version ?? 'legacy-v1',
     eventSourceUrl: attribution.event_source_url ?? 'https://www.multiverseco.org/voyager-initiation',
     email: details?.email ?? session.customer_email,
     phone: details?.phone,

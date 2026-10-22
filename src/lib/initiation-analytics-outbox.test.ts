@@ -14,6 +14,35 @@ function setup(patch: Partial<InitiationAnalyticsDependencies> = {}) {
     retrieveIntent: vi.fn(async () => intent), send: vi.fn(async () => {}), now: () => Date.parse('2026-10-14T00:01:00Z'), ...patch }
 }
 describe('durable PostHog Initiation outcomes', () => {
+  it('logs one verified $38 purchase with campaign context and the Meta correlation ID, without advertising identifiers', async () => {
+    const initialOrder = { ...order, order_kind: 'initial' as const, amount: 3800, pricing_version: 'voyager-bundles-v1',
+      meta_attribution: { fbp: 'fb.1.123.private-browser-id', fbc: 'fb.1.123.private-click-id' } }
+    const deps = setup({ loadOrder: async () => initialOrder,
+      retrieveSession: async () => ({ ...session, amount_total: 3800, metadata: { ...session.metadata, order_kind: 'initial' } }),
+      retrieveIntent: async () => ({ ...intent, amount: 3800, amount_received: 3800, metadata: { ...intent.metadata, order_kind: 'initial' } }),
+    })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
+    expect(deps.send).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      event: 'initiation_purchase_completed', uuid: claim.event_uuid,
+      properties: expect.objectContaining({ product_name: 'Initial Voyager Pack', order_kind: 'initial', payable_amount: 38,
+        amount_minor: 3800, currency: 'USD', payment_status: 'paid', is_test: false, order_id: order.id,
+        ad_id: '120253708881030237', meta_event_id: `initiation_purchase_${order.id}`,
+        meta_has_browser_id: true, meta_has_click_id: true, meta_tracking_disabled: false }),
+    }))
+    expect(JSON.stringify(vi.mocked(deps.send).mock.calls)).not.toMatch(/private-browser-id|private-click-id|never-send/)
+  })
+  it('records a $38 checkout without reporting a purchase before capture', async () => {
+    const deps = setup({ claim: async () => [{ ...claim, event: 'initiation_checkout_started' }],
+      loadOrder: async () => ({ ...order, status: 'pending', order_kind: 'initial', amount: 3800, pricing_version: 'voyager-bundles-v1' }),
+      retrieveSession: async () => ({ ...session, amount_total: 3800, status: 'open', payment_status: 'unpaid', metadata: { ...session.metadata, order_kind: 'initial' } }),
+    })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
+    expect(deps.retrieveIntent).not.toHaveBeenCalled()
+    const logged = vi.mocked(deps.send).mock.calls[0][0]
+    expect(logged).toMatchObject({ event: 'initiation_checkout_started', properties: { payable_amount: 38, order_kind: 'initial' } })
+    expect(logged.properties).not.toHaveProperty('payment_status')
+    expect(logged.properties).not.toHaveProperty('meta_event_id')
+  })
   it('requires captured payment plus paid database state and emits no customer fields', async () => {
     const deps = setup(); expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
     expect(deps.send).toHaveBeenCalledWith(expect.objectContaining({ uuid: claim.event_uuid, distinct_id: 'user1', timestamp: claim.event_time,

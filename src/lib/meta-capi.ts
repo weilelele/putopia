@@ -8,6 +8,10 @@ export type MetaPurchaseInput = {
   value: number
   currency: string
   contentId: string
+  contentName?: string
+  orderId?: string
+  orderKind?: string
+  pricingVersion?: string
   eventSourceUrl?: string | null
   email?: string | null
   phone?: string | null
@@ -74,6 +78,10 @@ export function buildMetaPurchasePayload(input: MetaPurchaseInput) {
         content_ids: [input.contentId],
         content_type: 'product',
         num_items: 1,
+        ...(input.contentName ? { content_name: input.contentName } : {}),
+        ...(input.orderId ? { order_id: input.orderId } : {}),
+        ...(input.orderKind ? { order_kind: input.orderKind } : {}),
+        ...(input.pricingVersion ? { pricing_version: input.pricingVersion } : {}),
       },
     }],
   }
