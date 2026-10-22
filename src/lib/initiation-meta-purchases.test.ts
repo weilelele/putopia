@@ -1,5 +1,6 @@
 import type Stripe from 'stripe'
 import { describe, expect, it, vi } from 'vitest'
+import { buildMetaPurchasePayload } from './meta-capi'
 import {
   buildInitiationMetaPurchase, createInitiationMetaStore, deliverInitiationMetaPurchase,
   initiationMetaRetryAt, retryInitiationMetaPurchases, safeInitiationMetaError,
@@ -43,6 +44,25 @@ function dependencies(patch: Partial<InitiationMetaOrder> = {}) {
 }
 
 describe('Initiation paid Purchase payload', () => {
+  it('delivers a distinct $38 Initial Pack Purchase with matching cookies and a stable order ID', async () => {
+    const deps = dependencies({ order_kind: 'initial', amount: 3800, pricing_version: 'voyager-bundles-v1' })
+    deps.retrieveSession.mockResolvedValue({ ...session, amount_total: 3800, metadata: { ...session.metadata, order_kind: 'initial' } })
+    expect(await deliverInitiationMetaPurchase(claim, deps)).toBe('sent')
+    const [input, options] = deps.sendPurchase.mock.calls[0]
+    expect(options).toEqual({ stripeLiveMode: true })
+    expect(buildMetaPurchasePayload(input).data[0]).toMatchObject({
+      event_name: 'Purchase', event_id: claim.event_id,
+      custom_data: { value: 38, currency: 'USD', content_ids: ['voyager_initiation'], content_name: 'Initial Voyager Pack',
+        order_id: order.id, order_kind: 'initial', pricing_version: 'voyager-bundles-v1' },
+      user_data: { fbp: order.meta_attribution!.fbp, fbc: order.meta_attribution!.fbc, em: [expect.any(String)] },
+    })
+    expect(deps.store.finish).toHaveBeenCalledWith(claim, expect.objectContaining({ status: 'sent', meta_trace_id: 'trace_123' }))
+  })
+  it('rejects $38 without its pricing version or with a crossed bundle', () => {
+    const initialSession = { ...session, amount_total: 3800, metadata: { ...session.metadata, order_kind: 'initial' } }
+    expect(() => buildInitiationMetaPurchase({ ...order, order_kind: 'initial', amount: 3800 }, claim, initialSession)).toThrow()
+    expect(() => buildInitiationMetaPurchase({ ...order, amount: 3800, pricing_version: 'voyager-bundles-v1' }, claim, initialSession)).toThrow()
+  })
   it('uses real checkout details and the fixed outbox identity/time for $520', () => {
     expect(buildInitiationMetaPurchase(order, claim, session)).toMatchObject({
       eventId: claim.event_id, eventTime: Math.floor(Date.parse(paidAt) / 1000), value: 520, currency: 'USD',

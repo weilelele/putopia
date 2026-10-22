@@ -40,6 +40,12 @@ describe('Initiation price exposure', () => {
   })
 })
 describe('Initiation analytics facts', () => {
+  it('labels the $38 Initial Pack separately throughout the funnel', () => {
+    expect(initiationAnalyticsProperties('initial', { order_kind: 'standard', product_name: 'spoofed', payable_amount: 1 })).toMatchObject({
+      product_type: 'voyager_initiation', product_name: 'Initial Voyager Pack', order_kind: 'initial',
+      payable_amount: 38, amount_minor: 3800, currency: 'USD', pricing_version: 'voyager-bundles-v1',
+    })
+  })
   it('reports current $460 upgrades and $488 Complete prices', () => {
     expect(initiationAnalyticsProperties('legacy_upgrade')).toMatchObject({ payable_amount: 460, amount_minor: 46000, order_kind: 'legacy_upgrade', currency: 'USD' })
     expect(initiationAnalyticsProperties('standard')).toMatchObject({ payable_amount: 488, amount_minor: 48800 })

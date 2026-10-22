@@ -48,6 +48,7 @@ export function initiationAnalyticsProperties(kind: InitiationOrderKind, context
   delete safe.disabled
   return {
     ...safe, page_version: INITIATION_PAGE_VERSION, batch: 'S26', order_kind: kind,
+    product_type: 'voyager_initiation', product_name: INITIATION_PRICES[kind].name,
     payable_amount: amount / 100,
     amount_minor: amount, currency: 'USD', pricing_version: INITIATION_PRICING_VERSION,
   }
