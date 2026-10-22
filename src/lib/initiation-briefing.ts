@@ -99,7 +99,7 @@ export function briefingOffers(status: InitiationStatus): BriefingOffer[] {
   const saving = dollars('initial') + dollars('legacy_upgrade') - dollars('standard')
   return [{
     id: 'initial', label: 'INITIAL', title: INITIATION_PRICES.initial.name, price: dollars('initial'),
-    points: [membership, 'Packs 1–2', `Letter, badge, ${ANTENNA.firstMention}`], note: `Console not included. Antenna requires installation on a Console. Add Console + Pack 4 later for $${dollars('legacy_upgrade')}.`, recommended: false,
+    points: [membership, 'Packs 1–2', `Letter, badge, ${ANTENNA.firstMention}`], note: `Add Console + Pack 4 later for $${dollars('legacy_upgrade')}.`, recommended: false,
   }, {
     id: 'standard', label: 'COMPLETE', title: INITIATION_PRICES.standard.name, price: dollars('standard'),
     points: [membership, 'All four packs', 'Your own Multiverse Console'], note: saving > 0 ? `Save $${saving} versus upgrading later.` : 'Pay once. No recurring fee.', recommended: true,

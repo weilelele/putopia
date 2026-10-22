@@ -2,6 +2,8 @@
 export const ANTENNA = {
   name: 'Antenna',
   firstMention: 'Antenna for Multiverse Console',
+  packTagline: 'A token of the Collective. A connection to the unknown.',
+  packDescription: 'Installed on your Console, it receives a particular category of signals from parallel worlds. We are still learning what those signals contain. Explore them together.',
   tagline: 'An emblem of the Collective. A connection to the unknown.',
   description: 'An emblem of the Collective. A connection to the unknown. A decorative collectible for your Console, it receives a particular category of parallel-world signals when installed on top. We are still learning what those signals contain. Explore them together.',
   briefingDescription: 'An emblem of the Collective, receiving a particular category of parallel-world signals. Explore the unknown together.',

@@ -40,7 +40,7 @@ describe('Voyager briefing content', () => {
   it('offers the same choices and prices as the checkout panel', () => {
     expect(briefingOffers('unpaid').map(o => [o.id, o.price, o.recommended])).toEqual([['initial', 38], ['standard', 488]].map(([id, price]) => [id, price, id === 'standard']))
     expect(briefingOffers('guest').map(o => o.id)).toEqual(['initial', 'standard'])
-    expect(briefingOffers('unpaid')[0].note).toBe('Console not included. Antenna requires installation on a Console. Add Console + Pack 4 later for $460.')
+    expect(briefingOffers('unpaid')[0].note).toBe('Add Console + Pack 4 later for $460.')
     expect(briefingOffers('unpaid')[1].note).toBe('Save $10 versus upgrading later.')
     for (const offer of briefingOffers('unpaid')) expect(offer.points[0]).toBe('Collective membership privileges')
     const upgrade = briefingOffers('legacy_pack')

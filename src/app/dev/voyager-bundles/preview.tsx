@@ -15,7 +15,7 @@ import styles from './preview.module.css'
 
 const packs = [
   { title: 'Initial Voyager Pack', month: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'Welcome letter and Voyager badge', description: 'Welcome letter and exclusive member badge. A physical invitation into the Collective.' },
-  { title: ANTENNA.firstMention, month: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: `${ANTENNA.description} ${ANTENNA.requirement} ${ANTENNA.initialExclusion} ${ANTENNA.imageCaption}` },
+  { title: ANTENNA.firstMention, month: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
   { title: 'Multiverse Console', month: 'Dec 2026', image: '', alt: '', description: 'Your own device for exploring and interacting with parallel worlds.' },
   { title: 'A Fourth Delivery', month: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'A future shipment for this cohort. Contents to be announced.' },
 ]
@@ -65,7 +65,7 @@ export function VoyagerBundlesPreview() {
             {pack.image && <div className={original.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 260px, 42vw" preload={index === 0} /></div>}
             <div className={original.packCopy}>
               <p className={original.packageNumber}>Package {index + 1} · {pack.month}</p>
-              <h4>{pack.title}</h4><p>{pack.description}</p>
+              <h4>{pack.title}</h4>{index === 1 && <p><strong>{ANTENNA.packTagline}</strong></p>}<p>{pack.description}</p>
             </div>
             {index === 2 && <ConsoleCarousel suspended={confirmation} />}
           </li>)}

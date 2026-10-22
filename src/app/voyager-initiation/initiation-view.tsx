@@ -50,7 +50,7 @@ const paymentMessages = {
 
 const packs = [
   { title: 'Initial Voyager Pack', dispatch: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'A welcome letter and Voyager badge on a desk', description: 'Welcome letter and exclusive member badge. A physical invitation into the Collective.' },
-  { title: ANTENNA.firstMention, dispatch: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.description },
+  { title: ANTENNA.firstMention, dispatch: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
   { title: 'Multiverse Console', dispatch: 'Dec 2026', image: '/assets/voyager-initiation/console-multiview-portrait.png', alt: 'Multiverse Console in the Kyoto workshop: front, rear, side display and control dial views', featured: true, description: 'Your own device for exploring and interacting with parallel worlds.' },
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'A future shipment for this cohort. Contents to be announced.', planned: true },
 ]
@@ -253,11 +253,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
                 <PackHeading>{pack.title}</PackHeading>
                 {legacy && index < 2 && <p className={styles.packAccess}>Included in Initial Pack</p>}
                 {pack.featured && consoleClaim.claimed && <p className={styles.packAccess}>{consoleClaim.batch?.name ?? 'Batch details unavailable'}</p>}
+                {index === 1 && <p className={styles.antennaCopy}><strong>{ANTENNA.packTagline}</strong></p>}
                 <p className={index === 1 ? styles.antennaCopy : undefined}>{pack.description}</p>
-                {index === 1 && <>
-                  <p className={styles.antennaCopy}>{ANTENNA.requirement} {ANTENNA.initialExclusion}</p>
-                  <p className={styles.antennaCaption}>{ANTENNA.imageCaption}</p>
-                </>}
                 {shipment ? shipment.status !== 'planned' && <p className={styles.shipmentStatus}>{shipment.status}</p> : initiated ? <p className={styles.shipmentStatus}>Progress unavailable</p> : null}
                 {shipment?.trackingUrl && <a className={styles.textLink} href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">Track delivery <ArrowRight size={18} aria-hidden /></a>}
               </div>

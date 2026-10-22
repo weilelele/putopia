@@ -12,6 +12,18 @@
 
 ## 现行英文
 
+### Pack 2 简介（用户随后确认的精简版）
+
+购买页与 briefing 的 Pack 2 仅保留以下两段，第一段加粗：
+
+**A token of the Collective. A connection to the unknown.**
+
+Installed on your Console, it receives a particular category of signals from parallel worlds. We are still learning what those signals contain. Explore them together.
+
+此处不再追加安装要求、不含主机或设计示意段落。briefing 套餐页仅保留后续 Console + Pack 4 升级价格，不追加适用性说明。主购买卡、FAQ 和交付说明继续保留已确认的安装／套餐边界；FAQ 与交付说明原文不因本次精简改动。
+
+### FAQ 等详细说明（保持已确认内容）
+
 **Antenna for Multiverse Console**
 
 > An emblem of the Collective. A connection to the unknown. A decorative collectible for your Console, it receives a particular category of parallel-world signals when installed on top. We are still learning what those signals contain. Explore them together.
