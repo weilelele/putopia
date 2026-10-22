@@ -12,7 +12,7 @@ export function initiationShipmentEmail(pack: 1 | 2 | 3 | 4, siteUrl: string) {
   return { subject: `S26 Initiation Pack ${pack} dispatched`, text: `Your Initiation Pack ${pack} has been dispatched. View your tracking information: ${new URL('/voyager-initiation', siteUrl).href}` }
 }
 export function initiationCalibrationEmail(siteUrl: string) {
-  return { subject: 'Continue your Voyager Calibration', text: `Complete Calibration, then return to Initiation to check payment availability. Calibration alone does not activate paid membership: ${new URL('/voyager-initiation', siteUrl).href}` }
+  return { subject: 'Continue your Voyager Calibration', text: `Add your perspective to the Collective with five Signal Calibration questions. You can complete them whenever you are ready: ${new URL('/quiz', siteUrl).href}` }
 }
 export function initiationConsoleEmail(siteUrl: string) {
   return { subject: 'Your Initiation Console allocation', text: `View your allocated Console and fulfillment progress: ${new URL('/devices/my-consoles', siteUrl).href}. Your four Initiation Pack records remain in Initiation.` }
