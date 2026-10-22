@@ -55,9 +55,9 @@ describe('Initiation analytics facts', () => {
       .toEqual({ utm_source: 'email', utm_campaign: 'p1-initiation-20261014' })
   })
   it('records the actual CTA branch before navigation', () => {
-    expect(initiationNextStep('guest', true)).toBe('login')
-    expect(initiationNextStep('unpaid', false)).toBe('calibration')
-    expect(initiationNextStep('legacy_pack', true)).toBe('checkout')
+    expect(initiationNextStep('guest')).toBe('login')
+    expect(initiationNextStep('unpaid')).toBe('checkout')
+    expect(initiationNextStep('legacy_pack')).toBe('checkout')
   })
   it('preserves exact Meta IDs as strings without numeric precision loss', () => {
     expect(sanitizeInitiationAnalytics({ campaign_id: '120253708880830237', adset_id: '120253708881010237', ad_id: '120253708881030237', placement: 'Instagram_Stories' }))
