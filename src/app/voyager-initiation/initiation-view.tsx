@@ -1,6 +1,7 @@
 'use client'
 
 import { INITIATION_PRICES, initiationPriceLabel } from '@/lib/initiation-pricing'
+import { ANTENNA } from '@/lib/antenna-copy'
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
@@ -49,7 +50,7 @@ const paymentMessages = {
 
 const packs = [
   { title: 'Initial Voyager Pack', dispatch: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'A welcome letter and Voyager badge on a desk', description: 'Welcome letter and exclusive member badge. A physical invitation into the Collective.' },
-  { title: 'Mysterious Widgets', dispatch: 'Nov 2026', image: '/assets/voyager-initiation/mysterious-widgets.png', alt: 'A metal cube, brass cylinder and dark mineral on a wooden desk', description: 'Small widgets that strengthen and amplify signals.' },
+  { title: ANTENNA.firstMention, dispatch: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.description },
   { title: 'Multiverse Console', dispatch: 'Dec 2026', image: '/assets/voyager-initiation/console-multiview-portrait.png', alt: 'Multiverse Console in the Kyoto workshop: front, rear, side display and control dial views', featured: true, description: 'Your own device for exploring and interacting with parallel worlds.' },
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'A future shipment for this cohort. Contents to be announced.', planned: true },
 ]
@@ -198,8 +199,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
               <input type="radio" name="voyager-bundle" value={option} aria-labelledby={`bundle-name-${option} bundle-price-${option}`} aria-describedby={`bundle-detail-${option}${option !== 'standard' ? ` bundle-note-${option}` : ''}`} checked={kind === option} onChange={() => { if (option !== 'legacy_upgrade') setBundle(option) }} />
               <span className={styles.bundleCopy}>
                 <span className={styles.bundleHeading}><span id={`bundle-name-${option}`}>{INITIATION_PRICES[option].name}</span><strong ref={kind === option ? priceRef : undefined} id={`bundle-price-${option}`}>{initiationPriceLabel(option)}</strong></span>
-                <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? 'Welcome letter, member badge and Mysterious Widgets.' : option === 'standard' ? 'Everything in Initial, plus Multiverse Console and the fourth delivery.' : 'One Multiverse Console and the fourth delivery.'}</span>
-                {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? 'Console claimed separately. Add Console + the fourth delivery later for $460.' : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
+                <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? 'Welcome letter, member badge and Antenna for Multiverse Console.' : option === 'standard' ? 'Everything in Initial, plus Multiverse Console and the fourth delivery.' : 'One Multiverse Console and the fourth delivery.'}</span>
+                {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? `Console not included. Antenna requires installation on a Console. Add Console + Pack 4 later for ${initiationPriceLabel('legacy_upgrade')}.` : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
               </span>
             </label>)}
           </fieldset>
@@ -252,7 +253,11 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
                 <PackHeading>{pack.title}</PackHeading>
                 {legacy && index < 2 && <p className={styles.packAccess}>Included in Initial Pack</p>}
                 {pack.featured && consoleClaim.claimed && <p className={styles.packAccess}>{consoleClaim.batch?.name ?? 'Batch details unavailable'}</p>}
-                <p>{pack.description}</p>
+                <p className={index === 1 ? styles.antennaCopy : undefined}>{pack.description}</p>
+                {index === 1 && <>
+                  <p className={styles.antennaCopy}>{ANTENNA.requirement} {ANTENNA.initialExclusion}</p>
+                  <p className={styles.antennaCaption}>{ANTENNA.imageCaption}</p>
+                </>}
                 {shipment ? shipment.status !== 'planned' && <p className={styles.shipmentStatus}>{shipment.status}</p> : initiated ? <p className={styles.shipmentStatus}>Progress unavailable</p> : null}
                 {shipment?.trackingUrl && <a className={styles.textLink} href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">Track delivery <ArrowRight size={18} aria-hidden /></a>}
               </div>

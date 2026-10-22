@@ -36,6 +36,8 @@
 .packageNumber { color: var(--color-nucleus); font-size: var(--fs-caption); margin: 0 0 6px; line-height: 1.5; }
 .packCopy :is(h3, h4) { font-size: var(--fs-body); line-height: 1.3; font-weight: 700; margin: 0 0 8px; overflow-wrap: anywhere; }
 .packCopy > p:last-child { margin: 0; font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
+.packCopy .antennaCopy { margin: 0 0 var(--s-3); font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
+.packCopy .antennaCaption { margin: 0; font-size: var(--fs-caption); line-height: 1.5; color: var(--color-star-dim); }
 .benefit { display: grid; gap: 20px; }
 .benefitImage { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
 .benefitImage img { object-fit: cover; }
