@@ -498,7 +498,7 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
     </div>
     <div className={s.gut}>
       <div className={s.packCard}>
-        <div className={s.packHero}>
+        <div className={`${s.packHero} ${selected === 1 ? s.antennaHero : ''}`}>
           <span key={pack.image} className={s.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 460px) 430px, 92vw" preload style={pack.focus ? { objectPosition: pack.focus } : undefined} /></span>
         </div>
         <div className={s.packCaption} aria-live="polite"><span>{pack.meta}</span><b>{pack.title}</b><p>{pack.description}</p>{selected === 1 && <><p>{ANTENNA.requirement} {ANTENNA.initialExclusion}</p><p>{ANTENNA.imageCaption}</p></>}</div>

@@ -14,8 +14,10 @@ Delivery is limited to the contiguous 48 US states and DC, with shipping and app
 
 Local integration does not mean production pricing has changed. Migration `schema_v103.sql` is not applied; dedicated Stripe prices and production Checkout acceptance remain pending. See the new pricing release record.
 
-## Historical record
+## Antenna naming and positioning
 
 October 22, 2026 naming clarification: the base name is **Antenna**, introduced as **Antenna for Multiverse Console**. An emblem of the Collective and a decorative collectible, it receives a particular category of parallel-world signals when installed on the Console. It cannot receive signals independently. The Collective's knowledge of the signals is limited; members explore them together. The three illustrated finishes are design studies, not a promise of three items or selectable finishes in Pack 2. Final appearance and quantity remain to be confirmed. See the [product language record](../../product/antenna.zh.md).
+
+## Historical record
 
 The previous $12 / $520 / $400 offer and its dated rollout notes are preserved in the [historical pricing archive](pricing-before-20261021.en.md). They do not price new orders.
