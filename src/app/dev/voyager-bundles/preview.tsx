@@ -27,7 +27,7 @@ const benefits = [
 ]
 
 const bundles = {
-  initial: { name: 'Initial Voyager Pack', price: INITIATION_PRICES.initial.amount / 100, detail: 'Welcome letter, member badge and Antenna for Multiverse Console.', note: 'Console not included. Antenna requires installation on a Console. Add Console + Pack 4 later for $460.' },
+  initial: { name: 'Initial Voyager Pack', price: INITIATION_PRICES.initial.amount / 100, detail: 'Welcome letter, member badge and Antenna for Multiverse Console.', note: 'Add Console + Pack 4 later for $460.' },
   complete: { name: 'Complete Voyager Pack', price: INITIATION_PRICES.standard.amount / 100, detail: 'Everything in Initial, plus Multiverse Console and the fourth delivery.', note: '' },
   upgrade: { name: 'Console + Fourth Delivery', price: INITIATION_PRICES.legacy_upgrade.amount / 100, detail: 'One Multiverse Console and the fourth delivery.', note: 'For existing Voyagers who already have the Initial Pack.' },
 } as const

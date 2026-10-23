@@ -187,7 +187,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
               <span className={styles.bundleCopy}>
                 <span className={styles.bundleHeading}><span id={`bundle-name-${option}`}>{INITIATION_PRICES[option].name}</span><strong ref={kind === option ? priceRef : undefined} id={`bundle-price-${option}`}>{initiationPriceLabel(option)}</strong></span>
                 <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? 'Welcome letter, member badge and Antenna for Multiverse Console.' : option === 'standard' ? 'Everything in Initial, plus Multiverse Console and the fourth delivery.' : 'One Multiverse Console and the fourth delivery.'}</span>
-                {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? `Console not included. Antenna requires installation on a Console. Add Console + Pack 4 later for ${initiationPriceLabel('legacy_upgrade')}.` : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
+                {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? `Add Console + Pack 4 later for ${initiationPriceLabel('legacy_upgrade')}.` : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
               </span>
             </label>)}
           </fieldset>
