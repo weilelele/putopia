@@ -6,6 +6,15 @@ import { parseVoyagerIntake } from '@/lib/voyager-intake'
 import { fixture, type FixtureName } from './fixtures'
 import type { VoyagerQuizServices } from '@/components/voyager-profile-quiz'
 import { briefingRegions } from '@/lib/initiation-briefing'
+import type { CheckoutSignInServices } from '@/app/voyager-initiation/checkout-sign-in'
+
+// Fixture sign-in never calls Supabase: no email is sent and no account is created.
+// Code 000000 succeeds; any other code shows the expired-code error.
+const PREVIEW_SIGN_IN: CheckoutSignInServices = {
+  sendCode: async () => ({ error: null }),
+  verifyCode: async (_email, token) => ({ error: token === '000000' ? null : { code: 'otp_expired', status: 403 } }),
+  signInWithPassword: async () => ({ error: null }),
+}
 
 // Local-only briefing data: names without avatars, and sample batch phases. Profiles open only if the IDs exist.
 const PREVIEW_MEMBERS = ['Evan R.', 'marlowe_8', 'tinylag42', 'June K.', 'Nell', 'Arlo Bennett', 'westwindow', 'owen.tape', 'Celia', 'rivet_26']
@@ -27,5 +36,5 @@ export function InitiationPreview({ name, deviceSource, paymentPlacement, briefi
       return { ok: true }
     },
   }
-  return <InitiationView snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS} briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource} quizServices={services} beginCheckout={async () => ({ status: 'not_open', message: 'Fixture only. No payment session has been created.' })} />
+  return <InitiationView snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS} briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource} quizServices={services} signInServices={PREVIEW_SIGN_IN} beginCheckout={async () => ({ status: 'not_open', message: 'Fixture only. No payment session has been created.' })} />
 }
