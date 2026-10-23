@@ -15,6 +15,7 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import type { VoyagerQuizServices } from '@/components/voyager-profile-quiz'
 import { PostPaymentCalibration } from './post-payment-calibration'
+import { CheckoutSignIn, type CheckoutSignInServices } from './checkout-sign-in'
 import styles from './initiation.module.css'
 import { INITIATION_FAQ } from './faq'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
@@ -65,6 +66,8 @@ export type InitiationViewProps = {
   checkoutCanceled?: boolean
   beginCheckout: () => Promise<InitiationCheckoutResult>
   quizServices?: VoyagerQuizServices
+  /** Sign-in calls for the Pay dialog; fixtures pass fakes so no email or account is created. */
+  signInServices?: CheckoutSignInServices
   paymentPlacement?: 'top' | 'bottom'
   analyticsEnvironment?: string
   regions?: BriefingRegion[]
@@ -72,7 +75,7 @@ export type InitiationViewProps = {
   briefingParam?: string
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, signInServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -85,6 +88,10 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const inFlight = useRef(false)
+  // A guest picks a bundle, signs in in the dialog, then continues with that bundle.
+  const [signInOpen, setSignInOpen] = useState(false)
+  const [signedInHere, setSignedInHere] = useState(false)
+  const pendingBundle = useRef<'initial' | 'standard'>(initialBundle)
   const { availability, status, shipments, consoleClaim } = snapshot
   const initiated = status === 'initiated'
   const granted = status === 'granted'
@@ -106,7 +113,18 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     const chosen = override ?? bundle
     captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
     setError('')
-    if (status === 'guest') { window.location.assign(initiationLoginPath(source, chosen)); return }
+    if (status === 'guest' && !signedInHere) { pendingBundle.current = chosen; setSignInOpen(true); return }
+    await continueToCheckout(chosen)
+  }
+
+  function signedIn() {
+    setSignedInHere(true)
+    setSignInOpen(false)
+    void continueToCheckout(pendingBundle.current)
+  }
+
+  async function continueToCheckout(chosen: 'initial' | 'standard') {
+    if (inFlight.current) return
     inFlight.current = true
     setBusy(true)
     try {
@@ -285,6 +303,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       seats={{ batch: availability.batch, capacity: availability.capacity, initiated: availability.initiated }} offers={briefingOffers(status)}
       busy={busy} unavailable={briefingUnavailable} capture={captureAnalytics} onChoose={chooseFromBriefing} onClose={closeBriefing} />}
     {quizServices && <PostPaymentCalibration snapshot={snapshot} quizServices={quizServices} autoInvite onAnalytics={captureAnalytics} />}
+    <CheckoutSignIn open={signInOpen} onClose={() => setSignInOpen(false)} onSignedIn={signedIn} services={signInServices} />
     <ArchiveSheet open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">
       <p>All Initial Pack members, including historical $12 buyers, can add Console + Pack 4 for $460.</p>
       <p>Your first two packs remain separate. The upgrade is a fixed additional payment, not a subtraction of your earlier payment.</p>

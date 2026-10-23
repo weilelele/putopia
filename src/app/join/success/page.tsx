@@ -6,12 +6,15 @@ import { ArchivePageHeader } from '@/components/archive-page-header'
 import { PostPaymentCalibration } from '@/app/voyager-initiation/post-payment-calibration'
 import { hasConfirmedInitiationPayment } from '@/lib/post-payment-calibration'
 import { PaymentStatusRefresh } from './payment-status-refresh'
+import { needsRegistration } from '@/lib/registration-state'
 export const dynamic = 'force-dynamic'
 export default async function JoinSuccessPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
   const source = deviceSourcePath((await searchParams).from)
   const returnPath = initiationReturnPath(source)
   const snapshot = await getInitiationSnapshot()
   const paid = hasConfirmedInitiationPayment(snapshot)
+  // Buyers who signed up with an email code at checkout have no name or password yet; setting them up is optional.
+  const setUpAccount = snapshot.userId ? await needsRegistration(snapshot.userId).catch(() => false) : false
   return <main className="main join-success-page"><div className="join-success-shell"><ArchiveCard className="join-success-card">
     <ArchivePageHeader title={paid ? 'WELCOME TO S26' : 'PAYMENT STATUS'} accent={paid ? 'INITIATION CONFIRMED' : 'VIEW YOUR RECORDS'} />
     <p className="join-success-copy">{snapshot.error ?? (!snapshot.userId
@@ -25,6 +28,10 @@ export default async function JoinSuccessPage({ searchParams }: { searchParams: 
       : 'Your payment has not yet been confirmed. Returning from checkout does not activate membership. Check Initiation for the latest status.')}</p>
     <PaymentStatusRefresh pending={!!snapshot.userId && snapshot.paymentStatus === 'pending'} />
     <PostPaymentCalibration snapshot={snapshot} showResume environment={process.env.VERCEL_ENV ?? 'unknown'} />
+    {setUpAccount && <>
+      <p className="join-success-copy">Add a display name and password so you can sign in without an email code next time.</p>
+      <ArchiveLinkButton href={`/register?redirect=${encodeURIComponent(returnPath)}`} fullWidth variant="secondary">SET UP YOUR ACCOUNT</ArchiveLinkButton>
+    </>}
     <ArchiveLinkButton href={snapshot.userId ? returnPath : `/login?redirect=${encodeURIComponent(returnPath)}`} fullWidth variant="primary">{snapshot.userId ? 'VIEW INITIATION' : 'LOG IN'}</ArchiveLinkButton>
   </ArchiveCard></div></main>
 }

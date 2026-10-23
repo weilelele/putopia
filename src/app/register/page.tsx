@@ -13,6 +13,7 @@ import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import { trackRedditSignUp } from '@/lib/actions/reddit-ads'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 import { safeAppPath } from '@/lib/ui-navigation'
+import { takePostRegisterRedirect } from '@/lib/post-register-redirect'
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
@@ -108,7 +109,9 @@ export default function RegisterPage() {
     }
 
     const requested = new URLSearchParams(window.location.search).get('redirect')
-    const destination = safeAppPath(requested, window.location.origin) ?? '/console'
+    let remembered: string | null = null
+    try { remembered = takePostRegisterRedirect(localStorage, window.location.origin, Date.now()) } catch { /* Storage is a convenience only. */ }
+    const destination = safeAppPath(requested, window.location.origin) ?? remembered ?? '/console'
     router.push(destination === '/login' || destination === '/register' ? '/console' : destination)
     router.refresh()
   }

@@ -15,6 +15,7 @@ import { ArchiveButton } from '@/components/archive-button'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 import { DEVICE_REEL } from '@/lib/device-reel'
 import { OnboardingSoundtrack } from '@/components/onboarding-soundtrack'
+import { rememberPostRegisterRedirect } from '@/lib/post-register-redirect'
 
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v3'
@@ -86,6 +87,11 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     () => resolveVariant(variants, { utmContent: getFirstTouch().utm_content, override: params.get('variant') }),
     [variants, params],
   )
+
+  /* Remember where a visitor sent here from /login wants to return after /register. */
+  useEffect(() => {
+    try { rememberPostRegisterRedirect(localStorage, params.get('redirect'), window.location.origin, Date.now()) } catch { /* Storage is a convenience only. */ }
+  }, [params])
 
   /* ?preview resets flags; otherwise check registered → console, or pending → inbox screen */
   useEffect(() => {

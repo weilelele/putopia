@@ -26,6 +26,8 @@ function LoginPageContent() {
   const [loading, setLoading] = useState(false)
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/console'
+  // Signing up instead of logging in keeps the same destination (see post-register-redirect).
+  const requestAccessHref = searchParams.get('redirect') ? `${REQUEST_ACCESS_HREF}&redirect=${encodeURIComponent(redirect)}` : REQUEST_ACCESS_HREF
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,7 +98,7 @@ function LoginPageContent() {
         </form>
 
         <div className="pilot-login-access">
-          <ArchiveLinkButton fullWidth href={REQUEST_ACCESS_HREF}>
+          <ArchiveLinkButton fullWidth href={requestAccessHref}>
             REQUEST ACCESS
           </ArchiveLinkButton>
         </div>
