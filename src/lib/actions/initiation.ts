@@ -45,7 +45,7 @@ export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
       admin.from('initiation_orders').select('id,status,order_kind').eq('user_id', user.id).order('created_at', { ascending: false }),
       admin.from('initiation_entitlements').select('order_id,active,console_claimed_at,console_order_id').eq('user_id', user.id).maybeSingle(),
       admin.from('initiation_shipments').select('id,position,title,scheduled_month,status,tracking_url,legacy_order_id').eq('user_id', user.id).order('scheduled_month'),
-      admin.from('initiation_members').select('source,active').eq('user_id', user.id).maybeSingle(),
+      admin.from('initiation_members').select('source,active,batch').eq('user_id', user.id).maybeSingle(),
       admin.rpc('eligible_initial_initiation_order', { p_user: user.id }),
     ])
     if (results.slice(0, 3).some(result => result.error)) throw new Error('Profile or historical orders could not be loaded.')
@@ -53,13 +53,13 @@ export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
     snapshot.role = profile.role
     snapshot.calibrated = intake?.version === VOYAGER_PROFILE_VERSION
     snapshot.legacyPackPurchased = !!legacy || !!initial
-    snapshot.ownsSeat = !!member
+    snapshot.ownsSeat = member?.batch === INITIATION_BATCH
     const kind = snapshot.legacyPackPurchased ? 'legacy_upgrade' : 'initial'
     snapshot.offer = { kind, amount: snapshot.legacyPackPurchased ? INITIATION_UPGRADE_AMOUNT : INITIAL_PACK_AMOUNT, currency: 'usd' }
     const offerConfig = initiationConfigurationError(kind)
     if (supply) {
-      snapshot.availability.checkoutOpen = supply.open && (supply.remaining > 0 || !!initial) && !offerConfig
-      snapshot.availability.reason = !supply.open ? 'Initiation checkout is not open yet.' : supply.remaining <= 0 && !initial ? 'All S26 seats are currently allocated or reserved.' : offerConfig
+      snapshot.availability.checkoutOpen = supply.open && (supply.remaining > 0 || (snapshot.legacyPackPurchased && snapshot.ownsSeat)) && !offerConfig
+      snapshot.availability.reason = !supply.open ? 'Initiation checkout is not open yet.' : supply.remaining <= 0 && !(snapshot.legacyPackPurchased && snapshot.ownsSeat) ? 'All S26 seats are currently allocated or reserved.' : offerConfig
     }
     const newRecordsUnavailable = results.slice(3).some(result => result.error)
     snapshot.status = newRecordsUnavailable ? 'unknown' : initiationMemberStatus(!!entitlement?.active, member, snapshot.legacyPackPurchased)
