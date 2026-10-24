@@ -1,0 +1,47 @@
+{
+  "verifiedAt": "2026-10-24T05:50:17.954Z",
+  "site": "https://putopia-stripe-meta-qa.vercel.app",
+  "stripeAccount": "acct_1UTxRiAPEEV0NYJ8",
+  "isolatedDatabase": "gqcgdmmmmfbatdneacny",
+  "session": {
+    "id": "cs_test_a14v8NGFA4HNqKPxkjD13qqwk536hJC5xoiQeNRrga2vcX2mrt8PU2p05q",
+    "status": "complete",
+    "payment": "paid",
+    "livemode": false,
+    "amount": 3800
+  },
+  "paymentIntent": {
+    "id": "pi_3UTxo6APEEV0NYJ80tNlq3zV",
+    "status": "succeeded",
+    "received": 3800
+  },
+  "order": {
+    "id": "f017c8c3-9170-4f60-9af2-b29be14af4f3",
+    "status": "paid",
+    "amount": 3800,
+    "order_kind": "initial",
+    "stripe_livemode": false,
+    "paid_at": "2026-10-24T05:49:04.859948+00:00"
+  },
+  "membershipCount": 1,
+  "shipments": [
+    {
+      "position": 1,
+      "status": "planned"
+    },
+    {
+      "position": 2,
+      "status": "planned"
+    }
+  ],
+  "webhook": {
+    "event_id": "evt_1UTxo7APEEV0NYJ8cVTywrJP",
+    "event_type": "checkout.session.completed",
+    "status": "processed"
+  },
+  "meta": {
+    "event_id": "initiation_purchase_f017c8c3-9170-4f60-9af2-b29be14af4f3",
+    "status": "pending",
+    "last_error": "Meta CAPI configuration is missing"
+  }
+}
