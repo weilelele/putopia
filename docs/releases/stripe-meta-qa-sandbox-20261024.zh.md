@@ -8,14 +8,14 @@
 | --- | --- |
 | 测试购买页 | https://putopia-stripe-meta-qa.vercel.app/voyager-initiation |
 | Vercel 项目 | `putopia-stripe-meta-qa` / `prj_8FdDESUZStbfGUcgC1w1vKJAPUPI` |
-| 已验收部署 | `dpl_E4u69RN1fgjpQ7fi2G7SifyrqG1u` |
+| 已验收部署 | `dpl_EfjKNmX3458DQrvWVPUCd14xhYxS` |
 | Stripe 沙盒 | `Putopia Meta Ads QA` / `acct_1UTxRiAPEEV0NYJ8` |
 | Stripe 管理入口 | https://dashboard.stripe.com/acct_1UTxRiAPEEV0NYJ8/test/dashboard |
 | Supabase 持久开发分支 | `stripe-meta-qa` / `gqcgdmmmmfbatdneacny` |
 | Stripe webhook | `https://putopia-stripe-meta-qa.vercel.app/api/stripe/webhook` |
 | 价格 | Initial $38 / Complete $488 / Upgrade $460，USD，一次性付款，含税 |
 
-测试站使用独立 Stripe 账户和独立数据库。未复制正式用户、订单、邮件发送密钥、MongoDB、PostHog 或 Meta CAPI Token。部署配置的 `crons` 为空；浏览器 Meta / X / Reddit 广告像素通过 `NEXT_PUBLIC_AD_PIXELS_DISABLED=true` 关闭。
+测试站使用独立 Stripe 账户和独立数据库。未复制正式用户、订单、邮件发送密钥、MongoDB 或 PostHog 凭据。Meta 使用本次新生成的 CAPI Token，仅配置于 QA 项目。部署配置的 `crons` 为空；浏览器 Meta / X / Reddit 广告像素通过 `NEXT_PUBLIC_AD_PIXELS_DISABLED=true` 关闭。
 
 测试站是原应用的独立代码快照，主要用于付款链路。空库没有复制正式内容、NPC、设备库存或 Storage 文件；这些页面可能显示空状态。后续产品代码更新需要显式重新部署此项目。不要将 QA 数据库分支合并进正式库，也不要从正式站复制密钥来填补缺项。
 
@@ -55,10 +55,27 @@ QA 库另外应用已有的 `schema_v104.sql` 与 `schema_v106.sql`，以匹配�
 
 复测卡号：`4242 4242 4242 4242`，任意未来有效期、任意三位 CVC；使用虚构收货资料和测试邮箱。只有 $38 路径完成了浏览器付款验收，$488 / $460 的价格已通过 Stripe API 校验，未声称它们也完成了付款。
 
-## 后续 Meta 回流联调
+## Meta CAPI 验收
 
-当前测试付款已产生 outbox 事件 `initiation_purchase_f017c8c3-9170-4f60-9af2-b29be14af4f3`，状态 `pending`，原因 `Meta CAPI configuration is missing`。这表示支付到业务入库和回传排队已通，尚未向 Meta 发送或完成广告归因验证。
+Dataset / Pixel：`993248870105581`（Multiverse Console Pixel）。经授权选择 **Set up without Dataset Quality API** 生成新 Token，未增加 Dataset Quality API 权限；Token、`TEST63642` 测试码及 QA 专用手动调用密钥以 Secret 变量保存到 QA 项目的 production / preview 环境，并重新部署生效。这里的 production 是独立 QA 项目的部署环境，不是正式业务项目。域名允许列表新增 `putopia-stripe-meta-qa.vercel.app` 及其子域，没有扩大为 `vercel.app`。
 
-下一步只在 QA 项目配置对应 Dataset `993248870105581` 的 `META_CAPI_ACCESS_TOKEN` 和 Events Manager 提供的 `META_CAPI_TEST_EVENT_CODE`，再部署并定向发送这个测试 outbox。现有发送代码要求 Stripe 测试事件必须携带 Test Event Code；不要通过去掉测试码来发送。
+2026-10-24 14:17（Asia/Shanghai）通过 QA 受保护的现有回传入口手动补发原沙盒订单，无定时任务：
 
-浏览器广告像素和正式广告投放均未开启。后续若要检查 Pixel / CAPI 去重，需要在明确的 Meta 测试流中单独配置浏览器事件；本次付款测试不能代替这项验收。
+- 订单 `f017c8c3-9170-4f60-9af2-b29be14af4f3`；Stripe `livemode=false`，实际测试支付 $38。
+- 事件 `Purchase`，ID `initiation_purchase_f017c8c3-9170-4f60-9af2-b29be14af4f3`；沿用原付款时间，`value=38`、`currency=USD`、`action_source=website`。
+- 事件来源保存为 QA 购买页；Events Manager 显示 QA 域名。
+- 回传批次 `meta.claimed=1 / sent=1 / retried=0 / failed=0`；outbox 为 `sent`、`last_error=null`、`sent_at=2026-10-24T06:17:44.168Z`。
+- Meta 回执 Trace ID：`Aj6l8SZAqTeNzUS3RYascA5`。
+- **Meta Test Events 实际显示 Purchase / Processed / Server，38 USD，事件 ID 与该订单一致。**
+
+证据：`output/stripe-sandbox-20261024/meta-purchase-verification.json` 与 `meta-purchase-processed.png`。验收页：https://eventsmanager.facebook.com/events_manager2/list/dataset/993248870105581/test_events?business_id=1428361782309735
+
+手动入口同时处理其他分析 outbox。本次总响应 HTTP 503 来自未配置 PostHog 的两条分析事件重试；Meta 子任务成功，不能把总状态码解释为 Meta 失败。QA 无生产 PostHog 凭据，也未因此新增该服务配置。
+
+浏览器广告像素仍关闭。本次仅证明服务器 CAPI 测试事件接收，未验收浏览器 Pixel / CAPI 去重或实际广告归因，未开启广告投放。测试 Stripe 事件强制携带 Test Event Code；正式 Stripe 事件不会携带该码。新 Token 是该 Dataset 的有效凭据，应始终仅在服务器保存。
+
+## 同步 GTM 团队
+
+建议发送测试站链接、上述验收截图及以下事件规范，不发送 CAPI Token：
+
+> 独立 Stripe / Meta QA 环境已打通。$38 测试订单的服务器 Purchase 已在 Dataset 993248870105581 的 Test Events 显示 Processed。Purchase 使用实际付款金额（美元值）、USD 和固定事件 ID initiation_purchase_<订单 UUID>。请核对 GTM 是否已有 Purchase 触发，避免在成功页刷新时重复上报；若要并行发送浏览器 Purchase，请与后端对齐同一个 event_id，并单独联调去重。当前 QA 浏览器广告像素关闭，测试码只用于测试，CAPI Token 不进入 GTM Web 容器或浏览器。
