@@ -1,0 +1,36 @@
+{
+  "verifiedAt": "2026-10-25T07:03:50.136Z",
+  "site": "https://putopia-stripe-meta-qa.vercel.app",
+  "vercelProjectId": "prj_8FdDESUZStbfGUcgC1w1vKJAPUPI",
+  "vercel": {
+    "paused": true,
+    "httpStatus": 503,
+    "error": "DEPLOYMENT_PAUSED"
+  },
+  "checkout": {
+    "databaseRef": "gqcgdmmmmfbatdneacny",
+    "batch": "S26",
+    "checkoutOpen": false
+  },
+  "stripe": {
+    "verifiedAt": "2026-10-25T06:59:43.611Z",
+    "stripeAccount": "acct_1UTxRiAPEEV0NYJ8",
+    "livemode": false,
+    "webhook": {
+      "id": "we_1UTxcNAPEEV0NYJ8m8FjcGur",
+      "status": "disabled"
+    },
+    "expiredSessions": [],
+    "remainingOpenSessions": 0,
+    "localCheckoutEnabled": false
+  },
+  "database": {
+    "branchId": "5becfb99-65ec-43ef-a621-bd5323551acb",
+    "projectRef": "gqcgdmmmmfbatdneacny",
+    "persistent": true,
+    "paused": false,
+    "pauseBlocker": "Persistent branch cannot be paused; mode conversion awaits explicit user approval after automatic approval review rejection."
+  },
+  "productionChanged": false,
+  "historicalReceiptsPreserved": true
+}

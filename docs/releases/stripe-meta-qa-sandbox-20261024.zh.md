@@ -1,5 +1,7 @@
 # Stripe / Meta Ads 独立线上沙盒
 
+> 2026-10-25：QA 站点已暂停，结账与 Stripe webhook 已关闭。数据库暂停待确认，详见末尾关闭记录。
+
 2026-10-24 建立。用于多人测试付款、签名 webhook 和后续 Meta Test Events 联调。
 
 ## 入口与隔离范围
@@ -79,3 +81,15 @@ Dataset / Pixel：`993248870105581`（Multiverse Console Pixel）。经授权选
 建议发送测试站链接、上述验收截图及以下事件规范，不发送 CAPI Token：
 
 > 独立 Stripe / Meta QA 环境已打通。$38 测试订单的服务器 Purchase 已在 Dataset 993248870105581 的 Test Events 显示 Processed。Purchase 使用实际付款金额（美元值）、USD 和固定事件 ID initiation_purchase_<订单 UUID>。请核对 GTM 是否已有 Purchase 触发，避免在成功页刷新时重复上报；若要并行发送浏览器 Purchase，请与后端对齐同一个 event_id，并单独联调去重。当前 QA 浏览器广告像素关闭，测试码只用于测试，CAPI Token 不进入 GTM Web 容器或浏览器。
+
+## 2026-10-25 关闭记录
+
+按用户“沙盒可以关闭了”的指示执行：
+
+- 独立 Vercel QA 项目已暂停；购买页实测 HTTP 503、`x-vercel-error=DEPLOYMENT_PAUSED`。
+- QA 数据库 S26 批次 `checkout_open=false`，并保持 `stripe_livemode=false`；本地 QA env 的 `INITIATION_CHECKOUT_ENABLED=false`。
+- 独立 Stripe 沙盒 webhook `we_1UTxcNAPEEV0NYJ8m8FjcGur` 已停用，回读为 `disabled`；检查没有未完成的 Checkout 会话，无需过期额外会话。
+- 原测试订单、Meta 回执、截图、数据库和沙盒账户均保留，未删除历史数据。正式项目未改动。
+- **QA 数据库尚未暂停**：平台返回 `Persistent branch cannot be paused`。CLI 的 `--persistent=false` 未实际改变属性；浏览器的切换操作被自动审批拒绝，因 Preview 模式可能改变数据保留和自动清理行为。目前停在模式切换确认框，需用户明确授权后才能转换并暂停。该分支没有 GitHub 仓库连接。
+
+无密钥机器回执：`output/stripe-sandbox-20261024/shutdown-verification.json`。若需恢复，先核对数据库状态和凭据，再恢复测试 webhook 与结账开关，最后恢复 QA 项目流量；不能仅恢复网站就视为沙盒已可用。
