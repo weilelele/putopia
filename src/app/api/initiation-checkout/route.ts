@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       mode: 'payment', ui_mode: 'hosted_page', payment_method_types: ['card'],
       automatic_tax: { enabled: false }, allow_promotion_codes: false,
       line_items: [{ price: order.price_id, quantity: 1 }],
-      client_reference_id: user.id, customer_email: user.email,
+      client_reference_id: user.id, customer_email: user.email || undefined,
       metadata: { product_type: INITIATION_PRODUCT, order_kind: order.order_kind, order_id: order.id, user_id: user.id, batch: 'S26', pricing_version: order.pricing_version, capture_policy: 'contiguous_us_manual_v1' },
       payment_intent_data: { capture_method: 'manual', metadata: { product_type: INITIATION_PRODUCT, order_kind: order.order_kind, order_id: order.id } },
       shipping_address_collection: { allowed_countries: initiationShippingCountries(process.env.INITIATION_SHIPPING_COUNTRIES)! as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[] },

@@ -1,0 +1,12 @@
+{
+  "verifiedAt": "2026-10-25T06:59:43.611Z",
+  "stripeAccount": "acct_1UTxRiAPEEV0NYJ8",
+  "livemode": false,
+  "webhook": {
+    "id": "we_1UTxcNAPEEV0NYJ8m8FjcGur",
+    "status": "disabled"
+  },
+  "expiredSessions": [],
+  "remainingOpenSessions": 0,
+  "localCheckoutEnabled": false
+}

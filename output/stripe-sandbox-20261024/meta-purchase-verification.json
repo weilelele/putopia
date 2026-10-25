@@ -1,0 +1,53 @@
+{
+  "verifiedAt": "2026-10-24T06:17:44.542Z",
+  "site": "https://putopia-stripe-meta-qa.vercel.app",
+  "datasetId": "993248870105581",
+  "testEventCode": "TEST63642",
+  "apiVersion": "v25.0",
+  "stripeLivemode": false,
+  "value": 38,
+  "currency": "USD",
+  "cronHttpStatus": 503,
+  "cronResult": {
+    "released": 0,
+    "meta": {
+      "claimed": 1,
+      "sent": 1,
+      "retried": 0,
+      "skipped": 0,
+      "failed": 0,
+      "lease_lost": 0
+    },
+    "analytics": {
+      "claimed": 2,
+      "sent": 0,
+      "retried": 2,
+      "skipped": 0,
+      "failed": 0,
+      "lease_lost": 0
+    },
+    "error": "Some reconciliation tasks need retry; reservations remain protected."
+  },
+  "outbox": {
+    "order_id": "f017c8c3-9170-4f60-9af2-b29be14af4f3",
+    "event_id": "initiation_purchase_f017c8c3-9170-4f60-9af2-b29be14af4f3",
+    "status": "sent",
+    "attempt_count": 2,
+    "last_error": null,
+    "sent_at": "2026-10-24T06:17:44.168+00:00",
+    "meta_trace_id": "Aj6l8SZAqTeNzUS3RYascA5"
+  },
+  "deploymentId": "dpl_EfjKNmX3458DQrvWVPUCd14xhYxS",
+  "eventSourceUrl": "https://putopia-stripe-meta-qa.vercel.app/voyager-initiation",
+  "metaUi": {
+    "status": "Processed",
+    "receivedFrom": "Server",
+    "eventName": "Purchase",
+    "value": 38,
+    "currency": "USD",
+    "eventId": "initiation_purchase_f017c8c3-9170-4f60-9af2-b29be14af4f3",
+    "verifiedAt": "2026-10-24T06:18:45.056Z",
+    "screenshot": "meta-purchase-processed.png"
+  },
+  "cronStatusExplanation": "HTTP 503 comes from two PostHog analytics retries because QA intentionally has no PostHog credentials; Meta Purchase delivery succeeded."
+}
