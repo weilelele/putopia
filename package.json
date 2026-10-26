@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:sql": "node scripts/test-sql.mjs",
     "mobile:check": "npm --prefix mobile run check",
     "appstore:screenshots": "node scripts/appstore-screenshots.mjs"
   },
@@ -31,6 +32,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
