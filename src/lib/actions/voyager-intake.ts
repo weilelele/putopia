@@ -6,7 +6,7 @@ import { parseVoyagerIntake, VOYAGER_PROFILE_VERSION } from '@/lib/voyager-intak
 import { recordVoyagerPathActivation } from '@/lib/voyager-path-membership'
 
 export async function getVoyagerIntake() {
-  const client = await createClient()
+  const client = await createClient({ allowAnonymous: true })
   const { data: { user } } = await client.auth.getUser()
   if (!user) return { userId: null, completed: false }
   const admin = createAdminClient()
@@ -18,7 +18,7 @@ export async function getVoyagerIntake() {
 }
 
 export async function saveVoyagerIntake(raw: unknown): Promise<{ ok: boolean; error?: string; activated?: boolean; worldId?: string | null }> {
-  const client = await createClient()
+  const client = await createClient({ allowAnonymous: true })
   const { data: { user } } = await client.auth.getUser()
   if (!user) return { ok: false, error: 'Please log in to save your Voyager profile.' }
   const answers = parseVoyagerIntake(raw)
@@ -32,6 +32,6 @@ export async function saveVoyagerIntake(raw: unknown): Promise<{ ok: boolean; er
     return { ok: false, error: 'Your profile could not be saved. Please try again. If the Parallax Array is unavailable, you can save without sharing.' }
   }
   if (data.activated) await recordVoyagerPathActivation(user.id)
-  for (const path of ['/quiz', '/voyager-path', '/voyager-initiation', '/worlds', '/worlds/live']) revalidatePath(path)
+  for (const path of ['/quiz', '/voyager-path', '/voyager-initiation', '/join/success', '/worlds', '/worlds/live']) revalidatePath(path)
   return { ok: true, activated: data.activated, worldId: data.worldId }
 }

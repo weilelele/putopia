@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { allowsUnregisteredViewer, requiresRegistration, routeWithSearch } from '@/lib/access-policy'
+import { isAnonymousUser } from '@/lib/supabase/anonymous'
 
 export async function proxy(request: NextRequest) {
   // Skip auth middleware if Supabase is not configured yet
@@ -30,7 +31,9 @@ export async function proxy(request: NextRequest) {
   )
 
   // Refresh session — do not remove this call
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user: sessionUser } } = await supabase.auth.getUser()
+  // Anonymous checkout sessions browse as logged-out visitors.
+  const user = isAnonymousUser(sessionUser) ? null : sessionUser
 
   const { pathname } = request.nextUrl
 

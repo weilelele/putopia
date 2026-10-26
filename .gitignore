@@ -53,3 +53,7 @@ top30_invite_email_drafts.md
 # APNs auth keys — never commit
 *.p8
 AuthKey_*.p8
+
+# Local working output and separately versioned demo sites
+/output/
+/sites/

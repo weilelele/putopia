@@ -2,9 +2,9 @@
 
 import { INITIATION_PRICES, initiationPriceLabel } from '@/lib/initiation-pricing'
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, CircleAlert, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CircleAlert } from 'lucide-react'
 import SmartImage from '@/components/smart-image'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { MemberStrip } from './member-strip'
@@ -12,7 +12,8 @@ import { ConsoleCarousel } from './console-carousel'
 import type { InitiationPublicMember, InitiationSnapshot } from '@/lib/initiation-types'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
-import { VoyagerProfileQuiz, type VoyagerQuizServices } from '@/components/voyager-profile-quiz'
+import type { VoyagerQuizServices } from '@/components/voyager-profile-quiz'
+import { PostPaymentCalibration } from './post-payment-calibration'
 import styles from './initiation.module.css'
 import { INITIATION_FAQ } from './faq'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
@@ -21,6 +22,9 @@ import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
 import { initiationPackProgress } from '@/lib/initiation-pack-progress'
 import { InitiationBriefing } from './briefing/initiation-briefing'
+import { ConfirmGuestEmail } from './confirm-guest-email'
+import type { GuestClaimNotice } from '@/lib/guest-checkout'
+import { createClient } from '@/lib/supabase/client'
 import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, shouldAutoOpenBriefing, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 
 const SOURCE_KEY = 'mc:initiation:device-source'
@@ -29,6 +33,7 @@ function readDeviceSource() {
   try { return deviceSourcePath(sessionStorage.getItem(SOURCE_KEY)) } catch { return null }
 }
 const emptyDeviceSource = () => null
+const startGuestCheckout = () => createClient().auth.signInAnonymously()
 // '' = nothing stored yet; 'server' and 'unavailable' never auto-open (no way to remember a dismissal).
 function readBriefingStore() {
   try { return localStorage.getItem(BRIEFING_STORAGE_KEY) ?? '' } catch { return 'unavailable' }
@@ -41,8 +46,8 @@ function writeBriefingStore(outcome: BriefingOutcome, page: number) {
 
 const paymentMessages = {
   pending: 'Payment is being processed. Membership and deliveries unlock only after payment is confirmed. Refresh to check the latest status.',
-  payment_failed: 'Payment was not completed. Your calibration is saved; you can retry when checkout is available.',
-  canceled: 'Your checkout was canceled. Your calibration is saved.',
+  payment_failed: 'Payment was not completed. You can retry when checkout is available.',
+  canceled: 'Your checkout was canceled. You can retry when checkout is available.',
   refunded: 'Your Initiation payment was refunded. Previous delivery records remain visible; an active Console claim is not implied.',
   disputed: 'Your payment is under review. Entitlements may be paused until the review is complete.',
   payment_review: 'Your payment needs review. Initiation is not confirmed yet.',
@@ -55,7 +60,7 @@ const packs = [
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'A future shipment for this cohort. Contents to be announced.', planned: true },
 ]
 
-export type InitiationCheckoutResult = { status: 'ready' | 'calibration_required' | 'not_open' | 'unauthenticated'; message: string }
+export type InitiationCheckoutResult = { status: 'ready' | 'not_open' | 'unauthenticated'; message: string }
 export type InitiationViewProps = {
   initialBundle?: 'initial' | 'standard'
   members?: InitiationPublicMember[]
@@ -64,14 +69,17 @@ export type InitiationViewProps = {
   checkoutCanceled?: boolean
   beginCheckout: () => Promise<InitiationCheckoutResult>
   quizServices?: VoyagerQuizServices
+  startGuestSession?: () => Promise<{ error: unknown }>
   paymentPlacement?: 'top' | 'bottom'
   analyticsEnvironment?: string
   regions?: BriefingRegion[]
   /** Value of `?briefing=`; `1` opens the briefing on arrival. */
   briefingParam?: string
+  /** Outcome of claiming a guest purchase after login (`?claim=`). */
+  claimNotice?: { code: GuestClaimNotice; message: string } | null
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, startGuestSession = startGuestCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam, claimNotice = null }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -79,16 +87,13 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       try { sessionStorage.setItem(SOURCE_KEY, deviceSource!) } catch { /* URL still preserves the current intent. */ }
     }
   }, [deviceSource])
-  const [calibrated, setCalibrated] = useState(snapshot.calibrated)
-  const [dialog, setDialog] = useState<'calibration' | 'batch' | 'initiated' | 'legacy-discount' | null>(null)
+  const [dialog, setDialog] = useState<'batch' | 'initiated' | 'legacy-discount' | null>(null)
   const [bundle, setBundle] = useState<'initial' | 'standard'>(initialBundle)
   const [busy, setBusy] = useState(false)
-  const [calibrationStarted, setCalibrationStarted] = useState(false)
-  const [quizBusy, setQuizBusy] = useState(false)
-  const [dirty, setDirty] = useState(false)
   const [error, setError] = useState('')
   const inFlight = useRef(false)
-  const completed = useCallback(() => setCalibrated(true), [])
+  // A guest who taps Pay gets an anonymous checkout session; the email is confirmed after payment.
+  const [guestSession, setGuestSession] = useState(false)
   const { availability, status, shipments, consoleClaim } = snapshot
   const initiated = status === 'initiated'
   const granted = status === 'granted'
@@ -107,26 +112,23 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
 
   const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null || briefingOpen)
 
-  function openCalibration(entry: string) {
-    captureAnalytics('calibration_opened', { entry_point: entry })
-    setDialog('calibration')
-  }
-
   async function become(override?: 'initial' | 'standard', surface: 'page' | 'brief' = 'page') {
     if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
     const chosen = override ?? bundle
-    captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status, calibrated), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
+    // Guests continue directly to checkout with an anonymous session.
+    captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status === 'guest' ? 'unpaid' : status), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
     setError('')
-    if (status === 'guest') { window.location.assign(initiationLoginPath(source, chosen)); return }
-    if (!calibrated) { openCalibration('initiate'); return }
     inFlight.current = true
     setBusy(true)
     try {
+      if (status === 'guest' && !guestSession) {
+        const { error: sessionError } = await startGuestSession()
+        // Anonymous sign-ins disabled or failing: fall back to the login page.
+        if (sessionError) { window.location.assign(initiationLoginPath(source, chosen)); return }
+        setGuestSession(true)
+      }
       const result = await beginCheckout()
-      if (result.status === 'calibration_required') {
-        setCalibrated(false)
-        openCalibration('checkout_preflight')
-      } else if (result.status === 'unauthenticated') {
+      if (result.status === 'unauthenticated') {
         window.location.assign(initiationLoginPath(source, chosen))
       } else if (result.status === 'ready') {
         const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bundle: legacy ? 'standard' : chosen, from: source, analytics: analyticsContext() }) })
@@ -172,7 +174,12 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             <div><dt className={styles.seatLabel}><span>INITIATED</span><button type="button" className={styles.batchInfo} aria-label="About initiated places" aria-haspopup="dialog" onClick={() => setDialog('initiated')}><CircleAlert size={15} aria-hidden /></button></dt><dd aria-label={availability.initiated === null ? 'Count not yet available' : undefined}>{availability.initiated ?? '—'}</dd><dd className={styles.memberQueue}><MemberStrip members={members} /></dd></div>
           </dl>
   )
+  const paymentStarted = memberView || ['paid', 'pending', 'payment_review'].includes(snapshot.paymentStatus)
+  const guestConfirm = snapshot.anonymous && paymentStarted ? <div className={styles.notice}><ConfirmGuestEmail /></div> : null
+  const claimStatus = claimNotice && <p className={styles.notice} role="status">{claimNotice.message}{claimNotice.code === 'failed' && <> <a className={styles.textLink} href="/api/initiation-claim">Try again</a></>}</p>
   const memberSummary = <div className={styles.join}>
+    {claimStatus}
+    {guestConfirm}
     <p className={styles.memberStatus}>{snapshot.ownsSeat ? `${availability.batch} · Voyager` : 'Voyager'}</p>
     <p className={styles.memberBundle}>{initiated ? `Complete Voyager Pack${snapshot.purchaseKind === 'legacy_upgrade' ? ' · Upgraded' : ''}` : 'Initial Voyager Pack'}</p>
     <p className={styles.packSummary} role="status">{progress.pending === null ? `${progress.included} packs included · Delivery progress unavailable` : `${progress.delivered} delivered · ${progress.pending} awaiting delivery`}</p>
@@ -183,7 +190,9 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   </div>
   const joinPanel = (
         <div data-initiation-section="payment" className={styles.join}>
-          {checkoutCanceled && !initiated && !granted && <p className={styles.notice} role="status">You returned from checkout without completing it. Your saved calibration remains available. Payment status below comes from your order records.</p>}
+          {!memberView && claimStatus}
+          {!memberView && guestConfirm}
+          {checkoutCanceled && !initiated && !granted && <p className={styles.notice} role="status">You returned from checkout without completing it. Payment status below comes from your order records.</p>}
           {!memberView && snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
           {!memberView && snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{paymentMessages[snapshot.paymentStatus]}</p>}
           {granted ? <>
@@ -216,14 +225,10 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             </label>)}
           </fieldset>
           <p className={styles.paymentTerms}>Pay once. No recurring membership fee.</p>
-          {calibrated ? <div className={styles.calibration} role="status" aria-live="polite">
-            <span>Signal Calibration</span><span className={styles.calibrationState}><Check size={17} aria-hidden />Complete</span>
-          </div> : <button type="button" className={`${styles.calibration} ${styles.calibrationAction}`} aria-haspopup="dialog" onClick={() => openCalibration('status')}>
-            <span>Signal Calibration</span><span className={styles.calibrationState}>Not completed <ArrowRight size={17} aria-hidden /></span>
-          </button>}
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : soldOut ? 'FULLY CLAIMED' : `${legacy ? 'UPGRADE' : 'CONTINUE'} · ${initiationPriceLabel(kind)}`}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
+          {(status === 'guest' || snapshot.anonymous) && !paymentStarted && <Link className={styles.textLink} href={initiationLoginPath(source, bundle)}>Already a Voyager? Log in <ArrowRight size={18} aria-hidden /></Link>}
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
             <h2>Delivery</h2>
@@ -315,9 +320,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     {briefingOpen && <InitiationBriefing trigger={briefing === 'idle' ? 'auto' : briefing === 'link' ? 'link' : 'replay'} members={members} regions={regions}
       seats={{ batch: availability.batch, capacity: availability.capacity, initiated: availability.initiated }} offers={briefingOffers(status)}
       busy={busy} unavailable={briefingUnavailable} capture={captureAnalytics} onChoose={chooseFromBriefing} onClose={closeBriefing} />}
-    <ArchiveSheet size={calibrationStarted ? 'fullscreen' : 'wide'} headerless open={dialog === 'calibration'} onClose={() => { captureAnalytics('calibration_closed', { started: calibrationStarted, completed: calibrated }); setDialog(null); setDirty(false); setCalibrationStarted(false) }} title="Signal Calibration" busy={quizBusy} dirty={dirty} className={styles.calibrationDialog}>
-      {dialog === 'calibration' && <VoyagerProfileQuiz calibration onAnalytics={captureAnalytics} services={quizServices} onComplete={completed} onReturn={() => { setDialog(null); setCalibrationStarted(false) }} onStart={() => setCalibrationStarted(true)} onBusyChange={setQuizBusy} onDirtyChange={setDirty} />}
-    </ArchiveSheet>
+    {quizServices && <PostPaymentCalibration snapshot={snapshot} quizServices={quizServices} autoInvite onAnalytics={captureAnalytics} />}
     <ArchiveSheet open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">
       <p>All Initial Pack members, including historical $12 buyers, can add Console + Pack 4 for $460.</p>
       <p>Your first two packs remain separate. The upgrade is a fixed additional payment, not a subtraction of your earlier payment.</p>

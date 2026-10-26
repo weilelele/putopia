@@ -1,13 +1,13 @@
 import { INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT } from '@/lib/initiation-pricing'
 import type { InitiationSnapshot } from '@/lib/initiation-types'
 
-export const fixtureNames = ['initial_pack', 'complete_pack', 'upgraded', 'initial_upgrade_pending', 'guest', 'granted', 'unpaid', 'calibrated', 'legacy_pack', 'initiated', 'claimed', 'both', 'architect', 'sold_out', 'pending', 'payment_failed', 'canceled', 'refunded', 'disputed', 'payment_review', 'unknown'] as const
+export const fixtureNames = ['initial_pack', 'complete_pack', 'upgraded', 'initial_upgrade_pending', 'guest', 'granted', 'unpaid', 'calibrated', 'legacy_pack', 'initiated', 'anonymous_initiated', 'claimed', 'both', 'architect', 'sold_out', 'pending', 'payment_failed', 'canceled', 'refunded', 'disputed', 'payment_review', 'unknown'] as const
 export type FixtureName = typeof fixtureNames[number]
 export function fixture(name: FixtureName): InitiationSnapshot {
-  const initiated = ['complete_pack', 'upgraded', 'initiated', 'claimed', 'both'].includes(name)
+  const initiated = ['complete_pack', 'upgraded', 'initiated', 'anonymous_initiated', 'claimed', 'both'].includes(name)
   const legacy = ['initial_pack', 'initial_upgrade_pending', 'legacy_pack', 'both', 'upgraded'].includes(name)
   return {
-    userId: name === 'guest' ? null : 'local-preview', role: name === 'architect' ? 'architect' : initiated || legacy || name === 'granted' ? 'voyager' : 'applicant',
+    userId: name === 'guest' ? null : 'local-preview', anonymous: name === 'anonymous_initiated', role: name === 'architect' ? 'architect' : initiated || legacy || name === 'granted' ? 'voyager' : 'applicant',
     calibrated: !['guest', 'unpaid'].includes(name), status: name === 'granted' ? 'granted' : name === 'unknown' ? 'unknown' : initiated ? 'initiated' : legacy ? 'legacy_pack' : name === 'guest' ? 'guest' : 'unpaid',
     availability: { batch: 'S26', capacity: 100, initiated: name === 'unknown' ? null : name === 'sold_out' ? 100 : name === 'granted' ? 1 : 26, checkoutOpen: false, reason: 'Fixture checkout never creates a transaction.' },
     consoleClaim: { eligible: initiated, claimed: name === 'claimed', href: initiated ? name === 'claimed' ? '/devices/my-consoles' : '/devices' : null, batch: name === 'claimed' ? { slug: 'kyoto-one', name: 'Kyoto One' } : null },

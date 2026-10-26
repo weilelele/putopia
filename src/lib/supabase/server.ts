@@ -2,11 +2,16 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/database'
+import { hideAnonymousUser } from './anonymous'
 
-export async function createClient() {
+/**
+ * Anonymous checkout sessions read as logged out (`getUser()` returns no user)
+ * unless `allowAnonymous` is set. Only the Initiation purchase path opts in.
+ */
+export async function createClient({ allowAnonymous = false }: { allowAnonymous?: boolean } = {}) {
   const cookieStore = await cookies()
 
-  return createServerClient<Database>(
+  const client = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -26,6 +31,7 @@ export async function createClient() {
       },
     }
   )
+  return allowAnonymous ? client : hideAnonymousUser(client)
 }
 
 // Singleton — the service-role client holds no per-user state (no token refresh,

@@ -1,13 +1,15 @@
-import { isInitiationOrderAmount } from './initiation-pricing'
+import { INITIATION_PRICES, isInitiationOrderAmount } from './initiation-pricing'
 import type Stripe from 'stripe'
 import { isIOSNativeApp } from './app-platform'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
 import { sendMetaPurchase, type MetaPurchaseInput } from './meta-capi'
 import type { InitiationMetaAttribution } from './initiation-meta-attribution'
+import { initiationBuyerId } from './guest-checkout'
 
 export type InitiationMetaOrder = {
   id: string
   user_id: string
+  purchased_by?: string | null
   status: string
   pricing_version?: string | null
   order_kind: InitiationOrderKind
@@ -73,7 +75,7 @@ export function buildInitiationMetaPurchase(
     || session.status !== 'complete' || session.payment_status !== 'paid'
     || session.amount_total !== order.amount || session.currency !== 'usd'
     || session.metadata?.product_type !== INITIATION_PRODUCT || session.metadata?.order_id !== order.id
-    || session.metadata?.user_id !== order.user_id || session.metadata?.order_kind !== order.order_kind) {
+    || session.metadata?.user_id !== initiationBuyerId(order) || session.metadata?.order_kind !== order.order_kind) {
     throw new PurchaseValidationError('Stripe purchase binding is invalid')
   }
   const attribution = order.meta_attribution ?? {}
@@ -90,6 +92,10 @@ export function buildInitiationMetaPurchase(
     value: order.amount / 100,
     currency: 'USD',
     contentId: INITIATION_PRODUCT,
+    contentName: INITIATION_PRICES[order.order_kind].name,
+    orderId: order.id,
+    orderKind: order.order_kind,
+    pricingVersion: order.pricing_version ?? 'legacy-v1',
     eventSourceUrl: attribution.event_source_url ?? 'https://www.multiverseco.org/voyager-initiation',
     email: details?.email ?? session.customer_email,
     phone: details?.phone,
@@ -199,7 +205,7 @@ export function createInitiationMetaStore(admin: AdminClient): InitiationMetaSto
     },
     async loadOrder(orderId) {
       const { data, error } = await db.from('initiation_orders')
-        .select('id,user_id,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,meta_attribution')
+        .select('id,user_id,purchased_by,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,meta_attribution')
         .eq('id', orderId).maybeSingle().abortSignal(AbortSignal.timeout(5000))
       if (error) throw error
       return data

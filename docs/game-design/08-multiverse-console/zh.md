@@ -1,5 +1,7 @@
 # 08 · 多元宇宙控制台（Multiverse Console）
 
+> 2026-10-14 操作定义更新：左右旋钮、Frequency、Bands、Remarks Band、量子按钮长短按及语音发送，以[设备操作基础说明](../../device-reference/console-operations.zh.md)为准。下文保留历史定位与网站展示背景。
+
 ## 1. 定位
 
 Multiverse Console 既是**世界观的核心道具**（航行者用来观测平行世界的复古设备），

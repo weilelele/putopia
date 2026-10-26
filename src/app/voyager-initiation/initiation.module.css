@@ -7,10 +7,6 @@
 .join { align-self: center; min-width: 0; overflow-wrap: anywhere; }
 .become { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; min-height: 60px; padding: 16px; font-size: var(--fs-label); letter-spacing: 0; }
 .price { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
-/* Incomplete calibration opens the flow; completed calibration is status only. */
-.calibration { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 28px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--color-nucleus); font-size: var(--fs-caption); line-height: 1.5; }
-.calibrationState { display: inline-flex; align-items: center; gap: 6px; color: var(--color-star-dim); white-space: nowrap; }
-.calibrationState svg { flex-shrink: 0; }
 .delivery { margin-top: 32px; }
 .delivery h2 { margin: 0 0 12px; font-size: var(--fs-label); color: var(--color-nucleus); text-transform: uppercase; }
 .delivery p { margin: 0 0 8px; font-size: var(--fs-body); line-height: 1.5; }
@@ -45,11 +41,6 @@
 .benefitCopy a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-nucleus); font-size: var(--fs-body); font-weight: 700; text-decoration: none; }
 .benefitCopy a:hover { text-decoration: underline; }
 .content a:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
-.calibrationDialog :global(.archive-quiz-shell) { padding: 0; }
-.calibrationDialog :global(.archive-page-header__title) { font-size: var(--fs-h3); }
-.calibrationDialog :global(.archive-quiz-option) { font-size: var(--fs-body); }
-.calibrationDialog :global(.archive-quiz-prompt) { padding: 16px; }
-.calibrationDialog :global(.archive-card) { background: var(--color-deep); }
 @media (min-width: 768px) {
   .hero { grid-template-columns: minmax(0, 1fr) minmax(260px, .9fr); gap: 24px; padding: 32px 0 48px; }
   .introduction h1 { font-size: 48px; }
@@ -142,9 +133,6 @@
 .faqItem p { margin: 0 0 20px; font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
 
 .standardPrice { margin: 16px 0 12px; color: var(--color-nucleus); font-size: var(--fs-h1); font-weight: 700; line-height: 1.1; }
-.calibrationAction { width: 100%; min-height: 44px; padding: 0 0 12px; border: 0; border-bottom: 1px solid var(--color-nucleus); background: transparent; color: var(--color-star); text-align: left; cursor: pointer; font-family: inherit; }
-.calibrationAction:hover, .calibrationAction:hover .calibrationState { color: var(--color-nucleus); }
-.calibrationAction:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 4px; }
 
 /* Keep the compact member queue directly under the right-hand count. */
 .seats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

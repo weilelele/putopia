@@ -1,7 +1,7 @@
 import { INITIATION_PRICES, INITIATION_PRICING_VERSION } from './initiation-pricing'
 import type { InitiationOrderKind, InitiationStatus } from './initiation-types'
 
-export const INITIATION_PAGE_VERSION = 'voyager-bundles-v1-20261021'
+export const INITIATION_PAGE_VERSION = 'voyager-post-payment-calibration-v1-20261022'
 export const INITIATION_UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as const
 export const INITIATION_AD_KEYS = ['campaign_id', 'adset_id', 'ad_id', 'placement'] as const
 export type InitiationAnalyticsContext = Partial<Record<typeof INITIATION_UTM_KEYS[number], string>> & {
@@ -48,13 +48,14 @@ export function initiationAnalyticsProperties(kind: InitiationOrderKind, context
   delete safe.disabled
   return {
     ...safe, page_version: INITIATION_PAGE_VERSION, batch: 'S26', order_kind: kind,
+    product_type: 'voyager_initiation', product_name: INITIATION_PRICES[kind].name,
     payable_amount: amount / 100,
     amount_minor: amount, currency: 'USD', pricing_version: INITIATION_PRICING_VERSION,
   }
 }
 
-export function initiationNextStep(status: InitiationStatus, calibrated: boolean) {
-  return status === 'guest' ? 'login' : !calibrated ? 'calibration' : 'checkout'
+export function initiationNextStep(status: InitiationStatus) {
+  return status === 'guest' ? 'login' : 'checkout'
 }
 
 /** Continuous foreground exposure; interruption restarts the full second. */

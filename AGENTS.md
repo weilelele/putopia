@@ -4,6 +4,46 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+# NPC Intel reactions and Feed authoring
+
+Apply `docs/product/npc-creation-rules.zh.md` to all NPC comments, replies,
+Feed posts and content maintenance, including manual and scheduled runs.
+
+For every NPC reaction run, including a manual trial, review, retry, or future
+scheduled run, read the current contents of all these files before selecting
+participants or drafting text or images:
+
+- `docs/game-design/00-overview/zh.md`
+- `docs/game-design/08-multiverse-console/zh.md`
+- `docs/device-reference/console-operations.zh.md`
+- `docs/product/npc-personalities-intel-review.zh.md`
+- `docs/product/npc-intel-runbook.zh.md`
+
+Console operation definitions in `console-operations.zh.md` take precedence over
+historical GDD descriptions. Use the GDD overview for fiction and roles, not as
+the authority for current pricing or implementation status. Full character
+sections take precedence over the overview table and old sample sentences.
+
+Also read the live source Intel, visible discussion, relevant character history,
+and recent posts. Record the required context paths and hashes in the run record.
+If a required file is missing, a relevant conflict cannot be resolved, or a
+necessary fact is unavailable, leave the affected action as a draft or skip it.
+Do not substitute a previous run's summary for the current files.
+
+Evaluate participant relevance, novelty, and whether an image adds value on each
+action; do not impose a cast size, image quota, random draw, or rotation. Follow
+the runbook's media provenance and Console reference rules. A review request
+authorizes proposed corrections and local images; publication scope must come
+from the user's instruction for that run. Do not silently rewrite old posts,
+attach new media, or enable a schedule while reviewing them.
+
+NPC identity is disclosed by the existing interface/profile. Keep comment and
+Feed bodies in character: do not append `[Fictional NPC]` or repetitive AI/image
+production disclaimers. Preserve image provenance in internal run/media records.
+Keep source Intel IDs/URLs in internal run records rather than appending raw
+`Intel: https://...` footers to every post. Do not create public maintenance
+placeholder posts such as `Updated with the image: ...`.
+
 # Design & UX
 
 `docs/design-system.md` is the authoritative design spec (palette, type scale,

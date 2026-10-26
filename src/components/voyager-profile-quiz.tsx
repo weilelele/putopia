@@ -10,6 +10,7 @@ import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveInput, ArchiveSelect, ArchiveTextarea } from '@/components/archive-input'
 import { ArchiveRouteError, ArchiveRouteLoading } from '@/components/archive-route-state'
+import { notifyCalibrationCompleted } from '@/lib/calibration-reminder-client'
 
 export type VoyagerQuizServices = {
   load: typeof getVoyagerIntake
@@ -117,6 +118,7 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
     try {
       const result = await services.save(answers)
       if (!result.ok) { report('calibration_save_failed', { reason: 'rejected' }); setError(result.error ?? 'Please try again.'); return }
+      if (userId && services === defaultServices) notifyCalibrationCompleted(userId)
       telemetry.current.submitted = true
       report('calibration_completed', { elapsed_ms: Math.round(performance.now() - telemetry.current.started) })
       setWorldId(result.worldId ?? null)
@@ -157,7 +159,7 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
         ) : step === 'intro' ? (
           <div className="archive-quiz-intro">
             <ArchivePageHeader title={calibration ? "SIGNAL" : "ESTABLISH YOUR"} accent={calibration ? "CALIBRATION" : "VOYAGER PROFILE"} />
-            <p className="archive-page-intro">{calibration ? "Complete your calibration before joining." : "Discover our shared purpose and add your perspective to the Collective."}</p>
+            <p className="archive-page-intro">Discover our shared purpose and add your perspective to the Collective.</p>
             <p className="archive-page-intro">5 questions</p>
             <ArchiveButton onClick={start} variant="primary">{calibration ? "START CALIBRATION →" : "BEGIN MY PROFILE →"}</ArchiveButton>
           </div>
@@ -166,8 +168,8 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
             <ArchivePageHeader title={calibration ? "SIGNAL CALIBRATION" : "VOYAGER PROFILE"} accent={calibration ? "COMPLETE" : "ESTABLISHED"} />
             <p className="archive-page-intro">Your perspective is now part of the Collective.</p>
             {worldId && <p className="archive-page-intro">Your observation has been shared with the Parallax Array in London.</p>}
-            {calibration && <p className="archive-page-intro">Calibration is saved. Initiation is confirmed only after payment.</p>}
-            {calibration ? <ArchiveButton onClick={onReturn}>RETURN TO INITIATION →</ArchiveButton> : <a href="/voyager-initiation" className="archive-button archive-button--primary">RETURN TO INITIATION →</a>}
+            {calibration && <p className="archive-page-intro">Your calibration is saved.</p>}
+            {calibration ? <ArchiveButton onClick={onReturn}>DONE →</ArchiveButton> : <a href="/voyager-initiation" className="archive-button archive-button--primary">RETURN TO INITIATION →</a>}
           </ArchiveCard>
         ) : (
           <form className="archive-quiz-question ph-no-capture ph-mask" onSubmit={event => { event.preventDefault(); void next() }}>

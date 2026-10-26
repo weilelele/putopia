@@ -2,16 +2,18 @@ import { isInitiationOrderAmount } from './initiation-pricing'
 import type Stripe from 'stripe'
 import { initiationAnalyticsProperties } from './initiation-analytics'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
+import { initiationBuyerId } from './guest-checkout'
 
 export type InitiationAnalyticsClaim = {
   order_id: string; event: 'initiation_checkout_started' | 'initiation_purchase_completed'
   event_uuid: string; event_time: string; claim_token: string; attempt_count: number; reused: boolean
 }
 export type InitiationAnalyticsOrder = {
-  id: string; user_id: string; status: string; order_kind: InitiationOrderKind; amount: number; currency: string
+  id: string; user_id: string; purchased_by?: string | null; status: string; order_kind: InitiationOrderKind; amount: number; currency: string
   stripe_livemode: boolean; stripe_session_id: string | null; stripe_payment_intent: string | null; paid_at: string | null
   pricing_version?: string | null
   analytics_context: Record<string, unknown> | null
+  meta_attribution?: { disabled?: boolean; fbp?: string; fbc?: string } | null
 }
 export type InitiationAnalyticsUpdate = {
   status: 'sent' | 'pending' | 'skipped'; claimed_at: null; claim_token: null
@@ -31,7 +33,7 @@ export function validInitiationAnalyticsSession(order: InitiationAnalyticsOrder,
   return session.id === order.stripe_session_id && session.livemode === order.stripe_livemode && session.mode === 'payment'
     && session.amount_total === order.amount && session.currency === order.currency
     && session.metadata?.product_type === INITIATION_PRODUCT && session.metadata?.order_id === order.id
-    && session.metadata?.user_id === order.user_id && session.metadata?.order_kind === order.order_kind
+    && session.metadata?.user_id === initiationBuyerId(order) && session.metadata?.order_kind === order.order_kind
 }
 
 /** Delivery is observation only: it cannot capture, cancel or create a payment. */
@@ -66,7 +68,14 @@ export async function retryInitiationAnalytics(deps: InitiationAnalyticsDependen
         properties: { ...initiationAnalyticsProperties(order.order_kind, order.analytics_context, order.amount), pricing_version: order.pricing_version ?? 'legacy-v1', source: 'server', order_id: order.id,
           is_internal_qa: order.analytics_context?.is_internal_qa === true,
           is_test: !order.stripe_livemode || order.analytics_context?.environment !== 'production',
-          ...(purchase ? { payment_status: 'paid' } : { reused: claim.reused }) } })
+          ...(purchase ? {
+            payment_status: 'paid', meta_event_id: `initiation_purchase_${order.id}`,
+            // Matching inputs only; Meta receipt lives in initiation_meta_purchases.
+            // Neither these flags nor an API receipt prove Ads Manager attribution.
+            meta_has_browser_id: !!order.meta_attribution?.fbp,
+            meta_has_click_id: !!order.meta_attribution?.fbc,
+            meta_tracking_disabled: order.meta_attribution?.disabled === true,
+          } : { reused: claim.reused }) } })
       return await finish({ status: 'sent', sent_at: new Date(deps.now()).toISOString(), last_error: null })
     } catch {
       try { return await finish({ status: 'pending', last_error: 'Analytics delivery unconfirmed; retry scheduled',
@@ -103,7 +112,7 @@ export function sendPendingInitiationAnalytics(admin: Admin, stripe: Stripe, opt
       return data ?? []
     },
     async loadOrder(id) {
-      const { data, error } = await db.from('initiation_orders').select('id,user_id,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,analytics_context')
+      const { data, error } = await db.from('initiation_orders').select('id,user_id,purchased_by,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,analytics_context,meta_attribution')
         .eq('id', id).maybeSingle().abortSignal(AbortSignal.timeout(5000))
       if (error) throw error
       return data

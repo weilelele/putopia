@@ -13,13 +13,13 @@ import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
 import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
 
 export const dynamic = 'force-dynamic'
-/** Authenticated POST only. All purchase facts are resolved on the server. */
+/** Authenticated POST only (anonymous checkout sessions included). All purchase facts are resolved on the server. */
 export async function POST(request: Request) {
   const configError = initiationConfigurationError()
   if (configError) return NextResponse.json({ error: configError }, { status: 503 })
   const origin = new URL(process.env.NEXT_PUBLIC_SITE_URL!).origin
   if (request.headers.get('origin') !== origin) return NextResponse.json({ error: 'Invalid checkout origin.' }, { status: 403 })
-  const client = await createClient()
+  const client = await createClient({ allowAnonymous: true })
   const { data: { user } } = await client.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Please log in before checkout.' }, { status: 401 })
   const stripe = getStripe()!
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'The dedicated Initiation price is not ready.' }, { status: 503 })
     }
     const { data: order, error } = await admin.rpc('reserve_initiation_v2', { p_user: user.id, p_price: priceId, p_product: productId, p_kind: kind, p_device_source: deviceSource })
-    if (error || !order) return NextResponse.json({ error: 'Checkout is unavailable. Check calibration, existing orders, and seat availability on Initiation.' }, { status: 409 })
+    if (error || !order) return NextResponse.json({ error: 'Checkout is unavailable. Check existing orders and seat availability on Initiation.' }, { status: 409 })
     if (order.amount !== amount || order.pricing_version !== INITIATION_PRICING_VERSION) throw new Error('Reserved quote does not match the current bundle')
     if (order.stripe_session_id) {
       const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id)
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       mode: 'payment', ui_mode: 'hosted_page', payment_method_types: ['card'],
       automatic_tax: { enabled: false }, allow_promotion_codes: false,
       line_items: [{ price: order.price_id, quantity: 1 }],
-      client_reference_id: user.id, customer_email: user.email,
+      client_reference_id: user.id, customer_email: user.email || undefined,
       metadata: { product_type: INITIATION_PRODUCT, order_kind: order.order_kind, order_id: order.id, user_id: user.id, batch: 'S26', pricing_version: order.pricing_version, capture_policy: 'contiguous_us_manual_v1' },
       payment_intent_data: { capture_method: 'manual', metadata: { product_type: INITIATION_PRODUCT, order_kind: order.order_kind, order_id: order.id } },
       shipping_address_collection: { allowed_countries: initiationShippingCountries(process.env.INITIATION_SHIPPING_COUNTRIES)! as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[] },

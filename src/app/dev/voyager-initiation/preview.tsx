@@ -18,8 +18,9 @@ const PREVIEW_REGIONS = briefingRegions([
 ])
 
 /** Preview-only state. All calibration writes remain in this component. */
-export function InitiationPreview({ name, deviceSource, paymentPlacement, briefingParam }: { name: FixtureName; deviceSource?: string; paymentPlacement?: 'top' | 'bottom'; briefingParam?: string }) {
+export function InitiationPreview({ name, deviceSource, paymentPlacement, briefingParam, calibrationIncomplete = false }: { name: FixtureName; deviceSource?: string; paymentPlacement?: 'top' | 'bottom'; briefingParam?: string; calibrationIncomplete?: boolean }) {
   const snapshot = fixture(name)
+  if (calibrationIncomplete) snapshot.calibrated = false
   const [completed, setCompleted] = useState(snapshot.calibrated)
   const services: VoyagerQuizServices = {
     load: async () => ({ userId: snapshot.userId, completed }),
@@ -29,5 +30,5 @@ export function InitiationPreview({ name, deviceSource, paymentPlacement, briefi
       return { ok: true }
     },
   }
-  return <><aside className={styles.notice} aria-label="UI preview"><p>Simulated records · No payment will be created</p><nav aria-label="Preview purchase state"><Link href="?state=initial_pack&qa=1">Initial · $38</Link><Link href="?state=upgraded&qa=1">Upgraded · $460</Link><Link href="?state=complete_pack&qa=1">Complete · $488</Link></nav></aside><InitiationView snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS} briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource} quizServices={services} analyticsEnvironment="fixture" beginCheckout={async () => ({ status: completed ? 'not_open' : 'calibration_required', message: 'Fixture only. No payment session has been created.' })} /></>
+  return <><aside className={styles.notice} aria-label="UI preview"><p>Simulated records · No payment will be created</p><nav aria-label="Preview purchase state"><Link href="?state=initial_pack&qa=1">Initial · $38</Link><Link href="?state=upgraded&qa=1">Upgraded · $460</Link><Link href="?state=complete_pack&qa=1">Complete · $488</Link><Link href="?state=initial_pack&calibration=incomplete&qa=1">After payment · Calibration reminder</Link></nav></aside><InitiationView snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS} briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource} quizServices={services} startGuestSession={async () => ({ error: null })} analyticsEnvironment="fixture" beginCheckout={async () => ({ status: 'not_open', message: 'Fixture only. No payment session has been created.' })} /></>
 }

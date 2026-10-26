@@ -1,0 +1,5 @@
+.quiz :global(.archive-quiz-shell) { padding: 0; }
+.quiz :global(.archive-page-header__title) { font-size: var(--fs-h3); }
+.quiz :global(.archive-quiz-option) { font-size: var(--fs-body); }
+.quiz :global(.archive-quiz-prompt) { padding: var(--s-4); }
+.quiz :global(.archive-card) { background: var(--color-deep); }

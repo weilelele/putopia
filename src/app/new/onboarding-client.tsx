@@ -960,113 +960,96 @@ function PendingInboxScreen({
     transition: 'opacity 0.5s ease, transform 0.5s ease',
   }
 
+  /* One goal per zone: confirm where the key went (with its correction right
+     beside it), then a single primary action to go get it, then the bypass. */
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', gap: '1.5rem',
+      display: 'flex', flexDirection: 'column', gap: 'var(--s-5)',
       ...fadeIn,
     }}>
 
-      {/* Header */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+      {/* Status + what to do */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
         <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.42em', color: 'var(--color-nebula)',
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700,
+          letterSpacing: '0.04em', color: 'var(--color-nucleus-2)',
         }}>
-          SIGNAL TRANSMITTED.
+          SIGNAL TRANSMITTED
         </div>
         <h2 style={{
           fontFamily: 'var(--font-body)', fontWeight: 700,
-          fontSize: 'var(--fs-title)', lineHeight: 1.4,
+          fontSize: 'var(--fs-h3)', lineHeight: 1.2,
           color: 'var(--color-star)', margin: 0,
         }}>
           Check your inbox.
         </h2>
         <p style={{
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          color: 'rgba(242,240,230,0.45)', lineHeight: 1.75, margin: 0,
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)',
+          color: 'var(--color-star-dim)', lineHeight: 1.5, margin: 0,
         }}>
-          Your activation key has been dispatched to:
+          Open the email from Multiverse Collective to activate your access.
         </p>
-        {/* Email pill + provider button — same row, same height */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
-            color: 'var(--color-star)',
-            border: '1px solid rgba(200,68,6,0.25)',
-            background: 'rgba(200,68,6,0.05)',
-            padding: '0.4rem 0.8rem',
-            letterSpacing: '0.04em',
-          }}>
-            {email}
-          </div>
-
-          {provider && (
-            <a
-              href={provider.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
-                letterSpacing: '0.04em', color: 'var(--color-nucleus)',
-                border: '1px solid rgba(255,90,31,0.35)',
-                background: 'rgba(255,90,31,0.07)',
-                padding: '0.4rem 0.8rem',
-                textDecoration: 'none',
-                transition: 'border-color 0.2s, background 0.2s',
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.borderColor = 'rgba(255,90,31,0.6)'
-                el.style.background  = 'rgba(255,90,31,0.13)'
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.borderColor = 'rgba(255,90,31,0.35)'
-                el.style.background  = 'rgba(255,90,31,0.07)'
-              }}
-            >
-              Open {provider.name} <span style={{ opacity: 0.5 }}>↗</span>
-            </a>
-          )}
-        </div>
       </div>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: 'rgba(255,90,31,0.12)' }} />
+      {/* Where it went — the correction lives next to the address it corrects */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 'var(--s-3)',
+          borderTop: '1px solid var(--bd-faint)', borderBottom: '1px solid var(--bd-faint)',
+          padding: 'var(--s-1) 0 var(--s-1) 0',
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-1)', minWidth: 0, padding: 'var(--s-2) 0' }}>
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+              color: 'var(--color-star-dim)',
+            }}>
+              Sent to
+            </span>
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', fontWeight: 700,
+              color: 'var(--color-star)', overflowWrap: 'anywhere',
+            }}>
+              {email}
+            </span>
+          </div>
+          <ArchiveButton
+            onClick={onStartOver}
+            variant="ghost"
+            size="compact"
+            aria-label="Change email"
+            style={{ flexShrink: 0, marginRight: '-0.5rem' }}
+          >
+            Change
+          </ArchiveButton>
+        </div>
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
+          color: 'var(--color-star-dim)', lineHeight: 1.4, margin: 0,
+        }}>
+          Not there in a minute? Check spam or promotions.
+        </p>
+      </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-
-        {/* Unknown provider: generic nudge */}
-        {!provider && (
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-            color: 'rgba(242,240,230,0.4)', lineHeight: 1.7,
-            border: '1px solid rgba(242,240,230,0.08)',
-            padding: '0.8rem 1rem',
-          }}>
-            Open your email client and look for a message from Multiverse Collective.
-          </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
+        {provider && (
+          <a
+            href={provider.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="archive-button archive-button--primary archive-button--full"
+          >
+            Open {provider.name} <span aria-hidden>↗</span>
+          </a>
         )}
 
-        {/* Enter collective — secondary */}
         <ArchiveButton
           onClick={onEnter}
           variant="secondary"
           fullWidth
         >
-          Enter the workspace directly <span style={{ opacity: 0.5 }}>→</span>
-        </ArchiveButton>
-      </div>
-
-      {/* Start over — tertiary text link */}
-      <div style={{ textAlign: 'center' }}>
-        <ArchiveButton
-          onClick={onStartOver}
-          variant="ghost"
-        >
-          Use a different email
+          Explore before activating <span aria-hidden>→</span>
         </ArchiveButton>
       </div>
 

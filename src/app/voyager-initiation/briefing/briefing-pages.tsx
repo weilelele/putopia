@@ -528,7 +528,7 @@ export function JoinPage({ state, offers, busy, unavailable, onChoose, onLearnMo
       <Kicker text="BECOME A VOYAGER" />
       <Headline text="Voyager Initiation" large />
       <div className={s.offers} style={{ '--count': offers.length } as CSSProperties}>
-        {offers.map((offer, k) => <div key={offer.id} className={`${s.offer} ${offer.recommended ? s.offerRecommended : ''} ${s.rise}`} style={rise(1100 + k * 200)}>
+        {offers.map((offer, k) => <div key={offer.id} className={`${s.offer} ${s.rise}`} style={rise(1100 + k * 200)}>
           <span className={s.offerLabel}>{offer.label}</span>
           <h3>{offer.title}</h3>
           <span className={s.price}>${offer.price}</span>

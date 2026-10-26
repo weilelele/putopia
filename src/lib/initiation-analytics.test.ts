@@ -40,6 +40,12 @@ describe('Initiation price exposure', () => {
   })
 })
 describe('Initiation analytics facts', () => {
+  it('labels the $38 Initial Pack separately throughout the funnel', () => {
+    expect(initiationAnalyticsProperties('initial', { order_kind: 'standard', product_name: 'spoofed', payable_amount: 1 })).toMatchObject({
+      product_type: 'voyager_initiation', product_name: 'Initial Voyager Pack', order_kind: 'initial',
+      payable_amount: 38, amount_minor: 3800, currency: 'USD', pricing_version: 'voyager-bundles-v1',
+    })
+  })
   it('reports current $460 upgrades and $488 Complete prices', () => {
     expect(initiationAnalyticsProperties('legacy_upgrade')).toMatchObject({ payable_amount: 460, amount_minor: 46000, order_kind: 'legacy_upgrade', currency: 'USD' })
     expect(initiationAnalyticsProperties('standard')).toMatchObject({ payable_amount: 488, amount_minor: 48800 })
@@ -49,9 +55,9 @@ describe('Initiation analytics facts', () => {
       .toEqual({ utm_source: 'email', utm_campaign: 'p1-initiation-20261014' })
   })
   it('records the actual CTA branch before navigation', () => {
-    expect(initiationNextStep('guest', true)).toBe('login')
-    expect(initiationNextStep('unpaid', false)).toBe('calibration')
-    expect(initiationNextStep('legacy_pack', true)).toBe('checkout')
+    expect(initiationNextStep('guest')).toBe('login')
+    expect(initiationNextStep('unpaid')).toBe('checkout')
+    expect(initiationNextStep('legacy_pack')).toBe('checkout')
   })
   it('preserves exact Meta IDs as strings without numeric precision loss', () => {
     expect(sanitizeInitiationAnalytics({ campaign_id: '120253708880830237', adset_id: '120253708881010237', ad_id: '120253708881030237', placement: 'Instagram_Stories' }))

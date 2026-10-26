@@ -94,7 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient()
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+      // Anonymous checkout sessions stay guests in the UI.
+      if (session?.user && !session.user.is_anonymous) {
         loadProfile(session.user.id, session.user.email).catch(() => setAccessRole('guest')).finally(() => setLoading(false))
       } else {
         syncFeedDraftAccount(draftStorage(), null)
@@ -106,7 +107,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
+      // Anonymous checkout sessions stay guests in the UI.
+      if (session?.user && !session.user.is_anonymous) {
         setLoading(true)
         setAccessRole('guest')
         loadProfile(session.user.id, session.user.email).catch(() => setAccessRole('guest')).finally(() => setLoading(false))
