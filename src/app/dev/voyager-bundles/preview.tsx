@@ -14,21 +14,21 @@ import original from '@/app/voyager-initiation/initiation.module.css'
 import styles from './preview.module.css'
 
 const packs = [
-  { title: 'Initial Voyager Pack', month: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'Welcome letter and Voyager badge', description: 'Welcome letter and exclusive member badge. A physical invitation into the Collective.' },
+  { title: 'Initial Voyager Pack', month: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'Welcome letter and Voyager badge', description: 'A welcome letter and exclusive Voyager badge.' },
   { title: ANTENNA.firstMention, month: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
   { title: 'Multiverse Console', month: 'Dec 2026', image: '', alt: '', description: 'Your own device for exploring and interacting with parallel worlds.' },
-  { title: 'A Fourth Delivery', month: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'A future shipment for this cohort. Contents to be announced.' },
+  { title: 'A Fourth Delivery', month: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },
 ]
 
 const benefits = [
-  { name: 'Mission Board', title: 'Your next assignment awaits.', image: '/assets/voyager-initiation/mission-board-v10.png', alt: 'The Mission Board beside a Multiverse Console', description: 'Unlock the Collective’s internal Mission Board. Take on emergency observations, attempt contact across worlds, and explore unknown frequencies.' },
-  { name: 'Classified Intel', title: 'Beyond the public archive.', image: '/assets/voyager-initiation/intel-questions.png', alt: 'Archival documents about the history and discoveries of the Collective', description: 'Explore the Collective’s history and hidden work through classified records and new field briefings.' },
-  { name: 'Shape the Collective', title: 'Help shape what comes next.', image: '/assets/voyager-initiation/participation-questions.png', alt: 'Proposals for future worlds, Voyagers and device locations', description: 'Take part in member-only votes and get priority access to world-record activities. The questions pictured are proposals; current opportunities appear in the voting hub.' },
+  { name: 'Mission Board', title: 'Your next assignment awaits.', image: '/assets/voyager-initiation/mission-board-v10.png', alt: 'The Mission Board beside a Multiverse Console', description: 'Take on emergency observations, attempt contact across worlds, and explore unknown frequencies.' },
+  { name: 'Classified Intel', title: 'Beyond the public archive.', image: '/assets/voyager-initiation/intel-questions.png', alt: 'Archival documents about the history and discoveries of the Collective', description: 'Explore the Collective’s history through classified records and field briefings.' },
+  { name: 'Shape the Collective', title: 'Help shape what comes next.', image: '/assets/voyager-initiation/participation-questions.png', alt: 'Proposals for future worlds, Voyagers and device locations', description: 'Vote on the Collective’s future and get priority access to world-record activities. Pictured: proposals.' },
 ]
 
 const bundles = {
-  initial: { name: 'Initial Voyager Pack', price: INITIATION_PRICES.initial.amount / 100, detail: 'Welcome letter, member badge and Antenna for Multiverse Console.', note: 'Console not included. Antenna requires installation on a Console. Add Console + Pack 4 later for $460.' },
-  complete: { name: 'Complete Voyager Pack', price: INITIATION_PRICES.standard.amount / 100, detail: 'Everything in Initial, plus Multiverse Console and the fourth delivery.', note: '' },
+  initial: { name: 'Initial Voyager Pack', price: INITIATION_PRICES.initial.amount / 100, detail: 'Welcome letter, Voyager badge and Antenna.', note: 'Add Console + Pack 4 later for $460.' },
+  complete: { name: 'Complete Voyager Pack', price: INITIATION_PRICES.standard.amount / 100, detail: 'Everything in Initial, plus Console and Pack 4.', note: '' },
   upgrade: { name: 'Console + Fourth Delivery', price: INITIATION_PRICES.legacy_upgrade.amount / 100, detail: 'One Multiverse Console and the fourth delivery.', note: 'For existing Voyagers who already have the Initial Pack.' },
 } as const
 
@@ -76,7 +76,7 @@ export function VoyagerBundlesPreview() {
         <div className={original.sectionHeading}><h3 id={`benefit-${index}`}><span className={original.chapter}>0{index + 2}</span>{benefit.name}</h3></div>
         <div className={original.benefit}>
           <div className={`${original.benefitImage} ${index === 0 ? original.missionImage : ''}`}><SmartImage src={benefit.image} alt={benefit.alt} sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
-          <div className={original.benefitCopy}><h3>{benefit.title}</h3><p>{benefit.description}</p></div>
+          <div className={original.benefitCopy}><h3>{benefit.title}</h3><p>{benefit.description}</p>{index === 2 && <Link href="/vote?tab=classified">See current votes <ArrowRight size={20} aria-hidden /></Link>}</div>
         </div>
       </section>)}
 
@@ -90,7 +90,7 @@ export function VoyagerBundlesPreview() {
           <p className={original.eyebrow}>Your initiation</p>
           <h2 id="bundle-title" className={styles.purchaseTitle}>Choose your bundle.</h2>
           {member ? <p className={styles.description}>Add the remaining two packs. Your existing Voyager membership stays with you.</p> : <div className={styles.sharedBenefits}>
-            <p className={styles.sharedTitle}>Voyager membership comes with either bundle.</p>
+            <p className={styles.sharedTitle}>Voyager membership included in both.</p>
           </div>}
           <fieldset className={styles.bundleList}>
             <legend className="sr-only">Choose a Voyager bundle</legend>
@@ -104,7 +104,7 @@ export function VoyagerBundlesPreview() {
             </label>)}
           </fieldset>
           <ArchiveButton fullWidth className={styles.checkout} onClick={() => setConfirmation(true)}>CONTINUE · ${bundle.price}<ArrowRight size={20} aria-hidden /></ArchiveButton>
-          <p className={styles.caption}>Pay once. No recurring membership fee.</p>
+          <p className={styles.caption}>One payment. No subscription.</p>
           <button type="button" className={styles.memberToggle} onClick={() => setMember(value => !value)}>{member ? '← View bundles' : 'Already a Voyager? Upgrade · $460'}{!member && <ArrowRight size={16} aria-hidden />}</button>
           <p className={styles.mockNote}>Preview only. No payment.</p>
         </div>
@@ -113,10 +113,10 @@ export function VoyagerBundlesPreview() {
       <section className={original.section} aria-labelledby="faq-title">
         <div className={original.sectionHeading}><h2 id="faq-title">FAQ</h2></div>
         {[
-          ['Is this a subscription?', 'No. Both bundles are one-time purchases with no recurring membership fee.'],
-          ['What’s the difference between the bundles?', 'The $38 Initial Voyager Pack includes membership and Packs 1–2. The $488 Complete Voyager Pack includes the same membership and all four packs, including the Console.'],
-          ['Can I add the Console later?', 'Yes. Existing Voyagers can add Console + Pack 4 for $460. Starting at $38 and upgrading later totals $498; the complete bundle saves $10.'],
-          ['When will the packs ship?', 'The current S26 schedule lists October, November and December 2026, then January 2027. These are planned shipping months, not guaranteed arrival dates.'],
+          ['Is this a subscription?', 'No. Both bundles are a one-time payment.'],
+          ['What’s the difference between the bundles?', 'Both include Voyager membership. Initial includes Packs 1–2; Complete includes all four, including the Console.'],
+          ['Can I add the Console later?', 'Yes. Add Console + Pack 4 for $460, including if you bought the original $12 Initial Pack. Buying Complete upfront saves $10 compared with the current Initial + upgrade.'],
+          ['When will the packs ship?', 'Planned dispatches: Oct 2026–Jan 2027, one pack per month. These are estimates; check your records for actual progress.'],
         ].map(([question, answer]) => <details className={original.faqItem} key={question}><summary>{question}</summary><p>{answer}</p></details>)}
       </section>
     </div>
