@@ -19,8 +19,7 @@ const PREVIEW_REGIONS = briefingRegions([
 
 /** Preview-only state. All calibration writes remain in this component. */
 export function InitiationPreview({ name, deviceSource, paymentPlacement, briefingParam, calibrationIncomplete = false }: { name: FixtureName; deviceSource?: string; paymentPlacement?: 'top' | 'bottom'; briefingParam?: string; calibrationIncomplete?: boolean }) {
-  const snapshot = fixture(name)
-  if (calibrationIncomplete) snapshot.calibrated = false
+  const snapshot = { ...fixture(name), ...(calibrationIncomplete ? { calibrated: false } : {}) }
   const [completed, setCompleted] = useState(snapshot.calibrated)
   const services: VoyagerQuizServices = {
     load: async () => ({ userId: snapshot.userId, completed }),

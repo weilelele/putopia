@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  BRIEFING_PAGES, BRIEFING_VERSION, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, briefingRegions, briefingSeats,
+  BRIEFING_PAGES, BRIEFING_VERSION, briefingAudience, briefingLoopWindow, briefingSoundOn, briefingLinkOpens, briefingOffers, briefingRecord, briefingRegions, briefingSeats,
   clampBriefingPage, readBriefingRecord, shouldAutoOpenBriefing,
 } from './initiation-briefing'
 
@@ -65,5 +65,26 @@ describe('Voyager briefing content', () => {
     expect(briefingSeats(100, 37)).toEqual({ total: 100, taken: 37, next: 37, known: true })
     expect(briefingSeats(100, null)).toEqual({ total: 100, taken: 0, next: 0, known: false })
     expect(briefingSeats(100, 140)).toEqual({ total: 100, taken: 100, next: null, known: true })
+  })
+})
+
+describe('Voyager briefing theme', () => {
+  it('plays unless this browser turned it off', () => {
+    expect(briefingSoundOn(null)).toBe(true)
+    expect(briefingSoundOn('on')).toBe(true)
+    expect(briefingSoundOn('off')).toBe(false)
+  })
+
+  it('skips decoder priming and loops exactly the composed length', () => {
+    const rate = 1000, samples = new Float32Array(rate * 3)
+    samples.fill(.2, 50)
+    expect(briefingLoopWindow(samples, rate, 2)).toEqual({ start: .05, end: 2.05 })
+    expect(briefingLoopWindow(new Float32Array(rate * 3).fill(.2), rate, 2)).toEqual({ start: 0, end: 2 })
+  })
+
+  it('never loops past the decoded audio or treats a silent file as primed', () => {
+    const rate = 1000
+    expect(briefingLoopWindow(new Float32Array(rate * 3), rate, 2)).toEqual({ start: 0, end: 2 })
+    expect(briefingLoopWindow(new Float32Array(rate).fill(.2), rate, 2)).toEqual({ start: 0, end: 1 })
   })
 })

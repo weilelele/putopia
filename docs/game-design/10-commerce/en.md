@@ -4,7 +4,7 @@ Confirmed October 21, 2026: **Initial US$38**, **Complete US$488**, and **Consol
 
 | Purchase | New payment | Included |
 | --- | --- | --- |
-| Initial | $38 | Member digital access and Packs 1–2: welcome letter, badge and Mysterious Widgets; no Console |
+| Initial | $38 | Member digital access and Packs 1–2: welcome letter, badge and Antenna for Multiverse Console; no Console |
 | Complete | $488 | The same member access and all four Packs, including one Console claim |
 | Initial upgrade | $460 | Console and Pack 4; keep the first two Packs without duplication |
 
@@ -15,6 +15,10 @@ Confirmed October 23, 2026: verified historical $12 Initial buyers are Voyagers 
 Delivery is limited to the contiguous 48 US states and DC, with shipping and applicable taxes included. New cancellation refunds allocate each payment equally across the packs it purchases: Initial $19 per pack, Complete $122, upgrade $230. Original Initial payments remain separate from upgrade refunds; historical terms remain applicable.
 
 Local integration does not mean production pricing has changed. Migration `schema_v103.sql` is not applied; dedicated Stripe prices and production Checkout acceptance remain pending. See the new pricing release record.
+
+## Antenna naming and positioning
+
+October 22, 2026 naming clarification: the base name is **Antenna**, introduced as **Antenna for Multiverse Console**. An emblem of the Collective and a decorative collectible, it receives a particular category of parallel-world signals when installed on the Console. It cannot receive signals independently. The Collective's knowledge of the signals is limited; members explore them together. The three illustrated finishes are design studies, not a promise of three items or selectable finishes in Pack 2. Final appearance and quantity remain to be confirmed. See the [product language record](../../product/antenna.zh.md).
 
 ## Historical record
 

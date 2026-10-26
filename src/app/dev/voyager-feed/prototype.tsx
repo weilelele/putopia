@@ -9,6 +9,7 @@ import guestStyles from '../../console/guest-intro.module.css'
 import { ArchiveTextarea } from '@/components/archive-input'
 import { actors, canReadFeed, visibleFeed, canInteract, canManage, canPost, maren, ryo, samplePosts, type Actor, type Entry, type Role } from './model'
 import s from './prototype.module.css'
+import { REQUEST_ACCESS_HREF } from '@/lib/request-access'
 
 type Modal = { type: 'compose' | 'permission' } | { type: 'edit' | 'delete' | 'menu'; postId: string; replyId?: string } | { type: 'profile'; actor: Actor } | { type: 'info'; title: string; text: string } | { type: 'reset' }
 type Editor = { text: string; image?: string; error: string }
@@ -179,7 +180,7 @@ export function VoyagerFeedPrototype() {
       </> : <section className={s.gate} aria-label="Join Multiverse Collective">
         <h2>Join the conversation</h2>
         <p className={s.gateDescription}>{role === 'unregistered' ? 'Complete your registration to read and join Voyager conversations.' : 'Request access or log in to read and join Voyager conversations.'}</p>
-        <div className={guestStyles.actions}><ArchiveLinkButton href={role === 'unregistered' ? '/register' : '/new'} variant="primary">REQUEST ACCESS</ArchiveLinkButton><ArchiveLinkButton href="/login?redirect=%2Fvoyagers" variant="secondary">LOG IN</ArchiveLinkButton></div>
+        <div className={guestStyles.actions}><ArchiveLinkButton href={role === 'unregistered' ? '/register' : REQUEST_ACCESS_HREF} variant="primary">REQUEST ACCESS</ArchiveLinkButton><ArchiveLinkButton href="/login?redirect=%2Fvoyagers" variant="secondary">LOG IN</ArchiveLinkButton></div>
       </section>)}
       {tab === 'MEMBERS' && <section className={s.section}><h2>Meet the Voyagers</h2><p>People exploring alongside you.</p>{[ryo, maren, actors.voyager, actors.architect].map(member => <button className={s.member} key={member.id} onClick={() => setModal({ type: 'profile', actor: member })}><Avatar actor={member} /><span><strong>{member.name}</strong><small>{member.location}</small></span><ArrowRight size={20} /></button>)}</section>}
       {tab === 'LOGS' && <section className={s.section}><h2>Voyager Logs</h2><p>Longer stories from the collective.</p><button className={s.log} onClick={() => info('A week beside the ocean', 'On the first morning, everything looked familiar. By the seventh, I had learned to look more closely. The shifting clouds and changing shoreline made each visit its own discovery. This is a sample Voyager Log for the interaction prototype.')}><small>RYO TANAKA · OCT 10, 2026</small><h3>A week beside the ocean</h3><p>Seven mornings. One shoreline. A different story each time.</p><span>READ LOG <ArrowRight size={18} /></span></button></section>}

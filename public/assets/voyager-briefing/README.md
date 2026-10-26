@@ -1,6 +1,6 @@
 # Voyager Briefing media
 
-Media for the first-visit Voyager Initiation briefing (`src/app/voyager-initiation/briefing/`). Re-encoded copies of existing approved project media; no new generation.
+Media for the first-visit Voyager Initiation briefing (`src/app/voyager-initiation/briefing/`). Re-encoded copies of existing approved project media, plus one original soundtrack synthesised in-repo.
 
 | File | Source |
 | --- | --- |
@@ -12,3 +12,4 @@ Media for the first-visit Voyager Initiation briefing (`src/app/voyager-initiati
 | console-reel.mp4 | `device-reel-v2-20261016.mp4`, 960px, no audio |
 | london-device.mp4 / .jpg | Worlds Explore live room `london-01` clip (cosmo asset 6a8566e041b16262cb633bb9) |
 | intel-questions.jpg, robot-library.jpg, console-workshop.jpg, voyager-badge.jpg, welcome-desk.jpg, pack-*.jpg | JPEG copies of existing `public/` images for canvas drawing and smaller payloads |
+| briefing-theme.mp3 | Original 96 s seamless loop "Signal From Elsewhere" (D minor, 80 BPM), synthesised by `scripts/audio/briefing-theme.py`; no samples or third-party audio |

@@ -69,6 +69,7 @@ export async function getInitiationSnapshot({ allowAnonymous = false }: { allowA
     }
     const newRecordsUnavailable = results.slice(3).some(result => result.error)
     snapshot.status = newRecordsUnavailable ? 'unknown' : initiationMemberStatus(!!entitlement?.active, member, snapshot.legacyPackPurchased)
+    snapshot.purchaseKind = newRecordsUnavailable ? null : initiationPurchaseKind(orders, entitlement, initial)
     snapshot.membershipSource = newRecordsUnavailable ? null : member?.source ?? null
     snapshot.purchaseKind = newRecordsUnavailable ? null : initiationPurchaseKind(orders, entitlement, initial)
     snapshot.paymentStatus = (newRecordsUnavailable ? 'unknown' : orders[0]?.status ?? 'none') as InitiationPaymentStatus

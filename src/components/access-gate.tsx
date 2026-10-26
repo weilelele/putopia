@@ -6,6 +6,7 @@ import posthog from 'posthog-js'
 import { isWindowActive, startAccessWindow } from '@/lib/access-window'
 import { AccessCountdown } from '@/components/access-countdown'
 import { useActivateAccess } from '@/components/activate-action'
+import { REQUEST_ACCESS_HREF } from '@/lib/request-access'
 
 /** Reveal animation length when a glimpse is granted, in ms. */
 const REVEAL_MS = 1400
@@ -21,7 +22,7 @@ const REVEAL_MS = 1400
  */
 export function AccessGate({
   children,
-  permanentHref = '/new',
+  permanentHref = REQUEST_ACCESS_HREF,
   loginHref = '/login',
 }: {
   children: ReactNode

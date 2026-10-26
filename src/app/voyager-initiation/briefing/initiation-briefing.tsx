@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react'
-import { ArrowRight, ChevronLeft, X } from 'lucide-react'
+import { ArrowRight, ChevronLeft, Volume2, VolumeX, X } from 'lucide-react'
 import { BRIEFING_PAGES, clampBriefingPage, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 import type { InitiationPublicMember } from '@/lib/initiation-types'
 import type { PageState } from './briefing-kit'
+import { useBriefingSound } from '@/hooks/use-briefing-sound'
 import { ClassifiedPage, CollectivePage, DevicePage, FrontLinePage, JoinPage, MembersPage, PacksPage, RecruitingPage, VotesPage } from './briefing-pages'
 import s from './briefing.module.css'
 
@@ -31,6 +32,7 @@ export function InitiationBriefing({ trigger, members, seats, regions, offers, b
   const dialog = useRef<HTMLDialogElement>(null)
   const [nav, setNav] = useState<NavState>(() => ({ page: 0, leaving: -1, dir: 1, visits: BRIEFING_PAGES.map((_, i) => i === 0 ? 1 : 0), maxPage: 0 }))
   const openedAt = useRef(0)
+  const sound = useBriefingSound(dialog)
   const swipe = useRef<{ x: number; y: number; control: boolean; swiped: boolean }>({ x: 0, y: 0, control: false, swiped: false })
 
   useEffect(() => {
@@ -117,9 +119,15 @@ export function InitiationBriefing({ trigger, members, seats, regions, offers, b
         {first
           ? <button type="button" className={s.iconButton} aria-label="Close briefing" onClick={() => close('closed')}><X size={20} aria-hidden /></button>
           : <button type="button" className={s.iconButton} aria-label="Previous page" onClick={() => go(nav.page - 1, 'back')}><ChevronLeft size={22} aria-hidden /></button>}
-        {last
-          ? <button type="button" className={s.iconButton} aria-label="Close briefing" onClick={() => close('completed')}><X size={20} aria-hidden /></button>
-          : <button type="button" className={s.skip} onClick={() => go(LAST, 'skip')}>Skip</button>}
+        <div className={s.topEnd}>
+          <button type="button" className={s.iconButton} data-sound-toggle aria-label={sound.on ? 'Turn music off' : 'Turn music on'}
+            onClick={() => capture('initiation_brief_sound_toggled', { sound: sound.toggle() ? 'on' : 'off', page_index: nav.page + 1, page_id: BRIEFING_PAGES[nav.page] })}>
+            {sound.on ? <Volume2 size={20} aria-hidden /> : <VolumeX size={20} aria-hidden />}
+          </button>
+          {last
+            ? <button type="button" className={s.iconButton} aria-label="Close briefing" onClick={() => close('completed')}><X size={20} aria-hidden /></button>
+            : <button type="button" className={s.skip} onClick={() => go(LAST, 'skip')}>Skip</button>}
+        </div>
       </div>
       {!last && <div className={s.dock}>
         <button type="button" className={s.next} onClick={() => go(nav.page + 1, 'next')}>NEXT<ArrowRight size={18} aria-hidden /></button>

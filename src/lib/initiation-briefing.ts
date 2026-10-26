@@ -1,6 +1,7 @@
 import { canClaimDeviceBatch, type DeviceBatchStatus, DEVICE_BATCH_PHASES } from './device-batches'
 import type { InitiationPaymentStatus, InitiationStatus } from './initiation-types'
 import { INITIATION_PRICES, type InitiationOrderKind } from './initiation-pricing'
+import { ANTENNA } from './antenna-copy'
 
 /** First-visit Voyager briefing shown over /voyager-initiation. Pure rules only; no DOM, storage or network. */
 export const BRIEFING_VERSION = '2026-10-v1'
@@ -50,6 +51,28 @@ export function briefingRecord(outcome: BriefingOutcome, page: number): string {
   return JSON.stringify({ version: BRIEFING_VERSION, outcome, page: Math.max(0, Math.min(BRIEFING_PAGES.length - 1, Math.trunc(page))) })
 }
 
+/** Background theme: an original 96 s loop (scripts/audio/briefing-theme.py), on by default and started by the first gesture. */
+export const BRIEFING_THEME = { src: '/assets/voyager-briefing/briefing-theme.mp3', loopSeconds: 96, volume: .6 } as const
+export const BRIEFING_SOUND_KEY = 'mc:initiation:briefing-sound'
+
+/** Sound stays on unless this browser turned it off; unreadable storage keeps the default. */
+export function briefingSoundOn(stored: string | null): boolean {
+  return stored !== 'off'
+}
+
+/**
+ * Seconds to loop inside a decoded theme. Some decoders keep the MP3 encoder's leading silence, so the loop starts at the
+ * first audible sample (the theme never starts silent) and runs exactly `loopSeconds`, ignoring trailing padding.
+ */
+export function briefingLoopWindow(samples: ArrayLike<number>, sampleRate: number, loopSeconds: number): { start: number; end: number } {
+  const duration = samples.length / sampleRate
+  const search = Math.min(samples.length, Math.round(sampleRate * .25))
+  let first = 0
+  while (first < search && Math.abs(samples[first]) < 1e-4) first++
+  const start = first < search ? first / sampleRate : 0
+  return { start, end: Math.min(duration, start + loopSeconds) }
+}
+
 export function clampBriefingPage(page: number): number {
   return Math.max(0, Math.min(BRIEFING_PAGES.length - 1, Math.trunc(page)))
 }
@@ -75,7 +98,7 @@ export function briefingOffers(status: InitiationStatus): BriefingOffer[] {
   const saving = dollars('initial') + dollars('legacy_upgrade') - dollars('standard')
   return [{
     id: 'initial', label: 'INITIAL', title: INITIATION_PRICES.initial.name, price: dollars('initial'),
-    points: [membership, 'Packs 1–2', 'Letter, badge, Mysterious Widgets'], note: `Add Console + Pack 4 later for $${dollars('legacy_upgrade')}.`,
+    points: [membership, 'Packs 1–2', `Letter, badge, ${ANTENNA.firstMention}`], note: `Add Console + Pack 4 later for $${dollars('legacy_upgrade')}.`,
   }, {
     id: 'standard', label: 'COMPLETE', title: INITIATION_PRICES.standard.name, price: dollars('standard'),
     points: [membership, 'All four packs', 'Your own Multiverse Console'], note: saving > 0 ? `Save $${saving} versus upgrading later.` : 'Pay once. No recurring fee.',

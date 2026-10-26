@@ -14,6 +14,7 @@ import { PwaInstallNudge } from '@/components/pwa-install-nudge'
 import { SectionTracker } from '@/components/section-tracker'
 import { MissionBoard } from '@/components/mission-board'
 import { canAccessMissionBoard } from '@/lib/mission-board'
+import { REQUEST_ACCESS_HREF } from '@/lib/request-access'
 export default function ConsoleClient({ initial }: { initial: Awaited<ReturnType<typeof getDashboard>> }) {
   const scrollContainer = useRef<HTMLElement>(null)
   const [data,setData] = useState(initial)
@@ -30,7 +31,7 @@ export default function ConsoleClient({ initial }: { initial: Awaited<ReturnType
       </div>
       <p className={styles.description}>We own devices looking into parallel worlds.</p>
       <div className={styles.actions}>
-        <ArchiveLinkButton href="/new" variant="primary">REQUEST ACCESS</ArchiveLinkButton>
+        <ArchiveLinkButton href={REQUEST_ACCESS_HREF} variant="primary">REQUEST ACCESS</ArchiveLinkButton>
         <ArchiveLinkButton href="/login" variant="secondary">LOG IN</ArchiveLinkButton>
       </div>
     </section>}

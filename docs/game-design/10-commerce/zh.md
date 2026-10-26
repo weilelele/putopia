@@ -4,7 +4,7 @@
 
 | 购买 | 新实付 | 包裹与权益 |
 | --- | --- | --- |
-| Initial | $38 | 会员数字权益、Pack 1 欢迎信/徽章、Pack 2 Mysterious Widgets；不含 Console |
+| Initial | $38 | 会员数字权益、Pack 1 欢迎信/徽章、Pack 2 Antenna for Multiverse Console（天线）；不含 Console |
 | Complete | $488 | 相同会员权益和四包，含一次 Console Claim |
 | Initial 升级 | $460 | 保留原前两包，仅新增 Console 和 Pack 4；历史 $12 用户同价 |
 
@@ -15,6 +15,10 @@ $38+$460=$498，直接 Complete 节省 $10。升级不是按历史实付抵扣�
 配送美国本土连续48州及DC，标价含运费和适用税费。取消退款按本次购买的包数均分：Initial 两包各$19，Complete 四包各$122，升级两包各$230；历史支付按原条款。原 Initial 支付与升级支付独立。发货计划及实际进度以成员记录为准。
 
 代码、数据库新迁移及 Stripe 三个专用 Price 必须配套；本地实现不代表生产已改价。当前迁移 `schema_v103.sql` 尚未应用，正式环境和实际 Checkout 未验收。详见新定价发布记录。
+
+## Antenna 命名与定位
+
+2026-10-22 命名与定位确认：基础名称 **Antenna**，首次出现 **Antenna for Multiverse Console**。它是组织信物与装饰性收藏物，也用于接收特定品类／方向的平行世界信号；接收时必须安装于 Console 顶部，不能独立接收。成员对可接收内容的认知有限，需要共同探索。英文信物表述采用 **An emblem of the Collective**，避免与未来数字 Token 混淆。当前图展示三种造型／材质方向，不承诺 Pack 2 含三支或用户可选颜色；数量和最终外观仍需确认。见[天线产品口径](../../product/antenna.zh.md)。
 
 ## 历史记录
 

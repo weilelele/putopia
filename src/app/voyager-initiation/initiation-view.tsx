@@ -1,6 +1,7 @@
 'use client'
 
 import { INITIATION_PRICES, initiationPriceLabel } from '@/lib/initiation-pricing'
+import { ANTENNA } from '@/lib/antenna-copy'
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
@@ -54,10 +55,10 @@ const paymentMessages = {
 }
 
 const packs = [
-  { title: 'Initial Voyager Pack', dispatch: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'A welcome letter and Voyager badge on a desk', description: 'Welcome letter and exclusive member badge. A physical invitation into the Collective.' },
-  { title: 'Mysterious Widgets', dispatch: 'Nov 2026', image: '/assets/voyager-initiation/mysterious-widgets.png', alt: 'A metal cube, brass cylinder and dark mineral on a wooden desk', description: 'Small widgets that strengthen and amplify signals.' },
+  { title: 'Initial Voyager Pack', dispatch: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
+  { title: ANTENNA.firstMention, dispatch: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
   { title: 'Multiverse Console', dispatch: 'Dec 2026', image: '/assets/voyager-initiation/console-multiview-portrait.png', alt: 'Multiverse Console in the Kyoto workshop: front, rear, side display and control dial views', featured: true, description: 'Your own device for exploring and interacting with parallel worlds.' },
-  { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'A future shipment for this cohort. Contents to be announced.', planned: true },
+  { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
 ]
 
 export type InitiationCheckoutResult = { status: 'ready' | 'not_open' | 'unauthenticated'; message: string }
@@ -211,7 +212,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           <p className={styles.eyebrow}>Your initiation</p>
           <h2 className={styles.purchaseTitle}>{legacy ? 'Activate Packs 3–4.' : 'Choose your bundle.'}</h2>
           {legacy ? <p className={styles.paymentTerms}>Add the remaining two packs. Your existing Voyager membership stays with you.</p> : <div className={styles.sharedBenefits}>
-            <p>Voyager membership comes with either bundle.</p>
+            <p>Voyager membership included in both.</p>
           </div>}
           <fieldset className={styles.bundleChoices} disabled={busy}>
             <legend className="sr-only">{legacy ? 'Your Voyager upgrade' : 'Choose a Voyager bundle'}</legend>
@@ -219,12 +220,12 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
               <input type="radio" name="voyager-bundle" value={option} aria-labelledby={`bundle-name-${option} bundle-price-${option}`} aria-describedby={`bundle-detail-${option}${option !== 'standard' ? ` bundle-note-${option}` : ''}`} checked={kind === option} onChange={() => { if (option !== 'legacy_upgrade') setBundle(option) }} />
               <span className={styles.bundleCopy}>
                 <span className={styles.bundleHeading}><span id={`bundle-name-${option}`}>{INITIATION_PRICES[option].name}</span><strong ref={kind === option ? priceRef : undefined} id={`bundle-price-${option}`}>{initiationPriceLabel(option)}</strong></span>
-                <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? 'Welcome letter, member badge and Mysterious Widgets.' : option === 'standard' ? 'Everything in Initial, plus Multiverse Console and the fourth delivery.' : 'One Multiverse Console and the fourth delivery.'}</span>
-                {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? 'Console claimed separately. Add Console + the fourth delivery later for $460.' : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
+                <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? 'Welcome letter, Voyager badge and Antenna.' : option === 'standard' ? 'Everything in Initial, plus Console and Pack 4.' : 'One Multiverse Console and the fourth delivery.'}</span>
+                {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? `Add Console + Pack 4 later for ${initiationPriceLabel('legacy_upgrade')}.` : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
               </span>
             </label>)}
           </fieldset>
-          <p className={styles.paymentTerms}>Pay once. No recurring membership fee.</p>
+          <p className={styles.paymentTerms}>One payment. No subscription.</p>
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : soldOut ? 'FULLY CLAIMED' : `${legacy ? 'UPGRADE' : 'CONTINUE'} · ${initiationPriceLabel(kind)}`}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
@@ -232,7 +233,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
             <h2>Delivery</h2>
-            <p>Contiguous US only.<br />Shipping &amp; taxes included.</p>
+            <p>Contiguous US. Shipping &amp; taxes included.</p>
             <Link className={styles.textLink} href="/terms/initiation">Delivery &amp; aftercare <ArrowRight size={18} aria-hidden /></Link>
           </section>
           {!availability.checkoutOpen && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
@@ -263,14 +264,14 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             const state = progress.packs[index]
             const shipment = state.shipment
             const deviceHref = consoleClaim.batch ? `/devices/batches/${consoleClaim.batch.slug}` : consoleDevicePath(source, consoleClaim.href)
-            return <li data-initiation-section={`pack_${index + 1}`} key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''} ${state.awaitingActivation ? styles.awaitingActivation : ''}`}>
+            return <li data-initiation-section={`pack_${index + 1}`} key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${index === 1 ? styles.antennaPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''} ${state.awaitingActivation ? styles.awaitingActivation : ''}`}>
               {!pack.featured && <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 320px, (min-width: 768px) 240px, 42vw" preload={index === 0} /></div>}
               <div className={styles.packCopy}>
                 <p className={styles.packageNumber}>Package {index + 1}{!state.awaitingActivation && <span> · {shipment?.scheduledMonth ? new Date(`${shipment.scheduledMonth}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : pack.dispatch}</span>}</p>
                 <PackHeading>{pack.title}</PackHeading>
                 {legacy && index < 2 && <p className={styles.packAccess}>Included in Initial Pack</p>}
                 {pack.featured && consoleClaim.claimed && <p className={styles.packAccess}>{consoleClaim.batch?.name ?? 'Batch details unavailable'}</p>}
-                <p>{pack.description}</p>
+                <p className={index === 1 ? styles.antennaCopy : undefined}>{pack.description}</p>
                 {(memberView || shipment) && <p className={styles.shipmentStatus}><span className={styles.statusLabel}>Status</span>{state.label}</p>}
                 {shipment?.trackingUrl && <a className={styles.textLink} href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">Track delivery <ArrowRight size={18} aria-hidden /></a>}
                 {state.awaitingActivation && <a className={styles.textLink} href="#activate-packs">Activate with upgrade <ArrowRight size={18} aria-hidden /></a>}
@@ -288,7 +289,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         <div className={styles.sectionHeading}><BenefitHeading id="mission-benefit-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Mission Board</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={`${styles.benefitImage} ${styles.missionImage}`}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
-          <div className={styles.benefitCopy}><h3>Your next assignment awaits.</h3><p>Unlock the Collective’s internal Mission Board. Take on emergency observations, attempt contact across worlds, and explore unknown frequencies.</p><Link href={snapshot.userId ? '/console#mission-board' : '/login?redirect=%2Fconsole%23mission-board'}>Explore the Mission Board <ArrowRight size={20} aria-hidden /></Link></div>
+          <div className={styles.benefitCopy}><h3>Your next assignment awaits.</h3><p>Take on emergency observations, attempt contact across worlds, and explore unknown frequencies.</p><Link href={snapshot.userId ? '/console#mission-board' : '/login?redirect=%2Fconsole%23mission-board'}>Explore the Mission Board <ArrowRight size={20} aria-hidden /></Link></div>
         </div>
       </section>
 
@@ -296,7 +297,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Classified Intel</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents asking: How long has the Collective existed? Who were the first Voyagers? What did they discover?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
-          <div className={styles.benefitCopy}><h3>Beyond the public archive.</h3><p>Explore the Collective’s history and hidden work through classified records and new field briefings.</p><Link href="/intel?tab=classified">Explore intel <ArrowRight size={20} aria-hidden /></Link></div>
+          <div className={styles.benefitCopy}><h3>Beyond the public archive.</h3><p>Explore the Collective’s history through classified records and field briefings.</p><Link href="/intel?tab=classified">Explore intel <ArrowRight size={20} aria-hidden /></Link></div>
         </div>
       </section>
 
@@ -304,7 +305,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         <div className={styles.sectionHeading}><BenefitHeading id="participation-title">{paymentAtBottom && <span className={styles.chapter}>04</span>}{paymentAtBottom ? 'Shape the Collective' : 'Participate'}</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/participation-questions.png" alt="Proposed decisions on physical maps and dossiers: Which world next? How many new Voyagers? Reveal our device locations? Investigate a new antenna organization?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
-          <div className={styles.benefitCopy}><h3>Help shape what comes next.</h3><p>Take part in member-only votes and get priority access to world-record activities. The questions pictured are proposals; current opportunities appear in the voting hub.</p><Link href="/vote?tab=classified">Explore member votes <ArrowRight size={20} aria-hidden /></Link></div>
+          <div className={styles.benefitCopy}><h3>Help shape what comes next.</h3><p>Vote on the Collective’s future and get priority access to world-record activities. Pictured: proposals.</p><Link href="/vote?tab=classified">See current votes <ArrowRight size={20} aria-hidden /></Link></div>
         </div>
       </section>
       </section>
@@ -312,7 +313,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       <section data-initiation-section="faq" className={styles.section} aria-labelledby="initiation-faq-title">
         <div className={styles.sectionHeading}><h2 id="initiation-faq-title">FAQ</h2></div>
         {INITIATION_FAQ.map(item => <details key={item.question} className={styles.faqItem}>
-          <summary>{item.question}</summary><p>{item.answer}</p>
+          <summary>{item.question}</summary><p>{item.answer}{'detailsLink' in item && <> See <Link href={item.detailsLink}>Delivery &amp; aftercare</Link> for fulfillment and access rules.</>}</p>
         </details>)}
       </section>
     </div>

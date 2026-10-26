@@ -6,17 +6,18 @@ import { ArchiveSheet } from '@/components/archive-sheet'
 import posthog from 'posthog-js'
 import { getPendingEmail } from '@/lib/access-window'
 import { getEmailProvider } from '@/lib/email-providers'
+import { REQUEST_ACCESS_HREF } from '@/lib/request-access'
 
 /**
  * Shared "get full access" action. A visitor who has already left an email gets
  * the activation popup (their address + a deep-link to their inbox + change /
- * log-in escapes); a cold visitor is sent to onboarding to leave one. Used by
+ * log-in escapes); a cold visitor is sent straight to the email step to leave one. Used by
  * both the homepage REQUEST ACCESS button and the gate's GET FULL ACCESS, so the
  * rule is identical everywhere: returning emailers are guided to their inbox.
  *
  * Returns `trigger(source)` to wire to a button and `modal` to render.
  */
-export function useActivateAccess(permanentHref = '/new', loginHref = '/login') {
+export function useActivateAccess(permanentHref = REQUEST_ACCESS_HREF, loginHref = '/login') {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
 
