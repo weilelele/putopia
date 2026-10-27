@@ -10,7 +10,7 @@ import SmartImage from '@/components/smart-image'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { MemberStrip } from './member-strip'
 import { ConsoleCarousel } from './console-carousel'
-import type { InitiationPublicMember, InitiationSnapshot, InitiationStatus } from '@/lib/initiation-types'
+import type { InitiationPublicMember, InitiationSnapshot } from '@/lib/initiation-types'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import type { VoyagerQuizServices } from '@/components/voyager-profile-quiz'
@@ -22,6 +22,7 @@ import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navi
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
+import { requestInitiationCheckout, type InitiationCheckoutInput, type InitiationCheckoutResult } from '@/lib/initiation-checkout-request'
 import { initiationPackProgress } from '@/lib/initiation-pack-progress'
 import { InitiationBriefing } from './briefing/initiation-briefing'
 import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, shouldAutoOpenBriefing, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
@@ -58,15 +59,13 @@ const packs = [
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
 ]
 
-/** `accountStatus` is the signed-in account's state, so a guest who just signed in can see their own records. */
-export type InitiationCheckoutResult = { status: 'ready' | 'not_open' | 'unauthenticated'; message: string; accountStatus?: InitiationStatus }
 export type InitiationViewProps = {
   initialBundle?: 'initial' | 'standard'
   members?: InitiationPublicMember[]
   snapshot: InitiationSnapshot
   deviceSource?: string | null
   checkoutCanceled?: boolean
-  beginCheckout: () => Promise<InitiationCheckoutResult>
+  startCheckout?: (input: InitiationCheckoutInput) => Promise<InitiationCheckoutResult>
   quizServices?: VoyagerQuizServices
   /** Sign-in calls for the Pay dialog; fixtures pass fakes so no email or account is created. */
   signInServices?: CheckoutSignInServices
@@ -79,7 +78,7 @@ export type InitiationViewProps = {
   briefingParam?: string
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -160,25 +159,13 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     inFlight.current = true
     setBusy(true)
     try {
-      const result = await beginCheckout()
-      // This page was rendered for a guest. A member (or an Initial Pack owner, who can only add the
-      // $460 upgrade) sees their own records and options after a reload instead of an error.
-      if (afterSignIn && result.accountStatus && result.accountStatus !== 'unpaid') {
+      const result = await startCheckout({ bundle: legacy ? 'standard' : chosen, from: source, analytics: analyticsContext(), afterSignIn })
+      if (result.status === 'refresh') {
         window.location.reload()
-        return
-      }
-      if (result.status === 'unauthenticated') {
+      } else if (result.status === 'unauthenticated') {
         window.location.assign(initiationLoginPath(source, chosen))
       } else if (result.status === 'ready') {
-        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bundle: legacy ? 'standard' : chosen, from: source, analytics: analyticsContext() }) })
-        const data = await response.json()
-        if (response.status === 401) {
-          window.location.assign(initiationLoginPath(source, chosen))
-        } else if (response.ok && typeof data.url === 'string' && new URL(data.url).protocol === 'https:') {
-          window.location.assign(data.url)
-        } else {
-          setError(typeof data.error === 'string' ? data.error : 'Checkout is unavailable. Please try again.')
-        }
+        window.location.assign(result.url)
       } else {
         setError(result.message)
       }
