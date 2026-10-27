@@ -45,14 +45,15 @@ export async function accountState(id: string): Promise<Account> {
   return { id, activated: !!data?.registered_at }
 }
 
-/** The account for `email`, or null. Profiles carry the lower-cased email, so most lookups skip listing users. */
+/** Exact server-only Auth lookup, including accounts whose profile is missing. Never enumerate users. */
 export async function findAccount(email: string): Promise<Account | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (createAdminClient() as any).from('voyager_profiles').select('id, registered_at').eq('email', email).limit(1)
+  const { data, error } = await (createAdminClient() as any).rpc('find_activation_account', { p_email: email.trim().toLowerCase() })
   if (error) throw error
-  if (data?.[0]) return { id: data[0].id, activated: !!data[0].registered_at }
-  const user = await findAuthUserByEmail(email)
-  return user ? accountState(user.id) : null
+  if (!Array.isArray(data) || data.length > 1) throw new Error('Account lookup is ambiguous')
+  if (!data.length) return null
+  if (typeof data[0].id !== 'string' || typeof data[0].activated !== 'boolean') throw new Error('Account lookup is unavailable')
+  return { id: data[0].id, activated: data[0].activated }
 }
 
 /** An existing account, or a new unactivated one. No Supabase email is sent. */

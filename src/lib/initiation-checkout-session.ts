@@ -14,6 +14,7 @@ import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
 import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
 import { prepareInitiationBundleSwitch } from '@/lib/initiation-checkout-switch'
 import { afterCheckout } from '@/lib/checkout-after'
+import { initiationCheckoutAccess } from '@/lib/initiation-checkout-access'
 
 /** How the buyer reached checkout: signed in, or an email-only account created by the email checkout. */
 export type InitiationCheckoutPath = 'signed_in' | 'email_first'
@@ -43,18 +44,33 @@ export async function createInitiationCheckout(request: Request, origin: string,
     }
     // Resolve qualification before selecting a price; never accept amount/kind from the browser.
     if (body?.bundle !== undefined && !['initial', 'standard'].includes(body.bundle as string)) return NextResponse.json({ error: 'Choose a valid bundle.' }, { status: 400 })
-    const [legacyResult, initialResult, batchResult, previousResult, profileResult] = await Promise.all([
+    const [legacyResult, initialResult, batchResult, previousResult, profileResult, accessRecords] = await Promise.all([
       admin.rpc('eligible_legacy_initiation_order', { p_user: user.id }),
       admin.rpc('eligible_initial_initiation_order', { p_user: user.id }),
       admin.from('initiation_batches').select('stripe_livemode').eq('label', 'S26').single(),
       admin.from('initiation_orders').select('*').eq('user_id', user.id).in('status', ['pending', 'payment_review', 'disputed']).maybeSingle(),
       admin.from('voyager_profiles').select('role').eq('id', user.id).maybeSingle(),
+      checkoutPath === 'signed_in' ? Promise.all([
+        admin.rpc('initiation_availability'),
+        admin.from('initiation_entitlements').select('active').eq('user_id', user.id).maybeSingle(),
+        admin.from('initiation_members').select('source,active,batch').eq('user_id', user.id).maybeSingle(),
+      ]) : null,
     ])
     mark('lookup')
     const { data: legacyId, error: legacyError } = legacyResult
     if (legacyError) throw legacyError
     const { data: initialId, error: initialError } = initialResult
     if (initialError) throw initialError
+    if (accessRecords) {
+      if (accessRecords.some(record => record.error)) throw new Error('Checkout records are unavailable')
+      const [supply, entitlement, member] = accessRecords.map(record => record.data)
+      const access = initiationCheckoutAccess({ supply, entitlement, member, ownsInitial: !!initialId || !!legacyId,
+        configError: initiationConfigurationError(initialId || legacyId ? 'legacy_upgrade' : 'initial') })
+      // A page rendered for a guest must first show an existing member/owner their own options.
+      // This flag only prevents checkout; it cannot skip any authorization or price validation.
+      if (body?.afterSignIn === true && ['initiated', 'granted', 'legacy_pack'].includes(access.status)) return NextResponse.json({ next: 'refresh' })
+      if (!access.checkoutOpen) return NextResponse.json({ error: access.message }, { status: 409 })
+    }
     if ((legacyId || initialId) && body?.bundle === 'initial') return NextResponse.json({ error: 'Your Initial Pack is already owned. Choose the upgrade.' }, { status: 409 })
     const kind = legacyId || initialId ? 'legacy_upgrade' : body?.bundle === 'initial' ? 'initial' : 'standard'
     const offerConfigError = initiationConfigurationError(kind)
@@ -105,18 +121,16 @@ export async function createInitiationCheckout(request: Request, origin: string,
     const attribution = captureInitiationMetaAttribution(request.headers, name => cookieStore.get(name)?.value, origin)
     // Preserve the first checkout's browser attribution across retries and races.
     // Saving before Stripe creation also covers a webhook winning session binding.
-    const { error: attributionError } = await admin.from('initiation_orders').update({ meta_attribution: attribution })
-      .eq('id', order.id).eq('status', 'pending').is('stripe_session_id', null).eq('meta_attribution', '{}')
-    if (attributionError) throw attributionError
-    try {
-      const analyticsContext = sanitizeInitiationAnalytics(body?.analytics)
-      const { data: profile, error: profileError } = profileResult
-      const { error: analyticsError } = await admin.from('initiation_orders').update({ analytics_context: {
+    const analyticsContext = sanitizeInitiationAnalytics(body?.analytics)
+    const { data: profile, error: profileError } = profileResult
+    // One conditional UPDATE saves both first-touch contexts atomically before Stripe creation.
+    const { error: attributionError } = await admin.rpc('save_initiation_checkout_attribution', {
+      p_order: order.id, p_user: user.id, p_meta: attribution, p_analytics: {
         ...analyticsContext, is_internal_qa: analyticsContext.is_internal_qa === true || profile?.role === 'architect' || !!profileError || !profile,
         environment: process.env.VERCEL_ENV ?? 'unknown', checkout_path: checkoutPath,
-      } }).eq('id', order.id).is('stripe_session_id', null).eq('analytics_context', '{}')
-      if (analyticsError) throw analyticsError
-    } catch { console.warn('[initiation-analytics] Attribution could not be saved; unknown environment remains excluded') }
+      },
+    })
+    if (attributionError) throw attributionError
     mark('attribution')
     const sourceQuery = order.device_source ? `&from=${encodeURIComponent(order.device_source)}` : ''
     const session = await stripe.checkout.sessions.create({

@@ -11,8 +11,8 @@ export async function POST(request: Request) {
   const origin = new URL(process.env.NEXT_PUBLIC_SITE_URL!).origin
   if (request.headers.get('origin') !== origin) return NextResponse.json({ error: 'Invalid checkout origin.' }, { status: 403 })
   const client = await createClient()
-  const { data: { user } } = await client.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Please log in before checkout.' }, { status: 401 })
+  const { data: { user }, error } = await client.auth.getUser()
+  if (error || !user) return NextResponse.json({ error: 'Please log in before checkout.' }, { status: 401 })
   const body = await request.json().catch(() => null)
   return createInitiationCheckout(request, origin, { id: user.id, email: user.email }, body, 'signed_in')
 }
