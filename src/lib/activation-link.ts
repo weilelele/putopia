@@ -44,28 +44,33 @@ const escapeHtml = (value: string) => value.replace(/[&<>"']/g, ch => ({ '&': '&
 /** The activation email. Initiation buyers read why their checkout needs it. */
 export function activationEmail(link: string, purpose: ActivationPurpose) {
   const intro = purpose === 'initiation'
-    ? 'Your Voyager Initiation checkout is linked to this email. Set your password to activate your account, then view your membership and delivery records in Initiation.'
-    : 'Set your password to activate your Multiverse Collective account.'
-  const footer = 'This link works for 24 hours, until your password is set. If you did not request this, you can ignore this email.'
+    ? 'Your Voyager Initiation checkout is linked to this email. Set your access code to activate your account, then view your membership and delivery records in Initiation.'
+    : 'Set your access code to activate your account. Then continue exploring the Collective and the Multiverse Console.'
+  const subject = 'Welcome to Multiverse Collective'
+  const recoveryLink = new URL('/auth/expired', link).href
+  const logoUrl = new URL('/assets/vi-wordmark.png', link).href
+  const footer = 'If you didn’t request this email, you can ignore it.'
   const href = escapeHtml(link)
   return {
-    subject: 'Activate your Multiverse Collective account',
-    text: [intro, '', `Activate your account: ${link}`, '', footer].join('\n'),
+    subject,
+    text: [subject + '.', '', intro, '', `ACTIVATE ACCOUNT: ${link}`, '', 'Valid for 24 hours.', `Get a new link: ${recoveryLink}`, '', footer].join('\n'),
     html: `<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Activate your account</title></head>
-<body style="margin:0;padding:0;background-color:#0A0E27;font-family:'Courier New',Courier,monospace;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0A0E27;"><tr><td align="center" style="padding:48px 16px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
-      <tr><td align="center" style="padding-bottom:32px;font-size:12px;font-weight:700;letter-spacing:0.3em;color:#FF6B35;">MULTIVERSE COLLECTIVE</td></tr>
-      <tr><td style="background-color:#0D1020;padding:40px 32px;">
-        <h1 style="margin:0 0 16px 0;font-size:20px;font-weight:700;color:#F5F5F5;line-height:1.3;">Activate your account</h1>
-        <p style="margin:0 0 32px 0;font-size:16px;color:#F5F5F5;line-height:1.5;">${escapeHtml(intro)}</p>
-        <table cellpadding="0" cellspacing="0" border="0"><tr><td style="background-color:#FF6B35;">
-          <a href="${href}" style="display:inline-block;padding:14px 32px;font-size:14px;font-weight:700;letter-spacing:0.12em;color:#0A0E27;text-decoration:none;">ACTIVATE ACCOUNT</a>
-        </td></tr></table>
-        <p style="margin:24px 0 0 0;font-size:12px;color:#8A93A8;line-height:1.6;">If the button does not work, paste this URL into your browser:<br /><a href="${href}" style="color:#FF6B35;word-break:break-all;">${href}</a></p>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${subject}</title></head>
+<body style="margin:0;background:#080C20;color:#F5F5F5;font-family:'Courier Prime','Courier New',Courier,monospace;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Set your access code and continue exploring.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#080C20;"><tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+      <tr><td style="padding:0 8px 28px;"><img src="${escapeHtml(logoUrl)}" width="180" alt="Multiverse Collective" style="display:block;width:180px;max-width:100%;height:auto;border:0;"></td></tr>
+      <tr><td style="background:#10162D;padding:28px 24px;">
+        <h1 style="font-size:24px;line-height:1.25;font-weight:700;margin:0 0 20px;">Welcome to<br>Multiverse Collective.</h1>
+        <p style="font-size:16px;line-height:1.5;margin:0 0 24px;">${escapeHtml(intro)}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" bgcolor="#E35205"><a href="${href}" style="display:block;padding:16px 12px;color:#10162D;font-size:16px;line-height:1.4;font-weight:700;text-decoration:none;">ACTIVATE ACCOUNT</a></td></tr></table>
+        <p style="font-size:13px;line-height:1.5;color:rgba(245,245,245,0.7);margin:16px 0 0;">Valid for 24 hours. <a href="${escapeHtml(recoveryLink)}" style="color:#F2783E;text-decoration:underline;">Get a new link</a>.</p>
       </td></tr>
-      <tr><td style="padding-top:24px;font-size:12px;color:#8A93A8;text-align:center;line-height:1.6;">${escapeHtml(footer)}</td></tr>
+      <tr><td style="padding:24px 8px 0;font-size:12px;line-height:1.5;color:rgba(245,245,245,0.7);">
+        <p style="margin:0 0 12px;">Button not working? <a href="${href}" style="color:#F2783E;text-decoration:underline;">Open this link</a>.</p>
+        <p style="margin:0;">${escapeHtml(footer)}</p>
+      </td></tr>
     </table>
   </td></tr></table>
 </body></html>`,
