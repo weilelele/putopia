@@ -55,3 +55,9 @@ Browser access restored. Requested mobile prototype flows verified at 390×844 a
 Formal Feed, Members and Logs integration is implemented. [Release QA](docs/design/voyager-feed-release/design-qa.md) distinguishes passed UI/isolated SQL checks from pending live activation. Full build, TypeScript, 621 tests and 24 isolated SQL assertions pass. The v97 migration has not been applied to the shared production database; live Feed verification remains blocked until that step. No deployment performed.
 
 final result: blocked (live Feed activation only)
+
+## Dashboard initiation entry — 2026-10-27
+
+Latest scoped report: [Dashboard identity card QA](docs/design/dashboard-initiation-20261027/design-qa.md). Selected orange-entry reference, original role/product copy, and equal 20° diagonal joins are implemented in the shared homepage component. Browser checks used local Applicant fixture data at 390×844, 320×844 and desktop 1440×1000. Initial narrow-label wrapping and desktop narrow-container issues were fixed and recaptured. The scoped report contains the combined reference/render comparison, typography/spacing/color/assets/copy checks, interaction evidence, and validation limits. Design checks, TypeScript, lint (0 errors), 826 tests and final production build passed. No deployment or production data changes.
+
+final result: passed
