@@ -1,0 +1,224 @@
+.header.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 32px;
+}
+
+.header > :first-child {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.board {
+  /* Both joins use this transform so their angle stays equal at any row height. */
+  --divider-skew: -20deg;
+  container-type: inline-size;
+  flex: 1.2 1 340px;
+  min-width: 0;
+  background: var(--bg-panel);
+}
+
+.identity {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  border-bottom: 1px solid var(--bd-faint);
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  color: var(--color-nucleus);
+  font-size: var(--fs-caption);
+}
+
+.avatar img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+}
+
+.name {
+  min-width: 0;
+  color: var(--color-star);
+  font-size: var(--fs-body);
+  overflow-wrap: anywhere;
+}
+
+.board .initiation,
+.board .initiation:hover,
+.board .initiation:focus-visible {
+  position: relative;
+  min-width: 0;
+  min-height: 88px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 12px 16px 36px;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-deep);
+  background: transparent;
+  text-align: left;
+  text-decoration: none;
+  transform: none;
+}
+
+/* Clip only the surface; the link's focus outline remains fully visible. */
+.initiationSurface {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.initiationSurface::before {
+  content: '';
+  position: absolute;
+  inset: 0 -100% 0 0;
+  background: var(--color-nucleus);
+  transform: skewX(var(--divider-skew));
+  transform-origin: left bottom;
+}
+
+.initiationCopy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 6px;
+  line-height: 1.25;
+}
+
+.initiationCopy strong {
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.initiationCopy > span {
+  font-size: var(--fs-compact);
+  font-weight: 700;
+}
+
+.initiation > svg {
+  position: relative;
+  flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+
+.initiation:active > svg {
+  transform: translateX(2px);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+}
+
+.board .dispatch {
+  min-width: 0;
+  min-height: 96px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+  border: 0;
+  color: var(--color-star);
+}
+
+.dispatch > span:first-child {
+  font-size: var(--fs-caption);
+  color: var(--color-nucleus);
+  font-weight: 400;
+  letter-spacing: .06em;
+}
+
+.dispatch > span:last-child {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: var(--fs-label);
+  font-weight: 400;
+}
+
+.dispatch strong {
+  font-size: 40px;
+  color: var(--color-nucleus);
+  line-height: 1;
+  font-weight: 400;
+}
+
+.board .days {
+  position: relative;
+  min-width: 0;
+  gap: 12px;
+  padding: 12px 8px 12px 28px;
+  border: 0;
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  transform: none;
+}
+
+.days::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-left: 1px solid var(--bd-faint);
+  transform: skewX(var(--divider-skew));
+  transform-origin: left bottom;
+  pointer-events: none;
+}
+
+.days > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.days strong {
+  font-size: var(--fs-h3);
+  font-weight: 400;
+}
+
+.days img {
+  width: 40px;
+  height: auto;
+  flex-shrink: 0;
+}
+
+@media (hover: hover) {
+  .initiation:hover > svg {
+    transform: translateX(3px);
+  }
+}
+
+@container (max-width: 300px) {
+  .person { gap: 8px; padding: 12px; }
+  .board .initiation { gap: 6px; padding-left: 28px; padding-right: 8px; }
+  .initiation > svg { width: 16px; height: 16px; }
+  .initiationCopy > span { font-size: var(--fs-caption); }
+  .board .dispatch { padding: 12px; }
+  .board .days { gap: 6px; padding-left: 24px; padding-right: 6px; }
+  .days img { width: 28px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .initiation > svg { transition: none; }
+  .initiation:hover > svg,
+  .initiation:active > svg { transform: none; }
+}
