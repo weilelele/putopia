@@ -2,7 +2,7 @@ import 'server-only'
 import { createHmac } from 'node:crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
-import { activationEmail, createActivationToken, readActivationToken, type ActivationClaims, type ActivationPurpose } from '@/lib/activation-link'
+import { activationEmail, createActivationToken, readActivationToken, verifyActivationToken, type ActivationClaims, type ActivationPurpose } from '@/lib/activation-link'
 
 /** Activation links are signed with a dedicated secret when set, else a key derived from the service-role key. */
 function activationSecret(): string {
@@ -119,7 +119,10 @@ export async function completeActivation(token: unknown, displayName: string, pa
 
 /** Whether an activation link can still set a password, for the page to show the right state up front. */
 export async function activationStatus(token: unknown): Promise<{ status: 'ready' | 'expired' | 'activated'; next: string | null }> {
-  const claims = readActivation(token)
+  // A signed old link can identify an already-activated account, but cannot set credentials.
+  const claims = verifyActivationToken(token, activationSecret())
   if (!claims) return { status: 'expired', next: null }
-  return { status: (await accountState(claims.userId)).activated ? 'activated' : 'ready', next: claims.next }
+  if ((await accountState(claims.userId)).activated) return { status: 'activated', next: null }
+  if (claims.expiresAt <= Date.now()) return { status: 'expired', next: null }
+  return { status: 'ready', next: claims.next }
 }
