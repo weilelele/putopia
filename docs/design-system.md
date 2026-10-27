@@ -371,3 +371,9 @@ Feed 分享入口修订（用户确认）：右下浮动入口使用「＋ Share
 结构：顶部左侧返回/关闭、右侧音乐开关与 Skip；右下角紧凑 NEXT（44px 高）；最后一页隐藏 NEXT，由两个付费选项卡片（与结算区同一组价格与选项）和 Learn more 承担动作。点屏幕左右侧、左右滑动、键盘方向键都可翻页。关闭、Skip 后到最后一页、Learn more 或选择付费项都会在本浏览器记住，之后不再自动弹出；页面 intro 区的「Watch the briefing」可随时重看；直达链接 `/voyager-initiation?briefing=1` 对同一人群直接打开简报（不受已看过记录影响）。成员页只使用公开的 S26 成员头像与昵称，点击打开现有成员资料弹窗；设备地区页使用已发布 Batch 的城市与阶段，未开放地区显示 CLASSIFIED。
 
 背景音乐：简报自带一段原创 96 秒循环配乐（`public/assets/voyager-briefing/briefing-theme.mp3`，由 `scripts/audio/briefing-theme.py` 合成），默认开启。浏览器禁止有声自动播放，所以在简报里第一次点击、滑动或按键时 2 秒淡入；右上角喇叭按钮可静音，选择记在本浏览器（`mc:initiation:briefing-sound`），之后重看也保持静音。用 Web Audio 无缝循环，切到后台时暂停，关闭简报时淡出。这是简报专属例外，其他页面不加背景音乐。
+
+### 激活完成引导 · 2026-10-27
+
+用户确认的局部影像动效例外：`/register/complete` 使用四块现有／扩景 Pack 照片，单一柔边聚光灯在照片内移动并平滑改变半径。Console 停留 4 秒，其他图各 1.82 秒，转场 1.1 秒；不增加 Pause 控件、背景音乐或 UI 光晕。离屏／隐藏页暂停，减少动态时显示静态照片。左下欢迎 Pack 边界最终为 60.45%，右侧保留压缩后的斜切；不留缩图黑条。原始设备与品牌资产不被覆盖。
+
+这是独立注册完成页，不显示全局导航；照片和 EXPLORE INITIATION 都进入现有 `/voyager-initiation?briefing=1` onboarding 简报，BACK TO DASHBOARD 到 `/console`。使用共享按钮、Courier Prime 和现有字号／配色。完整合同、素材来源和验收见 [激活完成引导](design/activation-welcome-20261027/README.md)。

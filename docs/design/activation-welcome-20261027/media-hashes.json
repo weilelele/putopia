@@ -1,0 +1,22 @@
+[
+  {
+    "path": "public/assets/activation-welcome/antenna.webp",
+    "sha256": "a708e558627e1dd676640c1ceae29e9e355df70abf64cf4d56586348fa9f72ea",
+    "bytes": 201670
+  },
+  {
+    "path": "public/assets/activation-welcome/console.webp",
+    "sha256": "37c9c0bf8cdfb1230013f2fa576d2c373c1700c30dc83b4fdf330a3feb57be7b",
+    "bytes": 76366
+  },
+  {
+    "path": "public/assets/activation-welcome/fourth-delivery.webp",
+    "sha256": "6071d79b0db862554625a7314a58d81641fb7d6431c9d01412e0a9afd429730e",
+    "bytes": 234416
+  },
+  {
+    "path": "public/assets/activation-welcome/welcome-pack.webp",
+    "sha256": "e70f56a566399cae437589720d26871c92e27b9e9a1250a6a24612943b605da1",
+    "bytes": 33534
+  }
+]
