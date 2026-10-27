@@ -41,6 +41,10 @@ describe('Voyager Initiation server preflight', () => {
     state.availability.checkoutOpen = true
     expect((await beginVoyagerInitiation()).status).toBe('ready')
   })
+  it.each(['initiated', 'legacy_pack', 'unpaid'] as const)('reports the %s account status for a guest who just signed in', async state => {
+    getSnapshot.mockResolvedValue(fixture(state))
+    expect((await beginVoyagerInitiation()).accountStatus).toBe(state)
+  })
   it('does not treat a failed lookup as completion', async () => {
     getSnapshot.mockRejectedValue(new Error('lookup failed'))
     await expect(beginVoyagerInitiation()).rejects.toThrow('lookup failed')

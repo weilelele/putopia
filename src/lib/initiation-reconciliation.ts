@@ -1,12 +1,16 @@
 import 'server-only'
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/server'
-import { INITIATION_PRODUCT } from '@/lib/initiation-types'
+import { INITIATION_PRODUCT, type InitiationOrderKind } from '@/lib/initiation-types'
 import { initiationCaptureDecision } from '@/lib/initiation-capture-policy'
 import { validateInitiationPayment, verifiedInitiationShipping, type InitiationPaymentEvidence } from '@/lib/initiation-payment'
 import { isInitiationShippingRegion } from '@/lib/initiation-checkout-policy'
 import { sendPendingInitiationMetaPurchases } from '@/lib/initiation-meta-purchases'
 import { sendPendingInitiationAnalytics } from '@/lib/initiation-analytics-outbox'
+import { initiationConfirmationEmail } from '@/lib/initiation-email'
+import { sendTrackedEmail } from '@/lib/tracked-email'
+import { accountState, activationLink } from '@/lib/activation'
+import { INITIATION_ACTIVATION_NEXT } from '@/lib/initiation-email-checkout'
 
 /** Re-fetch Stripe state on every attempt, including retries after an ambiguous capture. */
 export async function reconcileInitiationSession(sessionId: string, stripe: Stripe): Promise<'paid' | 'released' | 'pending'> {
@@ -104,5 +108,24 @@ export async function reconcileInitiationSession(sessionId: string, stripe: Stri
   }
   try { await sendPendingInitiationAnalytics(admin, stripe, { orderId: order.id, limit: 2 }) }
   catch { console.warn('[initiation-analytics] Paid analytics deferred to the outbox retry') }
+  // Only the reconciliation that moved this order to paid sends it; late events for older paid orders do not.
+  if (order.status !== 'paid') {
+    try { await sendInitiationConfirmation(order, session) }
+    catch (error) { console.error('[initiation-email] Confirmation email failed:', error instanceof Error ? error.message : 'unknown') }
+  }
   return 'paid'
+}
+
+/**
+ * The $38 / $488 (or upgrade) confirmation, once per order: email_delivery_log skips a repeat, so later
+ * reconciliations of a paid order never resend it. A buyer who has not set a password gets an activation link in it.
+ */
+async function sendInitiationConfirmation(order: { id: string; user_id: string; order_kind: InitiationOrderKind; amount: number; pricing_version?: string | null }, session: Stripe.Checkout.Session) {
+  const recipient = session.customer_details?.email ?? session.customer_email
+  if (!recipient) throw new Error('Initiation session has no buyer email')
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://multiverseco.org'
+  const activated = (await accountState(order.user_id)).activated
+  const email = initiationConfirmationEmail(siteUrl, order.order_kind, order, activated ? null : activationLink(order.user_id, INITIATION_ACTIVATION_NEXT))
+  const sent = await sendTrackedEmail({ eventKey: `initiation-confirmed:${order.id}`, userId: order.user_id, recipient, category: 'initiation_confirmation', ...email })
+  if (sent.error) throw new Error(sent.error)
 }

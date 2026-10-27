@@ -15,6 +15,7 @@ import { ArchiveButton } from '@/components/archive-button'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 import { DEVICE_REEL } from '@/lib/device-reel'
 import { OnboardingSoundtrack } from '@/components/onboarding-soundtrack'
+import { rememberPostRegisterRedirect } from '@/lib/post-register-redirect'
 
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v3'
@@ -73,8 +74,6 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
   const [submitting, setSubmitting]       = useState(false)
   const [submitError, setSubmitError]     = useState('')
   const [showTransition, setShowTransition] = useState(false)
-  const [showConfirm, setShowConfirm]     = useState(false)
-  const [awaitClick, setAwaitClick]       = useState(false)
   const [pendingEmail, setPendingEmail]   = useState<string | null>(null)
 
   /* ── UTM-driven content variant ──
@@ -86,6 +85,11 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     () => resolveVariant(variants, { utmContent: getFirstTouch().utm_content, override: params.get('variant') }),
     [variants, params],
   )
+
+  /* Remember where a visitor sent here from /login wants to return after /register. */
+  useEffect(() => {
+    try { rememberPostRegisterRedirect(localStorage, params.get('redirect'), window.location.origin, Date.now()) } catch { /* Storage is a convenience only. */ }
+  }, [params])
 
   /* ?preview resets flags; otherwise check registered → console, or pending → inbox screen */
   useEffect(() => {
@@ -211,17 +215,11 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
     if (result.redditConversionId) {
       trackRedditPixelEvent('Lead', result.redditConversionId)
     }
-    // Persist email so returning users skip onboarding and land on the inbox screen
+    // Persist email so returning users skip onboarding and land on the inbox screen,
+    // then show that screen now: it names the address and opens the mailbox.
+    // The Console stays one tap away there instead of an automatic redirect.
     localStorage.setItem('putopia_pending_email', normalizedEmail)
-    setShowConfirm(true)
-    // Enable click-anywhere to trigger scan after all lines have appeared
-    setTimeout(() => setAwaitClick(true), 2400)
-    // Auto-advance into the console after a beat so the user doesn't have to tap
-    // (the click-anywhere overlay still lets the impatient skip ahead).
-    setTimeout(() => {
-      localStorage.setItem('putopia_voyager_registered', '1')
-      window.location.href = '/console'
-    }, 3500)
+    setPendingEmail(normalizedEmail)
   }
 
   /* ── Returning user: already submitted email, hasn't completed /register ── */
@@ -264,18 +262,6 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
         alignItems: 'center', justifyContent: 'center',
       }}
     >
-      {/* Transparent click-capture layer — guaranteed full-screen when awaiting tap */}
-      {awaitClick && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 99998, cursor: 'pointer' }}
-          onClick={() => {
-            setAwaitClick(false)
-            localStorage.setItem('putopia_voyager_registered', '1')
-            window.location.href = '/console'
-          }}
-        />
-      )}
-
       {step !== 'success' ? (
         /* Main content — centered, constrained width, fits in one screen */
         <div className="onboarding-shell" style={{
@@ -321,8 +307,6 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
                   setEmail={setEmail}
                   submitting={submitting}
                   onSubmit={handleSubmit}
-                  showConfirm={showConfirm}
-                  awaitClick={awaitClick}
                   affirmLine1={initStep === 'cta' ? DIRECT_AFFIRM_LINE1 : v.affirmLine1}
                   affirmLine2={initStep === 'cta' ? '' : v.affirmLine2}
                   invitation={initStep === 'cta' ? DIRECT_INVITATION : v.ctaInvitation}
@@ -543,18 +527,15 @@ function WorldCard({ headline, selected, onSelect }: { headline: string; selecte
 /* ─────────────────────────────────────────────────────
    CTA CARD — affirmation first, then form staggered in
 ───────────────────────────────────────────────────── */
-function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClick, affirmLine1, affirmLine2, invitation, ctaLabel, submitError }: {
+function CtaCard({ email, setEmail, submitting, onSubmit, affirmLine1, affirmLine2, invitation, ctaLabel, submitError }: {
   email: string; setEmail: (v: string) => void
   submitting: boolean; onSubmit: (e: React.FormEvent) => void
-  showConfirm: boolean; awaitClick: boolean
   affirmLine1: string; affirmLine2: string; invitation: string; ctaLabel: string
   submitError: string
 }) {
   const [showSecondLine, setShowSecondLine] = useState(false)
   const [showForm, setShowForm]             = useState(false)
-  const [confirmLines, setConfirmLines]     = useState([false, false, false, false, false])
   const inputRef = useRef<HTMLInputElement>(null)
-  const provider = email ? getEmailProvider(email) : null
 
   useEffect(() => {
     const t1 = setTimeout(() => setShowSecondLine(true), 700)
@@ -564,24 +545,6 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
     }, 1500)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
-
-  // Stagger confirm lines in when showConfirm flips true
-  useEffect(() => {
-    if (!showConfirm) return
-    const delays = [0, 550, 1100, 1750, 2100]
-    const timers = delays.map((d, i) =>
-      setTimeout(() => setConfirmLines(prev => {
-        const next = [...prev]; next[i] = true; return next
-      }), d)
-    )
-    return () => timers.forEach(clearTimeout)
-  }, [showConfirm])
-
-  const lineStyle = (visible: boolean): React.CSSProperties => ({
-    opacity:    visible ? 1 : 0,
-    transform:  visible ? 'translateY(0)' : 'translateY(8px)',
-    transition: 'opacity 0.4s ease, transform 0.4s ease',
-  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', position: 'relative' }}>
@@ -669,96 +632,6 @@ function CtaCard({ email, setEmail, submitting, onSubmit, showConfirm, awaitClic
           </ArchiveButton>
 
         </form>
-      </div>
-
-      {/* ── Inbox confirm overlay — slides in over the form ── */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'var(--color-deep-2)',
-        display: 'flex', flexDirection: 'column', gap: '1.1rem',
-        justifyContent: 'center',
-        padding: '0.25rem 0',
-        opacity:    showConfirm ? 1 : 0,
-        pointerEvents: showConfirm ? 'none' : 'none', // click passes through to wrapper
-        transition: 'opacity 0.35s ease',
-      }}>
-        {/* SIGNAL TRANSMITTED. */}
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.42em', color: 'var(--color-nebula)',
-          ...lineStyle(confirmLines[0]),
-        }}>
-          SIGNAL TRANSMITTED.
-        </div>
-
-        {/* Check your email inbox. */}
-        <div style={{
-          fontFamily: 'var(--font-body)', fontWeight: 700,
-          fontSize: 'var(--fs-title)', lineHeight: 1.4, color: 'var(--color-star)',
-          ...lineStyle(confirmLines[1]),
-        }}>
-          Check your email inbox.
-        </div>
-
-        {/* Body */}
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-label)',
-          color: 'rgba(242,240,230,0.55)', lineHeight: 1.75,
-          ...lineStyle(confirmLines[2]),
-        }}>
-          Your key to the Collective<br />has been dispatched.
-        </div>
-
-        {/* Tap hint */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '0.5rem',
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          letterSpacing: '0.18em', color: 'rgba(200,68,6,0.6)',
-          marginTop: '0.5rem',
-          ...lineStyle(confirmLines[3]),
-        }}>
-          <span style={{ width: 18, height: 1, background: 'rgba(200,68,6,0.4)', display: 'inline-block', flexShrink: 0 }} />
-          Tap to enter the inner sanctum.
-          <span style={{
-            display: 'inline-block', width: 7, height: '1em',
-            background: 'var(--color-nebula)', verticalAlign: 'middle',
-            marginLeft: 3, opacity: awaitClick ? 0.7 : 0,
-            animation: awaitClick ? 'cursorBlink 1.1s step-end infinite' : 'none',
-          }} />
-        </div>
-
-        {/* Email provider shortcut */}
-        {provider && (
-          <div style={{ ...lineStyle(confirmLines[4]), pointerEvents: 'auto' }}>
-            <a
-              href={provider.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
-                fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-                letterSpacing: '0.14em', color: 'var(--color-star)',
-                border: '1px solid rgba(242,240,230,0.15)',
-                padding: '0.55rem 1rem',
-                background: 'rgba(242,240,230,0.04)',
-                textDecoration: 'none',
-                transition: 'border-color 0.2s, background 0.2s',
-              }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.borderColor = 'rgba(242,240,230,0.35)'
-                el.style.background  = 'rgba(242,240,230,0.08)'
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.borderColor = 'rgba(242,240,230,0.15)'
-                el.style.background  = 'rgba(242,240,230,0.04)'
-              }}
-            >
-              Open {provider.name} <span style={{ opacity: 0.5 }}>↗</span>
-            </a>
-          </div>
-        )}
       </div>
 
     </div>

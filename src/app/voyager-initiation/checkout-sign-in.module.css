@@ -1,0 +1,6 @@
+.form { display: grid; gap: var(--s-4); }
+.form p { margin: 0; font-size: var(--fs-body); line-height: 1.5; }
+.links { display: flex; flex-wrap: wrap; column-gap: var(--s-4); }
+.switch { justify-self: start; min-height: 44px; padding: 0; background: none; border: 0; color: var(--color-nucleus); font: inherit; font-size: var(--fs-body); text-align: left; cursor: pointer; }
+.switch:disabled { color: var(--color-star-dim); cursor: default; }
+.switch:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 2px; }

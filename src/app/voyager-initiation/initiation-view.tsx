@@ -10,11 +10,12 @@ import SmartImage from '@/components/smart-image'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { MemberStrip } from './member-strip'
 import { ConsoleCarousel } from './console-carousel'
-import type { InitiationPublicMember, InitiationSnapshot } from '@/lib/initiation-types'
+import type { InitiationPublicMember, InitiationSnapshot, InitiationStatus } from '@/lib/initiation-types'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import type { VoyagerQuizServices } from '@/components/voyager-profile-quiz'
 import { PostPaymentCalibration } from './post-payment-calibration'
+import { CheckoutSignIn, type CheckoutSignInServices, type EmailCheckoutStep } from './checkout-sign-in'
 import styles from './initiation.module.css'
 import { INITIATION_FAQ } from './faq'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
@@ -57,7 +58,8 @@ const packs = [
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
 ]
 
-export type InitiationCheckoutResult = { status: 'ready' | 'not_open' | 'unauthenticated'; message: string }
+/** `accountStatus` is the signed-in account's state, so a guest who just signed in can see their own records. */
+export type InitiationCheckoutResult = { status: 'ready' | 'not_open' | 'unauthenticated'; message: string; accountStatus?: InitiationStatus }
 export type InitiationViewProps = {
   initialBundle?: 'initial' | 'standard'
   members?: InitiationPublicMember[]
@@ -66,6 +68,10 @@ export type InitiationViewProps = {
   checkoutCanceled?: boolean
   beginCheckout: () => Promise<InitiationCheckoutResult>
   quizServices?: VoyagerQuizServices
+  /** Sign-in calls for the Pay dialog; fixtures pass fakes so no email or account is created. */
+  signInServices?: CheckoutSignInServices
+  /** Guest email checkout; fixtures pass a fake so no account or payment session is created. */
+  startEmailCheckout?: (email: string, bundle: 'initial' | 'standard', options?: { upgrade?: boolean }) => Promise<EmailCheckoutStep>
   paymentPlacement?: 'top' | 'bottom'
   analyticsEnvironment?: string
   regions?: BriefingRegion[]
@@ -73,7 +79,7 @@ export type InitiationViewProps = {
   briefingParam?: string
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -86,6 +92,11 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const inFlight = useRef(false)
+  // A guest picks a bundle and enters an email: a new email goes straight to payment,
+  // an activated account signs in with its password and then continues with that bundle.
+  const [signInOpen, setSignInOpen] = useState(false)
+  const [signedInHere, setSignedInHere] = useState(false)
+  const pendingBundle = useRef<'initial' | 'standard'>(initialBundle)
   const { availability, status, shipments, consoleClaim } = snapshot
   const initiated = status === 'initiated'
   const granted = status === 'granted'
@@ -109,11 +120,47 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     const chosen = override ?? bundle
     captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
     setError('')
-    if (status === 'guest') { window.location.assign(initiationLoginPath(source, chosen)); return }
+    if (status === 'guest' && !signedInHere) { pendingBundle.current = chosen; setSignInOpen(true); return }
+    await continueToCheckout(chosen)
+  }
+
+  function signedIn() {
+    setSignedInHere(true)
+    setSignInOpen(false)
+    void continueToCheckout(pendingBundle.current, true)
+  }
+
+  async function emailCheckout(email: string, options?: { upgrade?: boolean }): Promise<EmailCheckoutStep> {
+    const chosen = pendingBundle.current
+    if (startEmailCheckout) return startEmailCheckout(email, chosen, options)
+    const unavailable = 'Checkout is unavailable. Please try again.'
+    try {
+      const response = await fetch('/api/initiation-checkout/email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, bundle: chosen, upgrade: options?.upgrade === true, from: source, analytics: analyticsContext() }) })
+      const data = await response.json()
+      if (response.ok && typeof data.url === 'string' && new URL(data.url).protocol === 'https:') {
+        window.location.assign(data.url)
+        return { kind: 'redirected' }
+      }
+      if (response.ok && ['password', 'activation_sent', 'already_member', 'upgrade'].includes(data.next)) return { kind: data.next }
+      if (response.ok && data.next === 'checkout') { signedIn(); return { kind: 'redirected' } }
+      return { kind: 'error', message: typeof data.error === 'string' ? data.error : unavailable }
+    } catch {
+      return { kind: 'error', message: unavailable }
+    }
+  }
+
+  async function continueToCheckout(chosen: 'initial' | 'standard', afterSignIn = false) {
+    if (inFlight.current) return
     inFlight.current = true
     setBusy(true)
     try {
       const result = await beginCheckout()
+      // This page was rendered for a guest. A member (or an Initial Pack owner, who can only add the
+      // $460 upgrade) sees their own records and options after a reload instead of an error.
+      if (afterSignIn && result.accountStatus && result.accountStatus !== 'unpaid') {
+        window.location.reload()
+        return
+      }
       if (result.status === 'unauthenticated') {
         window.location.assign(initiationLoginPath(source, chosen))
       } else if (result.status === 'ready') {
@@ -299,6 +346,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       seats={{ batch: availability.batch, capacity: availability.capacity, initiated: availability.initiated }} offers={briefingOffers(status)}
       busy={busy} unavailable={briefingUnavailable} capture={captureAnalytics} onChoose={chooseFromBriefing} onClose={closeBriefing} />}
     {quizServices && <PostPaymentCalibration snapshot={snapshot} quizServices={quizServices} autoInvite onAnalytics={captureAnalytics} />}
+    <CheckoutSignIn open={signInOpen} onClose={() => setSignInOpen(false)} onSignedIn={signedIn} onEmail={emailCheckout} capture={captureAnalytics} services={signInServices} />
     <ArchiveSheet open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">
       <p>All Initial Pack members, including historical $12 buyers, can add Console + Pack 4 for $460.</p>
       <p>Your first two packs remain separate. The upgrade is a fixed additional payment, not a subtraction of your earlier payment.</p>
