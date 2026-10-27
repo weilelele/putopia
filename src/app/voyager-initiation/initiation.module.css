@@ -8,7 +8,6 @@
 .become { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; min-height: 60px; padding: 16px; font-size: var(--fs-label); letter-spacing: 0; }
 .price { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .delivery { margin-top: 32px; }
-.delivery h2 { margin: 0 0 12px; font-size: var(--fs-label); color: var(--color-nucleus); text-transform: uppercase; }
 .delivery p { margin: 0 0 8px; font-size: var(--fs-body); line-height: 1.5; }
 .delivery .textLink { font-size: var(--fs-label); }
 .seats { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin: 0 0 20px; }

@@ -263,7 +263,6 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           {error && <p ref={checkoutErrorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
-            <h2>Delivery</h2>
             <p>Contiguous US. Shipping &amp; taxes included.</p>
             <Link className={styles.textLink} href="/terms/initiation">Delivery &amp; aftercare <ArrowRight size={18} aria-hidden /></Link>
           </section>
