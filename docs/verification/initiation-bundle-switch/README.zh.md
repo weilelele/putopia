@@ -37,4 +37,27 @@
 
 ![桌面：$488 选择与错误反馈](desktop-error.png)
 
-未创建、取消或支付任何生产订单，未修改生产配置；无需数据库迁移。真实 Stripe 跳转尚待在隔离支付环境或正式发布后验收，当前证据为纯逻辑回归测试和无支付副作用的浏览器用例。
+未创建、取消或支付任何生产订单，未修改生产配置；无需数据库迁移。
+
+## 真实 Stripe 跳转验收 · 2026-10-27
+
+按用户要求，在合并前完成隔离环境验收。QA 部署为 `dpl_DDLyfd2j3FLLUEYfTsQ3AQ6eSgLX`，部署源是 `35b61dbb1626686248f30bc5bd0f23812bdc2c9e` 的 tracked 文件快照；三个修改的业务源文件与 PR 逐字节相同。部署配置仅替换为既有 QA 凭据，关闭 crons、邮件发送、浏览器广告像素和 Meta 回传。没有修改正式项目的环境变量。
+
+使用独立 Stripe 沙盒 `acct_1UTxRiAPEEV0NYJ8` 和独立 Supabase 分支 `gqcgdmmmmfbatdneacny`。手机视口为 390×844，同一虚构测试账号贯穿以下场景：
+
+| 场景 | 入口与结果 |
+| --- | --- |
+| 首次 $488 | 实际页面按钮 → 邮箱弹窗 → `/api/initiation-checkout/email` → Stripe，显示 **US$488.00** |
+| $488 → $38 | 返回页面改选 Initial，再提交同一邮箱 → Stripe，显示 **US$38.00**；旧 $488 Session 为 expired、旧订单 canceled |
+| 同方案重试 | 测试账号激活后，以其真实认证 Cookie 调用 `/api/initiation-checkout`，选择 Initial；HTTP 200，返回同一个 $38 Session，无新订单 |
+| 登录后 $38 → $488 | 实际页面按钮 → 邮箱与密码登录 → 认证结账接口 → Stripe，显示 **US$488.00**；旧 $38 Session 为 expired、旧订单 canceled |
+
+三次浏览器导航均实际到达 `checkout.stripe.com`。Stripe API 确认三笔 Session 全部 `livemode=false / payment_status=unpaid`，无 PaymentIntent、无 paid_at；未填写银行卡或提交支付，也未接受付款条款。机器回执见 [stripe-verification.json](stripe-verification.json)。
+
+![首次 $488 真实 Stripe 页面](stripe-488.png)
+
+![$488 切换到 $38 后的真实 Stripe 页面](stripe-38.png)
+
+![登录后切回 $488 的真实 Stripe 页面](stripe-488-return.png)
+
+验证完成后，三笔测试 Session 全部 expired，测试订单全部 canceled；记录保留。QA 批次恢复 `checkout_open=false / stripe_livemode=false`，QA Vercel 项目恢复暂停，Stripe webhook 始终 disabled。QA 数据库未暂停、未重置、未改变分支持久性。正式业务库及正式 Stripe 未参与测试。此验收覆盖真实托管页跳转与方案切换，不声称完成扣款或支付 webhook 验收。
