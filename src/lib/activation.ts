@@ -59,6 +59,11 @@ export async function findAccount(email: string): Promise<Account | null> {
 export async function findOrCreateAccount(email: string, signupSource: string): Promise<Account & { created: boolean }> {
   const existing = await findAccount(email)
   if (existing) return { ...existing, created: false }
+  return createUnactivatedAccount(email, signupSource)
+}
+
+/** Call after a lookup found no account; a concurrent signup is still recovered below. */
+export async function createUnactivatedAccount(email: string, signupSource: string): Promise<Account & { created: boolean }> {
   const { data, error } = await createAdminClient().auth.admin.createUser({ email, email_confirm: false, app_metadata: { signup_source: signupSource } })
   if (error) {
     // Lost a race with another request for the same email.
@@ -79,8 +84,8 @@ export function activationLink(userId: string, next?: string | null): string {
   return link.href
 }
 
-export async function sendActivationEmail(input: { userId: string; email: string; purpose: ActivationPurpose; next?: string | null }): Promise<{ error: string | null }> {
-  return sendEmail({ to: input.email, ...activationEmail(activationLink(input.userId, input.next), input.purpose) })
+export async function sendActivationEmail(input: { userId: string; email: string; purpose: ActivationPurpose; next?: string | null; timeoutMs?: number }): Promise<{ error: string | null }> {
+  return sendEmail({ to: input.email, timeoutMs: input.timeoutMs, ...activationEmail(activationLink(input.userId, input.next), input.purpose) })
 }
 
 export type ActivationResult = { ok: true; email: string; next: string | null } | { ok: false; reason: 'expired' | 'activated' | 'invalid' | 'failed'; message: string }

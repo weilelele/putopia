@@ -7,6 +7,48 @@ import { initiationConfigurationError } from '@/lib/initiation-config'
 import { INITIATION_BATCH, INITIATION_CAPACITY, INITIAL_PACK_AMOUNT, INITIATION_UPGRADE_AMOUNT, type InitiationSnapshot, type InitiationPaymentStatus, type InitiationShipment, type InitiationConsoleClaimResult } from '@/lib/initiation-types'
 import { VOYAGER_PROFILE_VERSION } from '@/lib/voyager-intake'
 
+export type InitiationCheckoutSnapshot = Pick<InitiationSnapshot, 'userId' | 'status' | 'error'> & {
+  availability: Pick<InitiationSnapshot['availability'], 'checkoutOpen' | 'reason'>
+}
+
+/** Checkout preflight needs access and supply only, not shipment history, calibration, roles or device details. */
+export async function getInitiationCheckoutSnapshot(): Promise<InitiationCheckoutSnapshot> {
+  const result: InitiationCheckoutSnapshot = { userId: null, status: 'unknown', error: null, availability: { checkoutOpen: false, reason: null } }
+  try {
+    const client = await createClient()
+    const { data: { user }, error: authError } = await client.auth.getUser()
+    if (authError && authError.name !== 'AuthSessionMissingError') throw authError
+    if (!user) return { ...result, status: 'guest' }
+    result.userId = user.id
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = createAdminClient() as any
+    const records = await Promise.all([
+      admin.rpc('initiation_availability'),
+      admin.from('initiation_entitlements').select('active').eq('user_id', user.id).maybeSingle(),
+      admin.from('initiation_members').select('source,active,batch').eq('user_id', user.id).maybeSingle(),
+      admin.rpc('eligible_initial_initiation_order', { p_user: user.id }),
+      admin.rpc('eligible_legacy_initiation_order', { p_user: user.id }),
+    ])
+    if (records.some(record => record.error)) throw new Error('Checkout records are unavailable')
+    const [rawSupply, entitlement, member, initialId, legacyId] = records.map(record => record.data)
+    const supply = parseInitiationAvailability(rawSupply)
+    if (!supply) throw new Error('Checkout supply is unavailable')
+    const ownsInitial = !!initialId || !!legacyId
+    result.status = initiationMemberStatus(!!entitlement?.active, member, ownsInitial)
+    const configError = initiationConfigurationError(ownsInitial ? 'legacy_upgrade' : 'initial')
+    const hasCapacity = supply.remaining > 0 || (ownsInitial && member?.batch === INITIATION_BATCH)
+    result.availability = {
+      checkoutOpen: supply.open && hasCapacity && !configError && !entitlement && result.status !== 'granted' && result.status !== 'unknown',
+      reason: !supply.open ? 'Initiation checkout is not open yet.' : !hasCapacity ? 'All S26 seats are currently allocated or reserved.'
+        : entitlement && !entitlement.active ? 'Your earlier Console payment needs review. Please contact support before another upgrade.' : configError,
+    }
+    return result
+  } catch {
+    return { ...result, status: 'unknown', error: 'Your membership records are unavailable. Please try again.',
+      availability: { checkoutOpen: false, reason: 'Checkout records are unavailable.' } }
+  }
+}
+
 /** No caller-supplied user ID. Failures are unknown, never unpaid or zero seats. */
 export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
   const snapshot: InitiationSnapshot = {
