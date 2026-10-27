@@ -12,6 +12,7 @@ import { INITIATION_PRODUCT } from '@/lib/initiation-types'
 import { captureInitiationMetaAttribution } from '@/lib/initiation-meta-attribution'
 import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
 import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
+import { prepareInitiationBundleSwitch } from '@/lib/initiation-checkout-switch'
 
 /** How the buyer reached checkout: signed in, or an email-only account created by the email checkout. */
 export type InitiationCheckoutPath = 'signed_in' | 'email_first'
@@ -45,6 +46,22 @@ export async function createInitiationCheckout(request: Request, origin: string,
     if (price.livemode !== batch.stripe_livemode || !price.active || price.type !== 'one_time' || price.unit_amount !== amount || price.currency !== 'usd' || price.product !== productId || price.tax_behavior !== 'inclusive') {
       return NextResponse.json({ error: 'The dedicated Initiation price is not ready.' }, { status: 503 })
     }
+    const { data: previousOrder, error: previousError } = await admin.from('initiation_orders').select('*')
+      .eq('user_id', user.id).in('status', ['pending', 'payment_review', 'disputed']).maybeSingle()
+    if (previousError) throw previousError
+    const canSwitch = await prepareInitiationBundleSwitch(previousOrder, kind, {
+      retrieveSession: id => stripe.checkout.sessions.retrieve(id),
+      expireSession: id => stripe.checkout.sessions.expire(id),
+      retrieveIntent: id => stripe.paymentIntents.retrieve(id),
+      cancelOrder: async previous => {
+        const { data, error: cancelError } = await admin.from('initiation_orders').update({ status: 'canceled' })
+          .eq('id', previous.id).eq('user_id', user.id).eq('status', 'pending')
+          .eq('stripe_session_id', previous.stripe_session_id).is('paid_at', null).is('stripe_payment_intent', null).select('id')
+        if (cancelError) throw cancelError
+        return data.length === 1
+      },
+    })
+    if (!canSwitch) return NextResponse.json({ error: 'Your previous checkout is still being confirmed. Please retry your original bundle or refresh to check payment status before switching.' }, { status: 409 })
     const { data: order, error } = await admin.rpc('reserve_initiation_v2', { p_user: user.id, p_price: priceId, p_product: productId, p_kind: kind, p_device_source: deviceSource })
     if (error || !order) return NextResponse.json({ error: 'Checkout is unavailable. Check existing orders and seat availability on Initiation.' }, { status: 409 })
     if (order.amount !== amount || order.pricing_version !== INITIATION_PRICING_VERSION) throw new Error('Reserved quote does not match the current bundle')

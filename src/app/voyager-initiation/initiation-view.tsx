@@ -90,6 +90,12 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const [bundle, setBundle] = useState<'initial' | 'standard'>(initialBundle)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const checkoutErrorRef = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    if (!error) return
+    checkoutErrorRef.current?.focus({ preventScroll: true })
+    checkoutErrorRef.current?.scrollIntoView({ block: 'center' })
+  }, [error])
   const inFlight = useRef(false)
   // A guest picks a bundle and enters an email: a new email goes straight to payment,
   // an activated account signs in with its password and then continues with that bundle.
@@ -242,6 +248,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : soldOut ? 'FULLY CLAIMED' : `${legacy ? 'UPGRADE' : 'CONTINUE'} · ${initiationPriceLabel(kind)}`}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
+          {error && <p ref={checkoutErrorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
             <h2>Delivery</h2>
@@ -250,7 +257,6 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           </section>
           {!availability.checkoutOpen && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
           </>}
-          {error && <p className={styles.error} role="alert">{error}</p>}
         </div>
   )
 

@@ -1,0 +1,138 @@
+{
+  "date": "2026-10-27",
+  "commit": "35b61dbb1626686248f30bc5bd0f23812bdc2c9e",
+  "deploymentId": "dpl_DDLyfd2j3FLLUEYfTsQ3AQ6eSgLX",
+  "stripeAccount": "acct_1UTxRiAPEEV0NYJ8",
+  "supabaseProject": "gqcgdmmmmfbatdneacny",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "sameBundleRetry": {
+    "httpStatus": 200,
+    "path": "signed_in",
+    "sameSessionId": "cs_test_a1K84ZNgPTBPj1xFT5POoeEgUluXEF7qujiToLb69CelzuET2Sgj5Psgu0",
+    "passed": true
+  },
+  "observations": [
+    {
+      "at": "2026-10-27T05:19:45.534Z",
+      "operation": "status",
+      "orders": [
+        {
+          "orderId": "25f9a3ff-6a88-40bc-8121-a6d9f1ba01cf",
+          "kind": "standard",
+          "amount": 48800,
+          "dbStatus": "canceled",
+          "sessionId": "cs_test_a1Ph7upJBzwPEVOQWR5rjYmZLS0hXCvbDC26kkAX9lLuorMB1lJQtv5elS",
+          "stripeStatus": "expired",
+          "paymentStatus": "unpaid",
+          "livemode": false
+        },
+        {
+          "orderId": "663c5f35-9cd2-4f4c-bb60-dee15de3f945",
+          "kind": "initial",
+          "amount": 3800,
+          "dbStatus": "pending",
+          "sessionId": "cs_test_a1K84ZNgPTBPj1xFT5POoeEgUluXEF7qujiToLb69CelzuET2Sgj5Psgu0",
+          "stripeStatus": "open",
+          "paymentStatus": "unpaid",
+          "livemode": false
+        }
+      ]
+    },
+    {
+      "at": "2026-10-27T05:21:13.326Z",
+      "operation": "status",
+      "orders": [
+        {
+          "orderId": "25f9a3ff-6a88-40bc-8121-a6d9f1ba01cf",
+          "kind": "standard",
+          "amount": 48800,
+          "dbStatus": "canceled",
+          "sessionId": "cs_test_a1Ph7upJBzwPEVOQWR5rjYmZLS0hXCvbDC26kkAX9lLuorMB1lJQtv5elS",
+          "stripeStatus": "expired",
+          "paymentStatus": "unpaid",
+          "livemode": false
+        },
+        {
+          "orderId": "663c5f35-9cd2-4f4c-bb60-dee15de3f945",
+          "kind": "initial",
+          "amount": 3800,
+          "dbStatus": "canceled",
+          "sessionId": "cs_test_a1K84ZNgPTBPj1xFT5POoeEgUluXEF7qujiToLb69CelzuET2Sgj5Psgu0",
+          "stripeStatus": "expired",
+          "paymentStatus": "unpaid",
+          "livemode": false
+        },
+        {
+          "orderId": "2b8184a7-9c38-4e96-94a8-9e35c07db3ac",
+          "kind": "standard",
+          "amount": 48800,
+          "dbStatus": "pending",
+          "sessionId": "cs_test_a1oc9V3Y7fsvr8t3Wuw0U4m4d2Germ9XjaNsIrCloACbsBEOrl6602Er7p",
+          "stripeStatus": "open",
+          "paymentStatus": "unpaid",
+          "livemode": false
+        }
+      ]
+    },
+    {
+      "at": "2026-10-27T05:21:14.532Z",
+      "operation": "cleanup",
+      "orders": [
+        {
+          "orderId": "25f9a3ff-6a88-40bc-8121-a6d9f1ba01cf",
+          "kind": "standard",
+          "amount": 48800,
+          "dbStatus": "canceled",
+          "sessionId": "cs_test_a1Ph7upJBzwPEVOQWR5rjYmZLS0hXCvbDC26kkAX9lLuorMB1lJQtv5elS",
+          "stripeStatus": "expired",
+          "paymentStatus": "unpaid",
+          "livemode": false
+        },
+        {
+          "orderId": "663c5f35-9cd2-4f4c-bb60-dee15de3f945",
+          "kind": "initial",
+          "amount": 3800,
+          "dbStatus": "canceled",
+          "sessionId": "cs_test_a1K84ZNgPTBPj1xFT5POoeEgUluXEF7qujiToLb69CelzuET2Sgj5Psgu0",
+          "stripeStatus": "expired",
+          "paymentStatus": "unpaid",
+          "livemode": false
+        },
+        {
+          "orderId": "2b8184a7-9c38-4e96-94a8-9e35c07db3ac",
+          "kind": "standard",
+          "amount": 48800,
+          "dbStatus": "canceled",
+          "sessionId": "cs_test_a1oc9V3Y7fsvr8t3Wuw0U4m4d2Germ9XjaNsIrCloACbsBEOrl6602Er7p",
+          "stripeStatus": "expired",
+          "paymentStatus": "unpaid",
+          "livemode": false
+        }
+      ]
+    }
+  ],
+  "browserChecks": [
+    {
+      "flow": "guest_standard",
+      "amount": 48800
+    },
+    {
+      "flow": "guest_switch_to_initial",
+      "amount": 3800
+    },
+    {
+      "flow": "signed_in_switch_to_standard",
+      "amount": 48800
+    }
+  ],
+  "cleanup": {
+    "checkoutOpen": false,
+    "stripeLivemode": false,
+    "qaProjectPaused": true,
+    "webhookEnabled": false,
+    "productionDataChanged": false
+  }
+}
