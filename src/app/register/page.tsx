@@ -12,7 +12,7 @@ import { syncLoopsRegistration } from '@/lib/actions/profile'
 import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import { trackRedditSignUp } from '@/lib/actions/reddit-ads'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
-import { safeAppPath } from '@/lib/ui-navigation'
+import { registrationLandingPath } from '@/lib/registration-landing'
 import { takePostRegisterRedirect } from '@/lib/post-register-redirect'
 import { activateAccount, checkActivationLink } from '@/lib/actions/activation'
 
@@ -163,9 +163,9 @@ export default function RegisterPage() {
     const requested = activatedNext ?? new URLSearchParams(window.location.search).get('redirect')
     let remembered: string | null = null
     try { remembered = takePostRegisterRedirect(localStorage, window.location.origin, Date.now()) } catch { /* Storage is a convenience only. */ }
-    const destination = safeAppPath(requested, window.location.origin) ?? remembered ?? '/console'
+    const destination = registrationLandingPath(requested, window.location.origin, remembered)
     // Full load: the client router cache can still hold the pre-registration redirect back to /register.
-    window.location.assign(destination === '/login' || destination === '/register' ? '/console' : destination)
+    window.location.assign(destination)
   }
 
   if (checking) {
