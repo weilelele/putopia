@@ -8,7 +8,7 @@
   color: var(--color-star);
   font-family: var(--font-mono);
 }
-.welcome { width: min(100%, 560px); margin: auto; padding: 24px 16px max(24px, env(safe-area-inset-bottom)); }
+.welcome { width: min(100%, 560px); margin: auto; padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)); }
 .intro { margin-bottom: 24px; }
 .status { margin: 0; padding-left: 16px; border-left: 2px solid var(--color-nucleus); color: var(--color-nucleus); font-size: var(--fs-label); letter-spacing: .04em; }
 .heading { margin: 24px 0 16px; font-size: var(--fs-h2); font-weight: 700; line-height: 1.1; letter-spacing: 0; }
