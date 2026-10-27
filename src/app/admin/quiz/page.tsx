@@ -18,7 +18,7 @@ const S = {
   label:  { display: 'block', color: 'rgba(245,245,245,0.35)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', marginBottom: '4px' } as const,
   input:  { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' as const },
   area:   { width: '100%', background: '#0F1430', border: '1px solid rgba(227,82,5,0.16)', color: '#F5F5F5', padding: '7px 10px', fontFamily: 'var(--font-mono)', fontSize: '13px', outline: 'none', resize: 'vertical' as const, boxSizing: 'border-box' as const, minHeight: 72 },
-  btn:    { padding: '6px 14px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
+  btn:    { padding: '6px 14px', letterSpacing: '0.1em', cursor: 'pointer', border: 'none' },
   btnOk:  { background: '#E35205', color: '#070912' },
   btnGhost: { background: 'transparent', border: '1px solid rgba(227,82,5,0.3)', color: 'rgba(245,245,245,0.55)' },
   btnDanger: { background: 'transparent', border: '1px solid rgba(232,48,48,0.4)', color: '#E83030' },

@@ -804,7 +804,10 @@ select {
   min-height: 56px;
   justify-content: center;
   touch-action: manipulation;
-  font-size: var(--fs-label);
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: 1.5;
   position: relative;
   border-radius: 0;
   clip-path: polygon(0 0, calc(100% - var(--archive-notch)) 0, 100% var(--archive-notch), 100% 100%, 0 100%);
@@ -1666,12 +1669,13 @@ input[type='radio'] {
 /* Canonical Style A primitives. Legacy .btn-* and .hud-* remain during migration. */
 .archive-button {
   min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 10px 16px; border: 1px solid transparent; border-radius: 2px; font-family: var(--font-mono);
-  font-size: var(--fs-label); font-weight: 700; letter-spacing: 0; text-align: center; text-decoration: none;
+  padding: 10px 16px; border: 1px solid transparent; border-radius: 2px;
+  text-align: center; text-decoration: none;
   touch-action: manipulation; cursor: pointer; white-space: normal; transition: transform 120ms ease, border-color 120ms ease;
 }
 
-.archive-button.archive-button { font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0; border-radius: var(--radius); }
+/* Button and navigation-link variants share label typography. */
+.archive-button.archive-button { font-family: var(--font-mono); font-size: var(--fs-body); font-weight: 400; line-height: 1.5; letter-spacing: 0; border-radius: var(--radius); }
 
 .archive-button--full {
   width: 100%;
@@ -4059,7 +4063,6 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 @media (max-width: 359px) { .event-card { flex-basis: 82%; } }
 @media (min-width: 768px) { .event-card { flex-basis: 340px; } .intel-lead h2 { max-width: 720px; } }
 
-.archive-button.archive-button--primary { font-size: var(--fs-body); font-weight: 400; }
 .intel-publish-action { width: 100%; margin: 24px 0; }
 .archive-root-actions .archive-button--ghost { color: var(--color-star-dim); }
 .archive-root-actions .archive-button--ghost:hover { color: var(--color-nucleus); }
@@ -4429,7 +4432,7 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
 .world-row__actions { padding: 12px; border-top: 1px solid var(--bd-faint); cursor: auto; }
 /* Report actions share one row at equal weight; the lead action takes its own full-width row. */
 .world-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.world-actions .archive-button { width: 100%; min-width: 0; padding-inline: 8px; white-space: normal; text-align: center; line-height: 1.25; font-size: var(--fs-label); }
+.world-actions .archive-button { width: 100%; min-width: 0; padding-inline: 8px; white-space: normal; text-align: center; }
 .world-actions__lead { grid-column: 1 / -1; text-decoration: none; }
 @media (min-width: 768px) { .world-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } .world-row--featured { grid-column: 1 / -1; } }
 
