@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <!--
-  Sign-in code for the Initiation checkout dialog (signInWithOtp).
-  Paste into Supabase Dashboard → Authentication → Email Templates for BOTH
-  "Magic Link" (existing accounts) and "Confirm signup" (new accounts).
+  Sign-in code, used only when an architect sends a sign-in request from the
+  Supabase Dashboard. The site itself never sends codes: sign-up and Initiation
+  checkout send our own 24-hour activation link (src/lib/activation.ts).
+  Paste into Supabase Dashboard → Authentication → Email Templates → "Magic Link".
   Subject: Your Multiverse Collective sign-in code
 -->
 <html lang="en">
@@ -29,7 +30,7 @@
                 Your sign-in code
               </h1>
               <p style="margin:0 0 24px 0;font-family:'Courier New',Courier,monospace;font-size:16px;color:#F5F5F5;line-height:1.5;">
-                Enter this code on Multiverse Collective to continue to checkout.
+                Enter this code on Multiverse Collective to sign in.
               </p>
               <p style="margin:0 0 24px 0;font-family:'Courier New',Courier,monospace;font-size:32px;font-weight:700;letter-spacing:0.25em;color:#FF6B35;">
                 {{ .Token }}

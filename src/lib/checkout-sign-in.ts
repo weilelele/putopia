@@ -1,4 +1,4 @@
-// Pure rules for the sign-in dialog on the Initiation Pay button.
+// Pure rules for the email dialog on the Initiation Pay button.
 
 /** Lower-cased email, or null when it is not a plausible address. */
 export function normalizeSignInEmail(raw: unknown): string | null {
@@ -7,25 +7,17 @@ export function normalizeSignInEmail(raw: unknown): string | null {
   return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null
 }
 
-/** Supabase email codes are 6–10 digits (6 by default); spaces and dashes are ignored. */
-export function normalizeEmailCode(raw: string): string | null {
-  const code = raw.replace(/[\s-]/g, '')
-  return /^\d{6,10}$/.test(code) ? code : null
-}
+export type SignInFailure = 'rate_limited' | 'invalid_password' | 'failed'
 
-export type SignInFailure = 'rate_limited' | 'invalid_code' | 'invalid_password' | 'failed'
-
-/** Map a Supabase auth error to what the dialog tells the buyer. */
+/** Map a Supabase password sign-in error to what the dialog tells the buyer. */
 export function signInFailure(error: { code?: string; status?: number; message?: string }): SignInFailure {
-  if (error.code === 'over_email_send_rate_limit' || error.code === 'over_request_rate_limit' || error.status === 429) return 'rate_limited'
-  if (error.code === 'otp_expired' || error.code === 'otp_disabled' || /token has expired|invalid/i.test(error.message ?? '') && error.code !== 'invalid_credentials') return 'invalid_code'
+  if (error.code === 'over_request_rate_limit' || error.status === 429) return 'rate_limited'
   if (error.code === 'invalid_credentials' || error.code === 'email_not_confirmed') return 'invalid_password'
   return 'failed'
 }
 
 export const SIGN_IN_MESSAGES: Record<SignInFailure, string> = {
   rate_limited: 'Too many attempts. Please wait a minute and try again.',
-  invalid_code: 'That code is incorrect or has expired. Check the latest email or send a new code.',
-  invalid_password: 'Email or password is incorrect. You can sign in with an email code instead.',
+  invalid_password: 'That password is incorrect.',
   failed: 'Sign-in is unavailable right now. Please try again.',
 }

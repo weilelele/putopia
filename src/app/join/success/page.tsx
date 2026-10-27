@@ -8,8 +8,11 @@ import { hasConfirmedInitiationPayment } from '@/lib/post-payment-calibration'
 import { PaymentStatusRefresh } from './payment-status-refresh'
 import { needsRegistration } from '@/lib/registration-state'
 export const dynamic = 'force-dynamic'
-export default async function JoinSuccessPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
-  const source = deviceSourcePath((await searchParams).from)
+export default async function JoinSuccessPage({ searchParams }: { searchParams: Promise<{ from?: string; session_id?: string }> }) {
+  const params = await searchParams
+  const source = deviceSourcePath(params.from)
+  // Email checkout returns signed out: the buyer has paid and activates the account from the emailed link.
+  const fromCheckout = typeof params.session_id === 'string' && params.session_id.startsWith('cs_')
   const returnPath = initiationReturnPath(source)
   const snapshot = await getInitiationSnapshot()
   const paid = hasConfirmedInitiationPayment(snapshot)
@@ -18,7 +21,7 @@ export default async function JoinSuccessPage({ searchParams }: { searchParams: 
   return <main className="main join-success-page"><div className="join-success-shell"><ArchiveCard className="join-success-card">
     <ArchivePageHeader title={paid ? 'WELCOME TO S26' : 'PAYMENT STATUS'} accent={paid ? 'INITIATION CONFIRMED' : 'VIEW YOUR RECORDS'} />
     <p className="join-success-copy">{snapshot.error ?? (!snapshot.userId
-      ? 'Log in to view your payment and fulfillment records.'
+      ? fromCheckout ? 'Payment received. Open the activation link we emailed you and set your password to see your membership, delivery and Console records. Already activated? Log in.' : 'Log in to view your payment and fulfillment records.'
       : paid ? snapshot.purchaseKind === 'initial'
         ? 'Your Initial Voyager Pack payment is confirmed. Your membership and first two Pack records are available in Initiation. Console + Pack 4 can be added later for $460.'
         : 'Your Initiation payment is confirmed. Your four Pack records and Console entitlement are available in Initiation.'
@@ -29,9 +32,11 @@ export default async function JoinSuccessPage({ searchParams }: { searchParams: 
     <PaymentStatusRefresh pending={!!snapshot.userId && snapshot.paymentStatus === 'pending'} />
     <PostPaymentCalibration snapshot={snapshot} showResume environment={process.env.VERCEL_ENV ?? 'unknown'} />
     {setUpAccount && <>
-      <p className="join-success-copy">Add a display name and password so you can sign in without an email code next time.</p>
+      <p className="join-success-copy">Add a display name and password to finish activating your account.</p>
       <ArchiveLinkButton href={`/register?redirect=${encodeURIComponent(returnPath)}`} fullWidth variant="secondary">SET UP YOUR ACCOUNT</ArchiveLinkButton>
     </>}
-    <ArchiveLinkButton href={snapshot.userId ? returnPath : `/login?redirect=${encodeURIComponent(returnPath)}`} fullWidth variant="primary">{snapshot.userId ? 'VIEW INITIATION' : 'LOG IN'}</ArchiveLinkButton>
+    <div className="join-success-actions">{snapshot.userId
+      ? <ArchiveLinkButton href={returnPath} fullWidth variant="primary">VIEW INITIATION</ArchiveLinkButton>
+      : <ArchiveLinkButton href={`/login?redirect=${encodeURIComponent(returnPath)}`} fullWidth variant="primary">LOG IN</ArchiveLinkButton>}</div>
   </ArchiveCard></div></main>
 }
