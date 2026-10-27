@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixture } from '@/app/dev/voyager-initiation/fixtures'
 const { getSnapshot } = vi.hoisted(() => ({ getSnapshot: vi.fn() }))
-vi.mock('@/lib/actions/initiation', () => ({ getInitiationSnapshot: getSnapshot }))
+vi.mock('@/lib/actions/initiation', () => ({ getInitiationCheckoutSnapshot: getSnapshot }))
 import { beginVoyagerInitiation } from './actions'
 
 describe('Voyager Initiation server preflight', () => {
