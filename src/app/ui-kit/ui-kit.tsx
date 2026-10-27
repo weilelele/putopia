@@ -9,6 +9,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveButton } from '@/components/archive-button'
+import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveField } from '@/components/archive-field'
 import { ArchiveTabs } from '@/components/archive-tabs'
 import { DialogExamples } from './dialog-examples'
@@ -138,16 +139,24 @@ export function UiKit() {
 <PrimaryNavigation variant="bottom" activePath={view === 'dashboard' ? '/console' : view === 'worlds' ? '/worlds' : `/${view}`} onNavigate={href => setView(href === '/console' ? 'dashboard' : href === '/worlds' ? 'worlds' : href.slice(1))} />
 </div>
       </section>
-      <section className="uk-section">
+      <section className="uk-section" id="buttons-01">
 <h2>Buttons and states</h2>
+<p>Button and link labels share Courier Prime, 16px, weight 400 and a 24px line height.</p>
 <div className="uk-stack">
 <ArchiveButton onClick={() => setButtonBusy(value => !value)}>Toggle loading example</ArchiveButton>
 <ArchiveButton loading={buttonBusy}>Primary action</ArchiveButton>
 <ArchiveButton variant="secondary">Secondary action</ArchiveButton>
+<ArchiveLinkButton href="#buttons-01" variant="primary">Primary link</ArchiveLinkButton>
+<ArchiveLinkButton href="#buttons-01" variant="secondary">Secondary link</ArchiveLinkButton>
 <ArchiveButton variant="ghost">Tertiary action</ArchiveButton>
 <ArchiveButton variant="destructive" onClick={() => setConfirmDelete(true)}>Delete sample record</ArchiveButton>
 <ArchiveButton disabled>Disabled action</ArchiveButton>
 <ArchiveButton size="compact" variant="secondary">Compact · 44px target</ArchiveButton>
+</div>
+<div className="world-actions" aria-label="World action buttons">
+<ArchiveLinkButton href="#buttons-01" variant="primary" className="world-actions__lead">More info →</ArchiveLinkButton>
+<ArchiveButton variant="secondary">Share report</ArchiveButton>
+<ArchiveButton variant="secondary">View reports</ArchiveButton>
 </div>
 </section>
       <section className="uk-section" id="nav-02">

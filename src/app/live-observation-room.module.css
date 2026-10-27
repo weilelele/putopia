@@ -713,7 +713,7 @@
   border: 1px solid var(--color-nucleus);
   color: var(--color-deep);
   background: var(--color-nucleus);
-  font: 400 var(--fs-body) var(--font-mono);
+  font: 400 var(--fs-body)/1.5 var(--font-mono);
   letter-spacing: 0.08em;
   cursor: pointer;
   clip-path: polygon(0 0, calc(100% - var(--archive-notch)) 0, 100% var(--archive-notch), 100% 100%, 0 100%);

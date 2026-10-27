@@ -6,6 +6,7 @@ Latest scoped report: [Activation welcome QA](docs/design/activation-welcome-202
 
 final result: passed
 
+
 final result: passed
 
 ## Reference and capture
@@ -65,5 +66,11 @@ final result: blocked (live Feed activation only)
 ## Dashboard initiation entry — 2026-10-27
 
 Latest scoped report: [Dashboard identity card QA](docs/design/dashboard-initiation-20261027/design-qa.md). Selected orange-entry reference, original role/product copy, and equal 20° diagonal joins are implemented in the shared homepage component. Browser checks used local Applicant fixture data at 390×844, 320×844 and desktop 1440×1000. Initial narrow-label wrapping and desktop narrow-container issues were fixed and recaptured. The scoped report contains the combined reference/render comparison, typography/spacing/color/assets/copy checks, interaction evidence, and validation limits. Design checks, TypeScript, lint (0 errors), 826 tests and final production build passed. No deployment or production data changes.
+
+final result: passed
+
+## Shared button typography · 2026-10-28
+
+Latest scoped report: [Button typography QA](docs/design/button-typography-20261028/design-qa.md). Shared primary/secondary buttons and links use Courier Prime, 16px, weight 400 and 24px line height. Authentication, activation welcome, Dashboard, Voyagers, dialog, World action fixtures and local admin forms were checked in the production build. Portrait 390px, narrow 320px and desktop evidence, computed styles and source-audit boundaries are recorded in the report. No production data writes or schema changes.
 
 final result: passed
