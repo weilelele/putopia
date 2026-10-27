@@ -4,7 +4,8 @@ import { initiationConfigurationError } from '@/lib/initiation-config'
 import { createInitiationCheckout } from '@/lib/initiation-checkout-session'
 import { normalizeSignInEmail } from '@/lib/checkout-sign-in'
 import { emailCheckoutGate, emailCheckoutOwnership, INITIATION_ACTIVATION_NEXT } from '@/lib/initiation-email-checkout'
-import { findAccount, findOrCreateAccount, sendActivationEmail } from '@/lib/activation'
+import { findAccount, createUnactivatedAccount, sendActivationEmail } from '@/lib/activation'
+import { afterCheckout } from '@/lib/checkout-after'
 import { requestClientIp } from '@/lib/initiation-meta-attribution'
 
 export const dynamic = 'force-dynamic'
@@ -57,15 +58,19 @@ export async function POST(request: Request) {
     const fromIp = ip ? await emailOrders().eq('meta_attribution->>client_ip_address', ip).gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString()) : { count: null, error: null }
     if (fromIp.error) throw fromIp.error
     const gate = emailCheckoutGate({ ip, recentFromIp: fromIp.count })
-    const account = existing ? { ...existing, created: false } : await findOrCreateAccount(email, 'initiation_email_checkout')
-    // A confirmed upgrade already got its activation link with the `upgrade` answer.
-    const sent = confirmedUpgrade ? { error: null } : await sendActivationEmail({ userId: account.id, email, purpose: 'initiation', next: INITIATION_ACTIVATION_NEXT })
+    const account = existing ? { ...existing, created: false } : await createUnactivatedAccount(email, 'initiation_email_checkout')
+    const sendActivation = () => sendActivationEmail({ userId: account.id, email, purpose: 'initiation', next: INITIATION_ACTIVATION_NEXT, timeoutMs: 5000 })
     if (gate === 'activate_first') {
+      const sent = confirmedUpgrade ? { error: null } : await sendActivation()
       if (sent.error) throw new Error(`Activation email failed: ${sent.error}`)
       return NextResponse.json({ next: 'activation_sent' })
     }
-    // A failed activation email never blocks payment; /auth/expired sends a new link to this email.
-    if (sent.error) console.error('[initiation-checkout] Activation email failed before checkout:', sent.error)
+    // Payment does not depend on mail delivery. A confirmed upgrade already got its activation link.
+    // /auth/expired can send a fresh link if this background attempt fails.
+    if (!confirmedUpgrade) afterCheckout(async () => {
+      const sent = await sendActivation()
+      if (sent.error) throw new Error('Activation delivery unconfirmed')
+    }, '[initiation-checkout] Activation email deferred; a fresh link can be requested')
     // The server prices an upgrade from ownership; `standard` is the bundle an upgrade continues.
     return createInitiationCheckout(request, origin, { id: account.id, email }, confirmedUpgrade ? { ...body, bundle: 'standard' } : body, 'email_first')
   } catch (error) {

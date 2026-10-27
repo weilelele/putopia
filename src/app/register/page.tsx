@@ -16,6 +16,28 @@ import { safeAppPath } from '@/lib/ui-navigation'
 import { takePostRegisterRedirect } from '@/lib/post-register-redirect'
 import { activateAccount, checkActivationLink } from '@/lib/actions/activation'
 
+async function trackRegistration(userId: string, email: string | undefined, displayName: string) {
+  const experimentGroup = await getOrAssignExperimentGroup()
+  if (email) {
+    syncLoopsRegistration(email, displayName, userId).catch(() => {})
+  }
+  const utm = getFirstTouch()
+  const redditResult = await trackRedditSignUp(utm.rdt_cid)
+  if (redditResult.conversionId) {
+    trackRedditPixelEvent('SignUp', redditResult.conversionId)
+  }
+  posthog.identify(userId, { email, display_name: displayName, registered_at: new Date().toISOString() })
+  posthog.capture('account_registered', {
+    experiment_group:  experimentGroup ?? undefined,
+    display_name:  displayName,
+    utm_source:    utm.utm_source   ?? undefined,
+    utm_medium:    utm.utm_medium   ?? undefined,
+    utm_campaign:  utm.utm_campaign ?? undefined,
+    utm_content:   utm.utm_content  ?? undefined,
+    fbclid:        utm.fbclid       ?? undefined,
+  })
+}
+
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
@@ -66,6 +88,15 @@ export default function RegisterPage() {
     }
 
     setLoading(true)
+    try {
+      await register()
+    } catch {
+      setError('ERR: REGISTRATION COULD NOT BE COMPLETED. PLEASE TRY AGAIN.')
+      setLoading(false)
+    }
+  }
+
+  const register = async () => {
     const supabase = createClient()
     let activatedNext: string | null = null
 
@@ -92,7 +123,8 @@ export default function RegisterPage() {
         data: { display_name: displayName.trim() },
       })
 
-      if (updateError) {
+      // A retry after a half-finished attempt resends the password that is already set.
+      if (updateError && updateError.code !== 'same_password') {
         setError(`ERR: ${updateError.message.toUpperCase()}`)
         setLoading(false)
         return
@@ -103,7 +135,7 @@ export default function RegisterPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!activationKey) await (supabase.from('voyager_profiles') as any).upsert({
+      const { error: profileError } = activationKey ? { error: null } : await (supabase.from('voyager_profiles') as any).upsert({
         id: user.id,
         display_name: displayName.trim(),
         bio: null,
@@ -118,33 +150,22 @@ export default function RegisterPage() {
         email: user.email?.toLowerCase() ?? null,
         registered_at: new Date().toISOString(),
       }, { onConflict: 'id' })
-      const experimentGroup = await getOrAssignExperimentGroup()
-      if (user.email) {
-        syncLoopsRegistration(user.email, displayName.trim(), user.id).catch(() => {})
+      if (profileError) {
+        setError('ERR: PROFILE COULD NOT BE SAVED. PLEASE TRY AGAIN.')
+        setLoading(false)
+        return
       }
-      const utm = getFirstTouch()
-      const redditResult = await trackRedditSignUp(utm.rdt_cid)
-      if (redditResult.conversionId) {
-        trackRedditPixelEvent('SignUp', redditResult.conversionId)
-      }
-      posthog.identify(user.id, { email: user.email, display_name: displayName.trim(), registered_at: new Date().toISOString() })
-      posthog.capture('account_registered', {
-        experiment_group:  experimentGroup ?? undefined,
-        display_name:  displayName.trim(),
-        utm_source:    utm.utm_source   ?? undefined,
-        utm_medium:    utm.utm_medium   ?? undefined,
-        utm_campaign:  utm.utm_campaign ?? undefined,
-        utm_content:   utm.utm_content  ?? undefined,
-        fbclid:        utm.fbclid       ?? undefined,
-      })
+      // Tracking is best effort: it must never keep a registered account on this screen.
+      const tracking = trackRegistration(user.id, user.email ?? undefined, displayName.trim()).catch(() => {})
+      await Promise.race([tracking, new Promise((resolve) => setTimeout(resolve, 3000))])
     }
 
     const requested = activatedNext ?? new URLSearchParams(window.location.search).get('redirect')
     let remembered: string | null = null
     try { remembered = takePostRegisterRedirect(localStorage, window.location.origin, Date.now()) } catch { /* Storage is a convenience only. */ }
     const destination = safeAppPath(requested, window.location.origin) ?? remembered ?? '/console'
-    router.push(destination === '/login' || destination === '/register' ? '/console' : destination)
-    router.refresh()
+    // Full load: the client router cache can still hold the pre-registration redirect back to /register.
+    window.location.assign(destination === '/login' || destination === '/register' ? '/console' : destination)
   }
 
   if (checking) {
