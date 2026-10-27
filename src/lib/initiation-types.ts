@@ -27,6 +27,10 @@ export interface InitiationSnapshot {
   ownsSeat?: boolean
   legacyPackPurchased: boolean
   paymentStatus: InitiationPaymentStatus
+  /** Latest order only: Stripe checkout completed (true), still open or unbound (false), unverifiable (null). */
+  checkoutComplete?: boolean | null
+  /** Kind of the latest order, whatever its status. */
+  latestOrderKind?: InitiationOrderKind | null
   error: string | null
 }
 export const INITIATION_PRODUCT = 'voyager_initiation'

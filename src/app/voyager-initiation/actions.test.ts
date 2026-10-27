@@ -21,6 +21,14 @@ describe('Voyager Initiation server preflight', () => {
     getSnapshot.mockResolvedValue(fixture(state))
     expect((await beginVoyagerInitiation()).status).toBe('not_open')
   })
+  it.each(['pending', 'activating', 'payment_review'] as const)('does not reopen checkout for a %s payment', async name => {
+    const state = fixture(name)
+    state.availability.checkoutOpen = true
+    getSnapshot.mockResolvedValue(state)
+    const result = await beginVoyagerInitiation()
+    expect(result.status).toBe('not_open')
+    expect(result.message).toContain('no need to pay again')
+  })
   it('allows legacy members to upgrade without calibration', async () => {
     const state = fixture('legacy_pack')
     state.calibrated = false

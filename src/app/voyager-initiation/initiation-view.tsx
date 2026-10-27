@@ -21,6 +21,8 @@ import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navi
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
+import { initiationPaymentHold } from '@/lib/initiation-payment-hold'
+import { PaymentStatusRefresh } from './payment-status-refresh'
 import { InitiationBriefing } from './briefing/initiation-briefing'
 import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, shouldAutoOpenBriefing, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 
@@ -41,7 +43,7 @@ function writeBriefingStore(outcome: BriefingOutcome, page: number) {
 
 
 const paymentMessages = {
-  pending: 'Payment is being processed. Membership and deliveries unlock only after payment is confirmed. Refresh to check the latest status.',
+  pending: 'Your checkout was started but not completed. Continue to finish payment.',
   payment_failed: 'Payment was not completed. You can retry when checkout is available.',
   canceled: 'Your checkout was canceled. You can retry when checkout is available.',
   refunded: 'Your Initiation payment was refunded. Previous delivery records remain visible; an active Console claim is not implied.',
@@ -89,20 +91,21 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const initiated = status === 'initiated'
   const granted = status === 'granted'
   const legacy = status === 'legacy_pack'
+  const hold = initiationPaymentHold(snapshot)
   const kind = legacy ? 'legacy_upgrade' : bundle
   const storedBriefing = useSyncExternalStore(subscribeToSource, readBriefingStore, serverBriefingStore)
   const [briefing, setBriefing] = useState<'idle' | 'replay' | 'link' | 'dismissed'>(() => briefingLinkOpens(snapshot.status, briefingParam) ? 'link' : 'idle')
   const briefingAuto = storedBriefing !== 'server' && storedBriefing !== 'unavailable'
     && shouldAutoOpenBriefing({ status, paymentStatus: snapshot.paymentStatus, checkoutCanceled, stored: storedBriefing || null })
-  const briefingOpen = briefing === 'replay' || briefing === 'link' || (briefing === 'idle' && briefingAuto)
+  const briefingOpen = !hold && (briefing === 'replay' || briefing === 'link' || (briefing === 'idle' && briefingAuto))
   const soldOut = !snapshot.ownsSeat && (availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity))
   const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind, userId: snapshot.userId,
-    internal: snapshot.role === 'architect', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
+    internal: snapshot.role === 'architect', environment: analyticsEnvironment, eligible: !initiated && !granted && !hold && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
 
   const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null || briefingOpen)
 
   async function become(override?: 'initial' | 'standard', surface: 'page' | 'brief' = 'page') {
-    if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
+    if (inFlight.current || initiated || granted || hold || soldOut || status === 'unknown') return
     const chosen = override ?? bundle
     captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
     setError('')
@@ -148,7 +151,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     : soldOut ? `${availability.batch} is fully claimed.`
     : !availability.checkoutOpen && status !== 'guest' ? (availability.reason ?? 'Checkout is not open yet.') : null
 
-  const paymentAtBottom = paymentPlacement === 'bottom' && !initiated && !granted
+  const paymentAtBottom = paymentPlacement === 'bottom' && !initiated && !granted && !hold
   const BenefitHeading = paymentAtBottom ? 'h3' : 'h2'
   const PackHeading = paymentAtBottom ? 'h4' : 'h3'
   const seatSummary = (
@@ -161,7 +164,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         <div data-initiation-section="payment" className={styles.join}>
           {checkoutCanceled && !initiated && !granted && <p className={styles.notice} role="status">You returned from checkout without completing it. Payment status below comes from your order records.</p>}
           {snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
-          {snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{paymentMessages[snapshot.paymentStatus]}</p>}
+          {!hold && snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{paymentMessages[snapshot.paymentStatus]}</p>}
           {granted ? <>
             <p className={styles.memberStatus}>{availability.batch} · Membership registered</p>
             <p className={styles.paymentTerms}>You have joined the Collective through a granted membership. No Initiation payment is recorded.</p>
@@ -173,6 +176,11 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             <ArchiveLinkButton href={consoleDevicePath(source, consoleClaim.href)} fullWidth variant="primary">{consoleClaim.claimed ? 'VIEW YOUR DEVICE' : consoleClaim.eligible ? 'VIEW DEVICE & CLAIM' : 'VIEW DEVICE'} <ArrowRight size={20} aria-hidden /></ArchiveLinkButton>
             <p className={styles.paymentTerms}>{consoleClaim.claimed ? 'Your Console has been claimed. Open Device to see its details.' : !consoleClaim.eligible ? 'Open Device to check current claim eligibility and availability.' : 'Claim your Console on Device when stock is available. If the batch is full, wait for availability; your entitlement is retained.'}</p>
             <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
+          </> : hold ? <>
+            <p className={styles.memberStatus} role="status">{availability.batch} · {hold.title}</p>
+            <p className={styles.paymentTerms}>{hold.message}</p>
+            <PaymentStatusRefresh pending={hold.refresh} />
+            {!hold.refresh && <p className={styles.paymentTerms}>Questions? Email <a className={styles.inlineLink} href="mailto:voyagers@multiverseco.org">voyagers@multiverseco.org</a>.</p>}
           </> : <>
           {!paymentAtBottom && seatSummary}
           <p className={styles.eyebrow}>Your initiation</p>
@@ -212,10 +220,10 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       <Link href="/console" className="archive-back-link"><ArrowLeft aria-hidden size={20} />Back to Dashboard</Link>
       <header data-initiation-section="intro" className={styles.hero}>
         <div className={styles.introduction}>
-          <p className={styles.eyebrow}>{initiated || granted ? 'Your membership' : legacy ? 'Your Initial membership' : 'Become a Voyager'}</p>
+          <p className={styles.eyebrow}>{initiated || granted ? 'Your membership' : hold ? 'Your initiation' : legacy ? 'Your Initial membership' : 'Become a Voyager'}</p>
           <h1>Voyager<br />Initiation</h1>
           <p className={styles.lede}>One initiation. A lasting place in the Collective.</p>
-          {briefingAudience(status) && <button type="button" className={styles.textLink} aria-haspopup="dialog" onClick={() => setBriefing('replay')}>Watch the briefing <ArrowRight size={18} aria-hidden /></button>}
+          {briefingAudience(status) && !hold && <button type="button" className={styles.textLink} aria-haspopup="dialog" onClick={() => setBriefing('replay')}>Watch the briefing <ArrowRight size={18} aria-hidden /></button>}
         </div>
         {paymentAtBottom ? seatSummary : joinPanel}
       </header>

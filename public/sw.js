@@ -1,5 +1,8 @@
-const CACHE_NAME = 'multiverse-pwa-v2'
+const CACHE_NAME = 'multiverse-pwa-v3'
 const OFFLINE_URL = '/offline'
+// A navigation right after an app switch (e.g. back from Stripe) can fail once
+// while the radio wakes up; retry before showing the offline page.
+const NAVIGATION_RETRY_MS = 1500
 const PRECACHE_URLS = [
   OFFLINE_URL,
   '/icons/icon-192.png',
@@ -34,7 +37,9 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(OFFLINE_URL)),
+      fetch(request)
+        .catch(() => new Promise((resolve) => setTimeout(resolve, NAVIGATION_RETRY_MS)).then(() => fetch(request)))
+        .catch(() => caches.match(OFFLINE_URL)),
     )
     return
   }

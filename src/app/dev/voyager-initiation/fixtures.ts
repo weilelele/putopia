@@ -1,7 +1,7 @@
 import { INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT } from '@/lib/initiation-pricing'
 import type { InitiationSnapshot } from '@/lib/initiation-types'
 
-export const fixtureNames = ['initial_pack', 'complete_pack', 'upgraded', 'initial_upgrade_pending', 'guest', 'granted', 'unpaid', 'calibrated', 'legacy_pack', 'initiated', 'claimed', 'both', 'architect', 'sold_out', 'pending', 'payment_failed', 'canceled', 'refunded', 'disputed', 'payment_review', 'unknown'] as const
+export const fixtureNames = ['initial_pack', 'complete_pack', 'upgraded', 'initial_upgrade_pending', 'guest', 'granted', 'unpaid', 'calibrated', 'legacy_pack', 'initiated', 'claimed', 'both', 'architect', 'sold_out', 'checkout_open', 'pending', 'activating', 'payment_failed', 'canceled', 'refunded', 'disputed', 'payment_review', 'unknown'] as const
 export type FixtureName = typeof fixtureNames[number]
 export function fixture(name: FixtureName): InitiationSnapshot {
   const initiated = ['complete_pack', 'upgraded', 'initiated', 'claimed', 'both'].includes(name)
@@ -15,7 +15,10 @@ export function fixture(name: FixtureName): InitiationSnapshot {
     purchaseKind: initiated ? legacy ? 'legacy_upgrade' : 'standard' : name === 'initial_pack' || name === 'initial_upgrade_pending' ? 'initial' : null,
     legacyPackPurchased: legacy,
     offer: { kind: legacy ? 'legacy_upgrade' : 'standard', amount: legacy ? INITIATION_UPGRADE_AMOUNT : INITIATION_AMOUNT, currency: 'usd' },
-    paymentStatus: name === 'unknown' ? 'unknown' : name === 'pending' || name === 'initial_upgrade_pending' ? 'pending' : name === 'payment_failed' ? 'payment_failed' : name === 'refunded' ? 'refunded' : name === 'canceled' ? 'canceled' : name === 'disputed' ? 'disputed' : name === 'payment_review' ? 'payment_review' : initiated || name === 'initial_pack' ? 'paid' : 'none',
+    paymentStatus: name === 'unknown' ? 'unknown' : name === 'pending' || name === 'checkout_open' || name === 'initial_upgrade_pending' ? 'pending' : name === 'payment_failed' ? 'payment_failed' : name === 'refunded' ? 'refunded' : name === 'canceled' ? 'canceled' : name === 'disputed' ? 'disputed' : name === 'payment_review' ? 'payment_review' : initiated || name === 'initial_pack' || name === 'activating' ? 'paid' : 'none',
+    // `pending` is the post-checkout window before reconciliation; `checkout_open` can still be resumed.
+    checkoutComplete: name === 'checkout_open' ? false : name === 'pending' || name === 'initial_upgrade_pending' ? true : null,
+    latestOrderKind: name === 'activating' ? 'standard' : name === 'initial_upgrade_pending' ? 'legacy_upgrade' : name === 'initial_pack' ? 'initial' : null,
     error: name === 'unknown' ? 'Your Initiation records are temporarily unavailable. Please try again.' : null,
     shipments: [
       ...(initiated ? ['Initial Voyager Pack', 'Mysterious Widgets', 'Multiverse Console', 'A Fourth Delivery'].map((title, i) => ({ id: `fixture-${i}`, position: i + 1, title, scheduledMonth: ['2026-10', '2026-11', '2026-12', '2027-01'][i], status: name === 'complete_pack' ? 'planned' as const : name === 'upgraded' ? (['delivered', 'delivered', 'planned', 'planned'] as const)[i] : (['delivered', 'dispatched', 'preparing', 'planned'] as const)[i], trackingUrl: null, source: legacy && i < 2 ? 'legacy_pack' as const : 'initiation' as const })) : []),

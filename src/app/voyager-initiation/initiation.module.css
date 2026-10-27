@@ -80,6 +80,7 @@
 }
 
 .notice { font-size: var(--fs-body); line-height: 1.5; margin: 0 0 16px; }
+.inlineLink { color: var(--color-nucleus); text-decoration: underline; }
 .memberStatus { color: var(--color-nucleus); font-size: var(--fs-title); font-weight: 700; }
 .textLink { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: var(--fs-body); color: var(--color-nucleus); }
 .shipmentStatus { text-transform: capitalize; font-size: var(--fs-body); line-height: 1.5; margin: 0; }

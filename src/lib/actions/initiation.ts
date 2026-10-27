@@ -6,6 +6,17 @@ import { initiationClaimResult } from '@/lib/initiation-claim'
 import { initiationConfigurationError } from '@/lib/initiation-config'
 import { INITIATION_BATCH, INITIATION_CAPACITY, INITIAL_PACK_AMOUNT, INITIATION_UPGRADE_AMOUNT, type InitiationSnapshot, type InitiationPaymentStatus, type InitiationShipment, type InitiationConsoleClaimResult } from '@/lib/initiation-types'
 import { VOYAGER_PROFILE_VERSION } from '@/lib/voyager-intake'
+import { getStripe } from '@/lib/stripe'
+
+/** A pending order may already be paid: Stripe redirects before reconciliation commits. */
+async function initiationCheckoutComplete(order: { id: string; stripe_session_id: string | null }): Promise<boolean | null> {
+  if (!order.stripe_session_id) return false
+  try {
+    const session = await getStripe()?.checkout.sessions.retrieve(order.stripe_session_id)
+    if (!session || session.metadata?.order_id !== order.id) return null
+    return session.status === 'complete'
+  } catch { return null }
+}
 
 /** No caller-supplied user ID. Failures are unknown, never unpaid or zero seats. */
 export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
@@ -42,7 +53,7 @@ export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
       admin.from('voyager_profiles').select('role').eq('id', user.id).single(),
       admin.from('voyager_intake').select('version').eq('user_id', user.id).maybeSingle(),
       admin.rpc('eligible_legacy_initiation_order', { p_user: user.id }),
-      admin.from('initiation_orders').select('id,status,order_kind').eq('user_id', user.id).order('created_at', { ascending: false }),
+      admin.from('initiation_orders').select('id,status,order_kind,stripe_session_id').eq('user_id', user.id).order('created_at', { ascending: false }),
       admin.from('initiation_entitlements').select('order_id,active,console_claimed_at,console_order_id').eq('user_id', user.id).maybeSingle(),
       admin.from('initiation_shipments').select('id,position,title,scheduled_month,status,tracking_url,legacy_order_id').eq('user_id', user.id).order('scheduled_month'),
       admin.from('initiation_members').select('source,active,batch').eq('user_id', user.id).maybeSingle(),
@@ -66,6 +77,8 @@ export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
     snapshot.purchaseKind = newRecordsUnavailable ? null : initiationPurchaseKind(orders, entitlement, initial)
     snapshot.membershipSource = newRecordsUnavailable ? null : member?.source ?? null
     snapshot.paymentStatus = (newRecordsUnavailable ? 'unknown' : orders[0]?.status ?? 'none') as InitiationPaymentStatus
+    snapshot.latestOrderKind = newRecordsUnavailable ? null : orders[0]?.order_kind ?? null
+    snapshot.checkoutComplete = snapshot.paymentStatus === 'pending' ? await initiationCheckoutComplete(orders[0]) : null
     snapshot.shipments = [
       ...(shipments ?? []).map((s: { id: string; position: number; title: string; scheduled_month: string; status: InitiationShipment['status']; tracking_url: string | null; legacy_order_id: string | null }) => ({ id: s.id, position: s.position, title: s.title, scheduledMonth: s.scheduled_month, status: s.status, trackingUrl: s.tracking_url, source: s.legacy_order_id ? 'legacy_pack' as const : 'initiation' as const })),
 
