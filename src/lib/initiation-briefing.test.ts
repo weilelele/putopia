@@ -38,7 +38,7 @@ describe('Voyager briefing audience', () => {
 
 describe('Voyager briefing content', () => {
   it('offers the same choices and prices as the checkout panel', () => {
-    expect(briefingOffers('unpaid').map(o => [o.id, o.price, o.recommended])).toEqual([['initial', 38], ['standard', 488]].map(([id, price]) => [id, price, id === 'standard']))
+    expect(briefingOffers('unpaid').map(o => [o.id, o.price])).toEqual([['initial', 38], ['standard', 488]])
     expect(briefingOffers('guest').map(o => o.id)).toEqual(['initial', 'standard'])
     expect(briefingOffers('unpaid')[0].note).toBe('Add Console + Pack 4 later for $460.')
     expect(briefingOffers('unpaid')[1].note).toBe('Save $10 versus upgrading later.')

@@ -31,3 +31,9 @@ node supabase/tests/legacy-s26-v108.mjs /absolute/path/to/@electric-sql/pglite/d
 迁移前后整表校验完全一致：`voyager_orders` 413 行、`initiation_orders` 11 行、`device_order_packs` 6 行、`initiation_shipments` 0 行、`initiation_entitlements` 0 行。同步 RPC 仍仅 service_role 可调用。
 
 发布内容从最新 main 独立整理，保留已上线的 Antenna 文案，只包含本次成员登记和满额升级调整。该独立发布树的 92 个测试文件、793 项测试、隔离 SQL 回归、类型检查、design check、lint 和生产构建通过；此前原工作区的 814 项包含其他尚未合入 main 的工作，不随本次发布。
+
+## 生产发布结果
+
+[PR #255](https://github.com/weilelele/putopia/pull/255) 已 squash 合并至 main，提交 `7a3545e3d48a94b85431017aa7db13096473921d`；PR 及 main CI 全部通过，远端发布分支已删除。
+
+Vercel 生产部署 `dpl_Dg6UG4e3uYQKboyANsAhtSwtkEme` 已 READY，构建约 82 秒，正式域名 `www.multiverseco.org` 已指向此提交。[正式 Initiation 页面](https://www.multiverseco.org/voyager-initiation) 刷新后显示 INITIATED 72、SEAT LIMIT 100。浏览器错误记录为空；新部署上线后的短期 error/fatal 日志查询没有返回记录。Drains 清单接口返回 404，未据此推断监控是否已配置，也未修改监控配置。

@@ -1,17 +1,32 @@
-# Signal Calibration after payment — 2026-10-23
+# Signal Calibration reminder: 24-hour cooldown
 
-Checkout keeps the existing login, pricing, inventory and duplicate-order safeguards, but no longer requires Signal Calibration. Initiation has no calibration status row. Confirmed paid buyers receive a centered invitation: “Welcome, Voyager” / “Your place in the Collective is secured. Let your signal be heard.” Align opens the existing five-question flow.
+2026-10-23 用户确认：点击 Later 后至少间隔 24 小时，下次进入网站时再提醒；完成信号对齐后不再提醒。
 
-Later, Close, Escape and leaving an unfinished quiz defer automatic reminders for at least 24 hours from the server timestamp. The site checks again on entry/return, never with a timer during uninterrupted browsing. Server state is shared across tabs and devices; completed calibration suppresses all future reminders for the current profile version. The success page retains manual access and refreshes pending payment records.
+## Behavior
 
-Release scope excludes the separate anonymous checkout and Pack progress work. The confirmed purchase-kind helper is included to distinguish paid Initial from historical membership. A future ownership transfer preserves the cooldown.
+- Reminder state is stored per verified user on the server. Tabs, browsers and devices share the cooldown. No quiz answers or payment details are stored in the reminder table.
+- The first eligible paid visit may show the existing invitation. Each automatic invitation atomically records its server timestamp; simultaneous checks cannot claim it twice.
+- Later, Escape, Close and leaving an unfinished quiz reset the cooldown from the time the server handles deferral. Explicitly opening the quiz also postpones automatic reminders.
+- The root layout checks on initial entry, returning to the visible website, browser page restoration, sign-in/account changes and confirmed payment return. There is no elapsed-time timer that opens a popup during uninterrupted browsing.
+- Ordinary site pages are covered, including Dashboard. Login, registration, auth callbacks, onboarding, the standalone quiz, offline, admin, studio and dev fixtures do not receive automatic reminders. Moving between ordinary pages does not reset the entry check. An existing dialog is allowed to finish before a claimed invitation appears.
+- The private RPC verifies current paid membership, active fulfillment entitlement where needed and saved calibration before claiming a reminder. Completion permanently suppresses future invitations for the current five-question profile version. A missing migration or data error suppresses the reminder without blocking the site.
+- A successful quiz save notifies other tabs to recheck server completion. The completing tab keeps its completion screen until Done.
+- Guest purchases transferred to an existing account carry their reminder timestamp; the later timestamp wins if the destination already has a cooldown.
+- The ceremonial copy, original five questions, payment flow and absence of an Initiation status row are preserved. The success page retains its manual calibration button.
 
-## Migrations
+## Deployment
 
-Production project: `oxwfnmcwovxnrvagxzdz`. Prerequisite v103 is already applied. Apply `schema_v105.sql` (removes only calibration from reservation prerequisites), then `schema_v107.sql` (private reminder table, atomic RPC, ownership transfer trigger). No checkout switch or price changes. Both migrations were applied successfully on 2026-10-23 before app deployment. Production verification confirms RLS enabled and browser roles denied direct table/RPC access; service_role retains RPC execution.
+`supabase/schema_v107.sql` was **applied to production** project `oxwfnmcwovxnrvagxzdz` on 2026-10-23 (migration version `20261022212602`), after v105 (`20261022212401`). It adds an RLS-enabled, service-role-only table, an atomic reminder RPC and a membership ownership transfer trigger. Production verification confirmed browser roles cannot read the table or execute the RPC. `v107` does not modify checkout rules or open payments.
+
+Released through [PR #251](https://github.com/weilelele/putopia/pull/251), squash commit `f96c329cf2ca3752263b3663b53244a34de725f4`. Vercel production deployment `dpl_GLwjwXXXQgGUiQvKtSq9s5LgkR1j` is READY and serves `www.multiverseco.org`. Release was isolated from main and excludes separate anonymous checkout and Pack progress work; the original working checkout was preserved. The isolated release passed 91 test files / 765 tests, typecheck, lint (0 errors, 25 existing warnings), design check, build and both PGlite migration suites. GitHub CI and preview passed before merge. Production browser verification at 390×844 confirmed the status row is absent, prices are configured, and there is no horizontal overflow or browser error. Initial production runtime error query returned no entries. No live payment or real-user calibration was created as a test. Direct Python HTTP checks returned 403; browser checks of the production site succeeded.
+
+Release evidence: [production mobile checkout](../../output/post-payment-calibration/release/production-mobile.png).
 
 ## Verification
 
-Disposable PGlite checks cover uncalibrated purchases, fulfillment, inventory, duplicate orders, private permissions, 24h minus 1ms, exactly 24h, snooze, concurrent claims, completion and ownership transfer. UI was verified in an isolated fixture environment at 390×844, 320×740 and desktop; the original five questions, deferral, return after a simulated 25 hours, and permanent completion suppression passed. No live payment test or production order is created.
+- `npm run design:check`, `git diff --check`, `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build`: passed. Lint retained the existing 26 unrelated warnings and no errors. Vitest: 96 files, 814 tests.
+- `supabase/tests/calibration-reminder-v107.mjs` passed on disposable PGlite PostgreSQL: initial invitation, 24h minus 1ms, exactly 24h, snooze reset using server time, duplicate claims, independent users, permanent completion suppression, revoked/NPC access, ownership transfer and private table/function permissions.
+- Browser verification at 390×844 used an isolated Next copy without project environment files and with analytics disabled. Reminder and quiz server actions used local fixture adapters; production was never written. Verified invitation on `/privacy`, Later and reload suppression, return after 25 simulated hours, original five-question completion, retained completion screen and no reminder after completion even with a year-old timestamp.
+- The SQL test verifies the real database policy; the browser test verifies the actual site coordinator and dialogs with simulated persistence. No live Stripe or production E2E claim is made.
 
-Release checks passed: design guidance, diff whitespace, TypeScript, lint (0 errors; 25 existing warnings), 91 Vitest files / 765 tests, production build, and both PGlite migration suites.
+Evidence: [site-wide entry](../../output/post-payment-calibration/24h/global-entry.png), [completion](../../output/post-payment-calibration/24h/completed.png), [quiet completed return](../../output/post-payment-calibration/24h/completed-return.png).

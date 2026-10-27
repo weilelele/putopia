@@ -1708,6 +1708,14 @@ input[type='radio'] {
   color: var(--archive-paper);
 }
 
+/* Text actions underline on hover/focus (design-system §4.1, C08). */
+.archive-button.archive-button--ghost:hover,
+.archive-button.archive-button--ghost:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
 .archive-button:active {
   transform: translateY(1px);
 }
