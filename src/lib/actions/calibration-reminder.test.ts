@@ -12,8 +12,8 @@ describe('calibration reminder server ownership', () => {
     admin.mockReturnValue({ rpc })
     rpc.mockResolvedValue({ data: { status: 'cooldown' }, error: null })
   })
-  it('uses only the verified session, including an anonymous paid buyer', async () => {
-    getUser.mockResolvedValue({ data: { user: { id: 'verified-buyer', is_anonymous: true } }, error: null })
+  it('uses only the verified session', async () => {
+    getUser.mockResolvedValue({ data: { user: { id: 'verified-buyer' } }, error: null })
     expect(await loadCalibrationReminder()).toEqual({ status: 'cooldown' })
     expect(rpc).toHaveBeenCalledWith('claim_voyager_calibration_reminder', { p_user: 'verified-buyer', p_snooze: false })
   })

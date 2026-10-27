@@ -14,13 +14,11 @@ export interface InitiationShipment {
 }
 export interface InitiationSnapshot {
   userId: string | null
-  /** Signed in with an anonymous checkout session; the email is not confirmed yet. */
-  anonymous: boolean
   role: string
   calibrated: boolean
   status: InitiationStatus
   membershipSource?: 'paid' | 'granted' | null
-  /** Kind of the confirmed purchase backing the current access, never a pending checkout. */
+  /** Kind of the confirmed purchase, never a pending checkout. */
   purchaseKind?: InitiationOrderKind | null
   availability: { remaining?: number | null; paid?: number | null; granted?: number | null; batch: string; capacity: number; initiated: number | null; checkoutOpen: boolean; reason: string | null }
   shipments: InitiationShipment[]

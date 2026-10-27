@@ -6,26 +6,20 @@ import { initiationClaimResult } from '@/lib/initiation-claim'
 import { initiationConfigurationError } from '@/lib/initiation-config'
 import { INITIATION_BATCH, INITIATION_CAPACITY, INITIAL_PACK_AMOUNT, INITIATION_UPGRADE_AMOUNT, type InitiationSnapshot, type InitiationPaymentStatus, type InitiationShipment, type InitiationConsoleClaimResult } from '@/lib/initiation-types'
 import { VOYAGER_PROFILE_VERSION } from '@/lib/voyager-intake'
-import { isAnonymousUser } from '@/lib/supabase/anonymous'
 
-/**
- * No caller-supplied user ID. Failures are unknown, never unpaid or zero seats.
- * `allowAnonymous` is for the purchase path: an anonymous checkout session sees
- * its own calibration and order instead of the guest view.
- */
-export async function getInitiationSnapshot({ allowAnonymous = false }: { allowAnonymous?: boolean } = {}): Promise<InitiationSnapshot> {
+/** No caller-supplied user ID. Failures are unknown, never unpaid or zero seats. */
+export async function getInitiationSnapshot(): Promise<InitiationSnapshot> {
   const snapshot: InitiationSnapshot = {
-    userId: null, anonymous: false, role: 'guest', calibrated: false, status: 'unknown',
+    userId: null, role: 'guest', calibrated: false, status: 'unknown',
     availability: { batch: INITIATION_BATCH, capacity: INITIATION_CAPACITY, initiated: null, checkoutOpen: false, reason: initiationConfigurationError() },
     shipments: [], consoleClaim: { eligible: false, claimed: false, href: null },
     legacyPackPurchased: false, paymentStatus: 'unknown', error: null,
   }
   try {
-    const client = await createClient({ allowAnonymous })
+    const client = await createClient()
     const { data: { user }, error: authError } = await client.auth.getUser()
     if (authError && authError.name !== 'AuthSessionMissingError') throw authError
     snapshot.userId = user?.id ?? null
-    snapshot.anonymous = isAnonymousUser(user)
     snapshot.status = user ? 'unknown' : 'guest'
     // schema_v83 has private tables; the verified session determines ownership.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,7 +65,6 @@ export async function getInitiationSnapshot({ allowAnonymous = false }: { allowA
     snapshot.status = newRecordsUnavailable ? 'unknown' : initiationMemberStatus(!!entitlement?.active, member, snapshot.legacyPackPurchased)
     snapshot.purchaseKind = newRecordsUnavailable ? null : initiationPurchaseKind(orders, entitlement, initial)
     snapshot.membershipSource = newRecordsUnavailable ? null : member?.source ?? null
-    snapshot.purchaseKind = newRecordsUnavailable ? null : initiationPurchaseKind(orders, entitlement, initial)
     snapshot.paymentStatus = (newRecordsUnavailable ? 'unknown' : orders[0]?.status ?? 'none') as InitiationPaymentStatus
     snapshot.shipments = [
       ...(shipments ?? []).map((s: { id: string; position: number; title: string; scheduled_month: string; status: InitiationShipment['status']; tracking_url: string | null; legacy_order_id: string | null }) => ({ id: s.id, position: s.position, title: s.title, scheduledMonth: s.scheduled_month, status: s.status, trackingUrl: s.tracking_url, source: s.legacy_order_id ? 'legacy_pack' as const : 'initiation' as const })),

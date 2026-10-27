@@ -5,7 +5,7 @@ import { parseCalibrationReminder, type CalibrationReminderResult } from '@/lib/
 
 async function reminder(snooze: boolean): Promise<CalibrationReminderResult> {
   try {
-    const client = await createClient({ allowAnonymous: true })
+    const client = await createClient()
     const { data: { user }, error: authError } = await client.auth.getUser()
     if (authError || !user) return { status: 'ineligible' }
     // Private records: ownership always comes from the verified session.

@@ -13,13 +13,13 @@ import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
 import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
 
 export const dynamic = 'force-dynamic'
-/** Authenticated POST only (anonymous checkout sessions included). All purchase facts are resolved on the server. */
+/** Authenticated POST only. All purchase facts are resolved on the server. */
 export async function POST(request: Request) {
   const configError = initiationConfigurationError()
   if (configError) return NextResponse.json({ error: configError }, { status: 503 })
   const origin = new URL(process.env.NEXT_PUBLIC_SITE_URL!).origin
   if (request.headers.get('origin') !== origin) return NextResponse.json({ error: 'Invalid checkout origin.' }, { status: 403 })
-  const client = await createClient({ allowAnonymous: true })
+  const client = await createClient()
   const { data: { user } } = await client.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Please log in before checkout.' }, { status: 401 })
   const stripe = getStripe()!
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       mode: 'payment', ui_mode: 'hosted_page', payment_method_types: ['card'],
       automatic_tax: { enabled: false }, allow_promotion_codes: false,
       line_items: [{ price: order.price_id, quantity: 1 }],
-      client_reference_id: user.id, customer_email: user.email || undefined,
+      client_reference_id: user.id, customer_email: user.email,
       metadata: { product_type: INITIATION_PRODUCT, order_kind: order.order_kind, order_id: order.id, user_id: user.id, batch: 'S26', pricing_version: order.pricing_version, capture_policy: 'contiguous_us_manual_v1' },
       payment_intent_data: { capture_method: 'manual', metadata: { product_type: INITIATION_PRODUCT, order_kind: order.order_kind, order_id: order.id } },
       shipping_address_collection: { allowed_countries: initiationShippingCountries(process.env.INITIATION_SHIPPING_COUNTRIES)! as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[] },

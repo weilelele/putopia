@@ -3,7 +3,7 @@ import { fixture } from '@/app/dev/voyager-initiation/fixtures'
 import { allowsCalibrationReminder, hasConfirmedInitiationPayment, parseCalibrationReminder, shouldInviteCalibration } from './post-payment-calibration'
 
 describe('post-payment Signal Calibration invitation', () => {
-  it.each(['initial_pack', 'complete_pack', 'upgraded', 'anonymous_initiated'] as const)('invites an uncalibrated %s buyer after confirmed payment', name => {
+  it.each(['initial_pack', 'complete_pack', 'upgraded'] as const)('invites an uncalibrated %s buyer after confirmed payment', name => {
     expect(shouldInviteCalibration({ ...fixture(name), calibrated: false })).toBe(true)
   })
   it.each(['guest', 'unpaid', 'granted', 'pending', 'payment_failed', 'canceled', 'refunded', 'disputed', 'payment_review', 'unknown', 'initial_upgrade_pending', 'legacy_pack'] as const)('does not treat %s as a confirmed new purchase', name => {

@@ -7,8 +7,6 @@ import { validateInitiationPayment, verifiedInitiationShipping, type InitiationP
 import { isInitiationShippingRegion } from '@/lib/initiation-checkout-policy'
 import { sendPendingInitiationMetaPurchases } from '@/lib/initiation-meta-purchases'
 import { sendPendingInitiationAnalytics } from '@/lib/initiation-analytics-outbox'
-import { guestSeatConflict, initiationBuyerId, normalizeGuestEmail } from '@/lib/guest-checkout'
-import { isAnonymousUser } from '@/lib/supabase/anonymous'
 
 /** Re-fetch Stripe state on every attempt, including retries after an ambiguous capture. */
 export async function reconcileInitiationSession(sessionId: string, stripe: Stripe): Promise<'paid' | 'released' | 'pending'> {
@@ -18,7 +16,7 @@ export async function reconcileInitiationSession(sessionId: string, stripe: Stri
   const admin = createAdminClient() as any
   const { data: order, error } = await admin.from('initiation_orders').select('*').eq('id', session.metadata.order_id).single()
   if (error || !order) throw new Error('Initiation order is unavailable')
-  if (session.livemode !== order.stripe_livemode || session.metadata.user_id !== initiationBuyerId(order) || session.metadata.order_kind !== order.order_kind ||
+  if (session.livemode !== order.stripe_livemode || session.metadata.user_id !== order.user_id || session.metadata.order_kind !== order.order_kind ||
     (order.stripe_session_id && order.stripe_session_id !== session.id)) throw new Error('Initiation session binding mismatch')
   const intentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id
   let intent = intentId ? await stripe.paymentIntents.retrieve(intentId) : null
@@ -69,21 +67,6 @@ export async function reconcileInitiationSession(sessionId: string, stripe: Stri
       if (legacy.error) throw legacy.error
       if (!legacy.data || legacy.data !== (order.initial_order_id ?? order.legacy_order_id)) decision = 'cancel_authorization'
     }
-    if (decision === 'capture') {
-      // An anonymous buyer paying with a seat holder's email is a logged-out member: never charge a second seat.
-      const email = normalizeGuestEmail(session.customer_details?.email)
-      const buyer = email ? await admin.auth.admin.getUserById(order.user_id) : null
-      if (buyer?.error) throw buyer.error
-      if (email && isAnonymousUser(buyer?.data.user)) {
-        const profiles = await admin.from('voyager_profiles').select('id').eq('email', email)
-        if (profiles.error) throw profiles.error
-        const holders = profiles.data.length
-          ? await admin.from('initiation_members').select('user_id').in('user_id', profiles.data.map((p: { id: string }) => p.id)).eq('active', true)
-          : { data: [], error: null }
-        if (holders.error) throw holders.error
-        if (guestSeatConflict({ id: order.user_id, anonymous: true }, holders.data.map((m: { user_id: string }) => m.user_id))) decision = 'cancel_authorization'
-      }
-    }
     if (decision === 'cancel_authorization') {
       intent = await stripe.paymentIntents.cancel(intent.id, {}, { idempotencyKey: `initiation:cancel:${order.id}` })
       if (intent.status !== 'canceled' || intent.amount_received !== 0) throw new Error('Authorization cancellation requires reconciliation')
@@ -122,29 +105,4 @@ export async function reconcileInitiationSession(sessionId: string, stripe: Stri
   try { await sendPendingInitiationAnalytics(admin, stripe, { orderId: order.id, limit: 2 }) }
   catch { console.warn('[initiation-analytics] Paid analytics deferred to the outbox retry') }
   return 'paid'
-}
-
-/**
- * A claimed guest purchase the account cannot take (it already holds a seat):
- * cancel the card authorization while it is still uncaptured, then release the
- * order through the normal reconciliation path. True when no money was taken.
- */
-export async function releaseUncapturedGuestOrder(orderId: string, stripe: Stripe): Promise<boolean> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const admin = createAdminClient() as any
-  const { data: order, error } = await admin.from('initiation_orders').select('id,status,stripe_session_id').eq('id', orderId).single()
-  if (error) throw error
-  if (!['pending', 'payment_review'].includes(order.status) || !order.stripe_session_id) return false
-  const session = await stripe.checkout.sessions.retrieve(order.stripe_session_id)
-  const intentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id
-  if (!intentId) return false
-  const intent = await stripe.paymentIntents.retrieve(intentId)
-  if (intent.metadata.order_id !== order.id || intent.status !== 'requires_capture') return false
-  try {
-    // Same idempotency key as the capture-time cancellation above.
-    await stripe.paymentIntents.cancel(intent.id, {}, { idempotencyKey: `initiation:cancel:${order.id}` })
-  } catch {
-    return false // Captured concurrently; a person must refund it.
-  }
-  return await reconcileInitiationSession(session.id, stripe) === 'released'
 }

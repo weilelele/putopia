@@ -1,6 +1,5 @@
 import { isInitiationOrderAmount } from './initiation-pricing'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
-import { initiationBuyerId } from './guest-checkout'
 
 export interface InitiationPaymentEvidence {
   status: string | null
@@ -20,12 +19,12 @@ export interface InitiationPaymentEvidence {
   lineCount: number
 }
 export function validateInitiationPayment(e: InitiationPaymentEvidence, order: {
-  pricing_version?: string | null; stripe_livemode: boolean; order_kind: InitiationOrderKind; amount: number; currency: string; id: string; user_id: string; purchased_by?: string | null; stripe_session_id: string | null; price_id: string; product_id: string
+  pricing_version?: string | null; stripe_livemode: boolean; order_kind: InitiationOrderKind; amount: number; currency: string; id: string; user_id: string; stripe_session_id: string | null; price_id: string; product_id: string
 }): boolean {
   return e.livemode === order.stripe_livemode && e.status === 'complete' && e.paymentStatus === 'paid' && e.mode === 'payment'
     && e.orderKind === order.order_kind && isInitiationOrderAmount(order)
     && e.amount === order.amount && e.currency === 'usd' && order.currency === 'usd'
-    && e.productType === INITIATION_PRODUCT && e.userId === initiationBuyerId(order) && e.orderId === order.id
+    && e.productType === INITIATION_PRODUCT && e.userId === order.user_id && e.orderId === order.id
     && (!order.stripe_session_id || order.stripe_session_id === e.sessionId)
     && e.lineCount === 1 && e.quantity === 1 && e.priceId === order.price_id && e.productId === order.product_id
 }
