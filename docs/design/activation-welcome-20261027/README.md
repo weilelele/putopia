@@ -18,6 +18,8 @@
 
 用户确认的去向是首次进入 Initiation 的 onboarding 简报，不是一个名为 `/initiation/new` 的新产品页。整张图片与主按钮都使用现有 `/voyager-initiation?briefing=1`，即使该浏览器已看过简报也可重新打开；简报自身保留已付款用户等既有资格判断。次按钮为 `/console`。
 
+2026-10-28 补充：已激活账号再次打开签名有效的激活链接，即使超过 24 小时，也不显示链接过期。当前浏览器已登录则整页跳转 Dashboard（`/console`）；未登录则到 `/login?redirect=%2Fconsole`，登录后回 Dashboard，不再沿用旧激活任务的目的地。旧链接本身不会创建登录会话。尚未激活的账号仍须在链接生成后 24 小时内设置身份，过期后进入 `/auth/expired` 重发入口；设置密码的服务端校验保留有效期限制。
+
 `/register/complete` 是注册任务的完成页：无 ownerTab，不显示全局导航，退出兜底 Dashboard。`/dev/activation-welcome` 仅用于开发与分支预览的无数据写入视觉夹具；正式生产返回 404。
 
 ## 素材与验证

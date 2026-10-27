@@ -53,9 +53,9 @@ export default function RegisterPage() {
   useEffect(() => {
     const key = new URLSearchParams(window.location.search).get('key')
     if (key) {
-      checkActivationLink(key).then(({ status, next }) => {
-        if (status === 'expired') router.replace('/auth/expired')
-        else if (status === 'activated') router.replace(next ? `/login?redirect=${encodeURIComponent(next)}` : '/login')
+      checkActivationLink(key).then((result) => {
+        if (result.status === 'expired') router.replace('/auth/expired')
+        else if (result.status === 'activated') window.location.replace(result.destination)
         else { setActivationKey(key); setChecking(false) }
       })
       return

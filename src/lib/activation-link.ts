@@ -16,8 +16,8 @@ export function createActivationToken(input: { userId: string; next?: string | n
   return `${body}.${b64(sign(body, secret))}`
 }
 
-/** The claims of a genuine, unexpired token, or null. */
-export function readActivationToken(token: unknown, secret: string, now: number): ActivationClaims | null {
+/** Verify identity for status checks only. Expiry is still enforced by readActivationToken before any activation. */
+export function verifyActivationToken(token: unknown, secret: string): ActivationClaims | null {
   if (typeof token !== 'string' || token.length > 1024) return null
   const [body, mac, extra] = token.split('.')
   if (!body || !mac || extra !== undefined) return null
@@ -26,11 +26,17 @@ export function readActivationToken(token: unknown, secret: string, now: number)
   if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return null
   try {
     const claims = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as { u?: unknown; n?: unknown; x?: unknown }
-    if (typeof claims.u !== 'string' || !claims.u || typeof claims.x !== 'number' || claims.x <= now) return null
+    if (typeof claims.u !== 'string' || !claims.u || typeof claims.x !== 'number' || !Number.isFinite(claims.x)) return null
     return { userId: claims.u, next: typeof claims.n === 'string' && claims.n.startsWith('/') && !claims.n.startsWith('//') ? claims.n : null, expiresAt: claims.x }
   } catch {
     return null
   }
+}
+
+/** The claims of a genuine, unexpired token, or null. Required before setting credentials. */
+export function readActivationToken(token: unknown, secret: string, now: number): ActivationClaims | null {
+  const claims = verifyActivationToken(token, secret)
+  return claims && claims.expiresAt > now ? claims : null
 }
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]!)
