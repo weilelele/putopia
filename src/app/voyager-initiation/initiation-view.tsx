@@ -15,12 +15,15 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import type { VoyagerQuizServices } from '@/components/voyager-profile-quiz'
 import { PostPaymentCalibration } from './post-payment-calibration'
+import { CheckoutSignIn, type CheckoutSignInServices, type EmailCheckoutStep } from './checkout-sign-in'
 import styles from './initiation.module.css'
 import { INITIATION_FAQ } from './faq'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
+import { requestInitiationCheckout, type InitiationCheckoutInput, type InitiationCheckoutResult } from '@/lib/initiation-checkout-request'
+import { initiationPackProgress } from '@/lib/initiation-pack-progress'
 import { InitiationBriefing } from './briefing/initiation-briefing'
 import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, shouldAutoOpenBriefing, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 
@@ -56,15 +59,18 @@ const packs = [
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
 ]
 
-export type InitiationCheckoutResult = { status: 'ready' | 'not_open' | 'unauthenticated'; message: string }
 export type InitiationViewProps = {
   initialBundle?: 'initial' | 'standard'
   members?: InitiationPublicMember[]
   snapshot: InitiationSnapshot
   deviceSource?: string | null
   checkoutCanceled?: boolean
-  beginCheckout: () => Promise<InitiationCheckoutResult>
+  startCheckout?: (input: InitiationCheckoutInput) => Promise<InitiationCheckoutResult>
   quizServices?: VoyagerQuizServices
+  /** Sign-in calls for the Pay dialog; fixtures pass fakes so no email or account is created. */
+  signInServices?: CheckoutSignInServices
+  /** Guest email checkout; fixtures pass a fake so no account or payment session is created. */
+  startEmailCheckout?: (email: string, bundle: 'initial' | 'standard', options?: { upgrade?: boolean }) => Promise<EmailCheckoutStep>
   paymentPlacement?: 'top' | 'bottom'
   analyticsEnvironment?: string
   regions?: BriefingRegion[]
@@ -72,7 +78,7 @@ export type InitiationViewProps = {
   briefingParam?: string
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, beginCheckout, quizServices, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -84,11 +90,24 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const [bundle, setBundle] = useState<'initial' | 'standard'>(initialBundle)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const checkoutErrorRef = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    if (!error) return
+    checkoutErrorRef.current?.focus({ preventScroll: true })
+    checkoutErrorRef.current?.scrollIntoView({ block: 'center' })
+  }, [error])
   const inFlight = useRef(false)
+  // A guest picks a bundle and enters an email: a new email goes straight to payment,
+  // an activated account signs in with its password and then continues with that bundle.
+  const [signInOpen, setSignInOpen] = useState(false)
+  const [signedInHere, setSignedInHere] = useState(false)
+  const pendingBundle = useRef<'initial' | 'standard'>(initialBundle)
   const { availability, status, shipments, consoleClaim } = snapshot
   const initiated = status === 'initiated'
   const granted = status === 'granted'
   const legacy = status === 'legacy_pack'
+  const memberView = initiated || legacy
+  const progress = initiationPackProgress(snapshot)
   const kind = legacy ? 'legacy_upgrade' : bundle
   const storedBriefing = useSyncExternalStore(subscribeToSource, readBriefingStore, serverBriefingStore)
   const [briefing, setBriefing] = useState<'idle' | 'replay' | 'link' | 'dismissed'>(() => briefingLinkOpens(snapshot.status, briefingParam) ? 'link' : 'idle')
@@ -97,7 +116,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const briefingOpen = briefing === 'replay' || briefing === 'link' || (briefing === 'idle' && briefingAuto)
   const soldOut = !snapshot.ownsSeat && (availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity))
   const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind, userId: snapshot.userId,
-    internal: snapshot.role === 'architect', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
+    internal: snapshot.role === 'architect' || analyticsEnvironment === 'fixture', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
 
   const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null || briefingOpen)
 
@@ -106,23 +125,47 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     const chosen = override ?? bundle
     captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
     setError('')
-    if (status === 'guest') { window.location.assign(initiationLoginPath(source, chosen)); return }
+    if (status === 'guest' && !signedInHere) { pendingBundle.current = chosen; setSignInOpen(true); return }
+    await continueToCheckout(chosen)
+  }
+
+  function signedIn() {
+    setSignedInHere(true)
+    setSignInOpen(false)
+    void continueToCheckout(pendingBundle.current, true)
+  }
+
+  async function emailCheckout(email: string, options?: { upgrade?: boolean }): Promise<EmailCheckoutStep> {
+    const chosen = pendingBundle.current
+    if (startEmailCheckout) return startEmailCheckout(email, chosen, options)
+    const unavailable = 'Checkout is unavailable. Please try again.'
+    try {
+      const response = await fetch('/api/initiation-checkout/email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, bundle: chosen, upgrade: options?.upgrade === true, from: source, analytics: analyticsContext() }) })
+      const data = await response.json()
+      if (response.ok && typeof data.url === 'string' && new URL(data.url).protocol === 'https:') {
+        window.location.assign(data.url)
+        return { kind: 'redirected' }
+      }
+      if (response.ok && ['password', 'activation_sent', 'already_member', 'upgrade'].includes(data.next)) return { kind: data.next }
+      if (response.ok && data.next === 'checkout') { signedIn(); return { kind: 'redirected' } }
+      return { kind: 'error', message: typeof data.error === 'string' ? data.error : unavailable }
+    } catch {
+      return { kind: 'error', message: unavailable }
+    }
+  }
+
+  async function continueToCheckout(chosen: 'initial' | 'standard', afterSignIn = false) {
+    if (inFlight.current) return
     inFlight.current = true
     setBusy(true)
     try {
-      const result = await beginCheckout()
-      if (result.status === 'unauthenticated') {
+      const result = await startCheckout({ bundle: legacy ? 'standard' : chosen, from: source, analytics: analyticsContext(), afterSignIn })
+      if (result.status === 'refresh') {
+        window.location.reload()
+      } else if (result.status === 'unauthenticated') {
         window.location.assign(initiationLoginPath(source, chosen))
       } else if (result.status === 'ready') {
-        const response = await fetch('/api/initiation-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bundle: legacy ? 'standard' : chosen, from: source, analytics: analyticsContext() }) })
-        const data = await response.json()
-        if (response.status === 401) {
-          window.location.assign(initiationLoginPath(source, chosen))
-        } else if (response.ok && typeof data.url === 'string' && new URL(data.url).protocol === 'https:') {
-          window.location.assign(data.url)
-        } else {
-          setError(typeof data.error === 'string' ? data.error : 'Checkout is unavailable. Please try again.')
-        }
+        window.location.assign(result.url)
       } else {
         setError(result.message)
       }
@@ -148,7 +191,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     : soldOut ? `${availability.batch} is fully claimed.`
     : !availability.checkoutOpen && status !== 'guest' ? (availability.reason ?? 'Checkout is not open yet.') : null
 
-  const paymentAtBottom = paymentPlacement === 'bottom' && !initiated && !granted
+  const paymentAtBottom = (legacy || paymentPlacement === 'bottom') && !initiated && !granted
   const BenefitHeading = paymentAtBottom ? 'h3' : 'h2'
   const PackHeading = paymentAtBottom ? 'h4' : 'h3'
   const seatSummary = (
@@ -157,11 +200,20 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             <div><dt className={styles.seatLabel}><span>INITIATED</span><button type="button" className={styles.batchInfo} aria-label="About initiated places" aria-haspopup="dialog" onClick={() => setDialog('initiated')}><CircleAlert size={15} aria-hidden /></button></dt><dd aria-label={availability.initiated === null ? 'Count not yet available' : undefined}>{availability.initiated ?? '—'}</dd><dd className={styles.memberQueue}><MemberStrip members={members} /></dd></div>
           </dl>
   )
+  const memberSummary = <div className={styles.join}>
+    <p className={styles.memberStatus}>{snapshot.ownsSeat ? `${availability.batch} · Voyager` : 'Voyager'}</p>
+    <p className={styles.memberBundle}>{initiated ? `Complete Voyager Pack${snapshot.purchaseKind === 'legacy_upgrade' ? ' · Upgraded' : ''}` : 'Initial Voyager Pack'}</p>
+    <p className={styles.packSummary} role="status">{progress.pending === null ? `${progress.included} packs included · Delivery progress unavailable` : `${progress.delivered} delivered · ${progress.pending} awaiting delivery`}</p>
+    {legacy && progress.packs.slice(2).every(pack => pack.awaitingActivation) && <p className={styles.paymentTerms}>Packs 3–4 await activation.</p>}
+    {snapshot.error && <p className={styles.notice} role="alert">{snapshot.error}</p>}
+    {snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{legacy && snapshot.paymentStatus === 'pending' ? 'Your upgrade payment is being confirmed. Your existing Pack access stays available.' : paymentMessages[snapshot.paymentStatus]}</p>}
+    <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
+  </div>
   const joinPanel = (
         <div data-initiation-section="payment" className={styles.join}>
           {checkoutCanceled && !initiated && !granted && <p className={styles.notice} role="status">You returned from checkout without completing it. Payment status below comes from your order records.</p>}
-          {snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
-          {snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{paymentMessages[snapshot.paymentStatus]}</p>}
+          {!memberView && snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
+          {!memberView && snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{paymentMessages[snapshot.paymentStatus]}</p>}
           {granted ? <>
             <p className={styles.memberStatus}>{availability.batch} · Membership registered</p>
             <p className={styles.paymentTerms}>You have joined the Collective through a granted membership. No Initiation payment is recorded.</p>
@@ -176,7 +228,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           </> : <>
           {!paymentAtBottom && seatSummary}
           <p className={styles.eyebrow}>Your initiation</p>
-          <h2 className={styles.purchaseTitle}>{legacy ? 'Complete your packs.' : 'Choose your bundle.'}</h2>
+          <h2 className={styles.purchaseTitle}>{legacy ? 'Activate Packs 3–4.' : 'Choose your bundle.'}</h2>
           {legacy ? <p className={styles.paymentTerms}>Add the remaining two packs. Your existing Voyager membership stays with you.</p> : <div className={styles.sharedBenefits}>
             <p>Voyager membership included in both.</p>
           </div>}
@@ -195,15 +247,14 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : soldOut ? 'FULLY CLAIMED' : `${legacy ? 'UPGRADE' : 'CONTINUE'} · ${initiationPriceLabel(kind)}`}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
+          {error && <p ref={checkoutErrorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
-            <h2>Delivery</h2>
             <p>Contiguous US. Shipping &amp; taxes included.</p>
             <Link className={styles.textLink} href="/terms/initiation">Delivery &amp; aftercare <ArrowRight size={18} aria-hidden /></Link>
           </section>
           {!availability.checkoutOpen && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
           </>}
-          {error && <p className={styles.error} role="alert">{error}</p>}
         </div>
   )
 
@@ -212,36 +263,38 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       <Link href="/console" className="archive-back-link"><ArrowLeft aria-hidden size={20} />Back to Dashboard</Link>
       <header data-initiation-section="intro" className={styles.hero}>
         <div className={styles.introduction}>
-          <p className={styles.eyebrow}>{initiated || granted ? 'Your membership' : legacy ? 'Your Initial membership' : 'Become a Voyager'}</p>
+          <p className={styles.eyebrow}>{memberView || granted ? 'Your membership' : 'Become a Voyager'}</p>
           <h1>Voyager<br />Initiation</h1>
           <p className={styles.lede}>One initiation. A lasting place in the Collective.</p>
           {briefingAudience(status) && <button type="button" className={styles.textLink} aria-haspopup="dialog" onClick={() => setBriefing('replay')}>Watch the briefing <ArrowRight size={18} aria-hidden /></button>}
         </div>
-        {paymentAtBottom ? seatSummary : joinPanel}
+        {memberView ? memberSummary : paymentAtBottom ? seatSummary : joinPanel}
       </header>
 
       <section aria-label={paymentAtBottom ? undefined : 'Voyager benefits'} aria-labelledby={paymentAtBottom ? 'voyager-benefits-title' : undefined}>
-      {paymentAtBottom && <h2 id="voyager-benefits-title" className={styles.benefitsTitle}>Your life as<br />a Voyager.</h2>}
+      {paymentAtBottom && <h2 id="voyager-benefits-title" className={styles.benefitsTitle}>{memberView ? 'Your Voyager packs.' : <>Your life as<br />a Voyager.</>}</h2>}
       {(!granted || shipments.length > 0) && <section className={styles.section} aria-labelledby="packs-title">
         <div className={styles.sectionHeading}><BenefitHeading id="packs-title">{paymentAtBottom && <span className={styles.chapter}>01</span>}{paymentAtBottom ? 'Physical Voyager Packs' : 'Voyager Packs'}</BenefitHeading></div>
         <ol className={styles.packs}>
           {packs.map((pack, index) => {
-            const shipment = shipments.find(item => item.position === index + 1)
+            const state = progress.packs[index]
+            const shipment = state.shipment
             const deviceHref = consoleClaim.batch ? `/devices/batches/${consoleClaim.batch.slug}` : consoleDevicePath(source, consoleClaim.href)
-            return <li data-initiation-section={`pack_${index + 1}`} key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${index === 1 ? styles.antennaPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''}`}>
+            return <li data-initiation-section={`pack_${index + 1}`} key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${index === 1 ? styles.antennaPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''} ${state.awaitingActivation ? styles.awaitingActivation : ''}`}>
               {!pack.featured && <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 320px, (min-width: 768px) 240px, 42vw" preload={index === 0} /></div>}
               <div className={styles.packCopy}>
-                <p className={styles.packageNumber}>Package {index + 1}<span> · {shipment?.scheduledMonth ? new Date(`${shipment.scheduledMonth}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : pack.dispatch}</span></p>
+                <p className={styles.packageNumber}>Package {index + 1}{!state.awaitingActivation && <span> · {shipment?.scheduledMonth ? new Date(`${shipment.scheduledMonth}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : pack.dispatch}</span>}</p>
                 <PackHeading>{pack.title}</PackHeading>
                 {legacy && index < 2 && <p className={styles.packAccess}>Included in Initial Pack</p>}
                 {pack.featured && consoleClaim.claimed && <p className={styles.packAccess}>{consoleClaim.batch?.name ?? 'Batch details unavailable'}</p>}
                 <p className={index === 1 ? styles.antennaCopy : undefined}>{pack.description}</p>
-                {shipment ? shipment.status !== 'planned' && <p className={styles.shipmentStatus}>{shipment.status}</p> : initiated ? <p className={styles.shipmentStatus}>Progress unavailable</p> : null}
+                {(memberView || shipment) && <p className={styles.shipmentStatus}><span className={styles.statusLabel}>Status</span>{state.label}</p>}
                 {shipment?.trackingUrl && <a className={styles.textLink} href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">Track delivery <ArrowRight size={18} aria-hidden /></a>}
+                {state.awaitingActivation && <a className={styles.textLink} href="#activate-packs">Activate with upgrade <ArrowRight size={18} aria-hidden /></a>}
               </div>
               {pack.featured && <>
                 <ConsoleCarousel suspended={dialog !== null} />
-                <Link className={styles.consoleExplore} href={deviceHref}>{consoleClaim.claimed ? 'View your batch' : 'Explore the Console'} <ArrowRight size={22} aria-hidden /></Link>
+                <Link className={styles.consoleExplore} href={deviceHref}>{consoleClaim.claimed ? 'View your batch' : state.claimable ? 'View device & claim' : 'Explore the Console'} <ArrowRight size={22} aria-hidden /></Link>
               </>}
             </li>
           })}
@@ -272,7 +325,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         </div>
       </section>
       </section>
-      {paymentAtBottom && <section className={`${styles.section} ${styles.bottomPayment}`} aria-label="Voyager Initiation checkout">{joinPanel}</section>}
+      {paymentAtBottom && <section id={legacy ? 'activate-packs' : undefined} className={`${styles.section} ${styles.bottomPayment}`} aria-label={legacy ? 'Activate Packs 3–4' : 'Voyager Initiation checkout'}>{joinPanel}</section>}
       <section data-initiation-section="faq" className={styles.section} aria-labelledby="initiation-faq-title">
         <div className={styles.sectionHeading}><h2 id="initiation-faq-title">FAQ</h2></div>
         {INITIATION_FAQ.map(item => <details key={item.question} className={styles.faqItem}>
@@ -285,6 +338,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       seats={{ batch: availability.batch, capacity: availability.capacity, initiated: availability.initiated }} offers={briefingOffers(status)}
       busy={busy} unavailable={briefingUnavailable} capture={captureAnalytics} onChoose={chooseFromBriefing} onClose={closeBriefing} />}
     {quizServices && <PostPaymentCalibration snapshot={snapshot} quizServices={quizServices} autoInvite onAnalytics={captureAnalytics} />}
+    <CheckoutSignIn open={signInOpen} onClose={() => setSignInOpen(false)} onSignedIn={signedIn} onEmail={emailCheckout} capture={captureAnalytics} services={signInServices} />
     <ArchiveSheet open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">
       <p>All Initial Pack members, including historical $12 buyers, can add Console + Pack 4 for $460.</p>
       <p>Your first two packs remain separate. The upgrade is a fixed additional payment, not a subtraction of your earlier payment.</p>

@@ -13,6 +13,30 @@ import { getOrAssignExperimentGroup } from '@/lib/actions/experiment'
 import { trackRedditSignUp } from '@/lib/actions/reddit-ads'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 import { safeAppPath } from '@/lib/ui-navigation'
+import { takePostRegisterRedirect } from '@/lib/post-register-redirect'
+import { activateAccount, checkActivationLink } from '@/lib/actions/activation'
+
+async function trackRegistration(userId: string, email: string | undefined, displayName: string) {
+  const experimentGroup = await getOrAssignExperimentGroup()
+  if (email) {
+    syncLoopsRegistration(email, displayName, userId).catch(() => {})
+  }
+  const utm = getFirstTouch()
+  const redditResult = await trackRedditSignUp(utm.rdt_cid)
+  if (redditResult.conversionId) {
+    trackRedditPixelEvent('SignUp', redditResult.conversionId)
+  }
+  posthog.identify(userId, { email, display_name: displayName, registered_at: new Date().toISOString() })
+  posthog.capture('account_registered', {
+    experiment_group:  experimentGroup ?? undefined,
+    display_name:  displayName,
+    utm_source:    utm.utm_source   ?? undefined,
+    utm_medium:    utm.utm_medium   ?? undefined,
+    utm_campaign:  utm.utm_campaign ?? undefined,
+    utm_content:   utm.utm_content  ?? undefined,
+    fbclid:        utm.fbclid       ?? undefined,
+  })
+}
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('')
@@ -21,10 +45,21 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
+  // Activation links (?key=) need no session: the account signs in once its password is set.
+  const [activationKey, setActivationKey] = useState<string | null>(null)
   const router = useRouter()
 
-  // Guard: must have an active session (from invite link via /auth/callback)
+  // Guard: an activation link that can still set a password, or an active session (older invite links via /auth/callback)
   useEffect(() => {
+    const key = new URLSearchParams(window.location.search).get('key')
+    if (key) {
+      checkActivationLink(key).then(({ status, next }) => {
+        if (status === 'expired') router.replace('/auth/expired')
+        else if (status === 'activated') router.replace(next ? `/login?redirect=${encodeURIComponent(next)}` : '/login')
+        else { setActivationKey(key); setChecking(false) }
+      })
+      return
+    }
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
@@ -53,25 +88,54 @@ export default function RegisterPage() {
     }
 
     setLoading(true)
-    const supabase = createClient()
-
-    // Set password on the invite-created account
-    const { error: updateError } = await supabase.auth.updateUser({
-      password,
-      data: { display_name: displayName.trim() },
-    })
-
-    if (updateError) {
-      setError(`ERR: ${updateError.message.toUpperCase()}`)
+    try {
+      await register()
+    } catch {
+      setError('ERR: REGISTRATION COULD NOT BE COMPLETED. PLEASE TRY AGAIN.')
       setLoading(false)
-      return
+    }
+  }
+
+  const register = async () => {
+    const supabase = createClient()
+    let activatedNext: string | null = null
+
+    if (activationKey) {
+      // The server sets the password and profile, then this browser signs in with it.
+      const activated = await activateAccount(activationKey, displayName, password)
+      if (!activated.ok) {
+        if (activated.reason === 'expired') { router.replace('/auth/expired'); return }
+        setError(activated.message)
+        setLoading(false)
+        return
+      }
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: activated.email, password })
+      if (signInError) {
+        setError('ERR: ACCOUNT ACTIVATED. PLEASE LOG IN WITH YOUR NEW ACCESS CODE.')
+        setLoading(false)
+        return
+      }
+      activatedNext = activated.next
+    } else {
+      // Set password on the invite-created account
+      const { error: updateError } = await supabase.auth.updateUser({
+        password,
+        data: { display_name: displayName.trim() },
+      })
+
+      // A retry after a half-finished attempt resends the password that is already set.
+      if (updateError && updateError.code !== 'same_password') {
+        setError(`ERR: ${updateError.message.toUpperCase()}`)
+        setLoading(false)
+        return
+      }
     }
 
-    // Create voyager profile
+    // Create voyager profile (activation links already did, on the server)
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('voyager_profiles') as any).upsert({
+      const { error: profileError } = activationKey ? { error: null } : await (supabase.from('voyager_profiles') as any).upsert({
         id: user.id,
         display_name: displayName.trim(),
         bio: null,
@@ -86,31 +150,22 @@ export default function RegisterPage() {
         email: user.email?.toLowerCase() ?? null,
         registered_at: new Date().toISOString(),
       }, { onConflict: 'id' })
-      const experimentGroup = await getOrAssignExperimentGroup()
-      if (user.email) {
-        syncLoopsRegistration(user.email, displayName.trim(), user.id).catch(() => {})
+      if (profileError) {
+        setError('ERR: PROFILE COULD NOT BE SAVED. PLEASE TRY AGAIN.')
+        setLoading(false)
+        return
       }
-      const utm = getFirstTouch()
-      const redditResult = await trackRedditSignUp(utm.rdt_cid)
-      if (redditResult.conversionId) {
-        trackRedditPixelEvent('SignUp', redditResult.conversionId)
-      }
-      posthog.identify(user.id, { email: user.email, display_name: displayName.trim(), registered_at: new Date().toISOString() })
-      posthog.capture('account_registered', {
-        experiment_group:  experimentGroup ?? undefined,
-        display_name:  displayName.trim(),
-        utm_source:    utm.utm_source   ?? undefined,
-        utm_medium:    utm.utm_medium   ?? undefined,
-        utm_campaign:  utm.utm_campaign ?? undefined,
-        utm_content:   utm.utm_content  ?? undefined,
-        fbclid:        utm.fbclid       ?? undefined,
-      })
+      // Tracking is best effort: it must never keep a registered account on this screen.
+      const tracking = trackRegistration(user.id, user.email ?? undefined, displayName.trim()).catch(() => {})
+      await Promise.race([tracking, new Promise((resolve) => setTimeout(resolve, 3000))])
     }
 
-    const requested = new URLSearchParams(window.location.search).get('redirect')
-    const destination = safeAppPath(requested, window.location.origin) ?? '/console'
-    router.push(destination === '/login' || destination === '/register' ? '/console' : destination)
-    router.refresh()
+    const requested = activatedNext ?? new URLSearchParams(window.location.search).get('redirect')
+    let remembered: string | null = null
+    try { remembered = takePostRegisterRedirect(localStorage, window.location.origin, Date.now()) } catch { /* Storage is a convenience only. */ }
+    const destination = safeAppPath(requested, window.location.origin) ?? remembered ?? '/console'
+    // Full load: the client router cache can still hold the pre-registration redirect back to /register.
+    window.location.assign(destination === '/login' || destination === '/register' ? '/console' : destination)
   }
 
   if (checking) {
@@ -126,7 +181,7 @@ export default function RegisterPage() {
 
       <div className="archive-auth-shell">
         <header className="archive-auth-heading">
-          <p>INVITATION VERIFIED</p>
+          <p>{activationKey ? 'ACTIVATE ACCOUNT' : 'INVITATION VERIFIED'}</p>
           <h1>ESTABLISH <span>IDENTITY</span></h1>
         </header>
 

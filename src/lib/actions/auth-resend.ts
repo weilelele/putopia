@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
+import { findAuthUserByEmail, sendActivationEmail } from '@/lib/activation'
 
 export interface ResendResult {
   ok: boolean
@@ -11,6 +12,7 @@ export interface ResendResult {
 /**
  * Resend an access link to a user whose invite/magic link has expired.
  * Checks that the email belongs to an existing invited account before sending.
+ * An account that has not set its password yet gets a new activation link instead.
  */
 export async function resendAccessLink(email: string): Promise<ResendResult> {
   const admin = createAdminClient()
@@ -24,11 +26,16 @@ export async function resendAccessLink(email: string): Promise<ResendResult> {
 
   // `email` exists in the DB but isn't in the generated TS types — cast to bypass.
   const { data: profile } = await (admin.from('voyager_profiles' as never) as ReturnType<typeof admin.from>)
-    .select('id')
+    .select('id, registered_at')
     .eq('id', authUser.id)
     .maybeSingle()
 
   if (!profile) return { ok: false, error: 'NO ACCOUNT FOUND FOR THIS EMAIL.' }
+  if (!(profile as { registered_at: string | null }).registered_at) {
+    const initiation = authUser.app_metadata?.signup_source === 'initiation_email_checkout'
+    const sent = await sendActivationEmail({ userId: authUser.id, email: normalised, purpose: initiation ? 'initiation' : 'signup', next: initiation ? '/voyager-initiation' : null })
+    return sent.error ? { ok: false, error: sent.error.toUpperCase() } : { ok: true }
+  }
 
   // Generate a magic link and send it ourselves. Supabase Admin generateLink()
   // returns an action_link; it does not deliver an email.
@@ -61,19 +68,6 @@ export async function resendAccessLink(email: string): Promise<ResendResult> {
   })
   if (send.error) return { ok: false, error: send.error.toUpperCase() }
   return { ok: true }
-}
-
-async function findAuthUserByEmail(email: string) {
-  const admin = createAdminClient()
-  let page = 1
-  while (true) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 })
-    if (error) return null
-    const found = data.users.find((u) => u.email?.toLowerCase() === email)
-    if (found) return found
-    if (!data.nextPage) return null
-    page = data.nextPage
-  }
 }
 
 function buildAccessLinkHtml(actionLink: string) {

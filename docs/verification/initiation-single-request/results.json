@@ -1,0 +1,385 @@
+{
+  "date": "2026-10-27",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "source": {
+    "benchmark": "7cd2bd7e326a918b1a4acaf5c2d3d854bce9de3c",
+    "finalCode": "db19f5c4e9c18696a7ae640df9c6367e6fbc95c8",
+    "beforeDeployment": "dpl_7i9ANPkDyBj3afBYpDunJei3SnSi",
+    "benchmarkDeployment": "dpl_7nYgMPk59zLWP29ueahnnx6YFZWY",
+    "finalCodeDeployment": "dpl_8poNresjNvVzV2DBeCRLZ1RLpz9V"
+  },
+  "method": "Host clock before actual click through real Stripe page: correct host, enabled visible card-number input, LOADING-container hidden (including its animation), document load complete. Read-only DOM polling; includes automation overhead. Warm browser, no CPU/network throttling.",
+  "summary": {
+    "pairedReuse": {
+      "samplesPerVersion": 5,
+      "beforeMedianMs": 2731,
+      "afterMedianMs": 1807,
+      "reductionPercent": 33.8
+    },
+    "newSession": {
+      "beforeMs": 3501,
+      "afterMs": 2536,
+      "samplesPerVersion": 1
+    },
+    "guestNewEmail": {
+      "completeMs": 3423,
+      "samples": 1,
+      "timer": "CONTINUE TO PAYMENT after email entry; excludes human typing"
+    }
+  },
+  "browser": [
+    {
+      "phase": "before_warmup",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:27:21.849Z",
+      "completeMs": 3888,
+      "polls": 92,
+      "sessionId": "cs_test_a1dJROZvt7WGEYTRHLyxkiEmQEK5HF6oonNOcw1Sj1VZ1QtD0VKfsnPabc"
+    },
+    {
+      "phase": "before_warmup",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:27:52.737Z",
+      "completeMs": 2926,
+      "polls": 130,
+      "sessionId": "cs_test_a1dJROZvt7WGEYTRHLyxkiEmQEK5HF6oonNOcw1Sj1VZ1QtD0VKfsnPabc",
+      "amountVisible": true
+    },
+    {
+      "phase": "before_warmup",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:27:56.793Z",
+      "completeMs": 2805,
+      "polls": 126,
+      "sessionId": "cs_test_a1dJROZvt7WGEYTRHLyxkiEmQEK5HF6oonNOcw1Sj1VZ1QtD0VKfsnPabc",
+      "amountVisible": true
+    },
+    {
+      "phase": "before_warmup",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:28:00.617Z",
+      "completeMs": 2767,
+      "polls": 146,
+      "sessionId": "cs_test_a1dJROZvt7WGEYTRHLyxkiEmQEK5HF6oonNOcw1Sj1VZ1QtD0VKfsnPabc",
+      "amountVisible": true
+    },
+    {
+      "phase": "before_warmup",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:28:04.223Z",
+      "completeMs": 2705,
+      "polls": 128,
+      "sessionId": "cs_test_a1dJROZvt7WGEYTRHLyxkiEmQEK5HF6oonNOcw1Sj1VZ1QtD0VKfsnPabc",
+      "amountVisible": true
+    },
+    {
+      "phase": "before",
+      "kind": "new_session",
+      "method": "poll",
+      "start": "2026-10-27T07:30:28.484Z",
+      "completeMs": 3501,
+      "polls": 123,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "before",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:30:32.855Z",
+      "completeMs": 3174,
+      "polls": 134,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "before",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:30:37.098Z",
+      "completeMs": 2972,
+      "polls": 102,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "before",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:30:40.951Z",
+      "completeMs": 2619,
+      "polls": 119,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "before",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:30:44.694Z",
+      "completeMs": 2685,
+      "polls": 107,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "before",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:30:48.268Z",
+      "completeMs": 2731,
+      "polls": 148,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "after_warmup",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:31:49.878Z",
+      "completeMs": 2723,
+      "polls": 149,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "after",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:31:53.877Z",
+      "completeMs": 1679,
+      "polls": 91,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "after",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:31:56.362Z",
+      "completeMs": 1960,
+      "polls": 116,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "after",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:31:59.257Z",
+      "completeMs": 1807,
+      "polls": 94,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "after",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:32:02.003Z",
+      "completeMs": 2634,
+      "polls": 123,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "after",
+      "kind": "reuse",
+      "method": "poll",
+      "start": "2026-10-27T07:32:05.489Z",
+      "completeMs": 1660,
+      "polls": 81,
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amountVisible": true
+    },
+    {
+      "phase": "after",
+      "kind": "new_session",
+      "method": "poll",
+      "start": "2026-10-27T07:33:03.861Z",
+      "completeMs": 2536,
+      "polls": 111,
+      "sessionId": "cs_test_a15wYbCVr3gFpATN4W9ZVdxRAi678BvWvXg3ynNsuHsF3sxaZVGeI4ESdS",
+      "amountVisible": true
+    },
+    {
+      "phase": "after",
+      "kind": "guest_new_email",
+      "method": "poll",
+      "start": "2026-10-27T07:33:35.067Z",
+      "completeMs": 3423,
+      "polls": 167,
+      "sessionId": "cs_test_a1od2ddAy6cJEac9dP30KugExNVodEs33EkFnviwvTmz8Ql97njiSlz9oB",
+      "amountVisible": true
+    },
+    {
+      "phase": "final_head",
+      "kind": "password_sign_in",
+      "method": "poll",
+      "start": "2026-10-27T07:42:03.646Z",
+      "completeMs": 2903,
+      "sessionId": "cs_test_a17djjK2zbJHJkqJPtaNU5VjLeeCbrxvIYj4XjZtg5NspnjfEiGyWYb9Qy",
+      "amountVisible": true
+    }
+  ],
+  "apiSafety": [
+    {
+      "check": "guest cannot use authenticated checkout",
+      "pass": true
+    },
+    {
+      "check": "origin validation",
+      "pass": true
+    },
+    {
+      "check": "invalid bundle rejected",
+      "pass": true
+    },
+    {
+      "check": "forged owner/amount ignored; afterSignIn still validates and prices server-side",
+      "pass": true,
+      "sessionId": "cs_test_a15wYbCVr3gFpATN4W9ZVdxRAi678BvWvXg3ynNsuHsF3sxaZVGeI4ESdS"
+    },
+    {
+      "check": "bounded Auth lookup found and missing account",
+      "pass": true
+    },
+    {
+      "check": "anon cannot invoke either server-only RPC",
+      "pass": true
+    },
+    {
+      "check": "authenticated cannot invoke either server-only RPC",
+      "pass": true
+    },
+    {
+      "check": "attribution rejects wrong reservation owner",
+      "pass": true
+    },
+    {
+      "check": "closed batch blocks checkout even with afterSignIn",
+      "pass": true
+    }
+  ],
+  "apiMeasurements": [
+    {
+      "operation": "after",
+      "at": "2026-10-27T07:35:05.697Z",
+      "results": [
+        {
+          "bundle": "initial",
+          "elapsedMs": 966,
+          "serverTiming": "lookup;dur=309.8, price;dur=83.3, reservation;dur=113.8, stripe_session;dur=76.3, checkout_total;dur=583.4",
+          "sessionId": "cs_test_a15wYbCVr3gFpATN4W9ZVdxRAi678BvWvXg3ynNsuHsF3sxaZVGeI4ESdS",
+          "amount": 3800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 1023,
+          "serverTiming": "lookup;dur=304.7, price;dur=75.5, reservation;dur=271.8, stripe_session;dur=77.0, checkout_total;dur=729.1",
+          "sessionId": "cs_test_a15wYbCVr3gFpATN4W9ZVdxRAi678BvWvXg3ynNsuHsF3sxaZVGeI4ESdS",
+          "amount": 3800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 894,
+          "serverTiming": "lookup;dur=341.7, price;dur=74.7, reservation;dur=123.5, stripe_session;dur=73.8, checkout_total;dur=613.9",
+          "sessionId": "cs_test_a15wYbCVr3gFpATN4W9ZVdxRAi678BvWvXg3ynNsuHsF3sxaZVGeI4ESdS",
+          "amount": 3800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 1169,
+          "serverTiming": "lookup;dur=310.8, price;dur=74.6, reservation;dur=103.5, stripe_session;dur=182.5, checkout_total;dur=671.7",
+          "sessionId": "cs_test_a15wYbCVr3gFpATN4W9ZVdxRAi678BvWvXg3ynNsuHsF3sxaZVGeI4ESdS",
+          "amount": 3800
+        },
+        {
+          "bundle": "standard",
+          "elapsedMs": 1794,
+          "serverTiming": "lookup;dur=278.5, price;dur=105.6, reservation;dur=462.7, attribution;dur=116.3, stripe_session;dur=421.2, binding;dur=113.1, checkout_total;dur=1497.4",
+          "sessionId": "cs_test_a1DKOOXnkGqlIDQisUEOwr2B0pCmZijyMjwVGLDV5gDH3ozygjB6133a8M",
+          "amount": 48800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 1723,
+          "serverTiming": "lookup;dur=347.8, price;dur=76.6, reservation;dur=443.5, attribution;dur=113.9, stripe_session;dur=223.2, binding;dur=106.9, checkout_total;dur=1311.9",
+          "sessionId": "cs_test_a17djjK2zbJHJkqJPtaNU5VjLeeCbrxvIYj4XjZtg5NspnjfEiGyWYb9Qy",
+          "amount": 3800
+        }
+      ]
+    }
+  ],
+  "cleanup": [
+    {
+      "orderId": "8b5dc1b0-637e-4cbb-9b0c-7ea2bb9795ac",
+      "sessionId": "cs_test_a1JofBjALw6XzQkLeknVsXpigotwu8ATQuhjPJE3Eh42itVQkRebrRuWJ3",
+      "amount": 3800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    },
+    {
+      "orderId": "79993a8f-6870-4ed1-a19b-5537c79a22d9",
+      "sessionId": "cs_test_a1dJROZvt7WGEYTRHLyxkiEmQEK5HF6oonNOcw1Sj1VZ1QtD0VKfsnPabc",
+      "amount": 3800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    },
+    {
+      "orderId": "d8b1a339-044c-457d-8052-a4613fcf43ae",
+      "sessionId": "cs_test_a15wYbCVr3gFpATN4W9ZVdxRAi678BvWvXg3ynNsuHsF3sxaZVGeI4ESdS",
+      "amount": 3800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    },
+    {
+      "orderId": "c40e38ce-5095-4e83-bef5-6e8f2b1c8652",
+      "sessionId": "cs_test_a1DKOOXnkGqlIDQisUEOwr2B0pCmZijyMjwVGLDV5gDH3ozygjB6133a8M",
+      "amount": 48800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    },
+    {
+      "orderId": "da689b03-800d-4552-a0cc-dc8a3c13de65",
+      "sessionId": "cs_test_a17djjK2zbJHJkqJPtaNU5VjLeeCbrxvIYj4XjZtg5NspnjfEiGyWYb9Qy",
+      "amount": 3800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    },
+    {
+      "orderId": "6d18f069-784c-4a13-a695-878f57f6e83c",
+      "sessionId": "cs_test_a1od2ddAy6cJEac9dP30KugExNVodEs33EkFnviwvTmz8Ql97njiSlz9oB",
+      "amount": 3800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    }
+  ],
+  "notes": [
+    "Small QA sample at portrait desktop viewport, not physical phone or 4G. No production test payments or accounts.",
+    "before_warmup and after_warmup are not part of the paired median. Two preliminary browser navigation waits timed out although Stripe did subsequently open; those unmeasured attempts were excluded before switching both cohorts to DOM-state polling.",
+    "Rebased final code includes main PR #269 removing the redundant Delivery heading. Checkout behavior matches the benchmark source; final source tree equality with its QA upload and password-sign-in → Stripe flow were verified.",
+    "Isolated QA uses independent Supabase and Stripe sandbox; external mail/analytics sender keys and browser ad pixels disabled, webhooks disabled, no crons. Mail-provider latency is not part of this measurement.",
+    "No cards entered, no terms accepted, no payment submitted. All six sessions expired; all six reservations canceled. QA batch closed and project paused again."
+  ]
+}

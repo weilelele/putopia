@@ -7,6 +7,7 @@ import type { ApplicationInsert, ApplicationStatus } from '@/types/database'
 import { getPostHogClient } from '@/lib/posthog-server'
 import { upsertLoopsContact } from '@/lib/loops'
 import { resendAccessLink } from '@/lib/actions/auth-resend'
+import { findOrCreateAccount, sendActivationEmail } from '@/lib/activation'
 import {
   createRedditConversionId,
   sendRedditConversion,
@@ -48,34 +49,30 @@ export async function submitApplication(
 
   if (error) return { error }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://multiverseco.org'
-
-  // Send invite email via Supabase Auth
+  // Send our 24-hour activation link (it opens /register to set the password).
+  // An activated account gets a sign-in access link instead.
   let inviteEmailSent = false
   let inviteErrorMessage: string | null = null
   try {
-    const admin = createAdminClient()
-    const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(normalizedEmail, {
-      redirectTo: `${siteUrl}/auth/callback`,
-    })
-    if (inviteError) {
-      if (/already been registered|already registered|already exists/i.test(inviteError.message)) {
-        const resend = await resendAccessLink(normalizedEmail)
-        inviteEmailSent = resend.ok
-        if (!resend.ok) {
-          inviteErrorMessage = resend.error ?? 'Could not send access link'
-          console.error('[submitApplication] resendAccessLink failed:', resend.error)
-        }
-      } else {
-        inviteErrorMessage = inviteError.message
-        console.error('[submitApplication] inviteUserByEmail failed:', inviteError.message)
+    const account = await findOrCreateAccount(normalizedEmail, 'request_access')
+    if (account.activated) {
+      const resend = await resendAccessLink(normalizedEmail)
+      inviteEmailSent = resend.ok
+      if (!resend.ok) {
+        inviteErrorMessage = resend.error ?? 'Could not send access link'
+        console.error('[submitApplication] resendAccessLink failed:', resend.error)
       }
     } else {
-      inviteEmailSent = true
+      const sent = await sendActivationEmail({ userId: account.id, email: normalizedEmail, purpose: 'signup' })
+      inviteEmailSent = !sent.error
+      if (sent.error) {
+        inviteErrorMessage = sent.error
+        console.error('[submitApplication] activation email failed:', sent.error)
+      }
     }
   } catch (err) {
     inviteErrorMessage = err instanceof Error ? err.message : 'Could not send access link'
-    console.error('[submitApplication] inviteUserByEmail threw:', err)
+    console.error('[submitApplication] activation email threw:', err)
   }
 
   // Sync to Loops (newsletter & marketing)

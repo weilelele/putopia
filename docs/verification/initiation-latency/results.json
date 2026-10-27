@@ -1,0 +1,160 @@
+{
+  "date": "2026-10-27",
+  "codeCommit": "aa4a454df6a22bd0e49d073e8eab45f33d680c80",
+  "baselineDeployment": "dpl_DDLyfd2j3FLLUEYfTsQ3AQ6eSgLX",
+  "optimizedDeployment": "dpl_7i9ANPkDyBj3afBYpDunJei3SnSi",
+  "stripeAccount": "acct_1UTxRiAPEEV0NYJ8",
+  "supabaseProject": "gqcgdmmmmfbatdneacny",
+  "metric": "HTTPS POST /api/initiation-checkout round trip, authenticated warm Initial session reuse",
+  "comparison": {
+    "beforeMs": [
+      2021,
+      2380,
+      1569
+    ],
+    "afterMs": [
+      1303,
+      1390,
+      1354
+    ],
+    "beforeMedianMs": 2021,
+    "afterMedianMs": 1354,
+    "reductionPercent": 33
+  },
+  "measurements": [
+    {
+      "operation": "before",
+      "at": "2026-10-27T05:56:25.818Z",
+      "results": [
+        {
+          "bundle": "initial",
+          "elapsedMs": 4093,
+          "serverTiming": null,
+          "sessionId": "cs_test_a1HHe9cNIWeQHevFpJH0Jvr9z12qRjkc97dXGWsgghsV8qesLJioWrGvtZ",
+          "amount": 3800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 2021,
+          "serverTiming": null,
+          "sessionId": "cs_test_a1HHe9cNIWeQHevFpJH0Jvr9z12qRjkc97dXGWsgghsV8qesLJioWrGvtZ",
+          "amount": 3800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 2380,
+          "serverTiming": null,
+          "sessionId": "cs_test_a1HHe9cNIWeQHevFpJH0Jvr9z12qRjkc97dXGWsgghsV8qesLJioWrGvtZ",
+          "amount": 3800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 1569,
+          "serverTiming": null,
+          "sessionId": "cs_test_a1HHe9cNIWeQHevFpJH0Jvr9z12qRjkc97dXGWsgghsV8qesLJioWrGvtZ",
+          "amount": 3800
+        }
+      ]
+    },
+    {
+      "operation": "after",
+      "at": "2026-10-27T06:00:22.282Z",
+      "results": [
+        {
+          "bundle": "initial",
+          "elapsedMs": 1791,
+          "serverTiming": "lookup;dur=396.9, price;dur=107.5, reservation;dur=298.7, stripe_session;dur=74.9, checkout_total;dur=878.9",
+          "sessionId": "cs_test_a1HHe9cNIWeQHevFpJH0Jvr9z12qRjkc97dXGWsgghsV8qesLJioWrGvtZ",
+          "amount": 3800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 1303,
+          "serverTiming": "lookup;dur=345.9, price;dur=85.0, reservation;dur=309.2, stripe_session;dur=74.1, checkout_total;dur=814.4",
+          "sessionId": "cs_test_a1HHe9cNIWeQHevFpJH0Jvr9z12qRjkc97dXGWsgghsV8qesLJioWrGvtZ",
+          "amount": 3800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 1390,
+          "serverTiming": "lookup;dur=323.4, price;dur=75.3, reservation;dur=271.4, stripe_session;dur=84.0, checkout_total;dur=754.2",
+          "sessionId": "cs_test_a1HHe9cNIWeQHevFpJH0Jvr9z12qRjkc97dXGWsgghsV8qesLJioWrGvtZ",
+          "amount": 3800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 1354,
+          "serverTiming": "lookup;dur=289.1, price;dur=77.7, reservation;dur=276.5, stripe_session;dur=74.0, checkout_total;dur=717.5",
+          "sessionId": "cs_test_a1HHe9cNIWeQHevFpJH0Jvr9z12qRjkc97dXGWsgghsV8qesLJioWrGvtZ",
+          "amount": 3800
+        },
+        {
+          "bundle": "standard",
+          "elapsedMs": 2243,
+          "serverTiming": "lookup;dur=357.4, price;dur=75.7, reservation;dur=620.7, attribution;dur=330.3, stripe_session;dur=280.1, binding;dur=288.6, checkout_total;dur=1952.9",
+          "sessionId": "cs_test_a1hFIDkiMTIVtah9ucOkFvbI9AeyIef1l9sGP3Ip6KLb6wuTHAjKtDF6HD",
+          "amount": 48800
+        },
+        {
+          "bundle": "initial",
+          "elapsedMs": 2697,
+          "serverTiming": "lookup;dur=329.5, price;dur=83.0, reservation;dur=682.5, attribution;dur=511.4, stripe_session;dur=331.9, binding;dur=234.4, checkout_total;dur=2172.8",
+          "sessionId": "cs_test_a1EKbADLSxUUh4muUJRJg3OslT5hE4UtfNYUyy7z384M7FKxQt6BeTC4nf",
+          "amount": 3800
+        }
+      ]
+    }
+  ],
+  "cleanup": [
+    {
+      "orderId": "51700581-1bbd-46fa-9060-a51b538c6ac6",
+      "sessionId": "cs_test_a1HHe9cNIWeQHevFpJH0Jvr9z12qRjkc97dXGWsgghsV8qesLJioWrGvtZ",
+      "amount": 3800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    },
+    {
+      "orderId": "e9ec4ae8-94e4-4916-a331-9d8a371daad0",
+      "sessionId": "cs_test_a1EKbADLSxUUh4muUJRJg3OslT5hE4UtfNYUyy7z384M7FKxQt6BeTC4nf",
+      "amount": 3800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    },
+    {
+      "orderId": "63662355-5595-46c2-8187-d96383d2de5d",
+      "sessionId": "cs_test_a1hFIDkiMTIVtah9ucOkFvbI9AeyIef1l9sGP3Ip6KLb6wuTHAjKtDF6HD",
+      "amount": 48800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    },
+    {
+      "orderId": "311e1337-724a-493b-b7d1-9ec900e33f64",
+      "sessionId": "cs_test_a1QpobupOszKJhZMXxzIk18NpEyLj00juJNGARhiZIGO9UUnp8PGUJyfSi",
+      "amount": 3800,
+      "status": "canceled",
+      "stripeStatus": "expired",
+      "paymentStatus": "unpaid",
+      "livemode": false
+    }
+  ],
+  "browser": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "newEmailStripeAmount": 3800,
+    "signedInStripeAmount": 3800,
+    "reusedSession": true
+  },
+  "restored": {
+    "qaProjectPaused": true,
+    "checkoutOpen": false,
+    "webhookDisabled": true
+  }
+}

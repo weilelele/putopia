@@ -8,7 +8,6 @@
 .become { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; min-height: 60px; padding: 16px; font-size: var(--fs-label); letter-spacing: 0; }
 .price { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .delivery { margin-top: 32px; }
-.delivery h2 { margin: 0 0 12px; font-size: var(--fs-label); color: var(--color-nucleus); text-transform: uppercase; }
 .delivery p { margin: 0 0 8px; font-size: var(--fs-body); line-height: 1.5; }
 .delivery .textLink { font-size: var(--fs-label); }
 .seats { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin: 0 0 20px; }
@@ -83,6 +82,13 @@
 .memberStatus { color: var(--color-nucleus); font-size: var(--fs-title); font-weight: 700; }
 .textLink { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: var(--fs-body); color: var(--color-nucleus); }
 .shipmentStatus { text-transform: capitalize; font-size: var(--fs-body); line-height: 1.5; margin: 0; }
+.memberBundle { margin: 0 0 var(--s-3); font-size: var(--fs-body); line-height: 1.5; }
+.packSummary { margin: 0 0 var(--s-3); font-size: var(--fs-body); line-height: 1.5; }
+.packCopy .shipmentStatus { display: grid; gap: var(--s-1); margin: var(--s-4) 0; color: var(--color-star); font-size: var(--fs-body); font-weight: 700; line-height: 1.5; }
+.statusLabel { font-size: var(--fs-caption); font-weight: 400; color: var(--color-star-dim); }
+.consolePack .shipmentStatus, .consolePack .statusLabel { color: var(--color-deep); }
+.awaitingActivation .packCopy::before { background: var(--color-deep); }
+.bottomPayment { scroll-margin-top: var(--s-5); }
 
 .become > span:first-child { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 

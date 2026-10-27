@@ -17,7 +17,7 @@ const getServerSnapshot = () => false
  */
 export function AdPixels() {
   const enabled = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
-  if (!enabled) return null
+  if (!enabled || process.env.NEXT_PUBLIC_AD_PIXELS_DISABLED === 'true') return null
   return (
     <>
         <Script id="meta-pixel" strategy="afterInteractive">{`

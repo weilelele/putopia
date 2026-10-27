@@ -84,7 +84,6 @@ export type BriefingOffer = {
   price: number
   points: string[]
   note: string
-  recommended: boolean
 }
 
 const dollars = (kind: InitiationOrderKind) => INITIATION_PRICES[kind].amount / 100
@@ -93,16 +92,16 @@ const dollars = (kind: InitiationOrderKind) => INITIATION_PRICES[kind].amount / 
 export function briefingOffers(status: InitiationStatus): BriefingOffer[] {
   if (status === 'legacy_pack') return [{
     id: 'legacy_upgrade', label: 'YOUR INITIAL PACK', title: INITIATION_PRICES.legacy_upgrade.name, price: dollars('legacy_upgrade'),
-    points: ['Your own Multiverse Console', 'The fourth delivery'], note: 'Your membership and first two packs stay with you.', recommended: true,
+    points: ['Your own Multiverse Console', 'The fourth delivery'], note: 'Your membership and first two packs stay with you.',
   }]
   const membership = 'Collective membership privileges'
   const saving = dollars('initial') + dollars('legacy_upgrade') - dollars('standard')
   return [{
     id: 'initial', label: 'INITIAL', title: INITIATION_PRICES.initial.name, price: dollars('initial'),
-    points: [membership, 'Packs 1–2', `Letter, badge, ${ANTENNA.firstMention}`], note: `Add Console + Pack 4 later for $${dollars('legacy_upgrade')}.`, recommended: false,
+    points: [membership, 'Packs 1–2', `Letter, badge, ${ANTENNA.firstMention}`], note: `Add Console + Pack 4 later for $${dollars('legacy_upgrade')}.`,
   }, {
     id: 'standard', label: 'COMPLETE', title: INITIATION_PRICES.standard.name, price: dollars('standard'),
-    points: [membership, 'All four packs', 'Your own Multiverse Console'], note: saving > 0 ? `Save $${saving} versus upgrading later.` : 'Pay once. No recurring fee.', recommended: true,
+    points: [membership, 'All four packs', 'Your own Multiverse Console'], note: saving > 0 ? `Save $${saving} versus upgrading later.` : 'Pay once. No recurring fee.',
   }]
 }
 

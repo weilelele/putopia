@@ -32,13 +32,13 @@ try {
   }
 
   await assert.rejects(complete(1), /permission denied for sequence voyager_member_no_seq/)
-  await db.exec(await fs.readFile(new URL('../schema_v109.sql', import.meta.url), 'utf8'))
+  await db.exec(await fs.readFile(new URL('../schema_v110.sql', import.meta.url), 'utf8'))
   for (const n of [2, 3]) {
     const orderId = await complete(n)
     assert.equal(await scalar('select status from initiation_orders where id=$1', [orderId]), 'paid')
     assert.equal(await scalar("select role::text||':'||(member_no is not null)::text from voyager_profiles where id=$1", [uid(n)]), 'voyager:true')
   }
-  console.log('member-no-grant-v109: service_role completes Initial and Complete purchases')
+  console.log('member-no-grant-v110: service_role completes Initial and Complete purchases')
 } finally {
   await db.close()
 }
