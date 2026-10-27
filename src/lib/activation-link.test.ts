@@ -44,9 +44,17 @@ describe('activation tokens', () => {
 describe('activationEmail', () => {
   it('links the button and the fallback URL, escaped', () => {
     const email = activationEmail('https://multiverseco.org/register?key=a.b&x=1', 'signup')
-    expect(email.subject).toBe('Activate your Multiverse Collective account')
-    expect(email.html).toContain('href="https://multiverseco.org/register?key=a.b&amp;x=1"')
+    expect(email.subject).toBe('Welcome to Multiverse Collective')
+    expect(email.html.match(/href="https:\/\/multiverseco\.org\/register\?key=a\.b&amp;x=1"/g)).toHaveLength(2)
     expect(email.text).toContain('https://multiverseco.org/register?key=a.b&x=1')
+  })
+
+  it('uses the activation site for the logo and recovery page, including on previews', () => {
+    const email = activationEmail('https://preview.example/register?key=k', 'signup')
+    expect(email.html).toContain('src="https://preview.example/assets/vi-wordmark.png"')
+    expect(email.html).toContain('href="https://preview.example/auth/expired"')
+    expect(email.text).toContain('Get a new link: https://preview.example/auth/expired')
+    expect(email.html).not.toContain('#preview')
   })
 
   it('tells Initiation buyers why the link came with their checkout', () => {
