@@ -50,4 +50,3 @@ export async function readMyDeviceConsoles(userId: string | null): Promise<Devic
     }] : []
   })
 }
-
