@@ -84,7 +84,7 @@ export function DeviceClaimPanel({ batch, access, ownedProgress }: {
       <ArchiveButton variant="secondary" fullWidth onClick={() => setExplanationOpen(false)}>CANCEL</ArchiveButton>
       <ArchiveLinkButton variant="primary" fullWidth href={`/voyager-initiation?from=${encodeURIComponent(`/devices/batches/${batch.slug}`)}`}>{access.legacyPackPurchased ? 'CONTINUE INITIATION' : 'GO TO INITIATION'}</ArchiveLinkButton>
     </div>}>
-      <p>Complete Voyager Initiation with a Console-inclusive purchase to apply.</p>
+      <p>Complete Voyager Initiation and payment to apply for a Console.</p>
     </ArchiveSheet>
   </section>
 }

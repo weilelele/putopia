@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { Minus, Plus } from 'lucide-react'
+import { ArrowRight, ChevronUp } from 'lucide-react'
+import { ArchiveButton } from './archive-button'
 import { CONSOLE_HERO } from '@/lib/console-hero'
 import SmartImage from './smart-image'
 import styles from './mc-console-panel.module.css'
@@ -44,9 +45,9 @@ export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poste
       <header className={styles.heading}>
         <h2 className={styles.sectionTitle}>Multiverse<br />Console</h2>
       </header>
-      <button className={styles.guideButton} type="button" onClick={() => setGuideOpen(open => !open)} aria-expanded={guideOpen} aria-controls={guideId}>
-        How it works {guideOpen ? <Minus size={20} aria-hidden /> : <Plus size={20} aria-hidden />}
-      </button>
+      <ArchiveButton variant="primary" fullWidth className={styles.guideButton} onClick={() => setGuideOpen(open => !open)} aria-expanded={guideOpen} aria-controls={guideId}>
+        <span>How it works</span>{guideOpen ? <ChevronUp size={20} aria-hidden /> : <ArrowRight size={20} aria-hidden />}
+      </ArchiveButton>
       <div id={guideId} hidden={!guideOpen} className={styles.guide}>
         {guideOpen ? <>
           <SmartImage src="/assets/voyager-briefing/console-real.jpg" alt="A Multiverse Console held in two hands, showing its central screen and the controls on either side" width={1280} height={720} sizes="(min-width: 1200px) 960px, (min-width: 768px) calc(100vw - 320px), calc(100vw - 32px)" className={styles.guideImage} />
