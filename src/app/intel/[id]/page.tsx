@@ -5,6 +5,7 @@ import { BackLink } from '@/components/back-link'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { getIntelById } from '@/lib/actions/intel'
+import { intelDetailCache } from '@/lib/intel-client-cache'
 import { NoticeStatus } from '@/components/notice-status'
 import type { IntelWithAvatar } from '@/types/database'
 import posthog from 'posthog-js'
@@ -28,10 +29,14 @@ function formatDate(iso: string) {
 
 export default function IntelDetailPage() {
   const { user, accessRole, loading } = useAuth()
-  return <IntelDetailContent key={`${user.id ?? 'guest'}:${accessRole}:${loading}`} />
+  const params = useParams()
+  if (loading) return <ArchiveRouteLoading />
+  const scope = `${user.id ?? 'guest'}:${user.role}:${accessRole}:${params.id}`
+  return <IntelDetailContent key={scope} scope={scope} />
 }
 
-function IntelDetailContent() {
+function IntelDetailContent({ scope }: { scope: string }) {
+  const cache = intelDetailCache.forKey(scope)
   const params = useParams()
   const id = params?.id as string
   const { user } = useAuth()
@@ -39,23 +44,22 @@ function IntelDetailContent() {
   const backHref = '/intel'
   const backLabel = '← INTEL'
 
-  const [entry, setEntry] = useState<IntelWithAvatar | null | undefined>(undefined)
+  const [entry, setEntry] = useState<IntelWithAvatar | null | undefined>(() => cache.peek())
   const [loadError, setLoadError] = useState(false)
   const scrollRef  = useRef<HTMLDivElement>(null)
   const markedRef  = useRef(false)   // fire once per page load
 
   const loadEntry = useCallback(async () => {
     await Promise.resolve()
-    setEntry(undefined)
     setLoadError(false)
     try {
-      const e = await getIntelById(id)
+      const e = await cache.load(() => getIntelById(id))
       setEntry(e ?? null)
       if (e) posthog.capture('intel_viewed', { intel_id: id, intel_tag: e.tag, intel_title: e.title })
     } catch {
       setLoadError(true)
     }
-  }, [id])
+  }, [id, cache])
 
   useEffect(() => {
     void Promise.resolve().then(loadEntry)

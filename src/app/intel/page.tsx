@@ -6,12 +6,14 @@ import { useSessionPreference } from '@/lib/use-session-preference'
 import { MessageSquare, Plus, ArrowRight } from 'lucide-react'
 import { getAllIntel } from '@/lib/actions/intel'
 import { getCommentCountsBulk } from '@/lib/actions/comments'
-import { Suspense, useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { IntelWithAvatar } from '@/types/database'
 import { SectionTracker } from '@/components/section-tracker'
 import { useAuth } from '@/lib/auth-context'
-import { CreateIntelModal } from './CreateIntelModal'
+import dynamic from 'next/dynamic'
+import { intelListCache, intelCommentCache, invalidateIntelClientCache } from '@/lib/intel-client-cache'
+const CreateIntelModal = dynamic(() => import('./CreateIntelModal').then(module => module.CreateIntelModal))
 import { FilterBar } from '@/components/filter-bar'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -47,7 +49,7 @@ function ClassifiedWall() {
 }
 
 // ─── Individual Intel card ────────────────────────────────────────────────────
-function IntelCard({ entry, commentCount = 0, lead = false }: { entry: IntelWithAvatar; commentCount?: number; lead?: boolean }) {
+function IntelCard({ entry, commentCount, lead = false }: { entry: IntelWithAvatar; commentCount?: number; lead?: boolean }) {
   const href = `/intel/${entry.id}`
   const metadata = <span className="intel-entry-meta">{entry.tag} · <time dateTime={entry.timestamp}>{formatDate(entry.timestamp)}</time></span>
   if (!lead) return <article className={`intel-recent-story${entry.images?.length ? " intel-recent-story--media" : ""}`}>
@@ -55,7 +57,7 @@ function IntelCard({ entry, commentCount = 0, lead = false }: { entry: IntelWith
     <PublisherIdentity name={entry.publisher_name ?? 'Multiverse Collective'} avatar={entry.publisher_avatar_url} />
     <NoticeStatus entry={entry} />
     {!!entry.images?.length && <Link href={href} className="intel-story-media" aria-label={`Open images: ${entry.title}`}><NewsMedia images={entry.images.slice(0,1)} title={entry.title} /></Link>}
-    <Link href={href} className="intel-comments"><MessageSquare aria-hidden size={14} />{commentCount} comments</Link>
+    <Link href={href} className="intel-comments"><MessageSquare aria-hidden size={14} />{commentCount === undefined ? 'Comments' : `${commentCount} comments`}</Link>
   </article>
   return <article className="intel-lead">
     {metadata}<h2>{entry.title}</h2>
@@ -64,7 +66,7 @@ function IntelCard({ entry, commentCount = 0, lead = false }: { entry: IntelWith
     <p className="intel-summary">{entry.content}</p>
     {!!entry.images?.length && <Link href={href} className="intel-story-media" aria-label={`Open images: ${entry.title}`}><NewsMedia images={entry.images} title={entry.title} /></Link>}
     <ArchiveLinkButton href={href} variant="primary" fullWidth>READ INTEL <ArrowRight aria-hidden size={20} /></ArchiveLinkButton>
-    <Link href={href} className="intel-comments" aria-label={`${commentCount} comments on ${entry.title}`}><MessageSquare aria-hidden size={14} />{commentCount} comments</Link>
+    <Link href={href} className="intel-comments" aria-label={`${commentCount === undefined ? 'Comments' : `${commentCount} comments`} on ${entry.title}`}><MessageSquare aria-hidden size={14} />{commentCount === undefined ? 'Comments' : `${commentCount} comments`}</Link>
   </article>
 }
 
@@ -85,16 +87,18 @@ export default function IntelPage() {
 
 function IntelPageContent() {
   const { user, accessRole, loading } = useAuth()
-  return <IntelPageData key={`${user.id ?? 'guest'}:${accessRole}:${loading}`} />
+  if (loading) return <PrimaryTabLoading kind="collection" />
+  const scope = `${user.id ?? 'guest'}:${user.role}:${accessRole}`
+  return <IntelPageData key={scope} scope={scope} />
 }
 
-function IntelPageData() {
+function IntelPageData({ scope }: { scope: string }) {
   const { isAtLeast } = useAuth()
-  const [intel, setIntel] = useState<IntelWithAvatar[]>([])
-  const [commentCounts, setCommentCounts] = useState<Record<string, number>>(
-    {},
-  )
-  const [loading, setLoading] = useState(true)
+  const cache = intelListCache.forKey(scope)
+  const countsCache = intelCommentCache.forKey(scope)
+  const [intel, setIntel] = useState<IntelWithAvatar[]>(() => cache.peek() ?? [])
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>(() => countsCache.peek() ?? {})
+  const [loading, setLoading] = useState(() => cache.peek() === undefined)
   const [loadError, setLoadError] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   // Deep-link support: /intel?tab=classified opens the Classified tab directly
@@ -104,27 +108,49 @@ function IntelPageData() {
     tabParam === 'classified' || tabParam === 'public' ? tabParam : 'all',
   )
 
-  const loadIntel = useCallback(async () => {
-    setLoading(true)
+  const requestVersion = useRef(0)
+  const countsVersion = useRef(0)
+  const [countsError, setCountsError] = useState(false)
+  const loadCounts = useCallback(async (items: IntelWithAvatar[], force = false) => {
+    const version = ++countsVersion.current
+    try {
+      const counts = await countsCache.load(async () => {
+        if (!items.length) return {}
+        const counts = await getCommentCountsBulk('intel', items.map(entry => entry.id))
+        return Object.fromEntries(items.map(entry => [entry.id, counts[entry.id] ?? 0]))
+      }, force)
+      if (version !== countsVersion.current) return
+      setCommentCounts(counts)
+      setCountsError(false)
+    } catch { if (version === countsVersion.current) setCountsError(true) }
+  }, [countsCache])
+
+  const loadIntel = useCallback(async (force = false) => {
+    const version = ++requestVersion.current
     setLoadError(false)
     try {
-      const next = await (async () => {
-        const items = await getAllIntel() as IntelWithAvatar[]
-        const counts = items.length > 0
-          ? await getCommentCountsBulk('intel', items.map((entry) => entry.id))
-          : {}
-        return { intel: items, commentCounts: counts }
-      })()
-      setIntel(next.intel)
-      setCommentCounts(next.commentCounts)
-    } catch {
-      setLoadError(true)
-    } finally {
+      const items = await cache.load(getAllIntel, force)
+      if (version !== requestVersion.current) return
+      setIntel(items)
       setLoading(false)
-    }
-  }, [])
+      // Secondary counts must not hold the article list behind another roundtrip.
+      await loadCounts(items, force)
+    } catch { if (version === requestVersion.current) setLoadError(true) }
+    finally { if (version === requestVersion.current) setLoading(false) }
+  }, [cache, loadCounts])
 
-  useEffect(() => { void Promise.resolve().then(() => loadIntel()) }, [loadIntel])
+  useEffect(() => {
+    let cancelled = false
+    const version = ++requestVersion.current
+    cache.load(getAllIntel).then(items => {
+      if (cancelled || version !== requestVersion.current) return
+      setIntel(items)
+      setLoading(false)
+      void loadCounts(items)
+    }).catch(() => { if (!cancelled && version === requestVersion.current) setLoadError(true) })
+      .finally(() => { if (!cancelled && version === requestVersion.current) setLoading(false) })
+    return () => { cancelled = true }
+  }, [cache, loadCounts])
 
   // Derive displayed list based on filter
   const visibleIntel =
@@ -153,10 +179,10 @@ function IntelPageData() {
 
       <div className="intel-editorial-feed">
         {showClassifiedWall ? <ClassifiedWall /> : <>
-          {visibleIntel[0] && <IntelCard lead entry={visibleIntel[0]} commentCount={commentCounts[visibleIntel[0].id] ?? 0} />}
-          {visibleIntel.length > 1 && <section aria-labelledby="recent-intel"><h2 id="recent-intel" className="archive-list-heading">RECENT</h2>{visibleIntel.slice(1).map(entry => <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id] ?? 0} />)}</section>}
-          {loading && <p role="status">Loading intel…</p>}
-          {loadError && <div role="alert"><p>Intel could not be loaded.</p><ArchiveButton variant="secondary" onClick={() => void loadIntel()}>Retry</ArchiveButton></div>}
+          {visibleIntel[0] && <IntelCard lead entry={visibleIntel[0]} commentCount={commentCounts[visibleIntel[0].id]} />}
+          {visibleIntel.length > 1 && <section aria-labelledby="recent-intel"><h2 id="recent-intel" className="archive-list-heading">RECENT</h2>{visibleIntel.slice(1).map(entry => <IntelCard key={entry.id} entry={entry} commentCount={commentCounts[entry.id]} />)}</section>}
+          {countsError && <div role="status"><p>Comment counts are unavailable.</p><ArchiveButton variant="ghost" onClick={() => void loadCounts(intel, true)}>Retry counts</ArchiveButton></div>}
+          {loadError && <div role="alert"><p>Intel could not be loaded.</p><ArchiveButton variant="secondary" onClick={() => void loadIntel(true)}>Retry</ArchiveButton></div>}
           {!loading && !loadError && !visibleIntel.length && <p>No intel in this category yet.</p>}
         </>}
       </div>
@@ -176,7 +202,7 @@ function IntelPageData() {
       {showCreate && (
         <CreateIntelModal
           onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); void loadIntel() }}
+          onCreated={() => { setShowCreate(false); invalidateIntelClientCache(); void loadIntel(true) }}
           existingItems={intel}
         />
       )}

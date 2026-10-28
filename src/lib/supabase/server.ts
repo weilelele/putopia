@@ -1,9 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 import type { Database } from '@/types/database'
 
-export async function createClient() {
+// React.cache is request-scoped; never share a cookie-bearing client across users.
+export const createClient = cache(async function createClient() {
   const cookieStore = await cookies()
 
   return createServerClient<Database>(
@@ -26,7 +28,7 @@ export async function createClient() {
       },
     }
   )
-}
+})
 
 // Singleton — the service-role client holds no per-user state (no token refresh,
 // no session persistence), so it's safe to reuse across requests within a warm

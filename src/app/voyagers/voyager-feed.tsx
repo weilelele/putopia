@@ -11,6 +11,8 @@ import { MemberProfileSheet } from '@/components/member-profile-sheet'
 import { ArchiveRouteLoading } from '@/components/archive-route-state'
 import { ArchiveTextarea, ArchiveSelect } from '@/components/archive-input'
 import { useAuth } from '@/lib/auth-context'
+import { createKeyedClientDataCache } from '@/lib/client-data-cache'
+import { mergeFeedPage, editCachedFeedEntry, removeCachedFeedEntry, addCachedFeedReply } from '@/lib/feed-page-cache'
 import { boundedFeedRequest, readFeedDraft, writeFeedDraft, type FeedDraft } from '@/lib/feed-recovery'
 import { getRouteScrollContainer } from '@/lib/route-scroll-container'
 import * as liveFeed from '@/lib/actions/voyager-feed'
@@ -22,12 +24,28 @@ import { REQUEST_ACCESS_HREF } from '@/lib/request-access'
 
 type Modal = { type: 'compose' | 'permission' } | { type: 'menu' | 'edit' | 'delete'; entry: FeedEntry }
 // List position is transient; text drafts are account-scoped session storage.
-const feedPositions = new Map<string, { top: number; id: string; count: number }>()
+const feedPositions = new Map<string, { id: string }>()
 let draftAccount: string | null = null
+const feedCaches = new WeakMap<object, ReturnType<typeof createKeyedClientDataCache<FeedPage>>>()
+function cacheFor(services: object) {
+  let store = feedCaches.get(services)
+  if (!store) { store = createKeyedClientDataCache<FeedPage>(30_000); feedCaches.set(services, store) }
+  return store
+}
+type VoyagerFeedProps = { postId?: string; services?: typeof liveFeed; baseHref?: string; mediaSource?: (entry: FeedEntry) => string; requestTimeout?: number }
 const protectedMedia = (entry: FeedEntry) => `/api/voyager-feed/media/${entry.id}`
 
-export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers', mediaSource = protectedMedia, requestTimeout = 15000 }: { postId?: string; services?: typeof liveFeed; baseHref?: string; mediaSource?: (entry: FeedEntry) => string; requestTimeout?: number }) {
-  const { user, loading: authLoading } = useAuth()
+export function VoyagerFeed(props: VoyagerFeedProps) {
+  const { user, accessRole, loading } = useAuth()
+  if (loading) return <ArchiveRouteLoading />
+  return <VoyagerFeedContent key={`${user.id ?? 'guest'}:${user.role}:${accessRole}:${props.postId ?? ''}`} {...props} />
+}
+
+function VoyagerFeedContent({ postId, services = liveFeed, baseHref = '/voyagers', mediaSource = protectedMedia, requestTimeout = 15000 }: VoyagerFeedProps) {
+  const { user, accessRole, loading: authLoading } = useAuth()
+  const store = cacheFor(services)
+  const cache = store.forKey(`${user.id ?? 'guest'}:${user.role}:${accessRole}:${baseHref}:${postId ?? 'feed'}`)
+  const readVersion = useRef(0)
   const router = useRouter()
   const root = useRef<HTMLElement>(null)
   const dialogTrigger = useRef<HTMLElement | null>(null)
@@ -36,8 +54,8 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
     if (authLoading) return
     if (draftAccount !== user.id) { feedPositions.clear(); draftAccount = user.id ?? null }
   }, [authLoading, user.id])
-  const [page, setPage] = useState<FeedPage | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState<FeedPage | null>(() => cache.peek() ?? null)
+  const [loading, setLoading] = useState(() => cache.peek() === undefined)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
@@ -98,30 +116,29 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
   }, [body, attachment, authorId, submitted, modal, page, recovery, composeKey, postId, replyTouched, reply, replyPending, draftKey, uncertainEdit])
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
-  const load = useCallback(async (more = false) => {
+  const load = useCallback(async (more = false, previous = page) => {
+    const version = ++readVersion.current
     setLoading(true); setError('')
+    // A confirmed write invalidates list/detail snapshots, including in-flight reads.
+    if (!more) store.invalidate()
     try {
       const result = await boundedFeedRequest(services.getVoyagerFeed(postId, more ? page?.next ?? undefined : undefined), requestTimeout)
-      if (!alive.current) return
-      setPage(previous => more && previous && !result.locked ? { ...result, entries: [...previous.entries, ...result.entries.filter(entry => !previous.entries.some(old => old.id === entry.id))] } : result)
-    } catch (cause) { if (alive.current) setError(cause instanceof Error ? cause.message : 'The feed could not be loaded.') }
-    finally { if (alive.current) setLoading(false) }
-  }, [postId, page, services, requestTimeout])
+      if (!alive.current || version !== readVersion.current) return
+      const next = mergeFeedPage(previous ?? undefined, result, more)
+      cache.set(next)
+      setPage(next)
+    } catch (cause) { if (alive.current && version === readVersion.current) setError(cause instanceof Error ? cause.message : 'The feed could not be loaded.') }
+    finally { if (alive.current && version === readVersion.current) setLoading(false) }
+  }, [postId, page, services, requestTimeout, cache, store])
   useEffect(() => {
-    if (authLoading) return
     let cancelled = false
-    const restoreRange = async () => {
-      let result = await boundedFeedRequest(services.getVoyagerFeed(postId), requestTimeout)
-      const saved = !postId && feedPositions.get(user.id ?? '')
-      while (!cancelled && saved && !result.locked && result.next && result.entries.length < saved.count) {
-        const more = await boundedFeedRequest(services.getVoyagerFeed(undefined, result.next), requestTimeout)
-        result = { ...more, entries: [...result.entries, ...more.entries] }
-      }
-      return result
-    }
-    restoreRange().then(result => { if (!cancelled) setPage(result) }).catch(() => { if (!cancelled) setError('The feed could not be loaded. Please retry.') }).finally(() => { if (!cancelled) setLoading(false) })
+    const version = ++readVersion.current
+    cache.load(async () => mergeFeedPage(cache.peek(), await boundedFeedRequest(services.getVoyagerFeed(postId), requestTimeout)))
+      .then(result => { if (!cancelled && version === readVersion.current) setPage(result) })
+      .catch(() => { if (!cancelled && version === readVersion.current) setError('The feed could not be loaded. Please retry.') })
+      .finally(() => { if (!cancelled && version === readVersion.current) setLoading(false) })
     return () => { cancelled = true }
-  }, [postId, authLoading, services, user.id, requestTimeout])
+  }, [postId, services, requestTimeout, cache])
   const restored = useRef(false)
   useEffect(() => {
     if (!page || restored.current) return
@@ -129,7 +146,6 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
     const frame = requestAnimationFrame(() => {
       const position = feedPositions.get(user.id ?? '')
       if (!postId && position) {
-        getRouteScrollContainer(root.current)?.scrollTo({ top: position.top })
         document.getElementById(`feed-${position.id}`)?.focus({ preventScroll: true })
       } else if (postId) document.getElementById('feed-post-heading')?.focus({ preventScroll: true })
     })
@@ -227,7 +243,7 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
     confirmed.current = true; writeFeedDraft(composeKey, null)
     closeModal(); setBody(''); setImage(null); setSubmitted(false); setNotice('Your post is published.')
     feedPositions.delete(user.id ?? '')
-    if (postId) router.push(baseHref)
+    if (postId) { store.invalidate(); router.push(baseHref) }
     else { await load(); getRouteScrollContainer(root.current)?.scrollTo({ top: 0 }) }
   })
   const sendReply = () => run(async () => {
@@ -238,7 +254,7 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
     const result = await call(services.createVoyagerPost(form))
     if (!alive.current) return
     if (result.error) { setError(result.error); if (result.outcome === 'rejected') { setReplyPending(false); replyId.current = crypto.randomUUID() }; return }
-    confirmed.current = true; writeFeedDraft(draftKey, null); setReplyState(''); setReplyPending(false); setReplyTouched(false); replyId.current = ''; setNotice('Reply added.'); await load()
+    confirmed.current = true; writeFeedDraft(draftKey, null); setReplyState(''); setReplyPending(false); setReplyTouched(false); replyId.current = ''; setNotice('Reply added.'); store.update(value => addCachedFeedReply(value, postId!)); await load()
   })
   const checkSubmission = (kind: 'compose' | 'reply') => run(async () => {
     const id = kind === 'compose' ? requestId.current : replyId.current
@@ -259,14 +275,16 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
     if (result.error) { setError(result.error); return }
     setUncertainEdit(false)
     confirmed.current = true; writeFeedDraft(`${composeKey}:edit:${modal.entry.id}`, null)
-    closeModal(); setNotice('Changes saved.'); await load()
+    const update = (value: FeedPage) => editCachedFeedEntry(value, modal.entry.id, body)
+    store.update(update)
+    closeModal(); setNotice('Changes saved.'); await load(false, page ? update(page) : null)
   })
   const checkChange = () => run(async () => {
     if (!modal || !('entry' in modal)) return
     const result = await call(services === liveFeed ? fetch(`/api/voyager-feed/submissions/${modal.entry.id}`, {cache:'no-store'}).then(async response => {if (!response.ok) throw new Error('Result unavailable'); return response.json() as Promise<Awaited<ReturnType<typeof liveFeed.getVoyagerSubmission>>>}) : services.getVoyagerSubmission(modal.entry.id))
     if (!alive.current) return
-    if (modal.type === 'delete' && !result) { setUncertainDelete(false); closeModal(); setNotice('Deletion confirmed.'); if (modal.entry.id === postId) router.replace(baseHref); else await load(); return }
-    if (modal.type === 'edit' && result?.body === body) { confirmed.current = true; writeFeedDraft(`${composeKey}:edit:${modal.entry.id}`, null); setUncertainEdit(false); closeModal(); setNotice('Changes confirmed.'); await load(); return }
+    if (modal.type === 'delete' && !result) { store.update(value => removeCachedFeedEntry(value, modal.entry)); setUncertainDelete(false); closeModal(); setNotice('Deletion confirmed.'); if (modal.entry.id === postId) { store.invalidate(); router.replace(baseHref) } else await load(false, page ? removeCachedFeedEntry(page, modal.entry) : null); return }
+    if (modal.type === 'edit' && result?.body === body) { confirmed.current = true; writeFeedDraft(`${composeKey}:edit:${modal.entry.id}`, null); setUncertainEdit(false); closeModal(); setNotice('Changes confirmed.'); store.update(value => editCachedFeedEntry(value, modal.entry.id, body)); await load(false, page ? editCachedFeedEntry(page, modal.entry.id, body) : null); return }
     setError(result ? 'This change is not visible yet. Check again before retrying.' : 'This content is no longer available. Keep your draft or return to the feed.')
   })
   const remove = () => run(async () => {
@@ -276,8 +294,9 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
     if (!alive.current) return
     if (result.error) { setError(result.error); return }
     setUncertainDelete(false)
+    store.update(value => removeCachedFeedEntry(value, modal.entry))
     closeModal(); setNotice('Content deleted.')
-    if (modal.entry.id === postId) { writeFeedDraft(draftKey, null); router.replace(baseHref) } else await load()
+    if (modal.entry.id === postId) { store.invalidate(); writeFeedDraft(draftKey, null); router.replace(baseHref) } else await load(false, page ? removeCachedFeedEntry(page, modal.entry) : null)
   })
   const vote = (entry: FeedEntry, direction: -1 | 1) => run(async () => {
     const next = (direction === 1 ? entry.liked : entry.downvoted) ? 0 : direction
@@ -285,10 +304,14 @@ export function VoyagerFeed({ postId, services = liveFeed, baseHref = '/voyagers
     if (!alive.current) return
     if (result.error) { setError(result.error); return }
     const update = (value: FeedEntry): FeedEntry => value.id === entry.id ? withFeedVote(value, next) : value
-    setPage(current => current ? { ...current, entries: current.entries.map(update), post: current.post ? update(current.post) : current.post } : current)
+    const updatePage = (current: FeedPage): FeedPage => ({ ...current, entries: current.entries.map(update), post: current.post ? update(current.post) : current.post })
+    readVersion.current++
+    store.update(updatePage)
+    setLoading(false)
+    if (page) { const nextPage = updatePage(page); cache.set(nextPage); setPage(nextPage) }
   })
   const closeModal = () => { setModal(null); setImage(null); setError(''); requestAnimationFrame(() => dialogTrigger.current?.focus({ preventScroll: true })) }
-  const remember = (id: string) => feedPositions.set(user.id ?? '', { id, count: page?.entries.length ?? 20, top: getRouteScrollContainer(root.current)?.scrollTop ?? 0 })
+  const remember = (id: string) => feedPositions.set(user.id ?? '', { id })
   const renderEntry = (entry: FeedEntry, detail = false) => <article key={entry.id} className={`${entry.parent_id ? s.reply : s.post} ${detail ? s.detailPost : ''}`}>
     <button className={s.avatarLink} aria-label={`View ${entry.display_name}'s profile`} onClick={() => setProfileId(entry.author_id)}><span className={s.avatar}>{entry.avatar_url ?  <img src={entry.avatar_url} alt="" loading="lazy" /> : <UserRound size={24} aria-hidden />}</span></button>
     <div className={s.postMain}><div className={s.postHeader}><strong className={s.identity}>{entry.display_name}</strong><small className={s.timestamp}><time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</time>{entry.updated_at !== entry.created_at && ' · Edited'}</small>
