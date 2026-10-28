@@ -5,5 +5,6 @@ export default async function ConsolePage() {
   const overview = getDashboardOverview()
   const updates = getDashboardUpdates()
   const events = getDashboardEvents()
-  return <ConsoleClient initial={await getDashboardIdentity()} overview={overview} updates={updates} events={events} />
+  const initial = await getDashboardIdentity()
+  return <ConsoleClient key={`${initial.viewerId ?? 'guest'}:${initial.voyager?.role ?? 'guest'}`} initial={initial} overview={overview} updates={updates} events={events} />
 }

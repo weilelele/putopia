@@ -12,7 +12,8 @@ const apiPort = Number(process.env.FIXTURE_PORT ?? 3027)
 const appPort = Number(process.env.APP_PORT ?? 3028)
 const api = `http://127.0.0.1:${apiPort}`
 const app = `http://127.0.0.1:${appPort}`
-const output = path.resolve('output/navigation-performance')
+const production = process.env.BROWSER_MODE === 'production'
+const output = path.resolve(`output/navigation-performance${production ? '-production' : ''}`)
 await mkdir(output, { recursive: true })
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alice = '10000000-0000-4000-8000-000000000001'
@@ -90,7 +91,8 @@ const fixture = createServer(async (req,res) => {
   return send(data)
 })
 await new Promise(resolve => fixture.listen(apiPort,'127.0.0.1',resolve))
-const next = spawn(process.execPath, ['node_modules/next/dist/bin/next','dev','--webpack','--hostname','127.0.0.1','--port',String(appPort)], {
+const nextArgs = production ? ['start'] : ['dev','--webpack']
+const next = spawn(process.execPath, ['node_modules/next/dist/bin/next',...nextArgs,'--hostname','127.0.0.1','--port',String(appPort)], {
   cwd:process.cwd(),
   env:{PATH:process.env.PATH,HOME:process.env.HOME,TMPDIR:process.env.TMPDIR,NEXT_TELEMETRY_DISABLED:'1',NEXT_PUBLIC_SUPABASE_URL:api,NEXT_PUBLIC_SUPABASE_ANON_KEY:'fixture-anon-key',SUPABASE_SERVICE_ROLE_KEY:'fixture-service-key',NEXT_PUBLIC_POSTHOG_KEY:'phc_fixture',NEXT_PUBLIC_POSTHOG_HOST:api,NEXT_PUBLIC_AD_PIXELS_DISABLED:'true'},
   stdio:['ignore','pipe','pipe'],
@@ -217,19 +219,33 @@ try {
     }, {api,action,session})
   }
   const profileReads = () => count(row => row.path.endsWith('/voyager_profiles') && row.client.includes('createBrowserClient'))
+  if (!production) {
   const beforeFocus = profileReads()
   await authClient('focus',sessionFor(alice))
   await authClient('focus',sessionFor(alice))
   await delay(250)
   assert.equal(profileReads(),beforeFocus,'repeated SIGNED_IN does not reload the browser profile')
+  await navigate('/console')
+  await page.locator('section[aria-label="Your membership status"]').getByText('Alice Fixture',{exact:true}).waitFor()
+  await navigate('/voyagers')
+  await page.getByText('Local fixture post 45',{exact:true}).waitFor()
   await authClient('signin',sessionFor(bob))
   await delay(900)
   assert.equal(await page.getByRole('button',{name:'Options for your post'}).count(),0,'another account cannot reuse management state')
+  await navigate('/console')
+  await page.locator('section[aria-label="Your membership status"]').getByText('Bob Fixture',{exact:true}).waitFor()
+  assert.equal(await page.locator('section[aria-label="Your membership status"]').getByText('Alice Fixture',{exact:true}).count(),0,'account switch must clear cached RSC identity and section state')
+  await navigate('/intel')
+  await page.getByRole('heading',{name:'Local Public Intel',exact:true}).waitFor()
+  assert.equal(await page.getByText('Local Classified Intel',{exact:true}).count(),0,'account switch cannot expose the previous account classified cache')
+  await navigate('/voyagers')
+  await page.getByText('Local fixture post 45',{exact:true}).waitFor()
   await authClient('signout')
   await page.getByRole('heading',{name:'Join the conversation'}).waitFor()
   assert.equal(await page.locator('article').count(),0,'signout clears private feed content')
   await authClient('signin',sessionFor(alice))
   await page.getByText('Local fixture post 45',{exact:true}).waitFor()
+  }
   console.log('Checking lazy Devices and streamed Dashboard')
   await navigate('/devices')
   await page.getByRole('tab',{name:'Fixture one',exact:true}).waitFor()
@@ -245,7 +261,7 @@ try {
   state.eventDelay = 4000
   await navigate('/console')
   await page.getByText('WELCOME,',{exact:true}).waitFor()
-  await page.getByRole('heading',{name:'Updates',exact:true}).waitFor()
+  await page.getByText('Fixture one update',{exact:true}).waitFor()
   const eventStillLoading = requests.some(row => row.path.endsWith('/signal_tasks') && row.ended === null)
   assert(eventStillLoading,'Dashboard identity and Updates render before slow Events')
   await page.getByText('There are no open events right now.').waitFor()
@@ -257,10 +273,11 @@ try {
   await page.setViewportSize({width:1440,height:1000})
   await page.screenshot({path:path.join(output,'intel-desktop.png')})
   assert.equal(errors.length,0,`Browser errors: ${errors.join('; ')}`)
+  results.mode = production ? 'production' : 'development'
   results.initialFeedPageReads = initialReads
   results.warmReturnAdditionalFeedReads = 0
   results.warmReturnAdditionalIntelReads = 0
-  results.checks = ['45-entry range restoration','warm Feed/Intel navigation','Intel article before counts','Intel detail return without a document reload','stale Feed head-only refresh','failed refresh preserves content','confirmed tail edit/delete','repeated auth event deduplication','account switch and logout isolation','lazy device batches','streamed Dashboard','390x844 portrait and desktop','no browser runtime errors']
+  results.checks = ['45-entry range restoration','warm Feed/Intel navigation','Intel article before counts','Intel detail return without a document reload','stale Feed head-only refresh','failed refresh preserves content','confirmed tail edit/delete',...(!production ? ['repeated auth event deduplication','account switch and logout isolation'] : []),'lazy device batches','streamed Dashboard','390x844 portrait and desktop','no browser runtime errors']
   await writeFile(path.join(output,'results.json'),JSON.stringify(results,null,2))
   console.log(JSON.stringify(results,null,2))
 } catch (error) {

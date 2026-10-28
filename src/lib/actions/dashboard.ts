@@ -20,8 +20,8 @@ const identity = cache(async () => {
 })
 
 export async function getDashboardIdentity() {
-  const { voyager, guest } = await identity()
-  return { voyager, guest }
+  const { user, voyager, guest } = await identity()
+  return { viewerId: user?.id ?? null, voyager, guest }
 }
 
 export async function getDashboardOverview() {

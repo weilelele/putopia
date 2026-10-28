@@ -65,7 +65,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (version !== requestVersion.current) return
     const effectiveRole = result.error ? 'applicant' : parseAccessRole(result.data, true)
     const scope = `${userId}:${data?.role ?? 'applicant'}:${effectiveRole}`
-    if (permissionScope.current !== scope) { clearClientDataCaches(); permissionScope.current = scope }
+    if (permissionScope.current !== scope) {
+      const permissionsChanged = permissionScope.current !== 'guest'
+      clearClientDataCaches()
+      permissionScope.current = scope
+      if (permissionsChanged) router.refresh()
+    }
     setAccessRole(effectiveRole)
     setUser({
       id: userId,
@@ -105,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const id = session?.user.id ?? null
       const changed = id !== activeId
+      const accountChanged = changed && activeId !== undefined
       if (changed || !session) {
         requestVersion.current++
         clearClientDataCaches()
@@ -117,6 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(GUEST)
         setLoading(Boolean(session))
       }
+      // Clear Next's RSC/router cache as well as our client read snapshots.
+      // Initial hydration already has the correct server identity.
+      if (accountChanged) router.refresh()
       if (!session) return
       // SIGNED_IN can fire again on window focus. Recheck periodically, but
       // do not turn an unchanged account into a full-page loading transition.
@@ -154,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       timers.forEach(clearTimeout)
       subscription.unsubscribe()
     }
-  }, [loadProfile])
+  }, [loadProfile, router])
 
   const logout = useCallback(async () => {
     const supabase = createClient()
