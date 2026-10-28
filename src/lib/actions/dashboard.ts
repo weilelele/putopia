@@ -4,7 +4,7 @@ import { getDashboardStats } from './dashboard-stats'
 import { readDashboardCovers } from '@/lib/dashboard-covers'
 import { readDashboardUpdates } from '@/lib/dashboard-updates'
 import { getAllVotes } from './votes'
-import { getDispatchDashboard } from './signal-tasks'
+import { readDashboardDispatch } from '@/lib/dashboard-dispatch'
 import { createClient } from '@/lib/supabase/server'
 import { getRequestIdentity } from '@/lib/request-auth'
 import { dashboardEventVotes, dashboardTuningWorlds, latestUpdates, orderDashboardEvents, type DashboardEvent } from '@/lib/dashboard-model'
@@ -30,25 +30,27 @@ export async function getDashboardOverview() {
 }
 
 export async function getDashboardUpdates() {
-  const { role } = await identity()
   try {
-    const feed = await readDashboardUpdates(role === 'voyager' || role === 'architect')
+    const feed = await readDashboardUpdates(identity().then(({ role }) => role === 'voyager' || role === 'architect'))
     return { updates: latestUpdates(feed.updates), errors: feed.incomplete ? ['Updates'] : [] }
   } catch { return { updates: [], errors: ['Updates'] } }
 }
 
 export async function getDashboardEvents() {
-  const { user, role } = await identity()
-  const client = await createClient()
+  const viewer = identity()
   const errors: string[] = []
   async function read<T>(name: string, task: () => Promise<T>): Promise<T | null> {
     try { return await task() } catch { errors.push(name); return null }
   }
   // Warm covers alongside eligibility rather than starting after it finishes.
   const coversPromise = readDashboardCovers().then(data => ({ data, failed: false }), () => ({ data: null, failed: true }))
+  const votesPromise = read('Votes', getAllVotes)
+  const dispatchPromise = read('Signal Dispatch', () => readDashboardDispatch(viewer.then(({ user, role }) => user ? { id: user.id, role } : null)))
+  const { user, role } = await viewer
+  const client = await createClient()
   const [votes, dispatch, responses, covers] = await Promise.all([
-    read('Votes', getAllVotes),
-    read('Signal Dispatch', () => getDispatchDashboard(true)),
+    votesPromise,
+    dispatchPromise,
     user ? read('Vote responses', async () => {
       const { data, error } = await client.from('vote_responses').select('vote_id').eq('user_id', user.id)
       if (error) throw error
