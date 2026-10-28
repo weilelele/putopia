@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useEffectEvent, useRef, useState, type MouseEvent, type PointerEvent } from 'react'
-import { ArrowRight, ChevronLeft, Volume2, VolumeX, X } from 'lucide-react'
+import { ChevronLeft, Volume2, VolumeX, X } from 'lucide-react'
 import { BRIEFING_PAGES, BRIEFING_VERSION, briefingTapTarget, clampBriefingPage, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 import type { InitiationPublicMember } from '@/lib/initiation-types'
 import type { PageState } from './briefing-kit'
@@ -34,7 +34,7 @@ export function InitiationBriefing({ trigger, members, seats, regions, offers, b
   const content = useRef<HTMLDivElement>(null)
   const pendingNavigation = useRef<{ id: string; from: number; to: number; via: string; startedAt: number } | null>(null)
   const track = (event: string, properties: Record<string, unknown> = {}) => capture(event, {
-    briefing_version: BRIEFING_VERSION, page_count: BRIEFING_PAGES.length, ...properties,
+    briefing_version: BRIEFING_VERSION, page_count: BRIEFING_PAGES.length, navigation_mode: 'tap_anywhere', ...properties,
   })
   const emit = useEffectEvent(track)
   const [nav, setNav] = useState<NavState>(() => ({ page: 0, leaving: -1, dir: 1, visits: BRIEFING_PAGES.map((_, i) => i === 0 ? 1 : 0), maxPage: 0 }))
@@ -106,21 +106,21 @@ export function InitiationBriefing({ trigger, members, seats, regions, offers, b
   const first = nav.page === 0, last = nav.page === LAST
 
   const ownTarget = (target: EventTarget) => (target as Element).closest('dialog') === dialog.current
-  function onPointerDown(event: PointerEvent<HTMLDivElement>) {
+  function onPointerDown(event: PointerEvent<HTMLDialogElement>) {
     swipe.current = { x: event.clientX, y: event.clientY, control: !ownTarget(event.target) || !!(event.target as Element).closest(CONTROLS),
       swiped: false, moved: false, pointerType: event.pointerType }
   }
-  function onPointerMove(event: PointerEvent<HTMLDivElement>) {
+  function onPointerMove(event: PointerEvent<HTMLDialogElement>) {
     const start = swipe.current
     if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) start.moved = true
   }
-  function onPointerUp(event: PointerEvent<HTMLDivElement>) {
+  function onPointerUp(event: PointerEvent<HTMLDialogElement>) {
     const start = swipe.current
     if (start.control || window.getSelection()?.toString()) return
     const dx = event.clientX - start.x, dy = event.clientY - start.y
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { start.swiped = true; go(nav.page + (dx < 0 ? 1 : -1), 'swipe') }
   }
-  function onClick(event: MouseEvent<HTMLDivElement>) {
+  function onClick(event: MouseEvent<HTMLDialogElement>) {
     if (!ownTarget(event.target)) return
     const target = event.target as Element
     const rect = event.currentTarget.getBoundingClientRect()
@@ -128,30 +128,32 @@ export function InitiationBriefing({ trigger, members, seats, regions, offers, b
     const x = ratio((event.clientX - rect.left) / rect.width), y = ratio((event.clientY - rect.top) / rect.height)
     const reason = target.closest(CONTROLS) ? 'control' : swipe.current.moved || swipe.current.swiped ? 'gesture'
       : window.getSelection()?.toString() ? 'selection' : pendingNavigation.current ? 'navigation_pending' : null
-    const next = briefingTapTarget(nav.page, x, reason !== null)
-    // NEXT/Skip have already handled their own click before it bubbles to the stage.
+    const next = briefingTapTarget(nav.page, reason !== null)
+    // Continue/Skip have already handled their own click before it bubbles to the dialog.
     const controlAction = target.closest('[data-briefing-nav]')?.getAttribute('data-briefing-nav')
     const controlNavigation = controlAction && pendingNavigation.current?.via === controlAction ? pendingNavigation.current.id : null
     const navigationId = controlNavigation ?? (next === null ? null : go(next, 'tap'))
-    if (first) track('initiation_brief_tapped', {
-      page_index: 1, page_id: BRIEFING_PAGES[0], x_ratio: x, y_ratio: y,
+    track('initiation_brief_tapped', {
+      page_index: nav.page + 1, page_id: BRIEFING_PAGES[nav.page], x_ratio: x, y_ratio: y,
       content_width: Math.round(rect.width), content_height: Math.round(rect.height),
+      coordinate_space: 'dialog',
       pointer_type: event.detail === 0 ? 'keyboard' : swipe.current.pointerType,
       target_kind: reason === 'control' ? 'control' : target.closest('[data-briefing-target]')?.getAttribute('data-briefing-target') ?? 'background',
-      navigation_requested: navigationId !== null, navigation_id: navigationId, ignored_reason: navigationId ? null : reason,
+      navigation_requested: navigationId !== null, navigation_id: navigationId, ignored_reason: navigationId ? null : reason ?? (last ? 'last_page' : null),
     })
   }
 
   return <dialog ref={dialog} className={s.dialog} aria-label="Voyager briefing" aria-modal="true"
     onCancel={event => { event.preventDefault(); close('closed') }}
+    onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
+    onPointerCancel={() => { swipe.current.moved = true }} onClick={onClick}
     onKeyDown={event => {
       if (!ownTarget(event.target) || (event.target as HTMLElement).closest('input, textarea')) return
       if (event.key === 'ArrowRight') go(nav.page + 1, 'key')
       if (event.key === 'ArrowLeft') go(nav.page - 1, 'key')
     }}>
-    <div className={s.stage} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
-      onPointerCancel={() => { swipe.current.moved = true }} onClick={onClick}>
-      <div ref={content} tabIndex={-1} className={s.pages}>
+    <div className={s.stage}>
+      <div ref={content} tabIndex={-1} className={`${s.pages} ${last ? '' : s.withContinue}`}>
         <DevicePage state={state(0)} />
         <CollectivePage state={state(1)} />
         <MembersPage state={state(2)} members={members} onProfile={() => track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[2], topic: 'member_profile' })} />
@@ -178,8 +180,7 @@ export function InitiationBriefing({ trigger, members, seats, regions, offers, b
         </div>
       </div>
       {!last && <div className={s.dock}>
-        {first && <p className={s.tapHint}>Tap to continue</p>}
-        <button type="button" className={s.next} data-briefing-nav="next" onClick={() => go(nav.page + 1, 'next')}>NEXT<ArrowRight size={18} aria-hidden /></button>
+        <button type="button" className={s.tapHint} data-briefing-nav="continue" onClick={() => go(nav.page + 1, 'continue')}>Tap to continue</button>
       </div>}
       <p className="sr-only" aria-live="polite">{`Page ${nav.page + 1} of ${BRIEFING_PAGES.length}`}</p>
     </div>
