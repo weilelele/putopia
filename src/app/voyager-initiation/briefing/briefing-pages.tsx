@@ -115,12 +115,12 @@ export function DevicePage({ state }: { state: PageState }) {
     return () => clips.forEach(releaseVideo)
   })
   return <BriefingPage state={state} className={s.p1} label="The device">
-    <div ref={film} className={s.film} role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: hands tuning a real Console into a world, a dial tuned to a robot library, a forest fairy and a starry hillside.">
+    <div ref={film} className={s.film} data-briefing-target="media" role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: hands tuning a real Console into a world, a dial tuned to a robot library, a forest fairy and a starry hillside.">
       {CONSOLE_CLIPS.map(clip => <video key={clip.src} data-src={clip.src} poster={clip.poster} muted playsInline preload="auto" />)}
       <span ref={lamp} className={s.lamp} />
       <canvas ref={canvas} className={s.fx} />
     </div>
-    <div className={`${s.copy} ${s.p1Copy} ${s.gut}`}>
+    <div className={`${s.copy} ${s.p1Copy} ${s.gut}`} data-briefing-target="copy">
       <Kicker text="THE DEVICE" />
       <Headline text="We own a device that can see into parallel worlds." large />
       <p className={`${s.lede} ${s.rise}`} style={rise(2700)}>It is called the Multiverse Console.</p>
@@ -199,7 +199,7 @@ export function CollectivePage({ state }: { state: PageState }) {
       <ul ref={verbs} className={s.verbs} aria-label="We explore, observe and intervene">
         {VERBS.map((verb, k) => <li key={verb} className={k === 2 ? s.hot : undefined} style={{ '--k': k } as CSSProperties}>{verb}</li>)}
       </ul>
-      <p className={`${s.p2Lede} ${s.rise}`} style={rise(2600)}>An organization that explores parallel worlds, observes them, and tries to intervene in them.</p>
+      <p className={`${s.p2Lede} ${s.rise}`} style={rise(2600)}>An organization that explores parallel worlds, observes them, and tries to intervene in them. Voyagers help decide what comes next.</p>
     </div>
   </BriefingPage>
 }
@@ -394,49 +394,6 @@ export function ClassifiedPage({ state }: { state: PageState }) {
       <span className={s.stamp}>VOYAGERS ONLY</span>
       <span ref={record} className={s.record}>CLASSIFIED RECORD 1 OF 3</span>
     </div>
-  </BriefingPage>
-}
-
-/* 6 · Votes: proposals pictured on the Initiation page open in turn. Percentages are illustrative. */
-const PROPOSALS = [
-  { question: 'Which world should we observe next?', options: [['The robot library', 44], ['The shepherd’s valley', 39], ['The starry meadow', 17]] },
-  { question: 'How many new Voyagers should join?', options: [['100', 52], ['250', 31], ['500', 17]] },
-  { question: 'Should we reveal our device locations?', options: [['Yes', 36], ['No', 64]] },
-  { question: 'Investigate a new antenna organization?', options: [['Yes', 71], ['No', 29]] },
-] as const
-
-export function VotesPage({ state }: { state: PageState }) {
-  const [open, setOpen] = useState(0)
-  useScene(state.active, (scene, reduced) => {
-    scene.later(() => setOpen(0), 0)
-    if (reduced) return
-    let k = 0
-    const step = () => { k = (k + 1) % PROPOSALS.length; setOpen(k); scene.later(step, 4000) }
-    scene.later(step, 4200)
-  })
-  return <BriefingPage state={state} className={s.p6} label="Member votes">
-    <div className={`${s.p6Head} ${s.gut}`}>
-      <SmartImage src="/assets/voyager-initiation/participation-questions.png" alt="" sizes="(min-width: 460px) 460px, 100vw" className={s.cover} preload />
-      <span className={s.scrim} />
-      <div className={s.copy}>
-        <Kicker text="MEMBER VOTES" />
-        <Headline text="Help shape what the Collective decides." />
-      </div>
-    </div>
-    <ul className={`${s.proposals} ${s.gut}`} aria-label="Example member proposals">
-      {PROPOSALS.map((proposal, k) => {
-        const lead = Math.max(...proposal.options.map(([, value]) => value))
-        return <li key={proposal.question} className={s.proposal} data-open={open === k || undefined} style={{ '--k': k } as CSSProperties}>
-          <div className={s.question}>{proposal.question}<span>PROPOSAL</span></div>
-          <div className={s.tally}><div><div className={s.options}>
-            {proposal.options.map(([label, value]) => <div key={label} className={`${s.option} ${value === lead ? s.lead : ''}`} style={{ '--p': `${value}%` } as CSSProperties}>
-              <div className={s.optionRow}><b>{label}</b><span>{value}%</span></div>
-              <div className={s.track}><i /></div>
-            </div>)}
-          </div></div></div>
-        </li>
-      })}
-    </ul>
   </BriefingPage>
 }
 
