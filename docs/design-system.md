@@ -338,6 +338,10 @@ Archive 系列组件和 `/ui-kit` 已按 2.3 更新。原 Golden examples 已退
 
 启动动画在手机端将字标控制在可用宽度的 82%、最大 520px；下方原图形 Logo 固定为 48px 宽并保持原比例，与字标间隔 24px。网页与原生使用同一比例；完整动画结束后另停留 3 秒才进入 Dashboard。
 
+### Device introduction simplification · 2026-10-29
+
+User-approved revision supersedes the older introduction layouts below: remove the dense pricing paragraph and the View missions / Meet voyagers / Explore worlds actions. Keep the current hero media and title, followed by “It's a device that we own to explore parallel worlds.” and one full-width orange primary “How it works” button matching the former View missions action (shared ArchiveButton, deep-blue text, label left and arrow right). It opens a centered `ArchiveSheet` with `size="wide"`, showing the existing current-model Console image with numbered arrows to the left Frequency knob, right Band knob and top Quantum Energy Button. Keep three brief matching instructions grounded in `docs/device-reference/console-operations.zh.md`; labels remain at least 12px at every viewport. Use SVG/HTML annotations without altering the original hardware image. Keep batch browsing and Claim in their existing positions. Device showcases devices available for future claims; do not explain Initial Pack, Complete Pack, upgrade options or pricing here. The ineligible Claim dialog only says “Complete Voyager Initiation and payment to apply for a Console.” Actual entitlement, inventory and payment checks remain authoritative.
+
 ### Device introduction · 2026-09-16
 
 User-approved exception: the Console introduction may auto-cycle world images inside its central circular screen with a brief screen-only glitch at transitions. Keep the housing and surrounding UI still; honor reduced motion. Device has no repeated visible page title. The introduction leads into “Found Around the World”; “Explore the function” opens a centered accessible modal with Confirmed and Unconfirmed groups.

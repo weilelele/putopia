@@ -1,21 +1,18 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, Check, Plus, HelpCircle } from 'lucide-react'
-import type { McFunction } from '@/types/database'
+import { useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { ArrowRight } from 'lucide-react'
+import { ArchiveButton } from './archive-button'
 import { ArchiveSheet } from './archive-sheet'
-import { ArchiveLinkButton } from './archive-link-button'
 import { CONSOLE_HERO } from '@/lib/console-hero'
 import SmartImage from './smart-image'
 import styles from './mc-console-panel.module.css'
 
-const DETAILS: Record<string, string> = {
-  'Worlds Detection': 'Observe parallel worlds.',
-  'Audio Collection': 'Receive and send sound.',
-}
-
-export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunction[]; heroVideo?: { src: string; poster?: string } }) {
-  const [guideOpen, setGuideOpen] = useState(false)
+export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poster?: string } } = {}) {
+  const [guideState, setGuideState] = useState<'idle' | 'open' | 'closed'>('idle')
+  const guideOpen = guideState === 'open'
+  const arrowId = useId()
   const [imageIndex, setImageIndex] = useState(0)
   const currentImage = CONSOLE_HERO.images[imageIndex]
   const imageRef = useRef<HTMLDivElement>(null)
@@ -32,11 +29,6 @@ export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunc
     }, CONSOLE_HERO.intervalMs)
     return () => { window.clearInterval(timer); observer.disconnect() }
   }, [guideOpen, heroVideo])
-
-  const groups = [
-    { title: 'Confirmed', functions: mcFunctions.filter(fn => fn.status === 'active'), confirmed: true },
-    { title: 'Unconfirmed', functions: mcFunctions.filter(fn => fn.status !== 'active'), confirmed: false },
-  ]
 
   return (
     <section className={styles.panel} aria-label="About the Multiverse Console">
@@ -55,29 +47,35 @@ export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunc
       </div>}
       <header className={styles.heading}>
         <h2 className={styles.sectionTitle}>Multiverse<br />Console</h2>
-        <p>Our collective&apos;s device for exploring parallel worlds. Complete Pack ($488) or an Initial-member upgrade ($460) includes a Console claim; allocation and delivery follow your member record.</p>
+        <p>It&apos;s a device that we own to explore parallel worlds.</p>
       </header>
-      <nav className={styles.exploreActions} aria-label="Explore the collective">
-        <ArchiveLinkButton href="/intel" variant="primary" fullWidth className={styles.missions}>
-          <span>View missions</span><ArrowRight size={20} aria-hidden />
-        </ArchiveLinkButton>
-        <ArchiveLinkButton href="/voyagers" variant="secondary" className={styles.exploreLink}>
-          <span>Meet voyagers</span><ArrowRight size={20} aria-hidden />
-        </ArchiveLinkButton>
-        <ArchiveLinkButton href="/worlds" variant="secondary" className={styles.exploreLink}>
-          <span>Explore worlds</span><ArrowRight size={20} aria-hidden />
-        </ArchiveLinkButton>
-      </nav>
-      <button className={styles.guideButton} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog">Explore the function <Plus size={20} aria-hidden /></button>
-      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="Console functions" >
-        {mcFunctions.length ? groups.map(group => <section className={styles.group} key={group.title} aria-label={group.title}>
-          <h3>{group.title}</h3>
-          {group.functions.length ? <ul>{group.functions.map(fn => <li key={fn.id}>
-            {group.confirmed ? <span className={styles.confirmedIcon}><Check size={19} aria-hidden /></span> : <HelpCircle className={styles.unknownIcon} size={32} aria-hidden />}
-            <div><h4>{fn.name}</h4><p>{group.confirmed ? (DETAILS[fn.name] || 'Confirmed capability.') : fn.status === 'in_development' ? 'In development' : 'Unconfirmed'}</p></div>
-          </li>)}</ul> : <p>No functions recorded in this category.</p>}
-        </section>) : <p>Function details are currently unavailable.</p>}
-      </ArchiveSheet>
+      <ArchiveButton variant="primary" fullWidth className={styles.guideButton} onClick={() => setGuideState('open')} aria-haspopup="dialog">
+        <span>How it works</span><ArrowRight size={20} aria-hidden />
+      </ArchiveButton>
+      {/* Retain the dialog after its first open so native close restores focus. */}
+      {guideState !== 'idle' ? createPortal(<ArchiveSheet open={guideOpen} onClose={() => setGuideState('closed')} title="How it works" size="wide">
+        {guideOpen ? <>
+          <figure className={styles.diagram} role="img" aria-label="Console controls: 1 points to the left Frequency knob, 2 to the right Band knob, and 3 to the top Quantum Energy Button.">
+            <SmartImage src="/assets/device-reel-wasteland-20261021-poster.jpg" alt="" width={1280} height={720} sizes="(min-width: 576px) 480px, calc(100vw - 96px)" className={styles.diagramImage} />
+            <svg className={styles.arrows} viewBox="0 0 1280 960" fill="none" aria-hidden="true">
+              <defs><marker id={arrowId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="28" markerHeight="28" markerUnits="userSpaceOnUse" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="currentColor" /></marker></defs>
+              <g stroke="currentColor" strokeWidth="1.5" markerEnd={`url(#${arrowId})`}>
+                <path d="M 135 430 H 200 L 278 485" vectorEffect="non-scaling-stroke" />
+                <path d="M 1145 430 H 1050 L 947 485" vectorEffect="non-scaling-stroke" />
+                <path d="M 650 110 V 295" vectorEffect="non-scaling-stroke" />
+              </g>
+            </svg>
+            <span className={`${styles.diagramNumber} ${styles.frequencyNumber}`} aria-hidden="true">1</span>
+            <span className={`${styles.diagramNumber} ${styles.bandNumber}`} aria-hidden="true">2</span>
+            <span className={`${styles.diagramNumber} ${styles.energyNumber}`} aria-hidden="true">3</span>
+          </figure>
+          <ol className={styles.steps}>
+            <li><span className={styles.stepNumber} aria-hidden="true">1</span><div><h3>Frequency</h3><p>Turn the left knob to find a world.</p></div></li>
+            <li><span className={styles.stepNumber} aria-hidden="true">2</span><div><h3>Band</h3><p>Turn the right knob to choose a view.</p></div></li>
+            <li><span className={styles.stepNumber} aria-hidden="true">3</span><div><h3>Quantum energy</h3><p>Hold the top button for at least 3 seconds to charge.</p></div></li>
+          </ol>
+        </> : null}
+      </ArchiveSheet>, document.body) : null}
     </section>
   )
 }
