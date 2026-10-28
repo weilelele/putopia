@@ -10,7 +10,8 @@ import SmartImage from './smart-image'
 import styles from './mc-console-panel.module.css'
 
 export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poster?: string } } = {}) {
-  const [guideOpen, setGuideOpen] = useState(false)
+  const [guideState, setGuideState] = useState<'idle' | 'open' | 'closed'>('idle')
+  const guideOpen = guideState === 'open'
   const arrowId = useId()
   const [imageIndex, setImageIndex] = useState(0)
   const currentImage = CONSOLE_HERO.images[imageIndex]
@@ -48,10 +49,12 @@ export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poste
         <h2 className={styles.sectionTitle}>Multiverse<br />Console</h2>
         <p>It&apos;s a device that we own to explore parallel worlds.</p>
       </header>
-      <ArchiveButton variant="primary" fullWidth className={styles.guideButton} onClick={() => setGuideOpen(true)} aria-haspopup="dialog">
+      <ArchiveButton variant="primary" fullWidth className={styles.guideButton} onClick={() => setGuideState('open')} aria-haspopup="dialog">
         <span>How it works</span><ArrowRight size={20} aria-hidden />
       </ArchiveButton>
-      {guideOpen ? createPortal(<ArchiveSheet open onClose={() => setGuideOpen(false)} title="How it works" size="wide">
+      {/* Retain the dialog after its first open so native close restores focus. */}
+      {guideState !== 'idle' ? createPortal(<ArchiveSheet open={guideOpen} onClose={() => setGuideState('closed')} title="How it works" size="wide">
+        {guideOpen ? <>
           <figure className={styles.diagram} role="img" aria-label="Console controls: 1 points to the left Frequency knob, 2 to the right Band knob, and 3 to the top Quantum Energy Button.">
             <SmartImage src="/assets/device-reel-wasteland-20261021-poster.jpg" alt="" width={1280} height={720} sizes="(min-width: 576px) 480px, calc(100vw - 96px)" className={styles.diagramImage} />
             <svg className={styles.arrows} viewBox="0 0 1280 960" fill="none" aria-hidden="true">
@@ -71,6 +74,7 @@ export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poste
             <li><span className={styles.stepNumber} aria-hidden="true">2</span><div><h3>Band</h3><p>Turn the right knob to choose a view.</p></div></li>
             <li><span className={styles.stepNumber} aria-hidden="true">3</span><div><h3>Quantum energy</h3><p>Hold the top button for at least 3 seconds to charge.</p></div></li>
           </ol>
+        </> : null}
       </ArchiveSheet>, document.body) : null}
     </section>
   )
