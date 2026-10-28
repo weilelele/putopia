@@ -1,15 +1,16 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { ArrowRight, ChevronUp } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { ArchiveButton } from './archive-button'
+import { ArchiveSheet } from './archive-sheet'
 import { CONSOLE_HERO } from '@/lib/console-hero'
 import SmartImage from './smart-image'
 import styles from './mc-console-panel.module.css'
 
 export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poster?: string } } = {}) {
   const [guideOpen, setGuideOpen] = useState(false)
-  const guideId = useId()
+  const arrowId = useId()
   const [imageIndex, setImageIndex] = useState(0)
   const currentImage = CONSOLE_HERO.images[imageIndex]
   const imageRef = useRef<HTMLDivElement>(null)
@@ -44,20 +45,34 @@ export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poste
       </div>}
       <header className={styles.heading}>
         <h2 className={styles.sectionTitle}>Multiverse<br />Console</h2>
+        <p>It&apos;s a device that we own to explore parallel worlds.</p>
       </header>
-      <ArchiveButton variant="primary" fullWidth className={styles.guideButton} onClick={() => setGuideOpen(open => !open)} aria-expanded={guideOpen} aria-controls={guideId}>
-        <span>How it works</span>{guideOpen ? <ChevronUp size={20} aria-hidden /> : <ArrowRight size={20} aria-hidden />}
+      <ArchiveButton variant="primary" fullWidth className={styles.guideButton} onClick={() => setGuideOpen(true)} aria-haspopup="dialog">
+        <span>How it works</span><ArrowRight size={20} aria-hidden />
       </ArchiveButton>
-      <div id={guideId} hidden={!guideOpen} className={styles.guide}>
+      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="How it works" size="wide">
         {guideOpen ? <>
-          <SmartImage src="/assets/voyager-briefing/console-real.jpg" alt="A Multiverse Console held in two hands, showing its central screen and the controls on either side" width={1280} height={720} sizes="(min-width: 1200px) 960px, (min-width: 768px) calc(100vw - 320px), calc(100vw - 32px)" className={styles.guideImage} />
+          <figure className={styles.diagram} role="img" aria-label="Console controls: 1 points to the left Frequency knob, 2 to the right Band knob, and 3 to the top Quantum Energy Button.">
+            <SmartImage src="/assets/device-reel-wasteland-20261021-poster.jpg" alt="" width={1280} height={720} sizes="(min-width: 576px) 480px, calc(100vw - 96px)" className={styles.diagramImage} />
+            <svg className={styles.arrows} viewBox="0 0 1280 960" fill="none" aria-hidden="true">
+              <defs><marker id={arrowId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="28" markerHeight="28" markerUnits="userSpaceOnUse" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="currentColor" /></marker></defs>
+              <g stroke="currentColor" strokeWidth="1.5" markerEnd={`url(#${arrowId})`}>
+                <path d="M 135 430 H 200 L 278 485" vectorEffect="non-scaling-stroke" />
+                <path d="M 1145 430 H 1050 L 947 485" vectorEffect="non-scaling-stroke" />
+                <path d="M 650 110 V 295" vectorEffect="non-scaling-stroke" />
+              </g>
+            </svg>
+            <span className={`${styles.diagramNumber} ${styles.frequencyNumber}`} aria-hidden="true">1</span>
+            <span className={`${styles.diagramNumber} ${styles.bandNumber}`} aria-hidden="true">2</span>
+            <span className={`${styles.diagramNumber} ${styles.energyNumber}`} aria-hidden="true">3</span>
+          </figure>
           <ol className={styles.steps}>
-            <li><h3>Find a world</h3><p>Turn the left knob to tune its Frequency.</p></li>
-            <li><h3>Choose a view</h3><p>Turn the right knob to switch Bands.</p></li>
-            <li><h3>Send energy</h3><p>Hold the Quantum Energy Button for at least 3 seconds to charge before sending energy.</p></li>
+            <li><span className={styles.stepNumber} aria-hidden="true">1</span><div><h3>Frequency</h3><p>Turn the left knob to find a world.</p></div></li>
+            <li><span className={styles.stepNumber} aria-hidden="true">2</span><div><h3>Band</h3><p>Turn the right knob to choose a view.</p></div></li>
+            <li><span className={styles.stepNumber} aria-hidden="true">3</span><div><h3>Quantum energy</h3><p>Hold the top button for at least 3 seconds to charge.</p></div></li>
           </ol>
         </> : null}
-      </div>
+      </ArchiveSheet>
     </section>
   )
 }
