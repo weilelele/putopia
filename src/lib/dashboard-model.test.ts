@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dashboardEventVotes, dashboardTuningWorlds, latestUpdates, orderDashboardEvents } from './dashboard-model'
+import { dashboardEventVotes, dashboardIntelUpdate, dashboardTuningWorlds, latestUpdates, orderDashboardEvents } from './dashboard-model'
 import type { Vote } from '@/types/database'
 
 const NOW = Date.parse('2026-09-10T00:00:00Z')
@@ -7,6 +7,13 @@ const vote = (id: string, patch: Partial<Vote> = {}): Vote => ({ id, title: id, 
 const update = (id: string, category: string, day: number, entityKey?: string) => ({ id, category, entityKey, occurredAt:`2026-09-${String(day).padStart(2,'0')}T00:00:00Z`, title:id, href:'/intel' })
 
 describe('Dashboard Updates contract', () => {
+  it('filters a shared classified source independently for each viewer without mutating it', () => {
+    const source = { id: 'private', title: 'Classified', timestamp: '2026-10-29T00:00:00Z', content: 'Private body', images: ['/private.png'], publisher_name: 'Private author', classified: true }
+    expect(dashboardIntelUpdate(source, '/avatar.png', true)).toMatchObject({ description: source.content, images: source.images, authorAvatar: '/avatar.png', locked: false })
+    expect(dashboardIntelUpdate(source, '/avatar.png', false)).toMatchObject({ description: undefined, images: undefined, image: null, authorName: undefined, authorAvatar: null, locked: true })
+    expect(dashboardIntelUpdate(source, '/avatar.png', true).description).toBe('Private body')
+    expect(source.content).toBe('Private body')
+  })
   it('keeps the latest ten from the four approved types without reserving Intel subtypes', () => {
     const updates = Array.from({ length: 14 }, (_, index) => update(`intel-${index}`, 'Intel', index + 1))
     expect(latestUpdates(updates, NOW).map(item => item.id)).toEqual(['intel-13','intel-12','intel-11','intel-10','intel-9','intel-8','intel-7','intel-6','intel-5','intel-4'])

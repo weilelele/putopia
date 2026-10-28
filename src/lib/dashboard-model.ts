@@ -1,9 +1,18 @@
-import type { Vote } from '@/types/database'
+import type { Intel, Vote } from '@/types/database'
 export type DashboardUpdate = { id: string; occurredAt: string; category: string; title: string; description?: string; image?: string | null; href: string; locked?: boolean; images?: string[]; authorName?: string; authorAvatar?: string | null; entityKey?: string }
 export type DashboardEvent = { id: string; kind: string; title: string; description: string; href: string; action: string; image?: string; endsAt?: string | null }
 const UPDATE_CATEGORIES = new Set(['Intel', 'Voyager activated', 'Established world', 'Device update'])
 const UPDATE_CAPS = new Map([['Voyager activated', 2], ['Established world', 3]])
 const VOYAGER_UPDATE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+
+/** Project a server-only cached source for the current viewer, without mutating it. */
+export function dashboardIntelUpdate(item: Pick<Intel, 'id' | 'timestamp' | 'title' | 'content' | 'images' | 'classified' | 'publisher_name'>, avatar: string | null, canSeeClassified: boolean): DashboardUpdate {
+  const locked = item.classified && !canSeeClassified
+  return { id: `intel-${item.id}`, occurredAt: item.timestamp, category: 'Intel', title: item.title,
+    description: locked ? undefined : item.content.slice(0, 180), image: locked ? null : item.images?.[0],
+    images: locked ? undefined : item.images, authorName: locked ? undefined : item.publisher_name ?? 'Multiverse Collective',
+    authorAvatar: locked ? null : avatar, href: `/intel/${encodeURIComponent(item.id)}`, locked }
+}
 
 /** Apply the approved Dashboard pool rules, then keep the ten newest entries. */
 export function latestUpdates(updates: DashboardUpdate[], now = Date.now()): DashboardUpdate[] {

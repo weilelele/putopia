@@ -35,8 +35,11 @@ const batches = ['one','two','three'].map((name,index) => {
   const content = {slug:`fixture-${name}`,code:`F${index}`,name:`Fixture ${name}`,location:'Local fixture',timeZone:'UTC',status:'searching',statusLine:'Local fixture only',updatedAt:'2026-10-28',nextMilestone:'Verification',image:'/assets/kyoto-one-20260910/01-warehouse-hero.png',imageAlt:'Device fixture',summary:'Local verification batch.',estimatedCompletion:'Unconfirmed',facts:[],lead:{profileId:alice,name:'Alice Fixture',role:'voyager',initials:'AF',location:'Fixture',bio:'Fixture',latestNote:'Fixture'},holders:[],distributionStages:[],archiveStages:[],latestUpdate:{date:'2026-10-28',title:`Fixture ${name} update`,body:'Fixture update.'}}
   return {content,published_content:content,publication_status:'published',revision:1,listing_quantity:0,claimed_quantity:0,reserved_quantity:0,price_amount:null,price_currency:null}
 })
+const signalWorld = {id:'40000000-0000-4000-8000-000000000001',name:'Fixture Signal',description:null,discoverer_name:'Alice Fixture',discoverer_id:alice,vote_scope:'all',scan_until:new Date(Date.now() - 3_600_000).toISOString(),lifecycle_state:'syncing'}
+const signalThread = {id:'50000000-0000-4000-8000-000000000001',world_id:signalWorld.id,reveal_anchor_at:signalWorld.scan_until,gap_hours:4}
+const signalTask = {id:'60000000-0000-4000-8000-000000000001',thread_id:signalThread.id,day_index:0,published_at:signalWorld.scan_until,dreamcatcher_round_id:null}
 const requests = []
-const state = { failFeed:false, feedDelay:160, commentDelay:1200, eventDelay:1400 }
+const state = { failFeed:false, feedDelay:160, commentDelay:1200, eventDelay:1400, databaseDelay:0 }
 const fixture = createServer(async (req,res) => {
   const url = new URL(req.url, api)
   const actor = actorFor(req)
@@ -52,6 +55,7 @@ const fixture = createServer(async (req,res) => {
     res.end(req.method === 'HEAD' ? '' : JSON.stringify(data))
   }
   if (req.method === 'OPTIONS') return send({})
+  if (url.pathname.startsWith('/rest/')) await delay(state.databaseDelay)
   if (url.pathname === '/auth/v1/user') { await delay(70); return send(userFor(actor ?? alice)) }
   if (url.pathname === '/auth/v1/logout') return send({}, 200)
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
@@ -86,7 +90,9 @@ const fixture = createServer(async (req,res) => {
     if (req.method === 'PATCH') entries = entries.map(entry => entry.id === id ? {...entry,...row.body} : entry)
     data = entries.filter(entry => entry.id === id)
     if (req.method === 'DELETE') entries = entries.filter(entry => entry.id !== id && entry.parent_id !== id)
-  } else if (table === 'signal_tasks') await delay(state.eventDelay)
+  } else if (table === 'signal_tasks') { await delay(state.eventDelay); data = [signalTask] }
+  else if (table === 'signal_threads') data = [signalThread]
+  else if (table === 'worlds' && url.searchParams.has('id')) data = [signalWorld]
   if (String(req.headers.accept).includes('application/vnd.pgrst.object+json')) return send(data[0] ?? null)
   return send(data)
 })
@@ -264,8 +270,70 @@ try {
   await page.getByText('Fixture one update',{exact:true}).waitFor()
   const eventStillLoading = requests.some(row => row.path.endsWith('/signal_tasks') && row.ended === null)
   assert(eventStillLoading,'Dashboard identity and Updates render before slow Events')
-  await page.getByText('There are no open events right now.').waitFor()
+  await page.getByRole('heading',{name:'Fixture Signal',exact:true}).waitFor()
   await page.screenshot({path:path.join(output,'dashboard-mobile.png')})
+  console.log('Checking authenticated Dashboard full refresh with database latency')
+  // Measure this document rather than speculative RSC prefetches for the other
+  // four navigation tabs. Normal warm-navigation checks above keep prefetch on.
+  await page.route('**/*', route => {
+    const headers = route.request().headers()
+    if (headers['next-router-prefetch'] || headers['next-router-segment-prefetch'] || headers.purpose === 'prefetch') return route.abort()
+    return route.fallback()
+  })
+  state.eventDelay = 0
+  state.databaseDelay = 180
+  const initialRequest = requests.length
+  const refreshed = []
+  for (let attempt=0;attempt<3;attempt++) {
+    const started = performance.now()
+    await page.reload({waitUntil:'commit'})
+    await page.getByText('WELCOME,',{exact:true}).waitFor()
+    const identityMs = Math.round(performance.now() - started)
+    await page.getByText('Fixture one update',{exact:true}).waitFor()
+    const updatesMs = Math.round(performance.now() - started)
+    await page.getByRole('heading',{name:'Fixture Signal',exact:true}).waitFor()
+    await page.waitForLoadState('load')
+    refreshed.push({identityMs,updatesMs,completeMs:Math.round(performance.now() - started)})
+  }
+  results.dashboardRefresh = {databaseLatencyMs:state.databaseDelay,samples:refreshed}
+  const dashboardReads = requests.slice(initialRequest)
+  results.dashboardRefresh.databaseReads = dashboardReads.filter(row => row.path.startsWith('/rest/')).length
+  if (!process.env.ALLOW_LEGACY_DASHBOARD) {
+    assert(!dashboardReads.some(row => row.path.endsWith('/worlds') && row.query.discoverer_id),'Dashboard does not load the personal world library')
+    assert(!dashboardReads.some(row => row.path.endsWith('/device_batch_units')),'Dashboard does not load device holders')
+    assert(!dashboardReads.some(row => row.path.endsWith('/signal_task_assets')),'warm Dashboard does not load full investigation media')
+    const dispatchTasks = dashboardReads.filter(row => row.path.endsWith('/signal_tasks') && row.query.select.includes('dreamcatcher_round_id'))
+    assert.equal(dispatchTasks.length,3,'one slim schedule read per full refresh')
+    const threads = dashboardReads.filter(row => row.path.endsWith('/signal_threads') && row.query.select.includes('reveal_anchor_at'))
+    assert.equal(threads.length,3,'one slim thread read per full refresh')
+    for (let i=0;i<3;i++) assert(threads[i].started < dispatchTasks[i].ended,'thread and task queries overlap')
+  }
+  const entries = []
+  for (let attempt=0;attempt<3;attempt++) {
+    // Empty browser cache + no client router state; the server remains warm.
+    const fresh = await browser.newContext({viewport:{width:390,height:844}})
+    await fresh.addCookies([{name:'sb-127-auth-token',value:`base64-${Buffer.from(JSON.stringify(sessionFor(alice))).toString('base64url')}`,domain:'127.0.0.1',path:'/'}])
+    await fresh.route('**/*', route => {
+      const target = new URL(route.request().url())
+      const headers = route.request().headers()
+      if (headers['next-router-prefetch'] || headers['next-router-segment-prefetch'] || headers.purpose === 'prefetch') return route.abort()
+      return target.origin === app || target.origin === api ? route.continue() : route.abort()
+    })
+    const entry = await fresh.newPage()
+    entry.on('pageerror',error => errors.push(error.message))
+    const started = performance.now()
+    await entry.goto(`${app}/console`,{waitUntil:'commit'})
+    await entry.getByText('WELCOME,',{exact:true}).waitFor()
+    const identityMs = Math.round(performance.now() - started)
+    await entry.getByText('Fixture one update',{exact:true}).waitFor()
+    const updatesMs = Math.round(performance.now() - started)
+    await entry.getByRole('heading',{name:'Fixture Signal',exact:true}).waitFor()
+    await entry.waitForLoadState('load')
+    entries.push({identityMs,updatesMs,completeMs:Math.round(performance.now() - started)})
+    await fresh.close()
+  }
+  results.dashboardFirstBrowserEntry = {serverCache:'warm',databaseLatencyMs:state.databaseDelay,samples:entries}
+  state.databaseDelay = 0
   await navigate('/intel')
   await page.getByRole('heading',{name:'Local Public Intel',exact:true}).waitFor()
   await page.screenshot({path:path.join(output,'intel-mobile.png')})
@@ -277,7 +345,7 @@ try {
   results.initialFeedPageReads = initialReads
   results.warmReturnAdditionalFeedReads = 0
   results.warmReturnAdditionalIntelReads = 0
-  results.checks = ['45-entry range restoration','warm Feed/Intel navigation','Intel article before counts','Intel detail return without a document reload','stale Feed head-only refresh','failed refresh preserves content','confirmed tail edit/delete',...(!production ? ['repeated auth event deduplication','account switch and logout isolation'] : []),'lazy device batches','streamed Dashboard','390x844 portrait and desktop','no browser runtime errors']
+  results.checks = ['45-entry range restoration','warm Feed/Intel navigation','Intel article before counts','Intel detail return without a document reload','stale Feed head-only refresh','failed refresh preserves content','confirmed tail edit/delete',...(!production ? ['repeated auth event deduplication','account switch and logout isolation'] : []),'lazy device batches','streamed Dashboard','three authenticated Dashboard full refreshes with 180ms database latency',...(!process.env.ALLOW_LEGACY_DASHBOARD ? ['no unused Dashboard library/holder/media reads','parallel task/thread reads'] : []),'390x844 portrait and desktop','no browser runtime errors']
   await writeFile(path.join(output,'results.json'),JSON.stringify(results,null,2))
   console.log(JSON.stringify(results,null,2))
 } catch (error) {
@@ -286,6 +354,8 @@ try {
   console.error(JSON.stringify(requests.slice(-12),null,2))
   throw error
 } finally {
+  await writeFile(path.join(output,'requests.json'),JSON.stringify(requests,null,2))
+  await writeFile(path.join(output,'results.json'),JSON.stringify(results,null,2))
   await writeFile(path.join(output,'server.log'),logs)
   await browser?.close()
   next.kill('SIGTERM')
