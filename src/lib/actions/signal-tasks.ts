@@ -1,4 +1,5 @@
 'use server'
+import { getRequestIdentity } from '@/lib/request-auth'
 
 /**
  * Signal Tasks — server actions (admin authoring + future member-facing reads).
@@ -11,7 +12,7 @@
  * convention — see admin/layout.tsx).
  */
 import { getRoundInvestigations } from '@/lib/dreamcatcher-rounds'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { listFrequencies as cosmoListFrequencies, sampleBandAssets, getBandAssets as cosmoGetBandAssets } from '@/lib/cosmo'
 import type { CosmoFrequency } from '@/lib/cosmo'
 import { processImageAsset, uploadProcessed, DEFAULT_CROP } from '@/lib/signal/process'
@@ -605,15 +606,8 @@ export interface SignalFeed {
 }
 
 async function currentUser(): Promise<{ id: string; role: string } | null> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, profile: data } = await getRequestIdentity()
   if (!user) return null
-  const admin = createAdminClient() as DB
-  const { data } = await admin
-    .from('voyager_profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
   return { id: user.id, role: data?.role ?? 'applicant' }
 }
 

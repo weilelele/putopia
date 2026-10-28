@@ -1,28 +1,17 @@
-import { getDeviceClaimSupply } from '@/lib/actions/device-supply'
-import { getInitiationSnapshot } from '@/lib/actions/initiation'
+import { Suspense } from 'react'
 import { getMcFunctions } from '@/lib/actions/mc-functions'
+import { getDeviceRoom } from '@/lib/actions/device-room'
 import { McConsolePanel } from '@/components/mc-console-panel'
-import { getMyDeviceConsoles } from '@/lib/actions/orders'
-import { getDeviceCameraSource } from '@/lib/device-camera-source'
 import { DEVICE_REEL } from '@/lib/device-reel'
 import type { DeviceBatch } from '@/lib/device-batches'
 import { DeviceRoomSwitcher } from './device-room-switcher'
 
-export async function DeviceRooms({ batches, initialSlug }: {
-  batches: DeviceBatch[]
-  initialSlug: string
-}) {
-  const [consoles, mcFunctions, initiation] = await Promise.all([
-    getMyDeviceConsoles(),
-    getMcFunctions(),
-    getInitiationSnapshot(),
-  ])
-  const rooms = await Promise.all(batches.map(async (batch) => ({
-    batch,
-    claimAccess: { status: initiation.status, consoleClaim: initiation.consoleClaim, legacyPackPurchased: initiation.legacyPackPurchased, supplyStatus: await getDeviceClaimSupply(batch.slug) },
-    camera: getDeviceCameraSource(batch),
-    ownedConsole: consoles.find((console) => console.order.device_batch_slug === batch.slug) ?? null,
-  })))
+async function Introduction() {
+  return <McConsolePanel mcFunctions={await getMcFunctions()} heroVideo={DEVICE_REEL} />
+}
 
-  return <DeviceRoomSwitcher rooms={rooms} initialSlug={initialSlug} introduction={<McConsolePanel key="console-introduction" mcFunctions={mcFunctions} heroVideo={DEVICE_REEL} />} />
+export async function DeviceRooms({ batches, initialSlug }: { batches: DeviceBatch[]; initialSlug: string }) {
+  // Other batches load on selection. The introduction streams independently.
+  const initial = await getDeviceRoom(initialSlug)
+  return <DeviceRoomSwitcher batches={batches} initial={initial} introduction={<Suspense fallback={<p role="status">RETRIEVING ARCHIVE</p>}><Introduction /></Suspense>} />
 }

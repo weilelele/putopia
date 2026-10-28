@@ -105,11 +105,12 @@ export async function getCommentCountsBulk(
   if (!subjectIds.length) return {}
   if (isRetiredChatSubject(subjectType)) return {}
   const admin = createAdminClient()
-  const { data } = await (admin.from('comments' as never) as ReturnType<typeof admin.from>)
+  const { data, error } = await (admin.from('comments' as never) as ReturnType<typeof admin.from>)
     .select('subject_id')
     .eq('subject_type', subjectType)
     .in('subject_id', subjectIds)
     .eq('is_visible', true)
+  if (error) throw new Error('Comment counts could not be loaded.')
   const counts: Record<string, number> = {}
   for (const row of (data ?? []) as { subject_id: string }[]) {
     counts[row.subject_id] = (counts[row.subject_id] ?? 0) + 1

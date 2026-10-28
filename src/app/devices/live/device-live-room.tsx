@@ -47,7 +47,9 @@ export function DeviceLiveRoom({
   camera,
   onSelectBatch,
   introduction,
+  pendingSlug,
 }: {
+  pendingSlug?: string
   introduction?: ReactNode
   onSelectBatch: (slug: string) => void
   batch: DeviceBatch
@@ -111,7 +113,7 @@ export function DeviceLiveRoom({
   }
 
   return (
-    <main className={`main ${styles.page}`} data-route-scroll>{!isRoot && <BackLink href="/devices" label="Devices" />}
+    <main className={`main ${styles.page}`} data-route-scroll aria-busy={Boolean(pendingSlug)}>{!isRoot && <BackLink href="/devices" label="Devices" />}
       {isRoot ? <><h1 className="sr-only">Devices</h1><RootBrandHeader /></> : (<header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
         <h1 className="sr-only">DEVICES</h1>
 
@@ -123,14 +125,15 @@ export function DeviceLiveRoom({
       </section>
 
       <nav className={styles.objectNav} aria-label="Device batches">
+        {pendingSlug && <span className="sr-only" role="status">Loading selected device…</span>}
         <div className={styles.objectTabs} role="tablist">
           {batches.map((item, index) => (
             <button
               role="tab"
-              aria-selected={batch.slug === item.slug}
+              aria-selected={(pendingSlug ?? batch.slug) === item.slug}
               className={styles.objectTab}
               type="button"
-              tabIndex={batch.slug === item.slug ? 0 : -1}
+              tabIndex={(pendingSlug ?? batch.slug) === item.slug ? 0 : -1}
               onClick={() => chooseBatch(item.slug)}
               onKeyDown={(event) => {
                 const nextIndex = event.key === 'ArrowRight' ? (index + 1) % batches.length

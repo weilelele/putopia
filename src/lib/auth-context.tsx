@@ -7,6 +7,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import { accessRole as parseAccessRole } from '@/lib/digital-access'
 import type { UserRole } from '@/types/database'
 import { allowsUnregisteredViewer, routeWithSearch } from '@/lib/access-policy'
+import { clearClientDataCaches } from '@/lib/client-data-cache'
 
 export type { UserRole }
 
@@ -47,25 +48,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser>(GUEST)
   const [accessRole, setAccessRole] = useState<UserRole>('guest')
   const requestVersion = useRef(0)
+  const permissionScope = useRef('guest')
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   const loadProfile = useCallback(async (userId: string, email?: string) => {
     syncFeedDraftAccount(draftStorage(), userId)
     const version = ++requestVersion.current
-    setAccessRole('guest')
     const supabase = createClient()
-    const { data, error } = await supabase
-      .from('voyager_profiles')
-      .select('role, display_name, avatar_url, registered_at')
-      .eq('id', userId)
-      .single()
-
-    // No role fallback on missing migration, RPC failure or account switch.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await (supabase as any).rpc('effective_access_role')
+    const [{ data, error }, result] = await Promise.all([
+      supabase.from('voyager_profiles').select('role, display_name, avatar_url, registered_at').eq('id', userId).single(),
+      // No role fallback on missing migration, RPC failure or account switch.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).rpc('effective_access_role'),
+    ])
     if (version !== requestVersion.current) return
-    setAccessRole(result.error ? 'applicant' : parseAccessRole(result.data, true))
+    const effectiveRole = result.error ? 'applicant' : parseAccessRole(result.data, true)
+    const scope = `${userId}:${data?.role ?? 'applicant'}:${effectiveRole}`
+    if (permissionScope.current !== scope) { clearClientDataCaches(); permissionScope.current = scope }
+    setAccessRole(effectiveRole)
     setUser({
       id: userId,
       role: data?.role ?? 'applicant',
@@ -92,34 +93,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient()
+    let activeId: string | null | undefined
+    let completedAt = 0
+    let pending: Promise<void> | null = null
+    let disposed = false
+    const timers = new Set<ReturnType<typeof setTimeout>>()
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadProfile(session.user.id, session.user.email).catch(() => setAccessRole('guest')).finally(() => setLoading(false))
-      } else {
-        syncFeedDraftAccount(draftStorage(), null)
+    // INITIAL_SESSION supplies the initial read. A second getSession() raced
+    // this event and fetched the same profile twice. Keep the callback sync:
+    // start Supabase reads outside the SDK's auth notification lock.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const id = session?.user.id ?? null
+      const changed = id !== activeId
+      if (changed || !session) {
         requestVersion.current++
+        clearClientDataCaches()
+        permissionScope.current = 'guest'
+        syncFeedDraftAccount(draftStorage(), id)
+        activeId = id
+        pending = null
+        completedAt = 0
         setAccessRole('guest')
         setUser(GUEST)
-        setLoading(false)
+        setLoading(Boolean(session))
       }
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setLoading(true)
-        setAccessRole('guest')
-        loadProfile(session.user.id, session.user.email).catch(() => setAccessRole('guest')).finally(() => setLoading(false))
-      } else {
-        syncFeedDraftAccount(draftStorage(), null)
+      if (!session) return
+      // SIGNED_IN can fire again on window focus. Recheck periodically, but
+      // do not turn an unchanged account into a full-page loading transition.
+      if (pending && (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
         requestVersion.current++
-        setAccessRole('guest')
-        setUser(GUEST)
-        setLoading(false)
+        pending = null
       }
+      if (pending || (!changed && event === 'SIGNED_IN' && Date.now() - completedAt < 60_000)) return
+      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') clearClientDataCaches()
+      const version = requestVersion.current
+      const timer = setTimeout(() => {
+        timers.delete(timer)
+        if (disposed || version !== requestVersion.current) return
+        const request = loadProfile(session.user.id, session.user.email)
+        pending = request
+        const profileVersion = requestVersion.current
+        void request.catch(() => {
+          if (disposed || profileVersion !== requestVersion.current) return
+          clearClientDataCaches()
+          setAccessRole('guest')
+          setUser(GUEST)
+        }).finally(() => {
+          if (disposed || profileVersion !== requestVersion.current) return
+          if (pending === request) pending = null
+          completedAt = Date.now()
+          setLoading(false)
+        })
+      }, 0)
+      timers.add(timer)
     })
-
-    return () => subscription.unsubscribe()
+    return () => {
+      disposed = true
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- This is a request generation counter, not a DOM ref; invalidate on cleanup.
+      requestVersion.current++
+      timers.forEach(clearTimeout)
+      subscription.unsubscribe()
+    }
   }, [loadProfile])
 
   const logout = useCallback(async () => {
@@ -137,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Push cleanup must never prevent the user from signing out.
     }
+    clearClientDataCaches()
     await supabase.auth.signOut()
     window.location.href = '/'
   }, [])
