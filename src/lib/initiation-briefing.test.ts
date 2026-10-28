@@ -42,17 +42,13 @@ describe('Voyager briefing content', () => {
       'brief_05_classified', 'brief_07_console', 'brief_08_packs', 'brief_09_join'])
   })
 
-  it('advances from every part of the first page but leaves controls and gestures alone', () => {
-    for (const x of [0, .15, .5, .62, 1]) expect(briefingTapTarget(0, x, false)).toBe(1)
-    expect(briefingTapTarget(0, .5, true)).toBeNull()
+  it('advances every introductory page without a position-dependent back zone', () => {
+    for (let page = 0; page < BRIEFING_PAGES.length - 1; page++) expect(briefingTapTarget(page, false)).toBe(page + 1)
   })
 
-  it('preserves later-page navigation zones and never advances beyond the join page', () => {
-    expect(briefingTapTarget(3, .1, false)).toBe(2)
-    expect(briefingTapTarget(3, .5, false)).toBeNull()
-    expect(briefingTapTarget(3, .9, false)).toBe(4)
-    expect(briefingTapTarget(7, .9, false)).toBeNull()
-    expect(briefingTapTarget(7, .1, true)).toBeNull()
+  it('leaves controls and gestures alone on every page and stops at the offer page', () => {
+    for (let page = 0; page < BRIEFING_PAGES.length; page++) expect(briefingTapTarget(page, true)).toBeNull()
+    expect(briefingTapTarget(BRIEFING_PAGES.length - 1, false)).toBeNull()
   })
 
   it('offers the same choices and prices as the checkout panel', () => {

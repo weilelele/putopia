@@ -77,11 +77,10 @@ export function clampBriefingPage(page: number): number {
   return Math.max(0, Math.min(BRIEFING_PAGES.length - 1, Math.trunc(page)))
 }
 
-/** The first page accepts every content tap; later pages keep their left/right navigation zones. */
-export function briefingTapTarget(page: number, xRatio: number, blocked: boolean): number | null {
+/** Every non-interactive tap advances; the final offer page never wraps or goes back on a tap. */
+export function briefingTapTarget(page: number, blocked: boolean): number | null {
   if (blocked) return null
-  const target = page === 0 || xRatio > .62 ? page + 1 : xRatio < .3 ? page - 1 : page
-  const next = clampBriefingPage(target)
+  const next = clampBriefingPage(page + 1)
   return next === page ? null : next
 }
 
