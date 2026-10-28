@@ -468,7 +468,7 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
         </button>)}
       </div>
     </div>
-    <p className={`${s.meta} ${s.p8Note} ${s.gut} ${s.rise}`} style={rise(1900)}>Tap a pack to see what is inside. One a month; contiguous US only, shipping and taxes included.</p>
+    <p className={`${s.meta} ${s.p8Note} ${s.gut} ${s.rise}`} style={rise(1900)}>Tap a pack to see what is inside.</p>
   </BriefingPage>
 }
 
