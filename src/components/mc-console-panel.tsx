@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ArrowRight } from 'lucide-react'
 import { ArchiveButton } from './archive-button'
 import { ArchiveSheet } from './archive-sheet'
@@ -50,8 +51,7 @@ export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poste
       <ArchiveButton variant="primary" fullWidth className={styles.guideButton} onClick={() => setGuideOpen(true)} aria-haspopup="dialog">
         <span>How it works</span><ArrowRight size={20} aria-hidden />
       </ArchiveButton>
-      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="How it works" size="wide">
-        {guideOpen ? <>
+      {guideOpen ? createPortal(<ArchiveSheet open onClose={() => setGuideOpen(false)} title="How it works" size="wide">
           <figure className={styles.diagram} role="img" aria-label="Console controls: 1 points to the left Frequency knob, 2 to the right Band knob, and 3 to the top Quantum Energy Button.">
             <SmartImage src="/assets/device-reel-wasteland-20261021-poster.jpg" alt="" width={1280} height={720} sizes="(min-width: 576px) 480px, calc(100vw - 96px)" className={styles.diagramImage} />
             <svg className={styles.arrows} viewBox="0 0 1280 960" fill="none" aria-hidden="true">
@@ -71,8 +71,7 @@ export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poste
             <li><span className={styles.stepNumber} aria-hidden="true">2</span><div><h3>Band</h3><p>Turn the right knob to choose a view.</p></div></li>
             <li><span className={styles.stepNumber} aria-hidden="true">3</span><div><h3>Quantum energy</h3><p>Hold the top button for at least 3 seconds to charge.</p></div></li>
           </ol>
-        </> : null}
-      </ArchiveSheet>
+      </ArchiveSheet>, document.body) : null}
     </section>
   )
 }
