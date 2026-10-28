@@ -20,6 +20,7 @@
 .dialog:focus { outline: none; }
 
 .stage { position: relative; width: min(100%, 460px); height: 100%; margin: 0 auto; overflow: hidden; background: var(--color-deep); }
+.stage[data-cinematic] { background: #000; }
 @media (min-width: 768px) { .stage { outline: 1px solid var(--bd-faint); } }
 
 .gut { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }

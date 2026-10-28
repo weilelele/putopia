@@ -152,7 +152,7 @@ export function InitiationBriefing({ trigger, members, seats, regions, offers, b
       if (event.key === 'ArrowRight') go(nav.page + 1, 'key')
       if (event.key === 'ArrowLeft') go(nav.page - 1, 'key')
     }}>
-    <div className={s.stage}>
+    <div className={s.stage} data-cinematic={nav.page < 2 || undefined}>
       <div ref={content} tabIndex={-1} className={`${s.pages} ${last ? '' : s.withContinue}`}>
         <DevicePage state={state(0)} />
         <CollectivePage state={state(1)} />
