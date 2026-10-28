@@ -93,9 +93,9 @@ strip's behaviour can be segmented by user type.
 | Event | Trigger | Properties |
 |-------|---------|------------|
 | `pwa_install_available` | Android browser exposes the native install prompt | — |
-| `pwa_install_clicked` | User taps the Console install card | — |
-| `pwa_install_accepted` | User accepts the native install prompt | `platform` |
-| `pwa_install_dismissed` | User dismisses the native install prompt | `platform` |
+| `pwa_install_clicked` | User confirms installation from Dashboard or the public install page | `source`: `dashboard`, `email`, `install_page` |
+| `pwa_install_accepted` | User accepts the native install prompt | `platform`, `source` |
+| `pwa_install_dismissed` | User dismisses the native install prompt | `platform`, `source` |
 | `pwa_installed` | Browser reports installation completed | — |
 | `pwa_standalone_launched` | App opens in standalone display mode | — |
 | `pwa_offline_viewed` | Connectivity returns after the offline fallback was shown | `offline_viewed_at` |

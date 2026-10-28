@@ -7,13 +7,13 @@ import SmartImage from './smart-image'
 import { ArchiveButton } from './archive-button'
 import { ArchiveLinkButton } from './archive-link-button'
 import type { DashboardUpdate, DashboardEvent } from '@/lib/dashboard-model'
-export function UpdateTimeline({ updates }: { updates: DashboardUpdate[] }) {
+export function UpdateTimeline({ updates, actions }: { updates: DashboardUpdate[]; actions?: Readonly<Record<string, () => void>> }) {
   const [failedImages, setFailedImages] = useState<string[]>([])
   return <ol className="update-timeline">{updates.map(item => {
     const images = (item.locked ? [] : item.images?.length ? item.images : item.image ? [item.image] : []).filter(src => src && !failedImages.includes(src))
     return <li key={item.id} className="update-row">
       <div className="update-time"><span aria-hidden className="update-node" /><time dateTime={item.occurredAt} title={new Date(item.occurredAt).toISOString()}>{new Date(item.occurredAt).toISOString().slice(5,10).replace('-','/')}</time></div>
-      <Link className={`update-content update-content--compact${images.length ? '' : ' update-content--text'}`} href={item.href} scroll={false}>
+      <Link className={`update-content update-content--compact${images.length ? '' : ' update-content--text'}`} href={item.href} scroll={false} aria-haspopup={actions?.[item.id] ? 'dialog' : undefined} onClick={actions?.[item.id] ? event => { if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); actions[item.id]() } : undefined}>
         {images[0] && <span className="update-thumbnail">
           <SmartImage src={images[0]} alt="" width={120} height={96} sizes="(max-width: 359px) 72px, (max-width: 767px) 88px, 120px" className="update-image" onError={() => setFailedImages(current => [...current, images[0]])} />
           {images.length > 1 && <span className="update-image-count" aria-label={`${images.length} images`}>+{images.length - 1}</span>}

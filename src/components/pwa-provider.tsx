@@ -7,23 +7,29 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 import {
   PWA_OFFLINE_VIEW_PENDING_KEY,
   type BeforeInstallPromptEvent,
   type InstallPromptOutcome,
 } from '@/types/pwa'
-import { markStoredPwaInstallNudgeInstalled } from '@/lib/pwa-install-nudge'
 import { isIOSNativeApp } from '@/lib/app-platform'
+import { getInstallPlatform, type InstallPlatform } from '@/lib/android-install'
 
 interface PwaContextValue {
   canInstall: boolean
-  promptInstall: () => Promise<InstallPromptOutcome | null>
+  platform: InstallPlatform
+  isInstalled: boolean
+  promptInstall: (source?: string) => Promise<InstallPromptOutcome | null>
 }
 
 const PwaContext = createContext<PwaContextValue>({
   canInstall: false,
+  platform: 'unknown',
+  isInstalled: false,
   promptInstall: async () => null,
 })
 
@@ -35,8 +41,19 @@ function isAndroidDevice() {
   return /Android/i.test(navigator.userAgent)
 }
 
+function subscribeToDisplayMode(onChange: () => void) {
+  const query = window.matchMedia('(display-mode: standalone)')
+  query.addEventListener('change', onChange)
+  return () => query.removeEventListener('change', onChange)
+}
+function readPlatform() { return getInstallPlatform(navigator.userAgent, isStandaloneDisplay()) }
+function serverPlatform(): InstallPlatform { return 'unknown' }
+
 export function PwaProvider({ children }: { children: React.ReactNode }) {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [installed, setInstalled] = useState(false)
+  const prompting = useRef(false)
+  const platform = useSyncExternalStore(subscribeToDisplayMode, readPlatform, serverPlatform)
 
   useEffect(() => {
     if (isIOSNativeApp(navigator.userAgent)) return
@@ -72,13 +89,14 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
       if (!isAndroidDevice() || isStandaloneDisplay()) return
       const promptEvent = event as BeforeInstallPromptEvent
       promptEvent.preventDefault()
+      setInstalled(false)
       setInstallPrompt(promptEvent)
       posthog.capture('pwa_install_available')
     }
 
     const handleInstalled = () => {
       setInstallPrompt(null)
-      markStoredPwaInstallNudgeInstalled()
+      setInstalled(true)
       posthog.capture('pwa_installed')
     }
 
@@ -93,26 +111,26 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const promptInstall = useCallback(async () => {
-    if (!installPrompt || isStandaloneDisplay()) return null
-
-    posthog.capture('pwa_install_clicked')
-    await installPrompt.prompt()
-    const choice = await installPrompt.userChoice
-    const outcome = choice.outcome
-
-    posthog.capture(
-      outcome === 'accepted' ? 'pwa_install_accepted' : 'pwa_install_dismissed',
-      { platform: choice.platform },
-    )
+  const promptInstall = useCallback(async (source = 'dashboard') => {
+    if (!installPrompt || prompting.current || isStandaloneDisplay()) return null
+    prompting.current = true
+    // A browser prompt is single-use, including after dismissal or failure.
     setInstallPrompt(null)
-    return outcome
+    try {
+      posthog.capture('pwa_install_clicked', { source })
+      await installPrompt.prompt()
+      const choice = await installPrompt.userChoice
+      posthog.capture(choice.outcome === 'accepted' ? 'pwa_install_accepted' : 'pwa_install_dismissed', { platform: choice.platform, source })
+      return choice.outcome
+    } finally { prompting.current = false }
   }, [installPrompt])
 
   const value = useMemo(() => ({
     canInstall: installPrompt !== null,
+    platform,
+    isInstalled: installed || platform === 'app',
     promptInstall,
-  }), [installPrompt, promptInstall])
+  }), [installPrompt, promptInstall, platform, installed])
 
   return <PwaContext.Provider value={value}>{children}</PwaContext.Provider>
 }

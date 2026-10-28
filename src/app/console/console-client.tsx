@@ -1,6 +1,6 @@
 'use client'
 import { RootBrandHeader } from '@/components/root-brand-header'
-import { Suspense, useRef } from 'react'
+import { Suspense } from 'react'
 import { DashboardStats } from '@/components/dashboard-stats'
 import type { getDashboardIdentity, getDashboardOverview, getDashboardUpdates, getDashboardEvents } from '@/lib/actions/dashboard'
 import { DashboardOverview, DashboardSummary, DashboardUpdates, DashboardEvents, DashboardSectionLoading } from './dashboard-sections'
@@ -8,7 +8,6 @@ import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import styles from './guest-intro.module.css'
 import SmartImage from '@/components/smart-image'
-import { PwaInstallNudge } from '@/components/pwa-install-nudge'
 import { SectionTracker } from '@/components/section-tracker'
 import { MissionBoard } from '@/components/mission-board'
 import { canAccessMissionBoard } from '@/lib/mission-board'
@@ -19,9 +18,8 @@ export default function ConsoleClient({ initial: data, overview, updates, events
   updates: Promise<Awaited<ReturnType<typeof getDashboardUpdates>>>
   events: Promise<Awaited<ReturnType<typeof getDashboardEvents>>>
 }) {
-  const scrollContainer = useRef<HTMLElement>(null)
-  return <main className="main archive-console-page" data-route-scroll ref={scrollContainer}>
-    <PwaInstallNudge eligibleUser={!data.guest} scrollContainer={scrollContainer} /><SectionTracker section="dashboard" /><ArchivePageHeader hideTitle title="Dashboard" />{!data.guest && <RootBrandHeader />}
+  return <main className="main archive-console-page" data-route-scroll>
+    <SectionTracker section="dashboard" /><ArchivePageHeader hideTitle title="Dashboard" />{!data.guest && <RootBrandHeader />}
     {data.guest && <section className={styles.intro} aria-label="Join Multiverse Collective">
       <div className={styles.brand}>
         <SmartImage className={styles.wordmark} src="/assets/vi-wordmark.png" alt="Multiverse Collective" width={3699} height={1020} sizes="(max-width: 650px) 80vw, 480px" preload />
