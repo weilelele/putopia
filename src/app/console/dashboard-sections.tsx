@@ -3,7 +3,8 @@ import { use, useEffect, useState, useTransition } from 'react'
 import { getDashboardEvents, getDashboardOverview, getDashboardUpdates } from '@/lib/actions/dashboard'
 import { DashboardVoyagerHeader, type DashboardVoyager } from '@/components/dashboard-voyager-header'
 import { DashboardStats } from '@/components/dashboard-stats'
-import { UpdateTimeline, EventRail } from '@/components/dashboard-content'
+import { EventRail } from '@/components/dashboard-content'
+import { AndroidInstallUpdates } from '@/components/android-install'
 import { ArchiveButton } from '@/components/archive-button'
 
 type Updates = Awaited<ReturnType<typeof getDashboardUpdates>>
@@ -40,7 +41,8 @@ export function DashboardUpdates({ initial }: { initial: Promise<Updates> }) {
   })
   return <section aria-labelledby="updates-heading"><div className="dashboard-section-heading"><h2 id="updates-heading">Updates</h2><span>Latest {data.updates.length}</span></div>
     {incomplete && <div className="archive-inline-notice" role="status"><p>Some updates could not be loaded.</p><ArchiveButton variant="secondary" loading={pending} onClick={retry}>Retry updates</ArchiveButton></div>}
-    {data.updates.length ? <UpdateTimeline updates={data.updates} /> : !incomplete && <p>No updates have been published yet.</p>}
+    <AndroidInstallUpdates updates={data.updates} />
+    {!data.updates.length && !incomplete && <p>No updates have been published yet.</p>}
   </section>
 }
 

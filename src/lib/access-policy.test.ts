@@ -21,6 +21,9 @@ describe('primary route access policy', () => {
     expect(allowsUnregisteredViewer('/')).toBe(true)
     expect(allowsUnregisteredViewer('/welcome')).toBe(true)
     expect(allowsUnregisteredViewer('/privacy')).toBe(true)
+    expect(allowsUnregisteredViewer('/install')).toBe(true)
+    expect(allowsUnregisteredViewer('/install/')).toBe(true)
+    expect(allowsUnregisteredViewer('/install/private')).toBe(false)
   })
 
   it('retains the separate registration gate on supporting listings', () => {
