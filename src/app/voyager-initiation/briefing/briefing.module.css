@@ -37,10 +37,12 @@
 .skip { min-height: 44px; padding: 0 12px; background: none; border: 0; color: var(--color-star); font: inherit; font-size: var(--fs-label); letter-spacing: .04em; opacity: .8; cursor: pointer; }
 .skip:hover { opacity: 1; }
 .dock {
-  position: absolute; z-index: 5; right: 0; bottom: 0;
-  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) 0;
+  position: absolute; z-index: 5; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: flex-end; gap: 16px;
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   pointer-events: none;
 }
+.tapHint { margin: 0 auto 0 0; font-size: var(--fs-caption); line-height: 1.5; color: var(--color-star); }
 .next {
   pointer-events: auto; position: relative; isolation: isolate; height: 44px;
   display: inline-flex; align-items: center; gap: 10px; padding: 0 16px 0 18px;
@@ -51,6 +53,7 @@
 :is(.iconButton, .skip, .next, .choose, .more, .packThumb, .memberButton):focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
 
 /* pages */
+.pages:focus { outline: none; }
 .pages { position: absolute; inset: 0; touch-action: pan-y; }
 .page { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; visibility: hidden; background: var(--color-deep); }
 .page[data-active], .page[data-leaving] { visibility: visible; }
@@ -139,32 +142,6 @@
 [data-active] .stamp { animation: stamp 300ms cubic-bezier(.3,1.5,.5,1) backwards 1900ms; }
 @keyframes stamp { from { opacity: 0; transform: rotate(-16deg) scale(2.6); } }
 .record { position: absolute; left: 16px; bottom: 14px; padding: 4px 8px; background: var(--color-deep); font-size: var(--fs-caption); letter-spacing: .05em; color: var(--color-star-dim); }
-
-/* 6 · votes */
-.p6 { display: flex; flex-direction: column; }
-.p6Head { position: relative; flex: none; padding-block: calc(64px + env(safe-area-inset-top, 0px)) 18px; overflow: hidden; }
-.p6Head > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.p6Head .scrim { background: rgba(8, 12, 32, .78); }
-.proposals { list-style: none; margin: 14px 0 calc(84px + env(safe-area-inset-bottom, 0px)); padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.proposal { background: var(--color-void); border: 1px solid transparent; transition: border-color .4s ease, background .4s ease; }
-.proposal[data-open] { border-color: var(--bd-orange); background: var(--bg-card); }
-[data-active] .proposal { animation: rise 480ms cubic-bezier(.2,.8,.2,1) backwards; animation-delay: calc(600ms + var(--k) * 120ms); }
-.question { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 12px 14px; font-size: .9375rem; font-weight: 700; line-height: 1.3; }
-.question span { flex: none; font-size: var(--fs-caption); font-weight: 400; color: var(--color-star-dim); letter-spacing: .04em; }
-.proposal[data-open] .question span { color: var(--color-nucleus-2); }
-.tally { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .5s cubic-bezier(.2,.8,.2,1); }
-.proposal[data-open] .tally { grid-template-rows: 1fr; }
-.tally > div { overflow: hidden; }
-.options { display: flex; flex-direction: column; gap: 8px; padding: 0 14px 14px; }
-.option { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-label); }
-.optionRow { display: flex; justify-content: space-between; gap: 8px; }
-.optionRow span { font-variant-numeric: tabular-nums; color: var(--color-star-dim); }
-.track { height: 5px; background: var(--color-void-2); }
-.track i { display: block; height: 100%; width: var(--p); background: var(--color-star-deep); transform-origin: left; }
-.lead .track i { background: var(--color-nucleus); }
-.lead .optionRow span { color: var(--color-nucleus-2); }
-.proposal[data-open] .track i { animation: grow .9s cubic-bezier(.7,0,.2,1) backwards .2s; }
-@keyframes grow { from { transform: scaleX(0); } }
 
 /* 7 · front line */
 .p7 { display: flex; flex-direction: column; }

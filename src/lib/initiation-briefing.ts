@@ -4,12 +4,12 @@ import { INITIATION_PRICES, type InitiationOrderKind } from './initiation-pricin
 import { ANTENNA } from './antenna-copy'
 
 /** First-visit Voyager briefing shown over /voyager-initiation. Pure rules only; no DOM, storage or network. */
-export const BRIEFING_VERSION = '2026-10-v1'
+export const BRIEFING_VERSION = '2026-10-v2'
 export const BRIEFING_STORAGE_KEY = 'mc:initiation:briefing'
 
 export const BRIEFING_PAGES = [
   'brief_01_device', 'brief_02_collective', 'brief_03_members', 'brief_04_recruiting', 'brief_05_classified',
-  'brief_06_votes', 'brief_07_console', 'brief_08_packs', 'brief_09_join',
+  'brief_07_console', 'brief_08_packs', 'brief_09_join',
 ] as const
 export type BriefingPageId = typeof BRIEFING_PAGES[number]
 
@@ -75,6 +75,14 @@ export function briefingLoopWindow(samples: ArrayLike<number>, sampleRate: numbe
 
 export function clampBriefingPage(page: number): number {
   return Math.max(0, Math.min(BRIEFING_PAGES.length - 1, Math.trunc(page)))
+}
+
+/** The first page accepts every content tap; later pages keep their left/right navigation zones. */
+export function briefingTapTarget(page: number, xRatio: number, blocked: boolean): number | null {
+  if (blocked) return null
+  const target = page === 0 || xRatio > .62 ? page + 1 : xRatio < .3 ? page - 1 : page
+  const next = clampBriefingPage(target)
+  return next === page ? null : next
 }
 
 export type BriefingOffer = {

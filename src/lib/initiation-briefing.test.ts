@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   BRIEFING_PAGES, BRIEFING_VERSION, briefingAudience, briefingLoopWindow, briefingSoundOn, briefingLinkOpens, briefingOffers, briefingRecord, briefingRegions, briefingSeats,
-  clampBriefingPage, readBriefingRecord, shouldAutoOpenBriefing,
+  briefingTapTarget, clampBriefingPage, readBriefingRecord, shouldAutoOpenBriefing,
 } from './initiation-briefing'
 
 describe('Voyager briefing audience', () => {
@@ -37,6 +37,24 @@ describe('Voyager briefing audience', () => {
 })
 
 describe('Voyager briefing content', () => {
+  it('keeps stable content IDs when the voting page is removed', () => {
+    expect(BRIEFING_PAGES).toEqual(['brief_01_device', 'brief_02_collective', 'brief_03_members', 'brief_04_recruiting',
+      'brief_05_classified', 'brief_07_console', 'brief_08_packs', 'brief_09_join'])
+  })
+
+  it('advances from every part of the first page but leaves controls and gestures alone', () => {
+    for (const x of [0, .15, .5, .62, 1]) expect(briefingTapTarget(0, x, false)).toBe(1)
+    expect(briefingTapTarget(0, .5, true)).toBeNull()
+  })
+
+  it('preserves later-page navigation zones and never advances beyond the join page', () => {
+    expect(briefingTapTarget(3, .1, false)).toBe(2)
+    expect(briefingTapTarget(3, .5, false)).toBeNull()
+    expect(briefingTapTarget(3, .9, false)).toBe(4)
+    expect(briefingTapTarget(7, .9, false)).toBeNull()
+    expect(briefingTapTarget(7, .1, true)).toBeNull()
+  })
+
   it('offers the same choices and prices as the checkout panel', () => {
     expect(briefingOffers('unpaid').map(o => [o.id, o.price])).toEqual([['initial', 38], ['standard', 488]])
     expect(briefingOffers('guest').map(o => o.id)).toEqual(['initial', 'standard'])
