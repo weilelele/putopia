@@ -1,21 +1,14 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, Check, Plus, HelpCircle } from 'lucide-react'
-import type { McFunction } from '@/types/database'
-import { ArchiveSheet } from './archive-sheet'
-import { ArchiveLinkButton } from './archive-link-button'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Minus, Plus } from 'lucide-react'
 import { CONSOLE_HERO } from '@/lib/console-hero'
 import SmartImage from './smart-image'
 import styles from './mc-console-panel.module.css'
 
-const DETAILS: Record<string, string> = {
-  'Worlds Detection': 'Observe parallel worlds.',
-  'Audio Collection': 'Receive and send sound.',
-}
-
-export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunction[]; heroVideo?: { src: string; poster?: string } }) {
+export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poster?: string } } = {}) {
   const [guideOpen, setGuideOpen] = useState(false)
+  const guideId = useId()
   const [imageIndex, setImageIndex] = useState(0)
   const currentImage = CONSOLE_HERO.images[imageIndex]
   const imageRef = useRef<HTMLDivElement>(null)
@@ -32,11 +25,6 @@ export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunc
     }, CONSOLE_HERO.intervalMs)
     return () => { window.clearInterval(timer); observer.disconnect() }
   }, [guideOpen, heroVideo])
-
-  const groups = [
-    { title: 'Confirmed', functions: mcFunctions.filter(fn => fn.status === 'active'), confirmed: true },
-    { title: 'Unconfirmed', functions: mcFunctions.filter(fn => fn.status !== 'active'), confirmed: false },
-  ]
 
   return (
     <section className={styles.panel} aria-label="About the Multiverse Console">
@@ -55,29 +43,20 @@ export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunc
       </div>}
       <header className={styles.heading}>
         <h2 className={styles.sectionTitle}>Multiverse<br />Console</h2>
-        <p>Our collective&apos;s device for exploring parallel worlds. Complete Pack ($488) or an Initial-member upgrade ($460) includes a Console claim; allocation and delivery follow your member record.</p>
       </header>
-      <nav className={styles.exploreActions} aria-label="Explore the collective">
-        <ArchiveLinkButton href="/intel" variant="primary" fullWidth className={styles.missions}>
-          <span>View missions</span><ArrowRight size={20} aria-hidden />
-        </ArchiveLinkButton>
-        <ArchiveLinkButton href="/voyagers" variant="secondary" className={styles.exploreLink}>
-          <span>Meet voyagers</span><ArrowRight size={20} aria-hidden />
-        </ArchiveLinkButton>
-        <ArchiveLinkButton href="/worlds" variant="secondary" className={styles.exploreLink}>
-          <span>Explore worlds</span><ArrowRight size={20} aria-hidden />
-        </ArchiveLinkButton>
-      </nav>
-      <button className={styles.guideButton} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog">Explore the function <Plus size={20} aria-hidden /></button>
-      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="Console functions" >
-        {mcFunctions.length ? groups.map(group => <section className={styles.group} key={group.title} aria-label={group.title}>
-          <h3>{group.title}</h3>
-          {group.functions.length ? <ul>{group.functions.map(fn => <li key={fn.id}>
-            {group.confirmed ? <span className={styles.confirmedIcon}><Check size={19} aria-hidden /></span> : <HelpCircle className={styles.unknownIcon} size={32} aria-hidden />}
-            <div><h4>{fn.name}</h4><p>{group.confirmed ? (DETAILS[fn.name] || 'Confirmed capability.') : fn.status === 'in_development' ? 'In development' : 'Unconfirmed'}</p></div>
-          </li>)}</ul> : <p>No functions recorded in this category.</p>}
-        </section>) : <p>Function details are currently unavailable.</p>}
-      </ArchiveSheet>
+      <button className={styles.guideButton} type="button" onClick={() => setGuideOpen(open => !open)} aria-expanded={guideOpen} aria-controls={guideId}>
+        How it works {guideOpen ? <Minus size={20} aria-hidden /> : <Plus size={20} aria-hidden />}
+      </button>
+      <div id={guideId} hidden={!guideOpen} className={styles.guide}>
+        {guideOpen ? <>
+          <SmartImage src="/assets/voyager-briefing/console-real.jpg" alt="A Multiverse Console held in two hands, showing its central screen and the controls on either side" width={1280} height={720} sizes="(min-width: 1200px) 960px, (min-width: 768px) calc(100vw - 320px), calc(100vw - 32px)" className={styles.guideImage} />
+          <ol className={styles.steps}>
+            <li><h3>Find a world</h3><p>Turn the left knob to tune its Frequency.</p></li>
+            <li><h3>Choose a view</h3><p>Turn the right knob to switch Bands.</p></li>
+            <li><h3>Send energy</h3><p>Hold the Quantum Energy Button for at least 3 seconds to charge before sending energy.</p></li>
+          </ol>
+        </> : null}
+      </div>
     </section>
   )
 }

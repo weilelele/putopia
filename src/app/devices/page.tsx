@@ -1,4 +1,3 @@
-import { getMcFunctions } from '@/lib/actions/mc-functions'
 import { McConsolePanel } from '@/components/mc-console-panel'
 import { RootBrandHeader } from '@/components/root-brand-header'
 import consoleStyles from '@/components/mc-console-panel.module.css'
@@ -20,7 +19,7 @@ export default async function DevicesPage() {
     <main className="main">
       <h1 className="sr-only">Devices</h1>
       <RootBrandHeader />
-      <McConsolePanel mcFunctions={await getMcFunctions()} />
+      <McConsolePanel />
       <h2 className={consoleStyles.sectionTitle}>Found Devices Around The World</h2>
       <p className="mt-4">No device batches have been published yet. Check back for recovery updates.</p>
     </main>

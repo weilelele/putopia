@@ -334,6 +334,10 @@ Archive 系列组件和 `/ui-kit` 已按 2.3 更新。原 Golden examples 已退
 
 启动动画在手机端将字标控制在可用宽度的 82%、最大 520px；下方原图形 Logo 固定为 48px 宽并保持原比例，与字标间隔 24px。网页与原生使用同一比例；完整动画结束后另停留 3 秒才进入 Dashboard。
 
+### Device introduction simplification · 2026-10-29
+
+User-approved revision supersedes the older introduction layouts below: remove the introductory paragraph and the View missions / Meet voyagers / Explore worlds actions. Keep the current hero media and title, followed by one full-width text row, “How it works”. It expands and collapses an inline guide rather than opening a dialog. The initial guide uses an existing Console photograph and three brief operation descriptions grounded in `docs/device-reference/console-operations.zh.md`; a dedicated operation video may replace the guide media later. Keep batch browsing and Claim in their existing positions. The ineligible Claim dialog uses one short sentence about completing a Console-inclusive Voyager Initiation purchase, without prices, upgrade details or a second legacy-member paragraph. Actual entitlement, inventory and payment checks remain authoritative.
+
 ### Device introduction · 2026-09-16
 
 User-approved exception: the Console introduction may auto-cycle world images inside its central circular screen with a brief screen-only glitch at transitions. Keep the housing and surrounding UI still; honor reduced motion. Device has no repeated visible page title. The introduction leads into “Found Around the World”; “Explore the function” opens a centered accessible modal with Confirmed and Unconfirmed groups.

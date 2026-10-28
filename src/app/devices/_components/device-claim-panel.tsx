@@ -84,8 +84,7 @@ export function DeviceClaimPanel({ batch, access, ownedProgress }: {
       <ArchiveButton variant="secondary" fullWidth onClick={() => setExplanationOpen(false)}>CANCEL</ArchiveButton>
       <ArchiveLinkButton variant="primary" fullWidth href={`/voyager-initiation?from=${encodeURIComponent(`/devices/batches/${batch.slug}`)}`}>{access.legacyPackPurchased ? 'CONTINUE INITIATION' : 'GO TO INITIATION'}</ArchiveLinkButton>
     </div>}>
-      <p>Choose Complete Pack ($488), or add Console + Pack 4 to your Initial Pack for $460. Initial alone ($38) does not include a Console. Allocation is subject to batch availability.</p>
-      {access.legacyPackPurchased ? <p>Your Initial Pack includes the first two packs. Continue Initiation to unlock Console claiming.</p> : null}
+      <p>Complete Voyager Initiation with a Console-inclusive purchase to apply.</p>
     </ArchiveSheet>
   </section>
 }
