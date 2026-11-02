@@ -47,7 +47,7 @@
   pointer-events: auto; min-height: 44px; margin: 0; padding: 0 16px;
   border: 0; background: none; color: var(--color-star); font: inherit; font-size: var(--fs-caption); line-height: 1.5; cursor: pointer;
 }
-:is(.iconButton, .skip, .tapHint, .choose, .more, .packThumb, .memberButton):focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+:is(.iconButton, .skip, .tapHint, .p9Action, .packThumb, .memberButton):focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
 
 /* pages */
 .pages:focus { outline: none; }
@@ -141,6 +141,66 @@
 @keyframes stamp { from { opacity: 0; transform: rotate(-16deg) scale(2.6); } }
 .record { position: absolute; left: 16px; bottom: 14px; padding: 4px 8px; background: var(--color-deep); font-size: var(--fs-caption); letter-spacing: .05em; color: var(--color-star-dim); }
 
+/* 6 · parallax array — a remote feed of the London device (soft, desaturated, swaying, grained like the Worlds live
+   rooms), and a small lens below it that gathers a world round by round, ringed by Voyager votes. */
+.p6 { background: #000; }
+.p6Scene { position: relative; min-height: 100%; display: flex; flex-direction: column; align-items: center; }
+.p6Copy { align-self: stretch; padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
+.p6Film { position: relative; align-self: stretch; flex: none; margin-top: 18px; aspect-ratio: 16 / 10; max-height: 46vh; overflow: hidden; background: #000; }
+.p6Sway { position: absolute; inset: 0; transform: scale(1.1); }
+[data-active] .p6Sway { animation: p6Sway 17s ease-in-out infinite alternate; }
+@keyframes p6Sway {
+  0% { transform: scale(1.1) translate(-1.2%, .6%) rotate(-.5deg); }
+  35% { transform: scale(1.12) translate(.8%, -.4%) rotate(.25deg); }
+  70% { transform: scale(1.1) translate(1.4%, .8%) rotate(.45deg); }
+  100% { transform: scale(1.11) translate(-.4%, -.6%) rotate(-.2deg); }
+}
+/* The video stays full size beneath the feed so browsers keep playing it; only the softened canvas is seen. */
+.p6Film video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.p6Feed {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: auto;
+  filter: saturate(.42) contrast(1.12) brightness(.74) sepia(.2);
+}
+[data-active] .p6Feed { animation: p6Jitter 7.3s steps(1, end) infinite; }
+@keyframes p6Jitter {
+  0%, 90%, 95%, 100% { transform: translate3d(0, 0, 0); }
+  91% { transform: translate3d(-1.1%, .4%, 0); }
+  92% { transform: translate3d(.8%, -.3%, 0); }
+  93% { transform: translate3d(-.3%, 0, 0); }
+  94% { transform: translate3d(.4%, .2%, 0); }
+}
+.p6Live { position: absolute; top: 10px; right: 10px; z-index: 1; display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--color-deep); font-size: var(--fs-caption); font-weight: 700; letter-spacing: .06em; color: var(--color-nucleus-2); }
+.p6Live b { color: var(--color-star); }
+/* Red is the live-feed signal, as in the Worlds live rooms. */
+.liveDot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-fault); }
+[data-active] .liveDot { animation: liveBlink 1.6s ease-in-out infinite; }
+@keyframes liveBlink { 50% { opacity: .2; } }
+[data-active] .p6Film { animation: open 900ms cubic-bezier(.7,0,.2,1) backwards 200ms; }
+
+.lens { position: relative; z-index: 1; flex: none; width: var(--lens-box); height: var(--lens-box); margin-top: calc(var(--lens-box) / -2); }
+[data-active] .lens { animation: dawn 1.2s ease backwards 900ms; }
+@keyframes dawn { from { opacity: 0; } }
+.porthole { position: absolute; left: 50%; top: 50%; width: var(--lens); height: var(--lens); margin: calc(var(--lens) / -2) 0 0 calc(var(--lens) / -2); border-radius: 50%; background: #000; }
+.lensCaption { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: .14em; fill: var(--color-star-dim); transition: fill .6s ease; }
+.p6Scene:is([data-stage="round"], [data-stage="vote"]) .lensCaption { fill: var(--color-nucleus-2); }
+
+.p6Report { align-self: stretch; margin-top: -2px; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: opacity 1.2s ease; }
+.p6ReportLabel { min-height: 1.2em; white-space: pre; font-size: var(--fs-caption); font-weight: 700; letter-spacing: .14em; color: var(--color-nucleus-2); }
+.p6ReportLabel[data-empty] { visibility: hidden; }
+.p6Quote { align-self: stretch; margin: 0; min-height: 4.4em; text-align: center; font-size: var(--fs-label); font-style: italic; line-height: 1.45; color: var(--color-star); }
+.p6Scene:is([data-stage="round"], [data-stage="vote"], [data-stage="continue"], [data-stage="fade"]) .p6Report { opacity: .36; }
+.p6Scene[data-stage="round"][data-round="1"] .p6Report { animation: p6Return 2.4s ease backwards; }
+@keyframes p6Return { from { opacity: 0; } }
+.caret { display: inline-block; width: .55em; height: 1.05em; margin-left: 1px; vertical-align: text-bottom; background: var(--color-nucleus); }
+.p6Scene:not([data-stage="typing"]) .caret { visibility: hidden; }
+[data-active] .p6Scene[data-stage="typing"] .caret { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.p6Units { list-style: none; margin: auto 0 0; padding-top: 14px; padding-bottom: 16px; align-self: stretch; display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 24px; font-size: var(--fs-caption); letter-spacing: .06em; }
+.p6Units li { display: flex; gap: 8px; color: var(--color-star-deep); }
+.p6Units b { font-weight: 700; color: var(--color-star-dim); }
+[data-active] .p6Units { animation: rise 560ms cubic-bezier(.2,.8,.2,1) backwards 1300ms; }
+.p6Scene > .fx { z-index: 2; }
+
 /* 7 · front line */
 .p7 { display: flex; flex-direction: column; }
 .reel { display: block; flex: none; width: 100%; height: 40%; object-fit: cover; background: #000; }
@@ -187,28 +247,23 @@
 .packThumb[aria-pressed="true"] :is(span, b) { color: var(--color-nucleus-2); font-weight: 700; }
 .p8Note { margin: 12px 0 calc(84px + env(safe-area-inset-bottom, 0px)); }
 
-/* 9 · join */
-.p9 { background: var(--color-deep); }
-.p9Media { position: absolute; left: 0; right: 0; top: 0; height: 42%; overflow: hidden; }
-.p9Media img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 72%; display: block; }
-[data-active] .p9Media img { animation: push 18s ease-in-out infinite alternate; }
-.p9Media .scrim { background: rgba(8, 12, 32, .45); }
-.p9Content { position: relative; min-height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding-block: 64px calc(24px + env(safe-area-inset-bottom, 0px)); }
-.offers { display: grid; grid-template-columns: repeat(var(--count), minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
-.offer { display: flex; flex-direction: column; gap: 8px; padding: 14px 12px; background: var(--color-void); border: 1px solid var(--bd-faint); }
-.offerLabel { font-size: var(--fs-caption); font-weight: 700; letter-spacing: .05em; color: var(--color-star-dim); }
-.offer h3 { margin: 0; font-size: .9375rem; line-height: 1.25; }
-.price { display: flex; align-items: baseline; gap: 8px; font-size: 1.875rem; font-weight: 700; line-height: 1; }
-.offer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: var(--fs-label); line-height: 1.35; flex: 1; }
-.offer li { display: flex; gap: 6px; }
-.offer li svg { flex: none; margin-top: 2px; color: var(--color-nucleus); }
-.offerNote { font-size: var(--fs-caption); color: var(--color-star-dim); line-height: 1.35; }
-.choose { position: relative; isolation: isolate; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; color: var(--color-void); font: inherit; font-size: var(--fs-compact); font-weight: 700; letter-spacing: .04em; cursor: pointer; }
-.choose:disabled { opacity: .48; cursor: not-allowed; }
-.choose::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--color-nucleus); clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%); }
-.p9Foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
-.more { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--color-nucleus-2); font: inherit; font-size: var(--fs-compact); cursor: pointer; }
-.more:hover { text-decoration: underline; }
+/* 9 · join — the flashback fills the page; the copy and two equal actions sit on its dark lower half. */
+.p9 { background: #000; }
+.p9Tag { position: absolute; z-index: 1; left: 16px; top: calc(56px + env(safe-area-inset-top, 0px)); margin: 0; padding: 4px 8px; background: var(--color-deep); font-size: var(--fs-caption); letter-spacing: .05em; color: var(--color-star-dim); }
+.p9Tag b { color: var(--color-nucleus-2); }
+/* Member pictures load here, unseen, and are drawn into the flashback. */
+.p9Faces { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+[data-active] .p9Tag { animation: dawn .6s ease backwards 400ms; }
+.p9Content { position: relative; min-height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding-block: 120px calc(28px + env(safe-area-inset-bottom, 0px)); --kicker-delay: 500ms; }
+.p9Lede { margin: 0; font-size: .9375rem; line-height: 1.5; color: var(--color-star); }
+.p9Actions { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+.p9Action {
+  min-height: 50px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px;
+  border: 1px solid var(--color-star-dim); background: rgba(8, 12, 32, .55); color: var(--color-star);
+  font: inherit; font-size: var(--fs-compact); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; text-decoration: none; cursor: pointer;
+  transition: border-color .2s ease;
+}
+.p9Action:hover { border-color: var(--color-nucleus); }
 
 @media (prefers-reduced-motion: reduce) {
   .dialog *, .dialog *::before, .dialog *::after { animation: none !important; transition: none !important; }

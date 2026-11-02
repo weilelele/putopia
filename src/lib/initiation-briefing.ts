@@ -1,7 +1,5 @@
 import { canClaimDeviceBatch, type DeviceBatchStatus, DEVICE_BATCH_PHASES } from './device-batches'
 import type { InitiationPaymentStatus, InitiationStatus } from './initiation-types'
-import { INITIATION_PRICES, type InitiationOrderKind } from './initiation-pricing'
-import { ANTENNA } from './antenna-copy'
 
 /** First-visit Voyager briefing shown over /voyager-initiation. Pure rules only; no DOM, storage or network. */
 export const BRIEFING_VERSION = '2026-10-v2'
@@ -9,7 +7,7 @@ export const BRIEFING_STORAGE_KEY = 'mc:initiation:briefing'
 
 export const BRIEFING_PAGES = [
   'brief_01_device', 'brief_02_collective', 'brief_03_members', 'brief_04_recruiting', 'brief_05_classified',
-  'brief_07_console', 'brief_08_packs', 'brief_09_join',
+  'brief_06_parallax_array', 'brief_07_console', 'brief_08_packs', 'brief_09_join',
 ] as const
 export type BriefingPageId = typeof BRIEFING_PAGES[number]
 
@@ -36,7 +34,8 @@ export function shouldAutoOpenBriefing(input: {
 }
 
 export type BriefingRecord = { version: string; outcome: BriefingOutcome; page: number }
-export type BriefingOutcome = 'closed' | 'skipped' | 'completed' | 'learn_more' | 'chose_offer'
+/** How the briefing ended; the last page offers the Dashboard or the packs at the foot of the Initiation page. */
+export type BriefingOutcome = 'closed' | 'skipped' | 'completed' | 'explore_collective' | 'view_packs'
 
 export function readBriefingRecord(raw: string | null): BriefingRecord | null {
   if (!raw) return null
@@ -77,39 +76,11 @@ export function clampBriefingPage(page: number): number {
   return Math.max(0, Math.min(BRIEFING_PAGES.length - 1, Math.trunc(page)))
 }
 
-/** Every non-interactive tap advances; the final offer page never wraps or goes back on a tap. */
+/** Every non-interactive tap advances; the final page never wraps or goes back on a tap. */
 export function briefingTapTarget(page: number, blocked: boolean): number | null {
   if (blocked) return null
   const next = clampBriefingPage(page + 1)
   return next === page ? null : next
-}
-
-export type BriefingOffer = {
-  id: InitiationOrderKind
-  label: string
-  title: string
-  price: number
-  points: string[]
-  note: string
-}
-
-const dollars = (kind: InitiationOrderKind) => INITIATION_PRICES[kind].amount / 100
-
-/** The same offers as the checkout panel, priced from the shared pricing definition. */
-export function briefingOffers(status: InitiationStatus): BriefingOffer[] {
-  if (status === 'legacy_pack') return [{
-    id: 'legacy_upgrade', label: 'YOUR INITIAL PACK', title: INITIATION_PRICES.legacy_upgrade.name, price: dollars('legacy_upgrade'),
-    points: ['Your own Multiverse Console', 'The fourth delivery'], note: 'Your membership and first two packs stay with you.',
-  }]
-  const membership = 'Collective membership privileges'
-  const saving = dollars('initial') + dollars('legacy_upgrade') - dollars('standard')
-  return [{
-    id: 'initial', label: 'INITIAL', title: INITIATION_PRICES.initial.name, price: dollars('initial'),
-    points: [membership, 'Packs 1–2', `Letter, badge, ${ANTENNA.firstMention}`], note: `Add Console + Pack 4 later for $${dollars('legacy_upgrade')}.`,
-  }, {
-    id: 'standard', label: 'COMPLETE', title: INITIATION_PRICES.standard.name, price: dollars('standard'),
-    points: [membership, 'All four packs', 'Your own Multiverse Console'], note: saving > 0 ? `Save $${saving} versus upgrading later.` : 'Pay once. No recurring fee.',
-  }]
 }
 
 export type BriefingRegion = { name: string; open: boolean; phase: number; phases: number; phaseLabel: string }

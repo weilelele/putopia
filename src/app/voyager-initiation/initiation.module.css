@@ -5,6 +5,7 @@
 .introduction h1 { font-size: 40px; line-height: 1.08; font-weight: 700; margin: 0; }
 .lede { font-size: var(--fs-body); line-height: 1.5; margin: 16px 0 0; max-width: 340px; color: var(--color-star-dim); }
 .join { align-self: center; min-width: 0; overflow-wrap: anywhere; }
+.join:focus { outline: none; }
 .become { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; min-height: 60px; padding: 16px; font-size: var(--fs-label); letter-spacing: 0; }
 .price { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .delivery { margin-top: 32px; }
@@ -42,6 +43,7 @@
 .benefitCopy p { color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.5; margin: 0 0 12px; }
 .benefitCopy a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-nucleus); font-size: var(--fs-body); font-weight: 700; text-decoration: none; }
 .benefitCopy a:hover { text-decoration: underline; }
+.benefitLinks { display: flex; flex-wrap: wrap; column-gap: 24px; }
 .content a:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
 @media (min-width: 768px) {
   .hero { grid-template-columns: minmax(0, 1fr) minmax(260px, .9fr); gap: 24px; padding: 32px 0 48px; }
