@@ -2,11 +2,11 @@
 
 import { useEffect, useEffectEvent, useRef, useState, type MouseEvent, type PointerEvent } from 'react'
 import { ChevronLeft, Volume2, VolumeX, X } from 'lucide-react'
-import { BRIEFING_PAGES, BRIEFING_VERSION, briefingTapTarget, clampBriefingPage, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
+import { BRIEFING_PAGES, BRIEFING_VERSION, briefingTapTarget, clampBriefingPage, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 import type { InitiationPublicMember } from '@/lib/initiation-types'
 import type { PageState } from './briefing-kit'
 import { useBriefingSound } from '@/hooks/use-briefing-sound'
-import { ClassifiedPage, CollectivePage, DevicePage, FrontLinePage, JoinPage, MembersPage, PacksPage, RecruitingPage } from './briefing-pages'
+import { ClassifiedPage, CollectivePage, DevicePage, FrontLinePage, JoinPage, MembersPage, PacksPage, RecruitingPage, ParallaxArrayPage } from './briefing-pages'
 import s from './briefing.module.css'
 
 export type BriefingProps = {
@@ -14,11 +14,9 @@ export type BriefingProps = {
   members: InitiationPublicMember[]
   seats: { batch: string; capacity: number; initiated: number | null }
   regions: BriefingRegion[]
-  offers: BriefingOffer[]
-  busy: boolean
-  unavailable: string | null
+  /** An Initial Pack member: the last page offers to activate the remaining packs. */
+  legacy: boolean
   capture: (event: string, properties?: Record<string, unknown>) => void
-  onChoose: (offer: BriefingOffer['id'], page: number) => void
   onClose: (outcome: BriefingOutcome, page: number) => void
 }
 
@@ -29,7 +27,7 @@ const LEAVE_MS = 260
 const CONTROLS = 'button, a, input, label, select, textarea, [role="button"], [contenteditable="true"]'
 
 /** First-visit briefing over /voyager-initiation. Mounted only while open; a native modal dialog keeps the page and app chrome inert behind it. */
-export function InitiationBriefing({ trigger, members, seats, regions, offers, busy, unavailable, capture, onChoose, onClose }: BriefingProps) {
+export function InitiationBriefing({ trigger, members, seats, regions, legacy, capture, onClose }: BriefingProps) {
   const dialog = useRef<HTMLDialogElement>(null)
   const content = useRef<HTMLDivElement>(null)
   const pendingNavigation = useRef<{ id: string; from: number; to: number; via: string; startedAt: number } | null>(null)
@@ -152,18 +150,19 @@ export function InitiationBriefing({ trigger, members, seats, regions, offers, b
       if (event.key === 'ArrowRight') go(nav.page + 1, 'key')
       if (event.key === 'ArrowLeft') go(nav.page - 1, 'key')
     }}>
-    <div className={s.stage} data-cinematic={nav.page < 2 || undefined}>
+    <div className={s.stage} data-cinematic={nav.page < 2 || ['brief_06_parallax_array', 'brief_09_join'].includes(BRIEFING_PAGES[nav.page]) || undefined}>
       <div ref={content} tabIndex={-1} className={`${s.pages} ${last ? '' : s.withContinue}`}>
         <DevicePage state={state(0)} />
         <CollectivePage state={state(1)} />
         <MembersPage state={state(2)} members={members} onProfile={() => track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[2], topic: 'member_profile' })} />
         <RecruitingPage state={state(3)} batch={seats.batch} capacity={seats.capacity} initiated={seats.initiated} />
         <ClassifiedPage state={state(4)} />
-        <FrontLinePage state={state(5)} regions={regions} />
-        <PacksPage state={state(6)} onPack={index => track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[6], topic: `pack_${index + 1}` })} />
-        <JoinPage state={state(7)} offers={offers} busy={busy} unavailable={unavailable}
-          onChoose={offer => onChoose(offer, nav.page)}
-          onLearnMore={() => { track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[7], topic: 'learn_more' }); close('learn_more') }} />
+        <ParallaxArrayPage state={state(5)} />
+        <FrontLinePage state={state(6)} regions={regions} />
+        <PacksPage state={state(7)} onPack={index => track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[7], topic: `pack_${index + 1}` })} />
+        <JoinPage state={state(8)} members={members} warm={nav.maxPage >= 4} legacy={legacy}
+          onExplore={() => { track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[8], topic: 'explore_collective' }); close('explore_collective') }}
+          onPacks={() => { track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[8], topic: 'view_packs' }); close('view_packs') }} />
       </div>
       <div className={s.top}>
         {first

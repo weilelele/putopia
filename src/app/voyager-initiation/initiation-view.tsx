@@ -2,6 +2,7 @@
 
 import { INITIATION_PRICES, initiationPriceLabel } from '@/lib/initiation-pricing'
 import { ANTENNA } from '@/lib/antenna-copy'
+import { PARALLAX_ARRAY, parallaxArrayUnitSummary } from '@/lib/parallax-array'
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
@@ -25,7 +26,7 @@ import { initiationNextStep } from '@/lib/initiation-analytics'
 import { requestInitiationCheckout, type InitiationCheckoutInput, type InitiationCheckoutResult } from '@/lib/initiation-checkout-request'
 import { initiationPackProgress } from '@/lib/initiation-pack-progress'
 import { InitiationBriefing } from './briefing/initiation-briefing'
-import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingOffers, briefingRecord, shouldAutoOpenBriefing, type BriefingOffer, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
+import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingRecord, shouldAutoOpenBriefing, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 
 const SOURCE_KEY = 'mc:initiation:device-source'
 const subscribeToSource = () => () => {}
@@ -120,10 +121,10 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
 
   const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null || briefingOpen)
 
-  async function become(override?: 'initial' | 'standard', surface: 'page' | 'brief' = 'page') {
+  async function become() {
     if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
-    const chosen = override ?? bundle
-    captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status), surface, bundle: legacy ? 'legacy_upgrade' : chosen })
+    const chosen = bundle
+    captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status), surface: 'page', bundle: legacy ? 'legacy_upgrade' : chosen })
     setError('')
     if (status === 'guest' && !signedInHere) { pendingBundle.current = chosen; setSignInOpen(true); return }
     await continueToCheckout(chosen)
@@ -177,19 +178,23 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     }
   }
 
+  // The briefing's last page never starts checkout: "Explore" leaves for the Dashboard with the briefing still up,
+  // "Get the packs" closes it and brings the payment panel into view.
+  const paymentRef = useRef<HTMLDivElement>(null)
+  const [paymentRequest, setPaymentRequest] = useState(0)
+  useEffect(() => {
+    const panel = paymentRef.current
+    if (!paymentRequest || !panel) return
+    const target = panel.closest<HTMLElement>('section') ?? panel
+    target.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+    panel.focus({ preventScroll: true })
+  }, [paymentRequest])
   function closeBriefing(outcome: BriefingOutcome, page: number) {
     writeBriefingStore(outcome, page)
+    if (outcome === 'explore_collective') return
     setBriefing('dismissed')
+    if (outcome === 'view_packs') setPaymentRequest(request => request + 1)
   }
-  function chooseFromBriefing(offer: BriefingOffer['id'], page: number) {
-    closeBriefing('chose_offer', page)
-    const choice = offer === 'initial' || offer === 'standard' ? offer : undefined
-    if (choice) setBundle(choice)
-    void become(choice, 'brief')
-  }
-  const briefingUnavailable = status === 'unknown' ? 'Records are unavailable right now. Please try again later.'
-    : soldOut ? `${availability.batch} is fully claimed.`
-    : !availability.checkoutOpen && status !== 'guest' ? (availability.reason ?? 'Checkout is not open yet.') : null
 
   const paymentAtBottom = (legacy || paymentPlacement === 'bottom') && !initiated && !granted
   const BenefitHeading = paymentAtBottom ? 'h3' : 'h2'
@@ -210,7 +215,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
   </div>
   const joinPanel = (
-        <div data-initiation-section="payment" className={styles.join}>
+        <div ref={paymentRef} tabIndex={-1} data-initiation-section="payment" className={styles.join}>
           {checkoutCanceled && !initiated && !granted && <p className={styles.notice} role="status">You returned from checkout without completing it. Payment status below comes from your order records.</p>}
           {!memberView && snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
           {!memberView && snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{paymentMessages[snapshot.paymentStatus]}</p>}
@@ -301,8 +306,16 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         </ol>
       </section>}
 
+      <section data-initiation-section="parallax_array" className={styles.section} aria-labelledby="parallax-array-title">
+        <div className={styles.sectionHeading}><BenefitHeading id="parallax-array-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}{PARALLAX_ARRAY.name}</BenefitHeading></div>
+        <div className={styles.benefit}>
+          <div className={styles.benefitImage}><SmartImage src={PARALLAX_ARRAY.image} alt={PARALLAX_ARRAY.imageAlt} sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
+          <div className={styles.benefitCopy}><h3>Describe a world you believe. We’d go looking for it.</h3><p>{PARALLAX_ARRAY.description}</p><p>{parallaxArrayUnitSummary()}</p><Link href={PARALLAX_ARRAY.href}>Explore with the {PARALLAX_ARRAY.name} <ArrowRight size={20} aria-hidden /></Link></div>
+        </div>
+      </section>
+
       <section data-initiation-section="mission_board" className={styles.section} aria-labelledby="mission-benefit-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="mission-benefit-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Mission Board</BenefitHeading></div>
+        <div className={styles.sectionHeading}><BenefitHeading id="mission-benefit-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Mission Board</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={`${styles.benefitImage} ${styles.missionImage}`}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
           <div className={styles.benefitCopy}><h3>Your next assignment awaits.</h3><p>Take on emergency observations, attempt contact across worlds, and explore unknown frequencies.</p><Link href={snapshot.userId ? '/console#mission-board' : '/login?redirect=%2Fconsole%23mission-board'}>Explore the Mission Board <ArrowRight size={20} aria-hidden /></Link></div>
@@ -310,18 +323,10 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       </section>
 
       <section data-initiation-section="intel" className={styles.section} aria-labelledby="intel-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Classified Intel</BenefitHeading></div>
+        <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>04</span>}Classified Intel &amp; Votes</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents asking: How long has the Collective existed? Who were the first Voyagers? What did they discover?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
-          <div className={styles.benefitCopy}><h3>Beyond the public archive.</h3><p>Explore the Collective’s history through classified records and field briefings.</p><Link href="/intel?tab=classified">Explore intel <ArrowRight size={20} aria-hidden /></Link></div>
-        </div>
-      </section>
-
-      <section data-initiation-section="participation" className={styles.section} aria-labelledby="participation-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="participation-title">{paymentAtBottom && <span className={styles.chapter}>04</span>}{paymentAtBottom ? 'Shape the Collective' : 'Participate'}</BenefitHeading></div>
-        <div className={styles.benefit}>
-          <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/participation-questions.png" alt="Proposed decisions on physical maps and dossiers: Which world next? How many new Voyagers? Reveal our device locations? Investigate a new antenna organization?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
-          <div className={styles.benefitCopy}><h3>Help shape what comes next.</h3><p>Vote on the Collective’s future and get priority access to world-record activities. Pictured: proposals.</p><Link href="/vote?tab=classified">See current votes <ArrowRight size={20} aria-hidden /></Link></div>
+          <div className={styles.benefitCopy}><h3>See what is hidden. Decide what comes next.</h3><p>Read the Collective’s classified records and field briefings, then vote on its future, with priority access to world-record activities.</p><div className={styles.benefitLinks}><Link href="/intel?tab=classified">Explore intel <ArrowRight size={20} aria-hidden /></Link><Link href="/vote?tab=classified">See current votes <ArrowRight size={20} aria-hidden /></Link></div></div>
         </div>
       </section>
       </section>
@@ -335,8 +340,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     </div>
 
     {briefingOpen && <InitiationBriefing trigger={briefing === 'idle' ? 'auto' : briefing === 'link' ? 'link' : 'replay'} members={members} regions={regions}
-      seats={{ batch: availability.batch, capacity: availability.capacity, initiated: availability.initiated }} offers={briefingOffers(status)}
-      busy={busy} unavailable={briefingUnavailable} capture={captureAnalytics} onChoose={chooseFromBriefing} onClose={closeBriefing} />}
+      seats={{ batch: availability.batch, capacity: availability.capacity, initiated: availability.initiated }} legacy={legacy}
+      capture={captureAnalytics} onClose={closeBriefing} />}
     {quizServices && <PostPaymentCalibration snapshot={snapshot} quizServices={quizServices} autoInvite onAnalytics={captureAnalytics} />}
     <CheckoutSignIn open={signInOpen} onClose={() => setSignInOpen(false)} onSignedIn={signedIn} onEmail={emailCheckout} capture={captureAnalytics} services={signInServices} />
     <ArchiveSheet open={dialog === 'legacy-discount'} onClose={() => setDialog(null)} title="Initial Pack member discount">

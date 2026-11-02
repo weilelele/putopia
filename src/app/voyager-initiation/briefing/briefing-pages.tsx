@@ -1,13 +1,15 @@
 'use client'
 
-import { useRef, useState, type CSSProperties } from 'react'
-import { ArrowRight, Check } from 'lucide-react'
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import SmartImage from '@/components/smart-image'
 import { ANTENNA } from '@/lib/antenna-copy'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import { MemberProfileSheet } from '@/components/member-profile-sheet'
 import { memberInitials } from '@/lib/member-initials'
-import { briefingSeats, type BriefingOffer, type BriefingRegion } from '@/lib/initiation-briefing'
+import { briefingSeats, type BriefingRegion } from '@/lib/initiation-briefing'
+import { PARALLAX_ARRAY_EXAMPLES, PARALLAX_ARRAY_ROUNDS, PARALLAX_ARRAY_UNITS, parallaxArrayCaption, parallaxArrayDissolve, parallaxArrayFrame, parallaxArraySignal, parallaxArrayVotes, PARALLAX_ARRAY_VOTE_MARKS, type ParallaxArrayFrame } from '@/lib/parallax-array'
 import type { InitiationPublicMember } from '@/lib/initiation-types'
 import { BriefingPage, Headline, Kicker, attachVideo, clamp, ease, easeOut, fitCanvas, lerp, releaseVideo, rise, useScene, type PageState } from './briefing-kit'
 import s from './briefing.module.css'
@@ -397,6 +399,237 @@ export function ClassifiedPage({ state }: { state: PageState }) {
   </BriefingPage>
 }
 
+/* 6 · Parallax Array: the London device listens through an aged, swaying feed. The observation dissolves into static as
+   it is sent; each round a small lens gathers more fragments of the world, and Voyager votes light up around it between
+   rounds. The picture never resolves completely. Examples rotate slowly. */
+const EXAMPLE_LENGTHS = PARALLAX_ARRAY_EXAMPLES.map(example => example.text.length)
+const LENS = 124
+const LENS_BOX = 208
+/** The device feed keeps one middling resolution throughout: soft and aged, never crisp, never breaking up. */
+const FEED_WIDTH = 240
+
+function refreshStatic(noise: HTMLCanvasElement, image: ImageData) {
+  const data = image.data
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = data[i + 1] = data[i + 2] = Math.random() * 255
+    data[i + 3] = 255
+  }
+  noise.getContext('2d')!.putImageData(image, 0, 0)
+}
+
+export function ParallaxArrayPage({ state }: { state: PageState }) {
+  const root = useRef<HTMLDivElement>(null)
+  const sky = useRef<HTMLCanvasElement>(null)
+  const film = useRef<HTMLDivElement>(null)
+  const feed = useRef<HTMLCanvasElement>(null)
+  const port = useRef<HTMLCanvasElement>(null)
+  const ring = useRef<HTMLCanvasElement>(null)
+  const caption = useRef<SVGTextPathElement>(null)
+  const quote = useRef<HTMLSpanElement>(null)
+  const reporter = useRef<HTMLSpanElement>(null)
+  const dormant = useRef<HTMLSpanElement>(null)
+  const arcId = useId()
+  const city = PARALLAX_ARRAY_UNITS.find(unit => unit.online)?.city ?? 'LONDON'
+  useScene(state.active, (scene, reduced) => {
+    const wrap = root.current!, video = film.current!.querySelector('video')!
+    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    // Sized from layout, not getBoundingClientRect, so an entrance transform can never measure a canvas at zero.
+    const sized = (canvas: HTMLCanvasElement, size: number) => {
+      canvas.width = canvas.height = Math.round(size * dpr)
+      const context = canvas.getContext('2d')!
+      context.setTransform(dpr, 0, 0, dpr, 0, 0)
+      return context
+    }
+    const pctx = sized(port.current!, LENS), rctx = sized(ring.current!, LENS_BOX)
+    const { ctx, w, h } = fitCanvas(sky.current!)
+    const box = wrap.getBoundingClientRect(), filmRect = film.current!.getBoundingClientRect()
+    const device = { x: filmRect.left - box.left + filmRect.width / 2, y: filmRect.top - box.top + filmRect.height * .45 }
+    // The feed is drawn small and scaled up, like the Worlds live rooms: soft without a blur filter, then grained.
+    const feedCanvas = feed.current!, fctx = feedCanvas.getContext('2d', { alpha: false })!
+    const aspect = film.current!.offsetHeight / Math.max(1, film.current!.offsetWidth)
+    const poster = new Image()
+    poster.src = `${MEDIA}/london-device.jpg`
+    const filmGrain = document.createElement('canvas')
+    filmGrain.width = 96; filmGrain.height = Math.max(32, Math.round(96 * aspect))
+    const filmGrainImage = filmGrain.getContext('2d')!.createImageData(filmGrain.width, filmGrain.height)
+    let lastFeed = -100
+    const drawFeed = (now: number) => {
+      if (now - lastFeed < 66) return
+      lastFeed = now
+      const source = video.readyState >= 2 ? video : poster.complete && poster.naturalWidth ? poster : null
+      if (!source) return
+      const sw = source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth, sh = source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight
+      const width = FEED_WIDTH, height = Math.max(1, Math.round(width * aspect))
+      if (feedCanvas.width !== width || feedCanvas.height !== height) { feedCanvas.width = width; feedCanvas.height = height }
+      const scale = Math.max(width / sw, height / sh), cw = width / scale, ch = height / scale
+      fctx.imageSmoothingEnabled = true; fctx.imageSmoothingQuality = 'high'
+      fctx.globalAlpha = 1
+      fctx.drawImage(source, (sw - cw) / 2, (sh - ch) * .4, cw, ch, 0, 0, width, height)
+      fctx.globalAlpha = .08
+      fctx.imageSmoothingEnabled = false
+      fctx.drawImage(filmGrain, 0, 0, width, height)
+      fctx.globalAlpha = 1
+    }
+    const images = PARALLAX_ARRAY_EXAMPLES.map(item => { const image = new Image(); image.src = item.image; return image })
+    const small = document.createElement('canvas'), smallCtx = small.getContext('2d')!
+    const pix = document.createElement('canvas')
+    pix.width = pix.height = LENS
+    const pixCtx = pix.getContext('2d')!
+    const noise = document.createElement('canvas')
+    noise.width = noise.height = 64
+    const noiseImage = noise.getContext('2d')!.createImageData(64, 64)
+    refreshStatic(noise, noiseImage)
+    const CELLS = 9
+    let ranks: number[] = [], shownExample = -1, shownKey = '', lastNoise = -100
+    const ripples: { start: number }[] = []
+
+    const drawLens = (frame: ParallaxArrayFrame, t: number) => {
+      const signal = parallaxArraySignal(frame), image = images[frame.example]
+      pctx.clearRect(0, 0, LENS, LENS)
+      pctx.save()
+      pctx.beginPath(); pctx.arc(LENS / 2, LENS / 2, LENS / 2, 0, Math.PI * 2); pctx.clip()
+      pctx.fillStyle = '#000'; pctx.fillRect(0, 0, LENS, LENS)
+      pctx.imageSmoothingEnabled = false
+      pctx.globalAlpha = .45; pctx.drawImage(noise, 0, 0, LENS, LENS); pctx.globalAlpha = 1
+      if (signal.reveal > 0 && image.complete && image.naturalWidth) {
+        // The world drifts slowly inside the lens, rendered at the round's coarse grain, one fragment at a time.
+        const side = Math.min(image.naturalWidth, image.naturalHeight) * .78
+        const sx = (image.naturalWidth - side) / 2 + Math.sin(t / 4200) * side * .06, sy = (image.naturalHeight - side) / 2 + Math.cos(t / 5100) * side * .05
+        if (small.width !== signal.grain) { small.width = signal.grain; small.height = signal.grain }
+        smallCtx.drawImage(image, sx, sy, side, side, 0, 0, signal.grain, signal.grain)
+        pixCtx.imageSmoothingEnabled = false
+        pixCtx.clearRect(0, 0, LENS, LENS)
+        pixCtx.drawImage(small, 0, 0, signal.grain, signal.grain, 0, 0, LENS, LENS)
+        const cell = LENS / CELLS
+        ranks.forEach((rank, i) => {
+          const alpha = clamp((signal.reveal - rank) / .12)
+          if (!alpha) return
+          const cx = (i % CELLS) * cell, cy = Math.floor(i / CELLS) * cell
+          pctx.globalAlpha = alpha
+          pctx.drawImage(pix, cx, cy, cell, cell, cx, cy, cell, cell)
+        })
+        pctx.globalAlpha = 1
+      }
+      pctx.globalAlpha = signal.noise * .5; pctx.drawImage(noise, 0, 0, LENS, LENS); pctx.globalAlpha = 1
+      pctx.restore()
+    }
+
+    const drawRing = (frame: ParallaxArrayFrame, t: number) => {
+      const c = LENS_BOX / 2, votes = parallaxArrayVotes(frame)
+      rctx.clearRect(0, 0, LENS_BOX, LENS_BOX)
+      rctx.strokeStyle = `rgba(${STAR},.22)`; rctx.lineWidth = 1
+      rctx.beginPath(); rctx.arc(c, c, LENS / 2 + 4, 0, Math.PI * 2); rctx.stroke()
+      if (frame.stage === 'round') {
+        // A slow scan travels the rim while the round is received.
+        const a = t / 900
+        rctx.strokeStyle = `rgba(${ORANGE},.9)`; rctx.lineWidth = 2
+        rctx.beginPath(); rctx.arc(c, c, LENS / 2 + 4, a, a + Math.PI / 3.5); rctx.stroke()
+      }
+      // Vote marks, like the recruiting seats: each Voyager vote lights one.
+      for (let i = 0; i < PARALLAX_ARRAY_VOTE_MARKS; i++) {
+        const angle = -Math.PI / 2 + i / PARALLAX_ARRAY_VOTE_MARKS * Math.PI * 2
+        const x = c + (LENS / 2 + 14) * Math.cos(angle), y = c + (LENS / 2 + 14) * Math.sin(angle)
+        const lit = clamp(votes - i)
+        rctx.beginPath(); rctx.arc(x, y, 1.6 + lit * 1.2, 0, Math.PI * 2)
+        if (lit > 0) { rctx.fillStyle = `rgba(${ORANGE},${.35 + lit * .65})`; rctx.fill() }
+        else { rctx.strokeStyle = `rgba(${STAR},.3)`; rctx.lineWidth = 1; rctx.stroke() }
+      }
+    }
+
+    const draw = (now: number, frame: ParallaxArrayFrame) => {
+      if (frame.example !== shownExample) { shownExample = frame.example; ranks = Array.from({ length: CELLS * CELLS }, () => Math.random() * .98) }
+      const key = `${frame.example}:${frame.stage}:${frame.round}`
+      if (key !== shownKey) {
+        if (shownKey && frame.stage === 'round') ripples.push({ start: now })
+        shownKey = key
+        wrap.dataset.stage = frame.stage
+        wrap.dataset.round = String(frame.round)
+        caption.current!.textContent = parallaxArrayCaption(frame, city)
+      }
+      // The report and its byline appear, dissolve and return together.
+      const example = PARALLAX_ARRAY_EXAMPLES[frame.example], text = example.text, byline = `VOYAGER REPORT FROM ${example.from.toUpperCase()}`
+      const dissolve = (line: string) => Array.from(line, (char, i) => {
+        const state = parallaxArrayDissolve(i, line.length, frame.progress)
+        return state === 'kept' || char === ' ' ? char : state === 'static' ? GLYPHS[Math.floor(Math.random() * GLYPHS.length)] : ' '
+      }).join('')
+      quote.current!.textContent = frame.stage === 'release' ? dissolve(text) : text.slice(0, frame.typed)
+      reporter.current!.textContent = frame.stage === 'release' ? dissolve(byline) : byline
+      if (frame.stage === 'typing' && !frame.typed) reporter.current!.dataset.empty = ''
+      else delete reporter.current!.dataset.empty
+      if (now - lastNoise >= 80) {
+        lastNoise = now
+        refreshStatic(noise, noiseImage)
+        refreshStatic(filmGrain, filmGrainImage)
+      }
+      drawFeed(now)
+      drawLens(frame, now)
+      drawRing(frame, now)
+      ctx.clearRect(0, 0, w, h)
+      for (let k = ripples.length - 1; k >= 0; k--) {
+        const age = now - ripples[k].start
+        if (age > 2400) { ripples.splice(k, 1); continue }
+        for (let i = 0; i < 2; i++) {
+          const u = clamp((age - i * 300) / 1900)
+          if (u <= 0 || u >= 1) continue
+          ctx.strokeStyle = `rgba(${ORANGE},${(1 - u) * .5})`; ctx.lineWidth = 1.5 * (1 - u) + .6
+          ctx.beginPath(); ctx.arc(device.x, device.y, 20 + easeOut(u) * w * .45, 0, Math.PI * 2); ctx.stroke()
+        }
+      }
+    }
+
+    const glyphs = dormant.current!, dormantText = glyphs.dataset.scramble ?? ''
+    if (reduced) {
+      const settled = { example: 0, typed: EXAMPLE_LENGTHS[0], stage: 'continue', round: PARALLAX_ARRAY_ROUNDS, progress: 0 } as const
+      const show = () => { shownKey = ''; draw(0, settled); ctx.clearRect(0, 0, w, h) }
+      show()
+      if (!images[0].complete) scene.listen(images[0], 'load', show)
+      return
+    }
+    scene.every(() => { glyphs.textContent = Array.from(dormantText).map(c => c !== ' ' && Math.random() < .15 ? GLYPHS[Math.floor(Math.random() * GLYPHS.length)] : c).join('') }, 160)
+    attachVideo(video)
+    void video.play().catch(() => {})
+    draw(0, parallaxArrayFrame(0, EXAMPLE_LENGTHS))
+    // The scene rises in over the first second; the observation starts typing once it is on screen.
+    scene.later(() => { const begin = performance.now(); scene.loop(() => { const now = performance.now(); draw(now, parallaxArrayFrame(now - begin, EXAMPLE_LENGTHS)) }) }, 1200)
+    return () => { releaseVideo(video); glyphs.textContent = dormantText }
+  })
+  const arc = LENS / 2 + 30, mid = LENS_BOX / 2
+  return <BriefingPage state={state} className={s.p6} label="Parallax Array">
+    <div ref={root} className={s.p6Scene} data-stage="typing">
+      <div className={`${s.copy} ${s.p6Copy} ${s.gut}`}>
+        <Kicker text="PARALLAX ARRAY" />
+        <Headline text="Describe a world you believe. We’d go looking for it." />
+      </div>
+      <div ref={film} className={s.p6Film}>
+        <span className={s.p6Sway}>
+          <video data-src={`${MEDIA}/london-device.mp4`} muted playsInline loop preload="none" aria-hidden />
+          <canvas ref={feed} className={s.p6Feed} role="img" aria-label={`A remote feed of the ${city} Parallax Array, listening`} />
+        </span>
+        <span className={s.p6Live}><i className={s.liveDot} aria-hidden /><b>{city}</b> LISTENING</span>
+      </div>
+      <div className={s.lens} style={{ '--lens': `${LENS}px`, '--lens-box': `${LENS_BOX}px` } as CSSProperties}>
+        <canvas ref={port} className={s.porthole} role="img" aria-label="A small round window gathering fragments of the observed world over three rounds" />
+        <canvas ref={ring} className={s.fx} aria-hidden />
+        <svg className={s.fx} viewBox={`0 0 ${LENS_BOX} ${LENS_BOX}`} aria-hidden>
+          <path id={arcId} d={`M ${mid - arc} ${mid} A ${arc} ${arc} 0 0 0 ${mid + arc} ${mid}`} fill="none" />
+          <text className={s.lensCaption}><textPath ref={caption} href={`#${arcId}`} startOffset="50%" textAnchor="middle">{city} · LISTENING</textPath></text>
+        </svg>
+      </div>
+      <div className={`${s.p6Report} ${s.gut}`} aria-hidden>
+        <span ref={reporter} className={s.p6ReportLabel} data-empty />
+        <p className={s.p6Quote}><span ref={quote} /><span className={s.caret} /></p>
+      </div>
+      <ul className={`${s.p6Units} ${s.gut}`} aria-label="Parallax Array locations">
+        {PARALLAX_ARRAY_UNITS.filter(unit => !unit.online).map(unit => <li key={unit.city}>
+          <b>{unit.city}</b><span ref={dormant} data-scramble="NOT YET ONLINE" aria-label="Not yet online">NOT YET ONLINE</span>
+        </li>)}
+      </ul>
+      <canvas ref={sky} className={s.fx} aria-hidden />
+    </div>
+    <ul className="sr-only">{PARALLAX_ARRAY_EXAMPLES.map(item => <li key={item.image}>Example observation from {item.from}: {item.text}</li>)}</ul>
+  </BriefingPage>
+}
+
 /* 7 · The front line: the Console film and each region's published phase. */
 const GLYPHS = '█▓▒░#%&@$*'
 
@@ -472,35 +705,169 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
   </BriefingPage>
 }
 
-/* 9 · Join: the same offers as the checkout panel. */
-export function JoinPage({ state, offers, busy, unavailable, onChoose, onLearnMore }: {
-  state: PageState; offers: BriefingOffer[]; busy: boolean; unavailable: string | null
-  onChoose: (offer: BriefingOffer['id']) => void; onLearnMore: () => void
+/* 9 · Join: a flashback through every page under a drifting torch, each cut through a dark lamp like page 1, landing
+   on a Console at its desk as the lights come up. Two equal ways out: the Dashboard, or the packs on the Initiation page. */
+const MEMORIES = [
+  { label: 'THE DEVICE', src: `${MEDIA}/flashback-device.jpg`, from: [.42, .3], to: [.58, .36] },
+  { label: 'THE COLLECTIVE', src: `${MEDIA}/flashback-library.jpg`, from: [.5, .24], to: [.5, .34] },
+  { label: 'THE MEMBERS', src: null, from: [.3, .26], to: [.66, .34] },
+  { label: 'RECRUITING', src: `${MEDIA}/flashback-badge.jpg`, from: [.56, .38], to: [.44, .3] },
+  { label: 'CLASSIFIED', src: `${MEDIA}/flashback-intel.jpg`, from: [.36, .26], to: [.6, .34] },
+  { label: 'PARALLAX ARRAY', src: `${MEDIA}/flashback-flooded.jpg`, from: [.62, .3], to: [.42, .36] },
+  { label: 'THE FRONT LINE', src: '/assets/device-reel-wasteland-20261021-poster.jpg', from: [.4, .34], to: [.54, .28] },
+  { label: 'YOUR PACKS', src: `${MEDIA}/flashback-antenna.jpg`, from: [.5, .36], to: [.6, .3] },
+] as const
+/** The closing still is portrait; `focus` is the Console's screen, where the lights come up from. */
+const DESK = { label: 'YOUR DESK', src: `${MEDIA}/console-desk.jpg`, focus: [.564, .29] }
+const CUTS = [760, 680, 600, 540, 480, 420, 380, 340]
+const FLASHBACK_DELAY = 400
+const LIGHTS_UP = 1100
+/** Memories cover only the upper part of the screen, where the torch travels, so stills are never blown up past ~1.5×. */
+const MEMORY_ZONE = .62
+const MEMBER_FACES = 24
+
+export function JoinPage({ state, members, warm, legacy, onExplore, onPacks }: {
+  state: PageState; members: InitiationPublicMember[]; warm: boolean; legacy: boolean; onExplore: () => void; onPacks: () => void
 }) {
-  return <BriefingPage state={state} className={s.p9} label="Voyager Initiation">
-    <div className={s.p9Media} aria-hidden>
-      <SmartImage src={`${MEDIA}/welcome-desk.jpg`} alt="" sizes="(min-width: 460px) 460px, 100vw" className={s.cover} preload />
-      <span className={s.scrim} />
+  const canvas = useRef<HTMLCanvasElement>(null)
+  const index = useRef<HTMLElement>(null)
+  const title = useRef<HTMLSpanElement>(null)
+  const faces = useRef<HTMLDivElement>(null)
+  // Members with a picture first; the rest fill in with their initials.
+  const crowd = [...members.filter(member => member.avatarUrl), ...members.filter(member => !member.avatarUrl)].slice(0, MEMBER_FACES)
+  // Warm the cache once the briefing is well under way, so the first cuts are never empty.
+  useEffect(() => { if (warm) for (const src of [...MEMORIES.map(memory => memory.src), DESK.src]) if (src) new Image().src = src }, [warm])
+  useScene(state.active, (scene, reduced) => {
+    const { ctx, w, h } = fitCanvas(canvas.current!)
+    const memories = MEMORIES.map(memory => { if (!memory.src) return null; const image = new Image(); image.src = memory.src; return image })
+    const desk = new Image()
+    desk.src = DESK.src
+    const zone = h * MEMORY_ZONE
+    const dots = Array.from({ length: 110 }, () => ({ x: Math.random() * w, y: Math.random() * zone, size: .8 + Math.random() * 1.4, alpha: .2 + Math.random() * .5 }))
+    // The members' faces scatter over a loose grid and drift upward through their cut.
+    const columns = 4, rows = Math.max(1, Math.ceil(crowd.length / columns))
+    const people = crowd.map((member, i) => ({
+      member, picture: faces.current!.querySelector<HTMLImageElement>(`[data-member="${CSS.escape(member.id)}"] img`),
+      x: ((i % columns) + .5 + (Math.random() - .5) * .5) / columns * w,
+      y: (Math.floor(i / columns) + .5 + (Math.random() - .5) * .4) / rows * zone * .9 + zone * .08,
+      size: 40 + Math.random() * 22,
+    }))
+    const ready = (image: HTMLImageElement | null) => !!image && image.complete && image.naturalWidth > 0
+    let shown = -1
+    const label = (k: number) => {
+      if (k === shown) return
+      shown = k
+      index.current!.textContent = String(k + 1).padStart(2, '0')
+      title.current!.textContent = k < MEMORIES.length ? MEMORIES[k].label : DESK.label
+    }
+    // The zone's lower edge melts into the black page, like the torch's own soft rim.
+    const fadeZone = () => {
+      const edge = ctx.createLinearGradient(0, zone * .72, 0, zone)
+      edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, '#000')
+      ctx.fillStyle = edge; ctx.fillRect(0, zone * .72, w, zone * .28)
+      ctx.fillStyle = '#000'; ctx.fillRect(0, zone, w, h - zone)
+    }
+    const drawMembers = (u: number) => {
+      for (const dot of dots) { ctx.fillStyle = `rgba(${STAR},${dot.alpha})`; ctx.fillRect(dot.x, dot.y, dot.size, dot.size) }
+      ctx.font = '700 14px "Courier Prime", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      for (const person of people) {
+        const r = person.size / 2, x = person.x, y = person.y - u * 18
+        ctx.save()
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip()
+        ctx.fillStyle = '#10162D'; ctx.fillRect(x - r, y - r, r * 2, r * 2)
+        if (ready(person.picture)) {
+          const image = person.picture!, side = Math.min(image.naturalWidth, image.naturalHeight)
+          ctx.drawImage(image, (image.naturalWidth - side) / 2, (image.naturalHeight - side) / 2, side, side, x - r, y - r, r * 2, r * 2)
+        } else {
+          ctx.fillStyle = '#F2783E'; ctx.fillText(memberInitials(person.member.displayName), x, y + 1)
+        }
+        ctx.restore()
+        ctx.strokeStyle = `rgba(${STAR},.3)`; ctx.lineWidth = 1
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke()
+      }
+    }
+    // Each memory covers the upper zone at close to its own resolution and pans a little across its cut.
+    const drawMemory = (k: number, u: number) => {
+      const image = memories[k]
+      if (!image) { drawMembers(u); fadeZone(); return }
+      if (!ready(image)) return
+      const scale = Math.max(w / image.naturalWidth, zone / image.naturalHeight) * 1.04
+      const iw = image.naturalWidth * scale, ih = image.naturalHeight * scale
+      ctx.drawImage(image, lerp(0, w - iw, lerp(.35, .65, u)), (zone - ih) / 2, iw, ih)
+      fadeZone()
+    }
+    const deskFrame = (push: number) => {
+      const scale = Math.max(w / desk.naturalWidth, h / desk.naturalHeight)
+      const iw = desk.naturalWidth * scale, ih = desk.naturalHeight * scale
+      return { x: (w - iw) / 2 + DESK.focus[0] * iw, y: DESK.focus[1] * ih, iw: iw * push, ih: ih * push }
+    }
+    // The Console stands at the top of the frame; the desk runs down behind the copy. It slowly pushes in once the lights are up.
+    const drawDesk = (push: number) => {
+      if (!ready(desk)) return
+      const { x, y, iw, ih } = deskFrame(push)
+      ctx.drawImage(desk, x - DESK.focus[0] * iw, y - DESK.focus[1] * ih, iw, ih)
+    }
+    const torch = (x: number, y: number, r: number, dark: number) => {
+      ctx.fillStyle = `rgba(8,12,32,${dark})`
+      ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.arc(x, y, r, 0, Math.PI * 2, true); ctx.fill()
+      const soft = ctx.createRadialGradient(x, y, r * .55, x, y, r)
+      soft.addColorStop(0, 'rgba(8,12,32,0)'); soft.addColorStop(1, `rgba(8,12,32,${dark})`)
+      ctx.fillStyle = soft; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
+    }
+    const settled = (since: number) => {
+      ctx.clearRect(0, 0, w, h)
+      drawDesk(1 + .05 * (1 - Math.cos(since / 18000 * Math.PI)) / 2)
+      ctx.fillStyle = 'rgba(8,12,32,.5)'; ctx.fillRect(0, 0, w, h)
+    }
+    if (reduced) {
+      label(MEMORIES.length)
+      settled(0)
+      if (!ready(desk)) scene.listen(desk, 'load', () => settled(0))
+      return
+    }
+    const radius = Math.min(170, w * .42)
+    const ends = CUTS.map((_, k) => FLASHBACK_DELAY + CUTS.slice(0, k + 1).reduce((a, b) => a + b, 0))
+    const flashback = ends[ends.length - 1]
+    label(0)
+    scene.loop(t => {
+      if (t >= flashback + LIGHTS_UP) { settled(t - flashback - LIGHTS_UP); return }
+      ctx.clearRect(0, 0, w, h)
+      if (t < FLASHBACK_DELAY) return
+      if (t >= flashback) {
+        // Lights up: the torch opens from the Console's screen until the whole desk shows under an even scrim.
+        label(MEMORIES.length)
+        const u = ease(clamp((t - flashback) / LIGHTS_UP))
+        drawDesk(1)
+        const focus = deskFrame(1)
+        torch(focus.x, focus.y, lerp(radius * .6, Math.hypot(w, h), u), .86)
+        ctx.fillStyle = `rgba(8,12,32,${.5 * u})`; ctx.fillRect(0, 0, w, h)
+        ctx.fillStyle = `rgba(0,0,0,${1 - clamp((t - flashback) / 260)})`; ctx.fillRect(0, 0, w, h)
+        return
+      }
+      const k = ends.findIndex(end => t < end), memory = MEMORIES[k]
+      const u = clamp((t - (ends[k] - CUTS[k])) / CUTS[k])
+      label(k)
+      drawMemory(k, u)
+      torch(lerp(memory.from[0], memory.to[0], u) * w, lerp(memory.from[1], memory.to[1], u) * h, radius, .86)
+      // The lamp: every cut rises out of the dark and falls back into it before the next.
+      const lamp = u < .3 ? 1 - u / .3 : u > .8 ? (u - .8) / .2 : 0
+      ctx.fillStyle = `rgba(0,0,0,${lamp})`; ctx.fillRect(0, 0, w, h)
+    })
+  })
+  return <BriefingPage state={state} className={s.p9} label="Briefing complete">
+    <canvas ref={canvas} className={s.fx} data-briefing-target="media" role="img"
+      aria-label="A flashback through the briefing under a torch: the Console, a robot library, the members' faces, the Voyager badge, the classified archive, a flooded world, the front line and the packs, ending on a Multiverse Console on a desk with a Voyager badge and an envelope." />
+    <div ref={faces} className={s.p9Faces} aria-hidden>
+      {crowd.map(member => member.avatarUrl && <span key={member.id} data-member={member.id}><SmartImage src={member.avatarUrl} alt="" sizes="64px" width={64} height={64} preload /></span>)}
     </div>
+    <p className={s.p9Tag} aria-hidden><b ref={index}>01</b> · <span ref={title}>{MEMORIES[0].label}</span></p>
     <div className={`${s.p9Content} ${s.gut}`}>
-      <Kicker text="BECOME A VOYAGER" />
-      <Headline text="Voyager Initiation" large />
-      <div className={s.offers} style={{ '--count': offers.length } as CSSProperties}>
-        {offers.map((offer, k) => <div key={offer.id} className={`${s.offer} ${s.rise}`} style={rise(1100 + k * 200)}>
-          <span className={s.offerLabel}>{offer.label}</span>
-          <h3>{offer.title}</h3>
-          <span className={s.price}>${offer.price}</span>
-          <ul>{offer.points.map(point => <li key={point}><Check size={12} strokeWidth={3} aria-hidden />{point}</li>)}</ul>
-          <span className={s.offerNote}>{offer.note}</span>
-          <button type="button" className={s.choose} disabled={busy || !!unavailable} onClick={() => onChoose(offer.id)}>
-            {offer.id === 'legacy_upgrade' ? `UPGRADE $${offer.price}` : `CHOOSE $${offer.price}`}
-          </button>
-        </div>)}
-      </div>
-      {unavailable && <p className={s.meta} role="status">{unavailable}</p>}
-      <div className={`${s.p9Foot} ${s.rise}`} style={rise(1600)}>
-        <button type="button" className={s.more} onClick={onLearnMore}>Learn more <ArrowRight size={16} aria-hidden /></button>
-        <span className={s.meta}>One payment · No subscription</span>
+      <Kicker text="BRIEFING COMPLETE" />
+      <Headline text="Now you know the Collective." large base={800} />
+      <p className={`${s.p9Lede} ${s.rise}`} style={rise(1500)}>{legacy ? 'Look around first, or activate the rest of your packs.' : 'Look around first, or start your Voyager Packs.'}</p>
+      <div className={`${s.p9Actions} ${s.rise}`} style={rise(1900)}>
+        <Link className={s.p9Action} href="/console" onClick={onExplore}>Explore the Collective <ArrowRight size={18} aria-hidden /></Link>
+        <button type="button" className={s.p9Action} onClick={onPacks}>{legacy ? 'Activate Packs 3–4' : 'Get the Voyager Packs'} <ArrowRight size={18} aria-hidden /></button>
       </div>
     </div>
   </BriefingPage>
