@@ -222,38 +222,35 @@
 
 /* 8 · packs */
 .p8 { display: flex; flex-direction: column; }
-.p8Copy { padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
-.packCard { margin-top: 18px; background: var(--color-void); }
-.packHero { position: relative; overflow: hidden; aspect-ratio: 3 / 2; background: #000; }
-.antennaHero { aspect-ratio: 16 / 9; }
+.p8Copy { padding-top: calc(56px + env(safe-area-inset-top, 0px)); }
+.p8Body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding-bottom: 12px; }
+.packCard { margin-top: 16px; flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; background: var(--color-void); }
+/* Full 3:2 when the screen allows; on a short screen the picture shrinks, never the caption. */
+.packHero { position: relative; overflow: hidden; aspect-ratio: 3 / 2; flex: 0 1 auto; min-height: 120px; background: #000; }
 [data-active] .packCard { animation: reveal 900ms cubic-bezier(.7,0,.2,1) backwards 350ms; }
 @keyframes reveal { from { clip-path: inset(18% 18% 18% 18%); opacity: .2; } }
 .packImage { position: absolute; inset: 0; animation: fade .4s ease both; }
 @keyframes fade { from { opacity: .15; } }
 .packHero img { width: 100%; height: 100%; object-fit: cover; display: block; }
 [data-active] .packHero img { animation: push 14s ease-in-out infinite alternate 1.2s; }
-.packCaption { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 2px; }
+.packCaption { flex: none; padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 2px; }
 .packCaption span { font-size: var(--fs-caption); font-weight: 700; letter-spacing: .05em; color: var(--color-nucleus-2); }
 .packCaption b { font-size: var(--fs-title); line-height: 1.2; }
-.packCaption p { margin: 2px 0 0; font-size: var(--fs-label); line-height: 1.4; color: var(--color-star-dim); }
-.packStrip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.packCaption p { margin: 2px 0 0; min-height: 2.8em; font-size: var(--fs-label); line-height: 1.4; color: var(--color-star-dim); }
+.packStrip { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
 .packThumb { appearance: none; border: 0; background: none; padding: 0; margin: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-caption); line-height: 1.25; min-height: 44px; }
 [data-active] .packThumb { animation: rise 480ms cubic-bezier(.2,.8,.2,1) backwards; animation-delay: calc(1200ms + var(--k) * 120ms); }
-.packThumb img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; opacity: .6; transition: opacity .25s ease; }
+.packThumb img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; opacity: .6; transition: opacity .25s ease; }
 .packThumb:hover img { opacity: .9; }
 .packThumb span { color: var(--color-star-dim); letter-spacing: .04em; }
-.packThumb b { font-weight: 400; color: var(--color-star-dim); }
 .packThumb[aria-pressed="true"] img { opacity: 1; outline: 2px solid var(--color-nucleus); outline-offset: -2px; }
-.packThumb[aria-pressed="true"] :is(span, b) { color: var(--color-nucleus-2); font-weight: 700; }
-.p8Note { margin: 12px 0 calc(84px + env(safe-area-inset-bottom, 0px)); }
+.packThumb[aria-pressed="true"] span { color: var(--color-nucleus-2); font-weight: 700; }
 
 /* 9 · join — the flashback fills the page; the copy and two equal actions sit on its dark lower half. */
 .p9 { background: #000; }
-.p9Tag { position: absolute; z-index: 1; left: 16px; top: calc(56px + env(safe-area-inset-top, 0px)); margin: 0; padding: 4px 8px; background: var(--color-deep); font-size: var(--fs-caption); letter-spacing: .05em; color: var(--color-star-dim); }
-.p9Tag b { color: var(--color-nucleus-2); }
 /* Member pictures load here, unseen, and are drawn into the flashback. */
-.p9Faces { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
-[data-active] .p9Tag { animation: dawn .6s ease backwards 400ms; }
+/* The clip is drawn into the canvas; the element only decodes it. */
+.p9Clip { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
 .p9Content { position: relative; min-height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding-block: 120px calc(28px + env(safe-area-inset-bottom, 0px)); --kicker-delay: 500ms; }
 .p9Lede { margin: 0; font-size: .9375rem; line-height: 1.5; color: var(--color-star); }
 .p9Actions { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }

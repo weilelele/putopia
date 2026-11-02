@@ -160,7 +160,7 @@ export function InitiationBriefing({ trigger, members, seats, regions, legacy, c
         <ParallaxArrayPage state={state(5)} />
         <FrontLinePage state={state(6)} regions={regions} />
         <PacksPage state={state(7)} onPack={index => track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[7], topic: `pack_${index + 1}` })} />
-        <JoinPage state={state(8)} members={members} warm={nav.maxPage >= 4} legacy={legacy}
+        <JoinPage state={state(8)} warm={nav.maxPage >= 4} legacy={legacy}
           onExplore={() => { track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[8], topic: 'explore_collective' }); close('explore_collective') }}
           onPacks={() => { track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[8], topic: 'view_packs' }); close('view_packs') }} />
       </div>
