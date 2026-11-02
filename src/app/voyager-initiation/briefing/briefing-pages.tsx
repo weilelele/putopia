@@ -670,12 +670,12 @@ export function FrontLinePage({ state, regions }: { state: PageState; regions: B
   </BriefingPage>
 }
 
-/* 8 · Packs: the Console leads; tap any month to see that pack. */
+/* 8 · Packs: the Console leads; tap any month to see that pack. The page fits one phone screen: the picture gives up height, the caption never changes size. */
 const PACKS = [
-  { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', short: 'Initial Pack', image: `${MEDIA}/pack-1.jpg`, focus: '50% 75%', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
-  { month: 'NOV', meta: 'PACK 2 · NOV 2026', title: ANTENNA.firstMention, short: ANTENNA.name, image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
-  { month: 'DEC', meta: 'PACK 3 · DEC 2026', title: 'Multiverse Console', short: 'Console', image: `${MEDIA}/console-workshop.jpg`, alt: 'A Multiverse Console on a workshop bench, its screen showing a parallel world', description: 'Your own device for exploring and interacting with parallel worlds.' },
-  { month: 'JAN', meta: 'PACK 4 · JAN 2027', title: 'A Fourth Delivery', short: 'Fourth delivery', image: `${MEDIA}/pack-4.jpg`, alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },
+  { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', image: `${MEDIA}/pack-1.jpg`, focus: '50% 75%', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
+  { month: 'NOV', meta: 'PACK 2 · NOV 2026', title: ANTENNA.name, image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packSummary },
+  { month: 'DEC', meta: 'PACK 3 · DEC 2026', title: 'Multiverse Console', image: `${MEDIA}/console-workshop.jpg`, alt: 'A Multiverse Console on a workshop bench, its screen showing a parallel world', description: 'Your own device for exploring and interacting with parallel worlds.' },
+  { month: 'JAN', meta: 'PACK 4 · JAN 2027', title: 'A Fourth Delivery', image: `${MEDIA}/pack-4.jpg`, alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },
 ]
 
 export function PacksPage({ state, onPack }: { state: PageState; onPack: (index: number) => void }) {
@@ -686,9 +686,9 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
       <Kicker text="YOUR PACKS" />
       <Headline text="Four packs come to your door." />
     </div>
-    <div className={s.gut}>
+    <div className={`${s.p8Body} ${s.gut}`}>
       <div className={s.packCard}>
-        <div className={`${s.packHero} ${selected === 1 ? s.antennaHero : ''}`}>
+        <div className={s.packHero}>
           <span key={pack.image} className={s.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 460px) 430px, 92vw" preload style={pack.focus ? { objectPosition: pack.focus } : undefined} /></span>
         </div>
         <div className={s.packCaption} aria-live="polite"><span>{pack.meta}</span><b>{pack.title}</b><p>{pack.description}</p></div>
@@ -697,105 +697,40 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
         {PACKS.map((item, k) => <button key={item.month} type="button" className={s.packThumb} aria-pressed={selected === k} style={{ '--k': k } as CSSProperties}
           onClick={() => { setSelected(k); onPack(k) }}>
           <SmartImage src={item.image} alt="" sizes="96px" width={96} height={96} preload style={item.focus ? { objectPosition: item.focus } : undefined} />
-          <span>{item.month}</span><b>{item.short}</b>
+          <span>{item.month}</span>
         </button>)}
       </div>
     </div>
-    <p className={`${s.meta} ${s.p8Note} ${s.gut} ${s.rise}`} style={rise(1900)}>Tap a pack to see what is inside.</p>
   </BriefingPage>
 }
 
-/* 9 · Join: a flashback through every page under a drifting torch, each cut through a dark lamp like page 1, landing
-   on a Console at its desk as the lights come up. Two equal ways out: the Dashboard, or the packs on the Initiation page. */
-const MEMORIES = [
-  { label: 'THE DEVICE', src: `${MEDIA}/flashback-device.jpg`, from: [.42, .3], to: [.58, .36] },
-  { label: 'THE COLLECTIVE', src: `${MEDIA}/flashback-library.jpg`, from: [.5, .24], to: [.5, .34] },
-  { label: 'THE MEMBERS', src: null, from: [.3, .26], to: [.66, .34] },
-  { label: 'RECRUITING', src: `${MEDIA}/flashback-badge.jpg`, from: [.56, .38], to: [.44, .3] },
-  { label: 'CLASSIFIED', src: `${MEDIA}/flashback-intel.jpg`, from: [.36, .26], to: [.6, .34] },
-  { label: 'PARALLAX ARRAY', src: `${MEDIA}/flashback-flooded.jpg`, from: [.62, .3], to: [.42, .36] },
-  { label: 'THE FRONT LINE', src: '/assets/device-reel-wasteland-20261021-poster.jpg', from: [.4, .34], to: [.54, .28] },
-  { label: 'YOUR PACKS', src: `${MEDIA}/flashback-antenna.jpg`, from: [.5, .36], to: [.6, .3] },
-] as const
+/* 9 · Join: the Console's own snow pulls back to the whole Console in its case (the opening scene of the Speedrun film),
+   then the lights come up on a Console at its desk. Two equal ways out: the Dashboard, or the packs on the Initiation page. */
+const UNBOXING = { src: `${MEDIA}/console-unboxing.mp4`, poster: `${MEDIA}/console-unboxing.jpg`, ms: 10_800 }
 /** The closing still is portrait; `focus` is the Console's screen, where the lights come up from. */
-const DESK = { label: 'YOUR DESK', src: `${MEDIA}/console-desk.jpg`, focus: [.564, .29] }
-const CUTS = [760, 680, 600, 540, 480, 420, 380, 340]
-const FLASHBACK_DELAY = 400
+const DESK = { src: `${MEDIA}/console-desk.jpg`, focus: [.564, .29] }
+const CLIP_DELAY = 300
+/** If the clip stalls or never starts, the lights come up anyway. */
+const CLIP_STALL = 2500
+const CLIP_FADE = .5
 const LIGHTS_UP = 1100
-/** Memories cover only the upper part of the screen, where the torch travels, so stills are never blown up past ~1.5×. */
-const MEMORY_ZONE = .62
-const MEMBER_FACES = 24
+/** The square clip spans the page's width, lifted so the Console's face sits above the copy; only the case lid is cut. */
+const CLIP_TOP = -.05
+const CLIP_EDGE = .45
 
-export function JoinPage({ state, members, warm, legacy, onExplore, onPacks }: {
-  state: PageState; members: InitiationPublicMember[]; warm: boolean; legacy: boolean; onExplore: () => void; onPacks: () => void
+export function JoinPage({ state, warm, legacy, onExplore, onPacks }: {
+  state: PageState; warm: boolean; legacy: boolean; onExplore: () => void; onPacks: () => void
 }) {
   const canvas = useRef<HTMLCanvasElement>(null)
-  const index = useRef<HTMLElement>(null)
-  const title = useRef<HTMLSpanElement>(null)
-  const faces = useRef<HTMLDivElement>(null)
-  // Members with a picture first; the rest fill in with their initials.
-  const crowd = [...members.filter(member => member.avatarUrl), ...members.filter(member => !member.avatarUrl)].slice(0, MEMBER_FACES)
-  // Warm the cache once the briefing is well under way, so the first cuts are never empty.
-  useEffect(() => { if (warm) for (const src of [...MEMORIES.map(memory => memory.src), DESK.src]) if (src) new Image().src = src }, [warm])
+  const clip = useRef<HTMLVideoElement>(null)
+  // Warm the cache once the briefing is well under way, so the clip starts at once.
+  useEffect(() => { if (warm) { attachVideo(clip.current!); new Image().src = DESK.src } }, [warm])
   useScene(state.active, (scene, reduced) => {
     const { ctx, w, h } = fitCanvas(canvas.current!)
-    const memories = MEMORIES.map(memory => { if (!memory.src) return null; const image = new Image(); image.src = memory.src; return image })
+    const video = clip.current!
     const desk = new Image()
     desk.src = DESK.src
-    const zone = h * MEMORY_ZONE
-    const dots = Array.from({ length: 110 }, () => ({ x: Math.random() * w, y: Math.random() * zone, size: .8 + Math.random() * 1.4, alpha: .2 + Math.random() * .5 }))
-    // The members' faces scatter over a loose grid and drift upward through their cut.
-    const columns = 4, rows = Math.max(1, Math.ceil(crowd.length / columns))
-    const people = crowd.map((member, i) => ({
-      member, picture: faces.current!.querySelector<HTMLImageElement>(`[data-member="${CSS.escape(member.id)}"] img`),
-      x: ((i % columns) + .5 + (Math.random() - .5) * .5) / columns * w,
-      y: (Math.floor(i / columns) + .5 + (Math.random() - .5) * .4) / rows * zone * .9 + zone * .08,
-      size: 40 + Math.random() * 22,
-    }))
-    const ready = (image: HTMLImageElement | null) => !!image && image.complete && image.naturalWidth > 0
-    let shown = -1
-    const label = (k: number) => {
-      if (k === shown) return
-      shown = k
-      index.current!.textContent = String(k + 1).padStart(2, '0')
-      title.current!.textContent = k < MEMORIES.length ? MEMORIES[k].label : DESK.label
-    }
-    // The zone's lower edge melts into the black page, like the torch's own soft rim.
-    const fadeZone = () => {
-      const edge = ctx.createLinearGradient(0, zone * .72, 0, zone)
-      edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, '#000')
-      ctx.fillStyle = edge; ctx.fillRect(0, zone * .72, w, zone * .28)
-      ctx.fillStyle = '#000'; ctx.fillRect(0, zone, w, h - zone)
-    }
-    const drawMembers = (u: number) => {
-      for (const dot of dots) { ctx.fillStyle = `rgba(${STAR},${dot.alpha})`; ctx.fillRect(dot.x, dot.y, dot.size, dot.size) }
-      ctx.font = '700 14px "Courier Prime", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-      for (const person of people) {
-        const r = person.size / 2, x = person.x, y = person.y - u * 18
-        ctx.save()
-        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip()
-        ctx.fillStyle = '#10162D'; ctx.fillRect(x - r, y - r, r * 2, r * 2)
-        if (ready(person.picture)) {
-          const image = person.picture!, side = Math.min(image.naturalWidth, image.naturalHeight)
-          ctx.drawImage(image, (image.naturalWidth - side) / 2, (image.naturalHeight - side) / 2, side, side, x - r, y - r, r * 2, r * 2)
-        } else {
-          ctx.fillStyle = '#F2783E'; ctx.fillText(memberInitials(person.member.displayName), x, y + 1)
-        }
-        ctx.restore()
-        ctx.strokeStyle = `rgba(${STAR},.3)`; ctx.lineWidth = 1
-        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke()
-      }
-    }
-    // Each memory covers the upper zone at close to its own resolution and pans a little across its cut.
-    const drawMemory = (k: number, u: number) => {
-      const image = memories[k]
-      if (!image) { drawMembers(u); fadeZone(); return }
-      if (!ready(image)) return
-      const scale = Math.max(w / image.naturalWidth, zone / image.naturalHeight) * 1.04
-      const iw = image.naturalWidth * scale, ih = image.naturalHeight * scale
-      ctx.drawImage(image, lerp(0, w - iw, lerp(.35, .65, u)), (zone - ih) / 2, iw, ih)
-      fadeZone()
-    }
+    const ready = (image: HTMLImageElement) => image.complete && image.naturalWidth > 0
     const deskFrame = (push: number) => {
       const scale = Math.max(w / desk.naturalWidth, h / desk.naturalHeight)
       const iw = desk.naturalWidth * scale, ih = desk.naturalHeight * scale
@@ -820,47 +755,53 @@ export function JoinPage({ state, members, warm, legacy, onExplore, onPacks }: {
       ctx.fillStyle = 'rgba(8,12,32,.5)'; ctx.fillRect(0, 0, w, h)
     }
     if (reduced) {
-      label(MEMORIES.length)
       settled(0)
       if (!ready(desk)) scene.listen(desk, 'load', () => settled(0))
       return
     }
+    attachVideo(video)
+    try { video.currentTime = 0 } catch { /* not ready */ }
+    scene.later(() => { void video.play().catch(() => {}) }, CLIP_DELAY)
+    const top = h * CLIP_TOP, bottom = top + w
+    // The clip fades up from the dark and back into it; its lower edge melts into the black page under the copy.
+    const drawClip = () => {
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h)
+      if (video.readyState < 2) return
+      ctx.drawImage(video, 0, top, w, w)
+      const edge = ctx.createLinearGradient(0, bottom - w * CLIP_EDGE, 0, bottom)
+      edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, '#000')
+      ctx.fillStyle = edge; ctx.fillRect(0, bottom - w * CLIP_EDGE, w, w * CLIP_EDGE)
+      // A little shade under the top controls, which are white like the snow.
+      const shade = ctx.createLinearGradient(0, 0, 0, 72)
+      shade.addColorStop(0, 'rgba(0,0,0,.6)'); shade.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = shade; ctx.fillRect(0, 0, w, 72)
+      const at = video.currentTime, length = video.duration || UNBOXING.ms / 1000
+      const lamp = Math.max(1 - at / CLIP_FADE, (at - (length - CLIP_FADE)) / CLIP_FADE)
+      ctx.fillStyle = `rgba(0,0,0,${clamp(lamp)})`; ctx.fillRect(0, 0, w, h)
+    }
     const radius = Math.min(170, w * .42)
-    const ends = CUTS.map((_, k) => FLASHBACK_DELAY + CUTS.slice(0, k + 1).reduce((a, b) => a + b, 0))
-    const flashback = ends[ends.length - 1]
-    label(0)
+    let end: number | null = null
     scene.loop(t => {
-      if (t >= flashback + LIGHTS_UP) { settled(t - flashback - LIGHTS_UP); return }
+      const stalled = t > CLIP_DELAY + CLIP_STALL && video.currentTime < .05 || t > CLIP_DELAY + UNBOXING.ms + CLIP_STALL
+      if (end === null && (video.ended || stalled)) { end = t; video.pause() }
+      if (end === null) { drawClip(); return }
+      const since = t - end
+      if (since >= LIGHTS_UP) { settled(since - LIGHTS_UP); return }
+      // Lights up: the torch opens from the Console's screen until the whole desk shows under an even scrim.
+      const u = ease(clamp(since / LIGHTS_UP))
       ctx.clearRect(0, 0, w, h)
-      if (t < FLASHBACK_DELAY) return
-      if (t >= flashback) {
-        // Lights up: the torch opens from the Console's screen until the whole desk shows under an even scrim.
-        label(MEMORIES.length)
-        const u = ease(clamp((t - flashback) / LIGHTS_UP))
-        drawDesk(1)
-        const focus = deskFrame(1)
-        torch(focus.x, focus.y, lerp(radius * .6, Math.hypot(w, h), u), .86)
-        ctx.fillStyle = `rgba(8,12,32,${.5 * u})`; ctx.fillRect(0, 0, w, h)
-        ctx.fillStyle = `rgba(0,0,0,${1 - clamp((t - flashback) / 260)})`; ctx.fillRect(0, 0, w, h)
-        return
-      }
-      const k = ends.findIndex(end => t < end), memory = MEMORIES[k]
-      const u = clamp((t - (ends[k] - CUTS[k])) / CUTS[k])
-      label(k)
-      drawMemory(k, u)
-      torch(lerp(memory.from[0], memory.to[0], u) * w, lerp(memory.from[1], memory.to[1], u) * h, radius, .86)
-      // The lamp: every cut rises out of the dark and falls back into it before the next.
-      const lamp = u < .3 ? 1 - u / .3 : u > .8 ? (u - .8) / .2 : 0
-      ctx.fillStyle = `rgba(0,0,0,${lamp})`; ctx.fillRect(0, 0, w, h)
+      drawDesk(1)
+      const focus = deskFrame(1)
+      torch(focus.x, focus.y, lerp(radius * .6, Math.hypot(w, h), u), .86)
+      ctx.fillStyle = `rgba(8,12,32,${.5 * u})`; ctx.fillRect(0, 0, w, h)
+      ctx.fillStyle = `rgba(0,0,0,${1 - clamp(since / 260)})`; ctx.fillRect(0, 0, w, h)
     })
+    return () => releaseVideo(video)
   })
   return <BriefingPage state={state} className={s.p9} label="Briefing complete">
     <canvas ref={canvas} className={s.fx} data-briefing-target="media" role="img"
-      aria-label="A flashback through the briefing under a torch: the Console, a robot library, the members' faces, the Voyager badge, the classified archive, a flooded world, the front line and the packs, ending on a Multiverse Console on a desk with a Voyager badge and an envelope." />
-    <div ref={faces} className={s.p9Faces} aria-hidden>
-      {crowd.map(member => member.avatarUrl && <span key={member.id} data-member={member.id}><SmartImage src={member.avatarUrl} alt="" sizes="64px" width={64} height={64} preload /></span>)}
-    </div>
-    <p className={s.p9Tag} aria-hidden><b ref={index}>01</b> · <span ref={title}>{MEMORIES[0].label}</span></p>
+      aria-label="A Multiverse Console's screen full of static; the camera pulls back to the whole Console in its case, then the lights come up on a Console on a desk with a Voyager badge and an envelope." />
+    <video ref={clip} className={s.p9Clip} data-src={UNBOXING.src} poster={UNBOXING.poster} muted playsInline preload="auto" aria-hidden />
     <div className={`${s.p9Content} ${s.gut}`}>
       <Kicker text="BRIEFING COMPLETE" />
       <Headline text="Now you know the Collective." large base={800} />
