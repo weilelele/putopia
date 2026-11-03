@@ -14,6 +14,11 @@ describe('Dashboard Updates contract', () => {
     expect(dashboardIntelUpdate(source, '/avatar.png', true).description).toBe('Private body')
     expect(source.content).toBe('Private body')
   })
+  it('shows a video post by its cover, never to viewers who cannot open it', () => {
+    const source = { id: 'reel', title: 'Reel', timestamp: '2026-11-03T00:00:00Z', content: 'Body', images: [], video_poster_url: '/cover.jpg', publisher_name: null, classified: true }
+    expect(dashboardIntelUpdate(source, null, true).image).toBe('/cover.jpg')
+    expect(dashboardIntelUpdate(source, null, false).image).toBeNull()
+  })
   it('keeps the latest ten from the four approved types without reserving Intel subtypes', () => {
     const updates = Array.from({ length: 14 }, (_, index) => update(`intel-${index}`, 'Intel', index + 1))
     expect(latestUpdates(updates, NOW).map(item => item.id)).toEqual(['intel-13','intel-12','intel-11','intel-10','intel-9','intel-8','intel-7','intel-6','intel-5','intel-4'])
