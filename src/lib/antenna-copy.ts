@@ -2,7 +2,7 @@
 export const ANTENNA = {
   name: 'Antenna',
   firstMention: 'Antenna for Multiverse Console',
-  packDescription: 'Installed on your Console, it receives a particular category of signals from parallel worlds. We are still learning what those signals contain. Explore them together.',
+  packDescription: 'Installed on your Console, it receives specific parallel-world signals. Explore the unknown together.',
   tagline: 'An emblem of the Collective. A connection to the unknown.',
   description: 'An emblem of the Collective. A connection to the unknown. A decorative collectible for your Console, it receives a particular category of parallel-world signals when installed on top. We are still learning what those signals contain. Explore them together.',
   /** Two lines at most on a phone: the briefing's pack card has a fixed caption height. */
