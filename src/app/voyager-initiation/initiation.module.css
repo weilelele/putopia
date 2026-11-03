@@ -48,7 +48,8 @@
 .benefitCopy p { color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.5; margin: 0 0 12px; }
 .benefitCopy a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-nucleus); font-size: var(--fs-body); font-weight: 700; text-decoration: none; }
 .benefitCopy a:hover { text-decoration: underline; }
-.benefitLinks { display: flex; flex-wrap: wrap; column-gap: 24px; }
+.benefitLinks { display: flex; flex-wrap: wrap; column-gap: var(--s-2); }
+.benefitLinks a { gap: var(--s-1); white-space: nowrap; }
 .content a:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
 @media (min-width: 768px) {
   .hero { grid-template-columns: minmax(0, 1fr) minmax(260px, .9fr); gap: 24px; padding: 32px 0 48px; }
