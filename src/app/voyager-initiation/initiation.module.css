@@ -17,16 +17,16 @@
 .seats dt { color: var(--color-star-dim); font-size: var(--fs-caption); line-height: 1.5; }
 .seats dd { margin: 4px 0 0; color: var(--color-nucleus); font-size: 36px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .error { font-size: var(--fs-label); line-height: 1.5; margin-top: 12px; }
-.section { border-top: 1px solid var(--bd-faint); padding: 28px 0; }
-.sectionHeading { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.section { border-top: 1px solid var(--bd-faint); padding: 24px 0; }
+.sectionHeading { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .sectionHeading :is(h2, h3) { color: var(--color-nucleus); font-size: var(--fs-title); font-weight: 700; margin: 0; text-transform: uppercase; }
 .sectionHeading p { font-size: var(--fs-caption); line-height: 1.5; color: var(--color-star-dim); margin: 0; }
 .packs { list-style: none; margin: 0; padding: 0; }
-.pack { display: grid; grid-template-columns: minmax(0, .6fr) minmax(0, 1.4fr); gap: 12px; }
-.packImage { position: relative; aspect-ratio: 3 / 2; align-self: start; margin-bottom: 24px; overflow: hidden; }
+.pack { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; }
+.packImage { position: relative; aspect-ratio: 3 / 2; align-self: start; margin-bottom: 16px; overflow: hidden; }
 .packImage img { object-fit: cover; }
 .antennaPack .packImage { aspect-ratio: 1; }
-.packCopy { min-width: 0; position: relative; padding: 0 0 28px 12px; border-left: 1px solid var(--color-nucleus); }
+.packCopy { min-width: 0; position: relative; padding: 0 0 20px 8px; border-left: 1px solid var(--color-nucleus); }
 .packCopy::before { content: ''; position: absolute; width: 9px; height: 9px; left: -5px; top: 5px; background: var(--color-nucleus); border: 1px solid var(--color-nucleus); border-radius: 50%; }
 .planned .packCopy::before { background: var(--color-deep); }
 .pack:last-child .packCopy { padding-bottom: 0; }
@@ -35,9 +35,9 @@
 .packCopy > p:last-child { margin: 0; font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
 .packCopy .antennaCopy { margin: 0 0 var(--s-3); font-size: var(--fs-body); line-height: 1.55; color: var(--color-star-dim); }
 .taskList .packImage { aspect-ratio: 1; }
-.taskList .packCopy { padding-bottom: 24px; }
+.taskList .packCopy { padding-bottom: 16px; }
 .taskList .pack:last-child .packCopy { padding-bottom: 0; }
-.taskDescription { margin: 0 0 8px; color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.55; }
+.taskDescription { margin: 0 0 4px; color: var(--color-star-dim); font-size: var(--fs-body); line-height: 1.55; }
 .taskLink { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: var(--fs-body); font-weight: 400; line-height: 1.5; color: var(--color-nucleus); }
 .taskLink svg { flex-shrink: 0; }
 .benefit { display: grid; gap: 20px; }
@@ -55,8 +55,8 @@
   .introduction h1 { font-size: 48px; }
   .sectionHeading { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 24px; }
   .sectionHeading p { text-align: right; }
-  .pack { grid-template-columns: minmax(0, .65fr) minmax(0, 1.35fr); gap: 16px; }
-  .packCopy { padding-left: 16px; }
+  .pack { grid-template-columns: 120px minmax(0, 1fr); gap: 16px; }
+  .packCopy { padding-left: 12px; }
   .packCopy :is(h3, h4) { font-size: var(--fs-title); }
   .packCopy > p:last-child { font-size: var(--fs-body); }
   .benefit { grid-template-columns: 1fr 1fr; gap: 28px; align-items: center; }
@@ -66,8 +66,8 @@
   .introduction h1 { font-size: 64px; }
   .section { padding: 36px 0; }
   .sectionHeading :is(h2, h3) { font-size: var(--fs-h3); }
-  .pack { grid-template-columns: 260px minmax(0, 1fr); gap: 20px; }
-  .packCopy { padding-left: 20px; }
+  .pack { grid-template-columns: 160px minmax(0, 1fr); gap: 16px; }
+  .packCopy { padding-left: 16px; }
   .packCopy :is(h3, h4) { font-size: var(--fs-h3); }
   .packageNumber { font-size: var(--fs-label); }
   .benefitCopy h3 { font-size: var(--fs-h2); }

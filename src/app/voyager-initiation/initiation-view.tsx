@@ -286,7 +286,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             const shipment = state.shipment
             const deviceHref = consoleClaim.batch ? `/devices/batches/${consoleClaim.batch.slug}` : consoleDevicePath(source, consoleClaim.href)
             return <li data-initiation-section={`pack_${index + 1}`} key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${index === 1 ? styles.antennaPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''} ${state.awaitingActivation ? styles.awaitingActivation : ''}`}>
-              {!pack.featured && <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 320px, (min-width: 768px) 240px, 42vw" preload={index === 0} /></div>}
+              {!pack.featured && <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 160px, (min-width: 768px) 120px, 72px" preload={index === 0} /></div>}
               <div className={styles.packCopy}>
                 <p className={styles.packageNumber}>Package {index + 1}{!state.awaitingActivation && <span> · {shipment?.scheduledMonth ? new Date(`${shipment.scheduledMonth}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : pack.dispatch}</span>}</p>
                 <PackHeading>{pack.title}</PackHeading>
@@ -307,21 +307,19 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       </section>}
 
       <section className={styles.section} aria-labelledby="missions-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="missions-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Core &amp; Participation Missions</BenefitHeading></div>
+        <div className={styles.sectionHeading}><BenefitHeading id="missions-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Commissions</BenefitHeading></div>
         <ul className={`${styles.packs} ${styles.taskList}`}>
           <li data-initiation-section="parallax_array" className={styles.pack}>
-            <div className={styles.packImage}><SmartImage src={PARALLAX_ARRAY.image} alt={PARALLAX_ARRAY.imageAlt} sizes="(min-width: 1100px) 260px, 30vw" /></div>
+            <div className={styles.packImage}><SmartImage src={PARALLAX_ARRAY.image} alt={PARALLAX_ARRAY.imageAlt} sizes="(min-width: 1100px) 160px, (min-width: 768px) 120px, 72px" /></div>
             <div className={styles.packCopy}>
-              <p className={styles.packageNumber}>Core mission</p>
               <PackHeading>{PARALLAX_ARRAY.name}</PackHeading>
               <p className={styles.taskDescription}>Describe a world. Refine its signals through observations and votes.</p>
               <Link className={styles.taskLink} href={PARALLAX_ARRAY.href}>Explore the Array <ArrowRight size={18} aria-hidden /></Link>
             </div>
           </li>
           <li data-initiation-section="mission_board" className={styles.pack}>
-            <div className={styles.packImage}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 260px, 30vw" /></div>
+            <div className={styles.packImage}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 160px, (min-width: 768px) 120px, 72px" /></div>
             <div className={styles.packCopy}>
-              <p className={styles.packageNumber}>Participation missions</p>
               <PackHeading>Mission Board</PackHeading>
               <p className={styles.taskDescription}>Join observations, attempt contact, and explore unknown frequencies.</p>
               <Link className={styles.taskLink} href={snapshot.userId ? '/console#mission-board' : '/login?redirect=%2Fconsole%23mission-board'}>View missions <ArrowRight size={18} aria-hidden /></Link>
@@ -333,7 +331,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       <section data-initiation-section="intel" className={styles.section} aria-labelledby="intel-title">
         <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Classified Intel &amp; Votes</BenefitHeading></div>
         <div className={styles.pack}>
-          <div className={styles.packImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents about the Collective’s history" sizes="(min-width: 1100px) 260px, 30vw" /></div>
+          <div className={styles.packImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents about the Collective’s history" sizes="(min-width: 1100px) 160px, (min-width: 768px) 120px, 72px" /></div>
           <div><p className={styles.taskDescription}>Read classified records and vote on the Collective’s future.</p><div className={styles.benefitLinks}><Link className={styles.taskLink} href="/intel?tab=classified">Explore intel <ArrowRight size={18} aria-hidden /></Link><Link className={styles.taskLink} href="/vote?tab=classified">See current votes <ArrowRight size={18} aria-hidden /></Link></div></div>
         </div>
       </section>
