@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | Physical Voyager Packs | Pack 2 复用 Pack 1 方形侧图。新图为深色织物衬里档案盒，移除 CSS brightness；简介为 `Parallel-world signals, received on your Console.` | [390px 手机](mobile-packs-v2.png) |
 | Commissions | 02 类下直接显示 Parallax Array / Mission Board 名称，不再有重复的橙色分类标签。复用 Pack 侧图、时间线和 h4 标题，各一句介绍及原入口；不显示地点在线状态句。原分析 section 标记保留在各条目。 | [390px 手机](mobile-commissions-v2.png)、[1280px 桌面](desktop-commissions-v2.png) |
-| Classified Intel & Votes | 03 类，左侧缩图，一句介绍，保留 Intel 与 Votes 两个入口。 | [手机任务及第三类](mobile-commissions-v2.png) |
+| Classified Intel & Votes | 按用户最终确认保留原来的大图介绍、标题、原文案与两个入口；仅归为 03 类。 | [最终手机效果](mobile-intel-restored.png) |
 | Choose your bundle | Initial 摘要为 `Voyager badge & Antenna.` 与 `Remote access to the Parallax Array.`；Complete 通过 Everything in Initial 承接。 | [390px 手机](mobile-bundles.png) |
 | FAQ | Devices & functions、Membership & payment、Shipping & taxes 三组。10 个原生 details，问题 16px / 400 字重；删除指定 $12 问题，Antenna 答案保留安装要求与 Initial 不含 Console 的说明。 | [390px 手机](mobile-faq.png) |
 
@@ -33,4 +33,4 @@
 - Parallax Array 与 Mission Board 入口目标、独立分析标记保留。
 - `npm run design:check`、`npx tsc --noEmit`、`npm run lint`（0 errors、26 条已有 warnings）、`npm test`（934 passed）、`npm run build` 通过。
 
-状态：本地实现与截图验证完成，随 PR #284 提供审阅；本轮未合并或发布。
+状态：本地实现与截图验证完成，最终发布状态以 PR #284 与 Vercel 部署记录为准。用户已授权调整后合并上线；Classified Intel & Votes 保留原展示模式，其余紧凑布局调整保留。

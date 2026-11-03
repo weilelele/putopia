@@ -330,9 +330,9 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
 
       <section data-initiation-section="intel" className={styles.section} aria-labelledby="intel-title">
         <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Classified Intel &amp; Votes</BenefitHeading></div>
-        <div className={styles.pack}>
-          <div className={styles.packImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents about the Collective’s history" sizes="(min-width: 1100px) 160px, (min-width: 768px) 120px, 72px" /></div>
-          <div><p className={styles.taskDescription}>Read classified records and vote on the Collective’s future.</p><div className={styles.benefitLinks}><Link className={styles.taskLink} href="/intel?tab=classified">Explore intel <ArrowRight size={18} aria-hidden /></Link><Link className={styles.taskLink} href="/vote?tab=classified">See current votes <ArrowRight size={18} aria-hidden /></Link></div></div>
+        <div className={styles.benefit}>
+          <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents asking: How long has the Collective existed? Who were the first Voyagers? What did they discover?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
+          <div className={styles.benefitCopy}><h3>See what is hidden. Decide what comes next.</h3><p>Read the Collective’s classified records and field briefings, then vote on its future, with priority access to world-record activities.</p><div className={styles.benefitLinks}><Link href="/intel?tab=classified">Explore intel <ArrowRight size={20} aria-hidden /></Link><Link href="/vote?tab=classified">See current votes <ArrowRight size={20} aria-hidden /></Link></div></div>
         </div>
       </section>
       </section>
