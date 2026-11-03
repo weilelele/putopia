@@ -16,9 +16,9 @@ export function briefingAudience(status: InitiationStatus): boolean {
   return status === 'guest' || status === 'unpaid' || status === 'legacy_pack'
 }
 
-/** `/voyager-initiation?briefing=1` opens the briefing on demand for the same audience, even if it was seen before. */
-export function briefingLinkOpens(status: InitiationStatus, value: string | undefined): boolean {
-  return value === '1' && briefingAudience(status)
+/** Device claim arrivals go straight to Initiation, including links carrying `briefing=1`. */
+export function briefingLinkOpens(status: InitiationStatus, value: string | undefined, fromDevice = false): boolean {
+  return !fromDevice && value === '1' && briefingAudience(status)
 }
 
 /** Opens automatically once per browser and version, never over a payment outcome. */
@@ -27,8 +27,9 @@ export function shouldAutoOpenBriefing(input: {
   paymentStatus: InitiationPaymentStatus
   checkoutCanceled: boolean
   stored: string | null
+  fromDevice?: boolean
 }): boolean {
-  if (!briefingAudience(input.status) || input.checkoutCanceled) return false
+  if (input.fromDevice || !briefingAudience(input.status) || input.checkoutCanceled) return false
   if (input.paymentStatus !== 'none' && input.paymentStatus !== 'unknown') return false
   return readBriefingRecord(input.stored)?.version !== BRIEFING_VERSION
 }
