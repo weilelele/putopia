@@ -2,6 +2,20 @@ import { it, expect, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 
+it('acknowledges push capability and activates only after an explicit upgrade request', async () => {
+  const handlers: Record<string, (event: unknown) => void> = {}
+  const skipWaiting = vi.fn().mockResolvedValue(undefined)
+  const reply = vi.fn()
+  runInNewContext(readFileSync('public/sw.js', 'utf8'), { self: { skipWaiting, addEventListener: (name: string, fn: (event: unknown) => void) => { handlers[name] = fn } } })
+  const event = { data: { type: 'WEB_PUSH_CAPABILITIES' }, ports: [{ postMessage: reply }], waitUntil: vi.fn() }
+  handlers.message(event)
+  expect(reply).toHaveBeenCalledWith({ webPush: 1 })
+  expect(skipWaiting).not.toHaveBeenCalled()
+  handlers.message({ ...event, data: { type: 'ACTIVATE_WEB_PUSH' } })
+  expect(skipWaiting).toHaveBeenCalledOnce()
+  await event.waitUntil.mock.calls[0][0]
+})
+
 it('handles a push and click, preserving the destination and reporting separate events without any network', async () => {
   const handlers: Record<string, (event: unknown) => void> = {}
   const showNotification = vi.fn().mockResolvedValue(undefined)

@@ -6,11 +6,7 @@ import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
 import styles from '@/app/profile/account-safety.module.css'
-
-function applicationKey(key: string): Uint8Array<ArrayBuffer> {
-  const raw = atob(key.replace(/-/g, '+').replace(/_/g, '/'))
-  return Uint8Array.from(raw, character => character.charCodeAt(0))
-}
+import { changeWebPushSubscription } from '@/lib/push/web-client'
 
 export function WebPushSettings() {
   const [available, setAvailable] = useState(false)
@@ -38,37 +34,11 @@ export function WebPushSettings() {
   async function toggle() {
     setBusy(true); setMessage('')
     try {
-      if (!enabled && Notification.permission === 'default') {
-        const permission = await Notification.requestPermission()
-        if (permission !== 'granted') throw new Error('Notifications are off. You can enable them later in browser settings.')
-      }
-      const registration = await navigator.serviceWorker.ready
-      const existing = await registration.pushManager.getSubscription()
-      if (enabled && existing) {
-        // Disable on the server first; preserve the subscription if that fails,
-        // so users can retry and do not leave an enabled orphan on the server.
-        const response = await fetch('/api/push/web/subscription', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: existing.endpoint }) })
-        const result = await response.json()
-        if (!response.ok) throw new Error(result.error)
-        await existing.unsubscribe()
-        setEnabled(false); setMessage('Console notifications are off.')
-        posthog.capture('web_push_unsubscribed')
-        return
-      }
-      const configResponse = await fetch('/api/push/web/subscription', { cache: 'no-store' })
-      const config = await configResponse.json()
-      if (!configResponse.ok || !config.publicKey) throw new Error('Notifications are not available yet. Please try again later.')
-      if (Notification.permission === 'denied') throw new Error('Notifications are blocked. Allow them in your browser’s site settings to continue.')
-      // subscribe is called only in response to this explicit user action.
-      const subscription = existing ?? await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: applicationKey(config.publicKey) })
-      const response = await fetch('/api/push/web/subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: subscription.toJSON(), consent: true }) })
-      const result = await response.json()
-      if (!response.ok) {
-        if (!existing) await subscription.unsubscribe()
-        throw new Error(result.error || 'Could not enable notifications.')
-      }
-      setEnabled(true); setMessage('Console notifications are on. You can turn them off here anytime.')
-      posthog.capture('web_push_subscribed')
+      const wanted = !enabled
+      await changeWebPushSubscription(wanted, { registration: () => navigator.serviceWorker.ready, notification: Notification, request: fetch })
+      setEnabled(wanted)
+      setMessage(wanted ? 'Console notifications are on. You can turn them off here anytime.' : 'Console notifications are off.')
+      posthog.capture(wanted ? 'web_push_subscribed' : 'web_push_unsubscribed')
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not update notifications.') }
     finally { setBusy(false) }
   }

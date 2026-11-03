@@ -38,3 +38,11 @@ export function parseWebCampaign(input: unknown) {
 export function canSendWebPush(enabled: string | undefined, action: unknown, confirm: unknown, campaignKey: string) {
   return enabled === 'true' && action === 'send' && confirm === campaignKey
 }
+
+export const WEB_PUSH_BATCH_SIZE = 5
+
+export function parseWebCampaignCursor(input: unknown): string | null {
+  if (input === undefined || input === null) return null
+  if (typeof input !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input)) throw new Error('Invalid subscription cursor')
+  return input
+}

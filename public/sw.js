@@ -53,6 +53,12 @@ function notificationRoute(route) {
   } catch { return new URL('/console', self.location.origin).href }
 }
 
+self.addEventListener('message', event => {
+  if (event.data?.type === 'WEB_PUSH_CAPABILITIES') event.ports[0]?.postMessage({ webPush: 1 })
+  // Only an explicit enable action asks a waiting push-capable worker to take over.
+  if (event.data?.type === 'ACTIVATE_WEB_PUSH') event.waitUntil(self.skipWaiting())
+})
+
 async function recordNotificationEvent(token, event) {
   if (typeof token !== 'string' || !/^[0-9a-f-]{36}$/i.test(token)) return
   try {

@@ -19,6 +19,13 @@ can use the actual account; anonymous A contacts cannot receive a targeted push
 until they sign in and opt in. Historical PWA installs are not auto-subscribed.
 No notification is sent by registering or loading these pages.
 
+Turning off is a separate action: if another tab already removed the browser
+subscription, it stays off and never creates a new subscription. Before enabling,
+the page probes the active worker for push support. An explicit enable action
+can activate a waiting push-capable worker; subscription and consent storage wait
+for activation and a successful capability reply. If that fails, the page asks
+the member to close all Console tabs and reopen, without reporting success.
+
 ## Operator API and UI
 
 - `GET /api/push/web/subscription`: public key, locked status, own endpoint hashes.
@@ -45,6 +52,13 @@ Campaign body:
 ```
 
 Each batch is limited to five subscriptions to fit the server execution window.
+A response includes `nextCursor` when more devices remain, including when one
+account has more than five devices. Pass that value as top-level `cursor` with
+the same campaign spec to continue; stop when `nextCursor` is null. Ordering is
+by subscription UUID with an exclusive cursor, so disabling an earlier device
+does not shift subsequent pages. Each request retains authorization, explicit
+recipients, the send lock, opt-out checks and campaign/device deduplication.
+The admin form exposes PREVIEW NEXT BATCH only; editing any field resets paging.
 A recipient list is mandatory. There is no implicit broadcast-to-all default.
 Duplicate campaign/subscription sends are skipped, including uncertain failures.
 Do not retry a claimed delivery under a new key without investigating its log.
@@ -71,3 +85,21 @@ simulated service-worker display/click receipts. Browser permission, actual
 provider acceptance and physical device delivery must be verified separately
 after the user authorizes an actual test notification. No real push was sent
 during preparation.
+
+## Review-fix verification — 2026-11-03
+
+- Design check, `tsc --noEmit`, lint (0 errors, 26 existing warnings), all
+  953 tests and the production build passed using CI placeholder credentials.
+- Regression tests cover an externally removed subscription during TURN OFF,
+  server-first opt-out failures, worker verification before consent, waiting and
+  installing workers, activation failure/timeouts, 5+1 device pages for one user,
+  malformed cursors, per-page auth/send locks and mocked-send deduplication.
+- Local Chromium verification used the real legacy v2 and updated service-worker
+  scripts, with permission, subscription and API data mocked. Activation and
+  capability confirmation completed before subscription storage; a stale TURN
+  OFF did not create another subscription. Preview continuation and edit/reset
+  behavior passed at 390×844 and 1440×900 without overflow or browser errors.
+- A read-only MC Home check found no config row (first initialization remains
+  false), no subscriptions and no delivery records. No schema/config writes,
+  real permission requests, real browser subscriptions or provider sends were
+  performed. Physical Android delivery remains deferred until authorized.
