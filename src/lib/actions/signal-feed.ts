@@ -82,7 +82,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
   const [intelR, wSyncingR, wStableR, deviceR, voyagerR, voteR] = await Promise.all([
     // All intel enters the pool; classified rows are teased (title only) to
     // ineligible viewers and gated below — the body is never sent to them.
-    db.from('intel').select('id, title, content, images, classified, publisher_name, publisher_id, timestamp').order('timestamp', { ascending: false }).limit(10),
+    db.from('intel').select('id, title, content, images, video_poster_url, classified, publisher_name, publisher_id, timestamp').order('timestamp', { ascending: false }).limit(10),
     // Raw "Initial Vision" (proposed) worlds are intentionally excluded from the
     // feed; only Signal Tuning (syncing) and Established (stable) worlds show.
     db.from('worlds').select(worldCols).eq('lifecycle_state', 'syncing').order('created_at', { ascending: false }).limit(8),
@@ -260,7 +260,7 @@ async function buildSignalFeed(canSeeGated: boolean): Promise<FeedEntry[]> {
         id: `intel-${r.id}`, kind: 'info', color: ORANGE, eyebrow: 'INTELLIGENCE',
         title: String(r.title ?? 'Untitled report'),
         snippet: locked ? undefined : snippet(r.content as string, 140),
-        image: locked ? null : (images[0] ?? null),
+        image: locked ? null : (images[0] ?? (r.video_poster_url as string | null) ?? null),
         actor: locked ? null : person(r.publisher_name as string, r.publisher_id as string),
         href: `/intel/${r.id}`, time: rel(r.timestamp as string),
         stat: locked ? null : commentStat('intel', String(r.id)),

@@ -263,13 +263,16 @@ export type Intel = {
   classified: boolean
   expires_at: string | null   // NOTICE task deadline; null for legacy notices / other tags
   images: string[]            // array of public storage URLs
+  video_url: string | null    // public storage URL of one MP4 (schema_v112)
+  video_poster_url: string | null // still frame shown before the video plays
   publisher_name: string | null
   publisher_id: string | null // references voyager_profiles.id
   created_by: string | null
   created_at: string
 }
 
-export type IntelInsert = Omit<Intel, 'created_at'>
+export type IntelInsert = Omit<Intel, 'created_at' | 'video_url' | 'video_poster_url'> &
+  Partial<Pick<Intel, 'video_url' | 'video_poster_url'>>
 export type IntelUpdate = Partial<Pick<Intel,
   'title' | 'content' | 'timestamp' | 'tag' | 'classified' | 'expires_at' |
   'images' | 'publisher_name' | 'publisher_id'
