@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-03",
+  "tool": "image_gen.imagegen",
+  "prompt": "Use case: precise-object-edit / product-mockup. Rephotograph the three existing Antenna objects in image 1 in a DIFFERENT DARK PHYSICAL SETTING. Image 1 defines the products: exactly three low, flat circular shallow domed caps, broad concentric grooves; antique brass/gold, warm ivory with a thin satin-silver rim, and deep navy with a thin orange rim. Preserve cap geometry and color identities. No visible tall stems or new connectors.\nImage 2 is MOOD AND EXPOSURE REFERENCE ONLY: its subdued archival workshop lighting and warm shadow tones. Do not copy the letter, badge, logo, writing, monitor or tools.\nNew setting: a shallow open archival equipment storage box, interior lined with matte charcoal felt / dark woven fabric. The three Antenna lie in a compact triangular arrangement INSIDE the box, slightly overlapping, one at a small natural tilt. The black felt and shadowed box edges fill the background. No bright polished wooden tabletop anywhere. The box is real utilitarian archival storage, not luxurious jewelry packaging. No compartments sized to suggest a finalized retail package; no logos or text. Props restricted to the box and the three objects.\nLighting: low-key real available light from a small soft window to upper left, moderate warm highlights, deep but detailed shadows, muted contrast, restrained reflections. Make the ivory object clearly ivory but never luminous white. Brass should have a restrained satin sheen, never sparkling. The dark scene should naturally match the subdued image 2; do NOT merely uniformly dim the original scene. Surface and material detail remain crisp and photographic.\nComposition: square 1:1 editorial product photograph, slightly overhead three-quarter angle, all three complete objects visible with margin, entire group in central 75% so a 100px square thumbnail is readable. No montage, grid, text, borders or watermark. Photoreal, plausible contacts and shadows. No changed product shape or extra objects.",
+  "references": [
+    {
+      "path": "public/assets/voyager-initiation/antenna-still-life-v1.jpg",
+      "role": "Product shape and color reference",
+      "sha256": "f66983b31bfe087d150d6339d386de819ed05c850b351968e7b719ff2139d237"
+    },
+    {
+      "path": "public/voyager-pack/pack-email.png",
+      "role": "Exposure and mood only",
+      "sha256": "ef356512ae8e6dc7839b7ae1850ed0ca2b90a0941647891652bd2c8817526085"
+    }
+  ],
+  "generatedSource": "/Users/will/.codex/generated_images/01a1624d-5310-7ed0-abea-46225f4d5235/exec-09c143a6-ad89-40a0-983b-db26ca3bf5e2.png",
+  "output": "public/assets/voyager-initiation/antenna-archive-case-v1.png",
+  "review": "Exactly three complete concentric caps, retained brass/ivory/navy colors; archive case felt replaces bright table. Natural low-key lighting. Concept imagery, no hardware geometry or performance validation.",
+  "outputSha256": "d115235e8095351b1bc0b69af019a2b1c5f0bc8ec1913a793345a0b264902b77"
+}
