@@ -31,7 +31,7 @@ export default function InitiationTermsPage() {
           </ul>
           <p>The Antenna is a collectible emblem of the Collective and a decorative receiving accessory. It must be installed on a Multiverse Console to receive signals. The {initiationPriceLabel('initial')} Initial Voyager Pack does not include the Console. Antenna images show design studies; final appearance and quantity are to be confirmed.</p>
           <p>Initial purchases include Packages 1–2; upgrades add Packages 3–4; Complete includes all four. These are scheduled dispatch months, rather than arrival dates. Existing Initial Pack members’ first two packs follow this same schedule and have not shipped yet.</p>
-          <p>Claim your Console on the Devices page after completing Initiation. S26 does not assign a device batch: choose any published batch with available capacity. Confirming a claim reserves your selected batch. Console Holder access begins after you receive the device and bind it to your account. To request a change before shipment, contact voyagers@multiverseco.org; changes are subject to availability. Once shipped, the batch cannot be changed. The Console is Package 3, a single delivery. If no device is available, you will need to wait for availability.</p>
+          <p>Claim your Console on the Devices page after completing Initiation. S26 does not assign a device batch: choose any published batch with available capacity. Confirming a claim reserves your selected batch. Console Holder access begins after you receive the device and bind it to your account. To request a change before shipment, contact architect@multiverseco.org; changes are subject to availability. Once shipped, the batch cannot be changed. The Console is Package 3, a single delivery. If no device is available, you will need to wait for availability.</p>
         </section>
         <section>
           <h2>DELIVERY DETAILS</h2>
@@ -54,7 +54,7 @@ export default function InitiationTermsPage() {
         <section>
           <h2>HELP WITH A PACK</h2>
           <p>For a damaged, incorrect, incomplete or missing delivery, send your order reference and a description, with photos or tracking details where available. We will investigate and arrange a replacement, reshipment or refund. We cover the necessary replacement or return shipping for problems caused by us or during delivery.</p>
-          <p>Contact <a href="mailto:voyagers@multiverseco.org">voyagers@multiverseco.org</a>. These arrangements do not limit rights that cannot be excluded under applicable consumer law.</p>
+          <p>Contact <a href="mailto:architect@multiverseco.org">architect@multiverseco.org</a>. These arrangements do not limit rights that cannot be excluded under applicable consumer law.</p>
         </section>
       </article>
     </main>

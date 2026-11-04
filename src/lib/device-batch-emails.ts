@@ -2,7 +2,7 @@ import type { DeviceBatch, DistributionStage } from '@/lib/device-batches'
 import { formatStripeMinorUnits } from '@/lib/device-checkout'
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://multiverseco.org'
-const REPLY_TO = process.env.COLLECTIVE_REPLY_TO ?? 'voyagers@multiverseco.org'
+const REPLY_TO = process.env.COLLECTIVE_REPLY_TO ?? 'architect@multiverseco.org'
 
 export type DeviceOrderEmailStatus =
   | 'paid'

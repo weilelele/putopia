@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'How Multiverse Collective collects, uses and shares personal data.',
 }
 
-const CONTACT = 'voyagers@multiverseco.org'
+const CONTACT = 'architect@multiverseco.org'
 const UPDATED = 'October 8, 2026'
 
 const sections: { title: string; body: React.ReactNode }[] = [
