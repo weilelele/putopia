@@ -7,7 +7,7 @@
 ## 统一结构
 
 - 发件人：`Multiverse Collective`
-- Reply-to：`voyagers@multiverseco.org`
+- Reply-to：`architect@multiverseco.org`
 - 顶部：Multiverse Collective wordmark
 - 默认页脚：`EXPLORING PARALLEL WORLDS, TOGETHER`
 - Batch 链接：`/devices/batches/{BATCH_SLUG}`

@@ -1,5 +1,5 @@
 // Purchase terms confirmed for Kyoto One. Do not extend to future batches implicitly.
-export const DEVICE_SUPPORT_EMAIL = 'voyagers@multiverseco.org'
+export const DEVICE_SUPPORT_EMAIL = 'architect@multiverseco.org'
 export const KYOTO_PURCHASE_TERMS = {
   shipping: 'All three shipments, shipping, and taxes are included in the $520 total.',
   cancellation: 'Cancel for a full refund before your first package is delivered. After delivery, cancellation and change-of-mind returns are unavailable for the entire order, including remaining shipments.',
