@@ -6,7 +6,9 @@ import { BRIEFING_PAGES, BRIEFING_VERSION, briefingTapTarget, clampBriefingPage,
 import type { InitiationPublicMember } from '@/lib/initiation-types'
 import type { PageState } from './briefing-kit'
 import { useBriefingSound } from '@/hooks/use-briefing-sound'
-import { ClassifiedPage, CollectivePage, DevicePage, FrontLinePage, JoinPage, MembersPage, PacksPage, RecruitingPage, ParallaxArrayPage } from './briefing-pages'
+import { ClassifiedPage, CollectivePage, DevicePage, FOLLOWING_CLIPS, FrontLinePage, JoinPage, MembersPage, PacksPage, RecruitingPage, ParallaxArrayPage } from './briefing-pages'
+import { prefetchClip } from './briefing-media'
+import { RECEIVE_LEAVE_MS, ReceivingScreen, type BriefingReceived } from './briefing-receive'
 import s from './briefing.module.css'
 
 export type BriefingProps = {
@@ -36,6 +38,9 @@ export function InitiationBriefing({ trigger, members, seats, regions, legacy, c
   })
   const emit = useEffectEvent(track)
   const [nav, setNav] = useState<NavState>(() => ({ page: 0, leaving: -1, dir: 1, visits: BRIEFING_PAGES.map((_, i) => i === 0 ? 1 : 0), maxPage: 0 }))
+  // Page 1 waits behind the receiving screen until its films are downloaded.
+  const [gate, setGate] = useState<'receiving' | 'leaving' | 'open'>('receiving')
+  const receiving = gate === 'receiving'
   const openedAt = useRef(0)
   const sound = useBriefingSound(dialog)
   const swipe = useRef<{ x: number; y: number; control: boolean; swiped: boolean; moved: boolean; pointerType: string }>({ x: 0, y: 0, control: false, swiped: false, moved: false, pointerType: 'unknown' })
@@ -59,12 +64,24 @@ export function InitiationBriefing({ trigger, members, seats, regions, legacy, c
   }, [nav.leaving, nav.page])
 
   useEffect(() => {
+    if (gate !== 'leaving') return
+    const timer = setTimeout(() => setGate('open'), RECEIVE_LEAVE_MS)
+    return () => clearTimeout(timer)
+  }, [gate])
+
+  useEffect(() => {
     openedAt.current = performance.now()
     track('initiation_brief_opened', { trigger })
-    track('initiation_brief_page_viewed', { page_index: 1, page_id: BRIEFING_PAGES[0], via: 'open' })
     // One mount is one briefing visit; later prop changes must not re-announce it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  function received(details: BriefingReceived) {
+    setGate('leaving')
+    track('initiation_brief_media_received', details)
+    track('initiation_brief_page_viewed', { page_index: 1, page_id: BRIEFING_PAGES[0], via: 'open' })
+    FOLLOWING_CLIPS.forEach(src => void prefetchClip(src))
+  }
 
   useEffect(() => {
     const navigation = pendingNavigation.current
@@ -80,7 +97,7 @@ export function InitiationBriefing({ trigger, members, seats, regions, legacy, c
 
   function go(target: number, via: string): string | null {
     const next = clampBriefingPage(target)
-    if (next === nav.page || pendingNavigation.current) return null
+    if (receiving || next === nav.page || pendingNavigation.current) return null
     const id = crypto.randomUUID()
     pendingNavigation.current = { id, from: nav.page, to: next, via, startedAt: performance.now() }
     track('initiation_brief_navigation_requested', {
@@ -100,7 +117,7 @@ export function InitiationBriefing({ trigger, members, seats, regions, legacy, c
     onClose(outcome, nav.page)
   }
 
-  const state = (index: number): PageState => ({ active: nav.page === index, leaving: nav.leaving === index, dir: nav.dir, visit: nav.visits[index] })
+  const state = (index: number): PageState => ({ active: !receiving && nav.page === index, leaving: nav.leaving === index, dir: nav.dir, visit: nav.visits[index] })
   const first = nav.page === 0, last = nav.page === LAST
 
   const ownTarget = (target: EventTarget) => (target as Element).closest('dialog') === dialog.current
@@ -124,7 +141,7 @@ export function InitiationBriefing({ trigger, members, seats, regions, legacy, c
     const rect = event.currentTarget.getBoundingClientRect()
     const ratio = (value: number) => Math.round(Math.max(0, Math.min(1, value)) * 1000) / 1000
     const x = ratio((event.clientX - rect.left) / rect.width), y = ratio((event.clientY - rect.top) / rect.height)
-    const reason = target.closest(CONTROLS) ? 'control' : swipe.current.moved || swipe.current.swiped ? 'gesture'
+    const reason = target.closest(CONTROLS) ? 'control' : receiving ? 'receiving' : swipe.current.moved || swipe.current.swiped ? 'gesture'
       : window.getSelection()?.toString() ? 'selection' : pendingNavigation.current ? 'navigation_pending' : null
     const next = briefingTapTarget(nav.page, reason !== null)
     // Continue/Skip have already handled their own click before it bubbles to the dialog.
@@ -164,6 +181,7 @@ export function InitiationBriefing({ trigger, members, seats, regions, legacy, c
           onExplore={() => { track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[8], topic: 'explore_collective' }); close('explore_collective') }}
           onPacks={() => { track('initiation_brief_detail_opened', { page_id: BRIEFING_PAGES[8], topic: 'view_packs' }); close('view_packs') }} />
       </div>
+      {gate !== 'open' && <ReceivingScreen leaving={gate === 'leaving'} onReceived={received} />}
       <div className={s.top}>
         {first
           ? <button type="button" className={s.iconButton} aria-label="Close briefing" onClick={() => close('closed')}><X size={20} aria-hidden /></button>
@@ -175,13 +193,13 @@ export function InitiationBriefing({ trigger, members, seats, regions, legacy, c
           </button>
           {last
             ? <button type="button" className={s.iconButton} aria-label="Close briefing" onClick={() => close('completed')}><X size={20} aria-hidden /></button>
-            : <button type="button" className={s.skip} data-briefing-nav="skip" onClick={() => go(LAST, 'skip')}>Skip</button>}
+            : !receiving && <button type="button" className={s.skip} data-briefing-nav="skip" onClick={() => go(LAST, 'skip')}>Skip</button>}
         </div>
       </div>
-      {!last && <div className={s.dock}>
+      {!last && !receiving && <div className={s.dock}>
         <button type="button" className={s.tapHint} data-briefing-nav="continue" onClick={() => go(nav.page + 1, 'continue')}>Tap to continue</button>
       </div>}
-      <p className="sr-only" aria-live="polite">{`Page ${nav.page + 1} of ${BRIEFING_PAGES.length}`}</p>
+      <p className="sr-only" aria-live="polite">{receiving ? 'Receiving the briefing' : `Page ${nav.page + 1} of ${BRIEFING_PAGES.length}`}</p>
     </div>
   </dialog>
 }
