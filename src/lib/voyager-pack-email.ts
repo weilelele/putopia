@@ -18,7 +18,7 @@ const WORDMARK = `${SITE}/assets/vi-wordmark.png`
 const PACK_IMG = process.env.PACK_EMAIL_IMAGE_URL ?? `${SITE}/voyager-pack/pack-email.png`
 
 /** Reply-to inbox a human actually monitors, so "just reply" works. */
-const REPLY_TO = process.env.COLLECTIVE_REPLY_TO ?? 'voyagers@multiverseco.org'
+const REPLY_TO = process.env.COLLECTIVE_REPLY_TO ?? 'architect@multiverseco.org'
 
 const ARCHITECTS: { name: string; handle: string; href: string; avatar: string | null }[] = [
   {

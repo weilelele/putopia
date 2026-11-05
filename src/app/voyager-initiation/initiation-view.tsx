@@ -2,7 +2,7 @@
 
 import { INITIATION_PRICES, initiationPriceLabel } from '@/lib/initiation-pricing'
 import { ANTENNA } from '@/lib/antenna-copy'
-import { PARALLAX_ARRAY, parallaxArrayUnitSummary } from '@/lib/parallax-array'
+import { PARALLAX_ARRAY } from '@/lib/parallax-array'
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
@@ -18,7 +18,7 @@ import type { VoyagerQuizServices } from '@/components/voyager-profile-quiz'
 import { PostPaymentCalibration } from './post-payment-calibration'
 import { CheckoutSignIn, type CheckoutSignInServices, type EmailCheckoutStep } from './checkout-sign-in'
 import styles from './initiation.module.css'
-import { INITIATION_FAQ } from './faq'
+import { INITIATION_FAQ_GROUPS } from './faq'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
@@ -243,7 +243,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
               <input type="radio" name="voyager-bundle" value={option} aria-labelledby={`bundle-name-${option} bundle-price-${option}`} aria-describedby={`bundle-detail-${option}${option !== 'standard' ? ` bundle-note-${option}` : ''}`} checked={kind === option} onChange={() => { if (option !== 'legacy_upgrade') setBundle(option) }} />
               <span className={styles.bundleCopy}>
                 <span className={styles.bundleHeading}><span id={`bundle-name-${option}`}>{INITIATION_PRICES[option].name}</span><strong ref={kind === option ? priceRef : undefined} id={`bundle-price-${option}`}>{initiationPriceLabel(option)}</strong></span>
-                <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? 'Welcome letter, Voyager badge and Antenna.' : option === 'standard' ? 'Everything in Initial, plus Console and Pack 4.' : 'One Multiverse Console and the fourth delivery.'}</span>
+                <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? <>Voyager badge &amp; Antenna.<br />Remote access to the Parallax Array.</> : option === 'standard' ? 'Everything in Initial, plus Console and Pack 4.' : 'One Multiverse Console and the fourth delivery.'}</span>
                 {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? `Add Console + Pack 4 later for ${initiationPriceLabel('legacy_upgrade')}.` : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
               </span>
             </label>)}
@@ -286,7 +286,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             const shipment = state.shipment
             const deviceHref = consoleClaim.batch ? `/devices/batches/${consoleClaim.batch.slug}` : consoleDevicePath(source, consoleClaim.href)
             return <li data-initiation-section={`pack_${index + 1}`} key={pack.title} className={`${styles.pack} ${index === 0 ? styles.initialPack : ''} ${index === 1 ? styles.antennaPack : ''} ${pack.featured ? styles.consolePack : ''} ${pack.planned ? styles.planned : ''} ${state.awaitingActivation ? styles.awaitingActivation : ''}`}>
-              {!pack.featured && <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 320px, (min-width: 768px) 240px, 42vw" preload={index === 0} /></div>}
+              {!pack.featured && <div className={styles.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 1100px) 160px, (min-width: 768px) 120px, 72px" preload={index === 0} /></div>}
               <div className={styles.packCopy}>
                 <p className={styles.packageNumber}>Package {index + 1}{!state.awaitingActivation && <span> · {shipment?.scheduledMonth ? new Date(`${shipment.scheduledMonth}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }) : pack.dispatch}</span>}</p>
                 <PackHeading>{pack.title}</PackHeading>
@@ -306,36 +306,45 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         </ol>
       </section>}
 
-      <section data-initiation-section="parallax_array" className={styles.section} aria-labelledby="parallax-array-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="parallax-array-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}{PARALLAX_ARRAY.name}</BenefitHeading></div>
-        <div className={styles.benefit}>
-          <div className={styles.benefitImage}><SmartImage src={PARALLAX_ARRAY.image} alt={PARALLAX_ARRAY.imageAlt} sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
-          <div className={styles.benefitCopy}><h3>Describe a world you believe. We’d go looking for it.</h3><p>{PARALLAX_ARRAY.description}</p><p>{parallaxArrayUnitSummary()}</p><Link href={PARALLAX_ARRAY.href}>Explore with the {PARALLAX_ARRAY.name} <ArrowRight size={20} aria-hidden /></Link></div>
-        </div>
-      </section>
-
-      <section data-initiation-section="mission_board" className={styles.section} aria-labelledby="mission-benefit-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="mission-benefit-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Mission Board</BenefitHeading></div>
-        <div className={styles.benefit}>
-          <div className={`${styles.benefitImage} ${styles.missionImage}`}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
-          <div className={styles.benefitCopy}><h3>Your next assignment awaits.</h3><p>Take on emergency observations, attempt contact across worlds, and explore unknown frequencies.</p><Link href={snapshot.userId ? '/console#mission-board' : '/login?redirect=%2Fconsole%23mission-board'}>Explore the Mission Board <ArrowRight size={20} aria-hidden /></Link></div>
-        </div>
+      <section className={styles.section} aria-labelledby="missions-title">
+        <div className={styles.sectionHeading}><BenefitHeading id="missions-title">{paymentAtBottom && <span className={styles.chapter}>02</span>}Commissions</BenefitHeading></div>
+        <ul className={`${styles.packs} ${styles.taskList}`}>
+          <li data-initiation-section="parallax_array" className={styles.pack}>
+            <div className={styles.packImage}><SmartImage src={PARALLAX_ARRAY.image} alt={PARALLAX_ARRAY.imageAlt} sizes="(min-width: 1100px) 160px, (min-width: 768px) 120px, 72px" /></div>
+            <div className={styles.packCopy}>
+              <PackHeading>{PARALLAX_ARRAY.name}</PackHeading>
+              <p className={styles.taskDescription}>Describe a world. Refine its signals through observations and votes.</p>
+              <Link className={styles.taskLink} href={PARALLAX_ARRAY.href}>Explore the Array <ArrowRight size={18} aria-hidden /></Link>
+            </div>
+          </li>
+          <li data-initiation-section="mission_board" className={styles.pack}>
+            <div className={styles.packImage}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 160px, (min-width: 768px) 120px, 72px" /></div>
+            <div className={styles.packCopy}>
+              <PackHeading>Mission Board</PackHeading>
+              <p className={styles.taskDescription}>Join observations, attempt contact, and explore unknown frequencies.</p>
+              <Link className={styles.taskLink} href={snapshot.userId ? '/console#mission-board' : '/login?redirect=%2Fconsole%23mission-board'}>View missions <ArrowRight size={18} aria-hidden /></Link>
+            </div>
+          </li>
+        </ul>
       </section>
 
       <section data-initiation-section="intel" className={styles.section} aria-labelledby="intel-title">
-        <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>04</span>}Classified Intel &amp; Votes</BenefitHeading></div>
+        <div className={styles.sectionHeading}><BenefitHeading id="intel-title">{paymentAtBottom && <span className={styles.chapter}>03</span>}Classified Intel &amp; Votes</BenefitHeading></div>
         <div className={styles.benefit}>
           <div className={styles.benefitImage}><SmartImage src="/assets/voyager-initiation/intel-questions.png" alt="Archival documents asking: How long has the Collective existed? Who were the first Voyagers? What did they discover?" sizes="(min-width: 1100px) 560px, (min-width: 768px) 420px, 100vw" /></div>
-          <div className={styles.benefitCopy}><h3>See what is hidden. Decide what comes next.</h3><p>Read the Collective’s classified records and field briefings, then vote on its future, with priority access to world-record activities.</p><div className={styles.benefitLinks}><Link href="/intel?tab=classified">Explore intel <ArrowRight size={20} aria-hidden /></Link><Link href="/vote?tab=classified">See current votes <ArrowRight size={20} aria-hidden /></Link></div></div>
+          <div className={styles.benefitCopy}><h3>See what is hidden. Decide what comes next.</h3><p>Read the Collective’s classified records and field briefings, then vote on its future, with priority access to world-record activities.</p><div className={styles.benefitLinks}><Link href="/intel?tab=classified">Explore intel <ArrowRight size={20} aria-hidden /></Link><Link href="/vote?tab=classified">View votes <ArrowRight size={20} aria-hidden /></Link></div></div>
         </div>
       </section>
       </section>
       {paymentAtBottom && <section id={legacy ? 'activate-packs' : undefined} className={`${styles.section} ${styles.bottomPayment}`} aria-label={legacy ? 'Activate Packs 3–4' : 'Voyager Initiation checkout'}>{joinPanel}</section>}
       <section data-initiation-section="faq" className={styles.section} aria-labelledby="initiation-faq-title">
         <div className={styles.sectionHeading}><h2 id="initiation-faq-title">FAQ</h2></div>
-        {INITIATION_FAQ.map(item => <details key={item.question} className={styles.faqItem}>
-          <summary>{item.question}</summary><p>{item.answer}{'detailsLink' in item && <> See <Link href={item.detailsLink}>Delivery &amp; aftercare</Link> for fulfillment and access rules.</>}</p>
-        </details>)}
+        {INITIATION_FAQ_GROUPS.map(group => <section key={group.id} className={styles.faqGroup} aria-labelledby={`faq-${group.id}`}>
+          <h3 id={`faq-${group.id}`}>{group.title}</h3>
+          {group.items.map(item => <details key={item.question} className={styles.faqItem}>
+            <summary>{item.question}</summary><p>{item.answer}{'detailsLink' in item && <> See <Link href={item.detailsLink}>Delivery &amp; aftercare</Link> for fulfillment and access rules.</>}</p>
+          </details>)}
+        </section>)}
       </section>
     </div>
 

@@ -27,8 +27,7 @@ const FROM = process.env.RESEND_FROM || 'Multiverse Collective <architect@multiv
 const API_KEY = process.env.RESEND_API_KEY
 if (!API_KEY) { console.error('RESEND_API_KEY missing'); process.exit(1) }
 
-// For a test, route replies to the real From inbox (architect@) rather than the
-// not-yet-provisioned voyagers@ default baked into the module.
+// For a test, route replies to the configured Reply-To or the real From inbox.
 const REPLY_TO = process.env.COLLECTIVE_REPLY_TO || FROM.replace(/^.*<|>.*$/g, '')
 
 const { subject, html, text } = buildVoyagerPackEmail({ name })

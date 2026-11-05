@@ -1,6 +1,8 @@
 'use client'
 import { RootBrandHeader } from '@/components/root-brand-header'
 import { PublisherIdentity, NewsMedia } from '@/components/news-content'
+import { IntelVideo } from '@/components/intel-video'
+import { intelStillImage } from '@/lib/intel-media'
 import { useSessionPreference } from '@/lib/use-session-preference'
 
 import { MessageSquare, Plus, ArrowRight } from 'lucide-react'
@@ -52,11 +54,12 @@ function ClassifiedWall() {
 function IntelCard({ entry, commentCount, lead = false }: { entry: IntelWithAvatar; commentCount?: number; lead?: boolean }) {
   const href = `/intel/${entry.id}`
   const metadata = <span className="intel-entry-meta">{entry.tag} · <time dateTime={entry.timestamp}>{formatDate(entry.timestamp)}</time></span>
-  if (!lead) return <article className={`intel-recent-story${entry.images?.length ? " intel-recent-story--media" : ""}`}>
+  const still = intelStillImage(entry)
+  if (!lead) return <article className={`intel-recent-story${still ? " intel-recent-story--media" : ""}`}>
     <Link href={href} className="intel-recent-row"><div>{metadata}<h3>{entry.title}</h3></div><ArrowRight aria-hidden size={22} /></Link>
     <PublisherIdentity name={entry.publisher_name ?? 'Multiverse Collective'} avatar={entry.publisher_avatar_url} />
     <NoticeStatus entry={entry} />
-    {!!entry.images?.length && <Link href={href} className="intel-story-media" aria-label={`Open images: ${entry.title}`}><NewsMedia images={entry.images.slice(0,1)} title={entry.title} /></Link>}
+    {still && <Link href={href} className="intel-story-media" aria-label={`Open ${entry.images?.length ? 'images' : 'video'}: ${entry.title}`}><NewsMedia images={[still]} title={entry.title} /></Link>}
     <Link href={href} className="intel-comments"><MessageSquare aria-hidden size={14} />{commentCount === undefined ? 'Comments' : `${commentCount} comments`}</Link>
   </article>
   return <article className="intel-lead">
@@ -64,6 +67,7 @@ function IntelCard({ entry, commentCount, lead = false }: { entry: IntelWithAvat
     <NoticeStatus entry={entry} />
     <PublisherIdentity name={entry.publisher_name ?? 'Multiverse Collective'} avatar={entry.publisher_avatar_url} />
     <p className="intel-summary">{entry.content}</p>
+    {entry.video_url && <IntelVideo src={entry.video_url} poster={entry.video_poster_url} title={entry.title} />}
     {!!entry.images?.length && <Link href={href} className="intel-story-media" aria-label={`Open images: ${entry.title}`}><NewsMedia images={entry.images} title={entry.title} /></Link>}
     <ArchiveLinkButton href={href} variant="primary" fullWidth>READ INTEL <ArrowRight aria-hidden size={20} /></ArchiveLinkButton>
     <Link href={href} className="intel-comments" aria-label={`${commentCount === undefined ? 'Comments' : `${commentCount} comments`} on ${entry.title}`}><MessageSquare aria-hidden size={14} />{commentCount === undefined ? 'Comments' : `${commentCount} comments`}</Link>
