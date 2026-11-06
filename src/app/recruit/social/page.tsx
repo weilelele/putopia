@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${role} — Multiverse Collective`, description,
     url: 'https://multiverseco.org/recruit/social', type: 'website',
-    images: [{ url: 'https://multiverseco.org/assets/recruit-social/social-recruitment-poster.png', width: 1080, height: 1350, alt: 'Can you make another universe go viral? Join Multiverse Collective as a Social Media & Community Intern.' }],
+    images: [{ url: 'https://multiverseco.org/assets/recruit-social/social-recruitment-poster.png', width: 1080, height: 1350, alt: 'Multiverse Collective is hiring a Social Media & Community Intern.' }],
   },
   twitter: { card: 'summary_large_image', title: role, description, images: ['https://multiverseco.org/assets/recruit-social/social-recruitment-poster.png'] },
 }
