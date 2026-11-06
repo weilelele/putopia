@@ -85,10 +85,7 @@ export const DreamcatcherLiveVideo = memo(function DreamcatcherLiveVideo({
           label={label} loop={steady} fallbackImage={fallbackImage}
           onEnded={() => setCursor((current) => advanceDreamcatcherPlayback(current, working, library))} />
       ) : (
-        <>
-          <Image alt={label} fill loading="eager" sizes="(max-width: 640px) 100vw, 1200px" src={fallbackImage} />
-          <span className={playerStyles.unavailable}>STATE VIDEO UNAVAILABLE</span>
-        </>
+        <Image alt={label} fill loading="eager" sizes="(max-width: 640px) 100vw, 1200px" src={fallbackImage} />
       )}
       <span aria-live="polite" className={styles.signalNotice}>
         {reconnectingPhase === phase ? 'SIGNAL REACQUIRING' : null}
