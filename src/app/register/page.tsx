@@ -79,11 +79,11 @@ export default function RegisterPage() {
       return
     }
     if (password.length < 8) {
-      setError('ERR: ACCESS CODE MUST BE AT LEAST 8 CHARACTERS')
+      setError('ERR: PASSWORD MUST BE AT LEAST 8 CHARACTERS')
       return
     }
     if (password !== confirmPassword) {
-      setError('ERR: ACCESS CODES DO NOT MATCH')
+      setError('ERR: PASSWORDS DO NOT MATCH')
       return
     }
 
@@ -111,7 +111,7 @@ export default function RegisterPage() {
       }
       const { error: signInError } = await supabase.auth.signInWithPassword({ email: activated.email, password })
       if (signInError) {
-        setError('ERR: ACCOUNT ACTIVATED. PLEASE LOG IN WITH YOUR NEW ACCESS CODE.')
+        setError('ERR: ACCOUNT ACTIVATED. PLEASE LOG IN WITH YOUR NEW PASSWORD.')
         setLoading(false)
         return
       }
@@ -197,7 +197,7 @@ export default function RegisterPage() {
             />
           </ArchiveField>
 
-          <ArchiveField htmlFor="register-password" label="ACCESS CODE">
+          <ArchiveField htmlFor="register-password" label="PASSWORD">
             <ArchiveInput
               id="register-password"
               type="password"
@@ -207,7 +207,7 @@ export default function RegisterPage() {
             />
           </ArchiveField>
 
-          <ArchiveField htmlFor="register-password-confirm" label="CONFIRM ACCESS CODE">
+          <ArchiveField htmlFor="register-password-confirm" label="CONFIRM PASSWORD">
             <ArchiveInput
               id="register-password-confirm"
               type="password"

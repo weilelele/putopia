@@ -60,7 +60,7 @@ function LoginPageContent() {
         <BackLink href="/console" label="Back to Dashboard" />
         <header className="pilot-login-heading">
           <h1 className="pilot-login-title">
-            AUTHENTICATE
+            SIGN IN
           </h1>
         </header>
 
@@ -75,7 +75,7 @@ function LoginPageContent() {
             />
           </ArchiveField>
 
-          <ArchiveField htmlFor="login-password" label="ACCESS CODE">
+          <ArchiveField htmlFor="login-password" label="PASSWORD">
             <ArchiveInput
               id="login-password"
               type="password"
@@ -93,13 +93,13 @@ function LoginPageContent() {
           )}
 
           <ArchiveButton disabled={loading} fullWidth type="submit">
-            {loading ? 'AUTHENTICATING...' : 'AUTHENTICATE'}
+            {loading ? 'SIGNING IN...' : 'SIGN IN'}
           </ArchiveButton>
         </form>
 
         <div className="pilot-login-access">
           <ArchiveLinkButton fullWidth href={requestAccessHref}>
-            REQUEST ACCESS
+            CREATE ACCOUNT
           </ArchiveLinkButton>
         </div>
       </div>
