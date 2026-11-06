@@ -1,4 +1,5 @@
 /** Pure rules for the Signal Dispatch vote sheet. */
+import { VOYAGERS_ONLY_LOCK } from './dreamcatcher-round-model'
 
 export type VoteCta = {
   label: string
@@ -16,6 +17,7 @@ export function voteCta(input: {
   mySelection: string | null
   /** 1-based number of the signal the viewer has highlighted, or null. */
   selectedNumber: number | null
+  lockReason?: string | null
 }): VoteCta {
   const nn = input.selectedNumber === null ? null : String(input.selectedNumber).padStart(2, '0')
   if (input.mySelection) {
@@ -26,10 +28,13 @@ export function voteCta(input: {
   }
   // Guests can always press: the button explains how to join instead of being disabled.
   if (!input.loggedIn) {
-    return { label: nn ? `CONFIRM SIGNAL ${nn}` : 'CONFIRM SIGNAL', disabled: false, promptAuth: true, hint: 'Create a free account to cast your signal.' }
+    return { label: nn ? `CONFIRM SIGNAL ${nn}` : 'CONFIRM SIGNAL', disabled: false, promptAuth: true, hint: 'Log in with a Voyager account to cast your signal.' }
   }
   if (input.initiatorOnly && !input.canRespond) {
     return { label: 'VOTE CLOSED', disabled: true, promptAuth: false, hint: 'Voting ended without responses. Only the original submitter can continue.' }
+  }
+  if (input.canRespond === false && input.lockReason === VOYAGERS_ONLY_LOCK) {
+    return { label: 'VOYAGERS ONLY', disabled: true, promptAuth: false, hint: 'Only Voyagers can vote on signals.' }
   }
   if (input.canRespond === false) {
     return { label: 'NOT AVAILABLE', disabled: true, promptAuth: false, hint: 'Voting on this signal is not open to your account.' }

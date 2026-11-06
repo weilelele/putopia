@@ -12,6 +12,8 @@ import { getRequestIdentity } from '@/lib/request-auth'
  * convention — see admin/layout.tsx).
  */
 import { getRoundInvestigations } from '@/lib/dreamcatcher-rounds'
+import { isSignalVoter, scopeAllowsVote, VOYAGERS_ONLY_LOCK } from '@/lib/dreamcatcher-round-model'
+import { DREAMCATCHER_ROUNDS_ENABLED } from '@/lib/signal/dispatch-policy'
 import { createAdminClient } from '@/lib/supabase/server'
 import { listFrequencies as cosmoListFrequencies, sampleBandAssets, getBandAssets as cosmoGetBandAssets } from '@/lib/cosmo'
 import type { CosmoFrequency } from '@/lib/cosmo'
@@ -730,10 +732,8 @@ export async function getSignalFeed(date?: string): Promise<SignalFeed> {
 }
 
 /**
- * Owner voting permission (doc 2.1). Architect can always vote; otherwise:
- *   self   → only the world's owner (discoverer)
- *   voters → Voyager members only
- *   all    → any logged-in registered user (applicants included)
+ * Voting permission. Only Voyagers (and Architects, always) can vote. On top of
+ * that, `self` narrows a world to its owner; `all` and `voters` both mean Voyagers.
  */
 function eligibleToVote(
   role: string | null,
@@ -741,19 +741,14 @@ function eligibleToVote(
   voteScope: WorldVoteScope,
   ownerId: string | null,
 ): boolean {
-  if (!role || !userId) return false
-  if (role === 'architect') return true
-  if (voteScope === 'self') return userId === ownerId
-  if (voteScope === 'voters') return role === 'voyager'
-  return true // 'all'
+  return !!userId && !!role && scopeAllowsVote({ id: userId, role }, voteScope, ownerId)
 }
 
 /** Human-readable reason a viewer can't vote, for the locked-card label. */
-function lockReason(voteScope: WorldVoteScope, loggedIn: boolean): string {
+function lockReason(voteScope: WorldVoteScope, loggedIn: boolean, role: string | null): string {
   if (!loggedIn) return 'Log in to respond'
-  if (voteScope === 'self') return 'Private — owner only'
-  if (voteScope === 'voters') return 'Voyagers only'
-  return 'Log in to respond'
+  if (isSignalVoter(role) && voteScope === 'self') return 'Private — owner only'
+  return VOYAGERS_ONLY_LOCK
 }
 
 /** File a response. Eligibility is per-world (doc 2.1). One filing per task. */
@@ -773,6 +768,12 @@ export async function submitSignalResponse(
     .maybeSingle()
   if (!task?.is_published) return { ok: false, error: 'Task is not published' }
   if (task.dreamcatcher_round_id) {
+    if (!isSignalVoter(me.role)) return { ok: false, error: 'Only Voyagers can vote on signals.' }
+    if (!DREAMCATCHER_ROUNDS_ENABLED) {
+      // A vote past the deadline settles the round, which must wait for the pause to lift.
+      const { data: round } = await admin.from('dreamcatcher_rounds').select('closes_at').eq('id', task.dreamcatcher_round_id).maybeSingle()
+      if (!round?.closes_at || Date.parse(round.closes_at) <= Date.now()) return { ok: false, error: 'This vote has closed.' }
+    }
     const { error } = await admin.rpc('respond_dreamcatcher_round', { p_task: taskId, p_asset: assetId, p_user: me.id })
     return error ? { ok: false, error: error.message } : { ok: true }
   }
@@ -1589,7 +1590,7 @@ function buildInvestigation(
     type: thread.type,
     voteScope,
     canParticipate: can,
-    lockReason: can ? null : lockReason(voteScope, !!me),
+    lockReason: can ? null : lockReason(voteScope, !!me, me?.role ?? null),
     days,
     searching,
   }

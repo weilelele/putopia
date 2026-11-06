@@ -3,6 +3,8 @@
 > Public name: **Parallax Array / 视差阵列**. User submissions are **Observations / 观测记录**. `dreamcatcher` remains an internal identifier.
 日期：2026-09-27。状态：产品规则已明确，本站轮次、队列、权限与展示已有本地实现；Cosmo 通信和取图沿用旧 Dispatch 链路，旧积压清理与停用保护已在生产完成，新轮次迁移与真实环境验收尚未完成。实现范围、验证结果及上线前置条件见[迭代记录](../releases/dreamcatcher-rounds.md)。下文保留设计依据，不能将本地实现视为已上线。
 
+> **2026-11-06 暂停与权限更新（优先于下文）：** 轮次循环暂停，等待玩法重做。`DREAMCATCHER_ROUNDS_ENABLED=false` 期间不推进轮次、不调用 Cosmo、不发轮次邮件；已开放的投票窗口仍可投到截止，到期后不结算，也不开放零反馈补投。Voyager、Architect 和有已付款订单的账号可以投递，投递内容留在队列等恢复。只有 Voyager 和 Architect 可以投票，原始发起者的补投同样受此限制；`vote_scope` 只有 `self` 还有收窄作用，`all` 和 `voters` 都等于 Voyager。
+
 ## 1. 产品目标与文档优先级
 
 用户提交自己的梦境或所见，将它交给一台 Dreamcatcher。提交成功后，后台即可通过 Cosmo 接入并提前生成，同时梦境在前台排队。轮到该梦境后，设备经历设定的工作时段；工作时段结束且素材已就绪，才以 Signal Dispatch 展示结果并开启完整的 24 小时投票。窗口结束且至少一名有权限的用户反馈后（若截止零反馈，则仅原始发起者可在之后补投并立即触发结算），汇总本轮反馈，用于下一轮生成；同一个梦境重新进入原设备队列，显示 Round 2、Round 3、Round 4……。

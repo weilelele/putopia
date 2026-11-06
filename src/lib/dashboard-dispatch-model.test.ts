@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+vi.mock('./signal/dispatch-policy', () => ({ DREAMCATCHER_ROUNDS_ENABLED: true }))
 import { dashboardDispatch, type DispatchWorld, type DispatchRound, type DispatchTask } from './dashboard-dispatch-model'
 
 const opened = '2026-10-29T00:00:00.000Z'
@@ -22,10 +23,10 @@ describe('Dashboard dispatch eligibility without investigation history', () => {
     expect(legacy()).toMatchObject({ awaitingYou: 1, awaitingWorldIds: [world.id] })
   })
   it.each([
-    ['self', 'member', 'voyager', 0], ['self', 'owner', 'applicant', 1],
+    ['self', 'member', 'voyager', 0], ['self', 'owner', 'voyager', 1], ['self', 'owner', 'applicant', 0],
     ['voters', 'member', 'applicant', 0], ['voters', 'member', 'voyager', 1],
-    ['self', 'member', 'architect', 1], ['all', 'member', 'applicant', 1],
-  ])('preserves %s voting scope for %s / %s', (scope, id, role, expected) => {
+    ['self', 'member', 'architect', 1], ['all', 'member', 'applicant', 0], ['all', 'member', 'voyager', 1],
+  ])('applies %s voting scope for %s / %s', (scope, id, role, expected) => {
     const input = { worlds: [{ ...world, vote_scope: scope }], viewer: { id, role } }
     expect(legacy(input).awaitingYou).toBe(expected)
     expect(rounds(input).awaitingYou).toBe(expected)
@@ -47,8 +48,8 @@ describe('Dashboard dispatch eligibility without investigation history', () => {
   it('keeps expired empty rounds available only to their initiator', () => {
     const after = Date.parse(round.closes_at!)
     expect(rounds({ now: after })).toMatchObject({ openWorlds: [], awaitingYou: 0 })
-    expect(rounds({ now: after, viewer: { id: 'initiator', role: 'applicant' } })).toMatchObject({ openWorlds: [], awaitingYou: 1 })
-    expect(rounds({ now: after, viewer: { id: 'initiator', role: 'applicant' }, roundResponses: [{ task_id: task.id }] }).awaitingYou).toBe(0)
+    expect(rounds({ now: after, viewer: { id: 'initiator', role: 'voyager' } })).toMatchObject({ openWorlds: [], awaitingYou: 1 })
+    expect(rounds({ now: after, viewer: { id: 'initiator', role: 'voyager' }, roundResponses: [{ task_id: task.id }] }).awaitingYou).toBe(0)
   })
   it('never revives an older open round after a later published round settles', () => {
     const next = { ...task, id: 'next', dreamcatcher_round_id: 'second' }
