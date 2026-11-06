@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { ArrowRight, Check, Clock3, Package } from 'lucide-react'
 import { ArchivePageHeader } from '@/components/archive-page-header'
 import { ArchiveSectionLabel } from '@/components/archive-section-label'
-import { DEVICE_BATCH_STATUS } from '@/lib/device-batches'
+import { DEVICE_BATCH_STAGE_LABEL, deviceBatchStage } from '@/lib/device-batches'
 import { listPublicDeviceBatches } from '@/lib/device-batch-repository'
 import { getMyConsoleShipments } from '@/lib/actions/device-supply'
 import { getMyDeviceConsoles } from '@/lib/actions/orders'
@@ -84,7 +84,7 @@ export default async function MyConsolesPage() {
                     />
                   </Link>
                   <div className={styles.ownedBatchIdentity}>
-                    <span>{DEVICE_BATCH_STATUS[batch.status].label}</span>
+                    <span>{DEVICE_BATCH_STAGE_LABEL[deviceBatchStage(batch.status)].label}</span>
                     <h2>{batch.name}</h2>
                     <p>{record.unitCode}</p>
                     <Link href={`/devices/batches/${batch.slug}`}>
