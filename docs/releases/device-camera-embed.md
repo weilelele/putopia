@@ -1,5 +1,13 @@
 # Device camera Embed integration
 
+## Current status
+
+Disabled since 2026-11-07. `cosmo-server-hk1.putopia.studio` stopped accepting
+connections, so `/embed-api/*` returned `503 FEED_UNAVAILABLE` and every Embed
+rendered black. `cameraEmbedsEnabled` in `src/lib/device-camera-source.ts` hides
+the cameras; Batch bindings were not changed. Set it back to `true` after the
+snapshot API responds again.
+
 ## Scope
 
 Device pages can show an existing Cosmo Band as a scheduled camera through an
