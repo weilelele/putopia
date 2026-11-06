@@ -598,10 +598,10 @@ export function FrontLinePage({ state, regions }: { state: PageState; regions: B
 
 /* 8 · Packs: the Console leads; tap any month to see that pack. The page fits one phone screen: the picture gives up height, the caption never changes size. */
 const PACKS = [
-  { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', image: `${MEDIA}/pack-1.jpg`, focus: '50% 75%', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
-  { month: 'NOV', meta: 'PACK 2 · NOV 2026', title: ANTENNA.name, image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packSummary },
-  { month: 'DEC', meta: 'PACK 3 · DEC 2026', title: 'Multiverse Console', image: `${MEDIA}/console-workshop.jpg`, alt: 'A Multiverse Console on a workshop bench, its screen showing a parallel world', description: 'Your own device for exploring and interacting with parallel worlds.' },
-  { month: 'JAN', meta: 'PACK 4 · JAN 2027', title: 'A Fourth Delivery', image: `${MEDIA}/pack-4.jpg`, alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },
+  { month: 'DEC', meta: 'PACK 1 · DEC 2026', title: 'Initial Voyager Pack', image: `${MEDIA}/pack-1.jpg`, focus: '50% 75%', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
+  { month: 'JAN', meta: 'PACK 2 · JAN 2027', title: ANTENNA.name, image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packSummary },
+  { month: 'FEB', meta: 'PACK 3 · FEB 2027', title: 'Multiverse Console', image: `${MEDIA}/console-workshop.jpg`, alt: 'A Multiverse Console on a workshop bench, its screen showing a parallel world', description: 'Your own device for exploring and interacting with parallel worlds.' },
+  { month: 'MAR', meta: 'PACK 4 · MAR 2027', title: 'A Fourth Delivery', image: `${MEDIA}/pack-4.jpg`, alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },
 ]
 
 export function PacksPage({ state, onPack }: { state: PageState; onPack: (index: number) => void }) {

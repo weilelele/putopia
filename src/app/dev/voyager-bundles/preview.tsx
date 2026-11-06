@@ -14,10 +14,10 @@ import original from '@/app/voyager-initiation/initiation.module.css'
 import styles from './preview.module.css'
 
 const packs = [
-  { title: 'Initial Voyager Pack', month: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'Welcome letter and Voyager badge', description: 'A welcome letter and exclusive Voyager badge.' },
-  { title: ANTENNA.firstMention, month: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
-  { title: 'Multiverse Console', month: 'Dec 2026', image: '', alt: '', description: 'Your own device for exploring and interacting with parallel worlds.' },
-  { title: 'A Fourth Delivery', month: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },
+  { title: 'Initial Voyager Pack', month: 'Dec 2026', image: '/voyager-pack/pack-email.png', alt: 'Welcome letter and Voyager badge', description: 'A welcome letter and exclusive Voyager badge.' },
+  { title: ANTENNA.firstMention, month: 'Jan 2027', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
+  { title: 'Multiverse Console', month: 'Feb 2027', image: '', alt: '', description: 'Your own device for exploring and interacting with parallel worlds.' },
+  { title: 'A Fourth Delivery', month: 'Mar 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },
 ]
 
 const benefits = [
@@ -116,7 +116,7 @@ export function VoyagerBundlesPreview() {
           ['Is this a subscription?', 'No. Both bundles are a one-time payment.'],
           ['What’s the difference between the bundles?', 'Both include Voyager membership. Initial includes Packs 1–2; Complete includes all four, including the Console.'],
           ['Can I add the Console later?', 'Yes. Add Console + Pack 4 for $460, including if you bought the original $12 Initial Pack. Buying Complete upfront saves $10 compared with the current Initial + upgrade.'],
-          ['When will the packs ship?', 'Planned dispatches: Oct 2026–Jan 2027, one pack per month. These are estimates; check your records for actual progress.'],
+          ['When will the packs ship?', 'Planned dispatches: Dec 2026–Mar 2027, one pack per month. These are estimates; check your records for actual progress.'],
         ].map(([question, answer]) => <details className={original.faqItem} key={question}><summary>{question}</summary><p>{answer}</p></details>)}
       </section>
     </div>

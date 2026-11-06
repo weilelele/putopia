@@ -30,7 +30,7 @@ You can request a batch change before your Console ships, subject to availabilit
 
 **When will my packs ship?**
 
-The four S26 packs are planned to ship in October, November and December 2026, then January 2027. These are planned shipping months, not guaranteed arrival dates. The Console is Pack 3. No S26 packs have shipped yet.
+The four S26 packs are planned to ship in December 2026, then January, February and March 2027. These are planned shipping months, not guaranteed arrival dates. The Console is Pack 3. No S26 packs have shipped yet.
 
 ### 5 Shipping region and costs
 

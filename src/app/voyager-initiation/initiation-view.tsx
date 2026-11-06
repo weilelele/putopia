@@ -54,10 +54,10 @@ const paymentMessages = {
 }
 
 const packs = [
-  { title: 'Initial Voyager Pack', dispatch: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
-  { title: ANTENNA.firstMention, dispatch: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
-  { title: 'Multiverse Console', dispatch: 'Dec 2026', image: '/assets/voyager-initiation/console-multiview-portrait.png', alt: 'Multiverse Console in the Kyoto workshop: front, rear, side display and control dial views', featured: true, description: 'Your own device for exploring and interacting with parallel worlds.' },
-  { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
+  { title: 'Initial Voyager Pack', dispatch: 'Dec 2026', image: '/voyager-pack/pack-email.png', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
+  { title: ANTENNA.firstMention, dispatch: 'Jan 2027', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
+  { title: 'Multiverse Console', dispatch: 'Feb 2027', image: '/assets/voyager-initiation/console-multiview-portrait.png', alt: 'Multiverse Console in the Kyoto workshop: front, rear, side display and control dial views', featured: true, description: 'Your own device for exploring and interacting with parallel worlds.' },
+  { title: 'A Fourth Delivery', dispatch: 'Mar 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
 ]
 
 export type InitiationViewProps = {
@@ -362,7 +362,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     </ArchiveSheet>
     <ArchiveSheet open={dialog === 'batch'} onClose={() => setDialog(null)} title="Batch S26">
       <p>S26 is the first Voyager Initiation release, limited to 100 seats.</p>
-      <p>Complete Pack includes four dispatches; Initial includes the first two. The planned S26 dispatch months are: October, November and December 2026, then January 2027. This schedule follows the batch, regardless of when you join.</p>
+      <p>Complete Pack includes four dispatches; Initial includes the first two. The planned S26 dispatch months are: December 2026, then January, February and March 2027. This schedule follows the batch, regardless of when you join.</p>
       <p>Further batches may open later with their own availability and dispatch schedules.</p>
     </ArchiveSheet>
 

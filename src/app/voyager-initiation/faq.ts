@@ -14,7 +14,7 @@ export const INITIATION_FAQ_GROUPS = [
     { question: 'When will my card be charged?', answer: 'We authorize your card at checkout and charge after verifying your delivery region. If unsupported, we cancel the authorization. A temporary bank hold may appear.' },
   ] },
   { id: 'shipping', title: 'Shipping & taxes', items: [
-    { question: 'When will my packs ship?', answer: 'Planned dispatches: Oct 2026–Jan 2027, one pack per month. These are estimates; check your records for actual progress.' },
+    { question: 'When will my packs ship?', answer: 'Planned dispatches: Dec 2026–Mar 2027, one pack per month. These are estimates; check your records for actual progress.' },
     { question: 'Where do you ship?', answer: 'The contiguous 48 US states and Washington, DC. Shipping and taxes included.' },
     { question: 'How are refunds calculated?', answer: 'Unshipped packs are refundable: $19 per pack for Initial, $122 for Complete, or $230 for the upgrade.', detailsLink: '/terms/initiation' },
   ] },
