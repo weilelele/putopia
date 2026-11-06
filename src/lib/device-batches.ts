@@ -220,6 +220,20 @@ export function getBatchRemainingQuantity(batch: DeviceBatch) {
 
 export const DEVICE_BATCH_PHASES = ['searching', 'claiming', 'pack_one', 'pack_two', 'console'] as const
 
+/** What visitors see: stored pack statuses still drive records, but publicly they are one delivery stage. */
+export const DEVICE_BATCH_STAGES = ['searching', 'claiming', 'delivering'] as const
+export type DeviceBatchStage = typeof DEVICE_BATCH_STAGES[number]
+
+export const DEVICE_BATCH_STAGE_LABEL: Record<DeviceBatchStage, { label: string; shortLabel: string }> = {
+  searching: { label: 'SEARCHING', shortLabel: 'SEARCH' },
+  claiming: { label: 'CLAIMING', shortLabel: 'CLAIM' },
+  delivering: { label: 'DELIVERING', shortLabel: 'DELIVER' },
+}
+
+export function deviceBatchStage(status: DeviceBatchStatus): DeviceBatchStage {
+  return status === 'searching' || status === 'claiming' ? status : 'delivering'
+}
+
 export function canClaimDeviceBatch(status: DeviceBatchStatus): boolean {
   return DEVICE_BATCH_PHASES.includes(status) && status !== 'searching'
 }

@@ -1,4 +1,4 @@
-import { DEVICE_BATCH_PHASES, DEVICE_BATCH_STATUS, type DeviceBatch, type DeviceBatchMedia, type DeviceBatchUpdate, type DistributionStageStatus } from './device-batches'
+import { DEVICE_BATCH_STAGES, DEVICE_BATCH_STAGE_LABEL, deviceBatchStage, type DeviceBatch, type DeviceBatchMedia, type DeviceBatchUpdate, type DistributionStageStatus } from './device-batches'
 
 /** Updates are explicit content; legacy reports and media are never imported. */
 export function getDeviceBatchUpdates(batch: Pick<DeviceBatch, 'updates'>): DeviceBatchUpdate[] {
@@ -27,10 +27,10 @@ export function getDeviceBatchMedia(batch: DeviceBatch): DeviceBatchMedia[] {
 }
 
 export function getDeviceBatchProgress(batch: DeviceBatch) {
-  const current = DEVICE_BATCH_PHASES.indexOf(batch.status)
-  return DEVICE_BATCH_PHASES.map((phase, index) => ({
-    label: DEVICE_BATCH_STATUS[phase].shortLabel,
-    fullLabel: DEVICE_BATCH_STATUS[phase].label,
+  const current = DEVICE_BATCH_STAGES.indexOf(deviceBatchStage(batch.status))
+  return DEVICE_BATCH_STAGES.map((stage, index) => ({
+    label: DEVICE_BATCH_STAGE_LABEL[stage].shortLabel,
+    fullLabel: DEVICE_BATCH_STAGE_LABEL[stage].label,
     status: (index < current ? 'completed' : index === current ? 'current' : 'upcoming') as DistributionStageStatus,
   }))
 }
