@@ -70,10 +70,21 @@ function buildGeom(m: Manifest): Geom {
   }
 }
 
-function FlipCell({ cell, pool, spread, runId, scale, playbackRate }: { playbackRate: number; cell: Placed; pool: string[]; spread: boolean; runId: number; scale: number }) {
+/**
+ * Real ms until a step scheduled at `delay` (preset ms) runs. A hold released before then keeps the original schedule;
+ * one released later replays the settle stagger from the release, without the opening shuffle.
+ */
+function releasedDelay(delay: number, since: number, playbackRate: number) {
+  return Math.max(delay / playbackRate - since, (delay - BASE) / playbackRate + 120)
+}
+
+function FlipCell({ cell, pool, spread, runId, scale, playbackRate, hold }: { playbackRate: number; cell: Placed; pool: string[]; spread: boolean; runId: number; scale: number; hold: boolean }) {
   const [src, setSrc] = useState(cell.file)
   const [tickKey, setTickKey] = useState(0)
   const [settled, setSettled] = useState(false)
+  const startedAt = useRef(0)
+
+  useEffect(() => { startedAt.current = performance.now() }, [runId])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resets animation state before re-running the shuffle sequence
@@ -82,17 +93,19 @@ function FlipCell({ cell, pool, spread, runId, scale, playbackRate }: { playback
       setSrc(pool[Math.floor(Math.random() * pool.length)])
       setTickKey((k) => k + 1)
     }, TICK / playbackRate)
+    // Held letters keep shuffling until the hold is released.
+    if (hold) return () => clearInterval(iv)
     const stop = setTimeout(() => {
       clearInterval(iv)
       setSrc(cell.file)
       setTickKey((k) => k + 1)
       setSettled(true)
-    }, cell.settleDelay / playbackRate)
+    }, releasedDelay(cell.settleDelay, performance.now() - startedAt.current, playbackRate))
     return () => {
       clearInterval(iv)
       clearTimeout(stop)
     }
-  }, [pool, cell.file, cell.settleDelay, runId, playbackRate])
+  }, [pool, cell.file, cell.settleDelay, runId, playbackRate, hold])
 
   const left = (spread ? cell.offX : cell.cmpX) * scale
   const top = (spread ? cell.offY : cell.cmpY) * scale
@@ -116,8 +129,11 @@ export function FlipWordmark({
   fill = 0.92,
   className,
   ariaLabel = 'Multiverse Collective',
+  hold = false,
 }: {
   onPlaybackComplete?: () => void
+  /** Keep the letters shuffling (for example while something loads); releasing it settles and spreads the wordmark. */
+  hold?: boolean
   playbackRate?: number
   replayable?: boolean
   maxWidth?: number
@@ -169,13 +185,18 @@ export function FlipWordmark({
   const scale = geom ? targetW / geom.spanW : 0
 
   // run once on mount + on replay
+  // The letters (and so their schedule) start once the container has a width.
+  const measured = containerW > 0
+  const startedAt = useRef(0)
+  useEffect(() => { startedAt.current = performance.now() }, [geom, runId, measured])
   useEffect(() => {
-    if (!geom) return
+    if (!geom || !measured) return
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the spread animation before replaying it on geom/run change
     setSpread(false)
-    const t = setTimeout(() => setSpread(true), (geom.lastSettle + PAUSE) / playbackRate)
+    if (hold) return
+    const t = setTimeout(() => setSpread(true), releasedDelay(geom.lastSettle, performance.now() - startedAt.current, playbackRate) + PAUSE / playbackRate)
     return () => clearTimeout(t)
-  }, [geom, runId, playbackRate])
+  }, [geom, runId, playbackRate, hold, measured])
 
   useEffect(() => {
     if ((reduceMotion || loadFailed) && fallbackReady) completePlayback()
@@ -206,7 +227,8 @@ export function FlipWordmark({
         @keyframes fwFlip { 0%{transform:rotateX(88deg);opacity:.15} 100%{transform:rotateX(0);opacity:1} }
         @keyframes fwLock { 0%{transform:rotateX(72deg) scale(1.02);opacity:.4} 60%{transform:rotateX(-8deg);opacity:1} 100%{transform:rotateX(0)} }
       `}</style>
-      {geom && !reduceMotion ? (
+      {/* Letters wait for a measured width: one mounted while hidden (e.g. in a closed dialog) would otherwise slide in from 0. */}
+      {geom && !reduceMotion && measured ? (
         <div
           className="fw-stage"
           role="img"
@@ -215,7 +237,7 @@ export function FlipWordmark({
           style={{ width: stageW, height: stageH, cursor: replayable ? 'pointer' : 'inherit' }}
         >
           {geom.cells.map((cell) => (
-            <FlipCell key={cell.row * 100 + cell.i} cell={cell} pool={geom.poolByRow[cell.row]} spread={spread} runId={runId} scale={scale} playbackRate={playbackRate} />
+            <FlipCell key={cell.row * 100 + cell.i} cell={cell} pool={geom.poolByRow[cell.row]} spread={spread} runId={runId} scale={scale} playbackRate={playbackRate} hold={hold} />
           ))}
         </div>
       ) : (

@@ -18,114 +18,40 @@ const MEDIA = '/assets/voyager-briefing'
 const ORANGE = '227,82,5'
 const STAR = '245,245,245'
 
-/* 1 · The device: static, then a slow lamp over a loop of Console films (one is real footage). */
-const CONSOLE_CLIPS = [
-  { src: `${MEDIA}/console-real.mp4`, poster: `${MEDIA}/console-real.jpg` },
-  { src: `${MEDIA}/console-tuning.mp4` },
-  { src: `${MEDIA}/console-fairy.mp4` },
-  { src: `${MEDIA}/console-starry.mp4` },
-]
-
-function drawSnow(buffer: HTMLCanvasElement, image: ImageData, ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  const data = image.data
-  for (let y = 0; y < buffer.height; y++) {
-    let previous = Math.random() * 255
-    const row = Math.random() * 36 - 18, streak = Math.random() < .012 ? 90 : 0
-    for (let x = 0; x < buffer.width; x++) {
-      previous = previous * .45 + Math.random() * 140
-      const offset = (y * buffer.width + x) * 4, value = clamp(previous + row + streak, 0, 255)
-      data[offset] = data[offset + 1] = data[offset + 2] = value
-      data[offset + 3] = 255
-    }
-  }
-  buffer.getContext('2d')!.putImageData(image, 0, 0)
-  ctx.clearRect(0, 0, w, h)
-  ctx.imageSmoothingEnabled = true
-  ctx.drawImage(buffer, 0, 0, w, h)
-  ctx.fillStyle = 'rgba(0,0,0,.3)'
-  ctx.fillRect(0, ((t * .2) % (h + 100)) - 50, w, 46)
-}
+/* 1 · The device: one film of Console footage, cut and lit by a slow lamp in the edit (see the media README). */
+/** Page 1 opens only once this is downloaded; page 2's clips follow in the background. */
+export const OPENING_FILM = `${MEDIA}/console-film.mp4`
+const LONDON_CLIP = `${MEDIA}/london-device.mp4`
+const PRESS_CLIP = `${MEDIA}/console-press.mp4`
+export const FOLLOWING_CLIPS = [LONDON_CLIP, PRESS_CLIP]
 
 export function DevicePage({ state }: { state: PageState }) {
-  const film = useRef<HTMLDivElement>(null)
-  const lamp = useRef<HTMLSpanElement>(null)
-  const canvas = useRef<HTMLCanvasElement>(null)
+  const film = useRef<HTMLVideoElement>(null)
   useScene(state.active, (scene, reduced) => {
-    const clips = Array.from(film.current!.querySelectorAll('video'))
-    const cv = canvas.current!, light = lamp.current!
-    clips.forEach(video => { releaseVideo(video); delete video.dataset.show })
-    delete light.dataset.on
-    if (reduced) { attachVideo(clips[0]); clips[0].dataset.show = ''; cv.style.opacity = '0'; return }
-    cv.style.transition = ''
-    cv.style.opacity = '1'
-    const { ctx, w, h } = fitCanvas(cv)
-    const buffer = document.createElement('canvas')
-    buffer.width = Math.max(80, Math.round(w / 2))
-    buffer.height = Math.max(60, Math.round(h / 2))
-    const image = buffer.getContext('2d')!.createImageData(buffer.width, buffer.height)
-    let snowing = true, last = -100
-    scene.loop(t => { if (snowing && t - last >= 40) { last = t; drawSnow(buffer, image, ctx, w, h, t) } })
-    scene.later(() => { cv.style.transition = 'opacity .16s ease'; cv.style.opacity = '0' }, 1400)
-    scene.later(() => { snowing = false; ctx.clearRect(0, 0, w, h) }, 1650)
-    // Each time the lamp goes fully dark (one animation iteration, every 3s) the film cuts to the next clip
-    // of a shuffled deck, at a random moment. Every clip plays once per round and a new round never starts
-    // with the clip on screen, so a clip only returns after all the others. The next cut is prepared while
-    // the light is on, so it is already seeked.
-    clips.forEach(video => { video.loop = true })
-    const randomMoment = (video: HTMLVideoElement) => {
-      const length = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 5
-      return .3 + Math.random() * Math.max(.1, length - 1.1)
-    }
-    const whenReady = (video: HTMLVideoElement, fn: () => void) => {
-      if (video.readyState >= 1) fn()
-      else video.addEventListener('loadedmetadata', () => { if (scene.alive()) fn() }, { once: true })
-    }
-    let current: HTMLVideoElement | null = null
-    let upcoming: HTMLVideoElement | null = null
-    let deck: HTMLVideoElement[] = []
-    const draw = () => {
-      if (!deck.length) {
-        deck = [...clips]
-        for (let i = deck.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [deck[i], deck[j]] = [deck[j], deck[i]]
-        }
-        if (deck[0] === current) deck.push(deck.shift()!)
-      }
-      return deck.shift()!
-    }
-    const prepare = () => {
-      const next = draw()
-      upcoming = next
-      attachVideo(next)
-      whenReady(next, () => { if (upcoming === next) { try { next.currentTime = randomMoment(next) } catch { /* seek not ready */ } } })
-    }
-    const cut = () => {
-      const next = upcoming ?? clips[0]
-      const previous = current
-      current = next
-      clips.forEach(video => { if (video === next) video.dataset.show = ''; else delete video.dataset.show })
-      void next.play().catch(() => {})
-      if (previous && previous !== next) releaseVideo(previous)
-      prepare()
-    }
-    upcoming = draw()
-    attachVideo(upcoming)
-    const first = upcoming
-    whenReady(first, () => { if (upcoming === first) { try { first.currentTime = randomMoment(first) } catch { /* seek not ready */ } } })
-    scene.later(() => { cut(); light.dataset.on = ''; scene.listen(light, 'animationiteration', cut) }, 1600)
-    return () => clips.forEach(releaseVideo)
+    const video = film.current!
+    const show = () => { video.dataset.show = '' }
+    releaseVideo(video)
+    delete video.dataset.show
+    // The film's lamp pulses, so reduced motion keeps to its still poster.
+    if (reduced) { show(); return }
+    // The film starts and loops in the dark, so it is revealed once playing: the lit poster would flash first. The poster
+    // takes over only if the film cannot start promptly (still streaming, or autoplay refused).
+    scene.listen(video, 'playing', show)
+    scene.later(show, 800)
+    attachVideo(video)
+    void video.play().catch(() => { if (scene.alive()) show() })
+    // Browsers suspend a muted film while the page is hidden and may not resume it, and nothing else restarts this loop.
+    scene.listen(document, 'visibilitychange', () => { if (!document.hidden) void video.play().catch(() => {}) })
+    return () => releaseVideo(video)
   })
   return <BriefingPage state={state} className={s.p1} label="The device">
-    <div ref={film} className={s.film} data-briefing-target="media" role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: hands tuning a real Console into a world, a dial tuned to a robot library, a forest fairy and a starry hillside.">
-      {CONSOLE_CLIPS.map(clip => <video key={clip.src} data-src={clip.src} poster={clip.poster} muted playsInline preload="auto" />)}
-      <span ref={lamp} className={s.lamp} />
-      <canvas ref={canvas} className={s.fx} />
+    <div className={s.film} data-briefing-target="media" role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: a dial tuned from static to a robot reading in a forest, hands holding a real Console tuned into a world, a forest fairy and a starry hillside.">
+      <video ref={film} data-src={OPENING_FILM} poster={`${MEDIA}/console-real.jpg`} muted playsInline loop preload="auto" />
     </div>
     <div className={`${s.copy} ${s.p1Copy} ${s.gut}`} data-briefing-target="copy">
       <Kicker text="THE DEVICE" />
       <Headline text="We own a device that can see into parallel worlds." large />
-      <p className={`${s.lede} ${s.rise}`} style={rise(2700)}>It is called the Multiverse Console.</p>
+      <p className={`${s.lede} ${s.rise}`} style={rise(1100)}>It is called the Multiverse Console.</p>
     </div>
   </BriefingPage>
 }
@@ -185,9 +111,9 @@ export function CollectivePage({ state }: { state: PageState }) {
   })
   return <BriefingPage state={state} className={s.p2} label="The Collective">
     <div ref={media} className={s.p2Media} aria-hidden>
-      <video data-src={`${MEDIA}/london-device.mp4`} poster={`${MEDIA}/london-device.jpg`} muted playsInline loop preload="auto" />
+      <video data-src={LONDON_CLIP} poster={`${MEDIA}/london-device.jpg`} muted playsInline loop preload="auto" />
       <span><SmartImage src={`${MEDIA}/robot-library.jpg`} alt="" sizes="(min-width: 460px) 460px, 100vw" className={s.cover} preload /></span>
-      <video data-src={`${MEDIA}/console-press.mp4`} poster={`${MEDIA}/console-press.jpg`} muted playsInline preload="auto" />
+      <video data-src={PRESS_CLIP} poster={`${MEDIA}/console-press.jpg`} muted playsInline preload="auto" />
       <span className={s.scrim} data-show="" />
     </div>
     <canvas ref={canvas} className={s.fx} />

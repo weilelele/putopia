@@ -83,6 +83,19 @@ export function briefingTapTarget(page: number, blocked: boolean): number | null
   return next === page ? null : next
 }
 
+/**
+ * The briefing opens on the wordmark shuffling until page 1's film is downloaded. It never strands a slow connection:
+ * after `hardMs`, or if the download fails, the briefing opens on the film's poster while the film streams.
+ */
+export const BRIEFING_RECEIVE = { hardMs: 12000 } as const
+export type BriefingReceiveOutcome = 'ready' | 'failed' | 'timeout'
+
+export function briefingReceiveOutcome(input: { elapsedMs: number; ready: boolean; settled: boolean }): BriefingReceiveOutcome | null {
+  if (input.ready) return 'ready'
+  if (input.settled) return 'failed'
+  return input.elapsedMs >= BRIEFING_RECEIVE.hardMs ? 'timeout' : null
+}
+
 export type BriefingRegion = { name: string; open: boolean; phase: number; phases: number; phaseLabel: string }
 
 const PHASE_LABEL: Record<DeviceBatchStatus, string> = { searching: 'Searching', claiming: 'Claiming', pack_one: 'Pack 1', pack_two: 'Pack 2', console: 'Console' }
