@@ -10,8 +10,7 @@
 }
 .welcome { width: min(100%, 560px); margin: auto; padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)); }
 .intro { margin-bottom: 24px; }
-.status { margin: 0; padding-left: 16px; border-left: 2px solid var(--color-nucleus); color: var(--color-nucleus); font-size: var(--fs-label); letter-spacing: .04em; }
-.heading { margin: 24px 0 16px; font-size: var(--fs-h2); font-weight: 700; line-height: 1.1; letter-spacing: 0; }
+.heading { margin: 0 0 16px; font-size: var(--fs-h2); font-weight: 700; line-height: 1.1; letter-spacing: 0; }
 .description { margin: 0; color: rgba(245,245,245,.7); font-size: var(--fs-body); line-height: 1.5; }
 .discovery { margin: 0 -16px; }
 .scene { display: block; position: relative; width: 100%; aspect-ratio: 1.06723586; overflow: hidden; isolation: isolate; background: var(--color-deep); }
