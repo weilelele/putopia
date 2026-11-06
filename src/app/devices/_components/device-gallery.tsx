@@ -80,6 +80,8 @@ export function DeviceGallery({ primary, primaryLabel, media, selected, onSelect
   const item = itemIndex >= 0 ? media[itemIndex] : null
   const primarySelected = hasPrimary && selected === 0
 
+  if (!hasPrimary && media.length === 0) return null
+
   return <section className={styles.gallery} aria-label="Device media" id="device-gallery">
     <div className={styles.stage}>
       {/* Keep the live iframe mounted so returning to it does not reconnect. */}
