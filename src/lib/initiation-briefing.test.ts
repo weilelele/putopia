@@ -29,6 +29,17 @@ describe('Voyager briefing audience', () => {
     expect(briefingLinkOpens('initiated', '1')).toBe(false)
   })
 
+  it('takes Device claim arrivals straight to Initiation on first and repeat visits', () => {
+    for (const status of ['guest', 'unpaid', 'legacy_pack'] as const) {
+      for (const stored of [null, 'not json', briefingRecord('completed', 8), JSON.stringify({ version: 'older' })]) {
+        expect(shouldAutoOpenBriefing({ status, paymentStatus: 'none', checkoutCanceled: false, stored, fromDevice: true })).toBe(false)
+      }
+      expect(briefingLinkOpens(status, '1', true)).toBe(false)
+      expect(shouldAutoOpenBriefing({ status, paymentStatus: 'none', checkoutCanceled: false, stored: null, fromDevice: false })).toBe(true)
+      expect(briefingLinkOpens(status, '1', false)).toBe(true)
+    }
+  })
+
   it('stores a bounded, versioned record', () => {
     expect(readBriefingRecord(briefingRecord('completed', 99))).toEqual({ version: BRIEFING_VERSION, outcome: 'completed', page: BRIEFING_PAGES.length - 1 })
     expect(readBriefingRecord('{"page":2}')).toBeNull()
