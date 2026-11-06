@@ -182,13 +182,17 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   // "Get the packs" closes it and brings the payment panel into view.
   const paymentRef = useRef<HTMLDivElement>(null)
   const [paymentRequest, setPaymentRequest] = useState(0)
+  // Claim on a Device page lands on the bundles, after the briefing if this browser has not seen it.
+  const arrivedToClaim = deviceSourcePath(deviceSource) !== null && !initiated && !granted && storedBriefing !== 'server' && !briefingOpen
+  const briefingWasShown = briefing !== 'idle'
   useEffect(() => {
     const panel = paymentRef.current
-    if (!paymentRequest || !panel) return
+    if ((!paymentRequest && !arrivedToClaim) || !panel) return
     const target = panel.closest<HTMLElement>('section') ?? panel
-    target.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+    const glide = (paymentRequest || briefingWasShown) && !matchMedia('(prefers-reduced-motion: reduce)').matches
+    target.scrollIntoView({ block: 'start', behavior: glide ? 'smooth' : 'auto' })
     panel.focus({ preventScroll: true })
-  }, [paymentRequest])
+  }, [paymentRequest, arrivedToClaim, briefingWasShown])
   function closeBriefing(outcome: BriefingOutcome, page: number) {
     writeBriefingStore(outcome, page)
     if (outcome === 'explore_collective') return

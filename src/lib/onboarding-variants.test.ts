@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import type { OnboardingVariantRow } from '@/types/database'
 import { resolveVariant, FALLBACK_COPY } from './onboarding-variants'
+import { DEVICE_REEL } from './device-reel'
+import { ONBOARDING_REEL } from './onboarding-video'
 
 /** Build a row with sensible defaults; override only what a test cares about. */
 function row(over: Partial<OnboardingVariantRow> = {}): OnboardingVariantRow {
@@ -89,6 +91,23 @@ describe('resolveVariant', () => {
   })
 
   describe('per-step videos', () => {
+    it('replaces the old bundled reel in existing rows while retaining their copy', () => {
+      const def = row({ video_url: DEVICE_REEL.src, video_url_q2: DEVICE_REEL.src, video_url_cta: DEVICE_REEL.src, console_headline: 'Existing question' })
+      const r = resolveVariant([def], {})
+      expect(r.videoQ1).toBe(ONBOARDING_REEL.src)
+      expect(r.videoQ2).toBe(ONBOARDING_REEL.src)
+      expect(r.videoCta).toBe(ONBOARDING_REEL.src)
+      expect(r.consoleHeadline).toBe('Existing question')
+    })
+
+    it('preserves campaign uploads while replacing a legacy default reel', () => {
+      const def = row({ video_url: DEVICE_REEL.src })
+      const campaign = row({ match_key: 'a3', video_url_q2: '/campaign.mp4' })
+      const r = resolveVariant([def, campaign], { utmContent: 'a3' })
+      expect(r.videoQ1).toBe(ONBOARDING_REEL.src)
+      expect(r.videoQ2).toBe('/campaign.mp4')
+      expect(r.videoCta).toBe('/campaign.mp4')
+    })
     it('continues the previous step when a step video is unset', () => {
       const def = row({ match_key: '', label: 'baseline', video_url: '/q1.mp4' })
       const r = resolveVariant([def], {})
