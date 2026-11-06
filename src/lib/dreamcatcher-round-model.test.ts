@@ -10,12 +10,27 @@ describe('round participation',()=>{
     expect(roundVoteAccess({...input,now:Date.parse(closesAt)})).toEqual({canVote:false,initiatorOnly:true,publicOpen:false})
     expect(roundVoteAccess({...input,now:Date.parse(closesAt),viewer:{id:'architect',role:'architect'}}).canVote).toBe(false)
   })
-  it('lets only the original submitter bypass the former role scope after zero feedback',()=>{
+  it('lets only a Voyager original submitter continue after zero feedback',()=>{
     const now=Date.parse(closesAt)+1
-    expect(roundVoteAccess({...input,now,viewer:{id:'original',role:'applicant'}}).canVote).toBe(true)
+    expect(roundVoteAccess({...input,now,viewer:{id:'original',role:'voyager'}}).canVote).toBe(true)
+    expect(roundVoteAccess({...input,now,viewer:{id:'original',role:'applicant'}}).canVote).toBe(false)
     expect(roundVoteAccess({...input,now,viewer:{id:'other',role:'voyager'}}).canVote).toBe(false)
     expect(roundVoteAccess({...input,now,viewer:null}).canVote).toBe(false)
-    expect(roundVoteAccess({...input,now,participantCount:1,viewer:{id:'original',role:'applicant'}}).canVote).toBe(false)
+    expect(roundVoteAccess({...input,now,participantCount:1,viewer:{id:'original',role:'voyager'}}).canVote).toBe(false)
+  })
+  it('limits every scope to Voyagers, and self to its owner',()=>{
+    for (const voteScope of ['all','voters']) {
+      expect(roundVoteAccess({...input,voteScope,viewer:{id:'member',role:'voyager'}}).canVote).toBe(true)
+      expect(roundVoteAccess({...input,voteScope,viewer:{id:'member',role:'architect'}}).canVote).toBe(true)
+      expect(roundVoteAccess({...input,voteScope,viewer:{id:'member',role:'applicant'}}).canVote).toBe(false)
+    }
+    expect(roundVoteAccess({...input,voteScope:'self',viewer:{id:'member',role:'voyager'}}).canVote).toBe(false)
+    expect(roundVoteAccess({...input,voteScope:'self',viewer:{id:'other',role:'voyager'}}).canVote).toBe(true)
+    expect(roundVoteAccess({...input,voteScope:'self',viewer:{id:'other',role:'applicant'}}).canVote).toBe(false)
+  })
+  it('keeps open windows votable during a pause but shuts the settling fallback',()=>{
+    expect(roundVoteAccess({...input,paused:true}).canVote).toBe(true)
+    expect(roundVoteAccess({...input,paused:true,now:Date.parse(closesAt)+1,viewer:{id:'original',role:'voyager'}})).toEqual({canVote:false,initiatorOnly:false,publicOpen:false})
   })
   it('never reopens ended, cancelled or not-yet-published rounds',()=>{
     for (const status of ['settled','cancelled','queued','processing'] as const) {

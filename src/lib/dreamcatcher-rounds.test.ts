@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 const state = vi.hoisted(() => ({ client: null as unknown }))
 vi.mock('server-only', () => ({}))
+vi.mock('./signal/dispatch-policy', () => ({ DREAMCATCHER_ROUNDS_ENABLED: true }))
 vi.mock('@/lib/supabase/server', () => ({ createAdminClient: () => state.client }))
 import { getRoundInvestigations } from './dreamcatcher-rounds'
 
@@ -35,7 +36,7 @@ describe('public round feed boundaries',()=>{
   it('removes zero-response rounds from everyone except the original submitter',async()=>{
     expect(await getRoundInvestigations(null)).toEqual([])
     expect(await getRoundInvestigations({id:'admin',role:'architect'})).toEqual([])
-    const own=await getRoundInvestigations({id:'owner',role:'applicant'})
+    const own=await getRoundInvestigations({id:'owner',role:'voyager'})
     expect(own[0].days[0].task.canRespond).toBe(true)
     expect(own[0].days[0].task.initiatorOnly).toBe(true)
   })

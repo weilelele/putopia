@@ -51,6 +51,7 @@ export function SignalVoteSheet({
   const cta = voteCta({
     loggedIn, canRespond: task.canRespond, closed: task.closed, initiatorOnly: !!task.initiatorOnly,
     mySelection: task.mySelection, selectedNumber: selectedIndex >= 0 ? selectedIndex + 1 : null,
+    lockReason: investigation.lockReason,
   })
   // Members who cannot vote may still look at the options; guests may try them.
   const locked = !!task.mySelection || task.closed

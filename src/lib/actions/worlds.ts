@@ -6,6 +6,9 @@ import type { WorldInsert, WorldUpdate, WorldFinalAsset, WorldFinalMedia } from 
 import { rollScanUntil } from '@/lib/signal/scan'
 import { logActivity } from './activity-events'
 import { requirePublishingArchitect, resolvePublishingIdentity } from '@/lib/publishing-identity'
+import { userCanSubmitObservation } from '@/lib/observation-access'
+import { OBSERVATION_ACCESS_ERROR } from '@/lib/observation-access-model'
+import { DREAMCATCHER_ROUNDS_ENABLED } from '@/lib/signal/dispatch-policy'
 
 /** Stable / verified worlds (the main archive). Public + identical for everyone,
  *  so cached 60 s to cut DB load on the console; edits self-heal within the window. */
@@ -100,6 +103,7 @@ export async function submitWorld(payload: {
     .single()
 
   if (!profile) return { error: 'Profile not found', data: null }
+  if (!await userCanSubmitObservation(user.id, profile.role)) return { error: OBSERVATION_ACCESS_ERROR, data: null }
 
   const discovererName = profile.display_name?.trim() || user.email?.split('@')[0] || 'Unknown Operative'
   // Share the legacy World entry with the atomic Parallax Array submission RPC.
@@ -156,8 +160,8 @@ export async function submitDreamcatcherWorld(payload: {
     .select('display_name, role')
     .eq('id', user.id)
     .maybeSingle()
-  if (!profile || !['applicant', 'voyager', 'architect'].includes(profile.role)) {
-    return { error: 'Applicant access or above is required.', data: null }
+  if (!profile || !await userCanSubmitObservation(user.id, profile.role)) {
+    return { error: OBSERVATION_ACCESS_ERROR, data: null }
   }
 
   if (!/^[0-9a-f-]{36}$/i.test(payload.submissionKey)) return { error: 'Invalid submission key', data: null }
@@ -532,7 +536,7 @@ export async function getDreamcatcherProgress(worldId: string) {
   if (error) throw new Error('Round progress unavailable')
   if (!round) return null
   const generation = round.dreamcatcher_generation_requests
-  return { roundNumber: round.round_number as number, status: round.status as string,
+  return { paused: !DREAMCATCHER_ROUNDS_ENABLED, roundNumber: round.round_number as number, status: round.status as string,
     generationStatus: (Array.isArray(generation) ? generation[0]?.status : generation?.status) as string | undefined,
     canStop: user?.id === round.initiator_id && !['settled','cancelled'].includes(round.status) }
 }
