@@ -100,7 +100,7 @@ export async function completeActivation(token: unknown, displayName: string, pa
   if (!claims) return { ok: false, reason: 'expired', message: 'This activation link has expired. Request a new one.' }
   const name = displayName.trim()
   if (!name || name.length > 40) return { ok: false, reason: 'invalid', message: 'ERR: DISPLAY NAME REQUIRED' }
-  if (password.length < 8) return { ok: false, reason: 'invalid', message: 'ERR: ACCESS CODE MUST BE AT LEAST 8 CHARACTERS' }
+  if (password.length < 8) return { ok: false, reason: 'invalid', message: 'ERR: PASSWORD MUST BE AT LEAST 8 CHARACTERS' }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = createAdminClient() as any
   const { data: { user }, error: userError } = await admin.auth.admin.getUserById(claims.userId)
