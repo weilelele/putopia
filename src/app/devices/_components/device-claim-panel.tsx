@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchiveSheet } from '@/components/archive-sheet'
+import { initiationReturnPath } from '@/app/voyager-initiation/navigation'
 import { claimInitiationConsole } from '@/lib/actions/initiation'
 import { deviceClaimState, type DeviceClaimAccess } from '@/lib/device-claim-state'
 export type { DeviceClaimAccess } from '@/lib/device-claim-state'
@@ -17,7 +18,6 @@ export function DeviceClaimPanel({ batch, access, ownedProgress }: {
   ownedProgress?: ReactNode
 }) {
   const router = useRouter()
-  const [explanationOpen, setExplanationOpen] = useState(false)
   const [confirmationOpen, setConfirmationOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
@@ -27,12 +27,7 @@ export function DeviceClaimPanel({ batch, access, ownedProgress }: {
   const hasClaim = state === 'claimed' || claimed
 
   async function claim() {
-    if (busy) return
-    if (!access.consoleClaim.eligible) {
-      setExplanationOpen(true)
-      return
-    }
-    if (state !== 'claim' || hasClaim) return
+    if (busy || state !== 'claim' || hasClaim) return
     setBusy(true)
     setMessage('')
     try {
@@ -67,8 +62,11 @@ export function DeviceClaimPanel({ batch, access, ownedProgress }: {
         <ArchiveButton variant="primary" fullWidth className={`${styles.primaryButton} ${styles.claimButton}`} disabled>ALLOCATION NOT OPEN</ArchiveButton>
       ) : state === 'unknown' ? (
         <ArchiveButton variant="primary" fullWidth className={`${styles.primaryButton} ${styles.claimButton}`} onClick={() => router.refresh()}>RETRY ACCESS CHECK</ArchiveButton>
+      ) : state === 'explain_initiation' ? (
+        // Initiation opens its briefing if this browser has not seen it, then lands on the bundles.
+        <ArchiveLinkButton variant="primary" fullWidth className={`${styles.primaryButton} ${styles.claimButton}`} href={initiationReturnPath(`/devices/batches/${batch.slug}`)}>CLAIM A CONSOLE</ArchiveLinkButton>
       ) : (
-        <ArchiveButton variant="primary" fullWidth className={`${styles.primaryButton} ${styles.claimButton}`} disabled={busy || (access.consoleClaim.eligible && full)} onClick={() => access.consoleClaim.eligible ? setConfirmationOpen(true) : setExplanationOpen(true)}>{busy ? 'CLAIMING…' : access.consoleClaim.eligible && full ? 'AWAITING AVAILABILITY' : 'CLAIM A CONSOLE'}</ArchiveButton>
+        <ArchiveButton variant="primary" fullWidth className={`${styles.primaryButton} ${styles.claimButton}`} disabled={busy || full} onClick={() => setConfirmationOpen(true)}>{busy ? 'CLAIMING…' : full ? 'AWAITING AVAILABILITY' : 'CLAIM A CONSOLE'}</ArchiveButton>
       ))}
     </div>
     {message ? <p className={styles.panelBody} role="status">{message}</p> : null}
@@ -79,12 +77,6 @@ export function DeviceClaimPanel({ batch, access, ownedProgress }: {
       <p>Claim a Console from <strong>{batch.name}</strong>?</p>
       <p>This uses your Console claim. To request a different batch before shipping, contact us; changes depend on availability. You cannot switch batches yourself.</p>
       {message && <p role="alert">{message}</p>}
-    </ArchiveSheet>
-    <ArchiveSheet open={explanationOpen} onClose={() => setExplanationOpen(false)} title="Voyager Initiation" footer={<div className="archive-sheet__actions">
-      <ArchiveButton variant="secondary" fullWidth onClick={() => setExplanationOpen(false)}>CANCEL</ArchiveButton>
-      <ArchiveLinkButton variant="primary" fullWidth href={`/voyager-initiation?from=${encodeURIComponent(`/devices/batches/${batch.slug}`)}`}>{access.legacyPackPurchased ? 'CONTINUE INITIATION' : 'GO TO INITIATION'}</ArchiveLinkButton>
-    </div>}>
-      <p>Complete Voyager Initiation and payment to apply for a Console.</p>
     </ArchiveSheet>
   </section>
 }
