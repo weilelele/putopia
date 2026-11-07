@@ -22,7 +22,7 @@ export function DeviceClaimPanel({ batch, access, ownedProgress }: {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [claimed, setClaimed] = useState(false)
-  const state = deviceClaimState(access, batch.inventory)
+  const state = deviceClaimState(access, batch.inventory, batch.status)
   const full = state === 'waiting_for_capacity'
   const hasClaim = state === 'claimed' || claimed
 
@@ -58,6 +58,8 @@ export function DeviceClaimPanel({ batch, access, ownedProgress }: {
     <div className={styles.claimRow}>
       {ownedProgress ?? (hasClaim ? (
         <ArchiveLinkButton variant="primary" fullWidth className={`${styles.primaryButton} ${styles.claimButton}`} href="/devices/my-consoles">CHECK MY PROGRESS</ArchiveLinkButton>
+      ) : state === 'searching' ? (
+        <ArchiveButton variant="primary" fullWidth className={`${styles.primaryButton} ${styles.claimButton}`} disabled>SEARCH IN PROGRESS</ArchiveButton>
       ) : state === 'unconfigured' ? (
         <ArchiveButton variant="primary" fullWidth className={`${styles.primaryButton} ${styles.claimButton}`} disabled>ALLOCATION NOT OPEN</ArchiveButton>
       ) : state === 'unknown' ? (
