@@ -347,6 +347,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           <h3 id={`faq-${group.id}`}>{group.title}</h3>
           {group.items.map(item => <details key={item.question} className={styles.faqItem}>
             <summary>{item.question}</summary><p>{item.answer}{'detailsLink' in item && <> See <Link href={item.detailsLink}>Delivery &amp; aftercare</Link> for fulfillment and access rules.</>}</p>
+            {'dispatches' in item && <ul>{item.dispatches.map(pack => <li key={pack.label}><strong>{pack.label}:</strong> {pack.month}</li>)}</ul>}
+            {'paragraphs' in item && item.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
           </details>)}
         </section>)}
       </section>
