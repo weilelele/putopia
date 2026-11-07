@@ -1,6 +1,9 @@
 .page {
   width: 100%;
-  min-height: 100dvh;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   padding: 56px 24px 112px;
   background: var(--color-deep);
   color: var(--color-star);
