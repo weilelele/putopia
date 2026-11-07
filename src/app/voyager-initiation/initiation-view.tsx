@@ -60,6 +60,28 @@ const packs = [
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
 ]
 
+// Square focal regions in the original photographs; no generated mockup is shipped.
+const bundleImages = [
+  { label: 'Pack 1', image: packs[0].image, alt: 'Orange Voyager badge on a desk', crop: [420, 601, 120, 365, 170] },
+  { label: 'Pack 2', image: '/assets/voyager-initiation/antenna-still-life-v1.jpg', alt: 'Brass Antenna design study, with its full outline visible', crop: [1536, 1024, 580, -40, 650] },
+  { label: 'Pack 3', image: '/assets/kyoto-one-20260910/01-warehouse-hero.png', alt: 'Multiverse Console on a workshop table', crop: [1536, 1024, 240, 0, 1056] },
+  { label: 'Pack 4', image: packs[3].image, alt: 'Sealed deep-blue envelope on a desk; contents to be announced', crop: [1536, 1024, 0, -256, 1536] },
+  { label: 'Mission', image: '/assets/voyager-initiation/mission-board-v10.png', alt: 'Mission Board displayed on a phone', crop: [1536, 1024, 650, 120, 850] },
+  { label: 'Membership', image: packs[0].image, alt: 'Welcome letter in its brown Collective folio', crop: [420, 601, 95, 185, 200] },
+] as const
+
+function BundleImages({ bundle }: { bundle: 'initial' | 'standard' }) {
+  const images = bundle === 'initial' ? bundleImages.filter(image => image.label !== 'Pack 3' && image.label !== 'Pack 4') : bundleImages
+  return <span className={`${styles.bundleImages} ${bundle === 'initial' ? styles.initialImages : ''}`}>
+    {images.map(({ label, image, alt, crop: [width, height, left, top, size] }) => <span className={styles.bundleBenefit} key={label}>
+      <span className={styles.bundleCircle}>
+        <SmartImage src={image} alt={alt} width={width} height={height} sizes={`${Math.ceil(width / size * (bundle === 'initial' ? 120 : 170))}px`} style={{ position: 'absolute', width: `${width / size * 100}%`, height: `${height / size * 100}%`, left: `${-left / size * 100}%`, top: `${-top / size * 100}%`, maxWidth: 'none' }} />
+      </span>
+      <span>{label}</span>
+    </span>)}
+  </span>
+}
+
 export type InitiationViewProps = {
   initialBundle?: 'initial' | 'standard'
   members?: InitiationPublicMember[]
@@ -239,27 +261,33 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           <p className={styles.eyebrow}>Your initiation</p>
           <h2 className={styles.purchaseTitle}>{legacy ? 'Activate Packs 3–4.' : 'Choose your bundle.'}</h2>
           {legacy ? <p className={styles.paymentTerms}>Add the remaining two packs. Your existing Voyager membership stays with you.</p> : <div className={styles.sharedBenefits}>
-            <p>Voyager membership included in both.</p>
+            <p>Voyager membership + remote Array access in both.</p>
           </div>}
           <fieldset className={styles.bundleChoices} disabled={busy}>
             <legend className="sr-only">{legacy ? 'Your Voyager upgrade' : 'Choose a Voyager bundle'}</legend>
             {(legacy ? ['legacy_upgrade'] as const : ['initial', 'standard'] as const).map(option => <label className={`${styles.bundleCard} ${kind === option ? styles.bundleSelected : ''}`} key={option}>
-              <input type="radio" name="voyager-bundle" value={option} aria-labelledby={`bundle-name-${option} bundle-price-${option}`} aria-describedby={`bundle-detail-${option}${option !== 'standard' ? ` bundle-note-${option}` : ''}`} checked={kind === option} onChange={() => { if (option !== 'legacy_upgrade') setBundle(option) }} />
+              <input type="radio" name="voyager-bundle" value={option} aria-labelledby={`bundle-name-${option} bundle-price-${option}`} aria-describedby={kind === option && option !== 'legacy_upgrade' ? undefined : `bundle-detail-${option}${option !== 'standard' ? ` bundle-note-${option}` : ''}`} checked={kind === option} onChange={() => { if (option !== 'legacy_upgrade') setBundle(option) }} />
               <span className={styles.bundleCopy}>
                 <span className={styles.bundleHeading}><span id={`bundle-name-${option}`}>{INITIATION_PRICES[option].name}</span><strong ref={kind === option ? priceRef : undefined} id={`bundle-price-${option}`}>{initiationPriceLabel(option)}</strong></span>
-                <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? <>Voyager badge &amp; Antenna.<br />Remote access to the Parallax Array.</> : option === 'standard' ? 'Everything in Initial, plus Console and Pack 4.' : 'One Multiverse Console and the fourth delivery.'}</span>
-                {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? `Add Console + Pack 4 later for ${initiationPriceLabel('legacy_upgrade')}.` : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
+                {(kind !== option || option === 'legacy_upgrade') && <>
+                  <span className={styles.bundleDetail} id={`bundle-detail-${option}`}>{option === 'initial' ? 'Packs 1–2' : option === 'standard' ? 'Packs 1–4 · Console included.' : 'One Multiverse Console and the fourth delivery.'}</span>
+                  {option !== 'standard' && <span className={styles.bundleNote} id={`bundle-note-${option}`}>{option === 'initial' ? `Add Console + Pack 4 later for ${initiationPriceLabel('legacy_upgrade')}.` : 'For Initial Pack members, including historical $12 buyers. Your first two packs stay with you.'}</span>}
+                </>}
               </span>
+              {kind === option && option !== 'legacy_upgrade' && <BundleImages bundle={option} />}
             </label>)}
           </fieldset>
-          <p className={styles.paymentTerms}>One payment. No subscription.</p>
+          <div className={styles.purchaseTerms}>
+            <p>One payment. No subscription.</p>
+            <p>Card authorized first; charged after delivery check.</p>
+          </div>
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : soldOut ? 'FULLY CLAIMED' : `${legacy ? 'UPGRADE' : 'CONTINUE'} · ${initiationPriceLabel(kind)}`}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
           </ArchiveButton>
           {error && <p ref={checkoutErrorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
-            <p>Contiguous US. Shipping &amp; taxes included.</p>
+            <p>48 contiguous US states + DC. Shipping &amp; taxes included.</p>
             <Link className={styles.textLink} href="/terms/initiation">Delivery &amp; aftercare <ArrowRight size={18} aria-hidden /></Link>
           </section>
           {!availability.checkoutOpen && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
