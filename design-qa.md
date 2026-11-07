@@ -74,3 +74,9 @@ final result: passed
 Latest scoped report: [Button typography QA](docs/design/button-typography-20261028/design-qa.md). Shared primary/secondary buttons and links use Courier Prime, 16px, weight 400 and 24px line height. Authentication, activation welcome, Dashboard, Voyagers, dialog, World action fixtures and local admin forms were checked in the production build. Portrait 390px, narrow 320px and desktop evidence, computed styles and source-audit boundaries are recorded in the report. No production data writes or schema changes.
 
 final result: passed
+
+## Initiation bundle selection — 2026-11-07
+
+Scoped isolated-main PR report: [Initiation bundle cards QA](docs/design/initiation-bundle-circles-20261107/design-qa.md). The selected card expands four/six original-image benefits; shared transaction copy is consolidated and inactive Initial retains only Packs 1–2 plus the $460 add-on note. Main checkout/FAQ/briefing contracts are preserved. Verified 390×844, 320×844, 200% text and 1440×1000; five repository gates pass, with 946 tests and no lint errors. No merge or production deployment.
+
+final result: passed
