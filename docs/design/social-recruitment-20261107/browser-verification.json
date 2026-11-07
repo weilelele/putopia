@@ -1,0 +1,50 @@
+[
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "bodyLineHeight": "30.4px",
+    "bodyFontSize": "16px",
+    "minimumFont": 13,
+    "sectionGap": "64px",
+    "images": true,
+    "title": "Social Media & Community Intern — Multiverse Collective",
+    "canonical": "https://multiverseco.org/recruit/social"
+  },
+  {
+    "viewport": {
+      "width": 320,
+      "height": 844
+    },
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "bodyLineHeight": "30.4px",
+    "bodyFontSize": "16px",
+    "minimumFont": 13,
+    "sectionGap": "64px",
+    "images": true,
+    "title": "Social Media & Community Intern — Multiverse Collective",
+    "canonical": "https://multiverseco.org/recruit/social"
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "status": 200,
+    "errors": [],
+    "overflow": false,
+    "bodyLineHeight": "30.4px",
+    "bodyFontSize": "16px",
+    "minimumFont": 13,
+    "sectionGap": "80px",
+    "images": true,
+    "title": "Social Media & Community Intern — Multiverse Collective",
+    "canonical": "https://multiverseco.org/recruit/social"
+  }
+]
