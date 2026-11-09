@@ -2,7 +2,8 @@ import 'server-only'
 import { createHmac } from 'node:crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
-import { activationEmail, createActivationToken, readActivationToken, verifyActivationToken, type ActivationClaims, type ActivationPurpose } from '@/lib/activation-link'
+import { activationEmail, createActivationToken, verifyActivationToken, type ActivationPurpose } from '@/lib/activation-link'
+import type { RegistrationErrorCode } from '@/lib/registration-errors'
 
 /** Activation links are signed with a dedicated secret when set, else a key derived from the service-role key. */
 function activationSecret(): string {
@@ -11,10 +12,6 @@ function activationSecret(): string {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceKey) throw new Error('Activation links are not configured')
   return createHmac('sha256', serviceKey).update('putopia:activation-link:v1').digest('hex')
-}
-
-export function readActivation(token: unknown): ActivationClaims | null {
-  return readActivationToken(token, activationSecret(), Date.now())
 }
 
 export async function findAuthUserByEmail(email: string) {
@@ -89,40 +86,74 @@ export async function sendActivationEmail(input: { userId: string; email: string
   return sendEmail({ to: input.email, timeoutMs: input.timeoutMs, ...activationEmail(activationLink(input.userId, input.next), input.purpose) })
 }
 
-export type ActivationResult = { ok: true; email: string; next: string | null } | { ok: false; reason: 'expired' | 'activated' | 'invalid' | 'failed'; message: string }
+export type ActivationResult =
+  | { ok: true; email: string; next: string | null }
+  | { ok: false; reason: 'activated'; message: string }
+  | { ok: false; reason: 'expired' | 'invalid' | 'failed'; errorCode: RegistrationErrorCode; message: string }
+
+const activationFailedMessage = 'ERR: ACCOUNT COULD NOT BE ACTIVATED. PLEASE TRY AGAIN.'
 
 /**
  * Sets the password and display name for the account named by an activation link.
  * The link stays usable until this succeeds; afterwards the account signs in with its password.
  */
 export async function completeActivation(token: unknown, displayName: string, password: string): Promise<ActivationResult> {
-  const claims = readActivation(token)
-  if (!claims) return { ok: false, reason: 'expired', message: 'This activation link has expired. Request a new one.' }
+  const claims = verifyActivationToken(token, activationSecret())
+  if (!claims || claims.expiresAt <= Date.now()) {
+    return {
+      ok: false, reason: 'expired', errorCode: claims ? 'link_expired' : 'link_invalid',
+      message: 'This activation link has expired. Request a new one.',
+    }
+  }
   const name = displayName.trim()
-  if (!name || name.length > 40) return { ok: false, reason: 'invalid', message: 'ERR: DISPLAY NAME REQUIRED' }
-  if (password.length < 8) return { ok: false, reason: 'invalid', message: 'ERR: PASSWORD MUST BE AT LEAST 8 CHARACTERS' }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const admin = createAdminClient() as any
-  const { data: { user }, error: userError } = await admin.auth.admin.getUserById(claims.userId)
-  if (userError || !user?.email) return { ok: false, reason: 'expired', message: 'This activation link is no longer valid. Request a new one.' }
-  if ((await accountState(user.id)).activated) return { ok: false, reason: 'activated', message: 'This account is already activated. Log in with your password.' }
-  const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
-    password, email_confirm: true, user_metadata: { ...user.user_metadata, display_name: name },
-  })
-  if (updateError) return { ok: false, reason: 'failed', message: `ERR: ${String(updateError.message).toUpperCase()}` }
-  const { error: profileError } = await admin.from('voyager_profiles')
-    .update({ display_name: name, email: user.email.toLowerCase(), registered_at: new Date().toISOString() })
-    .eq('id', user.id).is('registered_at', null)
-  if (profileError) return { ok: false, reason: 'failed', message: 'ERR: ACCOUNT COULD NOT BE ACTIVATED. PLEASE TRY AGAIN.' }
-  return { ok: true, email: user.email, next: claims.next }
+  if (!name || name.length > 40) return { ok: false, reason: 'invalid', errorCode: 'activation_input_invalid', message: 'ERR: DISPLAY NAME REQUIRED' }
+  if (password.length < 8) return { ok: false, reason: 'invalid', errorCode: 'activation_input_invalid', message: 'ERR: PASSWORD MUST BE AT LEAST 8 CHARACTERS' }
+
+  const admin = createAdminClient()
+  let errorCode: RegistrationErrorCode = 'link_check_failed'
+  try {
+    const { data: { user }, error: userError } = await admin.auth.admin.getUserById(claims.userId)
+    if (userError || !user?.email) {
+      return {
+        ok: false, reason: 'expired',
+        errorCode: !userError || userError.code === 'user_not_found' ? 'link_account_missing' : 'link_check_failed',
+        message: 'This activation link is no longer valid. Request a new one.',
+      }
+    }
+    if ((await accountState(user.id)).activated) return { ok: false, reason: 'activated', message: 'This account is already activated. Log in with your password.' }
+
+    errorCode = 'password_update_failed'
+    const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
+      password, email_confirm: true, user_metadata: { ...user.user_metadata, display_name: name },
+    })
+    if (updateError) return { ok: false, reason: 'failed', errorCode, message: `ERR: ${updateError.message.toUpperCase()}` }
+
+    errorCode = 'profile_write_failed'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profile, error: profileError } = await (admin as any).from('voyager_profiles')
+      .update({ display_name: name, email: user.email.toLowerCase(), registered_at: new Date().toISOString() })
+      .eq('id', user.id).is('registered_at', null).select('id').maybeSingle()
+    if (profileError) return { ok: false, reason: 'failed', errorCode, message: activationFailedMessage }
+    // A concurrent activation may have already completed the conditional write.
+    if (!profile && !(await accountState(user.id)).activated) {
+      return { ok: false, reason: 'failed', errorCode: 'profile_not_saved', message: activationFailedMessage }
+    }
+    return { ok: true, email: user.email, next: claims.next }
+  } catch {
+    return { ok: false, reason: 'failed', errorCode, message: activationFailedMessage }
+  }
 }
 
+type ActivationStatus =
+  | { status: 'ready' | 'activated'; next: string | null }
+  | { status: 'expired'; errorCode: 'link_invalid' | 'link_expired' | 'link_check_failed' }
+
 /** Whether an activation link can still set a password, for the page to show the right state up front. */
-export async function activationStatus(token: unknown): Promise<{ status: 'ready' | 'expired' | 'activated'; next: string | null }> {
+export async function activationStatus(token: unknown): Promise<ActivationStatus> {
   // A signed old link can identify an already-activated account, but cannot set credentials.
   const claims = verifyActivationToken(token, activationSecret())
-  if (!claims) return { status: 'expired', next: null }
+  if (!claims) return { status: 'expired', errorCode: 'link_invalid' }
   if ((await accountState(claims.userId)).activated) return { status: 'activated', next: null }
-  if (claims.expiresAt <= Date.now()) return { status: 'expired', next: null }
+  if (claims.expiresAt <= Date.now()) return { status: 'expired', errorCode: 'link_expired' }
   return { status: 'ready', next: claims.next }
 }
