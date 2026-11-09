@@ -77,15 +77,17 @@
 @keyframes pop { from { transform: scale(0); } }
 @keyframes push { to { transform: scale(1.07); } }
 
+/* 0 · receiving: the launch wordmark covers the stage below the top bar until page 1's films are downloaded,
+   then fades over page 1 (RECEIVE_LEAVE_MS in briefing-receive.tsx). */
+.receive { position: absolute; z-index: 4; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--color-deep); transition: opacity 360ms ease; }
+.receive[data-leaving] { opacity: 0; pointer-events: none; }
+
 /* 1 · device */
 .p1 { container-type: size; background: #000; }
 .film { position: absolute; left: 0; right: 0; top: calc(88px + env(safe-area-inset-top, 0px)); height: 75cqw; overflow: hidden; background: #000; }
 .film video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
 .film video[data-show] { opacity: 1; }
-.lamp { position: absolute; inset: 0; background: #000; opacity: 1; }
-.lamp[data-on] { animation: lamp 3s cubic-bezier(.45,0,.55,1) infinite; }
-@keyframes lamp { 0% { opacity: 1; } 38% { opacity: .04; } 62% { opacity: .04; } 100% { opacity: 1; } }
-.p1Copy { position: absolute; left: 0; right: 0; top: calc(88px + env(safe-area-inset-top, 0px) + 75cqw + 28px); gap: 12px; --kicker-delay: 1900ms; --base: 2100ms; }
+.p1Copy { position: absolute; left: 0; right: 0; top: calc(88px + env(safe-area-inset-top, 0px) + 75cqw + 28px); gap: 12px; --kicker-delay: 300ms; --base: 500ms; }
 
 /* 2 · collective */
 .p2Media { position: absolute; left: 0; right: 0; top: 0; height: 60%; background: #000; overflow: hidden; }
@@ -264,5 +266,4 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dialog *, .dialog *::before, .dialog *::after { animation: none !important; transition: none !important; }
-  .lamp { display: none; }
 }

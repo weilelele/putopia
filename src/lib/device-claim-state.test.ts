@@ -22,4 +22,18 @@ describe('Device claim states', () => {
   it('keeps already claimed access even when the batch is full', () => {
     expect(deviceClaimState({ ...eligible, consoleClaim: { ...eligible.consoleClaim, claimed: true } }, { listingQuantity: 50, claimedQuantity: 50 })).toBe('claimed')
   })
+  it('offers no claim on a Search batch, with or without an entitlement', () => {
+    const inventory = { listingQuantity: 50, claimedQuantity: 0 }
+    expect(deviceClaimState(eligible, inventory, 'searching')).toBe('searching')
+    expect(deviceClaimState({ ...eligible, status: 'guest', consoleClaim: { eligible: false, claimed: false, href: null } }, inventory, 'searching')).toBe('searching')
+    expect(deviceClaimState({ ...eligible, status: 'unknown' }, inventory, 'searching')).toBe('searching')
+  })
+  it('keeps an existing claim on a Search batch showing as claimed', () => {
+    expect(deviceClaimState({ ...eligible, consoleClaim: { ...eligible.consoleClaim, claimed: true } }, undefined, 'searching')).toBe('claimed')
+  })
+  it('leaves Claim and later stages to the entitlement and inventory checks', () => {
+    expect(deviceClaimState(eligible, { listingQuantity: 50, claimedQuantity: 12 }, 'claiming')).toBe('claim')
+    expect(deviceClaimState(eligible, { listingQuantity: 50, claimedQuantity: 50 }, 'pack_one')).toBe('waiting_for_capacity')
+    expect(deviceClaimState({ ...eligible, status: 'guest', consoleClaim: { eligible: false, claimed: false, href: null } }, undefined, 'claiming')).toBe('explain_initiation')
+  })
 })

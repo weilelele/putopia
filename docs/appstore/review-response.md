@@ -30,7 +30,7 @@ Information → Notes field.
    it is live for the iOS shell after deploy and no new binary is needed, but
    test it on a physical iPhone before replying.
 7. **24-hour moderation commitment.** Someone on the team must actually check
-   `/admin/reports` (and the report emails to voyagers@multiverseco.org) daily.
+   `/admin/reports` (and the report emails to architect@multiverseco.org) daily.
 
 ## 2. Purpose and target audience
 

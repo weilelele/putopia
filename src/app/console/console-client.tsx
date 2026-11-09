@@ -27,7 +27,7 @@ export default function ConsoleClient({ initial: data, overview, updates, events
       </div>
       <p className={styles.description}>We own devices looking into parallel worlds.</p>
       <div className={styles.actions}>
-        <ArchiveLinkButton href={REQUEST_ACCESS_HREF} variant="primary">REQUEST ACCESS</ArchiveLinkButton>
+        <ArchiveLinkButton href={REQUEST_ACCESS_HREF} variant="primary">CREATE ACCOUNT</ArchiveLinkButton>
         <ArchiveLinkButton href="/login" variant="secondary">LOG IN</ArchiveLinkButton>
       </div>
     </section>}

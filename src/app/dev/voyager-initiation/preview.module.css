@@ -3,3 +3,6 @@
 .notice nav { display: flex; flex-wrap: wrap; gap: var(--s-4); }
 .notice a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-nucleus); }
 .notice a:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
+
+/* Fixture-only text resizing keeps the viewport fixed for the 200% text check. */
+:global(html):has(.notice[data-initiation-large-text]) { font-size: 200%; }

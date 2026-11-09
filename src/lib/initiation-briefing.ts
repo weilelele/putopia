@@ -1,4 +1,4 @@
-import { canClaimDeviceBatch, type DeviceBatchStatus, DEVICE_BATCH_PHASES } from './device-batches'
+import { canClaimDeviceBatch, deviceBatchStage, type DeviceBatchStage, type DeviceBatchStatus, DEVICE_BATCH_STAGES } from './device-batches'
 import type { InitiationPaymentStatus, InitiationStatus } from './initiation-types'
 
 /** First-visit Voyager briefing shown over /voyager-initiation. Pure rules only; no DOM, storage or network. */
@@ -83,9 +83,22 @@ export function briefingTapTarget(page: number, blocked: boolean): number | null
   return next === page ? null : next
 }
 
+/**
+ * The briefing opens on the wordmark shuffling until page 1's film is downloaded. It never strands a slow connection:
+ * after `hardMs`, or if the download fails, the briefing opens on the film's poster while the film streams.
+ */
+export const BRIEFING_RECEIVE = { hardMs: 12000 } as const
+export type BriefingReceiveOutcome = 'ready' | 'failed' | 'timeout'
+
+export function briefingReceiveOutcome(input: { elapsedMs: number; ready: boolean; settled: boolean }): BriefingReceiveOutcome | null {
+  if (input.ready) return 'ready'
+  if (input.settled) return 'failed'
+  return input.elapsedMs >= BRIEFING_RECEIVE.hardMs ? 'timeout' : null
+}
+
 export type BriefingRegion = { name: string; open: boolean; phase: number; phases: number; phaseLabel: string }
 
-const PHASE_LABEL: Record<DeviceBatchStatus, string> = { searching: 'Searching', claiming: 'Claiming', pack_one: 'Pack 1', pack_two: 'Pack 2', console: 'Console' }
+const PHASE_LABEL: Record<DeviceBatchStage, string> = { searching: 'Searching', claiming: 'Claiming', delivering: 'Delivering' }
 
 /** Public batch facts only: city, whether a claim is open, and the published phase. */
 export function briefingRegions(batches: { location: string; status: DeviceBatchStatus }[], limit = 5): BriefingRegion[] {
@@ -95,7 +108,8 @@ export function briefingRegions(batches: { location: string; status: DeviceBatch
     const name = (batch.location.split(',')[0] ?? '').trim().toUpperCase()
     if (!name || seen.has(name)) continue
     seen.add(name)
-    regions.push({ name, open: canClaimDeviceBatch(batch.status), phase: DEVICE_BATCH_PHASES.indexOf(batch.status) + 1, phases: DEVICE_BATCH_PHASES.length, phaseLabel: PHASE_LABEL[batch.status] })
+    const stage = deviceBatchStage(batch.status)
+    regions.push({ name, open: canClaimDeviceBatch(batch.status), phase: DEVICE_BATCH_STAGES.indexOf(stage) + 1, phases: DEVICE_BATCH_STAGES.length, phaseLabel: PHASE_LABEL[stage] })
   }
   return regions.sort((a, b) => Number(b.open) - Number(a.open)).slice(0, limit)
 }

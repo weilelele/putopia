@@ -27,7 +27,6 @@ export function ActivationWelcome({ frame }: { frame?: number }) {
   return <main className={styles.page}>
     <div className={styles.welcome}>
       <header className={styles.intro}>
-        <p className={styles.status}>ACCOUNT ACTIVATED</p>
         <h1 className={styles.heading}>The unknown<br />is waiting.</h1>
         <p className={styles.description}>Your account is ready.<br />Discover what comes next.</p>
       </header>

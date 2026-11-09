@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Bell, MapPin } from 'lucide-react'
-import { DEVICE_BATCH_STATUS, type DeviceBatch } from '@/lib/device-batches'
+import { DEVICE_BATCH_STAGE_LABEL, deviceBatchStage, type DeviceBatch } from '@/lib/device-batches'
 import { FollowBatchButton } from './batch-actions'
 import { useFollowedBatchSlugs } from './use-followed-batches'
 import styles from '../device-batches.module.css'
@@ -45,7 +45,7 @@ export function FollowedBatchList({ batches }: { batches: DeviceBatch[] }) {
             />
           </Link>
           <div className={styles.followedBatchBody}>
-            <span>{DEVICE_BATCH_STATUS[batch.status].shortLabel}</span>
+            <span>{DEVICE_BATCH_STAGE_LABEL[deviceBatchStage(batch.status)].shortLabel}</span>
             <h3>{batch.name}</h3>
             <p>
               <MapPin aria-hidden size={13} /> {batch.location}

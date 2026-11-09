@@ -245,6 +245,7 @@ export default function IntelAdmin() {
                     <span style={{ fontSize: 'var(--fs-caption)', color: (i.images?.length ?? 0) > 0 ? '#20D890' : 'rgba(245,245,245,0.35)' }}>
                       {(i.images?.length ?? 0) > 0 ? `${i.images.length} 张` : '—'}
                     </span>
+                    {i.video_url && <span style={{ display: 'block', fontSize: 'var(--fs-caption)', color: '#20D890' }}>视频</span>}
                   </td>
                   <td style={{ ...S.td, fontSize: 'var(--fs-caption)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {i.publisher_name ?? <span style={{ color: 'rgba(245,245,245,0.35)' }}>—</span>}

@@ -9,7 +9,7 @@ import { dashboardIntelUpdate, type DashboardUpdate } from './dashboard-model'
 const readDashboardUpdateSources = unstable_cache(async () => {
   const db = createAdminClient()
   const [intel, established, members, batches, activity] = await Promise.all([
-    db.from('intel').select('id,title,content,images,classified,timestamp,publisher_id,publisher_name').order('timestamp', { ascending:false }).limit(10),
+    db.from('intel').select('id,title,content,images,video_poster_url,classified,timestamp,publisher_id,publisher_name').order('timestamp', { ascending:false }).limit(10),
     db.from('activity_events').select('id,created_at,target_id,target_title,target_image,target_href').eq('event_type','world_established').eq('is_visible',true).order('created_at',{ascending:false}).limit(30),
     db.from('activity_events').select('id,created_at,actor_name,actor_id,target_href').eq('event_type','voyager_activated').or('actor_role.is.null,actor_role.neq.architect').eq('is_visible',true).order('created_at',{ascending:false}).limit(20),
     db.from('device_batches').select('published_content,publication_status,revision,listing_quantity,claimed_quantity,reserved_quantity,price_amount,price_currency')
@@ -21,7 +21,7 @@ const readDashboardUpdateSources = unstable_cache(async () => {
   const publisherIds = [...new Set((intel.data ?? []).flatMap(item => item.publisher_id ? [item.publisher_id] : []))]
   const publishers = publisherIds.length ? await db.from('voyager_profiles').select('id,avatar_url').in('id',publisherIds) : {data:[],error:null}
   return { intel, established, members, batches, activity, publishers, incomplete: incomplete || Boolean(publishers.error) }
-}, ['dashboard-update-sources-v1'], { revalidate:30 })
+}, ['dashboard-update-sources-v2'], { revalidate:30 })
 
 /** Read enough candidates for category caps and entity deduplication before the global cutoff. */
 export async function readDashboardUpdates(permission: boolean | Promise<boolean>): Promise<{ updates: DashboardUpdate[]; incomplete: boolean }> {

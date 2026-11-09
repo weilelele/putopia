@@ -1,6 +1,7 @@
 'use client'
 import { PublisherIdentity } from '@/components/news-content'
 import { BackLink } from '@/components/back-link'
+import { IntelVideo } from '@/components/intel-video'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
@@ -137,6 +138,13 @@ function IntelDetailContent({ scope }: { scope: string }) {
             </article>
           </div>
         </ArchiveCard>
+
+        {entry.video_url && (
+          <div style={{ marginBottom: '2rem' }}>
+            <ArchiveSectionLabel>VIDEO</ArchiveSectionLabel>
+            <IntelVideo src={entry.video_url} poster={entry.video_poster_url} title={entry.title} />
+          </div>
+        )}
 
         {/* Full-color images — revealed at detail level */}
         {hasImages && (

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  BRIEFING_PAGES, BRIEFING_VERSION, briefingAudience, briefingLoopWindow, briefingSoundOn, briefingLinkOpens, briefingRecord, briefingRegions, briefingSeats,
+  BRIEFING_PAGES, BRIEFING_RECEIVE, BRIEFING_VERSION, briefingAudience, briefingLoopWindow, briefingSoundOn, briefingLinkOpens, briefingReceiveOutcome, briefingRecord, briefingRegions, briefingSeats,
   briefingTapTarget, clampBriefingPage, readBriefingRecord, shouldAutoOpenBriefing,
 } from './initiation-briefing'
 
@@ -69,6 +69,8 @@ describe('Voyager briefing content', () => {
     ])
     expect(regions.map(r => [r.name, r.open, r.phase])).toEqual([['KYOTO', true, 2], ['SHANGHAI', false, 1], ['KYOTO RESTORATION ROOM', false, 1]])
     expect(regions[0].phaseLabel).toBe('Claiming')
+    expect(regions[0].phases).toBe(3)
+    expect(briefingRegions([{ location: 'Kyoto, Japan', status: 'pack_two' }])[0]).toMatchObject({ phase: 3, phaseLabel: 'Delivering' })
     expect(briefingRegions(Array.from({ length: 9 }, (_, i) => ({ location: `City ${i}`, status: 'searching' as const }))).length).toBe(5)
   })
 
@@ -97,5 +99,23 @@ describe('Voyager briefing theme', () => {
     const rate = 1000
     expect(briefingLoopWindow(new Float32Array(rate * 3), rate, 2)).toEqual({ start: 0, end: 2 })
     expect(briefingLoopWindow(new Float32Array(rate).fill(.2), rate, 2)).toEqual({ start: 0, end: 1 })
+  })
+})
+
+describe('Voyager briefing receiving screen', () => {
+  const at = (elapsedMs: number, ready = false, settled = ready) => briefingReceiveOutcome({ elapsedMs, ready, settled })
+
+  it('holds until the film is downloaded', () => {
+    expect(at(500)).toBeNull()
+    expect(at(0, true)).toBe('ready')
+  })
+
+  it('opens without the film when its download fails', () => {
+    expect(at(500, false, true)).toBe('failed')
+  })
+
+  it('never strands a slow connection', () => {
+    expect(at(BRIEFING_RECEIVE.hardMs - 1)).toBeNull()
+    expect(at(BRIEFING_RECEIVE.hardMs)).toBe('timeout')
   })
 })
