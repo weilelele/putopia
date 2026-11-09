@@ -33,7 +33,7 @@ the member to close all Console tabs and reopen, without reporting success.
 - `DELETE /api/push/web/subscription`: disables only the signed-in owner's endpoint.
 - `POST /api/push/web/campaign`: architect session + same-origin, or a separately
   configured `WEB_PUSH_CAMPAIGN_SECRET` bearer. Default action is `preview`.
-- `/admin/web-push`: architect-only counts and a PREVIEW ONLY form; no send button.
+- `/admin/web-push`: architect-only counts and a preview form. The current batch can be sent after a successful preview only when the server send flag is enabled, the preview found eligible devices, and the operator types the exact campaign key.
 - `POST /api/push/web/events`: unguessable per-delivery capability token, same-origin,
   monotonic display/click timestamps; no permission to read records or send.
 
@@ -58,7 +58,7 @@ the same campaign spec to continue; stop when `nextCursor` is null. Ordering is
 by subscription UUID with an exclusive cursor, so disabling an earlier device
 does not shift subsequent pages. Each request retains authorization, explicit
 recipients, the send lock, opt-out checks and campaign/device deduplication.
-The admin form exposes PREVIEW NEXT BATCH only; editing any field resets paging.
+The admin form previews each batch separately. Editing any field invalidates the preview and resets paging. Sending rechecks live eligibility and reports provider acceptance, skips, or failures. A failed or uncertain response requires inspecting delivery records before retrying.
 A recipient list is mandatory. There is no implicit broadcast-to-all default.
 Duplicate campaign/subscription sends are skipped, including uncertain failures.
 Do not retry a claimed delivery under a new key without investigating its log.
