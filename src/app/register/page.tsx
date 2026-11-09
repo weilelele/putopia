@@ -15,6 +15,13 @@ import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 import { registrationLandingPath } from '@/lib/registration-landing'
 import { takePostRegisterRedirect } from '@/lib/post-register-redirect'
 import { activateAccount, checkActivationLink } from '@/lib/actions/activation'
+import { REGISTRATION_ERROR_EVENT, type RegistrationErrorCode } from '@/lib/registration-errors'
+
+function trackRegistrationError(errorCode: RegistrationErrorCode) {
+  try {
+    posthog.capture(REGISTRATION_ERROR_EVENT, { error_code: errorCode }, { send_instantly: true })
+  } catch { /* Analytics must not interrupt registration. */ }
+}
 
 async function trackRegistration(userId: string, email: string | undefined, displayName: string) {
   const experimentGroup = await getOrAssignExperimentGroup()
@@ -52,13 +59,25 @@ export default function RegisterPage() {
   // Guard: an activation link that can still set a password, or an active session (older invite links via /auth/callback)
   useEffect(() => {
     const key = new URLSearchParams(window.location.search).get('key')
-    if (key) {
-      checkActivationLink(key).then((result) => {
-        if (result.status === 'expired') router.replace('/auth/expired')
-        else if (result.status === 'activated') window.location.replace(result.destination)
-        else { setActivationKey(key); setChecking(false) }
+    if (key !== null) {
+      let current = true
+      void checkActivationLink(key).then((result) => {
+        if (!current) return
+        if (result.status === 'expired') {
+          trackRegistrationError(result.errorCode)
+          router.replace('/auth/expired')
+        } else if (result.status === 'activated') {
+          window.location.replace(result.destination)
+        } else {
+          setActivationKey(key)
+          setChecking(false)
+        }
+      }, () => {
+        if (!current) return
+        trackRegistrationError('link_check_failed')
+        router.replace('/auth/expired')
       })
-      return
+      return () => { current = false }
     }
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -75,97 +94,111 @@ export default function RegisterPage() {
     setError('')
 
     if (!displayName.trim()) {
+      trackRegistrationError('display_name_invalid')
       setError('ERR: DISPLAY NAME REQUIRED')
       return
     }
     if (password.length < 8) {
+      trackRegistrationError('password_too_short')
       setError('ERR: PASSWORD MUST BE AT LEAST 8 CHARACTERS')
       return
     }
     if (password !== confirmPassword) {
+      trackRegistrationError('passwords_do_not_match')
       setError('ERR: PASSWORDS DO NOT MATCH')
       return
     }
 
     setLoading(true)
+    let failureCode: RegistrationErrorCode = 'registration_unexpected'
     try {
-      await register()
+      const supabase = createClient()
+      let activatedNext: string | null = null
+
+      if (activationKey) {
+        failureCode = 'activation_request_failed'
+        // The server sets the password and profile, then this browser signs in with it.
+        const activated = await activateAccount(activationKey, displayName, password)
+        if (!activated.ok) {
+          if (activated.reason !== 'activated') trackRegistrationError(activated.errorCode)
+          if (activated.reason === 'expired') { router.replace('/auth/expired'); return }
+          setError(activated.message)
+          setLoading(false)
+          return
+        }
+        failureCode = 'auto_login_failed'
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email: activated.email, password })
+        if (signInError) {
+          trackRegistrationError(failureCode)
+          setError('ERR: ACCOUNT ACTIVATED. PLEASE LOG IN WITH YOUR NEW PASSWORD.')
+          setLoading(false)
+          return
+        }
+        activatedNext = activated.next
+      } else {
+        failureCode = 'password_update_failed'
+        // Set password on the invite-created account
+        const { error: updateError } = await supabase.auth.updateUser({
+          password,
+          data: { display_name: displayName.trim() },
+        })
+
+        // A retry after a half-finished attempt resends the password that is already set.
+        if (updateError && updateError.code !== 'same_password') {
+          trackRegistrationError(failureCode)
+          setError(`ERR: ${updateError.message.toUpperCase()}`)
+          setLoading(false)
+          return
+        }
+      }
+
+      // Create voyager profile (activation links already did, on the server)
+      failureCode = activationKey ? 'registration_unexpected' : 'profile_user_unavailable'
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        if (!activationKey) failureCode = 'profile_write_failed'
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: profileError } = activationKey ? { error: null } : await (supabase.from('voyager_profiles') as any).upsert({
+          id: user.id,
+          display_name: displayName.trim(),
+          bio: null,
+          avatar_url: null,
+          social_x: null,
+          social_instagram: null,
+          social_linkedin: null,
+          location: null,
+          role: 'applicant',
+          observation_days: 0,
+          worlds_discovered: 0,
+          email: user.email?.toLowerCase() ?? null,
+          registered_at: new Date().toISOString(),
+        }, { onConflict: 'id' })
+        if (profileError) {
+          trackRegistrationError(failureCode)
+          setError('ERR: PROFILE COULD NOT BE SAVED. PLEASE TRY AGAIN.')
+          setLoading(false)
+          return
+        }
+        failureCode = 'registration_unexpected'
+        // Tracking is best effort: it must never keep a registered account on this screen.
+        const tracking = trackRegistration(user.id, user.email ?? undefined, displayName.trim()).catch(() => {})
+        await Promise.race([tracking, new Promise((resolve) => setTimeout(resolve, 3000))])
+      } else if (!activationKey) {
+        trackRegistrationError(failureCode)
+      }
+      failureCode = 'registration_unexpected'
+
+      const requested = activatedNext ?? new URLSearchParams(window.location.search).get('redirect')
+      let remembered: string | null = null
+      try { remembered = takePostRegisterRedirect(localStorage, window.location.origin, Date.now()) } catch { /* Storage is a convenience only. */ }
+      const destination = registrationLandingPath(requested, window.location.origin, remembered)
+      // Full load: the client router cache can still hold the pre-registration redirect back to /register.
+      window.location.assign(destination)
     } catch {
+      trackRegistrationError(failureCode)
       setError('ERR: REGISTRATION COULD NOT BE COMPLETED. PLEASE TRY AGAIN.')
       setLoading(false)
     }
-  }
-
-  const register = async () => {
-    const supabase = createClient()
-    let activatedNext: string | null = null
-
-    if (activationKey) {
-      // The server sets the password and profile, then this browser signs in with it.
-      const activated = await activateAccount(activationKey, displayName, password)
-      if (!activated.ok) {
-        if (activated.reason === 'expired') { router.replace('/auth/expired'); return }
-        setError(activated.message)
-        setLoading(false)
-        return
-      }
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email: activated.email, password })
-      if (signInError) {
-        setError('ERR: ACCOUNT ACTIVATED. PLEASE LOG IN WITH YOUR NEW PASSWORD.')
-        setLoading(false)
-        return
-      }
-      activatedNext = activated.next
-    } else {
-      // Set password on the invite-created account
-      const { error: updateError } = await supabase.auth.updateUser({
-        password,
-        data: { display_name: displayName.trim() },
-      })
-
-      // A retry after a half-finished attempt resends the password that is already set.
-      if (updateError && updateError.code !== 'same_password') {
-        setError(`ERR: ${updateError.message.toUpperCase()}`)
-        setLoading(false)
-        return
-      }
-    }
-
-    // Create voyager profile (activation links already did, on the server)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: profileError } = activationKey ? { error: null } : await (supabase.from('voyager_profiles') as any).upsert({
-        id: user.id,
-        display_name: displayName.trim(),
-        bio: null,
-        avatar_url: null,
-        social_x: null,
-        social_instagram: null,
-        social_linkedin: null,
-        location: null,
-        role: 'applicant',
-        observation_days: 0,
-        worlds_discovered: 0,
-        email: user.email?.toLowerCase() ?? null,
-        registered_at: new Date().toISOString(),
-      }, { onConflict: 'id' })
-      if (profileError) {
-        setError('ERR: PROFILE COULD NOT BE SAVED. PLEASE TRY AGAIN.')
-        setLoading(false)
-        return
-      }
-      // Tracking is best effort: it must never keep a registered account on this screen.
-      const tracking = trackRegistration(user.id, user.email ?? undefined, displayName.trim()).catch(() => {})
-      await Promise.race([tracking, new Promise((resolve) => setTimeout(resolve, 3000))])
-    }
-
-    const requested = activatedNext ?? new URLSearchParams(window.location.search).get('redirect')
-    let remembered: string | null = null
-    try { remembered = takePostRegisterRedirect(localStorage, window.location.origin, Date.now()) } catch { /* Storage is a convenience only. */ }
-    const destination = registrationLandingPath(requested, window.location.origin, remembered)
-    // Full load: the client router cache can still hold the pre-registration redirect back to /register.
-    window.location.assign(destination)
   }
 
   if (checking) {
