@@ -168,6 +168,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     const supabase = createClient()
     try {
+      const registration = await navigator.serviceWorker?.getRegistration('/')
+      const subscription = await registration?.pushManager?.getSubscription()
+      if (subscription) {
+        try {
+          await fetch('/api/push/web/subscription', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: subscription.endpoint }) })
+        } finally { await subscription.unsubscribe() }
+      }
+    } catch { /* Signing out must remain available even if push cleanup fails. */ }
+    try {
       const token = window.localStorage.getItem('mc_ios_push_token')
       if (token) {
         await fetch('/api/push/device', {
