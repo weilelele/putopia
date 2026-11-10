@@ -1,0 +1,8 @@
+.help { color: var(--color-star-dim); font-size: var(--fs-label); line-height: 1.5; }
+.help ol { list-style: decimal; padding-left: 24px; }
+.help li + li { margin-top: 8px; }
+.actions { flex-direction: column; }
+.actions > button { flex: 0 0 auto; width: 100%; }
+.copy { display: grid; gap: 8px; margin-top: 24px; }
+.copy label, .copy p { font-size: var(--fs-caption); }
+.copy input { width: 100%; min-width: 0; padding: 12px; border: 1px solid var(--bd-faint); background: var(--color-void); color: var(--color-star); font: inherit; font-size: var(--fs-body); }

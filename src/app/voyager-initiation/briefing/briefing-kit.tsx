@@ -1,6 +1,7 @@
 'use client'
 
 import { Fragment, useEffect, useEffectEvent, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
+import { clipSource } from './briefing-media'
 import s from './briefing.module.css'
 
 /** Everything a page scene schedules belongs to that activation and stops when the page changes. */
@@ -53,10 +54,10 @@ export function useScene(active: boolean, run: (scene: Scene, reduced: boolean) 
   }, [active])
 }
 
-/** Videos carry their source in data-src and only hold a network connection while they are needed. */
+/** Videos carry their source in data-src and only hold a network connection while they are needed; a downloaded copy plays from memory. */
 export function attachVideo(video: HTMLVideoElement) {
   video.muted = true
-  const src = video.dataset.src
+  const src = video.dataset.src && clipSource(video.dataset.src)
   if (src && video.getAttribute('src') !== src) { video.src = src; video.load() }
 }
 export function releaseVideo(video: HTMLVideoElement) {

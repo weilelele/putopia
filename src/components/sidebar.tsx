@@ -18,7 +18,7 @@ export function Sidebar() {
     <div className="sidebar-auth">
       {loading ? <p className="sidebar-auth-name">VERIFYING ACCESS</p> : <><div className="sidebar-identity">{!guest && <span className="sidebar-avatar">{user.avatarUrl ? <SmartImage src={user.avatarUrl} alt="" width={36} height={36} sizes="36px" /> : (user.name ?? 'Voyager').slice(0,2).toUpperCase()}</span>}<div><span className="sidebar-auth-name">{guest ? 'WELCOME, EXPLORER' : user.name ?? 'Voyager'}</span><span className="sidebar-auth-role">{user.role.toUpperCase()}</span></div></div>
       <div className="sidebar-account-actions"><Link className="sidebar-auth-btn" href={guest ? '/login' : '/voyagers'}>{guest ? 'LOG IN' : 'ACCOUNT'}</Link>{!guest && <ArchiveButton variant="ghost" onClick={() => logout()}>LOG OUT</ArchiveButton>}</div>
-      {guest && <Link href={REQUEST_ACCESS_HREF} className="sidebar-apply">REQUEST ACCESS</Link>}</>}
+      {guest && <Link href={REQUEST_ACCESS_HREF} className="sidebar-apply">CREATE ACCOUNT</Link>}</>}
     </div>
   </aside>
 }

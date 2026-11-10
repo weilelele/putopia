@@ -5,6 +5,7 @@ import { getMyProfile, getMyProfileStages, updateProfile, uploadAvatar } from '@
 import { useAuth } from '@/lib/auth-context'
 import { BlockedMembersCard, DeleteAccountCard } from './account-safety'
 import { ProfileView, type ProfileServices } from './profile-view'
+import { WebPushSettings } from '@/components/web-push-settings'
 
 export default function ProfilePage() {
   const { logout } = useAuth()
@@ -15,5 +16,5 @@ export default function ProfilePage() {
     upload: uploadAvatar,
     logout,
   }), [logout])
-  return <ProfileView services={services} accountSafety={<><BlockedMembersCard /><DeleteAccountCard /></>} />
+  return <ProfileView services={services} accountSafety={<><WebPushSettings /><BlockedMembersCard /><DeleteAccountCard /></>} />
 }

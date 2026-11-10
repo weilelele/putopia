@@ -11,6 +11,7 @@ import { Send, CornerDownRight, ImagePlus, X } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useAuth } from '@/lib/auth-context'
 import { getComments, postComment, deleteComment, listImpersonatableProfiles } from '@/lib/actions/comments'
+import { intelCommentCache } from '@/lib/intel-client-cache'
 import { ArchiveField } from '@/components/archive-field'
 import { useId } from 'react'
 import type { Comment, CommentSubjectType, ImpersonatableProfile } from '@/types/database'
@@ -141,6 +142,7 @@ export function CommentThread({
     if (posthogEvent) posthog.capture(posthogEvent, { subject_type: subjectType, subject_id: subjectId, is_reply: !!parentId, has_images: imagePaths.length > 0 })
     const res = await postComment(subjectType, subjectId, body, { parentId, asProfileId, subjectTitle, imagePaths })
     if (res.error || !res.data) return { error: res.error ?? 'Could not send your comment. Please try again.' }
+    if (subjectType === 'intel') intelCommentCache.clear()
     setComments((prev) => [...prev, res.data!])
     setReplyTo(null)
     return { error: null }
@@ -153,6 +155,7 @@ export function CommentThread({
     try {
       const res = await deleteComment(commentId)
       if (res.error) { setDeleteError('Could not delete this comment. Please try again.'); return }
+      if (subjectType === 'intel') intelCommentCache.clear()
       setComments(prev => {
         const removed = new Set([commentId])
         let changed = true

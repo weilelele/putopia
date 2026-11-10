@@ -10,7 +10,7 @@ import { useSessionPreference } from '@/lib/use-session-preference'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { BackLink } from '@/components/back-link'
 import { usePathname } from 'next/navigation'
-import { DeviceGallery, UpdateMedia, DeviceMediaImage as Image } from '../_components/device-gallery'
+import { DeviceGallery, DeviceRecordImage, UpdateMedia } from '../_components/device-gallery'
 import { DeviceFieldLead } from '../_components/device-field-lead'
 import mediaStyles from '../_components/device-gallery.module.css'
 import { getDeviceBatchMedia, getDeviceBatchUpdates, getDeviceBatchProgress } from '@/lib/device-batch-content'
@@ -29,15 +29,16 @@ import { useFollowedBatchSlugs } from '../_components/use-followed-batches'
 import { CosmoCameraEmbed } from '@/components/cosmo-camera-embed'
 import type { DeviceCameraSource } from '@/lib/device-camera'
 import {
-  DEVICE_BATCH_STATUS,
-  DEVICE_BATCH_PHASES,
+  DEVICE_BATCH_STAGES,
+  DEVICE_BATCH_STAGE_LABEL,
+  deviceBatchStage,
   type DeviceBatch,
-  type DeviceBatchStatus,
+  type DeviceBatchStage,
 } from '@/lib/device-batches'
 import type { DeviceConsoleRecord } from '@/lib/actions/orders'
 
 type ContentTab = 'info' | 'updates'
-type BatchFilter = 'all' | 'following' | DeviceBatchStatus
+type BatchFilter = 'all' | 'following' | DeviceBatchStage
 
 export function DeviceLiveRoom({
   batch,
@@ -47,7 +48,9 @@ export function DeviceLiveRoom({
   camera,
   onSelectBatch,
   introduction,
+  pendingSlug,
 }: {
+  pendingSlug?: string
   introduction?: ReactNode
   onSelectBatch: (slug: string) => void
   batch: DeviceBatch
@@ -62,7 +65,7 @@ export function DeviceLiveRoom({
   const [savedTab, setActiveTab] = useSessionPreference<ContentTab>(`mc:view:devices:${batch.slug}:tab`, 'info')
   const activeTab = savedTab === 'updates' ? 'updates' : 'info'
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [filter, setFilter] = useSessionPreference<BatchFilter>('mc:view:devices:filter:v2', 'all')
+  const [filter, setFilter] = useSessionPreference<BatchFilter>('mc:view:devices:filter:v3', 'all')
   const [progressOpen, setProgressOpen] = useState(false)
   const progress = getDeviceBatchProgress(batch)
   const currentStage = progress.find((stage) => stage.status === 'current')?.label ?? (progress.every((stage) => stage.status === 'completed') ? 'COMPLETE' : 'AWAITING NEXT STAGE')
@@ -76,7 +79,7 @@ export function DeviceLiveRoom({
   const filteredBatches = useMemo(() => {
     if (filter === 'all') return batches
     if (filter === 'following') return batches.filter((item) => followedBatchSlugs.includes(item.slug))
-    return batches.filter((item) => item.status === filter)
+    return batches.filter((item) => deviceBatchStage(item.status) === filter)
   }, [batches, filter, followedBatchSlugs])
 
   const claimState = ownedConsole ? 'owned' : 'check_entitlement'
@@ -111,7 +114,7 @@ export function DeviceLiveRoom({
   }
 
   return (
-    <main className={`main ${styles.page}`} data-route-scroll>{!isRoot && <BackLink href="/devices" label="Devices" />}
+    <main className={`main ${styles.page}`} data-route-scroll aria-busy={Boolean(pendingSlug)}>{!isRoot && <BackLink href="/devices" label="Devices" />}
       {isRoot ? <><h1 className="sr-only">Devices</h1><RootBrandHeader /></> : (<header className={`${styles.roomHeader}${isRoot ? ` ${styles.rootActions}` : ''}`}>
         <h1 className="sr-only">DEVICES</h1>
 
@@ -123,14 +126,15 @@ export function DeviceLiveRoom({
       </section>
 
       <nav className={styles.objectNav} aria-label="Device batches">
+        {pendingSlug && <span className="sr-only" role="status">Loading selected device…</span>}
         <div className={styles.objectTabs} role="tablist">
           {batches.map((item, index) => (
             <button
               role="tab"
-              aria-selected={batch.slug === item.slug}
+              aria-selected={(pendingSlug ?? batch.slug) === item.slug}
               className={styles.objectTab}
               type="button"
-              tabIndex={batch.slug === item.slug ? 0 : -1}
+              tabIndex={(pendingSlug ?? batch.slug) === item.slug ? 0 : -1}
               onClick={() => chooseBatch(item.slug)}
               onKeyDown={(event) => {
                 const nextIndex = event.key === 'ArrowRight' ? (index + 1) % batches.length
@@ -157,6 +161,7 @@ export function DeviceLiveRoom({
         media={materialRecords}
         onSelect={(index) => { trackMedia('device_gallery_item_selected', index - (camera ? 1 : 0), { from_index: selectedMedia, position: index }); selectMedia(index) }}
         onVideoPlay={(mediaIndex) => trackMedia('device_video_played', mediaIndex, { surface: 'gallery' })}
+        onImageEnlarge={(mediaIndex) => trackMedia('device_image_enlarged', mediaIndex, { surface: 'gallery' })}
         primary={camera ? <CosmoCameraEmbed source={camera} location={batch.location} timeZone={batch.timeZone} /> : undefined}
         primaryLabel={camera?.binding.title}
         selected={selectedMedia}
@@ -214,7 +219,7 @@ export function DeviceLiveRoom({
                     <div className={styles.mediaRecordVisual}>
                       {item.kind === 'video'
                         ? <video controls playsInline poster={item.poster} preload="metadata" src={item.src} onPlay={() => trackMedia('device_video_played', materialRecords.indexOf(item), { surface: 'material_records' })} />
-                        : <Image alt={item.alt} height={1200} sizes="(max-width: 767px) calc(100vw - 64px), 34rem" src={item.src} style={{ height: 'auto', width: '100%' }} unoptimized width={1600} />}
+                        : <DeviceRecordImage item={item} onOpen={() => trackMedia('device_image_enlarged', materialRecords.indexOf(item), { surface: 'material_records' })} />}
                     </div>
                     <figcaption className={styles.mediaRecordCopy}>
                       <strong>{title || item.alt}</strong>
@@ -250,8 +255,8 @@ export function DeviceLiveRoom({
         <ArchiveSheet open onClose={() => setSheetOpen(false)} title="All device batches" dirty={false} busy={false}>
 
             <div className={styles.filterRow}>
-              {(['all', 'following', ...DEVICE_BATCH_PHASES] as BatchFilter[]).map((item) => (
-                <ArchiveButton variant="secondary" aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => { trackDevice('device_batch_filter_changed', { filter: item }); setFilter(item) }} type="button">{item === 'all' || item === 'following' ? item.toUpperCase() : DEVICE_BATCH_STATUS[item].label}</ArchiveButton>
+              {(['all', 'following', ...DEVICE_BATCH_STAGES] as BatchFilter[]).map((item) => (
+                <ArchiveButton variant="secondary" aria-pressed={filter === item} className={styles.filterButton} key={item} onClick={() => { trackDevice('device_batch_filter_changed', { filter: item }); setFilter(item) }} type="button">{item === 'all' || item === 'following' ? item.toUpperCase() : DEVICE_BATCH_STAGE_LABEL[item].label}</ArchiveButton>
               ))}
             </div>
             <div className={styles.sheetList}>
@@ -259,7 +264,7 @@ export function DeviceLiveRoom({
                 <ArchiveButton variant="secondary" className={styles.sheetRow} key={item.code} onClick={() => chooseBatch(item.slug, 'sheet')} type="button">
                   <span className={styles.dot} style={{ background: 'var(--color-nucleus)' }} />
                   <span><strong>{item.name.toUpperCase()}</strong><small>{item.location}</small></span>
-                  <span className={styles.sheetStatus}>{item.slug === batch.slug ? 'CURRENT · ' : ''}{DEVICE_BATCH_STATUS[item.status].shortLabel}</span>
+                  <span className={styles.sheetStatus}>{item.slug === batch.slug ? 'CURRENT · ' : ''}{DEVICE_BATCH_STAGE_LABEL[deviceBatchStage(item.status)].shortLabel}</span>
                   <ChevronRight aria-hidden size={18} />
                 </ArchiveButton>
               ))}

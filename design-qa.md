@@ -1,5 +1,12 @@
 # Device scene QA — 2026-09-18
 
+## Activation welcome release · 2026-10-27
+
+Latest scoped report: [Activation welcome QA](docs/design/activation-welcome-20261027/design-qa.md). Source and implementation compared at 390×844, with 320px and desktop checks. Default completed registration opens the verified welcome; explicit task return paths remain intact. Image/main action opens `/voyager-initiation?briefing=1`. No production data was mutated during verification.
+
+final result: passed
+
+
 final result: passed
 
 ## Reference and capture
@@ -59,5 +66,17 @@ final result: blocked (live Feed activation only)
 ## Dashboard initiation entry — 2026-10-27
 
 Latest scoped report: [Dashboard identity card QA](docs/design/dashboard-initiation-20261027/design-qa.md). Selected orange-entry reference, original role/product copy, and equal 20° diagonal joins are implemented in the shared homepage component. Browser checks used local Applicant fixture data at 390×844, 320×844 and desktop 1440×1000. Initial narrow-label wrapping and desktop narrow-container issues were fixed and recaptured. The scoped report contains the combined reference/render comparison, typography/spacing/color/assets/copy checks, interaction evidence, and validation limits. Design checks, TypeScript, lint (0 errors), 826 tests and final production build passed. No deployment or production data changes.
+
+final result: passed
+
+## Shared button typography · 2026-10-28
+
+Latest scoped report: [Button typography QA](docs/design/button-typography-20261028/design-qa.md). Shared primary/secondary buttons and links use Courier Prime, 16px, weight 400 and 24px line height. Authentication, activation welcome, Dashboard, Voyagers, dialog, World action fixtures and local admin forms were checked in the production build. Portrait 390px, narrow 320px and desktop evidence, computed styles and source-audit boundaries are recorded in the report. No production data writes or schema changes.
+
+final result: passed
+
+## Initiation bundle selection — 2026-11-07
+
+Scoped isolated-main PR report: [Initiation bundle cards QA](docs/design/initiation-bundle-circles-20261107/design-qa.md). The selected card expands four/six original-image benefits; shared transaction copy is consolidated and inactive Initial retains only Packs 1–2 plus the $460 add-on note. Main checkout/FAQ/briefing contracts are preserved. Verified 390×844, 320×844, 200% text and 1440×1000; five repository gates pass, with 946 tests and no lint errors. No merge or production deployment.
 
 final result: passed

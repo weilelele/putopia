@@ -320,8 +320,7 @@ export default function OnboardingEditorPage() {
 
 /* ── Small UI helpers ── */
 const btnStyle: React.CSSProperties = {
-  padding: '8px 14px', fontSize: 'var(--fs-caption)', letterSpacing: '0.1em',
-  fontFamily: 'var(--font-mono)', cursor: 'pointer',
+  padding: '8px 14px', letterSpacing: '0.1em', cursor: 'pointer',
   background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`,
 }
 

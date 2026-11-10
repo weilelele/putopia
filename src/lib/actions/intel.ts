@@ -7,6 +7,7 @@ import { logActivity } from './activity-events'
 import { validateNoticeTiming } from '@/lib/intel-notice'
 import { getMyDigitalAccessRole } from './digital-access'
 import { requirePublishingArchitect, resolvePublishingIdentity } from '@/lib/publishing-identity'
+import { intelStillImage, validateIntelVideoUrls } from '@/lib/intel-media'
 
 function revalidateIntel(id: string) {
   revalidatePath('/intel')
@@ -89,7 +90,7 @@ export async function getIntelById(id: string) {
 export async function createIntel(entry: IntelInsert) {
   const actor = await requirePublishingArchitect()
   if (!actor) return { error: 'Architect access is required.', data: null }
-  const validation = validateNoticeTiming(entry)
+  const validation = validateNoticeTiming(entry) ?? validateIntelVideoUrls(entry, process.env.NEXT_PUBLIC_SUPABASE_URL)
   if (validation) return { error: validation, data: null }
   let publisher
   try {
@@ -120,7 +121,7 @@ export async function createIntel(entry: IntelInsert) {
     event_type:  'intel_published',
     target_id:   data.id,
     target_title: entry.title,
-    target_image: entry.images?.[0] ?? undefined,
+    target_image: intelStillImage(entry) ?? undefined,
     target_href: `/intel/${data.id}`,
   })
 
@@ -168,7 +169,7 @@ export async function updateIntel(id: string, updates: IntelUpdate) {
     event_type:  'intel_updated',
     target_id:   id,
     target_title: normalizedUpdates.title ?? existing.title,
-    target_image: (normalizedUpdates.images ?? existing.images)?.[0] ?? undefined,
+    target_image: intelStillImage({ images: normalizedUpdates.images ?? existing.images, video_poster_url: existing.video_poster_url }) ?? undefined,
     target_href: `/intel/${id}`,
   })
 

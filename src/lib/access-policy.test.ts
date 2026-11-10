@@ -21,6 +21,18 @@ describe('primary route access policy', () => {
     expect(allowsUnregisteredViewer('/')).toBe(true)
     expect(allowsUnregisteredViewer('/welcome')).toBe(true)
     expect(allowsUnregisteredViewer('/privacy')).toBe(true)
+    expect(allowsUnregisteredViewer('/install')).toBe(true)
+    expect(allowsUnregisteredViewer('/install/')).toBe(true)
+    expect(allowsUnregisteredViewer('/install/private')).toBe(false)
+  })
+
+  it('keeps the recruitment brief public without opening unrelated recruitment paths', () => {
+    for (const path of ['/recruit/social', '/recruit/social/']) {
+      expect(allowsUnregisteredViewer(path)).toBe(true)
+      expect(requiresRegistration(path)).toBe(false)
+    }
+    expect(allowsUnregisteredViewer('/recruit/social/admin')).toBe(false)
+    expect(allowsUnregisteredViewer('/recruit/social-applications')).toBe(false)
   })
 
   it('retains the separate registration gate on supporting listings', () => {

@@ -1,0 +1,533 @@
+[
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "RESEND ACCESS LINK",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 560
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "LOG IN",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 560
+      }
+    ],
+    "contentWidth": 1280,
+    "page": "/auth/expired",
+    "width": 1280
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "AUTHENTICATE",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "REQUEST ACCESS",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      }
+    ],
+    "contentWidth": 390,
+    "page": "/login",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "RESEND ACCESS LINK",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "LOG IN",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      }
+    ],
+    "contentWidth": 390,
+    "page": "/auth/expired",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "Toggle loading example",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "Primary action",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "Secondary action",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "Primary link",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "Secondary link",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 46,
+        "label": "Tertiary action",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "Delete sample record",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "Disabled action",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 46,
+        "label": "Compact · 44px target",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "More info →",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 352
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "Share report",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 172
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 48,
+        "label": "View reports",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400",
+        "width": 172
+      }
+    ],
+    "contentWidth": 390,
+    "fixture": "buttons-01",
+    "page": "/ui-kit",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Cancel",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Delete sample record",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "SAVE CHANGES",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Cancel",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Continue",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Done",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      }
+    ],
+    "fixture": "action-dialog",
+    "page": "/ui-kit",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 52,
+        "label": "EXPLORE INITIATION",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "height": 52,
+        "label": "BACK TO DASHBOARD",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      }
+    ],
+    "contentWidth": 390,
+    "page": "/dev/activation-welcome",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "REQUEST ACCESS",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "LOG IN",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "0PARALLEL WORLDS",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "?DEVICES",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "2VOYAGERS",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      }
+    ],
+    "contentWidth": 390,
+    "page": "/console",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "REQUEST ACCESS",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "LOG IN",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      }
+    ],
+    "contentWidth": 390,
+    "page": "/voyagers",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "✕ CANCEL",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "CONFIRM PAYMENT & CREATE ORDER",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      }
+    ],
+    "page": "/admin/orders",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "CANCEL",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "SAVE QUESTION",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      }
+    ],
+    "page": "/admin/quiz",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "✕",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Promote World",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "New World",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Create & Tune",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      }
+    ],
+    "page": "/admin/signal-tasks",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "RESEND ACCESS LINK",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "LOG IN",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      }
+    ],
+    "page": "/auth/expired",
+    "width": 1280
+  },
+  {
+    "buttons": [
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Q1 · 观测仪好奇",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Q2 · 选择世界",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "Q3 · 迫切度滑块",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "CTA · 邮箱表单",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "MOBILE",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "DESKTOP",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "↻ 全部重载",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      },
+      {
+        "family": "courierPrime, \"Courier New\", ui-monospace, monospace",
+        "label": "+ 新增变体",
+        "lineHeight": "24px",
+        "size": "16px",
+        "weight": "400"
+      }
+    ],
+    "page": "/admin/onboarding-preview",
+    "width": 1280
+  }
+]

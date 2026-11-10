@@ -1,0 +1,74 @@
+[
+  {
+    "width": 390,
+    "height": 844,
+    "gesture": "touch swipe",
+    "before": {
+      "scrollTop": 0,
+      "clientHeight": 844,
+      "scrollHeight": 2779,
+      "overflowY": "auto",
+      "horizontalOverflow": false,
+      "buttonTop": 2618.671875,
+      "buttonBottom": 2666.671875
+    },
+    "after": {
+      "scrollTop": 1935,
+      "clientHeight": 844,
+      "scrollHeight": 2779,
+      "overflowY": "auto",
+      "horizontalOverflow": false,
+      "buttonTop": 683.671875,
+      "buttonBottom": 731.671875
+    },
+    "errors": []
+  },
+  {
+    "width": 320,
+    "height": 844,
+    "gesture": "touch swipe",
+    "before": {
+      "scrollTop": 0,
+      "clientHeight": 844,
+      "scrollHeight": 3249,
+      "overflowY": "auto",
+      "horizontalOverflow": false,
+      "buttonTop": 3088.546875,
+      "buttonBottom": 3136.546875
+    },
+    "after": {
+      "scrollTop": 2405,
+      "clientHeight": 844,
+      "scrollHeight": 3249,
+      "overflowY": "auto",
+      "horizontalOverflow": false,
+      "buttonTop": 683.546875,
+      "buttonBottom": 731.546875
+    },
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "height": 1000,
+    "gesture": "mouse wheel",
+    "before": {
+      "scrollTop": 0,
+      "clientHeight": 1000,
+      "scrollHeight": 2353,
+      "overflowY": "auto",
+      "horizontalOverflow": false,
+      "buttonTop": 2144.734375,
+      "buttonBottom": 2192.734375
+    },
+    "after": {
+      "scrollTop": 1353,
+      "clientHeight": 1000,
+      "scrollHeight": 2353,
+      "overflowY": "auto",
+      "horizontalOverflow": false,
+      "buttonTop": 791.734375,
+      "buttonBottom": 839.734375
+    },
+    "errors": []
+  }
+]

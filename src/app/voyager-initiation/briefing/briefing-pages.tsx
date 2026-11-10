@@ -1,13 +1,15 @@
 'use client'
 
-import { useRef, useState, type CSSProperties } from 'react'
-import { ArrowRight, Check } from 'lucide-react'
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import SmartImage from '@/components/smart-image'
 import { ANTENNA } from '@/lib/antenna-copy'
 import { FlipWordmark } from '@/components/flip-wordmark'
 import { MemberProfileSheet } from '@/components/member-profile-sheet'
 import { memberInitials } from '@/lib/member-initials'
-import { briefingSeats, type BriefingOffer, type BriefingRegion } from '@/lib/initiation-briefing'
+import { briefingSeats, type BriefingRegion } from '@/lib/initiation-briefing'
+import { PARALLAX_ARRAY_EXAMPLES, PARALLAX_ARRAY_ROUNDS, PARALLAX_ARRAY_UNITS, parallaxArrayCaption, parallaxArrayDissolve, parallaxArrayFrame, parallaxArraySignal, parallaxArrayVotes, PARALLAX_ARRAY_VOTE_MARKS, type ParallaxArrayFrame } from '@/lib/parallax-array'
 import type { InitiationPublicMember } from '@/lib/initiation-types'
 import { BriefingPage, Headline, Kicker, attachVideo, clamp, ease, easeOut, fitCanvas, lerp, releaseVideo, rise, useScene, type PageState } from './briefing-kit'
 import s from './briefing.module.css'
@@ -16,114 +18,40 @@ const MEDIA = '/assets/voyager-briefing'
 const ORANGE = '227,82,5'
 const STAR = '245,245,245'
 
-/* 1 · The device: static, then a slow lamp over a loop of Console films (one is real footage). */
-const CONSOLE_CLIPS = [
-  { src: `${MEDIA}/console-real.mp4`, poster: `${MEDIA}/console-real.jpg` },
-  { src: `${MEDIA}/console-tuning.mp4` },
-  { src: `${MEDIA}/console-fairy.mp4` },
-  { src: `${MEDIA}/console-starry.mp4` },
-]
-
-function drawSnow(buffer: HTMLCanvasElement, image: ImageData, ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  const data = image.data
-  for (let y = 0; y < buffer.height; y++) {
-    let previous = Math.random() * 255
-    const row = Math.random() * 36 - 18, streak = Math.random() < .012 ? 90 : 0
-    for (let x = 0; x < buffer.width; x++) {
-      previous = previous * .45 + Math.random() * 140
-      const offset = (y * buffer.width + x) * 4, value = clamp(previous + row + streak, 0, 255)
-      data[offset] = data[offset + 1] = data[offset + 2] = value
-      data[offset + 3] = 255
-    }
-  }
-  buffer.getContext('2d')!.putImageData(image, 0, 0)
-  ctx.clearRect(0, 0, w, h)
-  ctx.imageSmoothingEnabled = true
-  ctx.drawImage(buffer, 0, 0, w, h)
-  ctx.fillStyle = 'rgba(0,0,0,.3)'
-  ctx.fillRect(0, ((t * .2) % (h + 100)) - 50, w, 46)
-}
+/* 1 · The device: one film of Console footage, cut and lit by a slow lamp in the edit (see the media README). */
+/** Page 1 opens only once this is downloaded; page 2's clips follow in the background. */
+export const OPENING_FILM = `${MEDIA}/console-film.mp4`
+const LONDON_CLIP = `${MEDIA}/london-device.mp4`
+const PRESS_CLIP = `${MEDIA}/console-press.mp4`
+export const FOLLOWING_CLIPS = [LONDON_CLIP, PRESS_CLIP]
 
 export function DevicePage({ state }: { state: PageState }) {
-  const film = useRef<HTMLDivElement>(null)
-  const lamp = useRef<HTMLSpanElement>(null)
-  const canvas = useRef<HTMLCanvasElement>(null)
+  const film = useRef<HTMLVideoElement>(null)
   useScene(state.active, (scene, reduced) => {
-    const clips = Array.from(film.current!.querySelectorAll('video'))
-    const cv = canvas.current!, light = lamp.current!
-    clips.forEach(video => { releaseVideo(video); delete video.dataset.show })
-    delete light.dataset.on
-    if (reduced) { attachVideo(clips[0]); clips[0].dataset.show = ''; cv.style.opacity = '0'; return }
-    cv.style.transition = ''
-    cv.style.opacity = '1'
-    const { ctx, w, h } = fitCanvas(cv)
-    const buffer = document.createElement('canvas')
-    buffer.width = Math.max(80, Math.round(w / 2))
-    buffer.height = Math.max(60, Math.round(h / 2))
-    const image = buffer.getContext('2d')!.createImageData(buffer.width, buffer.height)
-    let snowing = true, last = -100
-    scene.loop(t => { if (snowing && t - last >= 40) { last = t; drawSnow(buffer, image, ctx, w, h, t) } })
-    scene.later(() => { cv.style.transition = 'opacity .16s ease'; cv.style.opacity = '0' }, 1400)
-    scene.later(() => { snowing = false; ctx.clearRect(0, 0, w, h) }, 1650)
-    // Each time the lamp goes fully dark (one animation iteration, every 3s) the film cuts to the next clip
-    // of a shuffled deck, at a random moment. Every clip plays once per round and a new round never starts
-    // with the clip on screen, so a clip only returns after all the others. The next cut is prepared while
-    // the light is on, so it is already seeked.
-    clips.forEach(video => { video.loop = true })
-    const randomMoment = (video: HTMLVideoElement) => {
-      const length = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 5
-      return .3 + Math.random() * Math.max(.1, length - 1.1)
-    }
-    const whenReady = (video: HTMLVideoElement, fn: () => void) => {
-      if (video.readyState >= 1) fn()
-      else video.addEventListener('loadedmetadata', () => { if (scene.alive()) fn() }, { once: true })
-    }
-    let current: HTMLVideoElement | null = null
-    let upcoming: HTMLVideoElement | null = null
-    let deck: HTMLVideoElement[] = []
-    const draw = () => {
-      if (!deck.length) {
-        deck = [...clips]
-        for (let i = deck.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [deck[i], deck[j]] = [deck[j], deck[i]]
-        }
-        if (deck[0] === current) deck.push(deck.shift()!)
-      }
-      return deck.shift()!
-    }
-    const prepare = () => {
-      const next = draw()
-      upcoming = next
-      attachVideo(next)
-      whenReady(next, () => { if (upcoming === next) { try { next.currentTime = randomMoment(next) } catch { /* seek not ready */ } } })
-    }
-    const cut = () => {
-      const next = upcoming ?? clips[0]
-      const previous = current
-      current = next
-      clips.forEach(video => { if (video === next) video.dataset.show = ''; else delete video.dataset.show })
-      void next.play().catch(() => {})
-      if (previous && previous !== next) releaseVideo(previous)
-      prepare()
-    }
-    upcoming = draw()
-    attachVideo(upcoming)
-    const first = upcoming
-    whenReady(first, () => { if (upcoming === first) { try { first.currentTime = randomMoment(first) } catch { /* seek not ready */ } } })
-    scene.later(() => { cut(); light.dataset.on = ''; scene.listen(light, 'animationiteration', cut) }, 1600)
-    return () => clips.forEach(releaseVideo)
+    const video = film.current!
+    const show = () => { video.dataset.show = '' }
+    releaseVideo(video)
+    delete video.dataset.show
+    // The film's lamp pulses, so reduced motion keeps to its still poster.
+    if (reduced) { show(); return }
+    // The film starts and loops in the dark, so it is revealed once playing: the lit poster would flash first. The poster
+    // takes over only if the film cannot start promptly (still streaming, or autoplay refused).
+    scene.listen(video, 'playing', show)
+    scene.later(show, 800)
+    attachVideo(video)
+    void video.play().catch(() => { if (scene.alive()) show() })
+    // Browsers suspend a muted film while the page is hidden and may not resume it, and nothing else restarts this loop.
+    scene.listen(document, 'visibilitychange', () => { if (!document.hidden) void video.play().catch(() => {}) })
+    return () => releaseVideo(video)
   })
   return <BriefingPage state={state} className={s.p1} label="The device">
-    <div ref={film} className={s.film} role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: hands tuning a real Console into a world, a dial tuned to a robot library, a forest fairy and a starry hillside.">
-      {CONSOLE_CLIPS.map(clip => <video key={clip.src} data-src={clip.src} poster={clip.poster} muted playsInline preload="auto" />)}
-      <span ref={lamp} className={s.lamp} />
-      <canvas ref={canvas} className={s.fx} />
+    <div className={s.film} data-briefing-target="media" role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: a dial tuned from static to a robot reading in a forest, hands holding a real Console tuned into a world, a forest fairy and a starry hillside.">
+      <video ref={film} data-src={OPENING_FILM} poster={`${MEDIA}/console-real.jpg`} muted playsInline loop preload="auto" />
     </div>
-    <div className={`${s.copy} ${s.p1Copy} ${s.gut}`}>
+    <div className={`${s.copy} ${s.p1Copy} ${s.gut}`} data-briefing-target="copy">
       <Kicker text="THE DEVICE" />
       <Headline text="We own a device that can see into parallel worlds." large />
-      <p className={`${s.lede} ${s.rise}`} style={rise(2700)}>It is called the Multiverse Console.</p>
+      <p className={`${s.lede} ${s.rise}`} style={rise(1100)}>It is called the Multiverse Console.</p>
     </div>
   </BriefingPage>
 }
@@ -183,9 +111,9 @@ export function CollectivePage({ state }: { state: PageState }) {
   })
   return <BriefingPage state={state} className={s.p2} label="The Collective">
     <div ref={media} className={s.p2Media} aria-hidden>
-      <video data-src={`${MEDIA}/london-device.mp4`} poster={`${MEDIA}/london-device.jpg`} muted playsInline loop preload="auto" />
+      <video data-src={LONDON_CLIP} poster={`${MEDIA}/london-device.jpg`} muted playsInline loop preload="auto" />
       <span><SmartImage src={`${MEDIA}/robot-library.jpg`} alt="" sizes="(min-width: 460px) 460px, 100vw" className={s.cover} preload /></span>
-      <video data-src={`${MEDIA}/console-press.mp4`} poster={`${MEDIA}/console-press.jpg`} muted playsInline preload="auto" />
+      <video data-src={PRESS_CLIP} poster={`${MEDIA}/console-press.jpg`} muted playsInline preload="auto" />
       <span className={s.scrim} data-show="" />
     </div>
     <canvas ref={canvas} className={s.fx} />
@@ -199,7 +127,7 @@ export function CollectivePage({ state }: { state: PageState }) {
       <ul ref={verbs} className={s.verbs} aria-label="We explore, observe and intervene">
         {VERBS.map((verb, k) => <li key={verb} className={k === 2 ? s.hot : undefined} style={{ '--k': k } as CSSProperties}>{verb}</li>)}
       </ul>
-      <p className={`${s.p2Lede} ${s.rise}`} style={rise(2600)}>An organization that explores parallel worlds, observes them, and tries to intervene in them.</p>
+      <p className={`${s.p2Lede} ${s.rise}`} style={rise(2600)}>An organization that explores parallel worlds, observes them, and tries to intervene in them. Voyagers help decide what comes next.</p>
     </div>
   </BriefingPage>
 }
@@ -397,46 +325,234 @@ export function ClassifiedPage({ state }: { state: PageState }) {
   </BriefingPage>
 }
 
-/* 6 · Votes: proposals pictured on the Initiation page open in turn. Percentages are illustrative. */
-const PROPOSALS = [
-  { question: 'Which world should we observe next?', options: [['The robot library', 44], ['The shepherd’s valley', 39], ['The starry meadow', 17]] },
-  { question: 'How many new Voyagers should join?', options: [['100', 52], ['250', 31], ['500', 17]] },
-  { question: 'Should we reveal our device locations?', options: [['Yes', 36], ['No', 64]] },
-  { question: 'Investigate a new antenna organization?', options: [['Yes', 71], ['No', 29]] },
-] as const
+/* 6 · Parallax Array: the London device listens through an aged, swaying feed. The observation dissolves into static as
+   it is sent; each round a small lens gathers more fragments of the world, and Voyager votes light up around it between
+   rounds. The picture never resolves completely. Examples rotate slowly. */
+const EXAMPLE_LENGTHS = PARALLAX_ARRAY_EXAMPLES.map(example => example.text.length)
+const LENS = 124
+const LENS_BOX = 208
+/** The device feed keeps one middling resolution throughout: soft and aged, never crisp, never breaking up. */
+const FEED_WIDTH = 240
 
-export function VotesPage({ state }: { state: PageState }) {
-  const [open, setOpen] = useState(0)
+function refreshStatic(noise: HTMLCanvasElement, image: ImageData) {
+  const data = image.data
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = data[i + 1] = data[i + 2] = Math.random() * 255
+    data[i + 3] = 255
+  }
+  noise.getContext('2d')!.putImageData(image, 0, 0)
+}
+
+export function ParallaxArrayPage({ state }: { state: PageState }) {
+  const root = useRef<HTMLDivElement>(null)
+  const sky = useRef<HTMLCanvasElement>(null)
+  const film = useRef<HTMLDivElement>(null)
+  const feed = useRef<HTMLCanvasElement>(null)
+  const port = useRef<HTMLCanvasElement>(null)
+  const ring = useRef<HTMLCanvasElement>(null)
+  const caption = useRef<SVGTextPathElement>(null)
+  const quote = useRef<HTMLSpanElement>(null)
+  const reporter = useRef<HTMLSpanElement>(null)
+  const dormant = useRef<HTMLSpanElement>(null)
+  const arcId = useId()
+  const city = PARALLAX_ARRAY_UNITS.find(unit => unit.online)?.city ?? 'LONDON'
   useScene(state.active, (scene, reduced) => {
-    scene.later(() => setOpen(0), 0)
-    if (reduced) return
-    let k = 0
-    const step = () => { k = (k + 1) % PROPOSALS.length; setOpen(k); scene.later(step, 4000) }
-    scene.later(step, 4200)
+    const wrap = root.current!, video = film.current!.querySelector('video')!
+    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    // Sized from layout, not getBoundingClientRect, so an entrance transform can never measure a canvas at zero.
+    const sized = (canvas: HTMLCanvasElement, size: number) => {
+      canvas.width = canvas.height = Math.round(size * dpr)
+      const context = canvas.getContext('2d')!
+      context.setTransform(dpr, 0, 0, dpr, 0, 0)
+      return context
+    }
+    const pctx = sized(port.current!, LENS), rctx = sized(ring.current!, LENS_BOX)
+    const { ctx, w, h } = fitCanvas(sky.current!)
+    const box = wrap.getBoundingClientRect(), filmRect = film.current!.getBoundingClientRect()
+    const device = { x: filmRect.left - box.left + filmRect.width / 2, y: filmRect.top - box.top + filmRect.height * .45 }
+    // The feed is drawn small and scaled up, like the Worlds live rooms: soft without a blur filter, then grained.
+    const feedCanvas = feed.current!, fctx = feedCanvas.getContext('2d', { alpha: false })!
+    const aspect = film.current!.offsetHeight / Math.max(1, film.current!.offsetWidth)
+    const poster = new Image()
+    poster.src = `${MEDIA}/london-device.jpg`
+    const filmGrain = document.createElement('canvas')
+    filmGrain.width = 96; filmGrain.height = Math.max(32, Math.round(96 * aspect))
+    const filmGrainImage = filmGrain.getContext('2d')!.createImageData(filmGrain.width, filmGrain.height)
+    let lastFeed = -100
+    const drawFeed = (now: number) => {
+      if (now - lastFeed < 66) return
+      lastFeed = now
+      const source = video.readyState >= 2 ? video : poster.complete && poster.naturalWidth ? poster : null
+      if (!source) return
+      const sw = source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth, sh = source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight
+      const width = FEED_WIDTH, height = Math.max(1, Math.round(width * aspect))
+      if (feedCanvas.width !== width || feedCanvas.height !== height) { feedCanvas.width = width; feedCanvas.height = height }
+      const scale = Math.max(width / sw, height / sh), cw = width / scale, ch = height / scale
+      fctx.imageSmoothingEnabled = true; fctx.imageSmoothingQuality = 'high'
+      fctx.globalAlpha = 1
+      fctx.drawImage(source, (sw - cw) / 2, (sh - ch) * .4, cw, ch, 0, 0, width, height)
+      fctx.globalAlpha = .08
+      fctx.imageSmoothingEnabled = false
+      fctx.drawImage(filmGrain, 0, 0, width, height)
+      fctx.globalAlpha = 1
+    }
+    const images = PARALLAX_ARRAY_EXAMPLES.map(item => { const image = new Image(); image.src = item.image; return image })
+    const small = document.createElement('canvas'), smallCtx = small.getContext('2d')!
+    const pix = document.createElement('canvas')
+    pix.width = pix.height = LENS
+    const pixCtx = pix.getContext('2d')!
+    const noise = document.createElement('canvas')
+    noise.width = noise.height = 64
+    const noiseImage = noise.getContext('2d')!.createImageData(64, 64)
+    refreshStatic(noise, noiseImage)
+    const CELLS = 9
+    let ranks: number[] = [], shownExample = -1, shownKey = '', lastNoise = -100
+    const ripples: { start: number }[] = []
+
+    const drawLens = (frame: ParallaxArrayFrame, t: number) => {
+      const signal = parallaxArraySignal(frame), image = images[frame.example]
+      pctx.clearRect(0, 0, LENS, LENS)
+      pctx.save()
+      pctx.beginPath(); pctx.arc(LENS / 2, LENS / 2, LENS / 2, 0, Math.PI * 2); pctx.clip()
+      pctx.fillStyle = '#000'; pctx.fillRect(0, 0, LENS, LENS)
+      pctx.imageSmoothingEnabled = false
+      pctx.globalAlpha = .45; pctx.drawImage(noise, 0, 0, LENS, LENS); pctx.globalAlpha = 1
+      if (signal.reveal > 0 && image.complete && image.naturalWidth) {
+        // The world drifts slowly inside the lens, rendered at the round's coarse grain, one fragment at a time.
+        const side = Math.min(image.naturalWidth, image.naturalHeight) * .78
+        const sx = (image.naturalWidth - side) / 2 + Math.sin(t / 4200) * side * .06, sy = (image.naturalHeight - side) / 2 + Math.cos(t / 5100) * side * .05
+        if (small.width !== signal.grain) { small.width = signal.grain; small.height = signal.grain }
+        smallCtx.drawImage(image, sx, sy, side, side, 0, 0, signal.grain, signal.grain)
+        pixCtx.imageSmoothingEnabled = false
+        pixCtx.clearRect(0, 0, LENS, LENS)
+        pixCtx.drawImage(small, 0, 0, signal.grain, signal.grain, 0, 0, LENS, LENS)
+        const cell = LENS / CELLS
+        ranks.forEach((rank, i) => {
+          const alpha = clamp((signal.reveal - rank) / .12)
+          if (!alpha) return
+          const cx = (i % CELLS) * cell, cy = Math.floor(i / CELLS) * cell
+          pctx.globalAlpha = alpha
+          pctx.drawImage(pix, cx, cy, cell, cell, cx, cy, cell, cell)
+        })
+        pctx.globalAlpha = 1
+      }
+      pctx.globalAlpha = signal.noise * .5; pctx.drawImage(noise, 0, 0, LENS, LENS); pctx.globalAlpha = 1
+      pctx.restore()
+    }
+
+    const drawRing = (frame: ParallaxArrayFrame, t: number) => {
+      const c = LENS_BOX / 2, votes = parallaxArrayVotes(frame)
+      rctx.clearRect(0, 0, LENS_BOX, LENS_BOX)
+      rctx.strokeStyle = `rgba(${STAR},.22)`; rctx.lineWidth = 1
+      rctx.beginPath(); rctx.arc(c, c, LENS / 2 + 4, 0, Math.PI * 2); rctx.stroke()
+      if (frame.stage === 'round') {
+        // A slow scan travels the rim while the round is received.
+        const a = t / 900
+        rctx.strokeStyle = `rgba(${ORANGE},.9)`; rctx.lineWidth = 2
+        rctx.beginPath(); rctx.arc(c, c, LENS / 2 + 4, a, a + Math.PI / 3.5); rctx.stroke()
+      }
+      // Vote marks, like the recruiting seats: each Voyager vote lights one.
+      for (let i = 0; i < PARALLAX_ARRAY_VOTE_MARKS; i++) {
+        const angle = -Math.PI / 2 + i / PARALLAX_ARRAY_VOTE_MARKS * Math.PI * 2
+        const x = c + (LENS / 2 + 14) * Math.cos(angle), y = c + (LENS / 2 + 14) * Math.sin(angle)
+        const lit = clamp(votes - i)
+        rctx.beginPath(); rctx.arc(x, y, 1.6 + lit * 1.2, 0, Math.PI * 2)
+        if (lit > 0) { rctx.fillStyle = `rgba(${ORANGE},${.35 + lit * .65})`; rctx.fill() }
+        else { rctx.strokeStyle = `rgba(${STAR},.3)`; rctx.lineWidth = 1; rctx.stroke() }
+      }
+    }
+
+    const draw = (now: number, frame: ParallaxArrayFrame) => {
+      if (frame.example !== shownExample) { shownExample = frame.example; ranks = Array.from({ length: CELLS * CELLS }, () => Math.random() * .98) }
+      const key = `${frame.example}:${frame.stage}:${frame.round}`
+      if (key !== shownKey) {
+        if (shownKey && frame.stage === 'round') ripples.push({ start: now })
+        shownKey = key
+        wrap.dataset.stage = frame.stage
+        wrap.dataset.round = String(frame.round)
+        caption.current!.textContent = parallaxArrayCaption(frame, city)
+      }
+      // The report and its byline appear, dissolve and return together.
+      const example = PARALLAX_ARRAY_EXAMPLES[frame.example], text = example.text, byline = `VOYAGER REPORT FROM ${example.from.toUpperCase()}`
+      const dissolve = (line: string) => Array.from(line, (char, i) => {
+        const state = parallaxArrayDissolve(i, line.length, frame.progress)
+        return state === 'kept' || char === ' ' ? char : state === 'static' ? GLYPHS[Math.floor(Math.random() * GLYPHS.length)] : ' '
+      }).join('')
+      quote.current!.textContent = frame.stage === 'release' ? dissolve(text) : text.slice(0, frame.typed)
+      reporter.current!.textContent = frame.stage === 'release' ? dissolve(byline) : byline
+      if (frame.stage === 'typing' && !frame.typed) reporter.current!.dataset.empty = ''
+      else delete reporter.current!.dataset.empty
+      if (now - lastNoise >= 80) {
+        lastNoise = now
+        refreshStatic(noise, noiseImage)
+        refreshStatic(filmGrain, filmGrainImage)
+      }
+      drawFeed(now)
+      drawLens(frame, now)
+      drawRing(frame, now)
+      ctx.clearRect(0, 0, w, h)
+      for (let k = ripples.length - 1; k >= 0; k--) {
+        const age = now - ripples[k].start
+        if (age > 2400) { ripples.splice(k, 1); continue }
+        for (let i = 0; i < 2; i++) {
+          const u = clamp((age - i * 300) / 1900)
+          if (u <= 0 || u >= 1) continue
+          ctx.strokeStyle = `rgba(${ORANGE},${(1 - u) * .5})`; ctx.lineWidth = 1.5 * (1 - u) + .6
+          ctx.beginPath(); ctx.arc(device.x, device.y, 20 + easeOut(u) * w * .45, 0, Math.PI * 2); ctx.stroke()
+        }
+      }
+    }
+
+    const glyphs = dormant.current!, dormantText = glyphs.dataset.scramble ?? ''
+    if (reduced) {
+      const settled = { example: 0, typed: EXAMPLE_LENGTHS[0], stage: 'continue', round: PARALLAX_ARRAY_ROUNDS, progress: 0 } as const
+      const show = () => { shownKey = ''; draw(0, settled); ctx.clearRect(0, 0, w, h) }
+      show()
+      if (!images[0].complete) scene.listen(images[0], 'load', show)
+      return
+    }
+    scene.every(() => { glyphs.textContent = Array.from(dormantText).map(c => c !== ' ' && Math.random() < .15 ? GLYPHS[Math.floor(Math.random() * GLYPHS.length)] : c).join('') }, 160)
+    attachVideo(video)
+    void video.play().catch(() => {})
+    draw(0, parallaxArrayFrame(0, EXAMPLE_LENGTHS))
+    // The scene rises in over the first second; the observation starts typing once it is on screen.
+    scene.later(() => { const begin = performance.now(); scene.loop(() => { const now = performance.now(); draw(now, parallaxArrayFrame(now - begin, EXAMPLE_LENGTHS)) }) }, 1200)
+    return () => { releaseVideo(video); glyphs.textContent = dormantText }
   })
-  return <BriefingPage state={state} className={s.p6} label="Member votes">
-    <div className={`${s.p6Head} ${s.gut}`}>
-      <SmartImage src="/assets/voyager-initiation/participation-questions.png" alt="" sizes="(min-width: 460px) 460px, 100vw" className={s.cover} preload />
-      <span className={s.scrim} />
-      <div className={s.copy}>
-        <Kicker text="MEMBER VOTES" />
-        <Headline text="Help shape what the Collective decides." />
+  const arc = LENS / 2 + 30, mid = LENS_BOX / 2
+  return <BriefingPage state={state} className={s.p6} label="Parallax Array">
+    <div ref={root} className={s.p6Scene} data-stage="typing">
+      <div className={`${s.copy} ${s.p6Copy} ${s.gut}`}>
+        <Kicker text="PARALLAX ARRAY" />
+        <Headline text="Describe a world you believe. We’d go looking for it." />
       </div>
+      <div ref={film} className={s.p6Film}>
+        <span className={s.p6Sway}>
+          <video data-src={`${MEDIA}/london-device.mp4`} muted playsInline loop preload="none" aria-hidden />
+          <canvas ref={feed} className={s.p6Feed} role="img" aria-label={`A remote feed of the ${city} Parallax Array, listening`} />
+        </span>
+        <span className={s.p6Live}><i className={s.liveDot} aria-hidden /><b>{city}</b> LISTENING</span>
+      </div>
+      <div className={s.lens} style={{ '--lens': `${LENS}px`, '--lens-box': `${LENS_BOX}px` } as CSSProperties}>
+        <canvas ref={port} className={s.porthole} role="img" aria-label="A small round window gathering fragments of the observed world over three rounds" />
+        <canvas ref={ring} className={s.fx} aria-hidden />
+        <svg className={s.fx} viewBox={`0 0 ${LENS_BOX} ${LENS_BOX}`} aria-hidden>
+          <path id={arcId} d={`M ${mid - arc} ${mid} A ${arc} ${arc} 0 0 0 ${mid + arc} ${mid}`} fill="none" />
+          <text className={s.lensCaption}><textPath ref={caption} href={`#${arcId}`} startOffset="50%" textAnchor="middle">{city} · LISTENING</textPath></text>
+        </svg>
+      </div>
+      <div className={`${s.p6Report} ${s.gut}`} aria-hidden>
+        <span ref={reporter} className={s.p6ReportLabel} data-empty />
+        <p className={s.p6Quote}><span ref={quote} /><span className={s.caret} /></p>
+      </div>
+      <ul className={`${s.p6Units} ${s.gut}`} aria-label="Parallax Array locations">
+        {PARALLAX_ARRAY_UNITS.filter(unit => !unit.online).map(unit => <li key={unit.city}>
+          <b>{unit.city}</b><span ref={dormant} data-scramble="NOT YET ONLINE" aria-label="Not yet online">NOT YET ONLINE</span>
+        </li>)}
+      </ul>
+      <canvas ref={sky} className={s.fx} aria-hidden />
     </div>
-    <ul className={`${s.proposals} ${s.gut}`} aria-label="Example member proposals">
-      {PROPOSALS.map((proposal, k) => {
-        const lead = Math.max(...proposal.options.map(([, value]) => value))
-        return <li key={proposal.question} className={s.proposal} data-open={open === k || undefined} style={{ '--k': k } as CSSProperties}>
-          <div className={s.question}>{proposal.question}<span>PROPOSAL</span></div>
-          <div className={s.tally}><div><div className={s.options}>
-            {proposal.options.map(([label, value]) => <div key={label} className={`${s.option} ${value === lead ? s.lead : ''}`} style={{ '--p': `${value}%` } as CSSProperties}>
-              <div className={s.optionRow}><b>{label}</b><span>{value}%</span></div>
-              <div className={s.track}><i /></div>
-            </div>)}
-          </div></div></div>
-        </li>
-      })}
-    </ul>
+    <ul className="sr-only">{PARALLAX_ARRAY_EXAMPLES.map(item => <li key={item.image}>Example observation from {item.from}: {item.text}</li>)}</ul>
   </BriefingPage>
 }
 
@@ -480,12 +596,12 @@ export function FrontLinePage({ state, regions }: { state: PageState; regions: B
   </BriefingPage>
 }
 
-/* 8 · Packs: the Console leads; tap any month to see that pack. */
+/* 8 · Packs: the Console leads; tap any month to see that pack. The page fits one phone screen: the picture gives up height, the caption never changes size. */
 const PACKS = [
-  { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', short: 'Initial Pack', image: `${MEDIA}/pack-1.jpg`, focus: '50% 75%', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
-  { month: 'NOV', meta: 'PACK 2 · NOV 2026', title: ANTENNA.firstMention, short: ANTENNA.name, image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
-  { month: 'DEC', meta: 'PACK 3 · DEC 2026', title: 'Multiverse Console', short: 'Console', image: `${MEDIA}/console-workshop.jpg`, alt: 'A Multiverse Console on a workshop bench, its screen showing a parallel world', description: 'Your own device for exploring and interacting with parallel worlds.' },
-  { month: 'JAN', meta: 'PACK 4 · JAN 2027', title: 'A Fourth Delivery', short: 'Fourth delivery', image: `${MEDIA}/pack-4.jpg`, alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },
+  { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', image: `${MEDIA}/pack-1.jpg`, focus: '50% 75%', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
+  { month: 'NOV', meta: 'PACK 2 · NOV 2026', title: ANTENNA.name, image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packSummary },
+  { month: 'DEC', meta: 'PACK 3 · DEC 2026', title: 'Multiverse Console', image: `${MEDIA}/console-workshop.jpg`, alt: 'A Multiverse Console on a workshop bench, its screen showing a parallel world', description: 'Your own device for exploring and interacting with parallel worlds.' },
+  { month: 'JAN', meta: 'PACK 4 · JAN 2027', title: 'A Fourth Delivery', image: `${MEDIA}/pack-4.jpg`, alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },
 ]
 
 export function PacksPage({ state, onPack }: { state: PageState; onPack: (index: number) => void }) {
@@ -496,9 +612,9 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
       <Kicker text="YOUR PACKS" />
       <Headline text="Four packs come to your door." />
     </div>
-    <div className={s.gut}>
+    <div className={`${s.p8Body} ${s.gut}`}>
       <div className={s.packCard}>
-        <div className={`${s.packHero} ${selected === 1 ? s.antennaHero : ''}`}>
+        <div className={s.packHero}>
           <span key={pack.image} className={s.packImage}><SmartImage src={pack.image} alt={pack.alt} sizes="(min-width: 460px) 430px, 92vw" preload style={pack.focus ? { objectPosition: pack.focus } : undefined} /></span>
         </div>
         <div className={s.packCaption} aria-live="polite"><span>{pack.meta}</span><b>{pack.title}</b><p>{pack.description}</p></div>
@@ -507,43 +623,118 @@ export function PacksPage({ state, onPack }: { state: PageState; onPack: (index:
         {PACKS.map((item, k) => <button key={item.month} type="button" className={s.packThumb} aria-pressed={selected === k} style={{ '--k': k } as CSSProperties}
           onClick={() => { setSelected(k); onPack(k) }}>
           <SmartImage src={item.image} alt="" sizes="96px" width={96} height={96} preload style={item.focus ? { objectPosition: item.focus } : undefined} />
-          <span>{item.month}</span><b>{item.short}</b>
+          <span>{item.month}</span>
         </button>)}
       </div>
     </div>
-    <p className={`${s.meta} ${s.p8Note} ${s.gut} ${s.rise}`} style={rise(1900)}>Tap a pack to see what is inside. One a month; contiguous US only, shipping and taxes included.</p>
   </BriefingPage>
 }
 
-/* 9 · Join: the same offers as the checkout panel. */
-export function JoinPage({ state, offers, busy, unavailable, onChoose, onLearnMore }: {
-  state: PageState; offers: BriefingOffer[]; busy: boolean; unavailable: string | null
-  onChoose: (offer: BriefingOffer['id']) => void; onLearnMore: () => void
+/* 9 · Join: the Console's own snow pulls back to the whole Console in its case (the opening scene of the Speedrun film),
+   then the lights come up on a Console at its desk. Two equal ways out: the Dashboard, or the packs on the Initiation page. */
+const UNBOXING = { src: `${MEDIA}/console-unboxing.mp4`, poster: `${MEDIA}/console-unboxing.jpg`, ms: 10_800 }
+/** The closing still is portrait; `focus` is the Console's screen, where the lights come up from. */
+const DESK = { src: `${MEDIA}/console-desk.jpg`, focus: [.564, .29] }
+const CLIP_DELAY = 300
+/** If the clip stalls or never starts, the lights come up anyway. */
+const CLIP_STALL = 2500
+const CLIP_FADE = .5
+const LIGHTS_UP = 1100
+/** The square clip spans the page's width, lifted so the Console's face sits above the copy; only the case lid is cut. */
+const CLIP_TOP = -.05
+const CLIP_EDGE = .45
+
+export function JoinPage({ state, warm, legacy, onExplore, onPacks }: {
+  state: PageState; warm: boolean; legacy: boolean; onExplore: () => void; onPacks: () => void
 }) {
-  return <BriefingPage state={state} className={s.p9} label="Voyager Initiation">
-    <div className={s.p9Media} aria-hidden>
-      <SmartImage src={`${MEDIA}/welcome-desk.jpg`} alt="" sizes="(min-width: 460px) 460px, 100vw" className={s.cover} preload />
-      <span className={s.scrim} />
-    </div>
+  const canvas = useRef<HTMLCanvasElement>(null)
+  const clip = useRef<HTMLVideoElement>(null)
+  // Warm the cache once the briefing is well under way, so the clip starts at once.
+  useEffect(() => { if (warm) { attachVideo(clip.current!); new Image().src = DESK.src } }, [warm])
+  useScene(state.active, (scene, reduced) => {
+    const { ctx, w, h } = fitCanvas(canvas.current!)
+    const video = clip.current!
+    const desk = new Image()
+    desk.src = DESK.src
+    const ready = (image: HTMLImageElement) => image.complete && image.naturalWidth > 0
+    const deskFrame = (push: number) => {
+      const scale = Math.max(w / desk.naturalWidth, h / desk.naturalHeight)
+      const iw = desk.naturalWidth * scale, ih = desk.naturalHeight * scale
+      return { x: (w - iw) / 2 + DESK.focus[0] * iw, y: DESK.focus[1] * ih, iw: iw * push, ih: ih * push }
+    }
+    // The Console stands at the top of the frame; the desk runs down behind the copy. It slowly pushes in once the lights are up.
+    const drawDesk = (push: number) => {
+      if (!ready(desk)) return
+      const { x, y, iw, ih } = deskFrame(push)
+      ctx.drawImage(desk, x - DESK.focus[0] * iw, y - DESK.focus[1] * ih, iw, ih)
+    }
+    const torch = (x: number, y: number, r: number, dark: number) => {
+      ctx.fillStyle = `rgba(8,12,32,${dark})`
+      ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.arc(x, y, r, 0, Math.PI * 2, true); ctx.fill()
+      const soft = ctx.createRadialGradient(x, y, r * .55, x, y, r)
+      soft.addColorStop(0, 'rgba(8,12,32,0)'); soft.addColorStop(1, `rgba(8,12,32,${dark})`)
+      ctx.fillStyle = soft; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
+    }
+    const settled = (since: number) => {
+      ctx.clearRect(0, 0, w, h)
+      drawDesk(1 + .05 * (1 - Math.cos(since / 18000 * Math.PI)) / 2)
+      ctx.fillStyle = 'rgba(8,12,32,.5)'; ctx.fillRect(0, 0, w, h)
+    }
+    if (reduced) {
+      settled(0)
+      if (!ready(desk)) scene.listen(desk, 'load', () => settled(0))
+      return
+    }
+    attachVideo(video)
+    try { video.currentTime = 0 } catch { /* not ready */ }
+    scene.later(() => { void video.play().catch(() => {}) }, CLIP_DELAY)
+    const top = h * CLIP_TOP, bottom = top + w
+    // The clip fades up from the dark and back into it; its lower edge melts into the black page under the copy.
+    const drawClip = () => {
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h)
+      if (video.readyState < 2) return
+      ctx.drawImage(video, 0, top, w, w)
+      const edge = ctx.createLinearGradient(0, bottom - w * CLIP_EDGE, 0, bottom)
+      edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, '#000')
+      ctx.fillStyle = edge; ctx.fillRect(0, bottom - w * CLIP_EDGE, w, w * CLIP_EDGE)
+      // A little shade under the top controls, which are white like the snow.
+      const shade = ctx.createLinearGradient(0, 0, 0, 72)
+      shade.addColorStop(0, 'rgba(0,0,0,.6)'); shade.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = shade; ctx.fillRect(0, 0, w, 72)
+      const at = video.currentTime, length = video.duration || UNBOXING.ms / 1000
+      const lamp = Math.max(1 - at / CLIP_FADE, (at - (length - CLIP_FADE)) / CLIP_FADE)
+      ctx.fillStyle = `rgba(0,0,0,${clamp(lamp)})`; ctx.fillRect(0, 0, w, h)
+    }
+    const radius = Math.min(170, w * .42)
+    let end: number | null = null
+    scene.loop(t => {
+      const stalled = t > CLIP_DELAY + CLIP_STALL && video.currentTime < .05 || t > CLIP_DELAY + UNBOXING.ms + CLIP_STALL
+      if (end === null && (video.ended || stalled)) { end = t; video.pause() }
+      if (end === null) { drawClip(); return }
+      const since = t - end
+      if (since >= LIGHTS_UP) { settled(since - LIGHTS_UP); return }
+      // Lights up: the torch opens from the Console's screen until the whole desk shows under an even scrim.
+      const u = ease(clamp(since / LIGHTS_UP))
+      ctx.clearRect(0, 0, w, h)
+      drawDesk(1)
+      const focus = deskFrame(1)
+      torch(focus.x, focus.y, lerp(radius * .6, Math.hypot(w, h), u), .86)
+      ctx.fillStyle = `rgba(8,12,32,${.5 * u})`; ctx.fillRect(0, 0, w, h)
+      ctx.fillStyle = `rgba(0,0,0,${1 - clamp(since / 260)})`; ctx.fillRect(0, 0, w, h)
+    })
+    return () => releaseVideo(video)
+  })
+  return <BriefingPage state={state} className={s.p9} label="Briefing complete">
+    <canvas ref={canvas} className={s.fx} data-briefing-target="media" role="img"
+      aria-label="A Multiverse Console's screen full of static; the camera pulls back to the whole Console in its case, then the lights come up on a Console on a desk with a Voyager badge and an envelope." />
+    <video ref={clip} className={s.p9Clip} data-src={UNBOXING.src} poster={UNBOXING.poster} muted playsInline preload="auto" aria-hidden />
     <div className={`${s.p9Content} ${s.gut}`}>
-      <Kicker text="BECOME A VOYAGER" />
-      <Headline text="Voyager Initiation" large />
-      <div className={s.offers} style={{ '--count': offers.length } as CSSProperties}>
-        {offers.map((offer, k) => <div key={offer.id} className={`${s.offer} ${s.rise}`} style={rise(1100 + k * 200)}>
-          <span className={s.offerLabel}>{offer.label}</span>
-          <h3>{offer.title}</h3>
-          <span className={s.price}>${offer.price}</span>
-          <ul>{offer.points.map(point => <li key={point}><Check size={12} strokeWidth={3} aria-hidden />{point}</li>)}</ul>
-          <span className={s.offerNote}>{offer.note}</span>
-          <button type="button" className={s.choose} disabled={busy || !!unavailable} onClick={() => onChoose(offer.id)}>
-            {offer.id === 'legacy_upgrade' ? `UPGRADE $${offer.price}` : `CHOOSE $${offer.price}`}
-          </button>
-        </div>)}
-      </div>
-      {unavailable && <p className={s.meta} role="status">{unavailable}</p>}
-      <div className={`${s.p9Foot} ${s.rise}`} style={rise(1600)}>
-        <button type="button" className={s.more} onClick={onLearnMore}>Learn more <ArrowRight size={16} aria-hidden /></button>
-        <span className={s.meta}>One payment · No subscription</span>
+      <Kicker text="BRIEFING COMPLETE" />
+      <Headline text="Now you know the Collective." large base={800} />
+      <p className={`${s.p9Lede} ${s.rise}`} style={rise(1500)}>{legacy ? 'Look around first, or activate the rest of your packs.' : 'Look around first, or start your Voyager Packs.'}</p>
+      <div className={`${s.p9Actions} ${s.rise}`} style={rise(1900)}>
+        <Link className={s.p9Action} href="/console" onClick={onExplore}>Explore the Collective <ArrowRight size={18} aria-hidden /></Link>
+        <button type="button" className={s.p9Action} onClick={onPacks}>{legacy ? 'Activate Packs 3–4' : 'Get the Voyager Packs'} <ArrowRight size={18} aria-hidden /></button>
       </div>
     </div>
   </BriefingPage>

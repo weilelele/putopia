@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ACTIVATION_TTL_MS, activationEmail, createActivationToken, readActivationToken } from './activation-link'
+import { ACTIVATION_TTL_MS, activationEmail, createActivationToken, readActivationToken, verifyActivationToken } from './activation-link'
 
 const SECRET = 'test-secret'
 const NOW = Date.UTC(2026, 9, 27, 12)
@@ -22,6 +22,17 @@ describe('activation tokens', () => {
     expect(readActivationToken(`${body}.${mac}.x`, SECRET, NOW)).toBeNull()
     expect(readActivationToken('nonsense', SECRET, NOW)).toBeNull()
     expect(readActivationToken(undefined, SECRET, NOW)).toBeNull()
+    for (const invalid of [`${forged}.${mac}`, token + '.x', 'nonsense', undefined]) {
+      expect(verifyActivationToken(invalid, SECRET)).toBeNull()
+    }
+    expect(verifyActivationToken(token, 'other-secret')).toBeNull()
+  })
+
+  it('can identify a signed old link for status checks without allowing it to set credentials', () => {
+    const token = createActivationToken({ userId: 'activated-user', now: NOW }, SECRET)
+    expect(verifyActivationToken(token, SECRET)?.userId).toBe('activated-user')
+    expect(readActivationToken(token, SECRET, NOW + ACTIVATION_TTL_MS)).toBeNull()
+    expect(readActivationToken(token, SECRET, NOW + 365 * ACTIVATION_TTL_MS)).toBeNull()
   })
 
   it('drops a landing path that is not on this site', () => {
@@ -33,9 +44,17 @@ describe('activation tokens', () => {
 describe('activationEmail', () => {
   it('links the button and the fallback URL, escaped', () => {
     const email = activationEmail('https://multiverseco.org/register?key=a.b&x=1', 'signup')
-    expect(email.subject).toBe('Activate your Multiverse Collective account')
-    expect(email.html).toContain('href="https://multiverseco.org/register?key=a.b&amp;x=1"')
+    expect(email.subject).toBe('Welcome to Multiverse Collective')
+    expect(email.html.match(/href="https:\/\/multiverseco\.org\/register\?key=a\.b&amp;x=1"/g)).toHaveLength(2)
     expect(email.text).toContain('https://multiverseco.org/register?key=a.b&x=1')
+  })
+
+  it('uses the activation site for the logo and recovery page, including on previews', () => {
+    const email = activationEmail('https://preview.example/register?key=k', 'signup')
+    expect(email.html).toContain('src="https://preview.example/assets/vi-wordmark.png"')
+    expect(email.html).toContain('href="https://preview.example/auth/expired"')
+    expect(email.text).toContain('Get a new link: https://preview.example/auth/expired')
+    expect(email.html).not.toContain('#preview')
   })
 
   it('tells Initiation buyers why the link came with their checkout', () => {

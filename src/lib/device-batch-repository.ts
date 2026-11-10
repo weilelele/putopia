@@ -1,4 +1,5 @@
 import 'server-only'
+import { cache } from 'react'
 
 import { createAdminClient } from '@/lib/supabase/server'
 import type { DeviceBatch } from '@/lib/device-batches'
@@ -41,7 +42,7 @@ async function attachLiveHolderDirectory(
   }))
 }
 
-export async function listPublicDeviceBatches(): Promise<DeviceBatch[]> {
+export const listPublicDeviceBatches = cache(async function listPublicDeviceBatches(): Promise<DeviceBatch[]> {
   try {
     const admin = createAdminClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,7 +88,7 @@ export async function listPublicDeviceBatches(): Promise<DeviceBatch[]> {
     console.error('[device-batches] published registry unavailable:', error)
     throw new Error('The Device Library is temporarily unavailable. Please try again.')
   }
-}
+})
 
 export async function getPublicDeviceBatch(slug: string) {
   const batches = await listPublicDeviceBatches()

@@ -1,21 +1,26 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, Check, Plus, HelpCircle } from 'lucide-react'
-import type { McFunction } from '@/types/database'
+import { createPortal } from 'react-dom'
+import { ArrowRight } from 'lucide-react'
+import { ArchiveButton } from './archive-button'
 import { ArchiveSheet } from './archive-sheet'
-import { ArchiveLinkButton } from './archive-link-button'
 import { CONSOLE_HERO } from '@/lib/console-hero'
 import SmartImage from './smart-image'
 import styles from './mc-console-panel.module.css'
 
-const DETAILS: Record<string, string> = {
-  'Worlds Detection': 'Observe parallel worlds.',
-  'Audio Collection': 'Receive and send sound.',
-}
+/** Reel 01 without its Collective introduction, cut from ~/Sites/orientation-reel (composition ReelHowItWorks). `at` is where each control starts. */
+const GUIDE_FILM = { src: '/assets/how-it-works-20261106.mp4', poster: '/assets/how-it-works-20261106-poster.jpg' }
+const GUIDE_STEPS = [
+  { title: 'Frequency', body: 'Turn the left knob to find a world.', at: 22.8 },
+  { title: 'Band', body: 'Turn the right knob to choose a view.', at: 42.2 },
+  { title: 'Quantum energy', body: 'Hold the top button for at least 3 seconds to charge and send energy.', at: 52.5 },
+]
 
-export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunction[]; heroVideo?: { src: string; poster?: string } }) {
-  const [guideOpen, setGuideOpen] = useState(false)
+export function McConsolePanel({ heroVideo }: { heroVideo?: { src: string; poster?: string } } = {}) {
+  const [guideState, setGuideState] = useState<'idle' | 'open' | 'closed'>('idle')
+  const guideOpen = guideState === 'open'
+  const guideFilm = useRef<HTMLVideoElement>(null)
   const [imageIndex, setImageIndex] = useState(0)
   const currentImage = CONSOLE_HERO.images[imageIndex]
   const imageRef = useRef<HTMLDivElement>(null)
@@ -33,10 +38,22 @@ export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunc
     return () => { window.clearInterval(timer); observer.disconnect() }
   }, [guideOpen, heroVideo])
 
-  const groups = [
-    { title: 'Confirmed', functions: mcFunctions.filter(fn => fn.status === 'active'), confirmed: true },
-    { title: 'Unconfirmed', functions: mcFunctions.filter(fn => fn.status !== 'active'), confirmed: false },
-  ]
+  // Opened by a tap, so try with the narration; browsers that refuse play muted with the burned-in captions.
+  useEffect(() => {
+    const film = guideFilm.current
+    if (!guideOpen || !film || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    film.play().catch(() => {
+      film.muted = true
+      return film.play().catch(() => {})
+    })
+  }, [guideOpen])
+
+  function seekGuide(at: number) {
+    const film = guideFilm.current
+    if (!film) return
+    film.currentTime = at
+    void film.play().catch(() => {})
+  }
 
   return (
     <section className={styles.panel} aria-label="About the Multiverse Console">
@@ -55,29 +72,26 @@ export function McConsolePanel({ mcFunctions, heroVideo }: { mcFunctions: McFunc
       </div>}
       <header className={styles.heading}>
         <h2 className={styles.sectionTitle}>Multiverse<br />Console</h2>
-        <p>Our collective&apos;s device for exploring parallel worlds. Complete Pack ($488) or an Initial-member upgrade ($460) includes a Console claim; allocation and delivery follow your member record.</p>
+        <p>It&apos;s a device that we own to explore parallel worlds.</p>
       </header>
-      <nav className={styles.exploreActions} aria-label="Explore the collective">
-        <ArchiveLinkButton href="/intel" variant="primary" fullWidth className={styles.missions}>
-          <span>View missions</span><ArrowRight size={20} aria-hidden />
-        </ArchiveLinkButton>
-        <ArchiveLinkButton href="/voyagers" variant="secondary" className={styles.exploreLink}>
-          <span>Meet voyagers</span><ArrowRight size={20} aria-hidden />
-        </ArchiveLinkButton>
-        <ArchiveLinkButton href="/worlds" variant="secondary" className={styles.exploreLink}>
-          <span>Explore worlds</span><ArrowRight size={20} aria-hidden />
-        </ArchiveLinkButton>
-      </nav>
-      <button className={styles.guideButton} type="button" onClick={() => setGuideOpen(true)} aria-haspopup="dialog">Explore the function <Plus size={20} aria-hidden /></button>
-      <ArchiveSheet open={guideOpen} onClose={() => setGuideOpen(false)} title="Console functions" >
-        {mcFunctions.length ? groups.map(group => <section className={styles.group} key={group.title} aria-label={group.title}>
-          <h3>{group.title}</h3>
-          {group.functions.length ? <ul>{group.functions.map(fn => <li key={fn.id}>
-            {group.confirmed ? <span className={styles.confirmedIcon}><Check size={19} aria-hidden /></span> : <HelpCircle className={styles.unknownIcon} size={32} aria-hidden />}
-            <div><h4>{fn.name}</h4><p>{group.confirmed ? (DETAILS[fn.name] || 'Confirmed capability.') : fn.status === 'in_development' ? 'In development' : 'Unconfirmed'}</p></div>
-          </li>)}</ul> : <p>No functions recorded in this category.</p>}
-        </section>) : <p>Function details are currently unavailable.</p>}
-      </ArchiveSheet>
+      <ArchiveButton variant="primary" fullWidth className={styles.guideButton} onClick={() => setGuideState('open')} aria-haspopup="dialog">
+        <span>How it works</span><ArrowRight size={20} aria-hidden />
+      </ArchiveButton>
+      {/* Retain the dialog after its first open so native close restores focus. */}
+      {guideState !== 'idle' ? createPortal(<ArchiveSheet open={guideOpen} onClose={() => setGuideState('closed')} title="How it works" size="wide">
+        {guideOpen ? <>
+          <div className={styles.guideFilm}>
+            <video ref={guideFilm} src={GUIDE_FILM.src} poster={GUIDE_FILM.poster} controls playsInline preload="metadata" aria-label="A narrated Console demonstration: the left knob tunes a world out of static, the right knob changes the view, and holding the top button charges and sends energy. Captions are part of the picture." />
+          </div>
+          <ol className={styles.steps}>
+            {GUIDE_STEPS.map((step, index) => <li key={step.title}>
+              <button type="button" onClick={() => seekGuide(step.at)} aria-label={`${step.title}: ${step.body} Play this part of the video.`}>
+                <span className={styles.stepNumber} aria-hidden="true">{index + 1}</span><div><h3>{step.title}</h3><p>{step.body}</p></div>
+              </button>
+            </li>)}
+          </ol>
+        </> : null}
+      </ArchiveSheet>, document.body) : null}
     </section>
   )
 }
