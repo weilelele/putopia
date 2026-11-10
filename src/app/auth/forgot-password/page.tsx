@@ -9,10 +9,6 @@ export default function ForgotPasswordPage() {
     <main className="main pilot-archive-page pilot-login-page">
       <div className="pilot-login-shell">
         <BackLink href="/login" label="Back to log in" />
-        <header className="pilot-login-heading">
-          <h1 className="pilot-login-title">FORGOT PASSWORD?</h1>
-          <p className="pilot-recovery-description">Enter the email address you use to log in.</p>
-        </header>
         <ForgotPasswordForm />
       </div>
     </main>
