@@ -59,5 +59,9 @@ jobs:
       - name: Test
         run: npm test
 
+      # In-memory PGlite only; RPCs run as service_role, like production.
+      - name: SQL tests
+        run: npm run test:sql
+
       - name: Build
         run: npm run build
