@@ -7,7 +7,7 @@ import { cookies } from 'next/headers'
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
-import { initiationConfigurationError, initiationStripeQuote } from '@/lib/initiation-config'
+import { initiationCheckoutPaymentMethods, initiationConfigurationError, initiationStripeQuote } from '@/lib/initiation-config'
 import { INITIATION_PRODUCT } from '@/lib/initiation-types'
 import { captureInitiationMetaAttribution } from '@/lib/initiation-meta-attribution'
 import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
@@ -134,7 +134,7 @@ export async function createInitiationCheckout(request: Request, origin: string,
     mark('attribution')
     const sourceQuery = order.device_source ? `&from=${encodeURIComponent(order.device_source)}` : ''
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment', ui_mode: 'hosted_page', payment_method_types: ['card'],
+      mode: 'payment', ui_mode: 'hosted_page', ...initiationCheckoutPaymentMethods(order),
       automatic_tax: { enabled: false }, allow_promotion_codes: false,
       line_items: [{ price: order.price_id, quantity: 1 }],
       client_reference_id: user.id, customer_email: user.email,

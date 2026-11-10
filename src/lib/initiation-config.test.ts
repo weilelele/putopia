@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { initiationStripeQuote } from './initiation-config'
+import { initiationCheckoutPaymentMethods, initiationStripeQuote } from './initiation-config'
 import { INITIATION_PRICING_VERSION } from './initiation-pricing'
 
 vi.mock('server-only', () => ({}))
@@ -12,15 +12,19 @@ const catalog = {
 }
 const dedicatedCatalog = {
   ...catalog,
-  STRIPE_INITIATION_COMPLETE_PRODUCT_ID: 'prod_complete',
-  STRIPE_INITIATION_COMPLETE_PRICE_ID: 'price_complete',
+  STRIPE_INITIATION_CHECKOUT_CATALOG: JSON.stringify({
+    initial: { productId: 'prod_new_initial', priceId: 'price_new_initial' },
+    standard: { productId: 'prod_complete', priceId: 'price_complete' },
+    paymentMethodConfigurationId: 'pmc_voyager',
+  }),
 }
 
-describe('Complete checkout catalog', () => {
-  it('selects the dedicated product only for new Complete orders when configured', () => {
+describe('Voyager Pack checkout catalog', () => {
+  it('switches both new Pack orders to their dedicated products without changing upgrades', () => {
     expect(initiationStripeQuote('standard', null, catalog)).toEqual({ productId: 'prod_shared', priceId: 'price_previous' })
+    expect(initiationStripeQuote('initial', null, catalog)).toEqual({ productId: 'prod_shared', priceId: 'price_initial' })
     expect(initiationStripeQuote('standard', null, dedicatedCatalog)).toEqual({ productId: 'prod_complete', priceId: 'price_complete' })
-    expect(initiationStripeQuote('initial', null, dedicatedCatalog)).toEqual({ productId: 'prod_shared', priceId: 'price_initial' })
+    expect(initiationStripeQuote('initial', null, dedicatedCatalog)).toEqual({ productId: 'prod_new_initial', priceId: 'price_new_initial' })
     expect(initiationStripeQuote('legacy_upgrade', null, dedicatedCatalog)).toEqual({ productId: 'prod_shared', priceId: 'price_upgrade' })
   })
 
@@ -33,6 +37,15 @@ describe('Complete checkout catalog', () => {
       price_id: 'price_previous',
     }
     expect(initiationStripeQuote('standard', previous, dedicatedCatalog)).toEqual({ productId: 'prod_shared', priceId: 'price_previous' })
-    expect(initiationStripeQuote('initial', previous, dedicatedCatalog)).toEqual({ productId: 'prod_shared', priceId: 'price_initial' })
+    expect(initiationStripeQuote('initial', previous, dedicatedCatalog)).toEqual({ productId: 'prod_new_initial', priceId: 'price_new_initial' })
+    expect(initiationCheckoutPaymentMethods(previous, dedicatedCatalog)).toEqual({ payment_method_types: ['card'] })
+  })
+
+  it.each(['initial', 'standard'] as const)('uses the dedicated payment methods and hides Link for new %s orders', kind => {
+    const { productId, priceId } = initiationStripeQuote(kind, null, dedicatedCatalog)
+    const order = { order_kind: kind, product_id: productId!, price_id: priceId! }
+    expect(initiationCheckoutPaymentMethods(order, dedicatedCatalog)).toEqual({
+      payment_method_configuration: 'pmc_voyager', wallet_options: { link: { display: 'never' } },
+    })
   })
 })
