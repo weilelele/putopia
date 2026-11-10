@@ -7,7 +7,7 @@ import { cookies } from 'next/headers'
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
-import { initiationConfigurationError } from '@/lib/initiation-config'
+import { initiationCheckoutPaymentMethods, initiationConfigurationError, initiationStripeQuote } from '@/lib/initiation-config'
 import { INITIATION_PRODUCT } from '@/lib/initiation-types'
 import { captureInitiationMetaAttribution } from '@/lib/initiation-meta-attribution'
 import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
@@ -75,10 +75,12 @@ export async function createInitiationCheckout(request: Request, origin: string,
     const kind = legacyId || initialId ? 'legacy_upgrade' : body?.bundle === 'initial' ? 'initial' : 'standard'
     const offerConfigError = initiationConfigurationError(kind)
     if (offerConfigError) return NextResponse.json({ error: offerConfigError }, { status: 503 })
-    const priceId = process.env[INITIATION_PRICES[kind].priceEnv]!
+    const { data: previousOrder, error: previousError } = previousResult
+    if (previousError) throw previousError
+    const { priceId, productId } = initiationStripeQuote(kind, previousOrder)
+    if (!priceId || !productId) throw new Error('Initiation quote is not configured')
     const amount = INITIATION_PRICES[kind].amount
     const deviceSource = deviceSourcePath(typeof body?.from === 'string' ? body.from : null)
-    const productId = process.env.STRIPE_INITIATION_PRODUCT_ID!
     const { data: batch, error: batchError } = batchResult
     if (batchError || !batch) throw new Error('Payment mode could not be verified')
     const price = await stripe.prices.retrieve(priceId)
@@ -86,8 +88,6 @@ export async function createInitiationCheckout(request: Request, origin: string,
     if (price.livemode !== batch.stripe_livemode || !price.active || price.type !== 'one_time' || price.unit_amount !== amount || price.currency !== 'usd' || price.product !== productId || price.tax_behavior !== 'inclusive') {
       return NextResponse.json({ error: 'The dedicated Initiation price is not ready.' }, { status: 503 })
     }
-    const { data: previousOrder, error: previousError } = previousResult
-    if (previousError) throw previousError
     const canSwitch = await prepareInitiationBundleSwitch(previousOrder, kind, {
       retrieveSession: id => stripe.checkout.sessions.retrieve(id),
       expireSession: id => stripe.checkout.sessions.expire(id),
@@ -134,7 +134,7 @@ export async function createInitiationCheckout(request: Request, origin: string,
     mark('attribution')
     const sourceQuery = order.device_source ? `&from=${encodeURIComponent(order.device_source)}` : ''
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment', ui_mode: 'hosted_page', payment_method_types: ['card'],
+      mode: 'payment', ui_mode: 'hosted_page', ...initiationCheckoutPaymentMethods(order),
       automatic_tax: { enabled: false }, allow_promotion_codes: false,
       line_items: [{ price: order.price_id, quantity: 1 }],
       client_reference_id: user.id, customer_email: user.email,
