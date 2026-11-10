@@ -3,6 +3,7 @@
 import { BackLink } from '@/components/back-link'
 import { ArchiveInput } from '@/components/archive-input'
 import { Suspense, useState } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
@@ -65,6 +66,10 @@ function LoginPageContent() {
         </header>
 
         <form onSubmit={handleSubmit} className="pilot-login-form">
+          {searchParams.get('password') === 'reset' && (
+            <p className="archive-form-message" role="status">Password reset. Log in with your new password.</p>
+          )}
+
           <ArchiveField htmlFor="login-email" label="EMAIL ADDRESS">
             <ArchiveInput
               id="login-email"
@@ -84,6 +89,10 @@ function LoginPageContent() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </ArchiveField>
+
+          <Link href="/auth/forgot-password" className="pilot-login-recovery-link">
+            Forgot password?
+          </Link>
 
           {error && (
             <div className="pilot-control-message is-error" role="alert">
