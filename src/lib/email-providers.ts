@@ -27,5 +27,5 @@ export const EMAIL_PROVIDERS: Record<string, { name: string; url: string }> = {
 
 export function getEmailProvider(email: string) {
   const domain = email.split('@')[1]?.toLowerCase()
-  return domain ? (EMAIL_PROVIDERS[domain] ?? null) : null
+  return domain && Object.hasOwn(EMAIL_PROVIDERS, domain) ? EMAIL_PROVIDERS[domain] : null
 }
