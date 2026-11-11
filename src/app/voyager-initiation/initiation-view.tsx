@@ -104,6 +104,8 @@ export type InitiationViewProps = {
 export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
+  // Only this arrival's URL bypasses the briefing; a remembered return destination does not.
+  const fromDevice = deviceSourcePath(deviceSource) !== null
   useEffect(() => {
     if (deviceSourcePath(deviceSource)) {
       try { sessionStorage.setItem(SOURCE_KEY, deviceSource!) } catch { /* URL still preserves the current intent. */ }
@@ -133,10 +135,10 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const progress = initiationPackProgress(snapshot)
   const kind = legacy ? 'legacy_upgrade' : bundle
   const storedBriefing = useSyncExternalStore(subscribeToSource, readBriefingStore, serverBriefingStore)
-  const [briefing, setBriefing] = useState<'idle' | 'replay' | 'link' | 'dismissed'>(() => briefingLinkOpens(snapshot.status, briefingParam) ? 'link' : 'idle')
+  const [briefing, setBriefing] = useState<'idle' | 'replay' | 'link' | 'dismissed'>(() => briefingLinkOpens(snapshot.status, briefingParam, fromDevice) ? 'link' : 'idle')
   const briefingAuto = storedBriefing !== 'server' && storedBriefing !== 'unavailable'
-    && shouldAutoOpenBriefing({ status, paymentStatus: snapshot.paymentStatus, checkoutCanceled, stored: storedBriefing || null })
-  const briefingOpen = briefing === 'replay' || briefing === 'link' || (briefing === 'idle' && briefingAuto)
+    && shouldAutoOpenBriefing({ status, paymentStatus: snapshot.paymentStatus, checkoutCanceled, stored: storedBriefing || null, fromDevice })
+  const briefingOpen = briefing === 'replay' || (!fromDevice && (briefing === 'link' || (briefing === 'idle' && briefingAuto)))
   const soldOut = !snapshot.ownsSeat && (availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity))
   const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind, userId: snapshot.userId,
     internal: snapshot.role === 'architect' || analyticsEnvironment === 'fixture', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
