@@ -257,7 +257,6 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
           </> : <>
           {!paymentAtBottom && seatSummary}
-          <p className={styles.eyebrow}>Your initiation</p>
           <h2 className={styles.purchaseTitle}>{legacy ? 'Activate Packs 3–4.' : 'Choose your bundle.'}</h2>
           {legacy ? <p className={styles.paymentTerms}>Add the remaining two packs. Your existing Voyager membership stays with you.</p> : <div className={styles.sharedBenefits}>
             <p>Voyager membership + remote Array access in both.</p>
