@@ -5,6 +5,9 @@ export const INITIATION_FAQ_GROUPS = [
     {
       question: 'What is the Multiverse Console?',
       answer: 'The Multiverse Console is a physical piece of sci-fi hardware built for the Collective’s fieldwork. Use its dials to tune into parallel worlds and switch between observation angles. Send quantum energy into a world, or send your voice with it where supported. A transmission might bring a faint image into focus or change something on the other side. Share what you observe with fellow Voyagers and investigate the results together.',
+      paragraphs: [
+        'There’s still much to discover about what the Console can do. As a Voyager, you can help the Collective uncover new capabilities and find new ways to interact with parallel worlds.',
+      ],
     },
     { question: 'What is the Antenna, and what does it do?', answer: 'The Antenna is a collectible receiving accessory for the Multiverse Console. Installed on top of your Console, it receives a particular category of signals from parallel worlds. We are still exploring what those signals contain, together.' },
     { question: 'Can I add a Console later?', answer: `Yes. Initial Pack members can add Console + Pack 4 for ${initiationPriceLabel('legacy_upgrade')}. Buying Complete upfront saves $10 compared with the current Initial + upgrade.` },
