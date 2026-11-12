@@ -44,10 +44,9 @@ function writeBriefingStore(outcome: BriefingOutcome, page: number) {
 }
 
 
-const paymentMessages = {
+const paymentMessages: Partial<Record<InitiationSnapshot['paymentStatus'], string>> = {
   pending: 'Payment is being processed. Membership and deliveries unlock only after payment is confirmed. Refresh to check the latest status.',
   payment_failed: 'Payment was not completed. You can retry when checkout is available.',
-  canceled: 'Your checkout was canceled. You can retry when checkout is available.',
   refunded: 'Your Initiation payment was refunded. Previous delivery records remain visible; an active Console claim is not implied.',
   disputed: 'Your payment is under review. Entitlements may be paused until the review is complete.',
   payment_review: 'Your payment needs review. Initiation is not confirmed yet.',
@@ -126,6 +125,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const [signedInHere, setSignedInHere] = useState(false)
   const pendingBundle = useRef<'initial' | 'standard'>(initialBundle)
   const { availability, status, shipments, consoleClaim } = snapshot
+  const paymentMessage = paymentMessages[snapshot.paymentStatus]
   const initiated = status === 'initiated'
   const granted = status === 'granted'
   const legacy = status === 'legacy_pack'
@@ -237,14 +237,13 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     <p className={styles.packSummary} role="status">{progress.pending === null ? `${progress.included} packs included · Delivery progress unavailable` : `${progress.delivered} delivered · ${progress.pending} awaiting delivery`}</p>
     {legacy && progress.packs.slice(2).every(pack => pack.awaitingActivation) && <p className={styles.paymentTerms}>Packs 3–4 await activation.</p>}
     {snapshot.error && <p className={styles.notice} role="alert">{snapshot.error}</p>}
-    {snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{legacy && snapshot.paymentStatus === 'pending' ? 'Your upgrade payment is being confirmed. Your existing Pack access stays available.' : paymentMessages[snapshot.paymentStatus]}</p>}
+    {paymentMessage && <p className={styles.notice} role="status">{legacy && snapshot.paymentStatus === 'pending' ? 'Your upgrade payment is being confirmed. Your existing Pack access stays available.' : paymentMessage}</p>}
     <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
   </div>
   const joinPanel = (
         <div ref={paymentRef} tabIndex={-1} data-initiation-section="payment" className={styles.join}>
-          {checkoutCanceled && !initiated && !granted && <p className={styles.notice} role="status">You returned from checkout without completing it. Payment status below comes from your order records.</p>}
           {!memberView && snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
-          {!memberView && snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{paymentMessages[snapshot.paymentStatus]}</p>}
+          {!memberView && snapshot.paymentStatus !== 'pending' && paymentMessage && <p className={styles.notice} role="status">{paymentMessage}</p>}
           {granted ? <>
             <p className={styles.memberStatus}>{availability.batch} · Membership registered</p>
             <p className={styles.paymentTerms}>You have joined the Collective through a granted membership. No Initiation payment is recorded.</p>
@@ -279,7 +278,6 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           </fieldset>
           <div className={styles.purchaseTerms}>
             <p>One payment. No subscription.</p>
-            <p>Card authorized first; charged after delivery check.</p>
           </div>
           <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : soldOut ? 'FULLY CLAIMED' : `${legacy ? 'UPGRADE' : 'CONTINUE'} · ${initiationPriceLabel(kind)}`}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
