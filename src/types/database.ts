@@ -347,6 +347,12 @@ export type StoryUpdate = Partial<Pick<
 export type Database = {
   public: {
     Tables: {
+      mission_acceptances: {
+        Row: { user_id: string; mission_id: string; accepted_at: string }
+        Insert: { user_id: string; mission_id: string; accepted_at?: string }
+        Update: never
+        Relationships: []
+      }
       npc_voice_profiles: {
         Row: { user_id: string; instructions: string; updated_by: string; updated_at: string }
         Insert: { user_id: string; instructions: string; updated_by: string; updated_at?: string }

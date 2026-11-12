@@ -350,8 +350,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             <div className={styles.packImage}><SmartImage src="/assets/voyager-initiation/mission-board-v10.png" alt="A phone displaying the Mission Board beside a Multiverse Console on a wooden workbench" sizes="(min-width: 1100px) 160px, (min-width: 768px) 120px, 72px" /></div>
             <div className={styles.packCopy}>
               <PackHeading>Mission Board</PackHeading>
-              <p className={styles.taskDescription}>Join observations, attempt contact, and explore unknown frequencies.</p>
-              <Link className={styles.taskLink} href={snapshot.userId ? '/console#mission-board' : '/login?redirect=%2Fconsole%23mission-board'}>View missions <ArrowRight size={18} aria-hidden /></Link>
+              <p className={styles.taskDescription}>Read this week’s leads from across the multiverse.</p>
+              <Link className={styles.taskLink} href="/console#mission-board">View missions <ArrowRight size={18} aria-hidden /></Link>
             </div>
           </li>
         </ul>
