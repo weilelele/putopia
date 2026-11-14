@@ -30,6 +30,8 @@ import styles from '../../live-observation-room.module.css'
 type RoomTab = 'dispatch' | 'observations'
 type Detail = { kind: 'dispatch'; investigationId: string }
 
+const PAUSED_NOTICE = 'Processing is paused while we rework this loop. New observations stay in the queue until it resumes.'
+
 const STATUS_LABEL: Record<DreamcatcherStatus, string> = {
   processing: 'PROCESSING',
   paused: 'PAUSED',
@@ -42,7 +44,8 @@ function localTime(timeZone: string, now: number) {
   return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, minute: '2-digit', second: '2-digit', timeZone }).format(new Date(now))
 }
 
-function jobStatus(job: DreamcatcherJob) {
+function jobStatus(job: DreamcatcherJob, paused: boolean) {
+  if (paused) return `ROUND ${job.roundNumber} · PAUSED`
   if (job.roundStatus) return roundLabel(job.roundStatus, job.roundNumber, job.generationStatus)
   if (job.status === 'processing') return `ROUND ${job.roundNumber} · PROCESSING`
   if (job.status === 'returning') return `ROUND ${job.roundNumber} · RETURNING TO DEVICE`
@@ -52,12 +55,14 @@ function jobStatus(job: DreamcatcherJob) {
 
 export function WorldsLiveRoom({
   rooms,
+  canSubmit,
   investigations,
   liveVideoLibrary,
   liveVideoRoomSlug,
   loggedIn,
 }: {
   rooms: DreamcatcherRoom[]
+  canSubmit: boolean
   investigations: PublicInvestigation[]
   liveVideoLibrary: DreamcatcherLiveVideoLibrary | null
   liveVideoRoomSlug: string
@@ -85,7 +90,8 @@ export function WorldsLiveRoom({
   const queueFull = !!selected && selected.queue.filter(j => j.status === 'queued' || j.status === 'returning').length >= selected.queueCapacity
   const orderedQueue = deviceQueueOrder(selected?.queue ?? [])
   const currentJob = orderedQueue.find((job) => job.roundStatus === 'processing' || (!job.roundStatus && job.status === 'processing'))
-  const working = isDreamcatcherWorking(selected?.status ?? 'idle', selected?.queue ?? [])
+  const paused = selected?.status === 'paused'
+  const working = !paused && isDreamcatcherWorking(selected?.status ?? 'idle', selected?.queue ?? [])
   const clock = localTime(selected?.timeZone ?? 'UTC', now)
   const roomInvestigations = useMemo(() => {
     const worldIds = new Set(selected?.queue.map((job) => job.worldId) ?? [])
@@ -203,6 +209,7 @@ export function WorldsLiveRoom({
             <ArchiveButton variant="ghost" aria-label="How this Parallax Array works" className={styles.infoButton} onClick={() => setInfoOpen(true)} type="button"><CircleHelp aria-hidden size={20} /></ArchiveButton>
             <ArchiveButton variant="primary" className={styles.primaryButton} disabled={queueFull || selected.status === 'offline'} onClick={() => { setSubmissionKey(crypto.randomUUID()); setSubmitOpen(true) }} type="button">{queueFull ? 'CHOOSE ANOTHER DEVICE' : 'SHARE AN OBSERVATION'}</ArchiveButton>
           </div>
+          {paused ? <p className={styles.formStatus}>{PAUSED_NOTICE}</p> : null}
           {statusMessage ? <p aria-live="polite" className={styles.formStatus}>{statusMessage}</p> : null}
         </section>
 
@@ -212,7 +219,7 @@ export function WorldsLiveRoom({
             {(queueExpanded ? orderedQueue : orderedQueue.slice(0, 3)).map(job => <details className={roomStyles.queueEntry} key={`${selected.id}-${job.id}`}>
               <summary className={roomStyles.queueSummary}>
                 <span className={roomStyles.queueTitle}>{job.title}</span>
-                <span className={roomStyles.queueMeta}>Round {job.roundNumber} · {job.roundStatus === 'processing' || (!job.roundStatus && job.status === 'processing') ? 'Processing' : 'Waiting'}</span>
+                <span className={roomStyles.queueMeta}>Round {job.roundNumber} · {paused ? 'Paused' : job.roundStatus === 'processing' || (!job.roundStatus && job.status === 'processing') ? 'Processing' : 'Waiting'}</span>
                 <ChevronRight aria-hidden size={14} />
               </summary>
               <div className={roomStyles.queueDetail}><p>{job.description || job.title}</p><p>Submitted by {job.submitter}</p><Link href={`/worlds/${encodeURIComponent(job.worldId)}`} prefetch={false}>Open observation <ChevronRight aria-hidden size={14} /></Link></div>
@@ -240,7 +247,7 @@ export function WorldsLiveRoom({
           {activeTab === 'observations' && !loggedIn ? <div className={roomStyles.signIn} role="tabpanel" id="world-room-observations" aria-labelledby="world-room-observations-tab"><p>Log in to follow your observations.</p><ArchiveLinkButton href="/login?redirect=%2Fworlds%2Flive" variant="secondary">LOG IN</ArchiveLinkButton></div> : null}
 
           {activeTab === 'observations' && loggedIn ? <div className={styles.queueList} role="tabpanel" id="world-room-observations" aria-labelledby="world-room-observations-tab">
-            {(selected.myObservations ?? []).map(job => <Link className={`${styles.queueItem} ${roomStyles.queueLink}`} key={job.id} href={`/worlds/${encodeURIComponent(job.worldId)}`} prefetch={false}><ChevronRight aria-hidden size={16} /><span><strong>{job.title}</strong><small>{job.roundStatus === 'awaiting_assets' ? 'Device processing complete. Waiting for signals to return.' : 'Open your observation to follow its progress.'}</small></span><span className={styles.queueStatus}>{jobStatus(job)}</span></Link>)}
+            {(selected.myObservations ?? []).map(job => <Link className={`${styles.queueItem} ${roomStyles.queueLink}`} key={job.id} href={`/worlds/${encodeURIComponent(job.worldId)}`} prefetch={false}><ChevronRight aria-hidden size={16} /><span><strong>{job.title}</strong><small>{paused ? 'Your observation is saved and will continue when processing resumes.' : job.roundStatus === 'awaiting_assets' ? 'Device processing complete. Waiting for signals to return.' : 'Open your observation to follow its progress.'}</small></span><span className={styles.queueStatus}>{jobStatus(job, paused)}</span></Link>)}
             {!selected.myObservations?.length ? <div className={styles.emptyRoom}>NO ONGOING OBSERVATIONS AT THIS LOCATION</div> : null}
           </div> : null}
 
@@ -249,15 +256,15 @@ export function WorldsLiveRoom({
 
 
       </div>
-      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}><p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. Signals can take longer to arrive; a device round does not guarantee signals within that time.</p><p>Your observation leaves the queue when device processing finishes. Follow its progress in My Observations while signals are on their way. When signals arrive, they become available for a 36-hour community vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>You can submit another observation after device processing finishes, even while earlier signals or votes are pending. One new observation may wait for or use this device at a time. Returning rounds keep their place in the same queue. The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
+      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}>{paused ? <p>{PAUSED_NOTICE}</p> : null}<p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>Voyagers and members with a paid order can submit observations. Only Voyagers can vote on signals.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. Signals can take longer to arrive; a device round does not guarantee signals within that time.</p><p>Your observation leaves the queue when device processing finishes. Follow its progress in My Observations while signals are on their way. When signals arrive, they become available for a 36-hour community vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>You can submit another observation after device processing finishes, even while earlier signals or votes are pending. One new observation may wait for or use this device at a time. Returning rounds keep their place in the same queue. The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
 
-      {submitOpen ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Share an observation" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}>{loggedIn ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT DID YOU OBSERVE?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe something you saw, remembered, or experienced…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form> : <div className={styles.dialogBody}><p>Applicant access or above is required to submit to a Parallax Array.</p><Link className={styles.primaryButton} href="/login">LOG IN TO CONTINUE</Link></div>}</ArchiveSheet> : null}
+      {submitOpen ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Share an observation" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}>{canSubmit ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT DID YOU OBSERVE?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe something you saw, remembered, or experienced…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form> : <div className={styles.dialogBody}><p>Only Voyagers and members with a paid order can submit to a Parallax Array.</p><Link className={styles.primaryButton} href={loggedIn ? '/voyager-initiation' : '/login?redirect=%2Fworlds%2Flive'}>{loggedIn ? 'BECOME A VOYAGER' : 'LOG IN TO CONTINUE'}</Link></div>}</ArchiveSheet> : null}
 
       {detail && dispatch ? <SignalVoteSheet investigation={dispatch} day={dispatchDay} loggedIn={loggedIn} pendingChoice={pendingChoice}
         onChoose={setPendingChoice} onConfirm={confirmSignal} onRequireAuth={() => setAuthPromptOpen(true)} onClose={() => setDetail(null)}
         busy={isPending} error={voteError} unknown={submissionUnknown} /> : null}
-      <AuthPromptSheet open={authPromptOpen} onClose={() => setAuthPromptOpen(false)} redirect="/worlds/live"
-        message="Voting is open to registered members. Create a free account to cast your signal and follow how the vote turns out." />
+      <AuthPromptSheet open={authPromptOpen} onClose={() => setAuthPromptOpen(false)} redirect="/worlds/live" title="Voyagers vote on signals"
+        message="Only Voyagers can vote on signals. Log in with your Voyager account, or register to start your Voyager Initiation." />
     </main>
   )
 }

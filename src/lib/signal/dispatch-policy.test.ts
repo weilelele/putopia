@@ -6,10 +6,23 @@ vi.mock('@/lib/email', () => ({ sendEmail: external.call }))
 vi.mock('@/lib/push/apns', () => ({ sendPushToUser: external.call }))
 vi.mock('@/lib/actions/signal-tasks', () => ({ setTaskPublished: external.call }))
 vi.mock('@anthropic-ai/sdk', () => ({ default: external.call }))
+vi.mock('server-only', () => ({}))
 import { runCosmoSync, buildCosmoSignalDay, maybeEmitColdRequest, emitClosedResults } from './cosmo-sync'
 import { runSignalRecall } from './recall'
 import { runEngagementEmails } from './engagement'
+import { DREAMCATCHER_ROUNDS_ENABLED } from './dispatch-policy'
+import { syncDreamcatcherCosmo } from './dreamcatcher-cosmo-sync'
+import { sendDreamcatcherNotifications } from './dreamcatcher-notifications'
+import { advanceDreamcatcherRounds } from '../dreamcatcher-rounds'
 afterEach(() => { expect(external.call).not.toHaveBeenCalled(); vi.clearAllMocks() })
+describe('paused Parallax Array rounds', () => {
+  it('stays off until the redesigned loop ships', () => { expect(DREAMCATCHER_ROUNDS_ENABLED).toBe(false) })
+  it('cannot advance rounds, call Cosmo or send round email', async () => {
+    await advanceDreamcatcherRounds()
+    expect(await syncDreamcatcherCosmo()).toEqual([])
+    expect(await sendDreamcatcherNotifications()).toEqual({ sent: 0, failed: 0 })
+  })
+})
 describe('retired Dispatch automation', () => {
   it('cannot generate, recover, import or emit even when called directly', async () => {
     expect(await runCosmoSync()).toEqual({ threads: 0, results: [] })

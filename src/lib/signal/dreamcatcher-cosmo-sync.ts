@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getWorldExpansions } from '@/lib/cosmo'
 import { resolveCosmoSignalAsset } from './cosmo-assets'
 import { selectRoundBatch } from './dreamcatcher-cosmo-model'
+import { DREAMCATCHER_ROUNDS_ENABLED } from './dispatch-policy'
 
 /** Reuse Dispatch's Supabase command inbox + read-only Cosmo Mongo connection.
  * This is an application cron adapter, not a new external worker protocol.
@@ -10,6 +11,7 @@ import { selectRoundBatch } from './dreamcatcher-cosmo-model'
  * are fenced/idempotent RPCs so overlapping cron runs cannot purchase twice.
  */
 export async function syncDreamcatcherCosmo() {
+  if (!DREAMCATCHER_ROUNDS_ENABLED) return []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = createAdminClient() as any
   const { data, error } = await admin.from('dreamcatcher_generation_requests')

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 const state = vi.hoisted(() => ({ rpc: vi.fn(), send: vi.fn(), resolve: vi.fn() }))
 vi.mock('server-only', () => ({}))
+vi.mock('./dispatch-policy', () => ({ DREAMCATCHER_ROUNDS_ENABLED: true }))
 vi.mock('@/lib/supabase/server', () => ({ createAdminClient: () => ({ rpc: state.rpc }) }))
 vi.mock('@/lib/email', () => ({ sendEmail: state.send }))
 vi.mock('./world-confirmed-email', () => ({ resolveUserEmail: state.resolve }))

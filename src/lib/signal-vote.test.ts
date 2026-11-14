@@ -17,6 +17,12 @@ describe('voteCta', () => {
     expect(voteCta({ ...base, mySelection: 'a' })).toMatchObject({ label: 'SIGNAL RECORDED', disabled: true })
     expect(voteCta({ ...base, closed: true })).toMatchObject({ label: 'VOTE CLOSED', disabled: true })
   })
+  it('tells a guest that voting needs a Voyager account', () => {
+    expect(voteCta({ ...base, loggedIn: false, canRespond: false }).hint).toMatch(/Voyager account/)
+  })
+  it('tells a non-Voyager member why they cannot vote', () => {
+    expect(voteCta({ ...base, canRespond: false, lockReason: 'Voyagers only' })).toMatchObject({ label: 'VOYAGERS ONLY', disabled: true, promptAuth: false })
+  })
   it('explains why a logged-in member cannot vote', () => {
     expect(voteCta({ ...base, canRespond: false })).toMatchObject({ label: 'NOT AVAILABLE', disabled: true })
     expect(voteCta({ ...base, canRespond: false, initiatorOnly: true }).hint).toMatch(/original submitter/)

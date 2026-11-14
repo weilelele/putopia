@@ -1,6 +1,7 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/server'
-import { roundVoteAccess, type RoundStatus, type RoundViewer } from './dreamcatcher-round-model'
+import { isSignalVoter, roundVoteAccess, VOYAGERS_ONLY_LOCK, type RoundStatus, type RoundViewer } from './dreamcatcher-round-model'
+import { DREAMCATCHER_ROUNDS_ENABLED } from './signal/dispatch-policy'
 import type { PublicInvestigation, PublicSignalAsset } from '@/lib/actions/signal-tasks'
 
 // The additive migration is not represented in the generated database types yet.
@@ -84,7 +85,7 @@ export async function getRoundInvestigations(viewer: RoundViewer, worldId?: stri
         status: w.lifecycle_state === 'syncing' ? r.status : 'cancelled',
         openedAt: r.opened_at, closesAt: r.closes_at, participantCount: resp.length,
         initiatorId: r.initiator_id, discovererId: w.discoverer_id,
-        voteScope: w.vote_scope, viewer, now,
+        voteScope: w.vote_scope, viewer, now, paused: !DREAMCATCHER_ROUNDS_ENABLED,
       })
       let inv = investigations.get(w.id)
       if (!inv) {
@@ -112,13 +113,17 @@ export async function getRoundInvestigations(viewer: RoundViewer, worldId?: stri
         },
       })
       inv.canParticipate = access.canVote
-      inv.lockReason = access.initiatorOnly ? 'Voting closed — only the original submitter can continue.' : !viewer ? 'Log in to respond' : null
+      inv.lockReason = access.initiatorOnly ? 'Voting closed — only the original submitter can continue.'
+        : !viewer ? 'Log in to respond'
+        : !isSignalVoter(viewer.role) ? VOYAGERS_ONLY_LOCK
+        : null
     }
   }
   return [...investigations.values()].filter(inv => includeHistory || inv.days.some(d => !d.task.closed))
 }
 
 export async function advanceDreamcatcherRounds() {
+  if (!DREAMCATCHER_ROUNDS_ENABLED) return
   const { error } = await db().rpc('advance_dreamcatcher_rounds')
   if (error) throw new Error(error.message)
 }

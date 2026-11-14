@@ -5,7 +5,7 @@ import { BackLink } from '@/components/back-link'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { roundLabel } from '@/lib/dreamcatcher-round-model'
+import { isSignalVoter, roundLabel } from '@/lib/dreamcatcher-round-model'
 import { getDreamcatcherProgress, stopDreamcatcherWorld, getWorldById, rescanWorld } from '@/lib/actions/worlds'
 import { getWorldInvestigation, setWorldVoteScope } from '@/lib/actions/signal-tasks'
 import type { WorldInvestigationData } from '@/lib/actions/signal-tasks'
@@ -163,8 +163,10 @@ export default function WorldDetailPage() {
         </div>
 
         {roundProgress && <ArchiveCard className="archive-inline-panel">
-          <p>{roundLabel(roundProgress.status, roundProgress.roundNumber, roundProgress.generationStatus)}</p>
-          {roundProgress.status === 'awaiting_assets' && <p>Device processing is complete. This observation has left the queue and is waiting for signals to return. We will email you when they are ready.</p>}
+          <p>{roundProgress.paused ? `ROUND ${roundProgress.roundNumber} · PAUSED` : roundLabel(roundProgress.status, roundProgress.roundNumber, roundProgress.generationStatus)}</p>
+          {roundProgress.paused
+            ? <p>Processing is paused while we rework this loop. This observation is saved and will continue when processing resumes.</p>
+            : roundProgress.status === 'awaiting_assets' && <p>Device processing is complete. This observation has left the queue and is waiting for signals to return. We will email you when they are ready.</p>}
           <ArchiveLinkButton href="/worlds/live" variant="ghost">VIEW PARALLAX ARRAY</ArchiveLinkButton>
           {roundProgress.canStop && <ArchiveButton disabled={stopping} onClick={async () => {
             setStopping(true)
@@ -194,12 +196,11 @@ export default function WorldDetailPage() {
             </div>
             {/* Signal Tuning is the lead content — the '// SIGNAL TUNING' label is dropped.
                 The vote-lock hint lives in the question footer, not a floating header. */}
-            {isOwner && (
+            {isOwner && isSignalVoter(inv?.role) && (
               <ArchiveCard className="archive-inline-panel">
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>WHO CAN VOTE</span>
-                <ArchiveSelect value={scope} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
-                  <option value="all">Open to everyone</option>
-                  <option value="voters">Voyagers only</option>
+                <ArchiveSelect value={scope === 'self' ? 'self' : 'voters'} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ padding: '0.3rem 0.5rem', cursor: 'pointer' }}>
+                  <option value="voters">Voyagers</option>
                   <option value="self">Just me (private)</option>
                 </ArchiveSelect>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.04em', color: 'var(--color-star-deep)' }}>

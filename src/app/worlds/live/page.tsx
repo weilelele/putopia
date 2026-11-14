@@ -3,6 +3,7 @@ import { WorldsLiveRoom } from './worlds-live-room'
 import { listDreamcatcherRooms } from '@/lib/dreamcatchers'
 import { getInvestigationFeed } from '@/lib/actions/signal-tasks'
 import { DREAMCATCHER_LIVE_VIDEO_SOURCE, getDreamcatcherLiveVideoLibrary } from '@/lib/dreamcatcher-live-source'
+import { viewerCanSubmitObservation } from '@/lib/observation-access'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,16 +13,18 @@ export const metadata: Metadata = {
 }
 
 export default async function WorldsLivePage() {
-  const [rooms, feed, liveVideoLibrary] = await Promise.all([
+  const [rooms, feed, liveVideoLibrary, canSubmit] = await Promise.all([
     listDreamcatcherRooms(),
     getInvestigationFeed().catch(() => ({ investigations: [], role: null, loggedIn: false })),
     getDreamcatcherLiveVideoLibrary().catch(() => {
       console.warn('[worlds/live] Console state video library unavailable')
       return null
     }),
+    viewerCanSubmitObservation().catch(() => false),
   ])
   return (
     <WorldsLiveRoom
+      canSubmit={canSubmit}
       key={rooms.map((room) => room.id).join(',')}
       investigations={feed.investigations}
       liveVideoLibrary={liveVideoLibrary}
