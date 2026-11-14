@@ -21,6 +21,8 @@ const STAR = '245,245,245'
 /* 1 · The device: one film of Console footage, cut and lit by a slow lamp in the edit (see the media README). */
 /** Page 1 opens only once this is downloaded; page 2's clips follow in the background. */
 export const OPENING_FILM = `${MEDIA}/console-film.mp4`
+/** The film's first shot, shown if the film cannot play; fetched alongside it so the fallback is never black. */
+export const OPENING_POSTER = `${MEDIA}/console-film.jpg`
 const LONDON_CLIP = `${MEDIA}/london-device.mp4`
 const PRESS_CLIP = `${MEDIA}/console-press.mp4`
 export const FOLLOWING_CLIPS = [LONDON_CLIP, PRESS_CLIP]
@@ -46,7 +48,7 @@ export function DevicePage({ state }: { state: PageState }) {
   })
   return <BriefingPage state={state} className={s.p1} label="The device">
     <div className={s.film} data-briefing-target="media" role="img" aria-label="Under a slow, pulsing light, each time it goes dark the screen cuts to another moment of Multiverse Console footage: a dial tuned from static to a robot reading in a forest, hands holding a real Console tuned into a world, a forest fairy and a starry hillside.">
-      <video ref={film} data-src={OPENING_FILM} poster={`${MEDIA}/console-real.jpg`} muted playsInline loop preload="auto" />
+      <video ref={film} data-src={OPENING_FILM} poster={OPENING_POSTER} muted playsInline loop preload="auto" />
     </div>
     <div className={`${s.copy} ${s.p1Copy} ${s.gut}`} data-briefing-target="copy">
       <Kicker text="THE DEVICE" />

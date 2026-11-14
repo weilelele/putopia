@@ -5,7 +5,8 @@ Media for the first-visit Voyager Initiation briefing (`src/app/voyager-initiati
 | File | Source |
 | --- | --- |
 | console-film.mp4 | Page 1's single 12 s loop, 3 s per shot in this order: `public/assets/device-reel-v2-20261016.mp4` 4.9–7.9s (static to a tuned world); `public/assets/device-reel.mp4` 14–17s (real footage of the physical Console); `output/console-imagery/2026-10-16-fairy-full-regenerated/fairy-full-regenerated-v1-final20s.mp4` 6.5–9.5s; `output/console-imagery/2026-10-16-world-tuning-v2/world-C-starry-v3-tuning-fix-final.mp4` 7.5–10.5s. Each shot rises from and falls to black over 1.14 s (smoothstep, baked in), so cuts and the loop seam are hidden. 960×720 centre crop for page 1's 4:3 frame, H.264 High CRF 29, no audio, keyframe per shot, faststart. The whole file downloads before the briefing opens (`briefing-receive.tsx`), so keep it under about 1 MB |
-| console-real.jpg | Still of the real footage (`device-reel.mp4`). Poster for console-film.mp4 and the reduced-motion view of page 1 |
+| console-film.jpg | `public/assets/device-reel-v2-20261016.mp4` at 6.4s (console-film.mp4's first shot fully lit), same 960×720 crop, JPEG q3. Poster for console-film.mp4, the reduced-motion view of page 1, and the fallback if the film cannot play; preloaded during the opening flip |
+| console-real.jpg | Still of the real footage (`device-reel.mp4`). Poster for the onboarding video (`src/lib/onboarding-video.ts`) |
 | console-press.mp4 / .jpg | `device-reel-v2-20261016.mp4` 13.4–18s (top button press) |
 | console-reel.mp4 | `device-reel-v2-20261016.mp4`, 960px, no audio |
 | london-device.mp4 / .jpg | Worlds Explore live room `london-01` clip (cosmo asset 6a8566e041b16262cb633bb9) |
