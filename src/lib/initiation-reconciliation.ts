@@ -24,6 +24,8 @@ export async function reconcileInitiationSession(sessionId: string, stripe: Stri
     (order.stripe_session_id && order.stripe_session_id !== session.id)) throw new Error('Initiation session binding mismatch')
   const intentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id
   let intent = intentId ? await stripe.paymentIntents.retrieve(intentId) : null
+  // A concurrent webhook can capture between the two reads; re-read so a stale unpaid session is not held for review.
+  if (intent?.status === 'succeeded' && session.payment_status === 'unpaid') session = await stripe.checkout.sessions.retrieve(sessionId)
   if (intent && (intent.livemode !== order.stripe_livemode || intent.metadata.order_id !== order.id ||
     intent.metadata.order_kind !== order.order_kind || intent.metadata.product_type !== INITIATION_PRODUCT ||
     intent.amount !== order.amount || intent.currency !== order.currency ||
