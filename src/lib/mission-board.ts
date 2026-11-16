@@ -118,17 +118,17 @@ const additionalMissions: Record<Series, Scenario> = {
 
 const weeklyMedia: Partial<Record<string, MissionImage>> = {
   'CNT-076': {
-    src: '/assets/mission-board/cnt-076-console.webp',
-    alt: 'The Console’s round screen shows a lamp and a figure at the far end of a bridge at dusk.',
-    width: 1080,
-    height: 810,
+    src: '/assets/mission-board/cnt-076-console-film-soft.webp',
+    alt: 'The Console’s round screen shows a fuzzy amber light over the dark outline of a bridge.',
+    width: 720,
+    height: 540,
     caption: 'Console concept · Bridge signal',
   },
   'OBS-205': {
-    src: '/assets/mission-board/obs-205-console.webp',
-    alt: 'The Console’s round screen shows rows of low shapes behind a hazy window.',
-    width: 1080,
-    height: 810,
+    src: '/assets/mission-board/obs-205-console-film-soft.webp',
+    alt: 'The Console’s round screen shows a faint window-like blur and a few indistinct shapes.',
+    width: 720,
+    height: 540,
     caption: 'Console concept · Window signal',
   },
 }
@@ -185,6 +185,17 @@ export function getPublicMissionEdition(now = Date.now()) {
       id, series, author, teaser, preview, image, frequencyRange,
     })),
   }
+}
+
+export function getArchivedMissionPreview(id: string, now = Date.now()) {
+  const match = /^(REC|CNT|OBS)-(\d{3,})$/.exec(id)
+  if (!match) return undefined
+  const type = match[1] as Series
+  // Each series reserves two consecutive numbers per week, including the optional fourth mission.
+  const week = Math.floor((Number(match[2]) - series[type].start) / 2)
+  const startsAt = FIRST_EDITION + week * WEEK_MS
+  if (week < 0 || !(startsAt + WEEK_MS <= now)) return undefined
+  return getPublicMissionEdition(startsAt).missions.find(mission => mission.id === id)
 }
 
 export function getCurrentMissionBriefing(id: string, now = Date.now()) {

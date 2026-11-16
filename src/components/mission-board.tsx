@@ -29,21 +29,23 @@ function MissionAvatar({ author, size }: { author: Mission['author']; size: numb
   return <SmartImage src={author.avatar} alt="" width={size} height={size} sizes={`${size}px`} className={styles.avatar} />
 }
 
-function MissionDialog({ mission, signedIn, close }: { mission: Mission; signedIn: boolean; close: () => void }) {
+function MissionDialog({ mission, signedIn, archived, close }: {
+  mission: Mission; signedIn: boolean; archived: boolean; close: () => void
+}) {
   const [briefing, setBriefing] = useState<Briefing | 'error' | null>(null)
   const [busy, setBusy] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [acceptError, setAcceptError] = useState(false)
 
   useEffect(() => {
-    if (!signedIn) return
+    if (!signedIn || archived) return
     let active = true
     loadMissionBriefing(mission.id).then(
       result => { if (active) setBriefing(result) },
       () => { if (active) setBriefing('error') },
     )
     return () => { active = false }
-  }, [mission.id, signedIn, attempt])
+  }, [mission.id, signedIn, archived, attempt])
 
   async function accept() {
     setBusy(true)
@@ -66,8 +68,8 @@ function MissionDialog({ mission, signedIn, close }: { mission: Mission; signedI
   }
 
   const available = briefing && briefing !== 'error' && briefing.kind === 'available' ? briefing : null
-  const locked = !signedIn || (briefing !== 'error' && briefing?.kind === 'locked')
-  const expired = briefing !== 'error' && briefing?.kind === 'expired'
+  const locked = !archived && (!signedIn || (briefing !== 'error' && briefing?.kind === 'locked'))
+  const expired = archived || (briefing !== 'error' && briefing?.kind === 'expired')
   const readError = briefing === 'error' || (available && !available.canAccept)
   return (
     <ArchiveSheet open onClose={close} title={mission.id} busy={busy} footer={
@@ -78,8 +80,8 @@ function MissionDialog({ mission, signedIn, close }: { mission: Mission; signedI
             Go to Voyager Initiation <ArrowRight size={18} aria-hidden />
           </ArchiveLinkButton>
         </>}
-        {!locked && !briefing && <p role="status">Checking Console access…</p>}
-        {expired && <p role="status">This mission has closed. Reload the Dashboard for this week’s missions.</p>}
+        {!locked && !expired && !briefing && <p role="status">Checking Console access…</p>}
+        {expired && <p role="status">This mission has closed.</p>}
         {readError && <>
           <p role="status">Mission access could not be checked.</p>
           <ArchiveButton variant="secondary" onClick={() => { setBriefing(null); setAttempt(value => value + 1) }}>Try again</ArchiveButton>
@@ -110,17 +112,19 @@ function MissionDialog({ mission, signedIn, close }: { mission: Mission; signedI
   )
 }
 
-export function MissionBoard({ edition, signedIn, initialMission }: {
+export function MissionBoard({ edition, signedIn, initialMission, archivedMission }: {
   edition: MissionEdition
   signedIn: boolean
   initialMission?: string
+  archivedMission?: Mission
 }) {
   const [selectedId, setSelectedId] = useState(initialMission ?? null)
   const [revealing, setRevealing] = useState(false)
   const board = useRef<HTMLElement>(null)
   const interacted = useRef(false)
   const trigger = useRef<HTMLButtonElement | null>(null)
-  const selected = edition.missions.find(mission => mission.id === selectedId)
+  const archived = archivedMission?.id === selectedId
+  const selected = archived ? archivedMission : edition.missions.find(mission => mission.id === selectedId)
 
   useEffect(() => {
     if (!board.current || initialMission || !('IntersectionObserver' in window)
@@ -182,7 +186,7 @@ export function MissionBoard({ edition, signedIn, initialMission }: {
           )
         })}
       </ul>
-      {selected && <MissionDialog key={selected.id} mission={selected} signedIn={signedIn} close={closeMission} />}
+      {selected && <MissionDialog key={selected.id} mission={selected} signedIn={signedIn} archived={archived} close={closeMission} />}
     </section>
   )
 }
