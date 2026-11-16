@@ -77,9 +77,11 @@ $38 访客测试单 `#1008` 已在无 Putopia 会话时完成邮箱预填和测�
 
 ## 正式收款接入准备
 
-首次切换范围为 $38 Initial 与 $488 Complete。$460 升级暂用现有 Stripe 流程，已经开始的 Stripe 结账仍由 Stripe 对账。准备中的 v121 包含 Shopify 预留席位、授权绑定、扣款确认、会员和 Console 权限，以及按 Pack 写入追踪号。v121 尚未应用到生产，`INITIATION_SHOPIFY_LIVE_ENABLED` 尚未启用。
+首次切换范围为 $38 Initial 与 $488 Complete。$460 升级暂用现有 Stripe 流程，已经开始的 Stripe 结账仍由 Stripe 对账。生产已应用 v121，包含 Shopify 预留席位、授权绑定、扣款确认、会员和 Console 权限，以及按 Pack 写入追踪号。公开切换由 `INITIATION_SHOPIFY_LIVE_ENABLED` 控制。
 
-- **Shopify。** 两个固定套餐须能从 Headless 生成新的购物车。当前商店有密码页，且 Shopify Payments 为 Test mode，捕获方式是 Automatically at checkout。正式流程需验证未登录 Shopify 的买家能进入托管结账，核对美国配送区、包邮、实收和支付方式，再用授权后捕获验证 Putopia 的配送限制和席位校验。
-- **Vercel。** 生产服务端需要 `SHOPIFY_LIVE_CLIENT_ID`、`SHOPIFY_LIVE_CLIENT_SECRET`、`SHOPIFY_LIVE_STOREFRONT_TOKEN`、`SHOPIFY_LIVE_INITIAL_VARIANT_ID`、`SHOPIFY_LIVE_COMPLETE_VARIANT_ID`。密钥存入 Production 环境，套餐 ID 对应目前测试单 #1006 和 #1007 使用的固定套餐。
+- **Shopify。** 两个固定套餐已验证能从 Headless 生成购物车。已在 Test mode 中保存 Manually 捕获。未输入店铺密码的新访客会重定向到密码页。只有在公开访问可用后，才能开启正式收款。
+- **Vercel。** 生产服务端需要 `SHOPIFY_LIVE_CLIENT_ID`、`SHOPIFY_LIVE_CLIENT_SECRET`、一个经验证的 Storefront 令牌，以及 `SHOPIFY_LIVE_INITIAL_VARIANT_ID` 和 `SHOPIFY_LIVE_COMPLETE_VARIANT_ID`。密钥存入 Production 环境。优先使用 `SHOPIFY_LIVE_STOREFRONT_TOKEN`，公共 Headless 令牌使用 `SHOPIFY_LIVE_STOREFRONT_PUBLIC_TOKEN`。
 - **Shopify → Putopia。** 将订单创建、已支付、更新、取消及退款等事件投递到配置好的 `/api/shopify/webhook`。验证 Shopify 签名、订单与邮箱绑定、单笔授权和完整扣款、重复事件、失败重试、退款与异常订单处理。还要逐包核对履约事件与会员页。
 - **切换。** 先从隔离环境验证签名事件到扣款确认，再验证正式 Shopify 购物车、付款后的访客激活和会员入口。完成后在 Shopify 关闭 Test mode，在 Vercel 启用公开开关并核对生产路由。回退时关闭公开开关，保留回调和对账，已发出的 Shopify Checkout 仍可核对。
+
+#1085（$38）和 #1086（$488）使用合成访客邮箱、官方测试卡及免费美国配送。Shopify Admin API 实测两笔都先返回 **AUTHORIZED**，分别手动捕获 $38 和 $488 后才成为 **PAID**。隔离的 v121 数据库验证两条会员记录、两包／四包分配、仅 Complete 解锁 Console，以及重复同步保持一条订单记录。生产 Webhook 到应用及实际访客回访仍需上线前核对。

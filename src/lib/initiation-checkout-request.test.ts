@@ -17,7 +17,16 @@ describe('single checkout request', () => {
     expect((await requestInitiationCheckout(input, request)).status).toBe(status)
     expect(request).toHaveBeenCalledOnce()
   })
-  it.each(['http://checkout.stripe.com/x', 'https://other.example/x', 'https://checkout.stripe.com.evil.example/x', 'https://user:pass@checkout.stripe.com/x'])('does not navigate to %s', async url => {
+  it('accepts Shopify’s signed cart redirect from the configured store', async () => {
+    const url = 'https://jtuuus-k3.myshopify.com/cart/c/cart-id?key=cart-token'
+    expect(await requestInitiationCheckout(input, vi.fn().mockResolvedValue(Response.json({ url }))))
+      .toEqual({ status: 'ready', url })
+  })
+  it.each([
+    'http://checkout.stripe.com/x', 'https://other.example/x', 'https://checkout.stripe.com.evil.example/x',
+    'https://user:pass@checkout.stripe.com/x', 'https://jtuuus-k3.myshopify.com/cart/c/cart-id',
+    'https://other.myshopify.com/cart/c/cart-id?key=cart-token',
+  ])('does not navigate to %s', async url => {
     expect((await requestInitiationCheckout(input, vi.fn().mockResolvedValue(Response.json({ url })))).status).toBe('error')
   })
 })

@@ -52,7 +52,7 @@ export async function createShopifyLiveCheckout(config: Config, request: Request
   const reference = shopifyLiveReservationReference({ shop:config.shop, id:order.id, userId:user.id, kind, variantId, email },config.clientSecret)
   const buyerIp = requestClientIp(request.headers)
   const result = await shopifyPilotRequest<CartResult>(`https://${config.shop}/api/${shopifyApiVersion}/graphql.json`, {
-    'Content-Type':'application/json','Shopify-Storefront-Private-Token':config.storefrontToken,
+    'Content-Type':'application/json',...config.storefrontAuth,
     ...(buyerIp && {'Shopify-Storefront-Buyer-IP':buyerIp}),
   }, JSON.stringify({
     query:`mutation StartPutopiaCheckout($input:CartInput!){
