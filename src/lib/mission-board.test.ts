@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getCurrentMissionBriefing, getPublicMissionEdition } from './mission-board'
+import { getArchivedMissionPreview, getCurrentMissionBriefing, getPublicMissionEdition } from './mission-board'
 
 const sunday = Date.parse('2026-11-15T23:59:59.999+08:00')
 
@@ -28,6 +28,17 @@ describe('Mission Board editions', () => {
     const ids = Array.from({ length: 53 }, (_, week) => getPublicMissionEdition(sunday + week * weekMs).missions)
       .flat().map(mission => mission.id)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('resolves archived links to the original public previews only', () => {
+    const thirdEdition = sunday + 1 + 7 * 24 * 60 * 60 * 1000
+    const launchMissions = getPublicMissionEdition(sunday + 1).missions
+    for (const mission of launchMissions) {
+      expect(getArchivedMissionPreview(mission.id, thirdEdition)).toEqual(mission)
+      expect(getArchivedMissionPreview(mission.id, thirdEdition - 1)).toBeUndefined()
+    }
+    expect(getArchivedMissionPreview('OBS-204', thirdEdition)).toBeUndefined()
+    expect(getArchivedMissionPreview('REC-99999', thirdEdition)).toBeUndefined()
   })
 
   it('keeps all three types and can select any type for the optional fourth slot', () => {

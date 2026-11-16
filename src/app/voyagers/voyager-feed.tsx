@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ThumbsUp, ThumbsDown, ImagePlus, Plus, MessageCircle, MoreHorizontal, UserRound, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ThumbsUp, ThumbsDown, ImagePlus, Plus, MessageCircle, MoreHorizontal, UserRound, X } from 'lucide-react'
 import { ArchiveSheet } from '@/components/archive-sheet'
 import { ArchiveButton } from '@/components/archive-button'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
@@ -16,7 +16,7 @@ import { mergeFeedPage, editCachedFeedEntry, removeCachedFeedEntry, addCachedFee
 import { boundedFeedRequest, readFeedDraft, writeFeedDraft, type FeedDraft } from '@/lib/feed-recovery'
 import { getRouteScrollContainer } from '@/lib/route-scroll-container'
 import * as liveFeed from '@/lib/actions/voyager-feed'
-import { withFeedVote, canPublishVoyagerFeed, canPublishAsNpc, canManageFeedEntry, type FeedEntry, type FeedPage } from '@/lib/voyager-feed'
+import { withFeedVote, canPublishVoyagerFeed, canPublishAsNpc, canManageFeedEntry, splitFeedMissionLink, type FeedEntry, type FeedPage } from '@/lib/voyager-feed'
 import { VoyagerHeader } from './voyager-header'
 import guestStyles from '../console/guest-intro.module.css'
 import s from './feed.module.css'
@@ -312,15 +312,21 @@ function VoyagerFeedContent({ postId, services = liveFeed, baseHref = '/voyagers
   })
   const closeModal = () => { setModal(null); setImage(null); setError(''); requestAnimationFrame(() => dialogTrigger.current?.focus({ preventScroll: true })) }
   const remember = (id: string) => feedPositions.set(user.id ?? '', { id })
-  const renderEntry = (entry: FeedEntry, detail = false) => <article key={entry.id} className={`${entry.parent_id ? s.reply : s.post} ${detail ? s.detailPost : ''}`}>
-    <button className={s.avatarLink} aria-label={`View ${entry.display_name}'s profile`} onClick={() => setProfileId(entry.author_id)}><span className={s.avatar}>{entry.avatar_url ?  <img src={entry.avatar_url} alt="" loading="lazy" /> : <UserRound size={24} aria-hidden />}</span></button>
-    <div className={s.postMain}><div className={s.postHeader}><strong className={s.identity}>{entry.display_name}</strong><small className={s.timestamp}><time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</time>{entry.updated_at !== entry.created_at && ' · Edited'}</small>
-      {(entry.can_manage ?? canManageFeedEntry(viewer, entry.author_id)) && <button className={s.iconButton} aria-label={`Options for your ${entry.parent_id ? 'reply' : 'post'}`} onClick={event => { dialogTrigger.current = event.currentTarget; setError(''); setModal({ type: 'menu', entry }) }}><MoreHorizontal size={18} /></button>}</div>
-      {detail && <small className={s.detailRole}>{entry.author_role.toUpperCase()}</small>}
-      {!entry.parent_id && !detail ? <Link id={`feed-${entry.id}`} className={s.postLink} href={`${baseHref}/posts/${entry.id}`} onClick={() => remember(entry.id)} aria-label={`Read post by ${entry.display_name}: ${entry.body}`}><p className={s.body}>{entry.body}</p>{entry.image_path &&  <img className={s.photo} src={mediaSource(entry)} alt={`Image shared by ${entry.display_name}`} loading="lazy" />}</Link> : <><p className={s.body}>{entry.body}</p>{entry.image_path &&  <img className={s.photo} src={mediaSource(entry)} alt={`Image shared by ${entry.display_name}`} />}</>}
-      <div className={s.postActions}><button disabled={busy} aria-pressed={Boolean(entry.liked)} title="Upvote" aria-label={`${entry.liked ? 'Remove ' : ''}upvote ${entry.display_name}'s ${entry.parent_id ? 'reply' : 'post'}`} onClick={() => void vote(entry, 1)}><ThumbsUp size={18} fill={entry.liked ? 'currentColor' : 'none'} aria-hidden="true" /><span>{entry.like_count ?? 0}</span></button><button disabled={busy} aria-pressed={Boolean(entry.downvoted)} title="Downvote" aria-label={`${entry.downvoted ? 'Remove ' : ''}downvote ${entry.display_name}'s ${entry.parent_id ? 'reply' : 'post'}`} onClick={() => void vote(entry, -1)}><ThumbsDown size={18} fill={entry.downvoted ? 'currentColor' : 'none'} aria-hidden="true" /><span>{entry.down_count ?? 0}</span></button>{!entry.parent_id && (detail ? <button aria-label="Write a reply" onClick={() => document.getElementById('feed-reply')?.focus()}><MessageCircle size={18} /><span>{entry.reply_count}</span></button> : <Link href={`${baseHref}/posts/${entry.id}`} onClick={() => remember(entry.id)} aria-label={`View ${entry.reply_count} replies to ${entry.display_name}'s post`}><MessageCircle size={18} /><span>{entry.reply_count}</span></Link>)}</div>
-    </div>
-  </article>
+  const renderEntry = (entry: FeedEntry, detail = false) => {
+    const { text, mission } = entry.parent_id ? { text: entry.body, mission: null } : splitFeedMissionLink(entry.body)
+    return <article key={entry.id} className={`${entry.parent_id ? s.reply : s.post} ${detail ? s.detailPost : ''}`}>
+      <button className={s.avatarLink} aria-label={`View ${entry.display_name}'s profile`} onClick={() => setProfileId(entry.author_id)}><span className={s.avatar}>{entry.avatar_url ?  <img src={entry.avatar_url} alt="" loading="lazy" /> : <UserRound size={24} aria-hidden />}</span></button>
+      <div className={s.postMain}><div className={s.postHeader}><strong className={s.identity}>{entry.display_name}</strong><small className={s.timestamp}><time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</time>{entry.updated_at !== entry.created_at && ' · Edited'}</small>
+        {(entry.can_manage ?? canManageFeedEntry(viewer, entry.author_id)) && <button className={s.iconButton} aria-label={`Options for your ${entry.parent_id ? 'reply' : 'post'}`} onClick={event => { dialogTrigger.current = event.currentTarget; setError(''); setModal({ type: 'menu', entry }) }}><MoreHorizontal size={18} /></button>}</div>
+        {detail && <small className={s.detailRole}>{entry.author_role.toUpperCase()}</small>}
+        {!entry.parent_id && !detail ? <Link id={`feed-${entry.id}`} className={s.postLink} href={`${baseHref}/posts/${entry.id}`} onClick={() => remember(entry.id)} aria-label={`Read post by ${entry.display_name}: ${text || mission?.id || ''}`}><p className={s.body}>{text || mission?.id}</p>{entry.image_path &&  <img className={s.photo} src={mediaSource(entry)} alt={`Image shared by ${entry.display_name}`} loading="lazy" />}</Link> : <>{text && <p className={s.body}>{text}</p>}{entry.image_path &&  <img className={s.photo} src={mediaSource(entry)} alt={`Image shared by ${entry.display_name}`} />}</>}
+        {mission && <Link className={s.missionLink} href={mission.href} prefetch={false} onClick={() => remember(entry.id)}>
+          Open briefing · {mission.id} <ArrowRight size={16} aria-hidden />
+        </Link>}
+        <div className={s.postActions}><button disabled={busy} aria-pressed={Boolean(entry.liked)} title="Upvote" aria-label={`${entry.liked ? 'Remove ' : ''}upvote ${entry.display_name}'s ${entry.parent_id ? 'reply' : 'post'}`} onClick={() => void vote(entry, 1)}><ThumbsUp size={18} fill={entry.liked ? 'currentColor' : 'none'} aria-hidden="true" /><span>{entry.like_count ?? 0}</span></button><button disabled={busy} aria-pressed={Boolean(entry.downvoted)} title="Downvote" aria-label={`${entry.downvoted ? 'Remove ' : ''}downvote ${entry.display_name}'s ${entry.parent_id ? 'reply' : 'post'}`} onClick={() => void vote(entry, -1)}><ThumbsDown size={18} fill={entry.downvoted ? 'currentColor' : 'none'} aria-hidden="true" /><span>{entry.down_count ?? 0}</span></button>{!entry.parent_id && (detail ? <button aria-label="Write a reply" onClick={() => document.getElementById('feed-reply')?.focus()}><MessageCircle size={18} /><span>{entry.reply_count}</span></button> : <Link href={`${baseHref}/posts/${entry.id}`} onClick={() => remember(entry.id)} aria-label={`View ${entry.reply_count} replies to ${entry.display_name}'s post`}><MessageCircle size={18} /><span>{entry.reply_count}</span></Link>)}</div>
+      </div>
+    </article>
+  }
   const recoveryPrompt = recovery && <section className={s.recovery} aria-label="Saved draft"><p>{recovery.draft.pending ? 'An earlier publishing result is still unconfirmed.' : 'You have a saved draft.'} Saved {new Date(recovery.draft.updated).toLocaleString()}.</p>{confirmDiscard && <p>Discarding this draft does not cancel or delete a post that may already have been published. You will lose its result-checking reference.</p>}{recovery.kind === 'edit' && recovery.draft.original !== (modal && 'entry' in modal ? modal.entry.body : '') && <p>The published content changed since this draft. Review it before saving.</p>}<div><ArchiveButton onClick={recoverDraft}>RESTORE DRAFT</ArchiveButton><ArchiveButton variant="secondary" onClick={discardRecovery}>{confirmDiscard ? 'CONFIRM DISCARD' : 'DISCARD DRAFT'}</ArchiveButton></div></section>
   const locked = page?.locked
   const title = modal?.type === 'compose' ? 'New post' : modal?.type === 'permission' ? 'Become a Voyager to post' : modal?.type === 'edit' ? 'Edit your content' : modal?.type === 'delete' ? 'Delete your content?' : 'Content options'
