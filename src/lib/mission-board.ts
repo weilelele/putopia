@@ -9,6 +9,8 @@ const series = {
 } as const
 
 type Series = keyof typeof series
+type MissionImage = { src: string; alt: string; width: number; height: number; caption: string }
+
 type Scenario = {
   series: Series
   frequency: number
@@ -16,7 +18,6 @@ type Scenario = {
   preview: string
   briefing: string
   followUp: string
-  image?: { src: string; alt: string; width: number; height: number; caption: string }
 }
 
 const editions: readonly (readonly Scenario[])[] = [
@@ -64,20 +65,6 @@ const editions: readonly (readonly Scenario[])[] = [
       preview: 'A faint image near Frequency {frequency} shows rows of low shapes behind a window. They could be desks. A wider view would help us tell what kind of place this is and whether anyone is there.',
       briefing: 'Check {frequency} and the settings one step on either side. Compare the available Bands at the clearest setting. Describe the building, what surrounds it and any signs of activity. Note which view supports your best guess.',
       followUp: 'If there’s an interior Band, check for one feature that helps identify how the building is used.',
-      image: {
-        src: '/assets/mission-board/obs-window-reference.webp',
-        alt: 'Rows of low, tabletop-like shapes are visible through the hazy panes of a wide window.',
-        width: 960,
-        height: 640,
-        caption: 'Concept reference · Window view',
-      },
-    },
-    {
-      series: 'OBS', frequency: 898,
-      teaser: 'A faint signal near {frequency} shows a line at a hatch.',
-      preview: 'Near Frequency {frequency}, shapes seem to line up at a low hatch. Something pale moves through the opening. We have enough to go looking, but we don’t yet know what sort of place this is.',
-      briefing: 'Find the clearest setting near {frequency} and check for a Band that shows the surrounding area. Give a first description of the place and what appears to be happening at the hatch. Include the Frequency and one detail that supports your description.',
-      followUp: 'Note where the line comes from if any available Band shows it.',
     },
   ],
   [
@@ -101,34 +88,89 @@ const editions: readonly (readonly Scenario[])[] = [
       preview: 'There’s a flicker near Frequency {frequency} that looks like objects moving in water. We can’t see enough of the banks to tell whether it’s a river, a canal or a flooded street.',
       briefing: 'Find the clearest setting near {frequency} and compare any available Bands. Describe the water, the edges of the channel and any signs of buildings or activity. Record which Frequency and Band gave you the clearest view of the setting.',
       followUp: 'If a Band shows what’s upstream, note whether the channel opens into a larger body of water or continues through built structures.',
-      image: {
-        src: '/assets/voyager-briefing/world-flooded.jpg',
-        alt: 'Floodwater covers a street lined with buildings; a railing marks the edge of the walkway.',
-        width: 720,
-        height: 720,
-        caption: 'Reference image · Flooded street',
-      },
     },
   ],
 ]
+
+const additionalMissions: Record<Series, Scenario> = {
+  REC: {
+    series: 'REC', frequency: 1126,
+    teaser: 'The north quay dropped out near {frequency}.',
+    preview: 'The archive shows a tide gauge mounted upside down on the north quay. A weak return near {frequency} puts the shoreline in roughly the right place.',
+    briefing: 'Sweep 0.2 to either side of {frequency}. Compare the gauge and nearest mooring post across any available Bands. Note the strongest setting and whether the scale reads from bottom to top.',
+    followUp: 'If you can’t see the scale, record where the gauge sits relative to the edge of the quay.',
+  },
+  CNT: {
+    series: 'CNT', frequency: 928,
+    teaser: 'A ferry answers a light on the far bank.',
+    preview: 'On a late crossing, the ferry lights up after a single lamp comes on ashore. The timing could be deliberate. We have only seen part of the exchange near {frequency}.',
+    briefing: 'Start near {frequency} and watch both banks if the Bands allow it. If there is a quiet interval after the ferry docks and the world supports voice, offer one greeting and note any change.',
+    followUp: 'Record an ordinary crossing first so you have something to compare with the one you observed after speaking.',
+  },
+  OBS: {
+    series: 'OBS', frequency: 898,
+    teaser: 'A faint signal near {frequency} shows a line at a hatch.',
+    preview: 'Near Frequency {frequency}, shapes seem to line up at a low hatch. Something pale moves through the opening. We have enough to go looking, but we don’t yet know what sort of place this is.',
+    briefing: 'Find the clearest setting near {frequency} and check for a Band that shows the surrounding area. Give a first description of the place and what appears to be happening at the hatch. Include the Frequency and one detail that supports your description.',
+    followUp: 'Note where the line comes from if any available Band shows it.',
+  },
+}
+
+const weeklyMedia: Partial<Record<string, MissionImage>> = {
+  'CNT-076': {
+    src: '/assets/mission-board/cnt-076-console.webp',
+    alt: 'The Console’s round screen shows a lamp and a figure at the far end of a bridge at dusk.',
+    width: 1080,
+    height: 810,
+    caption: 'Console concept · Bridge signal',
+  },
+  'OBS-205': {
+    src: '/assets/mission-board/obs-205-console.webp',
+    alt: 'The Console’s round screen shows rows of low shapes behind a hazy window.',
+    width: 1080,
+    height: 810,
+    caption: 'Console concept · Window signal',
+  },
+}
+
+function pickExtraSeries(week: number): Series | undefined {
+  // Mix the calendar week once so a reload or another viewer gets the same edition.
+  let seed = week + 3
+  seed = Math.imul(seed ^ (seed >>> 16), 0x21f0aaad)
+  seed = Math.imul(seed ^ (seed >>> 15), 0x735a2d97)
+  const roll = ((seed ^ (seed >>> 15)) >>> 0) % 6
+  return (['REC', 'CNT', 'OBS'] as const)[roll - 3]
+}
+
+function formatFrequency(tenths: number) {
+  return (tenths / 10).toFixed(1)
+}
 
 function getEdition(now: number) {
   const week = Math.max(0, Math.floor((now - FIRST_EDITION) / WEEK_MS))
   const cycle = Math.floor(week / editions.length)
   const counts = { REC: 0, CNT: 0, OBS: 0 }
-  const missions = editions[week % editions.length].map(scenario => {
+  const core = editions[week % editions.length]
+  const extra = pickExtraSeries(week)
+  const scenarios = extra ? [...core, additionalMissions[extra]] : core
+  const missions = scenarios.map(scenario => {
     const type = scenario.series
     const { start, ...author } = series[type]
     const number = start + week * 2 + counts[type]++
-    const frequency = ((scenario.frequency + (cycle * 13) % 421) / 10).toFixed(1)
+    const actualFrequency = scenario.frequency + (cycle * 13) % 421
+    const frequency = formatFrequency(actualFrequency)
+    const id = `${type}-${String(number).padStart(3, '0')}`
     const withFrequency = (value: string) => value.replaceAll('{frequency}', frequency)
     return {
-      id: `${type}-${String(number).padStart(3, '0')}`,
+      id,
       series: type,
       author,
       teaser: withFrequency(scenario.teaser),
       preview: withFrequency(scenario.preview),
-      image: scenario.image,
+      image: weeklyMedia[id],
+      frequencyRange: type === 'CNT'
+        ? `${formatFrequency(actualFrequency - 1)}–${formatFrequency(actualFrequency + 1)}`
+        : undefined,
       briefing: withFrequency(cycle % 2 ? scenario.briefing + ' ' + scenario.followUp : scenario.briefing),
     }
   })
@@ -139,7 +181,9 @@ export function getPublicMissionEdition(now = Date.now()) {
   const { startsAt, missions } = getEdition(now)
   return {
     startsAt,
-    missions: missions.map(({ id, series, author, teaser, preview, image }) => ({ id, series, author, teaser, preview, image })),
+    missions: missions.map(({ id, series, author, teaser, preview, image, frequencyRange }) => ({
+      id, series, author, teaser, preview, image, frequencyRange,
+    })),
   }
 }
 

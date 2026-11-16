@@ -30,10 +30,27 @@ describe('Mission Board editions', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it('exposes an optional reference image with the public preview', () => {
-    const edition = getPublicMissionEdition(Date.parse('2026-11-23T00:00:00+08:00'))
-    const illustrated = edition.missions.filter(mission => mission.image)
-    expect(illustrated.map(mission => mission.id)).toEqual(['OBS-207'])
-    expect(illustrated[0].image?.caption).toBe('Reference image · Flooded street')
+  it('keeps all three types and can select any type for the optional fourth slot', () => {
+    const weekMs = 7 * 24 * 60 * 60 * 1000
+    const sizes = new Set<number>()
+    const extras = new Set<string>()
+    for (let week = 0; week < 53; week++) {
+      const now = sunday + week * weekMs
+      const { missions } = getPublicMissionEdition(now)
+      expect(getPublicMissionEdition(now - 1_000).missions).toEqual(missions)
+      expect(missions.slice(0, 3).map(mission => mission.series)).toEqual(['REC', 'CNT', 'OBS'])
+      sizes.add(missions.length)
+      if (missions[3]) extras.add(missions[3].series)
+    }
+    expect(sizes).toEqual(new Set([3, 4]))
+    expect(extras).toEqual(new Set(['REC', 'CNT', 'OBS']))
+  })
+
+  it('shows the contact frequency range and two images in the launch week only', () => {
+    const edition = getPublicMissionEdition(sunday + 1)
+    expect(edition.missions.filter(mission => mission.frequencyRange)
+      .map(mission => [mission.id, mission.frequencyRange])).toEqual([['CNT-076', '112.3–112.5']])
+    expect(edition.missions.filter(mission => mission.image).map(mission => mission.id)).toEqual(['CNT-076', 'OBS-205'])
+    expect(getPublicMissionEdition(Date.parse('2026-12-07T00:00:00+08:00')).missions.some(mission => mission.image)).toBe(false)
   })
 })

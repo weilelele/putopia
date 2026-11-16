@@ -25,7 +25,8 @@
 }
 
 .heading span,
-.byline {
+.byline,
+.frequency {
   color: var(--color-star-dim);
   font-size: var(--fs-caption);
   line-height: 1.4;
@@ -63,7 +64,7 @@
 .row:hover .code,
 .typeIcon,
 .chevron { color: var(--color-nucleus-2); }
-.typeIcon { margin-top: var(--s-1); }
+.typeIcon { display: block; margin-top: var(--s-1); }
 .chevron { align-self: center; }
 
 .avatar {
@@ -76,6 +77,12 @@
 .code,
 .teaser { display: block; }
 .code { font-size: var(--fs-body); line-height: 1.3; }
+.titleLine {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 var(--s-2);
+}
 .byline {
   display: flex;
   align-items: center;
@@ -83,6 +90,49 @@
   margin-top: var(--s-1);
 }
 .teaser { margin-top: var(--s-1); font-size: var(--fs-compact); line-height: 1.4; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .missions li { --mission-delay: 0ms; }
+  .missions li:nth-child(2) { --mission-delay: 460ms; }
+  .missions li:nth-child(3) { --mission-delay: 920ms; }
+  .missions li:nth-child(4) { --mission-delay: 1380ms; }
+  .revealBand { position: relative; --band-delay: 0ms; }
+  .byline { --band-delay: 110ms; }
+  .teaser { --band-delay: 230ms; }
+
+  .board[data-revealing] .row { position: relative; }
+
+  .board[data-revealing] .row::before {
+    position: absolute;
+    z-index: 1;
+    inset: var(--s-3) 0;
+    background: var(--bg-panel);
+    content: '';
+    pointer-events: none;
+    animation: mission-row-start 1ms step-end var(--mission-delay) both;
+  }
+
+  .board[data-revealing] .revealBand::after {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-panel) url('/assets/mission-board/reveal-snow.png') repeat;
+    content: '';
+    pointer-events: none;
+    animation: mission-band-reveal 200ms ease-out both;
+    animation-delay: calc(var(--mission-delay) + var(--band-delay));
+  }
+
+  @keyframes mission-row-start {
+    from { visibility: visible; }
+    to { visibility: hidden; }
+  }
+
+  @keyframes mission-band-reveal {
+    0% { opacity: 1; background-position: 0 0; }
+    35% { opacity: .8; background-position: 6px 3px; }
+    100% { opacity: 0; visibility: hidden; background-position: 10px 5px; }
+  }
+}
 
 .dialogAuthor {
   display: flex;

@@ -116,8 +116,29 @@ export function MissionBoard({ edition, signedIn, initialMission }: {
   initialMission?: string
 }) {
   const [selectedId, setSelectedId] = useState(initialMission ?? null)
+  const [revealing, setRevealing] = useState(false)
+  const board = useRef<HTMLElement>(null)
+  const interacted = useRef(false)
   const trigger = useRef<HTMLButtonElement | null>(null)
   const selected = edition.missions.find(mission => mission.id === selectedId)
+
+  useEffect(() => {
+    if (!board.current || initialMission || !('IntersectionObserver' in window)
+      || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.2) return
+      observer.disconnect()
+      if (!interacted.current) setRevealing(true)
+    }, { threshold: 0.2 })
+    observer.observe(board.current)
+    return () => observer.disconnect()
+  }, [initialMission])
+
+  function skipReveal() {
+    interacted.current = true
+    setRevealing(false)
+  }
 
   function closeMission() {
     const row = trigger.current
@@ -126,7 +147,8 @@ export function MissionBoard({ edition, signedIn, initialMission }: {
   }
 
   return (
-    <section id="mission-board" className={styles.board} aria-labelledby="mission-board-heading">
+    <section ref={board} id="mission-board" className={styles.board} aria-labelledby="mission-board-heading"
+      data-revealing={revealing || undefined} onFocusCapture={skipReveal} onPointerDown={skipReveal}>
       <header className={styles.heading}>
         <h2 id="mission-board-heading">Mission Board</h2>
         <span>Week of <time dateTime={edition.startsAt}>{weekFormat.format(new Date(edition.startsAt))}</time></span>
@@ -140,14 +162,19 @@ export function MissionBoard({ edition, signedIn, initialMission }: {
                 trigger.current = event.currentTarget
                 setSelectedId(mission.id)
               }}>
-                <Icon className={styles.typeIcon} size={24} strokeWidth={1.5} aria-hidden />
+                <span className={`${styles.revealBand} ${styles.typeIcon}`} aria-hidden>
+                  <Icon size={24} strokeWidth={1.5} />
+                </span>
                 <span>
-                  <strong className={styles.code}>{mission.id}<span className="sr-only"> · {label}</span></strong>
-                  <span className={styles.byline}>
+                  <span className={`${styles.revealBand} ${styles.titleLine}`}>
+                    <strong className={styles.code}>{mission.id}<span className="sr-only"> · {label}</span></strong>
+                    {mission.frequencyRange && <span className={styles.frequency}>Frequency {mission.frequencyRange}</span>}
+                  </span>
+                  <span className={`${styles.revealBand} ${styles.byline}`}>
                     <MissionAvatar author={mission.author} size={20} />
                     <span>{mission.author.name}</span>
                   </span>
-                  <span className={styles.teaser}>{mission.teaser}</span>
+                  <span className={`${styles.revealBand} ${styles.teaser}`}>{mission.teaser}</span>
                 </span>
                 <ChevronRight className={styles.chevron} size={16} aria-hidden />
               </button>
