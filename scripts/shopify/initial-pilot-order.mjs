@@ -3,7 +3,7 @@ import { isInitiationShippingRegion } from '../../src/lib/initiation-checkout-po
 export const INITIAL_PILOT_QUERY = `
   query ShopifyPilotOrder($id: ID!, $isComplete: Boolean! = false) {
     order(id: $id) {
-      id test email updatedAt displayFinancialStatus
+      id test email updatedAt cancelledAt displayFinancialStatus
       customAttributes { key value }
       shippingAddress {
         countryCodeV2 provinceCode zip
@@ -13,6 +13,7 @@ export const INITIAL_PILOT_QUERY = `
         city @include(if: $isComplete)
       }
       totalPriceSet { ...PilotMoney }
+      currentTotalPriceSet { ...PilotMoney }
       totalShippingPriceSet { ...PilotMoney }
       totalDiscountsSet { ...PilotMoney }
       lineItems(first: 5) {
@@ -111,7 +112,7 @@ function refundPositions(refunds, lineToPosition, payment) {
   return [...positions].sort()
 }
 
-function shipmentStates(fulfillments, lineToPosition) {
+export function shipmentStates(fulfillments, lineToPosition) {
   const packs = Object.fromEntries([...lineToPosition.values()].map(position => [position, { status: 'planned', trackingUrl: null, trackingNumber: null }]))
   const trackingNumbers = new Set()
   requireMatch(fulfillments.length < 10, 'Too many fulfillments for the pilot')

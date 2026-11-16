@@ -15,6 +15,8 @@ import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, valid
 import { prepareInitiationBundleSwitch } from '@/lib/initiation-checkout-switch'
 import { afterCheckout } from '@/lib/checkout-after'
 import { initiationCheckoutAccess } from '@/lib/initiation-checkout-access'
+import { shopifyLiveConfig } from '@/lib/shopify-live-config'
+import { createShopifyLiveCheckout } from '@/lib/shopify-live-checkout'
 
 /** How the buyer reached checkout: signed in, or an email-only account created by the email checkout. */
 export type InitiationCheckoutPath = 'signed_in' | 'email_first'
@@ -77,6 +79,16 @@ export async function createInitiationCheckout(request: Request, origin: string,
     if (offerConfigError) return NextResponse.json({ error: offerConfigError }, { status: 503 })
     const { data: previousOrder, error: previousError } = previousResult
     if (previousError) throw previousError
+    const shopifyPending = previousOrder?.price_id?.startsWith('price_shopify_')
+    if (shopifyPending && (process.env.INITIATION_SHOPIFY_LIVE_ENABLED !== 'true' || kind === 'legacy_upgrade')) {
+      return NextResponse.json({ error: 'An existing Shopify checkout is still being reconciled.' }, { status: 409 })
+    }
+    if (kind !== 'legacy_upgrade' && process.env.INITIATION_SHOPIFY_LIVE_ENABLED === 'true'
+      && (!previousOrder || shopifyPending)) {
+      const config = shopifyLiveConfig()
+      if (!config) return NextResponse.json({ error: 'Checkout is temporarily unavailable.' }, { status: 503 })
+      return await createShopifyLiveCheckout(config, request, origin, user, body, checkoutPath, kind)
+    }
     const { priceId, productId } = initiationStripeQuote(kind, previousOrder)
     if (!priceId || !productId) throw new Error('Initiation quote is not configured')
     const amount = INITIATION_PRICES[kind].amount

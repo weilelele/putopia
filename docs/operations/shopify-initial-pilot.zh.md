@@ -74,3 +74,12 @@ Headless 尚未接通时，可以在本机用 `SHOPIFY_INITIAL_PILOT_DRAFT_URL` 
 付款后回原 Putopia 标签页点 **After Payment, Verify Email**。本机 Supabase 会向 Mailpit 发送单次验证链接。用原浏览器打开邮件，Putopia 校验已验证邮箱、试单引用、套餐及付款状态，再将订单关联到该账号并激活会员。用下一笔试单时使用另一枚已配置的合成邮箱。
 
 $38 访客测试单 `#1008` 已在无 Putopia 会话时完成邮箱预填和测试付款。付款前验证请求保持待付款，验证邮件完成后进入会员页并显示 Initial 与两个待发包裹。
+
+## 正式收款接入准备
+
+首次切换范围为 $38 Initial 与 $488 Complete。$460 升级暂用现有 Stripe 流程，已经开始的 Stripe 结账仍由 Stripe 对账。准备中的 v121 包含 Shopify 预留席位、授权绑定、扣款确认、会员和 Console 权限，以及按 Pack 写入追踪号。v121 尚未应用到生产，`INITIATION_SHOPIFY_LIVE_ENABLED` 尚未启用。
+
+- **Shopify。** 两个固定套餐须能从 Headless 生成新的购物车。当前商店有密码页，且 Shopify Payments 为 Test mode，捕获方式是 Automatically at checkout。正式流程需验证未登录 Shopify 的买家能进入托管结账，核对美国配送区、包邮、实收和支付方式，再用授权后捕获验证 Putopia 的配送限制和席位校验。
+- **Vercel。** 生产服务端需要 `SHOPIFY_LIVE_CLIENT_ID`、`SHOPIFY_LIVE_CLIENT_SECRET`、`SHOPIFY_LIVE_STOREFRONT_TOKEN`、`SHOPIFY_LIVE_INITIAL_VARIANT_ID`、`SHOPIFY_LIVE_COMPLETE_VARIANT_ID`。密钥存入 Production 环境，套餐 ID 对应目前测试单 #1006 和 #1007 使用的固定套餐。
+- **Shopify → Putopia。** 将订单创建、已支付、更新、取消及退款等事件投递到配置好的 `/api/shopify/webhook`。验证 Shopify 签名、订单与邮箱绑定、单笔授权和完整扣款、重复事件、失败重试、退款与异常订单处理。还要逐包核对履约事件与会员页。
+- **切换。** 先从隔离环境验证签名事件到扣款确认，再验证正式 Shopify 购物车、付款后的访客激活和会员入口。完成后在 Shopify 关闭 Test mode，在 Vercel 启用公开开关并核对生产路由。回退时关闭公开开关，保留回调和对账，已发出的 Shopify Checkout 仍可核对。
