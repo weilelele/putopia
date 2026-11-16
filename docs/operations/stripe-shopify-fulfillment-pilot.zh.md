@@ -80,3 +80,18 @@ node --env-file=.env.shopify-fulfillment.local scripts/shopify/import-stripe-bun
 ```
 
 [Shopify 发布应用版本](https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard) · [Shopify 应用权限](https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes) · [Shopify 拆分履约 API](https://shopify.dev/docs/api/admin-graphql/latest/mutations/fulfillmentOrderSplit)
+
+## 正式批次
+
+2026-11-17 完成 74 笔补导入，包括 10 笔 Initial、5 笔 Complete、59 笔旧版 Voyager Pack。加上两笔正式试单，Shopify 与 Putopia 的来源标记和订单映射逐笔一致，共 76 笔，原 Stripe 实收 $4,054 USD，105 个独立待发 Pack。另 8 条待核对记录未导入。
+
+- 正式库已应用 v116、v119、v120。v120 保存旧版 Voyager 订单与 Shopify 的一对一映射，用 Stripe 付款引用防止重复导入。旧版 $12 源订单的 `pack_count` 为 1，按一条实体商品导入，SKU 为 `VOYAGER-PACK-LEGACY`，保留实收、原地址和订单来源。
+- #1009（Initial）和 #1010（Complete）继续待发。测试单 #1006 和 #1007 的虚构追踪号已在隔离数据库验收，正式订单的追踪号待实际发货后录入。
+- 遇到 Shopify 刚建单后标签搜索尚未更新时，已关联的新套餐直接使用 Putopia 保存的 Shopify 订单 ID 读取和分包。发生超时且尚无绑定时，先按原单标签对账，保留数据库预约，确认没有重复订单再继续。
+- 旧版订单用下方 `prepare` 重新核实正式 Stripe 付款、退款、邮箱、收货地址和包裹历史。只把通过的源 UUID 交给 `apply`。导入后根据数据库记录的 Shopify 订单 ID 用 `verify` 复查。此流程保留源订单及会员记录，发货时按 Shopify 独立履约分组操作。
+
+```bash
+node --env-file=.env.shopify-fulfillment.local scripts/shopify/import-stripe-legacy.mjs prepare
+node --env-file=.env.shopify-fulfillment.local scripts/shopify/import-stripe-legacy.mjs apply <source-uuid> ...
+node --env-file=.env.shopify-fulfillment.local scripts/shopify/import-stripe-legacy.mjs verify <source-uuid> ...
+```

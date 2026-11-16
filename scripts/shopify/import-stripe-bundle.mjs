@@ -1,13 +1,14 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
+import { pathToFileURL } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { CURRENT_STRIPE_BUNDLES, checkCapturedStripeBundle, readShopifyShipments, stripeOrderTag } from './stripe-initial-fulfillment.mjs'
 
 const variants = ['67965516546239', '67965521559743', '67973291638975', '67973292064959']
-const scopeNames = ['write_orders', 'write_merchant_managed_fulfillment_orders']
-const sourceColumns = 'id,user_id,status,order_kind,amount,currency,pricing_version,paid_at,stripe_livemode,stripe_payment_intent,stripe_session_id,shipping'
-const shop = 'jtuuus-k3.myshopify.com'
+export const scopeNames = ['write_orders', 'write_merchant_managed_fulfillment_orders']
+const sourceColumns = 'id,user_id,status,order_kind,amount,currency,pricing_version,paid_at,stripe_livemode,stripe_payment_intent,stripe_session_id,shipping,shopify_fulfillment_order_ref'
+export const shop = 'jtuuus-k3.myshopify.com'
 const orderFields = `
   id test cancelledAt updatedAt email tags displayFinancialStatus
   shippingAddress { name address1 address2 city provinceCode zip countryCodeV2 phone }
@@ -21,7 +22,7 @@ const orderFields = `
     fulfillmentLineItems(first: 5) { nodes { quantity lineItem { id } } pageInfo { hasNextPage } }
   }`
 
-function requireThat(condition, message) {
+export function requireThat(condition, message) {
   if (!condition) throw new Error(message)
 }
 
@@ -31,7 +32,7 @@ async function post(url, body, headers) {
   return response.json()
 }
 
-async function shopifyApi() {
+export async function shopifyApi() {
   requireThat((process.env.SHOPIFY_FULFILLMENT_SHOP || process.env.SHOPIFY_PILOT_SHOP) === shop, 'Expected the authorized Putopia Shopify shop')
   const clientId = process.env.SHOPIFY_FULFILLMENT_CLIENT_ID || process.env.SHOPIFY_PILOT_CLIENT_ID
   const clientSecret = process.env.SHOPIFY_FULFILLMENT_CLIENT_SECRET || process.env.SHOPIFY_PILOT_CLIENT_SECRET
@@ -49,7 +50,7 @@ async function shopifyApi() {
   }
 }
 
-function stripeReader() {
+export function stripeReader() {
   const key = process.env.SHOPIFY_FULFILLMENT_STRIPE_READ_KEY
   if (key) {
     requireThat(/^(rk|sk)_live_/.test(key), 'Expected a live Stripe read credential')
@@ -73,7 +74,7 @@ function stripeReader() {
   }
 }
 
-function money(amount) {
+export function money(amount) {
   return { shopMoney: { currencyCode: 'USD', amount: (amount / 100).toFixed(2) } }
 }
 
@@ -88,7 +89,7 @@ function shippingAddress(shipping) {
   }
 }
 
-function addressKey(value) {
+export function addressKey(value) {
   return (value ?? '').trim().toUpperCase().replace(/[^\p{L}\p{N}]/gu, '')
 }
 
@@ -132,7 +133,7 @@ async function readSource(db, stripe, selector, clean) {
   throw new Error(`No order passed preflight. ${[...rejected].map(([reason, count]) => `${count} × ${reason}`).join('. ')}`)
 }
 
-async function lookupOrder(api, source, id) {
+export async function lookupOrder(api, source, id) {
   if (id) return (await api(`query($id:ID!){order(id:$id){${orderFields}}}`, { id })).order
   const tag = stripeOrderTag(source.id)
   const { orders } = await api(`query($search:String!){orders(first:2,query:$search){nodes{${orderFields}} pageInfo{hasNextPage}}}`, { search: `tag:${tag}` })
@@ -140,13 +141,13 @@ async function lookupOrder(api, source, id) {
   return orders.nodes[0] ?? null
 }
 
-async function createOrder(api, source) {
+export async function createOrder(api, source) {
   const { order, offer, email } = source
   const orderReceipt = {
-    currency: 'USD', processedAt: order.paid_at, sourceIdentifier: order.id, tags: [stripeOrderTag(order.id), 'Putopia Stripe import'],
+    currency: 'USD', processedAt: order.paid_at, sourceIdentifier: order.id, tags: [stripeOrderTag(order.id), 'Putopia Stripe import', ...(source.tags ?? [])],
     financialStatus: 'PAID', email, shippingAddress: shippingAddress(order.shipping), test: false,
     buyerAcceptsMarketing: false,
-    lineItems: offer.skus.map((sku, i) => ({
+    lineItems: source.lineItems ?? offer.skus.map((sku, i) => ({
       variantId: `gid://shopify/ProductVariant/${variants[i]}`, sku, priceSet: money(offer.prices[i]), quantity: 1, requiresShipping: true,
     })),
     transactions: [{ gateway: 'manual', kind: 'SALE', status: 'SUCCESS', amountSet: money(offer.amount), processedAt: order.paid_at, test: false }],
@@ -188,6 +189,14 @@ async function splitOutstandingPacks(api, id, skus) {
   throw new Error('Shopify did not yet confirm all Pack splits')
 }
 
+export function productionDb() {
+  const dbUrl = process.env.SHOPIFY_FULFILLMENT_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  const dbKey = process.env.SHOPIFY_FULFILLMENT_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+  requireThat(dbUrl?.replace(/\/$/,'') === 'https://oxwfnmcwovxnrvagxzdz.supabase.co' && dbKey,
+    'Expected the Putopia production database and server credential')
+  return createClient(dbUrl, dbKey, { auth: { persistSession: false, autoRefreshToken: false } })
+}
+
 async function main() {
   const [mode, selector, flag, ...rest] = process.argv.slice(2)
   const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i
@@ -195,17 +204,16 @@ async function main() {
   requireThat(['prepare','import','split','sync'].includes(mode) && valid && !rest.length
     && (['import','split','sync'].includes(mode) ? flag === '--apply' : !flag),
   'Usage: prepare <initial|standard|order-uuid> or <import|split|sync> <order-uuid> --apply')
-  const dbUrl = process.env.SHOPIFY_FULFILLMENT_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-  const dbKey = process.env.SHOPIFY_FULFILLMENT_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-  requireThat(dbUrl?.replace(/\/$/,'') === 'https://oxwfnmcwovxnrvagxzdz.supabase.co' && dbKey,
-    'Expected the Putopia production database and server credential')
-  const db = createClient(dbUrl, dbKey, { auth: { persistSession: false, autoRefreshToken: false } })
+  const db = productionDb()
   const source = await readSource(db, stripeReader(), selector, !['sync','split'].includes(mode))
   const api = await shopifyApi()
   const { currentAppInstallation } = await api('{currentAppInstallation{accessScopes{handle}}}')
   const missing = scopeNames.filter(scope => !currentAppInstallation.accessScopes.some(grant => grant.handle === scope))
   const { order, offer } = source
-  const already = await lookupOrder(api, order)
+  const reference = order.shopify_fulfillment_order_ref
+  const linkedId = reference?.startsWith(`${shop}/`) ? reference.split('/').at(-1) : null
+  requireThat(!reference || /^\d+$/.test(linkedId ?? ''), 'The Putopia order links to an unexpected Shopify order')
+  const already = await lookupOrder(api, order, linkedId ? `gid://shopify/Order/${linkedId}` : undefined)
   if (mode === 'prepare') {
     console.log(JSON.stringify({ sourceId: order.id, kind: order.order_kind, verifiedCents: offer.amount, shipToMatchesStripe: true,
       packPositions: source.packs.map(pack => pack.position), existingShopifyOrder: already?.id ?? null, missingScopes: missing }))
@@ -237,7 +245,9 @@ async function main() {
   console.log(JSON.stringify({ result: mode, shopifyOrderId: match[1], packUpdates: sync.data, outstandingPackGroups: splits }))
 }
 
-main().catch(error => {
-  console.error(error.constructor === Error && !error.cmd ? error.message : 'Source data or API check failed')
-  process.exitCode = 1
-})
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  main().catch(error => {
+    console.error(error.constructor === Error && !error.cmd ? error.message : 'Source data or API check failed')
+    process.exitCode = 1
+  })
+}
