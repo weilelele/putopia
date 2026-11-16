@@ -118,15 +118,15 @@ const additionalMissions: Record<Series, Scenario> = {
 
 const weeklyMedia: Partial<Record<string, MissionImage>> = {
   'CNT-076': {
-    src: '/assets/mission-board/cnt-076-console-film.webp',
-    alt: 'The Console’s round screen shows a lamp and a figure at the far end of a bridge at dusk.',
+    src: '/assets/mission-board/cnt-076-console-film-soft.webp',
+    alt: 'The Console’s round screen shows a fuzzy amber light over the dark outline of a bridge.',
     width: 720,
     height: 540,
     caption: 'Console concept · Bridge signal',
   },
   'OBS-205': {
-    src: '/assets/mission-board/obs-205-console-film.webp',
-    alt: 'The Console’s round screen shows rows of low shapes behind a hazy window.',
+    src: '/assets/mission-board/obs-205-console-film-soft.webp',
+    alt: 'The Console’s round screen shows a faint window-like blur and a few indistinct shapes.',
     width: 720,
     height: 540,
     caption: 'Console concept · Window signal',
