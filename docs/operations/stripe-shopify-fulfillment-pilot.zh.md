@@ -62,3 +62,21 @@ node --env-file=.env.shopify-fulfillment.local scripts/shopify/sync-stripe-initi
 正式导入前先核验一笔 Initial 和一笔 Complete，保留原订单号、原成交日期、实收及税额、订单邮箱、收件地址和包裹位置。使用原订单号建立唯一映射，核对重跑时订单仍只有一笔。导入设为外部已付款，关闭导入触发的客户确认信，保留待发状态与历史追踪号。退款仍在原 Stripe 交易处理。两笔验收后扩大到其余已核验订单，并在合并前验证 Shopify 向 Putopia 的生产履约回写和失败重试。
 
 [Shopify 导入订单 API](https://shopify.dev/docs/api/admin-graphql/latest/mutations/orderCreate) · [Shopify 导入通知选项](https://shopify.dev/docs/api/admin-graphql/latest/input-objects/OrderCreateOptionsInput) · [Shopify 履约权限](https://shopify.dev/docs/api/admin-graphql/latest/mutations/fulfillmentCreate)
+
+## 正式试单操作
+
+1. 在 Putopia Initial Pilot 的 Dev Dashboard 版本中保留 `read_orders`，添加 `write_orders` 和 `write_merchant_managed_fulfillment_orders`。发布版本后，在店铺后台批准新增权限，再跑下方 `prepare` 确认 `missingScopes` 为空。
+2. 正式 Supabase 依次应用尚未上线的 `schema_v116.sql` 和 `schema_v119.sql`。v117 和 v118 用于隔离的 Shopify 测试流程。v119 校验实时退款／争议、Pack 位置、源单与 Shopify 订单的唯一绑定。
+3. 选一笔 Initial 和一笔 Complete。用各自的 UUID 执行 `import`，再执行 `split`。Shopify 按原金额记录外部付款，保留成交日期和地址，关闭导入触发的订单与发货通知。每个 Pack 在 ZIP 95054 的发货地点独立待发。
+4. 核对两笔 Shopify 订单与 Putopia 原单的金额、地址、履约分组和订单绑定。已经获得真实追踪号的 Pack 才在 Shopify 发货并执行 `sync`；确认会员页的对应包裹显示该号码，其他包裹保持原状态。若 Shopify 写入发生超时，先按源单标签对账。保留数据库导入预约，直到确认能安全重试。
+5. 正式两单验收后再处理余下订单。旧版 $12 订单使用独立的商品映射和历史发货状态，需单独验收。预检异常的 8 单留给人工核对。
+
+```bash
+node --env-file=.env.shopify-fulfillment.local scripts/shopify/import-stripe-bundle.mjs prepare initial
+node --env-file=.env.shopify-fulfillment.local scripts/shopify/import-stripe-bundle.mjs prepare standard
+node --env-file=.env.shopify-fulfillment.local scripts/shopify/import-stripe-bundle.mjs import <order-uuid> --apply
+node --env-file=.env.shopify-fulfillment.local scripts/shopify/import-stripe-bundle.mjs split <order-uuid> --apply
+node --env-file=.env.shopify-fulfillment.local scripts/shopify/import-stripe-bundle.mjs sync <order-uuid> --apply
+```
+
+[Shopify 发布应用版本](https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard) · [Shopify 应用权限](https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes) · [Shopify 拆分履约 API](https://shopify.dev/docs/api/admin-graphql/latest/mutations/fulfillmentOrderSplit)
