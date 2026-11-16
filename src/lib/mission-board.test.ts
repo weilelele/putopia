@@ -29,4 +29,11 @@ describe('Mission Board editions', () => {
       .flat().map(mission => mission.id)
     expect(new Set(ids).size).toBe(ids.length)
   })
+
+  it('exposes an optional reference image with the public preview', () => {
+    const edition = getPublicMissionEdition(Date.parse('2026-11-23T00:00:00+08:00'))
+    const illustrated = edition.missions.filter(mission => mission.image)
+    expect(illustrated.map(mission => mission.id)).toEqual(['OBS-207'])
+    expect(illustrated[0].image?.caption).toBe('Reference image · Flooded street')
+  })
 })

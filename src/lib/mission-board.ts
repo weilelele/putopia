@@ -16,6 +16,7 @@ type Scenario = {
   preview: string
   briefing: string
   followUp: string
+  image?: { src: string; alt: string; width: number; height: number; caption: string }
 }
 
 const editions: readonly (readonly Scenario[])[] = [
@@ -93,6 +94,13 @@ const editions: readonly (readonly Scenario[])[] = [
       preview: 'There’s a flicker near Frequency {frequency} that looks like objects moving in water. We can’t see enough of the banks to tell whether it’s a river, a canal or a flooded street.',
       briefing: 'Find the clearest setting near {frequency} and compare any available Bands. Describe the water, the edges of the channel and any signs of buildings or activity. Record which Frequency and Band gave you the clearest view of the setting.',
       followUp: 'If a Band shows what’s upstream, note whether the channel opens into a larger body of water or continues through built structures.',
+      image: {
+        src: '/assets/voyager-briefing/world-flooded.jpg',
+        alt: 'Floodwater covers a street lined with buildings; a railing marks the edge of the walkway.',
+        width: 720,
+        height: 720,
+        caption: 'Reference image · Flooded street',
+      },
     },
   ],
 ]
@@ -112,6 +120,7 @@ function getEdition(now: number) {
       author,
       teaser: withFrequency(scenario.teaser),
       preview: withFrequency(scenario.preview),
+      image: scenario.image,
       briefing: withFrequency(cycle % 2 ? scenario.briefing + ' ' + scenario.followUp : scenario.briefing),
     }
   })
@@ -122,7 +131,7 @@ export function getPublicMissionEdition(now = Date.now()) {
   const { startsAt, missions } = getEdition(now)
   return {
     startsAt,
-    missions: missions.map(({ id, author, teaser, preview }) => ({ id, author, teaser, preview })),
+    missions: missions.map(({ id, author, teaser, preview, image }) => ({ id, author, teaser, preview, image })),
   }
 }
 

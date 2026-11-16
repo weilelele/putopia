@@ -94,6 +94,22 @@
 
 .instructions { padding-top: var(--s-3); }
 
+.briefingImage {
+  margin: var(--s-4) 0 0;
+}
+
+.briefingImage img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.briefingImage figcaption {
+  margin-top: var(--s-2);
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
 .dialogFooter {
   display: grid;
   gap: var(--s-3);

@@ -88,6 +88,16 @@ function MissionDialog({ mission, signedIn, close }: { mission: Mission; signedI
       <section className={styles.dialogBriefing}>
         <h3 className={styles.previewLabel}>{available ? 'Briefing' : 'Briefing Preview'}</h3>
         <p>{mission.preview}</p>
+        {mission.image && <figure className={styles.briefingImage}>
+          <SmartImage
+            src={mission.image.src}
+            alt={mission.image.alt}
+            width={mission.image.width}
+            height={mission.image.height}
+            sizes="(max-width: 528px) calc(100vw - 96px), 432px"
+          />
+          <figcaption>{mission.image.caption}</figcaption>
+        </figure>}
         {available && <p className={styles.instructions}>{available.briefing}</p>}
       </section>
     </ArchiveSheet>
