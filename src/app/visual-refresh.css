@@ -4292,6 +4292,27 @@ html[data-keyboard='open'] :where(.main, .landing-main) { padding-bottom: 24px; 
   overflow-wrap: anywhere;
 }
 .pilot-login-page .pilot-login-form { gap: 24px; }
+.pilot-login-recovery-link {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  min-height: 44px;
+  margin-block: -16px;
+  color: var(--color-nucleus);
+  font-size: var(--fs-label);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pilot-login-recovery-link:focus-visible {
+  outline: 2px solid var(--color-nucleus);
+  outline-offset: 3px;
+}
+.pilot-recovery-description {
+  margin: 12px 0 0;
+  color: var(--color-star);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
 
 .startup-screen { gap: 24px; }
 .startup-symbol { width: 140px; height: auto; flex-shrink: 0; pointer-events: none; }

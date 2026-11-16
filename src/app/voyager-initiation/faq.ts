@@ -2,9 +2,21 @@ import { initiationPriceLabel } from '@/lib/initiation-pricing'
 
 export const INITIATION_FAQ_GROUPS = [
   { id: 'devices', title: 'Devices & functions', items: [
-    { question: 'What is the Antenna, and what does it do?', answer: 'The Antenna is a collectible receiving accessory for the Multiverse Console. Installed on top of your Console, it receives a particular category of signals from parallel worlds. We are still exploring what those signals contain, together.' },
+    {
+      question: 'What is the Multiverse Console?',
+      answer: 'The Multiverse Console is a physical piece of sci-fi hardware built for the Collective’s fieldwork. Use its dials to tune into parallel worlds and switch between observation angles. Send quantum energy into a world, or send your voice with it where supported. A transmission might bring a faint image into focus or change something on the other side. Share what you observe with fellow Voyagers and investigate the results together.',
+      paragraphs: [
+        'There’s still much to discover about what the Console can do. As a Voyager, you can help the Collective uncover new capabilities and find new ways to interact with parallel worlds.',
+      ],
+    },
+    { question: 'What is the Antenna, and what does it do?', answer: 'Antenna for Multiverse Console. An emblem of the Collective. A connection to the unknown. It receives a particular category of parallel-world signals when installed on top of the Console. We are still learning what those signals contain. Explore them together.' },
     { question: 'Can I add a Console later?', answer: `Yes. Initial Pack members can add Console + Pack 4 for ${initiationPriceLabel('legacy_upgrade')}. Buying Complete upfront saves $10 compared with the current Initial + upgrade.` },
-    { question: 'How do I claim a Console?', answer: 'Complete and the upgrade include one Console. Choose an available batch on Devices. If full, choose another or wait; your entitlement remains.' },
+    {
+      question: 'How do I claim a Console?',
+      answer: 'If you purchased the Complete Voyager Pack or upgraded your Initial Voyager Pack with Console + Pack 4, go to the ',
+      claimLink: '/devices',
+      afterClaimLink: ' page and choose an available batch to claim your Console.',
+    },
     { question: 'Can I change my Console batch?', answer: 'Before shipment, subject to availability. Once shipped, the batch cannot be changed.' },
   ] },
   { id: 'membership', title: 'Membership & payment', items: [
