@@ -17,7 +17,7 @@ try {
   const blocks = [...harness.matchAll(/await db\.exec\(`([\s\S]*?)`\)/g)].slice(0, 2)
   assert.equal(blocks.length, 2)
   for (const block of blocks) await db.exec(block[1])
-  for (const version of ['83_initiation','85_initiation_roster','90','87_npc_initiation','88','89','91','94','102','103','105','107','108','116','119','120','121']) {
+  for (const version of ['83_initiation','85_initiation_roster','90','87_npc_initiation','88','89','91','94','102','103','105','107','108','116','119','120','122']) {
     await db.exec(await readFile(new URL(`../schema_v${version}.sql`, import.meta.url), 'utf8'))
   }
   await db.exec("update initiation_batches set checkout_open=true,stripe_livemode=true where label='S26'")
@@ -60,7 +60,7 @@ try {
       ['TEST-1',...Array(count-1).fill(null)])
   }
   assert.equal(await scalar("select has_table_privilege('authenticated','public.initiation_shopify_events','select')"),false)
-  console.log('Passed v121: Stripe coexistence, authorization lease, checkout expiry, member activation, Console unlock, Pack replay, and private queue')
+  console.log('Passed v122: Stripe coexistence, authorization lease, checkout expiry, member activation, Console unlock, Pack replay, and private queue')
 } finally {
   await db.close()
 }
