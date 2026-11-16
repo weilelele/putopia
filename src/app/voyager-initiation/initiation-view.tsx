@@ -25,6 +25,7 @@ import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
 import { requestInitiationCheckout, type InitiationCheckoutInput, type InitiationCheckoutResult } from '@/lib/initiation-checkout-request'
 import { initiationPackProgress } from '@/lib/initiation-pack-progress'
+import { checkShopifyBundlePilotPayment } from '@/lib/actions/shopify-bundle-pilot'
 import { InitiationBriefing } from './briefing/initiation-briefing'
 import { BRIEFING_STORAGE_KEY, briefingAudience, briefingLinkOpens, briefingRecord, shouldAutoOpenBriefing, type BriefingOutcome, type BriefingRegion } from '@/lib/initiation-briefing'
 
@@ -99,9 +100,12 @@ export type InitiationViewProps = {
   regions?: BriefingRegion[]
   /** Value of `?briefing=`; `1` opens the briefing on arrival. */
   briefingParam?: string
+  pilotCheckout?: 'initial' | 'standard'
+  guestPilotUrl?: string
+  pilotShipmentSync?: boolean
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam, pilotCheckout, guestPilotUrl, pilotShipmentSync }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -112,6 +116,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const [dialog, setDialog] = useState<'batch' | 'initiated' | 'legacy-discount' | null>(null)
   const [bundle, setBundle] = useState<'initial' | 'standard'>(initialBundle)
   const [busy, setBusy] = useState(false)
+  const [pilotMessage, setPilotMessage] = useState('')
   const [error, setError] = useState('')
   const checkoutErrorRef = useRef<HTMLParagraphElement>(null)
   useEffect(() => {
@@ -134,12 +139,12 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const kind = legacy ? 'legacy_upgrade' : bundle
   const storedBriefing = useSyncExternalStore(subscribeToSource, readBriefingStore, serverBriefingStore)
   const [briefing, setBriefing] = useState<'idle' | 'replay' | 'link' | 'dismissed'>(() => briefingLinkOpens(snapshot.status, briefingParam) ? 'link' : 'idle')
-  const briefingAuto = storedBriefing !== 'server' && storedBriefing !== 'unavailable'
+  const briefingAuto = !pilotCheckout && !guestPilotUrl && storedBriefing !== 'server' && storedBriefing !== 'unavailable'
     && shouldAutoOpenBriefing({ status, paymentStatus: snapshot.paymentStatus, checkoutCanceled, stored: storedBriefing || null })
   const briefingOpen = briefing === 'replay' || briefing === 'link' || (briefing === 'idle' && briefingAuto)
   const soldOut = !snapshot.ownsSeat && (availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity))
   const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind, userId: snapshot.userId,
-    internal: snapshot.role === 'architect' || analyticsEnvironment === 'fixture', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
+    internal: !!pilotCheckout || !!guestPilotUrl || snapshot.role === 'architect' || analyticsEnvironment === 'fixture', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
 
   const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null || briefingOpen)
 
@@ -150,6 +155,23 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     setError('')
     if (status === 'guest' && !signedInHere) { pendingBundle.current = chosen; setSignInOpen(true); return }
     await continueToCheckout(chosen)
+  }
+
+  async function checkPilotPayment() {
+    if (inFlight.current) return
+    inFlight.current = true
+    setBusy(true)
+    setPilotMessage('')
+    try {
+      const result = await checkShopifyBundlePilotPayment()
+      if (result.synced) window.location.reload()
+      else setPilotMessage(result.error ?? 'Payment is not confirmed yet. Complete Shopify checkout, then try again.')
+    } catch {
+      setPilotMessage('We could not check payment. Please try again.')
+    } finally {
+      inFlight.current = false
+      setBusy(false)
+    }
   }
 
   function signedIn() {
@@ -238,6 +260,10 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     {legacy && progress.packs.slice(2).every(pack => pack.awaitingActivation) && <p className={styles.paymentTerms}>Packs 3–4 await activation.</p>}
     {snapshot.error && <p className={styles.notice} role="alert">{snapshot.error}</p>}
     {snapshot.paymentStatus !== 'none' && snapshot.paymentStatus !== 'paid' && snapshot.paymentStatus !== 'unknown' && <p className={styles.notice} role="status">{legacy && snapshot.paymentStatus === 'pending' ? 'Your upgrade payment is being confirmed. Your existing Pack access stays available.' : paymentMessages[snapshot.paymentStatus]}</p>}
+    {pilotShipmentSync && <>
+      <ArchiveButton fullWidth variant="secondary" onClick={() => void checkPilotPayment()} loading={busy}>SYNC TEST SHIPMENTS</ArchiveButton>
+      {pilotMessage && <p className={styles.notice} role="status">{pilotMessage}</p>}
+    </>}
     <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
   </div>
   const joinPanel = (
@@ -279,18 +305,31 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
           </fieldset>
           <div className={styles.purchaseTerms}>
             <p>One payment. No subscription.</p>
-            <p>Card authorized first; charged after delivery check.</p>
+            {!pilotCheckout && !guestPilotUrl && <p>Card authorized first; charged after delivery check.</p>}
           </div>
-          <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
+          {pilotCheckout ? kind === pilotCheckout && !soldOut ? <>
+            <form method="post" action="/api/shopify-pilot/checkout" target="_blank" rel="noopener">
+              <ArchiveButton type="submit" className={styles.become} fullWidth variant="primary">
+                CONTINUE · {initiationPriceLabel(kind)} <ArrowRight size={20} aria-hidden />
+              </ArchiveButton>
+            </form>
+            <p className={styles.paymentTerms}>Shopify opens in a new tab with your account email. Return here after checkout to confirm payment.</p>
+            <ArchiveButton fullWidth variant="secondary" onClick={() => void checkPilotPayment()} loading={busy}>CONFIRM TEST PAYMENT</ArchiveButton>
+            {pilotMessage && <p className={styles.notice} role="status">{pilotMessage}</p>}
+          </> : <p className={styles.paymentTerms}>{soldOut ? 'FULLY CLAIMED' : `Select ${INITIATION_PRICES[pilotCheckout].name} to use Shopify test checkout.`}</p> : guestPilotUrl && !soldOut ? (
+            <ArchiveLinkButton className={styles.become} fullWidth href={`${guestPilotUrl}?bundle=${bundle}`}>
+              CONTINUE · {initiationPriceLabel(bundle)} <ArrowRight size={20} aria-hidden />
+            </ArchiveLinkButton>
+          ) : <ArchiveButton className={styles.become} fullWidth onClick={() => void become()} loading={busy} disabled={soldOut || status === 'unknown'}>
             <span>{status === 'unknown' ? 'RECORDS UNAVAILABLE' : soldOut ? 'FULLY CLAIMED' : `${legacy ? 'UPGRADE' : 'CONTINUE'} · ${initiationPriceLabel(kind)}`}</span>{!legacy && <ArrowRight size={20} aria-hidden />}
-          </ArchiveButton>
+          </ArchiveButton>}
           {error && <p ref={checkoutErrorRef} className={styles.error} role="alert" tabIndex={-1}>{error}</p>}
           {legacy && !availability.checkoutOpen && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Continue Initiation checkout is not open yet.'}</p>}
           <section className={styles.delivery} aria-label="Delivery">
             <p>48 contiguous US states + DC. Shipping &amp; taxes included.</p>
             <Link className={styles.textLink} href="/terms/initiation">Delivery &amp; aftercare <ArrowRight size={18} aria-hidden /></Link>
           </section>
-          {!availability.checkoutOpen && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
+          {!pilotCheckout && !guestPilotUrl && !availability.checkoutOpen && !legacy && !error && <p className={styles.paymentTerms}>{availability.reason ?? 'Checkout is not open. You can browse and save your Signal Calibration.'}</p>}
           </>}
         </div>
   )
@@ -326,6 +365,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
                 {pack.featured && consoleClaim.claimed && <p className={styles.packAccess}>{consoleClaim.batch?.name ?? 'Batch details unavailable'}</p>}
                 <p className={index === 1 ? styles.antennaCopy : undefined}>{pack.description}</p>
                 {(memberView || shipment) && <p className={styles.shipmentStatus}><span className={styles.statusLabel}>Status</span>{state.label}</p>}
+                {shipment?.trackingNumber && <p className={styles.trackingNumber}><span className={styles.statusLabel}>Tracking</span>{shipment.trackingNumber}</p>}
                 {shipment?.trackingUrl && <a className={styles.textLink} href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">Track delivery <ArrowRight size={18} aria-hidden /></a>}
                 {state.awaitingActivation && <a className={styles.textLink} href="#activate-packs">Activate with upgrade <ArrowRight size={18} aria-hidden /></a>}
               </div>

@@ -42,7 +42,7 @@ export async function readInitiationSnapshot(session: ReturnType<typeof getReque
       admin.rpc('eligible_legacy_initiation_order', { p_user: user.id }),
       admin.from('initiation_orders').select('id,status,order_kind').eq('user_id', user.id).order('created_at', { ascending: false }),
       admin.from('initiation_entitlements').select('order_id,active,console_claimed_at,console_order_id').eq('user_id', user.id).maybeSingle(),
-      admin.from('initiation_shipments').select('id,position,title,scheduled_month,status,tracking_url,legacy_order_id').eq('user_id', user.id).order('scheduled_month'),
+      admin.from('initiation_shipments').select('id,position,title,scheduled_month,status,tracking_url,tracking_number,legacy_order_id').eq('user_id', user.id).order('scheduled_month'),
       admin.from('initiation_members').select('source,active,batch').eq('user_id', user.id).maybeSingle(),
       admin.rpc('eligible_initial_initiation_order', { p_user: user.id }),
     ])
@@ -65,7 +65,10 @@ export async function readInitiationSnapshot(session: ReturnType<typeof getReque
     snapshot.membershipSource = newRecordsUnavailable ? null : member?.source ?? null
     snapshot.paymentStatus = (newRecordsUnavailable ? 'unknown' : orders[0]?.status ?? 'none') as InitiationPaymentStatus
     snapshot.shipments = [
-      ...(shipments ?? []).map((s: { id: string; position: number; title: string; scheduled_month: string; status: InitiationShipment['status']; tracking_url: string | null; legacy_order_id: string | null }) => ({ id: s.id, position: s.position, title: s.title, scheduledMonth: s.scheduled_month, status: s.status, trackingUrl: s.tracking_url, source: s.legacy_order_id ? 'legacy_pack' as const : 'initiation' as const })),
+      ...(shipments ?? []).map((s: { id: string; position: number; title: string; scheduled_month: string; status: InitiationShipment['status']; tracking_url: string | null; tracking_number: string | null; legacy_order_id: string | null }) => ({
+        id: s.id, position: s.position, title: s.title, scheduledMonth: s.scheduled_month, status: s.status,
+        trackingUrl: s.tracking_url, trackingNumber: s.tracking_number, source: s.legacy_order_id ? 'legacy_pack' as const : 'initiation' as const,
+      })),
 
     ]
     snapshot.consoleClaim = { eligible: !!entitlement?.active, claimed: !!entitlement?.console_claimed_at, href: entitlement?.active ? (entitlement.console_claimed_at ? '/devices/my-consoles' : '/devices') : null }
