@@ -1,33 +1,188 @@
 'use client'
 
-import { ArrowRight, LockKeyhole } from 'lucide-react'
-import { useId } from 'react'
-import SmartImage from './smart-image'
+import { ArrowRight, ChevronRight, Radio, RotateCcw, ScanEye } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArchiveButton } from './archive-button'
 import { ArchiveLinkButton } from './archive-link-button'
-import { missionCategories, type MissionCategory } from '@/lib/mission-board'
+import { ArchiveSheet } from './archive-sheet'
+import SmartImage from './smart-image'
+import { acceptMission, loadMissionBriefing } from '@/lib/actions/missions'
+import type { MissionEdition } from '@/lib/mission-board'
 import styles from './mission-board.module.css'
 
-export function MissionIcon({ category }: { category: MissionCategory }) {
-  return <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {category === 'observation' && <><path d="M2 16s4-7 11-7 11 7 11 7-4 7-11 7S2 16 2 16Z" /><circle cx="13" cy="16" r="4" /><path className={styles.accent} d="M25 2v5m0 3v.1" /></>}
-    {category === 'intervention' && <><path d="M7 16V9a2 2 0 0 1 4 0v6-10a2 2 0 0 1 4 0v10-8a2 2 0 0 1 4 0v11l2-3a2 2 0 0 1 3 2l-4 7c-2 3-8 3-11 0l-4-6a2 2 0 0 1 2-2Z" /><path className={styles.accent} d="M21 3c3 1 4 3 4 6M22 7l1 2" /></>}
-    {category === 'frequency' && <><path d="M4 17v5m5-10v13m10-13v13m5-8v5" /><path className={styles.accent} d="M14 8v18m-2-23 2 2 2-2" /></>}
-  </svg>
+const weekFormat = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Shanghai',
+  month: 'short',
+  day: 'numeric',
+})
+
+type Mission = MissionEdition['missions'][number]
+type Briefing = Awaited<ReturnType<typeof loadMissionBriefing>>
+
+const missionTypes = {
+  REC: { label: 'Recover a lost world', Icon: RotateCcw },
+  CNT: { label: 'Attempt contact', Icon: Radio },
+  OBS: { label: 'Observe a potential world', Icon: ScanEye },
+} as const
+
+function MissionAvatar({ author, size }: { author: Mission['author']; size: number }) {
+  return <SmartImage src={author.avatar} alt="" width={size} height={size} sizes={`${size}px`} className={styles.avatar} />
 }
 
-export function MissionBoardHeading() {
-  return <><SmartImage className={styles.logo} src="/assets/vi-icon.png" alt="" width={881} height={492} sizes="32px" /><span>Mission Board</span></>
+function MissionDialog({ mission, signedIn, close }: { mission: Mission; signedIn: boolean; close: () => void }) {
+  const [briefing, setBriefing] = useState<Briefing | 'error' | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [attempt, setAttempt] = useState(0)
+  const [acceptError, setAcceptError] = useState(false)
+
+  useEffect(() => {
+    if (!signedIn) return
+    let active = true
+    loadMissionBriefing(mission.id).then(
+      result => { if (active) setBriefing(result) },
+      () => { if (active) setBriefing('error') },
+    )
+    return () => { active = false }
+  }, [mission.id, signedIn, attempt])
+
+  async function accept() {
+    setBusy(true)
+    setAcceptError(false)
+    try {
+      const result = await acceptMission(mission.id)
+      if (result === 'accepted') {
+        setBriefing(current => current && current !== 'error' && current.kind === 'available'
+          ? { ...current, accepted: true } : current)
+      } else if (result === 'locked' || result === 'expired') {
+        setBriefing({ kind: result })
+      } else {
+        setAcceptError(true)
+      }
+    } catch {
+      setAcceptError(true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const available = briefing && briefing !== 'error' && briefing.kind === 'available' ? briefing : null
+  const locked = !signedIn || (briefing !== 'error' && briefing?.kind === 'locked')
+  const expired = briefing !== 'error' && briefing?.kind === 'expired'
+  const readError = briefing === 'error' || (available && !available.canAccept)
+  return (
+    <ArchiveSheet open onClose={close} title={mission.id} busy={busy} footer={
+      <div className={styles.dialogFooter}>
+        {locked && <>
+          <p className={styles.requirement}>Multiverse Console required.</p>
+          <ArchiveLinkButton href="/voyager-initiation" variant="primary" fullWidth>
+            Go to Voyager Initiation <ArrowRight size={18} aria-hidden />
+          </ArchiveLinkButton>
+        </>}
+        {!locked && !briefing && <p role="status">Checking Console access…</p>}
+        {expired && <p role="status">This mission has closed. Reload the Dashboard for this week’s missions.</p>}
+        {readError && <>
+          <p role="status">Mission access could not be checked.</p>
+          <ArchiveButton variant="secondary" onClick={() => { setBriefing(null); setAttempt(value => value + 1) }}>Try again</ArchiveButton>
+        </>}
+        {available?.canAccept && (available.accepted
+          ? <p role="status">Mission accepted.</p>
+          : <ArchiveButton loading={busy} onClick={accept}>Accept mission</ArchiveButton>)}
+        {acceptError && <p role="alert">Could not accept this mission. Try again.</p>}
+      </div>
+    }>
+      <div className={styles.dialogAuthor}><MissionAvatar author={mission.author} size={36} /><strong>{mission.author.name}</strong></div>
+      <section className={styles.dialogBriefing}>
+        <h3 className={styles.previewLabel}>{available ? 'Briefing' : 'Briefing Preview'}</h3>
+        <p>{mission.preview}</p>
+        {mission.image && <figure className={styles.briefingImage}>
+          <SmartImage
+            src={mission.image.src}
+            alt={mission.image.alt}
+            width={mission.image.width}
+            height={mission.image.height}
+            sizes="(max-width: 528px) calc(100vw - 96px), 432px"
+          />
+          <figcaption>{mission.image.caption}</figcaption>
+        </figure>}
+        {available && <p className={styles.instructions}>{available.briefing}</p>}
+      </section>
+    </ArchiveSheet>
+  )
 }
 
-/** Published assignments are intentionally empty until the publishing workflow is defined. */
-export function MissionBoard({ unlocked, id = 'mission-board' }: { unlocked: boolean; id?: string }) {
-  const heading = useId()
-  return <section id={id} className={styles.board} aria-labelledby={heading}>
-    <header className={styles.heading}><h2 id={heading}><MissionBoardHeading /></h2>{!unlocked && <LockKeyhole size={20} aria-label="Locked" />}</header>
-    {unlocked && <div className={styles.empty}><h3>No missions yet.</h3><p>Your access is open. New assignments from the Collective will appear here.</p></div>}
-    <ul className={styles.categories}>
-      {missionCategories.map(category => <li key={category.id}><MissionIcon category={category.id} /><div><h3>{category.label}</h3>{unlocked ? <p>{category.description}</p> : <div className={styles.redacted} aria-hidden="true"><span /><span /></div>}</div></li>)}
-    </ul>
-    {!unlocked && <ArchiveLinkButton href="/voyager-initiation" variant="primary" fullWidth>Voyager Initiation <ArrowRight size={20} aria-hidden /></ArchiveLinkButton>}
-  </section>
+export function MissionBoard({ edition, signedIn, initialMission }: {
+  edition: MissionEdition
+  signedIn: boolean
+  initialMission?: string
+}) {
+  const [selectedId, setSelectedId] = useState(initialMission ?? null)
+  const [revealing, setRevealing] = useState(false)
+  const board = useRef<HTMLElement>(null)
+  const interacted = useRef(false)
+  const trigger = useRef<HTMLButtonElement | null>(null)
+  const selected = edition.missions.find(mission => mission.id === selectedId)
+
+  useEffect(() => {
+    if (!board.current || initialMission || !('IntersectionObserver' in window)
+      || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.2) return
+      observer.disconnect()
+      if (!interacted.current) setRevealing(true)
+    }, { threshold: 0.2 })
+    observer.observe(board.current)
+    return () => observer.disconnect()
+  }, [initialMission])
+
+  function skipReveal() {
+    interacted.current = true
+    setRevealing(false)
+  }
+
+  function closeMission() {
+    const row = trigger.current
+    setSelectedId(null)
+    requestAnimationFrame(() => row?.focus({ preventScroll: true }))
+  }
+
+  return (
+    <section ref={board} id="mission-board" className={styles.board} aria-labelledby="mission-board-heading"
+      data-revealing={revealing || undefined} onFocusCapture={skipReveal} onPointerDown={skipReveal}>
+      <header className={styles.heading}>
+        <h2 id="mission-board-heading">Mission Board</h2>
+        <span>Week of <time dateTime={edition.startsAt}>{weekFormat.format(new Date(edition.startsAt))}</time></span>
+      </header>
+      <ul className={styles.missions}>
+        {edition.missions.map(mission => {
+          const { Icon, label } = missionTypes[mission.series]
+          return (
+            <li key={mission.id}>
+              <button type="button" className={styles.row} aria-haspopup="dialog" onClick={event => {
+                trigger.current = event.currentTarget
+                setSelectedId(mission.id)
+              }}>
+                <span className={`${styles.revealBand} ${styles.typeIcon}`} aria-hidden>
+                  <Icon size={24} strokeWidth={1.5} />
+                </span>
+                <span>
+                  <span className={`${styles.revealBand} ${styles.titleLine}`}>
+                    <strong className={styles.code}>{mission.id}<span className="sr-only"> · {label}</span></strong>
+                    {mission.frequencyRange && <span className={styles.frequency}>Frequency {mission.frequencyRange}</span>}
+                  </span>
+                  <span className={`${styles.revealBand} ${styles.byline}`}>
+                    <MissionAvatar author={mission.author} size={20} />
+                    <span>{mission.author.name}</span>
+                  </span>
+                  <span className={`${styles.revealBand} ${styles.teaser}`}>{mission.teaser}</span>
+                </span>
+                <ChevronRight className={styles.chevron} size={16} aria-hidden />
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      {selected && <MissionDialog key={selected.id} mission={selected} signedIn={signedIn} close={closeMission} />}
+    </section>
+  )
 }
