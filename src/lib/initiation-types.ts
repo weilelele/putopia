@@ -8,8 +8,9 @@ export interface InitiationShipment {
   id: string
   title: string
   scheduledMonth: string | null
-  status: 'planned' | 'preparing' | 'dispatched' | 'delivered'
+  status: 'planned' | 'preparing' | 'dispatched' | 'delivered' | 'canceled'
   trackingUrl: string | null
+  trackingNumber?: string | null
   source: 'initiation' | 'legacy_pack'
 }
 export interface InitiationSnapshot {

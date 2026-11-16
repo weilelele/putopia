@@ -90,6 +90,8 @@
 .memberStatus { color: var(--color-nucleus); font-size: var(--fs-title); font-weight: 700; }
 .textLink { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: var(--fs-body); color: var(--color-nucleus); }
 .shipmentStatus { text-transform: capitalize; font-size: var(--fs-body); line-height: 1.5; margin: 0; }
+.trackingNumber { font-size: var(--fs-body); line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
+.trackingNumber .statusLabel { display: block; }
 .memberBundle { margin: 0 0 var(--s-3); font-size: var(--fs-body); line-height: 1.5; }
 .packSummary { margin: 0 0 var(--s-3); font-size: var(--fs-body); line-height: 1.5; }
 .packCopy .shipmentStatus { display: grid; gap: var(--s-1); margin: var(--s-4) 0; color: var(--color-star); font-size: var(--fs-body); font-weight: 700; line-height: 1.5; }

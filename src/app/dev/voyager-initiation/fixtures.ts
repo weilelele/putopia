@@ -1,9 +1,15 @@
 import { INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT } from '@/lib/initiation-pricing'
 import type { InitiationSnapshot } from '@/lib/initiation-types'
 
-export const fixtureNames = ['initial_pack', 'complete_pack', 'upgraded', 'initial_upgrade_pending', 'guest', 'granted', 'unpaid', 'calibrated', 'legacy_pack', 'initiated', 'claimed', 'both', 'architect', 'sold_out', 'pending', 'payment_failed', 'canceled', 'refunded', 'disputed', 'payment_review', 'unknown'] as const
+export const fixtureNames = ['initial_pack', 'initial_tracking', 'complete_pack', 'upgraded', 'initial_upgrade_pending', 'guest', 'granted', 'unpaid', 'calibrated', 'legacy_pack', 'initiated', 'claimed', 'both', 'architect', 'sold_out', 'pending', 'payment_failed', 'canceled', 'refunded', 'disputed', 'payment_review', 'unknown'] as const
 export type FixtureName = typeof fixtureNames[number]
 export function fixture(name: FixtureName): InitiationSnapshot {
+  if (name === 'initial_tracking') {
+    const snapshot = fixture('initial_pack')
+    snapshot.shipments[0] = { ...snapshot.shipments[0], status: 'preparing',
+      trackingNumber: '9400100000000000000000', trackingUrl: 'https://example.com/tracking/9400100000000000000000' }
+    return snapshot
+  }
   const initiated = ['complete_pack', 'upgraded', 'initiated', 'claimed', 'both'].includes(name)
   const legacy = ['initial_pack', 'initial_upgrade_pending', 'legacy_pack', 'both', 'upgraded'].includes(name)
   return {
