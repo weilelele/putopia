@@ -8,11 +8,7 @@
 | --- | --- | --- | --- |
 | REC · 恢复信号 | Maren Solberg | 已有记录的世界失联。给出大致 Frequency 和一两个能认出旧世界的特征。Maren 先定义什么能算同一个世界。 | 实际 Frequency、匹配与不匹配的特征，以及是否能重复观测。 |
 | CNT · 接触 | Ryo Tanaka | 可能存在有意沟通的生物。先观察它们如何行动，再尝试一次能停止的小范围接触。 | 接触前后的变化，包括没有观察到回应。 |
-| OBS · 异常观测 | Valentina Cruz | 有一条模糊、短暂或与我们世界可能有关的线索。让玩家知道最先报回哪个小细节。 | 首条可辨信息、Frequency、Band 和确定程度。 |
-| CMP · 交叉核对 | Weile Yang（拟邀） | 已有两份可能相互矛盾的记录。给出共同参照物，让两份记录能放在一起比较。 | 每个 Band 的独立记录和一致的参照。 |
-| CAL · 校验 | Gloria X（拟邀） | 一个异常可能来自观测条件。设计简单的重复比较，一次只换一个条件。 | 复现条件、出现与未出现的次数。 |
-
-Weile Yang 和 Gloria X 的 Architect 身份已只读核对。CMP 和 CAL 是供本人决定是否署名的委托提案，以下 Feed 是中性草稿。两类当前只供审阅。
+| OBS · 异常观测 | Valentina Cruz | 已发现一个潜在信号，世界的内容仍待确认。给出大致 Frequency 和一条初步线索，邀请玩家辨认那是什么样的地方、里面有什么、正在发生什么。 | 一段初步的世界描述，附可辨细节、Frequency、Band 和仍不确定的地方。 |
 
 ## 测试分支中的三期任务
 
@@ -22,19 +18,14 @@ Weile Yang 和 Gloria X 的 Architect 身份已只读核对。CMP 和 CAL 是供
 | --- | --- | --- |
 | REC-118 | 110.0 went dark. Two lights faced inland. | If you find a harbor near 110.0, check which way the lights point. The harbor alone won’t tell us whether we’ve found the same world. |
 | CNT-074 | A ridge stood up. The lights stayed on. | If someone lives up there, I’d like to see how they signal to each other before we try to say hello. We can take our time with that. |
-| OBS-203 | A familiar street shows up near 88.2. | If you can make out even half a street name at 88.2, send it in. We can start checking our own maps before the rest comes into focus. |
+| OBS-203 | A street-shaped blur surfaced near 88.2. | If you get a clearer view at 88.2, tell us what’s around the bend. A few buildings or a stretch of open land would help us make sense of the place. |
 | REC-120 | The station at 97.3 dropped out. | One clear clock face won’t settle this. We need to see all three, then check whether the middle hand moves between observations. |
 | CNT-076 | Someone leaves a light burning across the bridge. | I’d watch the near bank for a while. If there’s already a conversation going on, let’s give it room to finish. |
-| OBS-205 | A classroom looks busy from the empty street. | Pick one thing bolted down, like a radiator or a window latch. If you can see it in both views, that’s a place to start. |
-| OBS-206 | One postmark looks like a mark from our archive. | A letter, a shape, even where the stamp sits on the envelope would help. Send the part you can actually make out. |
+| OBS-205 | Unconfirmed signal near 93.6. Rows of desks, maybe. | If the window clears, have a look at the rest of the building. A desk could be anywhere. The rooms around it might tell us what this place is for. |
+| OBS-206 | A faint signal near 89.8 shows a line at a hatch. | If you can see where the line comes from or what passes through the hatch, we’ll have a better idea what people might be doing there. |
 | REC-122 | The stairwell at 121.4 no longer resolves. | The gap at the end of the rail is the identifying feature. If you find stairs with the rail running all the way up, record that separately. |
 | CNT-078 | An island raises a flag each time a boat leaves. | Before we send anything, I’d wait for a crossing when the flag stays down. That may tell us something about who it’s meant for. |
-| OBS-207 | Numbered objects drift past in groups of three. | If you catch the same number twice, jot down what it was printed on both times. That will help us tell whether it’s one object coming back. |
-
-## 真人 Architect 候选草稿
-
-- **CMP-146 · Weile Yang（拟邀）**。看板 “Two views disagree on which way the water runs.” 简报预览 “At 96.1, two Bands look onto the same seawall. Use the marked gate as a common reference and note which way debris passes in each view.” Feed 草稿 “If you compare the seawall from two Bands, use the marked gate in both notes. That gives us something we can line up.”
-- **CAL-092 · Gloria X（拟邀）**。看板 “The bell moves before anything touches it.” 简报预览 “At 100.7, the bell appears to move first. Use the shadow under it as a reference. Repeat the same observation before trying a different Band.” Feed 草稿 “If you watch the bell, try the same view twice before switching Bands. Note whether the order changes on the second pass.”
+| OBS-207 | A weak signal near 109.3 shows shapes adrift. | If the water comes into focus, look at the edges. A curb would tell us something different from a riverbank. |
 
 ## 测试口径
 
@@ -49,4 +40,4 @@ Weile Yang 和 Gloria X 的 Architect 身份已只读核对。CMP 和 CAL 是供
 | `docs/device-reference/console-operations.zh.md` | `c8bb3fbd8211f3fb34375869173c53bc0dc7044189bdb11225df34481cc4a458` |
 | `docs/product/npc-creation-rules.zh.md` | `951517afe7441a345fc1bc9960c44daad1073297ac7528fc189d0a1dd8ce175a` |
 | `docs/product/npc-personalities-intel-review.zh.md` | `59027609a35f0ce017c15c6e255e4247aa83898f8839cf481e1202a0e0866703` |
-| `docs/product/npc-intel-runbook.zh.md` | `ecc96387fb5e08cb64a541b13721b462ae0198603177bcf7b1f6c684eadc61e5` |
+| `docs/product/npc-intel-runbook.zh.md` | `dde9690f49949baaac3b6613800c0c4711f4c9c6495ddcd0b690398e80bf1eb5` |
