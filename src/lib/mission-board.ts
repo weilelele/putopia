@@ -64,6 +64,13 @@ const editions: readonly (readonly Scenario[])[] = [
       preview: 'A faint image near Frequency {frequency} shows rows of low shapes behind a window. They could be desks. A wider view would help us tell what kind of place this is and whether anyone is there.',
       briefing: 'Check {frequency} and the settings one step on either side. Compare the available Bands at the clearest setting. Describe the building, what surrounds it and any signs of activity. Note which view supports your best guess.',
       followUp: 'If there’s an interior Band, check for one feature that helps identify how the building is used.',
+      image: {
+        src: '/assets/mission-board/obs-window-reference.webp',
+        alt: 'Rows of low, tabletop-like shapes are visible through the hazy panes of a wide window.',
+        width: 960,
+        height: 640,
+        caption: 'Concept reference · Window view',
+      },
     },
     {
       series: 'OBS', frequency: 898,
@@ -117,6 +124,7 @@ function getEdition(now: number) {
     const withFrequency = (value: string) => value.replaceAll('{frequency}', frequency)
     return {
       id: `${type}-${String(number).padStart(3, '0')}`,
+      series: type,
       author,
       teaser: withFrequency(scenario.teaser),
       preview: withFrequency(scenario.preview),
@@ -131,7 +139,7 @@ export function getPublicMissionEdition(now = Date.now()) {
   const { startsAt, missions } = getEdition(now)
   return {
     startsAt,
-    missions: missions.map(({ id, author, teaser, preview, image }) => ({ id, author, teaser, preview, image })),
+    missions: missions.map(({ id, series, author, teaser, preview, image }) => ({ id, series, author, teaser, preview, image })),
   }
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronRight, Radio, RotateCcw, ScanEye } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ArchiveButton } from './archive-button'
 import { ArchiveLinkButton } from './archive-link-button'
@@ -19,8 +19,14 @@ const weekFormat = new Intl.DateTimeFormat('en-US', {
 type Mission = MissionEdition['missions'][number]
 type Briefing = Awaited<ReturnType<typeof loadMissionBriefing>>
 
-function MissionAuthor({ author }: { author: Mission['author'] }) {
-  return <SmartImage src={author.avatar} alt="" width={36} height={36} sizes="36px" className={styles.avatar} />
+const missionTypes = {
+  REC: { label: 'Recover a lost world', Icon: RotateCcw },
+  CNT: { label: 'Attempt contact', Icon: Radio },
+  OBS: { label: 'Observe a potential world', Icon: ScanEye },
+} as const
+
+function MissionAvatar({ author, size }: { author: Mission['author']; size: number }) {
+  return <SmartImage src={author.avatar} alt="" width={size} height={size} sizes={`${size}px`} className={styles.avatar} />
 }
 
 function MissionDialog({ mission, signedIn, close }: { mission: Mission; signedIn: boolean; close: () => void }) {
@@ -84,7 +90,7 @@ function MissionDialog({ mission, signedIn, close }: { mission: Mission; signedI
         {acceptError && <p role="alert">Could not accept this mission. Try again.</p>}
       </div>
     }>
-      <div className={styles.dialogAuthor}><MissionAuthor author={mission.author} /><strong>{mission.author.name}</strong></div>
+      <div className={styles.dialogAuthor}><MissionAvatar author={mission.author} size={36} /><strong>{mission.author.name}</strong></div>
       <section className={styles.dialogBriefing}>
         <h3 className={styles.previewLabel}>{available ? 'Briefing' : 'Briefing Preview'}</h3>
         <p>{mission.preview}</p>
@@ -126,22 +132,28 @@ export function MissionBoard({ edition, signedIn, initialMission }: {
         <span>Week of <time dateTime={edition.startsAt}>{weekFormat.format(new Date(edition.startsAt))}</time></span>
       </header>
       <ul className={styles.missions}>
-        {edition.missions.map(mission => (
-          <li key={mission.id}>
-            <button type="button" className={styles.row} aria-haspopup="dialog" onClick={event => {
-              trigger.current = event.currentTarget
-              setSelectedId(mission.id)
-            }}>
-              <MissionAuthor author={mission.author} />
-              <span>
-                <strong className={styles.code}>{mission.id}</strong>
-                <span className={styles.byline}>{mission.author.name}</span>
-                <span className={styles.teaser}>{mission.teaser}</span>
-              </span>
-              <ChevronRight className={styles.chevron} size={16} aria-hidden />
-            </button>
-          </li>
-        ))}
+        {edition.missions.map(mission => {
+          const { Icon, label } = missionTypes[mission.series]
+          return (
+            <li key={mission.id}>
+              <button type="button" className={styles.row} aria-haspopup="dialog" onClick={event => {
+                trigger.current = event.currentTarget
+                setSelectedId(mission.id)
+              }}>
+                <Icon className={styles.typeIcon} size={24} strokeWidth={1.5} aria-hidden />
+                <span>
+                  <strong className={styles.code}>{mission.id}<span className="sr-only"> · {label}</span></strong>
+                  <span className={styles.byline}>
+                    <MissionAvatar author={mission.author} size={20} />
+                    <span>{mission.author.name}</span>
+                  </span>
+                  <span className={styles.teaser}>{mission.teaser}</span>
+                </span>
+                <ChevronRight className={styles.chevron} size={16} aria-hidden />
+              </button>
+            </li>
+          )
+        })}
       </ul>
       {selected && <MissionDialog key={selected.id} mission={selected} signedIn={signedIn} close={closeMission} />}
     </section>

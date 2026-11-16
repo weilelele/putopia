@@ -41,7 +41,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 16px;
+  grid-template-columns: 24px minmax(0, 1fr) 16px;
   align-items: start;
   gap: var(--s-3);
   width: 100%;
@@ -61,22 +61,27 @@
 }
 
 .row:hover .code,
+.typeIcon,
 .chevron { color: var(--color-nucleus-2); }
+.typeIcon { margin-top: var(--s-1); }
 .chevron { align-self: center; }
 
 .avatar {
-  width: 36px;
-  height: 36px;
+  display: block;
   flex: none;
   border-radius: 50%;
   object-fit: cover;
 }
 
 .code,
-.byline,
 .teaser { display: block; }
 .code { font-size: var(--fs-body); line-height: 1.3; }
-.byline { margin-top: var(--s-1); }
+.byline {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-1);
+}
 .teaser { margin-top: var(--s-1); font-size: var(--fs-compact); line-height: 1.4; }
 
 .dialogAuthor {
