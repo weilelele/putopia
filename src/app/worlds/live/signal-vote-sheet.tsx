@@ -19,15 +19,14 @@ const VOTING_RULE = 'Voting stays open for 36 hours. At least one response is ne
  * description → the question and its options → one sticky action with its hint.
  */
 export function SignalVoteSheet({
-  investigation, day, loggedIn, pendingChoice, onChoose, onConfirm, onRequireAuth, onClose, busy, error, unknown,
+  investigation, day, canUseArray, pendingChoice, onChoose, onConfirm, onClose, busy, error, unknown,
 }: {
   investigation: PublicInvestigation
   day: Day | undefined
-  loggedIn: boolean
+  canUseArray: boolean
   pendingChoice: string
   onChoose: (assetId: string) => void
   onConfirm: () => void
-  onRequireAuth: () => void
   onClose: () => void
   busy: boolean
   error: string
@@ -49,12 +48,10 @@ export function SignalVoteSheet({
   const options = task.assets.filter((asset) => asset.asset_role === 'option')
   const selectedIndex = options.findIndex((asset) => asset.id === pendingChoice)
   const cta = voteCta({
-    loggedIn, canRespond: task.canRespond, closed: task.closed, initiatorOnly: !!task.initiatorOnly,
+    loggedIn: true, canRespond: task.canRespond, closed: task.closed, initiatorOnly: !!task.initiatorOnly,
     mySelection: task.mySelection, selectedNumber: selectedIndex >= 0 ? selectedIndex + 1 : null,
-    lockReason: investigation.lockReason,
   })
-  // Members who cannot vote may still look at the options; guests may try them.
-  const locked = !!task.mySelection || task.closed
+  const locked = !canUseArray || !task.canRespond || !!task.mySelection || task.closed
   const timeLeft = now ? formatTimeLeft(task.closeAt, now) : null
   const description = investigation.description?.trim() || 'The original description is unavailable.'
   const long = description.length > 220
@@ -96,13 +93,14 @@ export function SignalVoteSheet({
         <p className={styles.rules}>{VOTING_RULE}</p>
       </section>
 
-      <div className={styles.footer}>
+      {!canUseArray && !task.closed ? <p className={styles.hint}>Voyagers can respond to Parallax Array signals.</p> : null}
+      {canUseArray ? <div className={styles.footer}>
         {error ? <p role="alert" className={styles.error}>{error}</p> : <p className={styles.hint}>{cta.hint}</p>}
         {unknown
           ? <ArchiveButton variant="primary" fullWidth onClick={() => window.location.reload()}>RELOAD AND CHECK SIGNAL</ArchiveButton>
           : <ArchiveButton variant="primary" fullWidth loading={busy} disabled={cta.disabled}
-              onClick={() => (cta.promptAuth ? onRequireAuth() : onConfirm())}>{cta.label}</ArchiveButton>}
-      </div>
+              onClick={onConfirm}>{cta.label}</ArchiveButton>}
+      </div> : null}
     </ArchiveSheet>
   )
 }

@@ -1,6 +1,7 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/server'
-import { isSignalVoter, roundVoteAccess, VOYAGERS_ONLY_LOCK, type RoundStatus, type RoundViewer } from './dreamcatcher-round-model'
+import { roundVoteAccess, type RoundStatus, type RoundViewer } from './dreamcatcher-round-model'
+import { hasVoyagerAccess } from './digital-access'
 import { DREAMCATCHER_ROUNDS_ENABLED } from './signal/dispatch-policy'
 import type { PublicInvestigation, PublicSignalAsset } from '@/lib/actions/signal-tasks'
 
@@ -113,10 +114,8 @@ export async function getRoundInvestigations(viewer: RoundViewer, worldId?: stri
         },
       })
       inv.canParticipate = access.canVote
-      inv.lockReason = access.initiatorOnly ? 'Voting closed — only the original submitter can continue.'
-        : !viewer ? 'Log in to respond'
-        : !isSignalVoter(viewer.role) ? VOYAGERS_ONLY_LOCK
-        : null
+      inv.lockReason = !hasVoyagerAccess(viewer?.role) ? 'Voyagers can respond to Parallax Array signals.'
+        : access.initiatorOnly ? 'Voting closed — only the original submitter can continue.' : null
     }
   }
   return [...investigations.values()].filter(inv => includeHistory || inv.days.some(d => !d.task.closed))

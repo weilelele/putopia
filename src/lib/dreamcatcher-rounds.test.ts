@@ -36,6 +36,7 @@ describe('public round feed boundaries',()=>{
   it('removes zero-response rounds from everyone except the original submitter',async()=>{
     expect(await getRoundInvestigations(null)).toEqual([])
     expect(await getRoundInvestigations({id:'admin',role:'architect'})).toEqual([])
+    expect(await getRoundInvestigations({id:'owner',role:'applicant'})).toEqual([])
     const own=await getRoundInvestigations({id:'owner',role:'voyager'})
     expect(own[0].days[0].task.canRespond).toBe(true)
     expect(own[0].days[0].task.initiatorOnly).toBe(true)

@@ -35,6 +35,7 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
   const [checking, setChecking] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [canShareObservation, setCanShareObservation] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [worldId, setWorldId] = useState<string | null>(null)
@@ -76,6 +77,7 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
     try {
       const state = await services.load()
       setUserId(state.userId)
+      setCanShareObservation(state.canShareObservation)
       if (state.completed) { setStep('result'); onComplete?.() }
     } catch {
       setLoadError(true)
@@ -212,10 +214,10 @@ export function VoyagerProfileQuiz({ calibration = false, onComplete, onReturn, 
               </>}
               {index === 3 && <ArchiveInput aria-labelledby="profile-question" placeholder="Your answer" maxLength={300} value={answers.work} onChange={event => update({ work: event.target.value })} />}
               {index === 4 && <>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, fontSize: 'var(--fs-body)', lineHeight: 1.5 }}>
+                {canShareObservation && <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, fontSize: 'var(--fs-body)', lineHeight: 1.5 }}>
                   <ArchiveInput type="checkbox" checked={answers.shareObservation} onChange={event => update({ shareObservation: event.target.checked })} disabled={submitting} />
                   Share this observation with the Parallax Array in London.
-                </label>
+                </label>}
                 <ArchiveTextarea aria-labelledby="profile-question" placeholder="Your answer" rows={5} maxLength={2000} value={answers.observation} onChange={event => update({ observation: event.target.value })} disabled={submitting} />
               </>}
             </div>

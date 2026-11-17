@@ -7,6 +7,21 @@
 .frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--color-deep); }
 .stage > .frame { position: absolute; inset: 0; height: 100%; }
 .frame img, .frame video { width: 100%; height: 100%; object-fit: contain; }
+.zoomTrigger { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: zoom-in; }
+.zoomTrigger:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: -2px; }
+.frameZoom { position: absolute; inset: 0; height: 100%; }
+.viewer { position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; overflow: hidden; background: var(--color-void); color: var(--color-star); font-family: var(--font-mono); }
+.viewer[open] { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.viewer::backdrop { background: var(--color-void); }
+.viewerStage { min-height: 0; overflow: hidden; }
+.viewerStage[data-zoomed='true'] { display: flex; overflow: auto; }
+.viewerPicture { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.viewerPicture:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: -2px; }
+.viewerPicture img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.viewerStage[data-zoomed='true'] .viewerPicture { flex: none; width: 250%; height: auto; margin: auto; cursor: zoom-out; }
+.viewerStage[data-zoomed='true'] .viewerPicture img { height: auto; }
+.viewerCaption { margin: 0; padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom)); font-size: var(--fs-caption); line-height: 1.5; color: var(--color-star-dim); }
+.viewerClose { position: absolute; top: calc(var(--s-2) + env(safe-area-inset-top)); right: var(--s-2); display: grid; place-items: center; width: 44px; height: 44px; padding: 0; background: var(--color-void); }
 .caption { margin: var(--s-2) 0; font-size: var(--fs-caption); color: var(--color-star-dim); }
 .rail { display: flex; gap: var(--s-2); overflow-x: auto; padding: var(--s-2) 0; }
 .thumbnail { flex: 0 0 88px; min-height: 64px; padding: var(--s-1); border: 1px solid var(--bd-faint); color: var(--color-star); background: var(--color-deep); font: inherit; font-size: var(--fs-caption); cursor: pointer; }
@@ -19,7 +34,7 @@
 .updateMedia { display: grid; gap: var(--s-3); margin-top: var(--s-3); }
 .updateMedia img, .updateMedia video { display: block; width: 100%; height: auto; max-height: 420px; object-fit: contain; }
 .updateBody { white-space: pre-wrap; }
-.progress { display: grid; grid-template-columns: repeat(5, minmax(56px, 1fr)); gap: var(--s-1); overflow-x: auto; }
+.progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-1); }
 @media (min-width: 768px) { .frame { aspect-ratio: 16 / 9; } }
 
 .progress .progressStep[data-status='completed'] span, .progress .progressStep[data-status='current'] span { background: var(--color-nucleus); }

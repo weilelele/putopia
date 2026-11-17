@@ -4,14 +4,16 @@ import { activationStatus, completeActivation, type ActivationResult } from '@/l
 import { createClient } from '@/lib/supabase/server'
 
 export type ActivationLinkCheck =
-  | { status: 'ready' | 'expired'; next: string | null }
+  | { status: 'ready'; next: string | null }
+  | Extract<Awaited<ReturnType<typeof activationStatus>>, { status: 'expired' }>
   | { status: 'activated'; destination: '/console' | '/login?redirect=%2Fconsole' }
 
 /** The activation link itself is the credential; these actions accept nothing else from the browser. */
 export async function checkActivationLink(token: string): Promise<ActivationLinkCheck> {
   let result: Awaited<ReturnType<typeof activationStatus>>
-  try { result = await activationStatus(token) } catch { return { status: 'expired', next: null } }
-  if (result.status !== 'activated') return { status: result.status, next: result.next }
+  try { result = await activationStatus(token) } catch { return { status: 'expired', errorCode: 'link_check_failed' } }
+  if (result.status === 'expired') return result
+  if (result.status === 'ready') return { status: 'ready', next: result.next }
 
   // The old activation link never signs anyone in; only the current verified session can skip login.
   try {
@@ -24,5 +26,5 @@ export async function checkActivationLink(token: string): Promise<ActivationLink
 
 export async function activateAccount(token: string, displayName: string, password: string): Promise<ActivationResult> {
   try { return await completeActivation(token, displayName, password) }
-  catch { return { ok: false, reason: 'failed', message: 'ERR: ACCOUNT COULD NOT BE ACTIVATED. PLEASE TRY AGAIN.' } }
+  catch { return { ok: false, reason: 'failed', errorCode: 'activation_request_failed', message: 'ERR: ACCOUNT COULD NOT BE ACTIVATED. PLEASE TRY AGAIN.' } }
 }

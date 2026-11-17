@@ -7,14 +7,16 @@ import { cookies } from 'next/headers'
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe'
-import { initiationConfigurationError } from '@/lib/initiation-config'
+import { initiationCheckoutPaymentMethods, initiationConfigurationError, initiationStripeQuote } from '@/lib/initiation-config'
 import { INITIATION_PRODUCT } from '@/lib/initiation-types'
 import { captureInitiationMetaAttribution } from '@/lib/initiation-meta-attribution'
 import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
 import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
 import { prepareInitiationBundleSwitch } from '@/lib/initiation-checkout-switch'
 import { afterCheckout } from '@/lib/checkout-after'
-import { initiationCheckoutAccess } from '@/lib/initiation-checkout-access'
+import { hasActiveShopifyReservation, initiationCheckoutAccess } from '@/lib/initiation-checkout-access'
+import { shopifyLiveConfig } from '@/lib/shopify-live-config'
+import { createShopifyLiveCheckout } from '@/lib/shopify-live-checkout'
 
 /** How the buyer reached checkout: signed in, or an email-only account created by the email checkout. */
 export type InitiationCheckoutPath = 'signed_in' | 'email_first'
@@ -48,7 +50,7 @@ export async function createInitiationCheckout(request: Request, origin: string,
       admin.rpc('eligible_legacy_initiation_order', { p_user: user.id }),
       admin.rpc('eligible_initial_initiation_order', { p_user: user.id }),
       admin.from('initiation_batches').select('stripe_livemode').eq('label', 'S26').single(),
-      admin.from('initiation_orders').select('*').eq('user_id', user.id).in('status', ['pending', 'payment_review', 'disputed']).maybeSingle(),
+      admin.from('initiation_orders').select('*').eq('user_id', user.id).in('status', ['pending', 'payment_review', 'disputed']),
       admin.from('voyager_profiles').select('role').eq('id', user.id).maybeSingle(),
       checkoutPath === 'signed_in' ? Promise.all([
         admin.rpc('initiation_availability'),
@@ -61,10 +63,13 @@ export async function createInitiationCheckout(request: Request, origin: string,
     if (legacyError) throw legacyError
     const { data: initialId, error: initialError } = initialResult
     if (initialError) throw initialError
+    const { data: previousOrders, error: previousError } = previousResult
+    if (previousError) throw previousError
     if (accessRecords) {
       if (accessRecords.some(record => record.error)) throw new Error('Checkout records are unavailable')
       const [supply, entitlement, member] = accessRecords.map(record => record.data)
       const access = initiationCheckoutAccess({ supply, entitlement, member, ownsInitial: !!initialId || !!legacyId,
+        hasReservation: hasActiveShopifyReservation(previousOrders),
         configError: initiationConfigurationError(initialId || legacyId ? 'legacy_upgrade' : 'initial') })
       // A page rendered for a guest must first show an existing member/owner their own options.
       // This flag only prevents checkout; it cannot skip any authorization or price validation.
@@ -75,10 +80,21 @@ export async function createInitiationCheckout(request: Request, origin: string,
     const kind = legacyId || initialId ? 'legacy_upgrade' : body?.bundle === 'initial' ? 'initial' : 'standard'
     const offerConfigError = initiationConfigurationError(kind)
     if (offerConfigError) return NextResponse.json({ error: offerConfigError }, { status: 503 })
-    const priceId = process.env[INITIATION_PRICES[kind].priceEnv]!
+    const shopifyPending = previousOrders.some((order: { price_id: string }) => order.price_id.startsWith('price_shopify_'))
+    const previousOrder = previousOrders.find((order: { price_id: string }) => !order.price_id.startsWith('price_shopify_'))
+    if (shopifyPending && (process.env.INITIATION_SHOPIFY_LIVE_ENABLED !== 'true' || kind === 'legacy_upgrade')) {
+      return NextResponse.json({ error: 'An existing Shopify checkout is still being reconciled.' }, { status: 409 })
+    }
+    if (kind !== 'legacy_upgrade' && process.env.INITIATION_SHOPIFY_LIVE_ENABLED === 'true'
+      && !previousOrder) {
+      const config = shopifyLiveConfig()
+      if (!config) return NextResponse.json({ error: 'Checkout is temporarily unavailable.' }, { status: 503 })
+      return await createShopifyLiveCheckout(config, request, origin, user, body, checkoutPath, kind)
+    }
+    const { priceId, productId } = initiationStripeQuote(kind, previousOrder)
+    if (!priceId || !productId) throw new Error('Initiation quote is not configured')
     const amount = INITIATION_PRICES[kind].amount
     const deviceSource = deviceSourcePath(typeof body?.from === 'string' ? body.from : null)
-    const productId = process.env.STRIPE_INITIATION_PRODUCT_ID!
     const { data: batch, error: batchError } = batchResult
     if (batchError || !batch) throw new Error('Payment mode could not be verified')
     const price = await stripe.prices.retrieve(priceId)
@@ -86,8 +102,6 @@ export async function createInitiationCheckout(request: Request, origin: string,
     if (price.livemode !== batch.stripe_livemode || !price.active || price.type !== 'one_time' || price.unit_amount !== amount || price.currency !== 'usd' || price.product !== productId || price.tax_behavior !== 'inclusive') {
       return NextResponse.json({ error: 'The dedicated Initiation price is not ready.' }, { status: 503 })
     }
-    const { data: previousOrder, error: previousError } = previousResult
-    if (previousError) throw previousError
     const canSwitch = await prepareInitiationBundleSwitch(previousOrder, kind, {
       retrieveSession: id => stripe.checkout.sessions.retrieve(id),
       expireSession: id => stripe.checkout.sessions.expire(id),
@@ -134,7 +148,7 @@ export async function createInitiationCheckout(request: Request, origin: string,
     mark('attribution')
     const sourceQuery = order.device_source ? `&from=${encodeURIComponent(order.device_source)}` : ''
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment', ui_mode: 'hosted_page', payment_method_types: ['card'],
+      mode: 'payment', ui_mode: 'hosted_page', ...initiationCheckoutPaymentMethods(order),
       automatic_tax: { enabled: false }, allow_promotion_codes: false,
       line_items: [{ price: order.price_id, quantity: 1 }],
       client_reference_id: user.id, customer_email: user.email,

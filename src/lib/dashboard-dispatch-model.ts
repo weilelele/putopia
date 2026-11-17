@@ -1,4 +1,4 @@
-import { roundVoteAccess, scopeAllowsVote, type RoundStatus, type RoundViewer } from './dreamcatcher-round-model'
+import { roundVoteAccess, type RoundStatus, type RoundViewer } from './dreamcatcher-round-model'
 import { buildSchedule, tuningPhase, DEFAULT_GAP_HOURS } from './signal/reveal'
 import { DREAMCATCHER_ROUNDS_ENABLED } from './signal/dispatch-policy'
 
@@ -22,7 +22,7 @@ export function latestDispatchRounds(rounds: DispatchRound[], tasks: DispatchTas
 /** Same schedule/access rules as the investigation page, without its history or media. */
 export function dashboardDispatch(input: {
   tasks: DispatchTask[]; threads: DispatchThread[]; worlds: DispatchWorld[]; rounds: DispatchRound[]
-  responded: string[]; roundResponses: { task_id: string }[]; viewer: RoundViewer; now: number
+  responded: string[]; roundResponses: { task_id: string }[]; viewer: RoundViewer; roundViewer?: RoundViewer; now: number
 }) {
   const worlds = new Map(input.worlds.map(world => [world.id, world]))
   const responded = new Set(input.responded)
@@ -49,8 +49,10 @@ export function dashboardDispatch(input: {
     if (world && task && opened && !openWorlds.some(item => item.id === world.id)) {
       openWorlds.push({ id: world.id, name: world.name, openedAt: opened.openAt.toISOString() })
     }
-    const eligible = scopeAllowsVote(viewer, world?.vote_scope ?? 'all', world?.discoverer_id ?? null)
-    if (task && eligible && !responded.has(task.id)) {
+    const scope = world?.vote_scope ?? 'all'
+    const eligible = viewer && (viewer.role === 'architect' || scope === 'all' ||
+      (scope === 'self' && viewer.id === world?.discoverer_id) || (scope === 'voters' && viewer.role === 'voyager'))
+    if (task && viewer && eligible && !responded.has(task.id)) {
       awaitingYou++
       if (thread.world_id) awaitingWorldIds.push(thread.world_id)
     }
@@ -62,7 +64,7 @@ export function dashboardDispatch(input: {
     if (!world || !round.task_id) continue
     const access = roundVoteAccess({ status: world.lifecycle_state === 'syncing' ? round.status : 'cancelled',
       openedAt: round.opened_at, closesAt: round.closes_at, participantCount: counts.get(round.task_id) ?? 0,
-      initiatorId: round.initiator_id, discovererId: world.discoverer_id, voteScope: world.vote_scope, viewer, now: input.now, paused: !DREAMCATCHER_ROUNDS_ENABLED })
+      initiatorId: round.initiator_id, discovererId: world.discoverer_id, voteScope: world.vote_scope, viewer: input.roundViewer === undefined ? viewer : input.roundViewer, now: input.now, paused: !DREAMCATCHER_ROUNDS_ENABLED })
     if (access.publicOpen && round.opened_at) openWorlds.push({ id: world.id, name: world.name, openedAt: round.opened_at })
     if (access.canVote && !responded.has(round.task_id)) { awaitingYou++; awaitingWorldIds.push(world.id) }
   }

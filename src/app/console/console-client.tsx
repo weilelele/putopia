@@ -1,6 +1,6 @@
 'use client'
 import { RootBrandHeader } from '@/components/root-brand-header'
-import { Suspense } from 'react'
+import { Suspense, type ReactNode } from 'react'
 import { DashboardStats } from '@/components/dashboard-stats'
 import type { getDashboardIdentity, getDashboardOverview, getDashboardUpdates, getDashboardEvents } from '@/lib/actions/dashboard'
 import { DashboardOverview, DashboardSummary, DashboardUpdates, DashboardEvents, DashboardSectionLoading } from './dashboard-sections'
@@ -9,10 +9,9 @@ import { ArchiveLinkButton } from '@/components/archive-link-button'
 import styles from './guest-intro.module.css'
 import SmartImage from '@/components/smart-image'
 import { SectionTracker } from '@/components/section-tracker'
-import { MissionBoard } from '@/components/mission-board'
-import { canAccessMissionBoard } from '@/lib/mission-board'
 import { REQUEST_ACCESS_HREF } from '@/lib/request-access'
-export default function ConsoleClient({ initial: data, overview, updates, events }: {
+export default function ConsoleClient({ initial: data, overview, updates, events, children }: {
+  children: ReactNode
   initial: Awaited<ReturnType<typeof getDashboardIdentity>>
   overview: Promise<Awaited<ReturnType<typeof getDashboardOverview>>>
   updates: Promise<Awaited<ReturnType<typeof getDashboardUpdates>>>
@@ -27,12 +26,12 @@ export default function ConsoleClient({ initial: data, overview, updates, events
       </div>
       <p className={styles.description}>We own devices looking into parallel worlds.</p>
       <div className={styles.actions}>
-        <ArchiveLinkButton href={REQUEST_ACCESS_HREF} variant="primary">REQUEST ACCESS</ArchiveLinkButton>
+        <ArchiveLinkButton href={REQUEST_ACCESS_HREF} variant="primary">CREATE ACCOUNT</ArchiveLinkButton>
         <ArchiveLinkButton href="/login" variant="secondary">LOG IN</ArchiveLinkButton>
       </div>
     </section>}
     {data.voyager ? <DashboardSummary voyager={data.voyager} events={events} /> : <Suspense fallback={<DashboardStats stats={null} />}><DashboardOverview initial={overview} /></Suspense>}
-    {data.voyager && !canAccessMissionBoard(data.voyager.role) && <MissionBoard unlocked={false} />}
+    {children}
     <div className="dashboard-content-grid">
       <Suspense fallback={<DashboardSectionLoading title="Updates" />}><DashboardUpdates initial={updates} /></Suspense>
       <Suspense fallback={<DashboardSectionLoading title="Events" />}><DashboardEvents initial={events} /></Suspense>

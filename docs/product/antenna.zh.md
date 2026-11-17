@@ -20,15 +20,13 @@ Installed on your Console, it receives a particular category of signals from par
 
 此处不再追加安装要求、不含主机或设计示意段落。briefing 套餐页仅保留后续 Console + Pack 4 升级价格，不追加适用性说明。主购买卡、FAQ 和交付说明继续保留已确认的安装／套餐边界；FAQ 与交付说明原文不因本次精简改动。
 
-### FAQ 等详细说明（保持已确认内容）
+### FAQ 回答（2026-11-07 精简）
 
-**Antenna for Multiverse Console**
+**What is the Antenna, and what does it do?**
 
-> An emblem of the Collective. A connection to the unknown. A decorative collectible for your Console, it receives a particular category of parallel-world signals when installed on top. We are still learning what those signals contain. Explore them together.
+> The Antenna is a collectible receiving accessory for the Multiverse Console. Installed on top of your Console, it receives a particular category of signals from parallel worlds. We are still exploring what those signals contain, together.
 
-> Must be installed on a Multiverse Console to receive signals.
-
-> The US$38 Initial Voyager Pack does not include the Console.
+用户确认 FAQ 仅保留上述定义与作用段落，删除后续关于独立接收、套餐边界、暂作收藏及设计示意的两段。安装要求、Initial 不含 Console、最终外观与数量未确认等产品事实仍按本文其他章节和交付说明维护。
 
 界面共用文案与图片路径维护于 `src/lib/antenna-copy.ts`。文案表达产品定义，不证明固件、内容接入或交付已经验收；发货进度继续以成员记录为准。
 

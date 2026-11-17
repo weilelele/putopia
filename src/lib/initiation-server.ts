@@ -5,6 +5,7 @@ import { initiationMemberStatus, initiationPurchaseKind, parseInitiationAvailabi
 import { initiationConfigurationError } from '@/lib/initiation-config'
 import { INITIATION_BATCH, INITIATION_CAPACITY, INITIAL_PACK_AMOUNT, INITIATION_UPGRADE_AMOUNT, type InitiationSnapshot, type InitiationPaymentStatus, type InitiationShipment } from '@/lib/initiation-types'
 import { VOYAGER_PROFILE_VERSION } from '@/lib/voyager-intake'
+import { hasActiveShopifyReservation } from './initiation-checkout-access'
 
 /** No caller-supplied user ID. Failures are unknown, never unpaid or zero seats. */
 export async function readInitiationSnapshot(session: ReturnType<typeof getRequestUser>): Promise<InitiationSnapshot> {
@@ -36,13 +37,21 @@ export async function readInitiationSnapshot(session: ReturnType<typeof getReque
       else if (supply.remaining <= 0) snapshot.availability.reason = 'All S26 seats are currently allocated or reserved.'
     }
     if (!user) return snapshot
+    const shipmentFields = 'id,position,title,scheduled_month,status,tracking_url,legacy_order_id'
+    const readShipments = async () => {
+      const query = (fields: string) => admin.from('initiation_shipments').select(fields).eq('user_id', user.id).order('scheduled_month')
+      const result = await query(`${shipmentFields},tracking_number`)
+      // The production app can read existing packs before v116 is applied.
+      return result.error?.code === '42703' && result.error.message.includes('tracking_number')
+        ? query(shipmentFields) : result
+    }
     const results = await Promise.all([
       admin.from('voyager_profiles').select('role').eq('id', user.id).single(),
       admin.from('voyager_intake').select('version').eq('user_id', user.id).maybeSingle(),
       admin.rpc('eligible_legacy_initiation_order', { p_user: user.id }),
-      admin.from('initiation_orders').select('id,status,order_kind').eq('user_id', user.id).order('created_at', { ascending: false }),
+      admin.from('initiation_orders').select('id,status,order_kind,price_id,expires_at').eq('user_id', user.id).order('created_at', { ascending: false }),
       admin.from('initiation_entitlements').select('order_id,active,console_claimed_at,console_order_id').eq('user_id', user.id).maybeSingle(),
-      admin.from('initiation_shipments').select('id,position,title,scheduled_month,status,tracking_url,legacy_order_id').eq('user_id', user.id).order('scheduled_month'),
+      readShipments(),
       admin.from('initiation_members').select('source,active,batch').eq('user_id', user.id).maybeSingle(),
       admin.rpc('eligible_initial_initiation_order', { p_user: user.id }),
     ])
@@ -52,20 +61,28 @@ export async function readInitiationSnapshot(session: ReturnType<typeof getReque
     snapshot.calibrated = intake?.version === VOYAGER_PROFILE_VERSION
     snapshot.legacyPackPurchased = !!legacy || !!initial
     snapshot.ownsSeat = member?.batch === INITIATION_BATCH
+    snapshot.hasCheckoutReservation = hasActiveShopifyReservation(orders ?? [])
     const kind = snapshot.legacyPackPurchased ? 'legacy_upgrade' : 'initial'
     snapshot.offer = { kind, amount: snapshot.legacyPackPurchased ? INITIATION_UPGRADE_AMOUNT : INITIAL_PACK_AMOUNT, currency: 'usd' }
     const offerConfig = initiationConfigurationError(kind)
     if (supply) {
-      snapshot.availability.checkoutOpen = supply.open && (supply.remaining > 0 || (snapshot.legacyPackPurchased && snapshot.ownsSeat)) && !offerConfig
-      snapshot.availability.reason = !supply.open ? 'Initiation checkout is not open yet.' : supply.remaining <= 0 && !(snapshot.legacyPackPurchased && snapshot.ownsSeat) ? 'All S26 seats are currently allocated or reserved.' : offerConfig
+      const hasCapacity = supply.remaining > 0 || snapshot.hasCheckoutReservation || (snapshot.legacyPackPurchased && snapshot.ownsSeat)
+      snapshot.availability.checkoutOpen = supply.open && hasCapacity && !offerConfig
+      snapshot.availability.reason = !supply.open ? 'Initiation checkout is not open yet.' : !hasCapacity ? 'All S26 seats are currently allocated or reserved.' : offerConfig
     }
     const newRecordsUnavailable = results.slice(3).some(result => result.error)
     snapshot.status = newRecordsUnavailable ? 'unknown' : initiationMemberStatus(!!entitlement?.active, member, snapshot.legacyPackPurchased)
     snapshot.purchaseKind = newRecordsUnavailable ? null : initiationPurchaseKind(orders, entitlement, initial)
     snapshot.membershipSource = newRecordsUnavailable ? null : member?.source ?? null
-    snapshot.paymentStatus = (newRecordsUnavailable ? 'unknown' : orders[0]?.status ?? 'none') as InitiationPaymentStatus
+    const latestStatus = orders?.[0]?.status
+    snapshot.paymentStatus = (newRecordsUnavailable ? 'unknown' : snapshot.hasCheckoutReservation ? 'pending'
+      : latestStatus === 'canceled' && member?.active && member.source === 'paid' ? 'paid'
+      : latestStatus ?? 'none') as InitiationPaymentStatus
     snapshot.shipments = [
-      ...(shipments ?? []).map((s: { id: string; position: number; title: string; scheduled_month: string; status: InitiationShipment['status']; tracking_url: string | null; legacy_order_id: string | null }) => ({ id: s.id, position: s.position, title: s.title, scheduledMonth: s.scheduled_month, status: s.status, trackingUrl: s.tracking_url, source: s.legacy_order_id ? 'legacy_pack' as const : 'initiation' as const })),
+      ...(shipments ?? []).map((s: { id: string; position: number; title: string; scheduled_month: string; status: InitiationShipment['status']; tracking_url: string | null; tracking_number?: string | null; legacy_order_id: string | null }) => ({
+        id: s.id, position: s.position, title: s.title, scheduledMonth: s.scheduled_month, status: s.status,
+        trackingUrl: s.tracking_url, trackingNumber: s.tracking_number ?? null, source: s.legacy_order_id ? 'legacy_pack' as const : 'initiation' as const,
+      })),
 
     ]
     snapshot.consoleClaim = { eligible: !!entitlement?.active, claimed: !!entitlement?.console_claimed_at, href: entitlement?.active ? (entitlement.console_claimed_at ? '/devices/my-consoles' : '/devices') : null }

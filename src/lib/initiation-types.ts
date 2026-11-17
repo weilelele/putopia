@@ -8,8 +8,9 @@ export interface InitiationShipment {
   id: string
   title: string
   scheduledMonth: string | null
-  status: 'planned' | 'preparing' | 'dispatched' | 'delivered'
+  status: 'planned' | 'preparing' | 'dispatched' | 'delivered' | 'canceled'
   trackingUrl: string | null
+  trackingNumber?: string | null
   source: 'initiation' | 'legacy_pack'
 }
 export interface InitiationSnapshot {
@@ -25,6 +26,7 @@ export interface InitiationSnapshot {
   consoleClaim: { eligible: boolean; claimed: boolean; href: string | null; batch?: { slug: string; name: string } | null }
   offer?: { kind: InitiationOrderKind; amount: number; currency: 'usd' }
   ownsSeat?: boolean
+  hasCheckoutReservation?: boolean
   legacyPackPurchased: boolean
   paymentStatus: InitiationPaymentStatus
   error: string | null

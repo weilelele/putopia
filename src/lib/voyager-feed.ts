@@ -24,6 +24,7 @@ export function validateFeedBody(value: unknown): string {
   if (typeof value !== 'string' || !value.trim() || value.trim().length > FEED_TEXT_LIMIT || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) throw new Error('Enter between 1 and 500 characters.')
   return value.trim()
 }
+
 export function validateFeedCursor(cursor?: FeedCursor): FeedCursor | undefined {
   if (!cursor) return undefined
   if (!validFeedId(cursor.id) || !/^\d{4}-\d\d-\d\dT[\d:.]+(?:Z|[+-]\d\d:\d\d)$/.test(cursor.created_at) || !Number.isFinite(Date.parse(cursor.created_at))) throw new Error('Invalid page cursor.')

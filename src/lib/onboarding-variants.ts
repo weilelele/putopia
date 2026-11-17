@@ -16,6 +16,7 @@
 
 import type { OnboardingVariantRow } from '@/types/database'
 import { DEVICE_REEL } from '@/lib/device-reel'
+import { ONBOARDING_REEL } from '@/lib/onboarding-video'
 
 export interface OnboardingCopy {
   /* Headlines, by question position in the live flow:
@@ -53,7 +54,7 @@ export const FALLBACK_COPY: OnboardingCopy = {
   affirmLine2:   "You are the Voyager we've been looking for.",
   ctaInvitation: 'Leave your email below to apply for your seat in our collective and secure your Multiverse Console.',
   ctaLabel:      'CONFIRM MY VOYAGER IDENTITY',
-  videoQ1:       DEVICE_REEL.src,
+  videoQ1:       ONBOARDING_REEL.src,
   videoQ2:       '',   // blank = continue the previous step's video
   videoCta:      '',
 }
@@ -79,9 +80,12 @@ function applyRow(base: OnboardingCopy, row: OnboardingVariantRow | undefined): 
    the admin left blank "continues" the previous step's clip. Q1 always resolves
    to a real video (the fallback reel at worst). */
 function chainVideos(c: OnboardingCopy): OnboardingCopy {
-  const videoQ1  = c.videoQ1  || FALLBACK_COPY.videoQ1
-  const videoQ2  = c.videoQ2  || videoQ1
-  const videoCta = c.videoCta || videoQ2
+  // Existing default rows may explicitly store the old bundled reel. Replace
+  // that source without editing shared DB rows or overriding campaign uploads.
+  const current = (src: string) => src === DEVICE_REEL.src ? ONBOARDING_REEL.src : src
+  const videoQ1  = current(c.videoQ1) || FALLBACK_COPY.videoQ1
+  const videoQ2  = current(c.videoQ2) || videoQ1
+  const videoCta = current(c.videoCta) || videoQ2
   return { ...c, videoQ1, videoQ2, videoCta }
 }
 

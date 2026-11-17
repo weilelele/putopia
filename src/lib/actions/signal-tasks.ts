@@ -12,7 +12,8 @@ import { getRequestIdentity } from '@/lib/request-auth'
  * convention — see admin/layout.tsx).
  */
 import { getRoundInvestigations } from '@/lib/dreamcatcher-rounds'
-import { isSignalVoter, scopeAllowsVote, VOYAGERS_ONLY_LOCK } from '@/lib/dreamcatcher-round-model'
+import { getMyDigitalAccessRole } from './digital-access'
+import { hasVoyagerAccess } from '@/lib/digital-access'
 import { DREAMCATCHER_ROUNDS_ENABLED } from '@/lib/signal/dispatch-policy'
 import { createAdminClient } from '@/lib/supabase/server'
 import { listFrequencies as cosmoListFrequencies, sampleBandAssets, getBandAssets as cosmoGetBandAssets } from '@/lib/cosmo'
@@ -613,6 +614,12 @@ async function currentUser(): Promise<{ id: string; role: string } | null> {
   return { id: user.id, role: data?.role ?? 'applicant' }
 }
 
+async function parallaxViewer(viewer: Awaited<ReturnType<typeof currentUser>>) {
+  if (!viewer) return null
+  const role = await getMyDigitalAccessRole().catch(() => 'applicant' as const)
+  return { id: viewer.id, role }
+}
+
 /**
  * Member-facing feed for a day's puzzles. Respects visibility rules:
  *  - everyone sees published tasks, their selected assets, and participant counts;
@@ -732,8 +739,10 @@ export async function getSignalFeed(date?: string): Promise<SignalFeed> {
 }
 
 /**
- * Voting permission. Only Voyagers (and Architects, always) can vote. On top of
- * that, `self` narrows a world to its owner; `all` and `voters` both mean Voyagers.
+ * Owner voting permission (doc 2.1). Architect can always vote; otherwise:
+ *   self   → only the world's owner (discoverer)
+ *   voters → Voyager members only
+ *   all    → any logged-in registered user (applicants included)
  */
 function eligibleToVote(
   role: string | null,
@@ -741,14 +750,19 @@ function eligibleToVote(
   voteScope: WorldVoteScope,
   ownerId: string | null,
 ): boolean {
-  return !!userId && !!role && scopeAllowsVote({ id: userId, role }, voteScope, ownerId)
+  if (!role || !userId) return false
+  if (role === 'architect') return true
+  if (voteScope === 'self') return userId === ownerId
+  if (voteScope === 'voters') return role === 'voyager'
+  return true // 'all'
 }
 
 /** Human-readable reason a viewer can't vote, for the locked-card label. */
-function lockReason(voteScope: WorldVoteScope, loggedIn: boolean, role: string | null): string {
+function lockReason(voteScope: WorldVoteScope, loggedIn: boolean): string {
   if (!loggedIn) return 'Log in to respond'
-  if (isSignalVoter(role) && voteScope === 'self') return 'Private — owner only'
-  return VOYAGERS_ONLY_LOCK
+  if (voteScope === 'self') return 'Private — owner only'
+  if (voteScope === 'voters') return 'Voyagers only'
+  return 'Log in to respond'
 }
 
 /** File a response. Eligibility is per-world (doc 2.1). One filing per task. */
@@ -768,7 +782,7 @@ export async function submitSignalResponse(
     .maybeSingle()
   if (!task?.is_published) return { ok: false, error: 'Task is not published' }
   if (task.dreamcatcher_round_id) {
-    if (!isSignalVoter(me.role)) return { ok: false, error: 'Only Voyagers can vote on signals.' }
+    if (!hasVoyagerAccess((await parallaxViewer(me))?.role)) return { ok: false, error: 'Only Voyagers can respond to Parallax Array signals.' }
     if (!DREAMCATCHER_ROUNDS_ENABLED) {
       // A vote past the deadline settles the round, which must wait for the pause to lift.
       const { data: round } = await admin.from('dreamcatcher_rounds').select('closes_at').eq('id', task.dreamcatcher_round_id).maybeSingle()
@@ -1590,7 +1604,7 @@ function buildInvestigation(
     type: thread.type,
     voteScope,
     canParticipate: can,
-    lockReason: can ? null : lockReason(voteScope, !!me, me?.role ?? null),
+    lockReason: can ? null : lockReason(voteScope, !!me),
     days,
     searching,
   }
@@ -1604,7 +1618,7 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   // Architects see the same member view here — future (not-yet-revealed) days are
   // hidden. The full authoring preview lives in /admin/signal-tasks.
 
-  const roundInvestigations = await getRoundInvestigations(me)
+  const roundInvestigations = await getRoundInvestigations(await parallaxViewer(me))
   const now = new Date()
 
   const { data: threadData } = await admin
@@ -1676,7 +1690,7 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
   const admin = createAdminClient() as DB
   const me = await currentUser()
   const role = me?.role ?? null
-  const rounds = await getRoundInvestigations(me, worldId, true)
+  const rounds = await getRoundInvestigations(await parallaxViewer(me), worldId, true)
   if (rounds.length) return { investigation: rounds[0], role, loggedIn: !!me }
   // Architects see the same member view here — future (not-yet-revealed) days are
   // hidden. The full authoring preview lives in /admin/signal-tasks.
@@ -1858,7 +1872,7 @@ export async function getDispatchDashboard(publicOverview = false): Promise<Disp
   const yourWorlds = ((mine ?? []) as { id: string; name: string; lifecycle_state: WorldLifecycle }[])
     .map((w) => ({ id: w.id, name: w.name, stage: worldStage(w.lifecycle_state) }))
 
-  const roundInvestigations = await getRoundInvestigations(me)
+  const roundInvestigations = await getRoundInvestigations(await parallaxViewer(me))
   for (const inv of roundInvestigations) {
     const day = inv.days.at(-1)
     if (!day || !inv.worldId) continue

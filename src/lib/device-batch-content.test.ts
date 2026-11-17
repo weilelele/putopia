@@ -59,12 +59,18 @@ describe('device update content', () => {
     expect(errors).toContain('Updates need unique IDs and valid content.')
   })
 
-  it('derives all five steps from the single batch status', () => {
-    const phases = ['searching', 'claiming', 'pack_one', 'pack_two', 'console'] as const
-    for (const [current, status] of phases.entries()) {
+  it('shows three public stages, with every stored pack status as Deliver', () => {
+    const expected = [
+      ['searching', ['current', 'upcoming', 'upcoming']],
+      ['claiming', ['completed', 'current', 'upcoming']],
+      ['pack_one', ['completed', 'completed', 'current']],
+      ['pack_two', ['completed', 'completed', 'current']],
+      ['console', ['completed', 'completed', 'current']],
+    ] as const
+    for (const [status, stages] of expected) {
       const progress = getDeviceBatchProgress({ ...batch, status, distributionStages: [] })
-      expect(progress.map((step) => step.label)).toEqual(['SEARCH', 'CLAIM', 'PACK 1', 'PACK 2', 'CONSOLE'])
-      expect(progress.map((step) => step.status)).toEqual(phases.map((_, index) => index < current ? 'completed' : index === current ? 'current' : 'upcoming'))
+      expect(progress.map((step) => step.label)).toEqual(['SEARCH', 'CLAIM', 'DELIVER'])
+      expect(progress.map((step) => step.status)).toEqual(stages)
     }
   })
 })

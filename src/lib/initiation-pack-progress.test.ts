@@ -42,6 +42,11 @@ describe('purchased Pack delivery progress', () => {
     snapshot.consoleClaim.claimed = true
     expect(initiationPackProgress(snapshot).packs[2]).toMatchObject({ claimable: false, label: 'Awaiting dispatch' })
   })
+  it('keeps an unclaimed Console actionable while its shipment is preparing', () => {
+    const snapshot = fixture('complete_pack')
+    snapshot.shipments[2].status = 'preparing'
+    expect(initiationPackProgress(snapshot).packs[2]).toMatchObject({ claimable: true, label: 'Preparing' })
+  })
   it('keeps historical deliveries visible but pauses unfulfilled refunded packs', () => {
     const snapshot = fixture('upgraded')
     snapshot.status = 'legacy_pack'

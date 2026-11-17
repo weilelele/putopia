@@ -23,13 +23,13 @@ describe('Dashboard dispatch eligibility without investigation history', () => {
     expect(legacy()).toMatchObject({ awaitingYou: 1, awaitingWorldIds: [world.id] })
   })
   it.each([
-    ['self', 'member', 'voyager', 0], ['self', 'owner', 'voyager', 1], ['self', 'owner', 'applicant', 0],
+    ['self', 'member', 'voyager', 0], ['self', 'owner', 'applicant', 1],
     ['voters', 'member', 'applicant', 0], ['voters', 'member', 'voyager', 1],
-    ['self', 'member', 'architect', 1], ['all', 'member', 'applicant', 0], ['all', 'member', 'voyager', 1],
-  ])('applies %s voting scope for %s / %s', (scope, id, role, expected) => {
+    ['self', 'member', 'architect', 1], ['all', 'member', 'applicant', 1],
+  ])('preserves %s voting scope for %s / %s', (scope, id, role, expected) => {
     const input = { worlds: [{ ...world, vote_scope: scope }], viewer: { id, role } }
     expect(legacy(input).awaitingYou).toBe(expected)
-    expect(rounds(input).awaitingYou).toBe(expected)
+    expect(rounds(input).awaitingYou).toBe(role === 'applicant' ? 0 : expected)
   })
   it('computes the current time on every read, including exact closing/gap/open boundaries', () => {
     const tasks = [task, { ...task, id: 'next', day_index: 1 }]
@@ -50,6 +50,9 @@ describe('Dashboard dispatch eligibility without investigation history', () => {
     expect(rounds({ now: after })).toMatchObject({ openWorlds: [], awaitingYou: 0 })
     expect(rounds({ now: after, viewer: { id: 'initiator', role: 'voyager' } })).toMatchObject({ openWorlds: [], awaitingYou: 1 })
     expect(rounds({ now: after, viewer: { id: 'initiator', role: 'voyager' }, roundResponses: [{ task_id: task.id }] }).awaitingYou).toBe(0)
+  })
+  it('uses effective membership for Array events when the profile role is stale', () => {
+    expect(rounds({ viewer: { id: 'member', role: 'voyager' }, roundViewer: { id: 'member', role: 'applicant' } }).awaitingYou).toBe(0)
   })
   it('never revives an older open round after a later published round settles', () => {
     const next = { ...task, id: 'next', dreamcatcher_round_id: 'second' }

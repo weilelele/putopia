@@ -14,6 +14,7 @@ import { ArchiveField } from '@/components/archive-field'
 import { ArchiveButton } from '@/components/archive-button'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 import { DEVICE_REEL } from '@/lib/device-reel'
+import { ONBOARDING_REEL } from '@/lib/onboarding-video'
 import { OnboardingSoundtrack } from '@/components/onboarding-soundtrack'
 import { rememberPostRegisterRedirect } from '@/lib/post-register-redirect'
 
@@ -360,7 +361,7 @@ function VideoSection({ src }: { src: string }) {
       {/* ── Video ── */}
       <video
         src={src}
-        poster={src === DEVICE_REEL.src ? DEVICE_REEL.poster : undefined}
+        poster={src === ONBOARDING_REEL.src ? ONBOARDING_REEL.poster : src === DEVICE_REEL.src ? DEVICE_REEL.poster : undefined}
         preload="metadata"
         autoPlay muted loop playsInline
         style={{

@@ -4,8 +4,13 @@ import { isDeviceCameraBinding, parseCameraOrigin, type DeviceCameraSource } fro
 
 const productionEmbedOrigin = 'https://cosmo-device-embed.vercel.app'
 
+// Cosmo's HK server is unreachable, so every Embed renders black. Batch bindings
+// stay in place; set this back to true once /embed-api responds again.
+const cameraEmbedsEnabled: boolean = false
+
 /** Reads config only. Never persists the temporary demo binding into a Batch. */
 export function getDeviceCameraSource(batch: DeviceBatch): DeviceCameraSource | null {
+  if (!cameraEmbedsEnabled) return null
   const local = process.env.NODE_ENV !== 'production'
   const configuredOrigin = process.env.COSMO_EMBED_ORIGIN
   const embedOrigin = parseCameraOrigin(configuredOrigin === undefined && !local ? productionEmbedOrigin : configuredOrigin, local)

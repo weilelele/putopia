@@ -5,7 +5,8 @@ import { BackLink } from '@/components/back-link'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { isSignalVoter, roundLabel } from '@/lib/dreamcatcher-round-model'
+import { roundLabel } from '@/lib/dreamcatcher-round-model'
+import { hasVoyagerAccess } from '@/lib/digital-access'
 import { getDreamcatcherProgress, stopDreamcatcherWorld, getWorldById, rescanWorld } from '@/lib/actions/worlds'
 import { getWorldInvestigation, setWorldVoteScope } from '@/lib/actions/signal-tasks'
 import type { WorldInvestigationData } from '@/lib/actions/signal-tasks'
@@ -196,7 +197,7 @@ export default function WorldDetailPage() {
             </div>
             {/* Signal Tuning is the lead content — the '// SIGNAL TUNING' label is dropped.
                 The vote-lock hint lives in the question footer, not a floating header. */}
-            {isOwner && isSignalVoter(inv?.role) && (
+            {isOwner && hasVoyagerAccess(inv?.role) && (
               <ArchiveCard className="archive-inline-panel">
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.12em', color: 'var(--color-star-deep)' }}>WHO CAN VOTE</span>
                 <ArchiveSelect value={scope === 'self' ? 'self' : 'voters'} disabled={scopeSaving} onChange={(e) => onScopeChange(e.target.value as WorldVoteScope)} style={{ padding: '0.3rem 0.5rem', cursor: 'pointer' }}>

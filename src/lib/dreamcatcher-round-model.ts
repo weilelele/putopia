@@ -1,16 +1,7 @@
 /** Pure public presentation policy; database RPCs enforce the same rules. */
+import { hasVoyagerAccess } from './digital-access'
 export type RoundStatus = 'waiting_capacity' | 'queued' | 'processing' | 'awaiting_assets' | 'voting_open' | 'awaiting_initiator_feedback' | 'settled' | 'cancelled'
 export type RoundViewer = { id: string; role: string } | null
-export const VOYAGERS_ONLY_LOCK = 'Voyagers only'
-/** Signal votes are for Voyagers. Architects keep their operating access. */
-export function isSignalVoter(role: string | null | undefined): boolean {
-  return role === 'voyager' || role === 'architect'
-}
-/** 'self' is the only scope narrower than the Voyager base rule; 'all' and 'voters' now match. */
-export function scopeAllowsVote(viewer: RoundViewer, voteScope: string, ownerId: string | null): boolean {
-  if (!viewer || !isSignalVoter(viewer.role)) return false
-  return viewer.role === 'architect' || voteScope !== 'self' || viewer.id === ownerId
-}
 export function roundVoteAccess(input: {
   status: RoundStatus; openedAt: string | null; closesAt: string | null; participantCount: number
   initiatorId: string; discovererId: string | null; voteScope: string; viewer: RoundViewer; now: number
@@ -23,8 +14,10 @@ export function roundVoteAccess(input: {
   const publicOpen = active && opened && input.now < deadline
   const initiatorOnly = !input.paused && active && opened && input.now >= deadline && input.participantCount === 0
   const me = input.viewer
-  const eligible = scopeAllowsVote(me, input.voteScope, input.discovererId)
-  return { canVote: publicOpen ? eligible : initiatorOnly && !!me && isSignalVoter(me.role) && me.id === input.initiatorId, initiatorOnly, publicOpen }
+  const member = !!me && hasVoyagerAccess(me.role)
+  const eligible = member && (me.role === 'architect' || input.voteScope === 'all' || input.voteScope === 'voters' ||
+    (input.voteScope === 'self' && me.id === input.discovererId))
+  return { canVote: publicOpen ? eligible : member && initiatorOnly && me.id === input.initiatorId, initiatorOnly, publicOpen }
 }
 export function roundLabel(status: string, roundNumber: number, generationStatus?: string): string {
   const labels: Record<string, string> = {

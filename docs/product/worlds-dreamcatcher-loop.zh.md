@@ -3,7 +3,7 @@
 > Public name: **Parallax Array / 视差阵列**. User submissions are **Observations / 观测记录**. `dreamcatcher` remains an internal identifier.
 日期：2026-09-27。状态：产品规则已明确，本站轮次、队列、权限与展示已有本地实现；Cosmo 通信和取图沿用旧 Dispatch 链路，旧积压清理与停用保护已在生产完成，新轮次迁移与真实环境验收尚未完成。实现范围、验证结果及上线前置条件见[迭代记录](../releases/dreamcatcher-rounds.md)。下文保留设计依据，不能将本地实现视为已上线。
 
-> **2026-11-06 暂停与权限更新（优先于下文）：** 轮次循环暂停，等待玩法重做。`DREAMCATCHER_ROUNDS_ENABLED=false` 期间不推进轮次、不调用 Cosmo、不发轮次邮件；已开放的投票窗口仍可投到截止，到期后不结算，也不开放零反馈补投。Voyager、Architect 和有已付款订单的账号可以投递，投递内容留在队列等恢复。只有 Voyager 和 Architect 可以投票，原始发起者的补投同样受此限制；`vote_scope` 只有 `self` 还有收窄作用，`all` 和 `voters` 都等于 Voyager。
+> **2026-11-06 暂停与权限更新（优先于下文）：** 轮次循环暂停，等待玩法重做。`DREAMCATCHER_ROUNDS_ENABLED=false` 期间不推进轮次、不调用 Cosmo、不发轮次邮件；已开放的投票窗口仍可投到截止，到期后不结算，也不开放零反馈补投。投递和投票权限以 #322 为准：只有会员身份为 Voyager 或 Architect 的账号（`effective_access_role`，数据库由 schema_v124 触发器把关）可以投递和投票，原始发起者的补投同样受此限制；暂停期间的投递留在队列等恢复。`vote_scope` 只有 `self` 还有收窄作用，`all` 和 `voters` 都等于 Voyager。
 
 ## 1. 产品目标与文档优先级
 

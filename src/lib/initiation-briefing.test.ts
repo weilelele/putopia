@@ -69,6 +69,8 @@ describe('Voyager briefing content', () => {
     ])
     expect(regions.map(r => [r.name, r.open, r.phase])).toEqual([['KYOTO', true, 2], ['SHANGHAI', false, 1], ['KYOTO RESTORATION ROOM', false, 1]])
     expect(regions[0].phaseLabel).toBe('Claiming')
+    expect(regions[0].phases).toBe(3)
+    expect(briefingRegions([{ location: 'Kyoto, Japan', status: 'pack_two' }])[0]).toMatchObject({ phase: 3, phaseLabel: 'Delivering' })
     expect(briefingRegions(Array.from({ length: 9 }, (_, i) => ({ location: `City ${i}`, status: 'searching' as const }))).length).toBe(5)
   })
 

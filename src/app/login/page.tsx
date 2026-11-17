@@ -3,6 +3,7 @@
 import { BackLink } from '@/components/back-link'
 import { ArchiveInput } from '@/components/archive-input'
 import { Suspense, useState } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import posthog from 'posthog-js'
@@ -60,11 +61,15 @@ function LoginPageContent() {
         <BackLink href="/console" label="Back to Dashboard" />
         <header className="pilot-login-heading">
           <h1 className="pilot-login-title">
-            AUTHENTICATE
+            SIGN IN
           </h1>
         </header>
 
         <form onSubmit={handleSubmit} className="pilot-login-form">
+          {searchParams.get('password') === 'reset' && (
+            <p className="archive-form-message" role="status">Password reset. Log in with your new password.</p>
+          )}
+
           <ArchiveField htmlFor="login-email" label="EMAIL ADDRESS">
             <ArchiveInput
               id="login-email"
@@ -75,7 +80,7 @@ function LoginPageContent() {
             />
           </ArchiveField>
 
-          <ArchiveField htmlFor="login-password" label="ACCESS CODE">
+          <ArchiveField htmlFor="login-password" label="PASSWORD">
             <ArchiveInput
               id="login-password"
               type="password"
@@ -85,6 +90,10 @@ function LoginPageContent() {
             />
           </ArchiveField>
 
+          <Link href="/auth/forgot-password" className="pilot-login-recovery-link">
+            Forgot password?
+          </Link>
+
           {error && (
             <div className="pilot-control-message is-error" role="alert">
               <span aria-hidden="true">!</span>
@@ -93,13 +102,13 @@ function LoginPageContent() {
           )}
 
           <ArchiveButton disabled={loading} fullWidth type="submit">
-            {loading ? 'AUTHENTICATING...' : 'AUTHENTICATE'}
+            {loading ? 'SIGNING IN...' : 'SIGN IN'}
           </ArchiveButton>
         </form>
 
         <div className="pilot-login-access">
           <ArchiveLinkButton fullWidth href={requestAccessHref}>
-            REQUEST ACCESS
+            CREATE ACCOUNT
           </ArchiveLinkButton>
         </div>
       </div>

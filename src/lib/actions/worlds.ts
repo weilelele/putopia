@@ -6,8 +6,7 @@ import type { WorldInsert, WorldUpdate, WorldFinalAsset, WorldFinalMedia } from 
 import { rollScanUntil } from '@/lib/signal/scan'
 import { logActivity } from './activity-events'
 import { requirePublishingArchitect, resolvePublishingIdentity } from '@/lib/publishing-identity'
-import { userCanSubmitObservation } from '@/lib/observation-access'
-import { OBSERVATION_ACCESS_ERROR } from '@/lib/observation-access-model'
+import { hasVoyagerAccess } from '@/lib/digital-access'
 import { DREAMCATCHER_ROUNDS_ENABLED } from '@/lib/signal/dispatch-policy'
 
 /** Stable / verified worlds (the main archive). Public + identical for everyone,
@@ -103,7 +102,6 @@ export async function submitWorld(payload: {
     .single()
 
   if (!profile) return { error: 'Profile not found', data: null }
-  if (!await userCanSubmitObservation(user.id, profile.role)) return { error: OBSERVATION_ACCESS_ERROR, data: null }
 
   const discovererName = profile.display_name?.trim() || user.email?.split('@')[0] || 'Unknown Operative'
   // Share the legacy World entry with the atomic Parallax Array submission RPC.
@@ -144,7 +142,11 @@ export async function submitDreamcatcherWorld(payload: {
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Please log in before submitting an observation.', data: null }
+  if (!user || user.is_anonymous) return { error: 'Log in as a Voyager to submit an observation.', data: null }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const access = await (supabase as any).rpc('effective_access_role')
+  if (access.error) return { error: 'Voyager access could not be verified. Please try again.', data: null }
+  if (!hasVoyagerAccess(access.data)) return { error: 'Only Voyagers can submit to a Parallax Array.', data: null }
 
   if (!process.env.COSMO_MONGO_URI?.trim()) return { error: 'Observation submission is temporarily unavailable. Please try again later.', data: null }
 
@@ -160,9 +162,7 @@ export async function submitDreamcatcherWorld(payload: {
     .select('display_name, role')
     .eq('id', user.id)
     .maybeSingle()
-  if (!profile || !await userCanSubmitObservation(user.id, profile.role)) {
-    return { error: OBSERVATION_ACCESS_ERROR, data: null }
-  }
+  if (!profile) return { error: 'Your Voyager profile could not be loaded.', data: null }
 
   if (!/^[0-9a-f-]{36}$/i.test(payload.submissionKey)) return { error: 'Invalid submission key', data: null }
   // One transaction creates the world, thread, first round and generation outbox.

@@ -1632,6 +1632,9 @@
 .workspaceDetails .queueItem { grid-template-columns: 24px minmax(0,1fr); }
 .workspaceDetails .queueStatus { grid-column: 2; text-align: left; }
 .workspaceMedia .liveImage { min-height: 0; }
+/* A batch with no media gives its column to the details. */
+.workspaceMedia:empty { display: none; }
+.workspace:has(> .workspaceMedia:empty) { grid-template-columns: minmax(0,1fr); }
 
 .materialPreview { margin: 0; }
 .materialPreviewMedia { position: relative; width: 100%; aspect-ratio: 4 / 3; }
