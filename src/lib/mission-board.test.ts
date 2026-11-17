@@ -63,10 +63,11 @@ describe('Mission Board editions', () => {
     expect(extras).toEqual(new Set(['REC', 'CNT', 'OBS']))
   })
 
-  it('shows the contact frequency range and two images in the launch week only', () => {
+  it('puts every frequency in its teaser and shows two images in the launch week', () => {
     const edition = getPublicMissionEdition(sunday + 1)
-    expect(edition.missions.filter(mission => mission.frequencyRange)
-      .map(mission => [mission.id, mission.frequencyRange])).toEqual([['CNT-076', '112.3–112.5']])
+    expect(edition.missions.map(mission => [mission.id, mission.teaser.frequency])).toEqual([
+      ['REC-120', '97.3'], ['CNT-076', '112.3–112.5'], ['OBS-205', '93.6'],
+    ])
     expect(edition.missions.filter(mission => mission.image).map(mission => mission.id)).toEqual(['CNT-076', 'OBS-205'])
     expect(getPublicMissionEdition(Date.parse('2026-12-07T00:00:00+08:00')).missions.some(mission => mission.image)).toBe(false)
   })

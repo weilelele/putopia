@@ -169,15 +169,14 @@ export function MissionBoard({ edition, signedIn, initialMission, archivedMissio
                   <Icon size={24} strokeWidth={1.5} />
                 </span>
                 <span>
-                  <span className={`${styles.revealBand} ${styles.titleLine}`}>
-                    <strong className={styles.code}>{mission.id}<span className="sr-only"> · {label}</span></strong>
-                    {mission.frequencyRange && <span className={styles.frequency}>Frequency {mission.frequencyRange}</span>}
-                  </span>
+                  <strong className={`${styles.revealBand} ${styles.code}`}>{mission.id}<span className="sr-only"> · {label}</span></strong>
                   <span className={`${styles.revealBand} ${styles.byline}`}>
                     <MissionAvatar author={mission.author} size={20} />
                     <span>{mission.author.name}</span>
                   </span>
-                  <span className={`${styles.revealBand} ${styles.teaser}`}>{mission.teaser}</span>
+                  <span className={`${styles.revealBand} ${styles.teaser}`}>
+                    {mission.teaser.before}<span className={styles.frequency}>{mission.teaser.frequency}</span>{mission.teaser.after}
+                  </span>
                 </span>
                 <ChevronRight className={styles.chevron} size={16} aria-hidden />
               </button>
