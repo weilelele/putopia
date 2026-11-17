@@ -28,7 +28,7 @@ describe('Dashboard dispatch eligibility without investigation history', () => {
   ])('preserves %s voting scope for %s / %s', (scope, id, role, expected) => {
     const input = { worlds: [{ ...world, vote_scope: scope }], viewer: { id, role } }
     expect(legacy(input).awaitingYou).toBe(expected)
-    expect(rounds(input).awaitingYou).toBe(expected)
+    expect(rounds(input).awaitingYou).toBe(role === 'applicant' ? 0 : expected)
   })
   it('computes the current time on every read, including exact closing/gap/open boundaries', () => {
     const tasks = [task, { ...task, id: 'next', day_index: 1 }]
@@ -47,8 +47,11 @@ describe('Dashboard dispatch eligibility without investigation history', () => {
   it('keeps expired empty rounds available only to their initiator', () => {
     const after = Date.parse(round.closes_at!)
     expect(rounds({ now: after })).toMatchObject({ openWorlds: [], awaitingYou: 0 })
-    expect(rounds({ now: after, viewer: { id: 'initiator', role: 'applicant' } })).toMatchObject({ openWorlds: [], awaitingYou: 1 })
-    expect(rounds({ now: after, viewer: { id: 'initiator', role: 'applicant' }, roundResponses: [{ task_id: task.id }] }).awaitingYou).toBe(0)
+    expect(rounds({ now: after, viewer: { id: 'initiator', role: 'voyager' } })).toMatchObject({ openWorlds: [], awaitingYou: 1 })
+    expect(rounds({ now: after, viewer: { id: 'initiator', role: 'voyager' }, roundResponses: [{ task_id: task.id }] }).awaitingYou).toBe(0)
+  })
+  it('uses effective membership for Array events when the profile role is stale', () => {
+    expect(rounds({ viewer: { id: 'member', role: 'voyager' }, roundViewer: { id: 'member', role: 'applicant' } }).awaitingYou).toBe(0)
   })
   it('never revives an older open round after a later published round settles', () => {
     const next = { ...task, id: 'next', dreamcatcher_round_id: 'second' }

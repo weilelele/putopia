@@ -8,6 +8,7 @@ import { isFuzzyWorld, isOfficialWorld, worldByline, worldTags } from '@/lib/wor
 import { WorldsSectionTabs } from '@/components/worlds-section-tabs'
 import { ArchiveCard } from '@/components/archive-card'
 import { RootBrandHeader } from '@/components/root-brand-header'
+import WorldsLivePage from './live/page'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,10 +66,11 @@ function FeedSkeleton() {
 export default async function WorldsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ submitted?: string }>
+  searchParams: Promise<{ section?: string; submitted?: string }>
 }) {
   const params = await searchParams
   const submittedName = params.submitted
+  if (params.section !== 'observe' && !submittedName) return <WorldsLivePage />
 
   return (
     <main className="main pilot-archive-page archive-collection-page worlds-page">

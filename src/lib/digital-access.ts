@@ -1,5 +1,9 @@
 import type { UserRole } from '@/types/database'
 const roles: UserRole[] = ['guest', 'applicant', 'voyager', 'architect']
+export function hasVoyagerAccess(role: unknown): boolean {
+  return role === 'voyager' || role === 'architect'
+}
+
 export function accessRole(value: unknown, signedIn: boolean): UserRole {
   return roles.includes(value as UserRole) ? value as UserRole : signedIn ? 'applicant' : 'guest'
 }
