@@ -32,7 +32,7 @@ export function ActivationWelcome({ frame }: { frame?: number }) {
       </header>
       <div className={styles.discovery}>
         <Link ref={scene} href={BRIEFING_HREF} prefetch={false} className={styles.scene}
-          aria-label="Watch the Voyager Initiation briefing: discover the Console, welcome letter and badge, Antenna design studies and an unrevealed delivery">
+          aria-label="Watch the Voyager Initiation briefing: discover the Console, welcome letter and badge, the Antenna and an unrevealed delivery">
           <div className={styles.photographs} aria-hidden="true">
             {packs.map((pack, index) => <span key={pack.name} data-pack={pack.name} className={`${styles.tile} ${styles[pack.name]}`}>
               <Image src={`/assets/activation-welcome/${pack.file}`} alt="" width={pack.width} height={pack.height}

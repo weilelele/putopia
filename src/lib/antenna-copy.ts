@@ -11,6 +11,6 @@ export const ANTENNA = {
   requirement: 'Must be installed on a Multiverse Console to receive signals.',
   initialExclusion: 'Initial Voyager Pack does not include the Console.',
   image: '/assets/voyager-initiation/antenna-archive-case-v1.png',
-  imageAlt: 'Brass, ivory and navy Antenna design studies in a dark fabric-lined archive case',
-  imageCaption: 'Design studies; final appearance and quantity to be confirmed.',
+  imageAlt: 'Brass, ivory and navy Antennas in a dark fabric-lined archive case',
+  imageCaption: 'Rendered image; final appearance and quantity to be confirmed.',
 } as const
