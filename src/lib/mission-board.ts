@@ -14,7 +14,7 @@ type MissionImage = { src: string; alt: string; width: number; height: number }
 type Scenario = {
   series: Series
   frequency: number
-  teaser: string
+  teaser: `${string}{frequency}${string}`
   preview: string
   briefing: string
   followUp: string
@@ -31,7 +31,7 @@ const editions: readonly (readonly Scenario[])[] = [
     },
     {
       series: 'CNT', frequency: 1046,
-      teaser: 'A ridge stood up. The lights stayed on.',
+      teaser: 'At {frequency}, a ridge stood up. The lights stayed on.',
       preview: 'What looked like a ridge rose out of the water and walked away. The lights along its back stayed on. If someone lives up there, I’d like to know how they signal to one another.',
       briefing: 'At {frequency}, compare two available Bands for signs the lights are being used deliberately. If the world supports voice, try one short greeting and wait. Note whether anything changes, including if the lights continue as before.',
       followUp: 'Watch one full cycle of the lights before attempting contact. Note the order in which they turn on.',
@@ -54,7 +54,7 @@ const editions: readonly (readonly Scenario[])[] = [
     },
     {
       series: 'CNT', frequency: 1124,
-      teaser: 'A light on each bank. Is one answering the other?',
+      teaser: 'At {frequency}, a light on each bank. Is one answering the other?',
       preview: 'A figure at the end of a bridge leaves a light on after everyone else has gone. A second light sometimes appears on the near bank. I’d wait to see whether the two lights are related.',
       briefing: 'At {frequency}, compare Bands for a view of each bank. Observe the order in which the lights appear and go out. If voice is supported and the exchange has ended, try one greeting and wait.',
       followUp: 'Record a cycle where the second light never appears. Compare the first figure’s behavior with a cycle where it does.',
@@ -77,7 +77,7 @@ const editions: readonly (readonly Scenario[])[] = [
     },
     {
       series: 'CNT', frequency: 944,
-      teaser: 'An island raises a flag each time a boat leaves.',
+      teaser: 'At {frequency}, an island raises a flag each time a boat leaves.',
       preview: 'A flag goes up on the island when a boat leaves the opposite shore. I’d like to know whether anyone on the boat looks back before we try to make ourselves known.',
       briefing: 'At {frequency}, follow one crossing across the available Bands. Note any deliberate gesture from the boat. If the world supports voice and the crew is stationary, try a short greeting once and wait.',
       followUp: 'Watch an empty stretch of water for the same length of time. Note whether the flag rises without a boat.',
@@ -102,7 +102,7 @@ const additionalMissions: Record<Series, Scenario> = {
   },
   CNT: {
     series: 'CNT', frequency: 928,
-    teaser: 'A ferry answers a light on the far bank.',
+    teaser: 'At {frequency}, a ferry answers a light on the far bank.',
     preview: 'On a late crossing, the ferry lights up after a single lamp comes on ashore. The timing could be deliberate. We have only seen part of the exchange near {frequency}.',
     briefing: 'Start near {frequency} and watch both banks if the Bands allow it. If there is a quiet interval after the ferry docks and the world supports voice, offer one greeting and note any change.',
     followUp: 'Record an ordinary crossing first so you have something to compare with the one you observed after speaking.',
@@ -158,18 +158,19 @@ function getEdition(now: number) {
     const number = start + week * 2 + counts[type]++
     const actualFrequency = scenario.frequency + (cycle * 13) % 421
     const frequency = formatFrequency(actualFrequency)
+    const [before, after] = scenario.teaser.split('{frequency}')
+    const teaserFrequency = type === 'CNT'
+      ? `${formatFrequency(actualFrequency - 1)}–${formatFrequency(actualFrequency + 1)}`
+      : frequency
     const id = `${type}-${String(number).padStart(3, '0')}`
     const withFrequency = (value: string) => value.replaceAll('{frequency}', frequency)
     return {
       id,
       series: type,
       author,
-      teaser: withFrequency(scenario.teaser),
+      teaser: { before, frequency: teaserFrequency, after },
       preview: withFrequency(scenario.preview),
       image: weeklyMedia[id],
-      frequencyRange: type === 'CNT'
-        ? `${formatFrequency(actualFrequency - 1)}–${formatFrequency(actualFrequency + 1)}`
-        : undefined,
       briefing: withFrequency(cycle % 2 ? scenario.briefing + ' ' + scenario.followUp : scenario.briefing),
     }
   }).filter(mission => mission.id !== 'OBS-206')
@@ -180,8 +181,8 @@ export function getPublicMissionEdition(now = Date.now()) {
   const { startsAt, missions } = getEdition(now)
   return {
     startsAt,
-    missions: missions.map(({ id, series, author, teaser, preview, image, frequencyRange }) => ({
-      id, series, author, teaser, preview, image, frequencyRange,
+    missions: missions.map(({ id, series, author, teaser, preview, image }) => ({
+      id, series, author, teaser, preview, image,
     })),
   }
 }
