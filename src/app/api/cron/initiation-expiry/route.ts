@@ -13,12 +13,12 @@ export async function GET(request: Request) {
   if (!isCronAuthorized(request.headers.get('authorization'), process.env.CRON_SECRET)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (process.env.VERCEL_ENV !== 'production') return NextResponse.json({ error: 'Production only' }, { status: 403 })
   const stripe = getStripe()
-  if (!stripe) return NextResponse.json({ error: 'Stripe is not configured' }, { status: 503 })
   const shopifyConfig = shopifyLiveConfig()
+  if (!stripe && !shopifyConfig) return NextResponse.json({ error: 'Payments are not configured' }, { status: 503 })
   // Always retry the outbox even if an unrelated expiry record needs review.
   const [expiry, meta, analytics, shopify] = await Promise.allSettled([
-    Promise.resolve().then(() => reconcileInitiationExpiry(stripe)),
-    Promise.resolve().then(() => sendPendingInitiationMetaPurchases(createAdminClient(), stripe)),
+    stripe ? Promise.resolve().then(() => reconcileInitiationExpiry(stripe)) : Promise.resolve(null),
+    stripe ? Promise.resolve().then(() => sendPendingInitiationMetaPurchases(createAdminClient(), stripe)) : Promise.resolve(null),
     Promise.resolve().then(() => sendPendingInitiationAnalytics(createAdminClient(), stripe)),
     shopifyConfig ? (async () => {
       const expired = await createAdminClient().rpc('expire_unbound_initiation_shopify_checkouts' as never)
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     })() : Promise.resolve(null),
   ])
   const failed = expiry.status === 'rejected' || meta.status === 'rejected' || shopify.status === 'rejected'
-    || (meta.status === 'fulfilled' && (meta.value.failed > 0 || meta.value.retried > 0))
+    || (meta.status === 'fulfilled' && !!meta.value && (meta.value.failed > 0 || meta.value.retried > 0))
     || analytics.status === 'rejected' || (analytics.status === 'fulfilled' && (analytics.value.failed > 0 || analytics.value.retried > 0))
   return NextResponse.json({
     released: expiry.status === 'fulfilled' ? expiry.value : null,

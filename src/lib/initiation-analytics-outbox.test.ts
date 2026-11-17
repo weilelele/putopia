@@ -14,6 +14,60 @@ function setup(patch: Partial<InitiationAnalyticsDependencies> = {}) {
     retrieveIntent: vi.fn(async () => intent), send: vi.fn(async () => {}), now: () => Date.parse('2026-10-14T00:01:00Z'), ...patch }
 }
 describe('durable PostHog Initiation outcomes', () => {
+  const browserId = '82000000-0000-4000-8000-000000000001'
+  const shopifyOrder: InitiationAnalyticsOrder = { ...order, amount: 48800, pricing_version: 'voyager-bundles-v1',
+    stripe_session_id: null, stripe_payment_intent: null,
+    analytics_context: { ...order.analytics_context, posthog_distinct_id: browserId, posthog_session_id: browserId, checkout_path: 'email_first' },
+    shopify_checkout: { order_id: order.id, shop: 'jtuuus-k3.myshopify.com',
+      checkout_url: 'https://jtuuus-k3.myshopify.com/cart/c/cart-id?key=private-cart-token',
+      shopify_order_id: 'gid://shopify/Order/123', authorization_id: 'gid://shopify/OrderTransaction/1', capture_id: 'gid://shopify/OrderTransaction/2' },
+  }
+  it('joins a verified Shopify capture to the guest browser and original visit without contacting Stripe', async () => {
+    const deps = setup({ loadOrder: async () => shopifyOrder })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
+    expect(deps.retrieveSession).not.toHaveBeenCalled()
+    expect(deps.retrieveIntent).not.toHaveBeenCalled()
+    expect(deps.send).toHaveBeenCalledWith(expect.objectContaining({ distinct_id: browserId,
+      properties: expect.objectContaining({ payment_provider: 'shopify', payable_amount: 488, payment_evidence: 'verified_shopify_capture',
+        checkout_path: 'email_first', $session_id: browserId, is_test: false }) }))
+    expect(JSON.stringify(vi.mocked(deps.send).mock.calls)).not.toMatch(/private-cart-token|never-send|checkout_url/)
+  })
+  it('records a created Shopify checkout before the buyer has an order or capture', async () => {
+    const deps = setup({ claim: async () => [{ ...claim, event: 'initiation_checkout_started' }], loadOrder: async () => ({ ...shopifyOrder,
+      status: 'pending', paid_at: null, shopify_checkout: { ...shopifyOrder.shopify_checkout!, shopify_order_id: null, authorization_id: null, capture_id: null } }) })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
+    expect(deps.send).toHaveBeenCalledWith(expect.objectContaining({ properties: expect.objectContaining({
+      payment_provider: 'shopify', checkout_evidence: 'server_checkout_created' }) }))
+    expect(vi.mocked(deps.send).mock.calls[0][0].properties).not.toHaveProperty('payment_status')
+  })
+  it.each([
+    { capture_id: null }, { authorization_id: null }, { shopify_order_id: null },
+    { capture_id: 'gid://shopify/OrderTransaction/1' }, { order_id: 'other-order' }, { shop: 'other.myshopify.com' },
+  ])('rejects unverified Shopify payment evidence %j', async patch => {
+    const deps = setup({ loadOrder: async () => ({ ...shopifyOrder, shopify_checkout: { ...shopifyOrder.shopify_checkout!, ...patch } }) })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ retried: 1 })
+    expect(deps.send).not.toHaveBeenCalled()
+  })
+  it('skips opted-out Shopify events and preserves test labels', async () => {
+    const deps = setup({ loadOrder: async () => ({ ...shopifyOrder, analytics_context: { ...shopifyOrder.analytics_context, disabled: true } }) })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ skipped: 1 })
+    expect(deps.send).not.toHaveBeenCalled()
+    const preview = setup({ loadOrder: async () => ({ ...shopifyOrder, analytics_context: { environment: 'preview' } }) })
+    expect(await retryInitiationAnalytics(preview)).toMatchObject({ sent: 1 })
+    expect(preview.send).toHaveBeenCalledWith(expect.objectContaining({ properties: expect.objectContaining({ is_test: true }) }))
+  })
+  it('rechecks the Shopify capture and paid state before sending', async () => {
+    let reads = 0
+    const deps = setup({ loadOrder: async () => ({ ...shopifyOrder, status: ++reads === 1 ? 'paid' : 'refunded' }) })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ skipped: 1 })
+    expect(deps.send).not.toHaveBeenCalled()
+  })
+  it('uses the same Shopify event UUID when a capture delivery is retried', async () => {
+    const deps = setup({ loadOrder: async () => shopifyOrder, send: vi.fn().mockRejectedValueOnce(new Error('lost acknowledgement')).mockResolvedValueOnce(undefined) })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ retried: 1 })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
+    expect(vi.mocked(deps.send).mock.calls[0][0]).toEqual(vi.mocked(deps.send).mock.calls[1][0])
+  })
   it('logs one verified $38 purchase with campaign context and the Meta correlation ID, without advertising identifiers', async () => {
     const initialOrder = { ...order, order_kind: 'initial' as const, amount: 3800, pricing_version: 'voyager-bundles-v1',
       meta_attribution: { fbp: 'fb.1.123.private-browser-id', fbc: 'fb.1.123.private-click-id' } }

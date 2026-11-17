@@ -11,6 +11,8 @@ import { shopifyLiveCheckoutAttribute, shopifyLiveReservationReference } from '.
 import { type shopifyLiveConfig } from './shopify-live-config'
 import { shopifyLiveCheckoutUrl } from './shopify-checkout-url'
 import type { InitiationCheckoutPath } from './initiation-checkout-session'
+import { afterCheckout } from './checkout-after'
+import { sendPendingInitiationAnalytics } from './initiation-analytics-outbox'
 
 type Config = NonNullable<ReturnType<typeof shopifyLiveConfig>>
 type CartResult = {
@@ -39,6 +41,11 @@ export async function createShopifyLiveCheckout(config: Config, request: Request
   }
   const order = reservation.data as { id:string; amount:number } | null
   if (!order?.id || order.amount !== INITIATION_PRICES[kind].amount) throw new Error('Shopify reservation quote did not match')
+  const ready = (url: URL) => {
+    afterCheckout(() => sendPendingInitiationAnalytics(admin, null, { orderId: order.id, limit: 2 }),
+      '[initiation-analytics] Shopify checkout analytics deferred to the outbox')
+    return NextResponse.json({ url: url.href })
+  }
 
   const readSavedUrl = async () => {
     const saved = await admin.from('initiation_shopify_checkouts' as never).select('checkout_url').eq('order_id',order.id).single()
@@ -47,13 +54,13 @@ export async function createShopifyLiveCheckout(config: Config, request: Request
     return raw ? shopifyLiveCheckoutUrl(raw) : null
   }
   const existing = await readSavedUrl()
-  if (existing) return NextResponse.json({url:existing.href})
+  if (existing) return ready(existing)
 
   const cookieStore = await cookies()
   const attribution = captureInitiationMetaAttribution(request.headers,name=>cookieStore.get(name)?.value,origin)
   const savedAttribution = await admin.rpc('save_initiation_checkout_attribution' as never, {
     p_order:order.id,p_user:user.id,p_meta:attribution,p_analytics:{
-      ...sanitizeInitiationAnalytics(body?.analytics),environment:process.env.VERCEL_ENV,checkout_path:path,disabled:true,
+      ...sanitizeInitiationAnalytics(body?.analytics),environment:process.env.VERCEL_ENV,checkout_path:path,
     },
   } as never)
   if (savedAttribution.error) throw savedAttribution.error
@@ -81,5 +88,5 @@ export async function createShopifyLiveCheckout(config: Config, request: Request
   if (bound.error) throw bound.error
   const selected = bound.data ? url : await readSavedUrl()
   if (!selected) throw new Error('Could not save the Shopify checkout URL')
-  return NextResponse.json({url:selected.href})
+  return ready(selected)
 }

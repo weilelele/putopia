@@ -15,6 +15,11 @@ export function validInitiationCheckoutUrl(raw: string) {
     || !!shopifyLiveCheckoutUrl(raw)
 }
 
+export function initiationCheckoutProvider(raw: string): 'stripe' | 'shopify' | null {
+  if (!validInitiationCheckoutUrl(raw)) return null
+  return shopifyLiveCheckoutUrl(raw) ? 'shopify' : 'stripe'
+}
+
 /** One browser round trip; the API checks access before making any payment reservation. */
 export async function requestInitiationCheckout(input: InitiationCheckoutInput, request: typeof fetch = fetch): Promise<InitiationCheckoutResult> {
   const response = await request('/api/initiation-checkout', {
