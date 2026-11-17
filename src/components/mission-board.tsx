@@ -104,7 +104,6 @@ function MissionDialog({ mission, signedIn, archived, close }: {
             height={mission.image.height}
             sizes="(max-width: 528px) calc(100vw - 96px), 432px"
           />
-          <figcaption>{mission.image.caption}</figcaption>
         </figure>}
         {available && <p className={styles.instructions}>{available.briefing}</p>}
       </section>

@@ -161,12 +161,6 @@
   height: auto;
 }
 
-.briefingImage figcaption {
-  margin-top: var(--s-2);
-  color: var(--color-star-dim);
-  font-size: var(--fs-caption);
-}
-
 .dialogFooter {
   display: grid;
   gap: var(--s-3);

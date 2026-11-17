@@ -25,13 +25,6 @@ export function validateFeedBody(value: unknown): string {
   return value.trim()
 }
 
-/** A mission URL on its own final line becomes a separate link beside the post link. */
-export function splitFeedMissionLink(body: string) {
-  const match = /(?:^|\r?\n)https:\/\/www\.multiverseco\.org\/console\?mission=((?:REC|CNT|OBS)-[0-9]{3,})#mission-board[ \t]*$/.exec(body)
-  if (!match) return { text: body, mission: null }
-  const id = match[1]
-  return { text: body.slice(0, match.index).trimEnd(), mission: { id, href: `/console?mission=${id}#mission-board` } }
-}
 export function validateFeedCursor(cursor?: FeedCursor): FeedCursor | undefined {
   if (!cursor) return undefined
   if (!validFeedId(cursor.id) || !/^\d{4}-\d\d-\d\dT[\d:.]+(?:Z|[+-]\d\d:\d\d)$/.test(cursor.created_at) || !Number.isFinite(Date.parse(cursor.created_at))) throw new Error('Invalid page cursor.')

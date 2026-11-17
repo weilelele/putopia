@@ -31,18 +31,6 @@
 .body { white-space: pre-wrap; overflow-wrap: anywhere; margin: 2px 0 8px; font-size: 15px; line-height: 20px; letter-spacing: 0; }
 .postLink { display: block; color: var(--color-star); text-decoration: none; }
 .postLink:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
-.missionLink {
-  display: inline-flex;
-  align-items: center;
-  justify-self: start;
-  gap: var(--s-2);
-  min-height: 44px;
-  color: var(--color-nucleus-2);
-  font-size: var(--fs-compact);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.missionLink:focus-visible { outline: 2px solid var(--color-nucleus); outline-offset: 3px; }
 .photo { width: 100%; aspect-ratio: 1.8; object-fit: cover; }
 .postActions { display: flex; align-items: center; gap: 28px; }
 .postActions button, .postActions a { display: flex; align-items: center; gap: 8px; min-height: 44px; min-width: 48px; font-size: var(--fs-caption); color: var(--color-star); text-decoration: none; }
@@ -58,7 +46,7 @@
 .detailPost .postMain { display: contents; }
 .detailPost .postHeader, .detailRole { grid-column: 2; }
 .detailRole { font-size: var(--fs-caption); color: var(--color-star-dim); margin-top: -12px; }
-.detailPost .body, .detailPost .photo, .detailPost .missionLink, .detailPost .postActions { grid-column: 1 / -1; }
+.detailPost .body, .detailPost .photo, .detailPost .postActions { grid-column: 1 / -1; }
 .detailPost .body { font-size: var(--fs-body); line-height: 24px; margin: 8px 0; }
 .replyHeading { display: flex; gap: 8px; padding: 16px 0 8px; font-size: var(--fs-body); }
 .replyHeading span { color: var(--color-star-dim); font-weight: 400; }
