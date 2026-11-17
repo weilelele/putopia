@@ -1,19 +1,26 @@
 import { initiationMemberStatus, parseInitiationAvailability } from './initiation-membership'
 import { INITIATION_BATCH } from './initiation-types'
 
+export function hasActiveShopifyReservation(orders: readonly { status: string; price_id: string; expires_at: string }[]) {
+  const now = Date.now()
+  return process.env.INITIATION_SHOPIFY_LIVE_ENABLED === 'true' && orders.some(order =>
+    order.status === 'pending' && order.price_id.startsWith('price_shopify_') && Date.parse(order.expires_at) > now)
+}
+
 /** The former preflight rules, evaluated inside the authenticated checkout request. */
 export function initiationCheckoutAccess(input: {
   supply: unknown
   entitlement: { active: boolean } | null
   member: { source: 'paid' | 'granted'; active: boolean; batch: string } | null
   ownsInitial: boolean
+  hasReservation?: boolean
   configError: string | null
 }) {
   const supply = parseInitiationAvailability(input.supply)
   if (!supply) throw new Error('Checkout supply is unavailable')
   const { entitlement, member, ownsInitial, configError } = input
   const status = initiationMemberStatus(!!entitlement?.active, member, ownsInitial)
-  const hasCapacity = supply.remaining > 0 || (ownsInitial && member?.batch === INITIATION_BATCH)
+  const hasCapacity = supply.remaining > 0 || input.hasReservation === true || (ownsInitial && member?.batch === INITIATION_BATCH)
   const checkoutOpen = supply.open && hasCapacity && !configError && !entitlement && status !== 'granted' && status !== 'unknown'
   const message = status === 'unknown' ? 'Your membership records are unavailable. Please try again.'
     : status === 'granted' ? 'Your granted S26 membership is already registered. No payment is required to register it again.'

@@ -14,7 +14,7 @@ import { sanitizeInitiationAnalytics } from '@/lib/initiation-analytics'
 import { queueInitiationCheckoutAnalytics, sendPendingInitiationAnalytics, validInitiationAnalyticsSession } from '@/lib/initiation-analytics-outbox'
 import { prepareInitiationBundleSwitch } from '@/lib/initiation-checkout-switch'
 import { afterCheckout } from '@/lib/checkout-after'
-import { initiationCheckoutAccess } from '@/lib/initiation-checkout-access'
+import { hasActiveShopifyReservation, initiationCheckoutAccess } from '@/lib/initiation-checkout-access'
 import { shopifyLiveConfig } from '@/lib/shopify-live-config'
 import { createShopifyLiveCheckout } from '@/lib/shopify-live-checkout'
 
@@ -50,7 +50,7 @@ export async function createInitiationCheckout(request: Request, origin: string,
       admin.rpc('eligible_legacy_initiation_order', { p_user: user.id }),
       admin.rpc('eligible_initial_initiation_order', { p_user: user.id }),
       admin.from('initiation_batches').select('stripe_livemode').eq('label', 'S26').single(),
-      admin.from('initiation_orders').select('*').eq('user_id', user.id).in('status', ['pending', 'payment_review', 'disputed']).maybeSingle(),
+      admin.from('initiation_orders').select('*').eq('user_id', user.id).in('status', ['pending', 'payment_review', 'disputed']),
       admin.from('voyager_profiles').select('role').eq('id', user.id).maybeSingle(),
       checkoutPath === 'signed_in' ? Promise.all([
         admin.rpc('initiation_availability'),
@@ -63,10 +63,13 @@ export async function createInitiationCheckout(request: Request, origin: string,
     if (legacyError) throw legacyError
     const { data: initialId, error: initialError } = initialResult
     if (initialError) throw initialError
+    const { data: previousOrders, error: previousError } = previousResult
+    if (previousError) throw previousError
     if (accessRecords) {
       if (accessRecords.some(record => record.error)) throw new Error('Checkout records are unavailable')
       const [supply, entitlement, member] = accessRecords.map(record => record.data)
       const access = initiationCheckoutAccess({ supply, entitlement, member, ownsInitial: !!initialId || !!legacyId,
+        hasReservation: hasActiveShopifyReservation(previousOrders),
         configError: initiationConfigurationError(initialId || legacyId ? 'legacy_upgrade' : 'initial') })
       // A page rendered for a guest must first show an existing member/owner their own options.
       // This flag only prevents checkout; it cannot skip any authorization or price validation.
@@ -77,14 +80,13 @@ export async function createInitiationCheckout(request: Request, origin: string,
     const kind = legacyId || initialId ? 'legacy_upgrade' : body?.bundle === 'initial' ? 'initial' : 'standard'
     const offerConfigError = initiationConfigurationError(kind)
     if (offerConfigError) return NextResponse.json({ error: offerConfigError }, { status: 503 })
-    const { data: previousOrder, error: previousError } = previousResult
-    if (previousError) throw previousError
-    const shopifyPending = previousOrder?.price_id?.startsWith('price_shopify_')
+    const shopifyPending = previousOrders.some((order: { price_id: string }) => order.price_id.startsWith('price_shopify_'))
+    const previousOrder = previousOrders.find((order: { price_id: string }) => !order.price_id.startsWith('price_shopify_'))
     if (shopifyPending && (process.env.INITIATION_SHOPIFY_LIVE_ENABLED !== 'true' || kind === 'legacy_upgrade')) {
       return NextResponse.json({ error: 'An existing Shopify checkout is still being reconciled.' }, { status: 409 })
     }
     if (kind !== 'legacy_upgrade' && process.env.INITIATION_SHOPIFY_LIVE_ENABLED === 'true'
-      && (!previousOrder || shopifyPending)) {
+      && !previousOrder) {
       const config = shopifyLiveConfig()
       if (!config) return NextResponse.json({ error: 'Checkout is temporarily unavailable.' }, { status: 503 })
       return await createShopifyLiveCheckout(config, request, origin, user, body, checkoutPath, kind)

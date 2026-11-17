@@ -7,13 +7,14 @@ import { emailCheckoutGate, emailCheckoutOwnership, INITIATION_ACTIVATION_NEXT }
 import { findAccount, createUnactivatedAccount, sendActivationEmail } from '@/lib/activation'
 import { afterCheckout } from '@/lib/checkout-after'
 import { requestClientIp } from '@/lib/initiation-meta-attribution'
+import { hasActiveShopifyReservation } from '@/lib/initiation-checkout-access'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * Guest checkout with an email only.
  * - An activated account (password set) answers `{ next: 'password' }`: the dialog signs in, then checks out signed in.
- * - Any other email gets an activation link and goes straight to Stripe with that email; the browser stays signed out.
+ * - Any other email gets an activation link and goes straight to checkout with that email; the browser stays signed out.
  * - Over the per-IP limit it gets the activation link only (`{ next: 'activation_sent' }`) and pays after setting a password.
  * An unactivated account that already bought gets the activation link too, and either `{ next: 'already_member' }`
  * (nothing to pay) or `{ next: 'upgrade' }` (only the $460 upgrade, which the buyer confirms with `upgrade: true`).
@@ -46,7 +47,12 @@ export async function POST(request: Request) {
     const { data: supply, error: supplyError } = await admin.rpc('initiation_availability')
     if (supplyError || !supply) throw supplyError ?? new Error('Initiation inventory is unavailable')
     if (!supply.open) return NextResponse.json({ error: 'Initiation checkout is not open yet.' }, { status: 409 })
-    if (supply.remaining <= 0 && ownership !== 'upgrade') return NextResponse.json({ error: 'All S26 seats are currently allocated or reserved.' }, { status: 409 })
+    const previous = existing && process.env.INITIATION_SHOPIFY_LIVE_ENABLED === 'true'
+      ? await admin.from('initiation_orders').select('status,price_id,expires_at').eq('user_id', existing.id).eq('status', 'pending')
+      : null
+    if (previous?.error) throw previous.error
+    const hasReservation = hasActiveShopifyReservation(previous?.data ?? [])
+    if (supply.remaining <= 0 && ownership !== 'upgrade' && !hasReservation) return NextResponse.json({ error: 'All S26 seats are currently allocated or reserved.' }, { status: 409 })
     const confirmedUpgrade = ownership === 'upgrade' && body?.upgrade === true
     if (ownership === 'upgrade' && !confirmedUpgrade) {
       const sent = await activate()
