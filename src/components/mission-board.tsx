@@ -57,6 +57,9 @@ function MissionDialog({ mission, signedIn, archived, close }: {
           ? { ...current, accepted: true } : current)
       } else if (result === 'locked' || result === 'expired') {
         setBriefing({ kind: result })
+      } else if (result === 'console_required') {
+        setBriefing(current => current && current !== 'error' && current.kind === 'available'
+          ? { ...current, canAccept: false } : current)
       } else {
         setAcceptError(true)
       }
@@ -70,22 +73,23 @@ function MissionDialog({ mission, signedIn, archived, close }: {
   const available = briefing && briefing !== 'error' && briefing.kind === 'available' ? briefing : null
   const locked = !archived && (!signedIn || (briefing !== 'error' && briefing?.kind === 'locked'))
   const expired = archived || (briefing !== 'error' && briefing?.kind === 'expired')
-  const readError = briefing === 'error' || (available && !available.canAccept)
+  const readError = briefing === 'error' || (briefing && briefing.kind === 'unavailable')
   return (
     <ArchiveSheet open onClose={close} title={mission.id} busy={busy} footer={
       <div className={styles.dialogFooter}>
         {locked && <>
-          <p className={styles.requirement}>Multiverse Console required.</p>
+          <p className={styles.requirement}>Voyager membership is required to open this briefing.</p>
           <ArchiveLinkButton href="/voyager-initiation" variant="primary" fullWidth>
             Go to Voyager Initiation <ArrowRight size={18} aria-hidden />
           </ArchiveLinkButton>
         </>}
-        {!locked && !expired && !briefing && <p role="status">Checking Console access…</p>}
+        {!locked && !expired && !briefing && <p role="status">Checking Voyager access…</p>}
         {expired && <p role="status">This mission has closed.</p>}
         {readError && <>
           <p role="status">Mission access could not be checked.</p>
           <ArchiveButton variant="secondary" onClick={() => { setBriefing(null); setAttempt(value => value + 1) }}>Try again</ArchiveButton>
         </>}
+        {available && !available.canAccept && <p className={styles.requirement}>Bind a Multiverse Console to accept this mission.</p>}
         {available?.canAccept && (available.accepted
           ? <p role="status">Mission accepted.</p>
           : <ArchiveButton loading={busy} onClick={accept}>Accept mission</ArchiveButton>)}
@@ -94,9 +98,9 @@ function MissionDialog({ mission, signedIn, archived, close }: {
     }>
       <div className={styles.dialogAuthor}><MissionAvatar author={mission.author} size={36} /><strong>{mission.author.name}</strong></div>
       <section className={styles.dialogBriefing}>
-        <h3 className={styles.previewLabel}>{available ? 'Briefing' : 'Briefing Preview'}</h3>
-        <p>{mission.preview}</p>
-        {mission.image && <figure className={styles.briefingImage}>
+        <h3 className={styles.previewLabel}>{available ? 'Briefing' : 'Teaser'}</h3>
+        <p>{available || (archived && mission.preview) ? mission.preview : `${mission.teaser.before}${mission.teaser.frequency}${mission.teaser.after}`}</p>
+        {(available || archived) && mission.image && <figure className={styles.briefingImage}>
           <SmartImage
             src={mission.image.src}
             alt={mission.image.alt}

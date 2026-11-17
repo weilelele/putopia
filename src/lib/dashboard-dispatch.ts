@@ -1,6 +1,7 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient } from './supabase/server'
+import { getMyDigitalAccessRole } from './actions/digital-access'
 import type { RoundViewer } from './dreamcatcher-round-model'
 import { dashboardDispatch, latestDispatchRounds, type DispatchTask, type DispatchThread, type DispatchWorld, type DispatchRound } from './dashboard-dispatch-model'
 
@@ -19,7 +20,7 @@ export async function readDashboardDispatch(viewerInput: RoundViewer | Promise<R
   const db = createAdminClient() as SupabaseClient
   // Independent datasets start together. No owner profiles, assets, distributions
   // or personal world library are needed to decide whether an event is open.
-  const [tasks, threads, rounds, { viewer, responses }] = await Promise.all([
+  const [tasks, threads, rounds, { viewer, responses }, roundViewer] = await Promise.all([
     readRows<DispatchTask>((from, to) => db.from('signal_tasks')
       .select('id,thread_id,day_index,published_at,dreamcatcher_round_id').eq('is_published', true)
       .not('thread_id', 'is', null).order('id').range(from, to)),
@@ -32,6 +33,7 @@ export async function readDashboardDispatch(viewerInput: RoundViewer | Promise<R
       responses: viewer ? await readRows<{ task_id: string }>((from, to) => db.from('signal_responses')
         .select('task_id').eq('user_id', viewer.id).order('id').range(from, to)) : [],
     })),
+    Promise.resolve(viewerInput).then(async viewer => viewer ? { id: viewer.id, role: await getMyDigitalAccessRole().catch(() => 'applicant') } : null),
   ])
   const worldIds = [...new Set([...threads.flatMap(thread => thread.world_id ? [thread.world_id] : []), ...rounds.map(round => round.world_id)])]
   const roundIds = latestDispatchRounds(rounds, tasks).filter(round => ['voting_open', 'awaiting_initiator_feedback'].includes(round.status)).flatMap(round => round.task_id ? [round.task_id] : [])
@@ -49,5 +51,5 @@ export async function readDashboardDispatch(viewerInput: RoundViewer | Promise<R
         .select('task_id').in('task_id', roundIds.slice(start, start + 100)).order('id').range(from, to)))
     } })(),
   ])
-  return dashboardDispatch({ tasks, threads, rounds, worlds, responded: responses.map(response => response.task_id), roundResponses, viewer, now: Date.now() })
+  return dashboardDispatch({ tasks, threads, rounds, worlds, responded: responses.map(response => response.task_id), roundResponses, viewer, roundViewer, now: Date.now() })
 }

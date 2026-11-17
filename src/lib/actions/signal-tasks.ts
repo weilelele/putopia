@@ -12,6 +12,8 @@ import { getRequestIdentity } from '@/lib/request-auth'
  * convention — see admin/layout.tsx).
  */
 import { getRoundInvestigations } from '@/lib/dreamcatcher-rounds'
+import { getMyDigitalAccessRole } from './digital-access'
+import { hasVoyagerAccess } from '@/lib/digital-access'
 import { createAdminClient } from '@/lib/supabase/server'
 import { listFrequencies as cosmoListFrequencies, sampleBandAssets, getBandAssets as cosmoGetBandAssets } from '@/lib/cosmo'
 import type { CosmoFrequency } from '@/lib/cosmo'
@@ -611,6 +613,12 @@ async function currentUser(): Promise<{ id: string; role: string } | null> {
   return { id: user.id, role: data?.role ?? 'applicant' }
 }
 
+async function parallaxViewer(viewer: Awaited<ReturnType<typeof currentUser>>) {
+  if (!viewer) return null
+  const role = await getMyDigitalAccessRole().catch(() => 'applicant' as const)
+  return { id: viewer.id, role }
+}
+
 /**
  * Member-facing feed for a day's puzzles. Respects visibility rules:
  *  - everyone sees published tasks, their selected assets, and participant counts;
@@ -773,6 +781,7 @@ export async function submitSignalResponse(
     .maybeSingle()
   if (!task?.is_published) return { ok: false, error: 'Task is not published' }
   if (task.dreamcatcher_round_id) {
+    if (!hasVoyagerAccess((await parallaxViewer(me))?.role)) return { ok: false, error: 'Only Voyagers can respond to Parallax Array signals.' }
     const { error } = await admin.rpc('respond_dreamcatcher_round', { p_task: taskId, p_asset: assetId, p_user: me.id })
     return error ? { ok: false, error: error.message } : { ok: true }
   }
@@ -1603,7 +1612,7 @@ export async function getInvestigationFeed(): Promise<InvestigationFeedData> {
   // Architects see the same member view here — future (not-yet-revealed) days are
   // hidden. The full authoring preview lives in /admin/signal-tasks.
 
-  const roundInvestigations = await getRoundInvestigations(me)
+  const roundInvestigations = await getRoundInvestigations(await parallaxViewer(me))
   const now = new Date()
 
   const { data: threadData } = await admin
@@ -1675,7 +1684,7 @@ export async function getWorldInvestigation(worldId: string): Promise<WorldInves
   const admin = createAdminClient() as DB
   const me = await currentUser()
   const role = me?.role ?? null
-  const rounds = await getRoundInvestigations(me, worldId, true)
+  const rounds = await getRoundInvestigations(await parallaxViewer(me), worldId, true)
   if (rounds.length) return { investigation: rounds[0], role, loggedIn: !!me }
   // Architects see the same member view here — future (not-yet-revealed) days are
   // hidden. The full authoring preview lives in /admin/signal-tasks.
@@ -1857,7 +1866,7 @@ export async function getDispatchDashboard(publicOverview = false): Promise<Disp
   const yourWorlds = ((mine ?? []) as { id: string; name: string; lifecycle_state: WorldLifecycle }[])
     .map((w) => ({ id: w.id, name: w.name, stage: worldStage(w.lifecycle_state) }))
 
-  const roundInvestigations = await getRoundInvestigations(me)
+  const roundInvestigations = await getRoundInvestigations(await parallaxViewer(me))
   for (const inv of roundInvestigations) {
     const day = inv.days.at(-1)
     if (!day || !inv.worldId) continue

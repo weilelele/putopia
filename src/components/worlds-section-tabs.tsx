@@ -3,11 +3,11 @@ import Link from 'next/link'
 export type WorldsSection = 'observe' | 'explore'
 
 const SECTIONS: { id: WorldsSection; label: string; href: string }[] = [
-  { id: 'observe', label: 'OBSERVE', href: '/worlds' },
-  { id: 'explore', label: 'EXPLORE', href: '/worlds/live' },
+  { id: 'explore', label: 'EXPLORE', href: '/worlds' },
+  { id: 'observe', label: 'OBSERVE', href: '/worlds?section=observe' },
 ]
 
-/** Shared switcher for the two Worlds surfaces: Observe (browse established worlds, default entry) and Explore (Dreamcatcher: initial visions + dispatch tasks). */
+/** Explore is the default Worlds entry; Observe retains the established-world archive. */
 export function WorldsSectionTabs({ active }: { active: WorldsSection }) {
   return (
     <nav className="archive-tabs" aria-label="Worlds sections">

@@ -10,12 +10,17 @@ describe('round participation',()=>{
     expect(roundVoteAccess({...input,now:Date.parse(closesAt)})).toEqual({canVote:false,initiatorOnly:true,publicOpen:false})
     expect(roundVoteAccess({...input,now:Date.parse(closesAt),viewer:{id:'architect',role:'architect'}}).canVote).toBe(false)
   })
-  it('lets only the original submitter bypass the former role scope after zero feedback',()=>{
+  it('lets only an active Voyager who originally submitted continue after zero feedback',()=>{
     const now=Date.parse(closesAt)+1
-    expect(roundVoteAccess({...input,now,viewer:{id:'original',role:'applicant'}}).canVote).toBe(true)
+    expect(roundVoteAccess({...input,now,viewer:{id:'original',role:'voyager'}}).canVote).toBe(true)
+    expect(roundVoteAccess({...input,now,viewer:{id:'original',role:'applicant'}}).canVote).toBe(false)
     expect(roundVoteAccess({...input,now,viewer:{id:'other',role:'voyager'}}).canVote).toBe(false)
     expect(roundVoteAccess({...input,now,viewer:null}).canVote).toBe(false)
     expect(roundVoteAccess({...input,now,participantCount:1,viewer:{id:'original',role:'applicant'}}).canVote).toBe(false)
+  })
+  it('keeps published signals readable during a Voyager-only response window',()=>{
+    expect(roundVoteAccess({...input,voteScope:'all',viewer:{id:'reader',role:'applicant'}}))
+      .toEqual({canVote:false,initiatorOnly:false,publicOpen:true})
   })
   it('never reopens ended, cancelled or not-yet-published rounds',()=>{
     for (const status of ['settled','cancelled','queued','processing'] as const) {

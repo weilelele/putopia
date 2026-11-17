@@ -1,6 +1,5 @@
 'use client'
 import { PublisherIdentity } from '@/components/news-content'
-import { AuthPromptSheet } from '@/components/auth-prompt-sheet'
 import { SignalVoteSheet } from './signal-vote-sheet'
 import { deviceQueueOrder } from '@/lib/dreamcatcher-queue-policy'
 import { roundLabel } from '@/lib/dreamcatcher-round-model'
@@ -56,12 +55,14 @@ export function WorldsLiveRoom({
   liveVideoLibrary,
   liveVideoRoomSlug,
   loggedIn,
+  canUseArray,
 }: {
   rooms: DreamcatcherRoom[]
   investigations: PublicInvestigation[]
   liveVideoLibrary: DreamcatcherLiveVideoLibrary | null
   liveVideoRoomSlug: string
   loggedIn: boolean
+  canUseArray: boolean
 }) {
   const router = useRouter()
   const [selectedSlug, setSelectedSlug] = useSessionPreference('mc:view:worlds:room', rooms[0]?.slug ?? '')
@@ -78,7 +79,6 @@ export function WorldsLiveRoom({
   const [statusMessage, setStatusMessage] = useState('')
   const [pendingChoice, setPendingChoice] = useState('')
   const [voteError, setVoteError] = useState('')
-  const [authPromptOpen, setAuthPromptOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const selected = rooms.find((room) => room.slug === selectedSlug) ?? rooms[0]
   const [now, setNow] = useState(rooms[0]?.observedAt ?? 0)
@@ -120,7 +120,7 @@ export function WorldsLiveRoom({
 
   function submitDream(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!dream.trim() || queueFull || isPending || submissionUnknown) return
+    if (!canUseArray || !dream.trim() || queueFull || selected.status === 'offline' || isPending || submissionUnknown) return
     setStatusMessage('')
     startTransition(async () => {
       try {
@@ -147,7 +147,7 @@ export function WorldsLiveRoom({
   const dispatchDay = dispatch?.days.findLast((day) => !day.task.closed) ?? dispatch?.days.at(-1)
 
   function confirmSignal() {
-    if (!dispatchDay || !pendingChoice || isPending || submissionUnknown) return
+    if (!canUseArray || !dispatchDay?.task.canRespond || !pendingChoice || isPending || submissionUnknown) return
     setVoteError('')
     startTransition(async () => {
       try {
@@ -201,8 +201,10 @@ export function WorldsLiveRoom({
           </p>
           <div className={styles.dreamActionRow}>
             <ArchiveButton variant="ghost" aria-label="How this Parallax Array works" className={styles.infoButton} onClick={() => setInfoOpen(true)} type="button"><CircleHelp aria-hidden size={20} /></ArchiveButton>
-            <ArchiveButton variant="primary" className={styles.primaryButton} disabled={queueFull || selected.status === 'offline'} onClick={() => { setSubmissionKey(crypto.randomUUID()); setSubmitOpen(true) }} type="button">{queueFull ? 'CHOOSE ANOTHER DEVICE' : 'SHARE AN OBSERVATION'}</ArchiveButton>
+            {canUseArray ? <ArchiveButton variant="primary" className={styles.primaryButton} disabled={queueFull || selected.status === 'offline'} onClick={() => { setSubmissionKey(crypto.randomUUID()); setSubmitOpen(true) }}>Share an observation</ArchiveButton>
+              : <ArchiveLinkButton href="/voyager-initiation" variant="secondary">Voyager Initiation</ArchiveLinkButton>}
           </div>
+          {!canUseArray ? <p className={styles.formStatus}>Voyagers can submit observations to the Parallax Array.</p> : null}
           {statusMessage ? <p aria-live="polite" className={styles.formStatus}>{statusMessage}</p> : null}
         </section>
 
@@ -249,15 +251,13 @@ export function WorldsLiveRoom({
 
 
       </div>
-      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}><p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. Signals can take longer to arrive; a device round does not guarantee signals within that time.</p><p>Your observation leaves the queue when device processing finishes. Follow its progress in My Observations while signals are on their way. When signals arrive, they become available for a 36-hour community vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>You can submit another observation after device processing finishes, even while earlier signals or votes are pending. One new observation may wait for or use this device at a time. Returning rounds keep their place in the same queue. The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
+      {infoOpen ? <ArchiveSheet open onClose={() => setInfoOpen(false)} title="How the Parallax Array works" dirty={false} busy={false}><div className={styles.dialogBody}><p>The Parallax Array receives signals from worlds adjacent to ours. Your observations help bring them into focus.</p><p>This Parallax Array processes one world at a time in fixed rounds of roughly {selected.roundDurationMinutes} minutes. Signals can take longer to arrive; a device round does not guarantee signals within that time.</p><p>Your observation leaves the queue when device processing finishes. Follow its progress in My Observations while signals are on their way. When signals arrive, they become available for a 36-hour Voyager vote. With at least one response, the observation returns to this device. If nobody responds, only the original submitter can choose later to start the next round.</p><p>You can submit another observation after device processing finishes, even while earlier signals or votes are pending. One new observation may wait for or use this device at a time. Returning rounds keep their place in the same queue. The waiting queue has a fixed capacity. If this device stops accepting observations, choose another location.</p></div></ArchiveSheet> : null}
 
-      {submitOpen ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Share an observation" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}>{loggedIn ? <form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT DID YOU OBSERVE?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe something you saw, remembered, or experienced…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form> : <div className={styles.dialogBody}><p>Applicant access or above is required to submit to a Parallax Array.</p><Link className={styles.primaryButton} href="/login">LOG IN TO CONTINUE</Link></div>}</ArchiveSheet> : null}
+      {submitOpen && canUseArray ? <ArchiveSheet open onClose={() => setSubmitOpen(false)} title="Share an observation" dirty={!submissionUnknown && !!dream.trim()} busy={isPending}><form className={styles.submissionForm} onSubmit={submitDream}><label htmlFor="dream-description">WHAT DID YOU OBSERVE?</label><ArchiveTextarea autoFocus className={styles.textArea} id="dream-description" maxLength={2000} minLength={20} onChange={(event) => setDream(event.target.value)} placeholder="Describe something you saw, remembered, or experienced…" rows={5} value={dream} /><ArchiveButton variant="primary" className={styles.primaryButton} disabled={dream.trim().length < 20 || queueFull || selected.status === 'offline' || isPending || submissionUnknown} type="submit">{isPending ? 'JOINING…' : `SUBMIT TO ${selected.city.toUpperCase()}`}</ArchiveButton>{statusMessage ? <p role="status" className={styles.formStatus}>{statusMessage}</p> : null}{submissionUnknown && <ArchiveButton variant="primary" type="button" className={styles.primaryButton} onClick={() => window.location.reload()}>Reload and check queue</ArchiveButton>}</form></ArchiveSheet> : null}
 
-      {detail && dispatch ? <SignalVoteSheet investigation={dispatch} day={dispatchDay} loggedIn={loggedIn} pendingChoice={pendingChoice}
-        onChoose={setPendingChoice} onConfirm={confirmSignal} onRequireAuth={() => setAuthPromptOpen(true)} onClose={() => setDetail(null)}
+      {detail && dispatch ? <SignalVoteSheet investigation={dispatch} day={dispatchDay} canUseArray={canUseArray} pendingChoice={pendingChoice}
+        onChoose={setPendingChoice} onConfirm={confirmSignal} onClose={() => setDetail(null)}
         busy={isPending} error={voteError} unknown={submissionUnknown} /> : null}
-      <AuthPromptSheet open={authPromptOpen} onClose={() => setAuthPromptOpen(false)} redirect="/worlds/live"
-        message="Voting is open to registered members. Create a free account to cast your signal and follow how the vote turns out." />
     </main>
   )
 }

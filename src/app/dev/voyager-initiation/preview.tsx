@@ -38,7 +38,7 @@ export function InitiationPreview({ name, deviceSource, paymentPlacement, briefi
   const snapshot = { ...fixture(name), ...(calibrationIncomplete ? { calibrated: false } : {}) }
   const [completed, setCompleted] = useState(snapshot.calibrated)
   const services: VoyagerQuizServices = {
-    load: async () => ({ userId: snapshot.userId, completed }),
+    load: async () => ({ userId: snapshot.userId, completed, canShareObservation: snapshot.role === 'voyager' || snapshot.role === 'architect' }),
     save: async raw => {
       if (!parseVoyagerIntake(raw)) return { ok: false, error: 'Please complete all five questions.' }
       setCompleted(true)

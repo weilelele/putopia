@@ -1,4 +1,5 @@
 /** Pure public presentation policy; database RPCs enforce the same rules. */
+import { hasVoyagerAccess } from './digital-access'
 export type RoundStatus = 'waiting_capacity' | 'queued' | 'processing' | 'awaiting_assets' | 'voting_open' | 'awaiting_initiator_feedback' | 'settled' | 'cancelled'
 export type RoundViewer = { id: string; role: string } | null
 export function roundVoteAccess(input: {
@@ -11,9 +12,10 @@ export function roundVoteAccess(input: {
   const publicOpen = active && opened && input.now < deadline
   const initiatorOnly = active && opened && input.now >= deadline && input.participantCount === 0
   const me = input.viewer
-  const eligible = !!me && (me.role === 'architect' || input.voteScope === 'all' ||
-    (input.voteScope === 'self' && me.id === input.discovererId) || (input.voteScope === 'voters' && me.role === 'voyager'))
-  return { canVote: publicOpen ? eligible : initiatorOnly && me?.id === input.initiatorId, initiatorOnly, publicOpen }
+  const member = !!me && hasVoyagerAccess(me.role)
+  const eligible = member && (me.role === 'architect' || input.voteScope === 'all' || input.voteScope === 'voters' ||
+    (input.voteScope === 'self' && me.id === input.discovererId))
+  return { canVote: publicOpen ? eligible : member && initiatorOnly && me.id === input.initiatorId, initiatorOnly, publicOpen }
 }
 export function roundLabel(status: string, roundNumber: number, generationStatus?: string): string {
   const labels: Record<string, string> = {
