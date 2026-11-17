@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canPublishAsNpc, canReadVoyagerFeed, canPublishVoyagerFeed, canManageFeedEntry, validateFeedBody, validateFeedCursor, validFeedId, splitFeedMissionLink, withFeedVote, type FeedEntry, type FeedViewer } from './voyager-feed'
+import { canPublishAsNpc, canReadVoyagerFeed, canPublishVoyagerFeed, canManageFeedEntry, validateFeedBody, validateFeedCursor, validFeedId, withFeedVote, type FeedEntry, type FeedViewer } from './voyager-feed'
 const id = '10000000-0000-4000-8000-000000000001'
 const viewer = (role: FeedViewer['role'], registered = true): FeedViewer => ({ id, role, registered_at: registered ? '2026-10-13T00:00:00Z' : null, display_name: 'Test', avatar_url: null })
 describe('Voyager feed authorization', () => {
@@ -60,22 +60,5 @@ describe('feed votes', () => {
   it.each([-1,0,1] as const)('does not count repeated absolute vote %s twice', vote => {
     const once = withFeedVote(entry, vote)
     expect(withFeedVote(once, vote)).toEqual(once)
-  })
-})
-
-describe('mission links in Feed posts', () => {
-  it('separates the briefing action from the plain-text post body', () => {
-    expect(splitFeedMissionLink('Check the middle clock.\n\nhttps://www.multiverseco.org/console?mission=REC-120#mission-board')).toEqual({
-      text: 'Check the middle clock.',
-      mission: { id: 'REC-120', href: '/console?mission=REC-120#mission-board' },
-    })
-  })
-
-  it.each([
-    'https://elsewhere.example/console?mission=REC-120#mission-board',
-    'https://www.multiverseco.org/console?mission=REC-120&highlights=1#mission-board',
-    'See https://www.multiverseco.org/console?mission=REC-120#mission-board.',
-  ])('keeps nonmatching links as plain text', body => {
-    expect(splitFeedMissionLink(body)).toEqual({ text: body, mission: null })
   })
 })

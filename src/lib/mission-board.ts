@@ -9,7 +9,7 @@ const series = {
 } as const
 
 type Series = keyof typeof series
-type MissionImage = { src: string; alt: string; width: number; height: number; caption: string }
+type MissionImage = { src: string; alt: string; width: number; height: number }
 
 type Scenario = {
   series: Series
@@ -122,14 +122,12 @@ const weeklyMedia: Partial<Record<string, MissionImage>> = {
     alt: 'The Console’s round screen shows a fuzzy amber light over the dark outline of a bridge.',
     width: 720,
     height: 540,
-    caption: 'Console concept · Bridge signal',
   },
   'OBS-205': {
     src: '/assets/mission-board/obs-205-console-film-soft.webp',
     alt: 'The Console’s round screen shows a faint window-like blur and a few indistinct shapes.',
     width: 720,
     height: 540,
-    caption: 'Console concept · Window signal',
   },
 }
 
@@ -153,6 +151,7 @@ function getEdition(now: number) {
   const core = editions[week % editions.length]
   const extra = pickExtraSeries(week)
   const scenarios = extra ? [...core, additionalMissions[extra]] : core
+  // Filter after assigning numbers so withdrawing an assignment cannot reassign its ID.
   const missions = scenarios.map(scenario => {
     const type = scenario.series
     const { start, ...author } = series[type]
@@ -173,7 +172,7 @@ function getEdition(now: number) {
         : undefined,
       briefing: withFrequency(cycle % 2 ? scenario.briefing + ' ' + scenario.followUp : scenario.briefing),
     }
-  })
+  }).filter(mission => mission.id !== 'OBS-206')
   return { startsAt: new Date(FIRST_EDITION + week * WEEK_MS).toISOString(), missions }
 }
 
