@@ -31,7 +31,7 @@ export function MembershipPreviewPurchase({ preview, renderOfferImages }: {
       <legend className="sr-only">{ownership === 'none' ? 'Choose a Voyager option' : 'Choose your upgrade'}</legend>
       {offers.map(offer => {
         const chosen = selected.target === offer.target
-        const showDetail = offer.target !== 'membership' && (!chosen || ownership === 'initial')
+        const showDetail = offer.target === 'membership' || !chosen || ownership === 'initial'
         return <label className={`${styles.bundleCard} ${chosen ? styles.bundleSelected : ''}`} key={offer.target}>
           <input type="radio" name="membership-offer" value={offer.target} checked={chosen}
             onChange={() => setTarget(offer.target)} aria-labelledby={`membership-name-${offer.target} membership-price-${offer.target}`}
@@ -42,8 +42,9 @@ export function MembershipPreviewPurchase({ preview, renderOfferImages }: {
               <strong id={`membership-price-${offer.target}`}>{dollars(offer.amount)}</strong>
             </span>
             {showDetail && <span className={styles.bundleDetail} id={`membership-detail-${offer.target}`}>
-              {offer.target === 'initial' ? 'Packs 1–2'
-                : ownership === 'initial' ? 'Console + Pack 4' : 'Packs 1–4 · Console included'}
+              {offer.target === 'membership' ? 'No physical packs'
+                : offer.target === 'initial' ? 'Packs 1–2'
+                  : ownership === 'initial' ? 'Console + Pack 4' : 'Packs 1–4 · Console included'}
             </span>}
             {offer.credit > 0 && <span className={styles.bundleNote}>{dollars(offer.listAmount)} − {dollars(offer.credit)} already paid</span>}
           </span>
