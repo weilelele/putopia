@@ -1,8 +1,8 @@
 # Mission Board Console references · Week of 2026-11-16
 
-The two images illustrate original fictional commissions. No live Intel, comment, or Feed post is their source. The device definition, character rules, and internal reference checks are recorded in [the Mission Board examples](mission-board-examples.zh.md#测试口径). The captions identify these as Console concepts.
+The two Console concept images illustrate original fictional commissions. No live Intel, comment, or Feed post is their source. The device definition, character rules, and internal reference checks are recorded in [the Mission Board examples](mission-board-examples.zh.md#测试口径).
 
-The player can see the film-style images in the public briefing dialogs. The Feed companion posts use text and link to those dialogs. The images were made with built-in ImageGen and resized to WebP. The first set is 1080×810, and the night and film revisions are 720×540.
+The player can see the film-style images in the public briefing dialogs. The Feed companion posts contain text only. The images were made with built-in ImageGen and resized to WebP. The first set is 1080×810, and the night and film revisions are 720×540.
 
 ## Hardware references
 

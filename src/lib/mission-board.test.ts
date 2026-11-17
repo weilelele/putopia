@@ -9,7 +9,7 @@ describe('Mission Board editions', () => {
     const second = getPublicMissionEdition(sunday + 1)
     expect(first.missions.map(mission => mission.id)).toEqual(['REC-118', 'CNT-074', 'OBS-203'])
     expect(second.startsAt).toBe('2026-11-15T16:00:00.000Z')
-    expect(second.missions).toHaveLength(4)
+    expect(second.missions.map(mission => mission.id)).toEqual(['REC-120', 'CNT-076', 'OBS-205'])
     expect(second.missions.some(mission => first.missions.some(old => old.id === mission.id))).toBe(false)
   })
 
@@ -39,6 +39,12 @@ describe('Mission Board editions', () => {
     }
     expect(getArchivedMissionPreview('OBS-204', thirdEdition)).toBeUndefined()
     expect(getArchivedMissionPreview('REC-99999', thirdEdition)).toBeUndefined()
+  })
+
+  it('keeps the withdrawn mission unavailable both during and after the edition', () => {
+    const startsAt = sunday + 1
+    expect(getCurrentMissionBriefing('OBS-206', startsAt)).toBeNull()
+    expect(getArchivedMissionPreview('OBS-206', startsAt + 7 * 24 * 60 * 60 * 1000)).toBeUndefined()
   })
 
   it('keeps all three types and can select any type for the optional fourth slot', () => {
