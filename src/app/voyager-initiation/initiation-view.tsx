@@ -142,7 +142,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const briefingAuto = !pilotCheckout && !guestPilotUrl && storedBriefing !== 'server' && storedBriefing !== 'unavailable'
     && shouldAutoOpenBriefing({ status, paymentStatus: snapshot.paymentStatus, checkoutCanceled, stored: storedBriefing || null })
   const briefingOpen = briefing === 'replay' || briefing === 'link' || (briefing === 'idle' && briefingAuto)
-  const soldOut = !snapshot.ownsSeat && (availability.remaining === 0 || (availability.initiated !== null && availability.initiated >= availability.capacity))
+  const fullyClaimed = availability.initiated !== null && availability.initiated >= availability.capacity
+  const soldOut = !snapshot.ownsSeat && !snapshot.hasCheckoutReservation && (fullyClaimed || (!!snapshot.userId && availability.remaining === 0))
   const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind, userId: snapshot.userId,
     internal: !!pilotCheckout || !!guestPilotUrl || snapshot.role === 'architect' || analyticsEnvironment === 'fixture', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
 

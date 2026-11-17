@@ -26,6 +26,7 @@ export interface InitiationSnapshot {
   consoleClaim: { eligible: boolean; claimed: boolean; href: string | null; batch?: { slug: string; name: string } | null }
   offer?: { kind: InitiationOrderKind; amount: number; currency: 'usd' }
   ownsSeat?: boolean
+  hasCheckoutReservation?: boolean
   legacyPackPurchased: boolean
   paymentStatus: InitiationPaymentStatus
   error: string | null

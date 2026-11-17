@@ -25,10 +25,18 @@ export async function createShopifyLiveCheckout(config: Config, request: Request
   const variantId = config[kind]
   const deviceSource = deviceSourcePath(typeof body?.from === 'string' ? body.from : null)
   const admin = createAdminClient()
-  const reservation = await admin.rpc('reserve_initiation_shopify' as never, {
+  const reservation = await admin.rpc('reserve_initiation_shopify_v2' as never, {
     p_user: user.id, p_shop: config.shop, p_variant_id: variantId, p_email: email, p_kind: kind, p_device_source: deviceSource,
   } as never)
-  if (reservation.error) return NextResponse.json({error: 'Check whether you already have a pending checkout, then try again.'},{status:409})
+  if (reservation.error) {
+    if (reservation.error.code !== 'P0001') throw reservation.error
+    const error = reservation.error.message === 'An existing payment must finish reconciliation'
+      ? 'An existing payment is being confirmed. Refresh to check its status before starting another payment.'
+      : reservation.error.message === 'S26 seats are fully reserved'
+        ? 'All S26 seats are currently allocated or reserved.'
+        : 'Checkout is unavailable. Refresh Initiation and try again.'
+    return NextResponse.json({ error }, { status: 409 })
+  }
   const order = reservation.data as { id:string; amount:number } | null
   if (!order?.id || order.amount !== INITIATION_PRICES[kind].amount) throw new Error('Shopify reservation quote did not match')
 

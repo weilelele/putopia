@@ -9,7 +9,7 @@ import {
 
 type Config = NonNullable<ReturnType<typeof shopifyLiveConfig>>
 type EventRow = { order_gid:string; event_id:string }
-type Binding = { order_id:string; email:string; variant_id:string; shopify_order_id:string|null; authorization_id:string|null }
+type Binding = { order_id:string; email:string; variant_id:string; shopify_order_id:string|null; authorization_id:string|null; superseded_by:string|null }
 type Source = { user_id:string; order_kind:'initial'|'standard'; status:string }
 
 async function adminQuery(config: Config) {
@@ -35,17 +35,33 @@ async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof a
   const reservationId = shopifyLiveReservationId(reference)
   if (!reservationId) return
   const [linked, source] = await Promise.all([
-    admin.from('initiation_shopify_checkouts' as never).select('order_id,email,variant_id,shopify_order_id,authorization_id').eq('order_id',reservationId).eq('shop',config.shop).maybeSingle(),
+    admin.from('initiation_shopify_checkouts' as never).select('order_id,email,variant_id,shopify_order_id,authorization_id,superseded_by').eq('order_id',reservationId).eq('shop',config.shop).maybeSingle(),
     admin.from('initiation_orders').select('user_id,order_kind,status').eq('id',reservationId).maybeSingle(),
   ])
   if (linked.error || source.error) throw new Error('Shopify reservation lookup failed')
   const binding = linked.data as Binding | null
   const local = source.data as Source | null
   if (!binding || !local) return
-  if (local.status==='canceled' && !binding.authorization_id) return
+  if (local.status==='canceled' && !binding.authorization_id && (!binding.superseded_by || order.cancelledAt)) return
   const evidence = verifyShopifyLiveOrder(order,{
     id:binding.order_id,shop:config.shop,userId:local.user_id,email:binding.email,kind:local.order_kind,variantId:binding.variant_id,
   },config.clientSecret)
+  if (binding.superseded_by) {
+    if (evidence.state!=='authorized') throw new Error('Superseded Shopify checkout has an unexpected capture')
+    const { orderCancel } = await query<{orderCancel:{job:{id:string}|null;orderCancelUserErrors:unknown[]}}>(`
+      mutation VoidSupersededCheckout($orderId:ID!) {
+        orderCancel(orderId:$orderId, reason:OTHER, restock:true, notifyCustomer:false,
+          refundMethod:{originalPaymentMethodsRefund:false},
+          staffNote:"An alternate Putopia package was already selected for payment.") {
+          job{id}
+          orderCancelUserErrors{code}
+        }
+      }
+    `,{orderId:evidence.orderId})
+    if (!orderCancel.job || orderCancel.orderCancelUserErrors.length) throw new Error('Superseded Shopify authorization needs review')
+    // The cancellation job is asynchronous. Keep the webhook in the queue until Shopify confirms cancellation.
+    throw new Error('Awaiting Shopify cancellation of the superseded checkout')
+  }
   const remoteBinding = {p_reservation:binding.order_id,p_shop:config.shop,p_order_id:evidence.orderId,p_authorization_id:evidence.authorization}
   if (evidence.state==='authorized') {
     const approved=await admin.rpc('bind_initiation_shopify_authorization' as never,remoteBinding as never)
