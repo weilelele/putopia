@@ -19,7 +19,8 @@ import { PostPaymentCalibration } from './post-payment-calibration'
 import { CheckoutSignIn, type CheckoutSignInServices, type EmailCheckoutStep } from './checkout-sign-in'
 import styles from './initiation.module.css'
 import { INITIATION_FAQ_GROUPS } from './faq'
-import { MembershipMark, MembershipPreviewPurchase, type MembershipPreview, type MembershipMarkVariant } from './membership-preview-purchase'
+import { MembershipPreviewPurchase, type MembershipPreview } from './membership-preview-purchase'
+import type { MembershipTarget } from '@/lib/voyager-membership-offers'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
@@ -71,13 +72,18 @@ const bundleImages = [
   { label: 'Membership', image: packs[0].image, alt: 'Welcome letter in its brown Collective folio', crop: [420, 601, 95, 185, 200] },
 ] as const
 
-function BundleImages({ bundle, mark }: { bundle: 'initial' | 'standard'; mark?: MembershipMarkVariant }) {
-  const images = bundle === 'initial' ? bundleImages.filter(image => image.label !== 'Pack 3' && image.label !== 'Pack 4') : bundleImages
-  return <span className={`${styles.bundleImages} ${bundle === 'initial' ? styles.initialImages : ''}`}>
+function BundleImages({ bundle }: { bundle: MembershipTarget }) {
+  const images = bundle === 'membership'
+    ? bundleImages.filter(image => image.label === 'Mission' || image.label === 'Membership')
+    : bundle === 'initial'
+      ? bundleImages.filter(image => image.label !== 'Pack 3' && image.label !== 'Pack 4')
+      : bundleImages
+  const grid = bundle === 'standard' ? '' : styles.initialImages
+  return <span className={`${styles.bundleImages} ${grid} ${bundle === 'membership' ? styles.membershipImages : ''}`}>
     {images.map(({ label, image, alt, crop: [width, height, left, top, size] }) => <span className={styles.bundleBenefit} key={label}>
-      {label === 'Membership' && mark ? <MembershipMark mark={mark} /> : <span className={styles.bundleCircle}>
-        <SmartImage src={image} alt={alt} width={width} height={height} sizes={`${Math.ceil(width / size * (bundle === 'initial' ? 120 : 170))}px`} style={{ position: 'absolute', width: `${width / size * 100}%`, height: `${height / size * 100}%`, left: `${-left / size * 100}%`, top: `${-top / size * 100}%`, maxWidth: 'none' }} />
-      </span>}
+      <span className={styles.bundleCircle}>
+        <SmartImage src={image} alt={alt} width={width} height={height} sizes={`${Math.ceil(width / size * (bundle === 'standard' ? 170 : 120))}px`} style={{ position: 'absolute', width: `${width / size * 100}%`, height: `${height / size * 100}%`, left: `${-left / size * 100}%`, top: `${-top / size * 100}%`, maxWidth: 'none' }} />
+      </span>
       <span>{label}</span>
     </span>)}
   </span>
@@ -270,7 +276,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
   </div>
   const joinPanel = membershipPreview ? <MembershipPreviewPurchase preview={membershipPreview}
-    renderPackImages={selection => <BundleImages bundle={selection} mark={membershipPreview.mark} />} /> : (
+    renderOfferImages={selection => <BundleImages bundle={selection} />} /> : (
         <div ref={paymentRef} tabIndex={-1} data-initiation-section="payment" className={styles.join}>
           {!memberView && snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
           {!memberView && snapshot.paymentStatus !== 'pending' && paymentMessage && <p className={styles.notice} role="status">{paymentMessage}</p>}

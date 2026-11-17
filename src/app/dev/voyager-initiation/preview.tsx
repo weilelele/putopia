@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { MembershipMark, membershipMarks, type MembershipMarkVariant, type MembershipPreview } from '@/app/voyager-initiation/membership-preview-purchase'
+import type { MembershipPreview } from '@/app/voyager-initiation/membership-preview-purchase'
 import { InitiationView } from '@/app/voyager-initiation/initiation-view'
 import { PrimaryNavigation } from '@/components/primary-navigation'
 import { parseVoyagerIntake } from '@/lib/voyager-intake'
@@ -46,33 +46,25 @@ export function InitiationPreview({ name, deviceSource, paymentPlacement, briefi
       return { ok: true }
     },
   }
-  const previewHref = (ownership: 'choose' | 'active' | 'initial', mark: string) => `?membership=${ownership}&mark=${mark}&layout=payment-first`
+  const previewHref = (ownership: 'choose' | 'active' | 'initial') => `?membership=${ownership}&layout=payment-first`
   const ownership = membershipPreview?.ownership === 'membership' ? 'active' : membershipPreview?.ownership === 'initial' ? 'initial' : 'choose'
   return <>
     <aside className={styles.notice} aria-label="UI preview" data-initiation-large-text={largeText || undefined}>
       <p>Preview · No payment will be created</p>
-      {membershipPreview ? <>
-        <nav aria-label="Membership artwork" className={styles.markChoices}>
-          {(Object.keys(membershipMarks) as MembershipMarkVariant[]).map(mark => (
-            <Link key={mark} href={previewHref(ownership, mark)} aria-current={membershipPreview.mark === mark ? 'page' : undefined}>
-              <MembershipMark mark={mark} />
-              <span>{membershipMarks[mark]}</span>
-            </Link>
-          ))}
-        </nav>
+      {membershipPreview ? (
         <nav aria-label="Preview purchase state">
-          <Link href={previewHref('choose', membershipPreview.mark)} aria-current={ownership === 'choose' ? 'page' : undefined}>New buyer</Link>
-          <Link href={previewHref('active', membershipPreview.mark)} aria-current={ownership === 'active' ? 'page' : undefined}>Digital member</Link>
-          <Link href={previewHref('initial', membershipPreview.mark)} aria-current={ownership === 'initial' ? 'page' : undefined}>Initial owner</Link>
+          <Link href={previewHref('choose')} aria-current={ownership === 'choose' ? 'page' : undefined}>New buyer</Link>
+          <Link href={previewHref('active')} aria-current={ownership === 'active' ? 'page' : undefined}>Digital member</Link>
+          <Link href={previewHref('initial')} aria-current={ownership === 'initial' ? 'page' : undefined}>Initial owner</Link>
         </nav>
-      </> : <nav aria-label="Preview purchase state">
+      ) : <nav aria-label="Preview purchase state">
         <Link href="?state=initial_pack&qa=1">Initial · $38</Link>
         <Link href="?state=upgraded&qa=1">Upgraded · $460</Link>
         <Link href="?state=complete_pack&qa=1">Complete · $488</Link>
         <Link href="?state=initial_pack&calibration=incomplete&qa=1">After payment · Calibration reminder</Link>
       </nav>}
     </aside>
-    <InitiationView key={`${membershipPreview?.ownership}:${membershipPreview?.mark}`}
+    <InitiationView key={membershipPreview?.ownership}
       membershipPreview={membershipPreview} snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS}
       briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource}
       quizServices={services} signInServices={PREVIEW_SIGN_IN} startEmailCheckout={PREVIEW_EMAIL_CHECKOUT}
