@@ -19,6 +19,7 @@ import { PostPaymentCalibration } from './post-payment-calibration'
 import { CheckoutSignIn, type CheckoutSignInServices, type EmailCheckoutStep } from './checkout-sign-in'
 import styles from './initiation.module.css'
 import { INITIATION_FAQ_GROUPS } from './faq'
+import { PACK_ONE_MEDIA } from './pack-one-media'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
@@ -54,20 +55,20 @@ const paymentMessages: Partial<Record<InitiationSnapshot['paymentStatus'], strin
 }
 
 const packs = [
-  { title: 'Initial Voyager Pack', dispatch: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
+  { title: 'Initial Voyager Pack', dispatch: 'Oct 2026', ...PACK_ONE_MEDIA, description: 'A welcome letter and exclusive Voyager badge.' },
   { title: ANTENNA.firstMention, dispatch: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
   { title: 'Multiverse Console', dispatch: 'Dec 2026', image: '/assets/voyager-initiation/console-multiview-portrait.png', alt: 'Multiverse Console in the Kyoto workshop: front, rear, side display and control dial views', featured: true, description: 'Your own device for exploring and interacting with parallel worlds.' },
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
 ]
 
-// Square focal regions in the original photographs; no generated mockup is shipped.
+// Square focal regions in the source images.
 const bundleImages = [
-  { label: 'Pack 1', image: packs[0].image, alt: 'Orange Voyager badge on a desk', crop: [420, 601, 120, 365, 170] },
+  { label: 'Pack 1', image: PACK_ONE_MEDIA.image, alt: 'Orange Voyager badge on a desk', crop: [1448, 1086, 473, 545, 448] },
   { label: 'Pack 2', image: '/assets/voyager-initiation/antenna-still-life-v1.jpg', alt: 'Brass Antenna design study, with its full outline visible', crop: [1536, 1024, 580, -40, 650] },
   { label: 'Pack 3', image: '/assets/kyoto-one-20260910/01-warehouse-hero.png', alt: 'Multiverse Console on a workshop table', crop: [1536, 1024, 240, 0, 1056] },
   { label: 'Pack 4', image: packs[3].image, alt: 'Sealed deep-blue envelope on a desk; contents to be announced', crop: [1536, 1024, 0, -256, 1536] },
   { label: 'Mission', image: '/assets/voyager-initiation/mission-board-v10.png', alt: 'Mission Board displayed on a phone', crop: [1536, 1024, 650, 120, 850] },
-  { label: 'Membership', image: packs[0].image, alt: 'Welcome letter in its brown Collective folio', crop: [420, 601, 95, 185, 200] },
+  { label: 'Membership', image: '/voyager-pack/pack-email.png', alt: 'Welcome letter in its brown Collective folio', crop: [420, 601, 95, 185, 200] },
 ] as const
 
 function BundleImages({ bundle }: { bundle: 'initial' | 'standard' }) {
