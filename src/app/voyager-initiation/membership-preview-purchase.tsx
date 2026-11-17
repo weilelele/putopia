@@ -31,7 +31,7 @@ export function MembershipPreviewPurchase({ preview, renderOfferImages }: {
       <legend className="sr-only">{ownership === 'none' ? 'Choose a Voyager option' : 'Choose your upgrade'}</legend>
       {offers.map(offer => {
         const chosen = selected.target === offer.target
-        const showDetail = offer.target === 'membership' || !chosen || ownership === 'initial'
+        const showDetail = !chosen || ownership === 'initial'
         return <label className={`${styles.bundleCard} ${chosen ? styles.bundleSelected : ''}`} key={offer.target}>
           <input type="radio" name="membership-offer" value={offer.target} checked={chosen}
             onChange={() => setTarget(offer.target)} aria-labelledby={`membership-name-${offer.target} membership-price-${offer.target}`}
