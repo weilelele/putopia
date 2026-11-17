@@ -111,7 +111,7 @@
     background: var(--bg-panel);
     content: '';
     pointer-events: none;
-    animation: mission-row-start 1ms step-end var(--mission-delay) both;
+    animation: mission-row-start 0s var(--mission-delay) both;
   }
 
   .board[data-revealing] .revealBand::after {
