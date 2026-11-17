@@ -40,6 +40,16 @@ describe('Initiation price exposure', () => {
   })
 })
 describe('Initiation analytics facts', () => {
+  it('keeps only opaque browser identifiers for checkout correlation', () => {
+    const id = '82000000-0000-4000-8000-000000000001'
+    expect(sanitizeInitiationAnalytics({ posthog_distinct_id: id, posthog_session_id: id }))
+      .toEqual({ posthog_distinct_id: id, posthog_session_id: id })
+    expect(sanitizeInitiationAnalytics({ posthog_distinct_id: 'customer@example.com', posthog_session_id: 'secret-token' })).toEqual({})
+    const properties = initiationAnalyticsProperties('initial', { posthog_distinct_id: id, posthog_session_id: id, disabled: true })
+    expect(properties).toMatchObject({ $session_id: id, analytics_version: 'checkout-providers-v2' })
+    expect(properties).not.toHaveProperty('posthog_distinct_id')
+    expect(properties).not.toHaveProperty('disabled')
+  })
   it('labels the $38 Initial Pack separately throughout the funnel', () => {
     expect(initiationAnalyticsProperties('initial', { order_kind: 'standard', product_name: 'spoofed', payable_amount: 1 })).toMatchObject({
       product_type: 'voyager_initiation', product_name: 'Initial Voyager Pack', order_kind: 'initial',

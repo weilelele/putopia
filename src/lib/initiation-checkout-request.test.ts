@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { requestInitiationCheckout } from './initiation-checkout-request'
+import { initiationCheckoutProvider, requestInitiationCheckout } from './initiation-checkout-request'
 const input = { bundle: 'initial' as const, from: null, analytics: {}, afterSignIn: false }
 describe('single checkout request', () => {
+  it('derives the provider from the validated destination without recording the checkout URL', () => {
+    expect(initiationCheckoutProvider('https://checkout.stripe.com/c/pay/session')).toBe('stripe')
+    expect(initiationCheckoutProvider('https://jtuuus-k3.myshopify.com/cart/c/cart-id?key=private')).toBe('shopify')
+    expect(initiationCheckoutProvider('https://other.myshopify.com/checkouts/test')).toBeNull()
+  })
   it('makes one request with the selected bundle and sign-in context', async () => {
     const request = vi.fn().mockResolvedValue(Response.json({ url: 'https://checkout.stripe.com/c/pay/session' }))
     expect(await requestInitiationCheckout(input, request)).toEqual({ status: 'ready', url: 'https://checkout.stripe.com/c/pay/session' })

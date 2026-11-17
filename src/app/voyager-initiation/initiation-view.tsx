@@ -24,7 +24,7 @@ import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navi
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
-import { requestInitiationCheckout, type InitiationCheckoutInput, type InitiationCheckoutResult } from '@/lib/initiation-checkout-request'
+import { initiationCheckoutProvider, requestInitiationCheckout, type InitiationCheckoutInput, type InitiationCheckoutResult } from '@/lib/initiation-checkout-request'
 import { initiationPackProgress } from '@/lib/initiation-pack-progress'
 import { checkShopifyBundlePilotPayment } from '@/lib/actions/shopify-bundle-pilot'
 import { InitiationBriefing } from './briefing/initiation-briefing'
@@ -190,13 +190,16 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       const response = await fetch('/api/initiation-checkout/email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, bundle: chosen, upgrade: options?.upgrade === true, from: source, analytics: analyticsContext() }) })
       const data = await response.json()
       if (response.ok && typeof data.url === 'string' && new URL(data.url).protocol === 'https:') {
+        captureAnalytics('initiation_checkout_redirected', { payment_provider: initiationCheckoutProvider(data.url), checkout_path: 'email_first', bundle: chosen })
         window.location.assign(data.url)
         return { kind: 'redirected' }
       }
       if (response.ok && ['password', 'activation_sent', 'already_member', 'upgrade'].includes(data.next)) return { kind: data.next }
       if (response.ok && data.next === 'checkout') { signedIn(); return { kind: 'redirected' } }
+      captureAnalytics('initiation_checkout_failed', { checkout_path: 'email_first', stage: 'create_checkout', http_status: response.status })
       return { kind: 'error', message: typeof data.error === 'string' ? data.error : unavailable }
     } catch {
+      captureAnalytics('initiation_checkout_failed', { checkout_path: 'email_first', stage: 'request_checkout' })
       return { kind: 'error', message: unavailable }
     }
   }
@@ -212,11 +215,14 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       } else if (result.status === 'unauthenticated') {
         window.location.assign(initiationLoginPath(source, chosen))
       } else if (result.status === 'ready') {
+        captureAnalytics('initiation_checkout_redirected', { payment_provider: initiationCheckoutProvider(result.url), checkout_path: 'signed_in', bundle: legacy ? 'legacy_upgrade' : chosen })
         window.location.assign(result.url)
       } else {
+        captureAnalytics('initiation_checkout_failed', { checkout_path: 'signed_in', stage: 'create_checkout' })
         setError(result.message)
       }
     } catch {
+      captureAnalytics('initiation_checkout_failed', { checkout_path: 'signed_in', stage: 'request_checkout' })
       setError('We could not check your access. Please try again.')
     } finally {
       inFlight.current = false
