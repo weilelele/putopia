@@ -64,7 +64,7 @@ const packs = [
 // Square focal regions in the source images.
 const bundleImages = [
   { label: 'Pack 1', image: PACK_ONE_MEDIA.image, alt: 'Orange Voyager badge on a desk', crop: [1448, 1086, 473, 545, 448] },
-  { label: 'Pack 2', image: '/assets/voyager-initiation/antenna-still-life-v1.jpg', alt: 'Brass Antenna design study, with its full outline visible', crop: [1536, 1024, 580, -40, 650] },
+  { label: 'Pack 2', image: '/assets/voyager-initiation/antenna-still-life-v1.jpg', alt: 'Brass Antenna, with its full outline visible', crop: [1536, 1024, 580, -40, 650] },
   { label: 'Pack 3', image: '/assets/kyoto-one-20260910/01-warehouse-hero.png', alt: 'Multiverse Console on a workshop table', crop: [1536, 1024, 240, 0, 1056] },
   { label: 'Pack 4', image: packs[3].image, alt: 'Sealed deep-blue envelope on a desk; contents to be announced', crop: [1536, 1024, 0, -256, 1536] },
   { label: 'Mission', image: '/assets/voyager-initiation/mission-board-v10.png', alt: 'Mission Board displayed on a phone', crop: [1536, 1024, 650, 120, 850] },

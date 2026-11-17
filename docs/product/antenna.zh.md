@@ -42,4 +42,6 @@ Initial US$38：既定会员数字权益、Pack 1 欢迎信／徽章与 Pack 2�
 
 公开说明：**Design studies; final appearance and quantity to be confirmed.** 图片不承诺一单三支、颜色可选或具体量产材质。旧方块／圆筒／矿石图及原始提示词保留为历史素材，现行页面不再使用。
 
+2026-11-17 更新：Will 说明现行 Antenna 图为实拍渲染。公开说明改为 **Rendered image; final appearance and quantity to be confirmed.**，条款改为 “Antenna images are renders; final appearance and quantity are to be confirmed.” 最终外观与数量仍待确认，图片仍不承诺一单三支或颜色可选。
+
 完整生成来源、参考哈希和审核见[媒体记录](antenna-media-20261022.md)。

@@ -11,6 +11,8 @@ Scope: only the approved account-activation welcome. Original public product ass
 
 User approved making the Antenna group smaller and the sealed envelope smaller still, without altering the layout or adding black margins. The wider-framed variants fill the original masked regions naturally. They were reviewed for photo realism, original object types/materials, continuous desktop, sealed/unrevealed envelope, and source family consistency. These are illustrative variants rather than photographs of confirmed delivered goods; small source details can vary. Antenna remains design studies, not promised quantities/finishes. No new Console hardware was generated.
 
+2026-11-17 update: Will stated that the source `antenna-still-life-v1.jpg` is now a real-shot render, not a concept image. `antenna.webp` remains the ImageGen reframing recorded above (SHA-256 `a708e558627e1dd676640c1ceae29e9e355df70abf64cf4d56586348fa9f72ea`, unchanged). The page's aria-label no longer calls the Antenna a design study. Final appearance and quantity remain to be confirmed.
+
 The exact final prompts are retained below. Built-in tool used throughout, no CLI generation fallback. SHA-256 values of delivered assets are in media-hashes.json.
 
 ## Antenna reference edit

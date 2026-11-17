@@ -24,6 +24,8 @@
 
 目视复查：三枚完整同心纹圆盘，古铜、骨白银边、深蓝橙边可区分；新物理环境为档案盒和深色织物，没有亮桌面或新增设备功能。图片用于设计展示，不定义最终数量或结构。共享 Antenna 图引用同时更新使用它的既有界面。
 
+2026-11-17 更新：Will 说明 `antenna-archive-case-v1.png` 现为实拍渲染，不是概念图；文件未替换（SHA-256 `d115235e8095351b1bc0b69af019a2b1c5f0bc8ec1913a793345a0b264902b77`）。最终数量与外观仍待确认。详见 [Voyager Initiation 素材记录](../../../public/assets/voyager-initiation/README.md)。
+
 ## 验证
 
 - 本机 fixture 预览使用 dummy service settings，未连接真实服务完成交易。
