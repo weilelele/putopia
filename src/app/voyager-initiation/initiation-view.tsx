@@ -19,6 +19,7 @@ import { PostPaymentCalibration } from './post-payment-calibration'
 import { CheckoutSignIn, type CheckoutSignInServices, type EmailCheckoutStep } from './checkout-sign-in'
 import styles from './initiation.module.css'
 import { INITIATION_FAQ_GROUPS } from './faq'
+import { MembershipMark, MembershipPreviewPurchase, type MembershipPreview, type MembershipMarkVariant } from './membership-preview-purchase'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
@@ -70,13 +71,13 @@ const bundleImages = [
   { label: 'Membership', image: packs[0].image, alt: 'Welcome letter in its brown Collective folio', crop: [420, 601, 95, 185, 200] },
 ] as const
 
-function BundleImages({ bundle }: { bundle: 'initial' | 'standard' }) {
+function BundleImages({ bundle, mark }: { bundle: 'initial' | 'standard'; mark?: MembershipMarkVariant }) {
   const images = bundle === 'initial' ? bundleImages.filter(image => image.label !== 'Pack 3' && image.label !== 'Pack 4') : bundleImages
   return <span className={`${styles.bundleImages} ${bundle === 'initial' ? styles.initialImages : ''}`}>
     {images.map(({ label, image, alt, crop: [width, height, left, top, size] }) => <span className={styles.bundleBenefit} key={label}>
-      <span className={styles.bundleCircle}>
+      {label === 'Membership' && mark ? <MembershipMark mark={mark} /> : <span className={styles.bundleCircle}>
         <SmartImage src={image} alt={alt} width={width} height={height} sizes={`${Math.ceil(width / size * (bundle === 'initial' ? 120 : 170))}px`} style={{ position: 'absolute', width: `${width / size * 100}%`, height: `${height / size * 100}%`, left: `${-left / size * 100}%`, top: `${-top / size * 100}%`, maxWidth: 'none' }} />
-      </span>
+      </span>}
       <span>{label}</span>
     </span>)}
   </span>
@@ -102,9 +103,10 @@ export type InitiationViewProps = {
   pilotCheckout?: 'initial' | 'standard'
   guestPilotUrl?: string
   pilotShipmentSync?: boolean
+  membershipPreview?: MembershipPreview
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam, pilotCheckout, guestPilotUrl, pilotShipmentSync }: InitiationViewProps) {
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam, pilotCheckout, guestPilotUrl, pilotShipmentSync, membershipPreview }: InitiationViewProps) {
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -139,7 +141,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const kind = legacy ? 'legacy_upgrade' : bundle
   const storedBriefing = useSyncExternalStore(subscribeToSource, readBriefingStore, serverBriefingStore)
   const [briefing, setBriefing] = useState<'idle' | 'replay' | 'link' | 'dismissed'>(() => briefingLinkOpens(snapshot.status, briefingParam) ? 'link' : 'idle')
-  const briefingAuto = !pilotCheckout && !guestPilotUrl && storedBriefing !== 'server' && storedBriefing !== 'unavailable'
+  const briefingAuto = !membershipPreview && !pilotCheckout && !guestPilotUrl && storedBriefing !== 'server' && storedBriefing !== 'unavailable'
     && shouldAutoOpenBriefing({ status, paymentStatus: snapshot.paymentStatus, checkoutCanceled, stored: storedBriefing || null })
   const briefingOpen = briefing === 'replay' || briefing === 'link' || (briefing === 'idle' && briefingAuto)
   const fullyClaimed = availability.initiated !== null && availability.initiated >= availability.capacity
@@ -267,7 +269,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     </>}
     <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
   </div>
-  const joinPanel = (
+  const joinPanel = membershipPreview ? <MembershipPreviewPurchase preview={membershipPreview}
+    renderPackImages={selection => <BundleImages bundle={selection} mark={membershipPreview.mark} />} /> : (
         <div ref={paymentRef} tabIndex={-1} data-initiation-section="payment" className={styles.join}>
           {!memberView && snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
           {!memberView && snapshot.paymentStatus !== 'pending' && paymentMessage && <p className={styles.notice} role="status">{paymentMessage}</p>}
@@ -337,17 +340,17 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       <Link href="/console" className="archive-back-link"><ArrowLeft aria-hidden size={20} />Back to Dashboard</Link>
       <header data-initiation-section="intro" className={styles.hero}>
         <div className={styles.introduction}>
-          <p className={styles.eyebrow}>{memberView || granted ? 'Your membership' : 'Become a Voyager'}</p>
+          <p className={styles.eyebrow}>{memberView || granted || membershipPreview?.ownership === 'membership' ? 'Your membership' : 'Become a Voyager'}</p>
           <h1>Voyager<br />Initiation</h1>
           <p className={styles.lede}>One initiation. A lasting place in the Collective.</p>
           {briefingAudience(status) && <button type="button" className={styles.textLink} aria-haspopup="dialog" onClick={() => setBriefing('replay')}>Watch the briefing <ArrowRight size={18} aria-hidden /></button>}
         </div>
-        {memberView ? memberSummary : paymentAtBottom ? seatSummary : joinPanel}
+        {memberView && !membershipPreview ? memberSummary : paymentAtBottom ? seatSummary : joinPanel}
       </header>
 
       <section aria-label={paymentAtBottom ? undefined : 'Voyager benefits'} aria-labelledby={paymentAtBottom ? 'voyager-benefits-title' : undefined}>
       {paymentAtBottom && <h2 id="voyager-benefits-title" className={styles.benefitsTitle}>{memberView ? 'Your Voyager packs.' : <>Your life as<br />a Voyager.</>}</h2>}
-      {(!granted || shipments.length > 0) && <section className={styles.section} aria-labelledby="packs-title">
+      {membershipPreview?.ownership !== 'membership' && (!granted || shipments.length > 0) && <section className={styles.section} aria-labelledby="packs-title">
         <div className={styles.sectionHeading}><BenefitHeading id="packs-title">{paymentAtBottom && <span className={styles.chapter}>01</span>}{paymentAtBottom ? 'Physical Voyager Packs' : 'Voyager Packs'}</BenefitHeading></div>
         <ol className={styles.packs}>
           {packs.map((pack, index) => {
@@ -411,7 +414,11 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         <div className={styles.sectionHeading}><h2 id="initiation-faq-title">FAQ</h2></div>
         {INITIATION_FAQ_GROUPS.map(group => <section key={group.id} className={styles.faqGroup} aria-labelledby={`faq-${group.id}`}>
           <h3 id={`faq-${group.id}`}>{group.title}</h3>
-          {group.items.map(item => <details key={item.question} className={styles.faqItem}>
+          {membershipPreview && group.id === 'membership' ? <>
+            <details className={styles.faqItem}><summary>What does Voyager Membership include?</summary><p>It activates the same Voyager access as either Pack option and uses one of the 100 S26 seats. It includes no physical Packs or Console claim.</p></details>
+            <details className={styles.faqItem}><summary>How does my $12 apply to an upgrade?</summary><p>Pay $26 to add the Initial Pack or $476 to go directly to Complete. Once you have Initial, adding Console + Pack 4 costs $460.</p></details>
+            <details className={styles.faqItem}><summary>Is this a subscription?</summary><p>Each option is a one-time payment.</p></details>
+          </> : group.items.map(item => <details key={item.question} className={styles.faqItem}>
             <summary>{item.question}</summary>
             <p>
               {item.answer}

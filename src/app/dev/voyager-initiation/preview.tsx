@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { MembershipMark, membershipMarks, type MembershipMarkVariant, type MembershipPreview } from '@/app/voyager-initiation/membership-preview-purchase'
 import { InitiationView } from '@/app/voyager-initiation/initiation-view'
 import { PrimaryNavigation } from '@/components/primary-navigation'
 import { parseVoyagerIntake } from '@/lib/voyager-intake'
@@ -34,7 +35,7 @@ const PREVIEW_REGIONS = briefingRegions([
 ])
 
 /** Preview-only state. All calibration writes remain in this component. */
-export function InitiationPreview({ name, deviceSource, paymentPlacement, briefingParam, calibrationIncomplete = false, largeText = false }: { name: FixtureName; deviceSource?: string; paymentPlacement?: 'top' | 'bottom'; briefingParam?: string; calibrationIncomplete?: boolean; largeText?: boolean }) {
+export function InitiationPreview({ name, deviceSource, paymentPlacement, briefingParam, calibrationIncomplete = false, largeText = false, membershipPreview }: { name: FixtureName; deviceSource?: string; paymentPlacement?: 'top' | 'bottom'; briefingParam?: string; calibrationIncomplete?: boolean; largeText?: boolean; membershipPreview?: MembershipPreview }) {
   const snapshot = { ...fixture(name), ...(calibrationIncomplete ? { calibrated: false } : {}) }
   const [completed, setCompleted] = useState(snapshot.calibrated)
   const services: VoyagerQuizServices = {
@@ -45,5 +46,38 @@ export function InitiationPreview({ name, deviceSource, paymentPlacement, briefi
       return { ok: true }
     },
   }
-  return <><aside className={styles.notice} aria-label="UI preview" data-initiation-large-text={largeText || undefined}><p>Simulated records · No payment will be created</p><nav aria-label="Preview purchase state"><Link href="?state=initial_pack&qa=1">Initial · $38</Link><Link href="?state=upgraded&qa=1">Upgraded · $460</Link><Link href="?state=complete_pack&qa=1">Complete · $488</Link><Link href="?state=initial_pack&calibration=incomplete&qa=1">After payment · Calibration reminder</Link></nav></aside><InitiationView snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS} briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource} quizServices={services} signInServices={PREVIEW_SIGN_IN} startEmailCheckout={PREVIEW_EMAIL_CHECKOUT} analyticsEnvironment="fixture" startCheckout={async () => ({ status: 'error', message: 'Fixture only. No payment session has been created.' })} /><PrimaryNavigation variant="bottom" activePath="/voyager-initiation" /></>
+  const previewHref = (ownership: 'choose' | 'active' | 'initial', mark: string) => `?membership=${ownership}&mark=${mark}&layout=payment-first`
+  const ownership = membershipPreview?.ownership === 'membership' ? 'active' : membershipPreview?.ownership === 'initial' ? 'initial' : 'choose'
+  return <>
+    <aside className={styles.notice} aria-label="UI preview" data-initiation-large-text={largeText || undefined}>
+      <p>Preview · No payment will be created</p>
+      {membershipPreview ? <>
+        <nav aria-label="Membership artwork" className={styles.markChoices}>
+          {(Object.keys(membershipMarks) as MembershipMarkVariant[]).map(mark => (
+            <Link key={mark} href={previewHref(ownership, mark)} aria-current={membershipPreview.mark === mark ? 'page' : undefined}>
+              <MembershipMark mark={mark} />
+              <span>{membershipMarks[mark]}</span>
+            </Link>
+          ))}
+        </nav>
+        <nav aria-label="Preview purchase state">
+          <Link href={previewHref('choose', membershipPreview.mark)} aria-current={ownership === 'choose' ? 'page' : undefined}>New buyer</Link>
+          <Link href={previewHref('active', membershipPreview.mark)} aria-current={ownership === 'active' ? 'page' : undefined}>Digital member</Link>
+          <Link href={previewHref('initial', membershipPreview.mark)} aria-current={ownership === 'initial' ? 'page' : undefined}>Initial owner</Link>
+        </nav>
+      </> : <nav aria-label="Preview purchase state">
+        <Link href="?state=initial_pack&qa=1">Initial · $38</Link>
+        <Link href="?state=upgraded&qa=1">Upgraded · $460</Link>
+        <Link href="?state=complete_pack&qa=1">Complete · $488</Link>
+        <Link href="?state=initial_pack&calibration=incomplete&qa=1">After payment · Calibration reminder</Link>
+      </nav>}
+    </aside>
+    <InitiationView key={`${membershipPreview?.ownership}:${membershipPreview?.mark}`}
+      membershipPreview={membershipPreview} snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS}
+      briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource}
+      quizServices={services} signInServices={PREVIEW_SIGN_IN} startEmailCheckout={PREVIEW_EMAIL_CHECKOUT}
+      analyticsEnvironment="fixture"
+      startCheckout={async () => ({ status: 'error', message: 'Fixture only. No payment session has been created.' })} />
+    <PrimaryNavigation variant="bottom" activePath="/voyager-initiation" />
+  </>
 }

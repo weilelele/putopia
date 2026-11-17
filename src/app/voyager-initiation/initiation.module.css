@@ -185,3 +185,12 @@
 .bundleCircle img { object-fit: fill; }
 .purchaseTerms { display: grid; gap: var(--s-2); margin-bottom: var(--s-5); font-size: var(--fs-body); line-height: 1.5; }
 .purchaseTerms p { margin: 0; }
+
+.membershipMark { display: grid; place-items: center; background: var(--bg-panel); }
+.membershipMarkInner { display: grid; justify-items: center; gap: var(--s-1); width: 72%; }
+.membershipMarkInner img { display: block; width: 100%; height: auto; object-fit: contain; }
+.membershipMarkInner > span { color: var(--color-star); font-size: var(--fs-caption); line-height: 1.2; }
+.membershipMark[data-mark='batch'] .membershipMarkInner img { width: 78%; }
+.membershipMark[data-mark='identity'] .membershipMarkInner { width: 88%; padding: var(--s-1); border: 1px solid var(--color-nucleus); }
+.membershipMark[data-mark='identity'] img { width: 72%; }
+.digitalOfferBenefits { grid-column: 1 / -1; display: grid; grid-template-columns: 80px minmax(0, 1fr); align-items: center; gap: var(--s-3); font-size: var(--fs-label); line-height: 1.5; }

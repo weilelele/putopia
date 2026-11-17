@@ -6,3 +6,9 @@
 
 /* Fixture-only text resizing keeps the viewport fixed for the 200% text check. */
 :global(html):has(.notice[data-initiation-large-text]) { font-size: 200%; }
+
+.notice .markChoices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); max-width: 360px; margin-top: var(--s-3); }
+.markChoices a { display: grid; justify-items: center; align-content: start; gap: var(--s-1); padding: var(--s-2); text-align: center; text-decoration: none; color: var(--color-star); border: 1px solid var(--bd-faint); }
+.markChoices a > span:first-child { max-width: 80px; }
+.markChoices a[aria-current='page'] { border-color: var(--color-nucleus); }
+.notice nav:not(.markChoices) a[aria-current='page'] { color: var(--color-star); }
