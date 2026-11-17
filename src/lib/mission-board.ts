@@ -54,7 +54,7 @@ const editions: readonly (readonly Scenario[])[] = [
     },
     {
       series: 'CNT', frequency: 1124,
-      teaser: 'Someone leaves a light burning across the bridge.',
+      teaser: 'A light on each bank. Is one answering the other?',
       preview: 'A figure at the end of a bridge leaves a light on after everyone else has gone. A second light sometimes appears on the near bank. I’d wait to see whether the two lights are related.',
       briefing: 'At {frequency}, compare Bands for a view of each bank. Observe the order in which the lights appear and go out. If voice is supported and the exchange has ended, try one greeting and wait.',
       followUp: 'Record a cycle where the second light never appears. Compare the first figure’s behavior with a cycle where it does.',

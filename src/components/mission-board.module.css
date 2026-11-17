@@ -27,10 +27,12 @@
 .heading span,
 .byline,
 .frequency {
-  color: var(--color-star-dim);
   font-size: var(--fs-caption);
   line-height: 1.4;
 }
+
+.heading span,
+.byline { color: var(--color-star-dim); }
 
 .missions {
   list-style: none;
@@ -93,12 +95,12 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .missions li { --mission-delay: 0ms; }
-  .missions li:nth-child(2) { --mission-delay: 460ms; }
-  .missions li:nth-child(3) { --mission-delay: 920ms; }
-  .missions li:nth-child(4) { --mission-delay: 1380ms; }
+  .missions li:nth-child(2) { --mission-delay: 920ms; }
+  .missions li:nth-child(3) { --mission-delay: 1840ms; }
+  .missions li:nth-child(4) { --mission-delay: 2760ms; }
   .revealBand { position: relative; --band-delay: 0ms; }
-  .byline { --band-delay: 110ms; }
-  .teaser { --band-delay: 230ms; }
+  .byline { --band-delay: 220ms; }
+  .teaser { --band-delay: 460ms; }
 
   .board[data-revealing] .row { position: relative; }
 
@@ -118,7 +120,7 @@
     background: var(--bg-panel) url('/assets/mission-board/reveal-snow.png') repeat;
     content: '';
     pointer-events: none;
-    animation: mission-band-reveal 200ms ease-out both;
+    animation: mission-band-reveal 400ms ease-out both;
     animation-delay: calc(var(--mission-delay) + var(--band-delay));
   }
 
