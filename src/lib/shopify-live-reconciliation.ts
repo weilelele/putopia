@@ -7,6 +7,7 @@ import { shopifyApiVersion, shopifyPilotRequest } from './shopify-bundle-pilot'
 import { type shopifyLiveConfig } from './shopify-live-config'
 import { sendPendingInitiationAnalytics } from './initiation-analytics-outbox'
 import { sendPendingInitiationMetaPurchases } from './initiation-meta-purchases'
+import { queueShopifyTransactionDiagnostics } from './shopify-transaction-diagnostics'
 import {
   shopifyLiveCheckoutAttribute, shopifyLiveReservationId, verifyShopifyLiveOrder, withShopifyOrderVariantIdentity,
   type ShopifyLiveOrder, type ShopifyOrderIdentitySnapshot,
@@ -15,7 +16,7 @@ import {
 type Config = NonNullable<ReturnType<typeof shopifyLiveConfig>>
 type EventRow = { order_gid:string; event_id:string }
 type Binding = { order_id:string; email:string; variant_id:string; shopify_order_id:string|null; authorization_id:string|null; superseded_by:string|null; reference_version:number }
-type Source = { id: string; user_id:string; order_kind:InitiationOrderKind; status:string; amount:number; pricing_version:string|null; membership_order_id:string|null; initial_order_id:string|null }
+type Source = { id: string; user_id:string; order_kind:InitiationOrderKind; status:string; amount:number; pricing_version:string|null; membership_order_id:string|null; initial_order_id:string|null; analytics_context: Record<string, unknown> }
 
 async function adminQuery(config: Config) {
   const root = `https://${config.shop}`
@@ -48,12 +49,21 @@ async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof a
   if (!reservationId) return
   const [linked, source] = await Promise.all([
     admin.from('initiation_shopify_checkouts' as never).select('order_id,email,variant_id,shopify_order_id,authorization_id,superseded_by,reference_version').eq('order_id',reservationId).eq('shop',config.shop).maybeSingle(),
-    admin.from('initiation_orders').select('id,user_id,order_kind,status,amount,pricing_version,membership_order_id,initial_order_id').eq('id',reservationId).maybeSingle(),
+    admin.from('initiation_orders').select('id,user_id,order_kind,status,amount,pricing_version,membership_order_id,initial_order_id,analytics_context').eq('id',reservationId).maybeSingle(),
   ])
   if (linked.error || source.error) throw new Error('Shopify reservation lookup failed')
   const binding = linked.data as Binding | null
   const local = source.data as Source | null
   if (!binding || !local) return
+  // Observe failed attempts as well as success, before the stricter paid-order validator.
+  // Telemetry failure never changes whether an authorization is captured or a membership activated.
+  try {
+    if (local.analytics_context.disabled !== true) await queueShopifyTransactionDiagnostics(admin, order, {
+      id: binding.order_id, shop: config.shop, userId: local.user_id, email: binding.email,
+      kind: local.order_kind, variantId: binding.variant_id, amount: local.amount, pricingVersion: local.pricing_version,
+      membershipOrderId: local.membership_order_id, initialOrderId: local.initial_order_id, referenceVersion: binding.reference_version,
+    }, config.clientSecret)
+  } catch { console.warn('[shopify] Transaction observation deferred; payment reconciliation continues') }
   if (local.status==='canceled' && !binding.authorization_id && binding.superseded_by && order.cancelledAt) return
   if (local.order_kind === 'membership') order = withShopifyOrderVariantIdentity(order, await query.orderIdentity(orderId))
   const evidence = verifyShopifyLiveOrder(order,{

@@ -49,7 +49,7 @@ export const INITIAL_PILOT_QUERY = `
     presentmentMoney { amount currencyCode }
   }
   fragment PilotTransaction on OrderTransaction {
-    id kind status test gateway processedAt parentTransaction { id }
+    id kind status test gateway processedAt createdAt errorCode parentTransaction { id }
     amountSet { ...PilotMoney }
   }
 `
