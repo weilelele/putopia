@@ -18,7 +18,7 @@ import type { VoyagerQuizServices } from '@/components/voyager-profile-quiz'
 import { PostPaymentCalibration } from './post-payment-calibration'
 import { CheckoutSignIn, type CheckoutSignInServices, type EmailCheckoutStep } from './checkout-sign-in'
 import styles from './initiation.module.css'
-import { INITIATION_FAQ_GROUPS } from './faq'
+import { INITIATION_FAQ_GROUPS, MEMBERSHIP_FAQ_GROUPS } from './faq'
 import { MembershipPreviewPurchase, type MembershipPreview } from './membership-preview-purchase'
 import type { MembershipTarget } from '@/lib/voyager-membership-offers'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
@@ -123,6 +123,7 @@ export type InitiationViewProps = {
 }
 
 export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam, pilotCheckout, guestPilotUrl, pilotShipmentSync, membershipPreview }: InitiationViewProps) {
+  const faqGroups = membershipPreview ? MEMBERSHIP_FAQ_GROUPS : INITIATION_FAQ_GROUPS
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -428,13 +429,9 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       {paymentAtBottom && <section id={legacy ? 'activate-packs' : undefined} className={`${styles.section} ${styles.bottomPayment}`} aria-label={legacy ? 'Activate Packs 3–4' : 'Voyager Initiation checkout'}>{joinPanel}</section>}
       <section data-initiation-section="faq" className={styles.section} aria-labelledby="initiation-faq-title">
         <div className={styles.sectionHeading}><h2 id="initiation-faq-title">FAQ</h2></div>
-        {INITIATION_FAQ_GROUPS.map(group => <section key={group.id} className={styles.faqGroup} aria-labelledby={`faq-${group.id}`}>
+        {faqGroups.map(group => <section key={group.id} className={styles.faqGroup} aria-labelledby={`faq-${group.id}`}>
           <h3 id={`faq-${group.id}`}>{group.title}</h3>
-          {membershipPreview && group.id === 'membership' ? <>
-            <details className={styles.faqItem}><summary>What does Voyager Membership include?</summary><p>It activates the same Voyager access as either Pack option and uses one of the 100 S26 seats. It includes no physical Packs or Console claim.</p></details>
-            <details className={styles.faqItem}><summary>How does my $12 apply to an upgrade?</summary><p>Pay $26 to add the Initial Pack or $476 to go directly to Complete. Once you have Initial, adding Console + Pack 4 costs $460.</p></details>
-            <details className={styles.faqItem}><summary>Is this a subscription?</summary><p>Each option is a one-time payment.</p></details>
-          </> : group.items.map(item => <details key={item.question} className={styles.faqItem}>
+          {group.items.map(item => <details key={item.question} className={styles.faqItem}>
             <summary>{item.question}</summary>
             <p>
               {item.answer}
