@@ -1,6 +1,6 @@
 # Shopify 支付漏斗埋点调整
 
-实现分支为 `codex/shopify-purchase-analytics`。应用代码和 `supabase/schema_v125.sql` 尚待发布，迁移尚未应用于生产。
+PR #326 已合并上线，v125 已应用生产。后续分支 `codex/shopify-checkout-stages` 接入 Shopify 页面步骤和 Meta Purchase；v126 也已应用生产，应用代码按同一发布流程验收。
 
 ## 漏斗与事件
 
@@ -40,15 +40,21 @@ Shopify purchase 使用现有核验流程写入的订单和 capture 绑定。必
 
 ## Shopify 内部步骤与 Meta
 
-当前改动覆盖站内行为、结账链接及实付回传。Shopify 内部的 `checkout_started`、`checkout_contact_info_submitted`、`checkout_address_info_submitted`、`checkout_shipping_info_submitted`、`payment_info_submitted` 和 `checkout_completed` 需要在 Shopify Customer Events 配置 Pixel 后接入。实际页面加载、地址、配送和支付阶段的流失，在 Pixel 上线并验收前写未知。
+`scripts/shopify/customer-events-pixel.js` 订阅 Shopify 的 `checkout_started`、`checkout_contact_info_submitted`、`checkout_address_info_submitted`、`checkout_shipping_info_submitted`、`payment_info_submitted` 和 `checkout_completed`。映射后的事件分别为 `initiation_checkout_viewed`、`initiation_checkout_contact_submitted`、`initiation_checkout_address_submitted`、`initiation_checkout_shipping_submitted`、`initiation_checkout_payment_submitted` 和 `initiation_checkout_completed_viewed`。
+
+Pixel 将阶段、时间和本次结账的签名引用发送到 `/api/shopify/customer-events`。服务端核验签名与订单绑定、时间范围及退出追踪标记，再用 `capture_source=shopify_pixel` 写入现有 outbox。相同订单的每个阶段只保留首条事件，重试保留原时间和事件 UUID。Pixel 来源在数据库约束下只能生成步骤事件。跨域接口不使用浏览器 Cookie，允许 Shopify sandbox 的来源，签名仅授权记录当前结账的行为。回应不包含订单或客户数据。
 
 Pixel 仅转发阶段名称、事件 ID、时间及无个人信息的订单关联键。订单实付以已核验的服务端 capture 为准。Shopify 的 `checkout_completed` 可能因页面未加载而漏发。
 
-Meta Purchase 的现有自建 CAPI worker 仍以 Stripe 为依据。上线前应核对 Shopify 的 Facebook & Instagram 渠道是否已经回传 Purchase，并确定事件去重与金额口径。该项需在 Shopify／Meta 后台核验，当前 PR 不声称已接通 Shopify 广告归因。
+2026-11-18 检查时，Shopify Customer Events 无已连接 Pixel，销售渠道未显示 Facebook & Instagram。自建 CAPI worker 现在支持核验过 capture 的 Shopify 订单，复用原有 `initiation_purchase_<local_order_id>`，原金额、付款时间、发送回执和重试去重。测试、追踪退出、内部 QA 及原生 iOS 规则继续生效。匹配邮箱在原有 Meta payload 中哈希，PostHog 不接收邮箱。后续启用 Shopify 原生 Meta 渠道时，需要明确其 Purchase 事件 ID 及发送责任，防止原生渠道与自建 CAPI 重复上报。
+
+Meta 专用 Test Events 验证已返回 `events_received=1`。该验证使用合成输入与测试代码，真实广告归因仍须结合之后的实际订单和 Ads Manager 核验。
 
 ## 验证与发布
 
-先应用 v125，再发布应用代码，最后核对生产中新触发的 Shopify checkout／purchase 是否有 provider、原始时间和正确金额。历史 `disabled=true` 记录保留原状。此前的历史日报需要用业务订单重核，不能从新增埋点倒推过去的页面行为。
+v125、v126 已应用。后续发布完成后连接已保存的 Shopify Pixel，并核对新步骤的签名验证、CORS 和 PostHog 接收。历史 `disabled=true` 记录保留原状。此前的历史日报需要用业务订单重核，不能从新增埋点倒推过去的页面行为。
+
+检查过去 24 小时新建的 Shopify 记录时发现 76 条旧 Stripe 导入与 2 条测试订单，新增真实 Shopify 订单为 0。使用 `Putopia Stripe import` 标记、交易 gateway、真实付款时间和本地订单绑定排除导入记录，避免将其计入新增 Shopify 收入。
 
 本地 SQL 验证只使用合成内存数据库。
 

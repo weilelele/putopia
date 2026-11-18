@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   // Always retry the outbox even if an unrelated expiry record needs review.
   const [expiry, meta, analytics, shopify] = await Promise.allSettled([
     stripe ? Promise.resolve().then(() => reconcileInitiationExpiry(stripe)) : Promise.resolve(null),
-    stripe ? Promise.resolve().then(() => sendPendingInitiationMetaPurchases(createAdminClient(), stripe)) : Promise.resolve(null),
+    Promise.resolve().then(() => sendPendingInitiationMetaPurchases(createAdminClient(), stripe)),
     Promise.resolve().then(() => sendPendingInitiationAnalytics(createAdminClient(), stripe)),
     shopifyConfig ? (async () => {
       const expired = await createAdminClient().rpc('expire_unbound_initiation_shopify_checkouts' as never)

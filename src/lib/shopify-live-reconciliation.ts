@@ -4,6 +4,7 @@ import { createAdminClient } from './supabase/server'
 import { shopifyApiVersion, shopifyPilotRequest } from './shopify-bundle-pilot'
 import { type shopifyLiveConfig } from './shopify-live-config'
 import { sendPendingInitiationAnalytics } from './initiation-analytics-outbox'
+import { sendPendingInitiationMetaPurchases } from './initiation-meta-purchases'
 import {
   shopifyLiveCheckoutAttribute, shopifyLiveReservationId, verifyShopifyLiveOrder, type ShopifyLiveOrder,
 } from './shopify-live-order'
@@ -90,6 +91,8 @@ async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof a
   if (shipments.error) throw new Error('Shopify Pack status requires reconciliation')
   try { await sendPendingInitiationAnalytics(admin, null, { orderId: binding.order_id, limit: 2 }) }
   catch { console.warn('[initiation-analytics] Shopify purchase analytics deferred to the outbox') }
+  try { await sendPendingInitiationMetaPurchases(admin, null, { orderId: binding.order_id, limit: 1 }) }
+  catch { console.warn('[initiation-meta] Shopify purchase deferred to the outbox') }
 }
 
 export async function reconcileShopifyLiveQueue(config: Config, onlyOrder?: string) {

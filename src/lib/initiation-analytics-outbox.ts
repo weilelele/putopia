@@ -3,10 +3,12 @@ import type Stripe from 'stripe'
 import { initiationAnalyticsProperties, sanitizeInitiationAnalytics } from './initiation-analytics'
 import { shopifyLiveCheckoutUrl, shopifyLiveShop } from './shopify-checkout-url'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
+import type { ShopifyCheckoutStage } from './shopify-customer-events'
 
 export type InitiationAnalyticsClaim = {
-  order_id: string; event: 'initiation_checkout_started' | 'initiation_purchase_completed'
+  order_id: string; event: 'initiation_checkout_started' | 'initiation_purchase_completed' | ShopifyCheckoutStage
   event_uuid: string; event_time: string; claim_token: string; attempt_count: number; reused: boolean
+  capture_source?: 'server' | 'shopify_pixel'
 }
 export type InitiationAnalyticsOrder = {
   id: string; user_id: string; status: string; order_kind: InitiationOrderKind; amount: number; currency: string
@@ -70,6 +72,8 @@ export async function retryInitiationAnalytics(deps: InitiationAnalyticsDependen
       const purchase = claim.event === 'initiation_purchase_completed'
       if (purchase && order.status !== 'paid') return await finish({ status: 'skipped', last_error: 'Order is no longer paid' })
       const provider = order.shopify_checkout ? 'shopify' : 'stripe'
+      const pixel = claim.capture_source === 'shopify_pixel'
+      if (pixel && (provider !== 'shopify' || purchase || claim.event === 'initiation_checkout_started')) throw new Error('Invalid pixel event')
       if (provider === 'shopify') {
         if (!validShopifyAnalyticsOrder(order, purchase)) throw new Error('Invalid Shopify analytics binding')
         if (purchase && Date.parse(claim.event_time) !== Date.parse(order.paid_at ?? '')) throw new Error('Invalid paid evidence')
@@ -96,12 +100,12 @@ export async function retryInitiationAnalytics(deps: InitiationAnalyticsDependen
       }
       const context = sanitizeInitiationAnalytics(order.analytics_context)
       await deps.send({ uuid: claim.event_uuid, event: claim.event, distinct_id: context.posthog_distinct_id ?? order.user_id, timestamp: claim.event_time,
-        properties: { ...initiationAnalyticsProperties(order.order_kind, order.analytics_context, order.amount), pricing_version: order.pricing_version ?? 'legacy-v1', source: 'server', order_id: order.id,
+        properties: { ...initiationAnalyticsProperties(order.order_kind, order.analytics_context, order.amount), pricing_version: order.pricing_version ?? 'legacy-v1', source: pixel ? 'shopify_pixel' : 'server', order_id: order.id,
           is_internal_qa: order.analytics_context?.is_internal_qa === true,
           payment_provider: provider,
           checkout_path: ['email_first', 'signed_in'].includes(String(order.analytics_context?.checkout_path))
             ? order.analytics_context?.checkout_path : 'unknown',
-          ...(!purchase ? { checkout_evidence: 'server_checkout_created' } : {}),
+          ...(!purchase ? { checkout_evidence: pixel ? 'shopify_customer_event' : 'server_checkout_created' } : {}),
           ...(provider === 'shopify' ? { shopify_order_id: order.shopify_checkout?.shopify_order_id,
             ...(purchase ? { payment_evidence: 'verified_shopify_capture' } : {}) } : {}),
           is_test: !order.stripe_livemode || order.analytics_context?.environment !== 'production',
