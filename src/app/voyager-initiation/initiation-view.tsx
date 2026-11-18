@@ -21,11 +21,12 @@ import styles from './initiation.module.css'
 import { INITIATION_FAQ_GROUPS, MEMBERSHIP_FAQ_GROUPS } from './faq'
 import { MembershipPreviewPurchase, type MembershipPreview } from './membership-preview-purchase'
 import type { MembershipTarget } from '@/lib/voyager-membership-offers'
+import { PACK_ONE_MEDIA } from './pack-one-media'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
 import { useInitiationEngagement } from './use-initiation-engagement'
 import { useInitiationAnalytics } from './use-initiation-analytics'
 import { initiationNextStep } from '@/lib/initiation-analytics'
-import { requestInitiationCheckout, type InitiationCheckoutInput, type InitiationCheckoutResult } from '@/lib/initiation-checkout-request'
+import { initiationCheckoutProvider, requestInitiationCheckout, type InitiationCheckoutInput, type InitiationCheckoutResult } from '@/lib/initiation-checkout-request'
 import { initiationPackProgress } from '@/lib/initiation-pack-progress'
 import { checkShopifyBundlePilotPayment } from '@/lib/actions/shopify-bundle-pilot'
 import { InitiationBriefing } from './briefing/initiation-briefing'
@@ -56,7 +57,7 @@ const paymentMessages: Partial<Record<InitiationSnapshot['paymentStatus'], strin
 }
 
 const packs = [
-  { title: 'Initial Voyager Pack', dispatch: 'Oct 2026', image: '/voyager-pack/pack-email.png', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
+  { title: 'Initial Voyager Pack', dispatch: 'Oct 2026', ...PACK_ONE_MEDIA, description: 'A welcome letter and exclusive Voyager badge.' },
   { title: ANTENNA.firstMention, dispatch: 'Nov 2026', image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packDescription },
   { title: 'Multiverse Console', dispatch: 'Dec 2026', image: '/assets/voyager-initiation/console-multiview-portrait.png', alt: 'Multiverse Console in the Kyoto workshop: front, rear, side display and control dial views', featured: true, description: 'Your own device for exploring and interacting with parallel worlds.' },
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
@@ -65,10 +66,10 @@ const packs = [
 // Mission briefings are one of the four digital Membership benefits.
 const missionImage = { image: '/assets/voyager-initiation/mission-board-v10.png', alt: 'Mission Board displayed on a phone', crop: [1536, 1024, 650, 120, 850] } as const
 
-// Square focal regions in the original photographs; no generated mockup is shipped.
+// Square focal regions in the source images.
 const bundleImages = [
-  { label: 'Membership', image: packs[0].image, alt: 'Welcome letter in its brown Collective folio', crop: [420, 601, 95, 185, 200] },
-  { label: 'Pack 1', image: packs[0].image, alt: 'Orange Voyager badge on a desk', crop: [420, 601, 120, 365, 170] },
+  { label: 'Membership', image: '/voyager-pack/pack-email.png', alt: 'Welcome letter in its brown Collective folio', crop: [420, 601, 95, 185, 200] },
+  { label: 'Pack 1', image: PACK_ONE_MEDIA.image, alt: 'Orange Voyager badge on a desk', crop: [1448, 1086, 473, 545, 448] },
   { label: 'Pack 2', image: '/assets/voyager-initiation/antenna-still-life-v1.jpg', alt: 'Brass Antenna design study, with its full outline visible', crop: [1536, 1024, 580, -40, 650] },
   { label: 'Pack 3', image: '/assets/kyoto-one-20260910/01-warehouse-hero.png', alt: 'Multiverse Console on a workshop table', crop: [1536, 1024, 240, 0, 1056] },
   { label: 'Pack 4', image: packs[3].image, alt: 'Sealed deep-blue envelope on a desk; contents to be announced', crop: [1536, 1024, 0, -256, 1536] },
@@ -207,13 +208,16 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       const response = await fetch('/api/initiation-checkout/email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, bundle: chosen, upgrade: options?.upgrade === true, from: source, analytics: analyticsContext() }) })
       const data = await response.json()
       if (response.ok && typeof data.url === 'string' && new URL(data.url).protocol === 'https:') {
+        captureAnalytics('initiation_checkout_redirected', { payment_provider: initiationCheckoutProvider(data.url), checkout_path: 'email_first', bundle: chosen })
         window.location.assign(data.url)
         return { kind: 'redirected' }
       }
       if (response.ok && ['password', 'activation_sent', 'already_member', 'upgrade'].includes(data.next)) return { kind: data.next }
       if (response.ok && data.next === 'checkout') { signedIn(); return { kind: 'redirected' } }
+      captureAnalytics('initiation_checkout_failed', { checkout_path: 'email_first', stage: 'create_checkout', http_status: response.status })
       return { kind: 'error', message: typeof data.error === 'string' ? data.error : unavailable }
     } catch {
+      captureAnalytics('initiation_checkout_failed', { checkout_path: 'email_first', stage: 'request_checkout' })
       return { kind: 'error', message: unavailable }
     }
   }
@@ -229,11 +233,14 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       } else if (result.status === 'unauthenticated') {
         window.location.assign(initiationLoginPath(source, chosen))
       } else if (result.status === 'ready') {
+        captureAnalytics('initiation_checkout_redirected', { payment_provider: initiationCheckoutProvider(result.url), checkout_path: 'signed_in', bundle: legacy ? 'legacy_upgrade' : chosen })
         window.location.assign(result.url)
       } else {
+        captureAnalytics('initiation_checkout_failed', { checkout_path: 'signed_in', stage: 'create_checkout' })
         setError(result.message)
       }
     } catch {
+      captureAnalytics('initiation_checkout_failed', { checkout_path: 'signed_in', stage: 'request_checkout' })
       setError('We could not check your access. Please try again.')
     } finally {
       inFlight.current = false

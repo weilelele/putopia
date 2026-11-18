@@ -11,6 +11,7 @@ import { memberInitials } from '@/lib/member-initials'
 import { briefingSeats, type BriefingRegion } from '@/lib/initiation-briefing'
 import { PARALLAX_ARRAY_EXAMPLES, PARALLAX_ARRAY_ROUNDS, PARALLAX_ARRAY_UNITS, parallaxArrayCaption, parallaxArrayDissolve, parallaxArrayFrame, parallaxArraySignal, parallaxArrayVotes, PARALLAX_ARRAY_VOTE_MARKS, type ParallaxArrayFrame } from '@/lib/parallax-array'
 import type { InitiationPublicMember } from '@/lib/initiation-types'
+import { PACK_ONE_MEDIA } from '../pack-one-media'
 import { BriefingPage, Headline, Kicker, attachVideo, clamp, ease, easeOut, fitCanvas, lerp, releaseVideo, rise, useScene, type PageState } from './briefing-kit'
 import s from './briefing.module.css'
 
@@ -597,8 +598,8 @@ export function FrontLinePage({ state, regions }: { state: PageState; regions: B
 }
 
 /* 8 · Packs: the Console leads; tap any month to see that pack. The page fits one phone screen: the picture gives up height, the caption never changes size. */
-const PACKS = [
-  { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', image: `${MEDIA}/pack-1.jpg`, focus: '50% 75%', alt: 'A welcome letter and Voyager badge on a desk', description: 'A welcome letter and exclusive Voyager badge.' },
+const PACKS: { month: string; meta: string; title: string; image: string; alt: string; description: string; focus?: string }[] = [
+  { month: 'OCT', meta: 'PACK 1 · OCT 2026', title: 'Initial Voyager Pack', ...PACK_ONE_MEDIA, focus: '50% 32%', description: 'A welcome letter and exclusive Voyager badge.' },
   { month: 'NOV', meta: 'PACK 2 · NOV 2026', title: ANTENNA.name, image: ANTENNA.image, alt: ANTENNA.imageAlt, description: ANTENNA.packSummary },
   { month: 'DEC', meta: 'PACK 3 · DEC 2026', title: 'Multiverse Console', image: `${MEDIA}/console-workshop.jpg`, alt: 'A Multiverse Console on a workshop bench, its screen showing a parallel world', description: 'Your own device for exploring and interacting with parallel worlds.' },
   { month: 'JAN', meta: 'PACK 4 · JAN 2027', title: 'A Fourth Delivery', image: `${MEDIA}/pack-4.jpg`, alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.' },

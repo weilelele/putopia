@@ -1,11 +1,14 @@
-import { isInitiationOrderAmount } from './initiation-pricing'
+import { INITIATION_PRICES, isInitiationOrderAmount } from './initiation-pricing'
 import type Stripe from 'stripe'
-import { initiationAnalyticsProperties } from './initiation-analytics'
+import { initiationAnalyticsProperties, sanitizeInitiationAnalytics } from './initiation-analytics'
+import { shopifyLiveCheckoutUrl, shopifyLiveShop } from './shopify-checkout-url'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
+import type { ShopifyCheckoutStage } from './shopify-customer-events'
 
 export type InitiationAnalyticsClaim = {
-  order_id: string; event: 'initiation_checkout_started' | 'initiation_purchase_completed'
+  order_id: string; event: 'initiation_checkout_started' | 'initiation_purchase_completed' | ShopifyCheckoutStage
   event_uuid: string; event_time: string; claim_token: string; attempt_count: number; reused: boolean
+  capture_source?: 'server' | 'shopify_pixel'
 }
 export type InitiationAnalyticsOrder = {
   id: string; user_id: string; status: string; order_kind: InitiationOrderKind; amount: number; currency: string
@@ -13,6 +16,10 @@ export type InitiationAnalyticsOrder = {
   pricing_version?: string | null
   analytics_context: Record<string, unknown> | null
   meta_attribution?: { disabled?: boolean; fbp?: string; fbc?: string } | null
+  shopify_checkout?: {
+    order_id: string; shop: string; checkout_url: string | null
+    shopify_order_id: string | null; authorization_id: string | null; capture_id: string | null
+  } | null
 }
 export type InitiationAnalyticsUpdate = {
   status: 'sent' | 'pending' | 'skipped'; claimed_at: null; claim_token: null
@@ -35,6 +42,20 @@ export function validInitiationAnalyticsSession(order: InitiationAnalyticsOrder,
     && session.metadata?.user_id === order.user_id && session.metadata?.order_kind === order.order_kind
 }
 
+/** These bindings are written only after the signed Shopify order is verified and its capture confirmed. */
+export function validShopifyAnalyticsOrder(order: InitiationAnalyticsOrder, purchase: boolean) {
+  const checkout = order.shopify_checkout
+  if (!checkout || checkout.order_id !== order.id || checkout.shop !== shopifyLiveShop
+    || !checkout.checkout_url || !shopifyLiveCheckoutUrl(checkout.checkout_url)
+    || order.stripe_session_id || order.stripe_payment_intent || !order.stripe_livemode
+    || !['initial', 'standard'].includes(order.order_kind) || order.amount !== INITIATION_PRICES[order.order_kind].amount) return false
+  if (!purchase) return true
+  return !!(checkout.shopify_order_id && /^gid:\/\/shopify\/Order\/\d+$/.test(checkout.shopify_order_id)
+    && checkout.authorization_id && /^gid:\/\/shopify\/OrderTransaction\/\d+$/.test(checkout.authorization_id)
+    && checkout.capture_id && /^gid:\/\/shopify\/OrderTransaction\/\d+$/.test(checkout.capture_id)
+    && checkout.capture_id !== checkout.authorization_id && order.status === 'paid' && order.paid_at)
+}
+
 /** Delivery is observation only: it cannot capture, cancel or create a payment. */
 export async function retryInitiationAnalytics(deps: InitiationAnalyticsDependencies, options: { orderId?: string; limit?: number } = {}) {
   const claims = await deps.claim(options.orderId ?? null, Math.max(1, Math.min(5, options.limit ?? 5)))
@@ -45,27 +66,48 @@ export async function retryInitiationAnalytics(deps: InitiationAnalyticsDependen
     }
     try {
       const order = await deps.loadOrder(claim.order_id)
-      if (!order || !isInitiationOrderAmount(order) || order.currency !== 'usd' || !order.stripe_session_id
+      if (!order || order.id !== claim.order_id || !isInitiationOrderAmount(order) || order.currency !== 'usd'
         || !Number.isFinite(Date.parse(claim.event_time)) || !/^[0-9a-f-]{36}$/i.test(claim.event_uuid)) throw new Error('Invalid analytics binding')
       if (order.analytics_context?.disabled === true) return await finish({ status: 'skipped', last_error: null })
       const purchase = claim.event === 'initiation_purchase_completed'
       if (purchase && order.status !== 'paid') return await finish({ status: 'skipped', last_error: 'Order is no longer paid' })
-      const session = await deps.retrieveSession(order.stripe_session_id)
-      if (!validInitiationAnalyticsSession(order, session)) throw new Error('Invalid analytics binding')
+      const provider = order.shopify_checkout ? 'shopify' : 'stripe'
+      const pixel = claim.capture_source === 'shopify_pixel'
+      if (pixel && (provider !== 'shopify' || purchase || claim.event === 'initiation_checkout_started')) throw new Error('Invalid pixel event')
+      if (provider === 'shopify') {
+        if (!validShopifyAnalyticsOrder(order, purchase)) throw new Error('Invalid Shopify analytics binding')
+        if (purchase && Date.parse(claim.event_time) !== Date.parse(order.paid_at ?? '')) throw new Error('Invalid paid evidence')
+      } else {
+        if (!order.stripe_session_id) throw new Error('Invalid analytics binding')
+        const session = await deps.retrieveSession(order.stripe_session_id)
+        if (!validInitiationAnalyticsSession(order, session)) throw new Error('Invalid analytics binding')
+        if (purchase) {
+          const intentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id
+          if (!intentId || intentId !== order.stripe_payment_intent || session.status !== 'complete' || session.payment_status !== 'paid'
+            || Date.parse(claim.event_time) !== Date.parse(order.paid_at ?? '')) throw new Error('Invalid paid evidence')
+          const intent = await deps.retrieveIntent(intentId)
+          if (intent.status !== 'succeeded' || intent.amount_received !== order.amount || intent.amount !== order.amount
+            || intent.currency !== 'usd' || intent.livemode !== order.stripe_livemode || intent.metadata.order_id !== order.id
+            || intent.metadata.order_kind !== order.order_kind || intent.metadata.product_type !== INITIATION_PRODUCT) throw new Error('Payment is not captured')
+        }
+      }
       if (purchase) {
-        const intentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id
-        if (!intentId || intentId !== order.stripe_payment_intent || session.status !== 'complete' || session.payment_status !== 'paid'
-          || Date.parse(claim.event_time) !== Date.parse(order.paid_at ?? '')) throw new Error('Invalid paid evidence')
-        const intent = await deps.retrieveIntent(intentId)
-        if (intent.status !== 'succeeded' || intent.amount_received !== order.amount || intent.amount !== order.amount
-          || intent.currency !== 'usd' || intent.livemode !== order.stripe_livemode || intent.metadata.order_id !== order.id
-          || intent.metadata.order_kind !== order.order_kind || intent.metadata.product_type !== INITIATION_PRODUCT) throw new Error('Payment is not captured')
         const current = await deps.loadOrder(order.id)
         if (!current || current.status !== 'paid') return await finish({ status: 'skipped', last_error: 'Order is no longer paid' })
+        if (current.analytics_context?.disabled === true) return await finish({ status: 'skipped', last_error: null })
+        if (provider === 'shopify' && (!validShopifyAnalyticsOrder(current, true)
+          || current.shopify_checkout?.capture_id !== order.shopify_checkout?.capture_id)) throw new Error('Shopify capture changed')
       }
-      await deps.send({ uuid: claim.event_uuid, event: claim.event, distinct_id: order.user_id, timestamp: claim.event_time,
-        properties: { ...initiationAnalyticsProperties(order.order_kind, order.analytics_context, order.amount), pricing_version: order.pricing_version ?? 'legacy-v1', source: 'server', order_id: order.id,
+      const context = sanitizeInitiationAnalytics(order.analytics_context)
+      await deps.send({ uuid: claim.event_uuid, event: claim.event, distinct_id: context.posthog_distinct_id ?? order.user_id, timestamp: claim.event_time,
+        properties: { ...initiationAnalyticsProperties(order.order_kind, order.analytics_context, order.amount), pricing_version: order.pricing_version ?? 'legacy-v1', source: pixel ? 'shopify_pixel' : 'server', order_id: order.id,
           is_internal_qa: order.analytics_context?.is_internal_qa === true,
+          payment_provider: provider,
+          checkout_path: ['email_first', 'signed_in'].includes(String(order.analytics_context?.checkout_path))
+            ? order.analytics_context?.checkout_path : 'unknown',
+          ...(!purchase ? { checkout_evidence: pixel ? 'shopify_customer_event' : 'server_checkout_created' } : {}),
+          ...(provider === 'shopify' ? { shopify_order_id: order.shopify_checkout?.shopify_order_id,
+            ...(purchase ? { payment_evidence: 'verified_shopify_capture' } : {}) } : {}),
           is_test: !order.stripe_livemode || order.analytics_context?.environment !== 'production',
           ...(purchase ? {
             payment_status: 'paid', meta_event_id: `initiation_purchase_${order.id}`,
@@ -100,7 +142,7 @@ export async function sendInitiationPostHog(input: Parameters<InitiationAnalytic
 }
 
 type Admin = ReturnType<typeof import('./supabase/server').createAdminClient>
-export function sendPendingInitiationAnalytics(admin: Admin, stripe: Stripe, options: { orderId?: string; limit?: number } = {}) {
+export function sendPendingInitiationAnalytics(admin: Admin, stripe: Stripe | null, options: { orderId?: string; limit?: number } = {}) {
   // The new additive schema is deployed independently of generated database types.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = admin as any
@@ -114,7 +156,12 @@ export function sendPendingInitiationAnalytics(admin: Admin, stripe: Stripe, opt
       const { data, error } = await db.from('initiation_orders').select('id,user_id,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,analytics_context,meta_attribution')
         .eq('id', id).maybeSingle().abortSignal(AbortSignal.timeout(5000))
       if (error) throw error
-      return data
+      if (!data || data.stripe_session_id) return data
+      const binding = await db.from('initiation_shopify_checkouts')
+        .select('order_id,shop,checkout_url,shopify_order_id,authorization_id,capture_id')
+        .eq('order_id', id).maybeSingle().abortSignal(AbortSignal.timeout(5000))
+      if (binding.error) throw binding.error
+      return { ...data, shopify_checkout: binding.data }
     },
     async finish(claim, update) {
       const { data, error } = await db.from('initiation_analytics_outbox').update(update).eq('order_id', claim.order_id).eq('event', claim.event)
@@ -122,8 +169,14 @@ export function sendPendingInitiationAnalytics(admin: Admin, stripe: Stripe, opt
       if (error) throw error
       return data?.length === 1
     },
-    retrieveSession: id => stripe.checkout.sessions.retrieve(id, {}, { timeout: 5000, maxNetworkRetries: 0 }),
-    retrieveIntent: id => stripe.paymentIntents.retrieve(id, {}, { timeout: 5000, maxNetworkRetries: 0 }),
+    retrieveSession: async id => {
+      if (!stripe) throw new Error('Stripe is not configured')
+      return stripe.checkout.sessions.retrieve(id, {}, { timeout: 5000, maxNetworkRetries: 0 })
+    },
+    retrieveIntent: async id => {
+      if (!stripe) throw new Error('Stripe is not configured')
+      return stripe.paymentIntents.retrieve(id, {}, { timeout: 5000, maxNetworkRetries: 0 })
+    },
     send: sendInitiationPostHog, now: Date.now,
   }, options)
 }

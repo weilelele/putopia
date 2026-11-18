@@ -2,7 +2,7 @@ import type Stripe from 'stripe'
 import { describe, expect, it, vi } from 'vitest'
 import { buildMetaPurchasePayload } from './meta-capi'
 import {
-  buildInitiationMetaPurchase, createInitiationMetaStore, deliverInitiationMetaPurchase,
+  buildInitiationMetaPurchase, buildShopifyInitiationMetaPurchase, createInitiationMetaStore, deliverInitiationMetaPurchase,
   initiationMetaRetryAt, retryInitiationMetaPurchases, safeInitiationMetaError,
   type InitiationMetaClaim, type InitiationMetaDependencies, type InitiationMetaOrder, type InitiationMetaStore,
 } from './initiation-meta-purchases'
@@ -44,6 +44,32 @@ function dependencies(patch: Partial<InitiationMetaOrder> = {}) {
 }
 
 describe('Initiation paid Purchase payload', () => {
+  const shopify: InitiationMetaOrder = { ...order, amount: 48800, pricing_version: 'voyager-bundles-v1',
+    stripe_session_id: null, stripe_payment_intent: null,
+    shopify_checkout: { order_id: order.id, shop: 'jtuuus-k3.myshopify.com',
+      checkout_url: 'https://jtuuus-k3.myshopify.com/cart/c/fixture?key=private',
+      shopify_order_id: 'gid://shopify/Order/1', authorization_id: 'gid://shopify/OrderTransaction/1',
+      capture_id: 'gid://shopify/OrderTransaction/2', email: 'purchaser@example.test' },
+  }
+  it('sends a captured Shopify purchase once using the existing outbox event identity', async () => {
+    const deps = dependencies(shopify)
+    expect(await deliverInitiationMetaPurchase(claim, deps)).toBe('sent')
+    expect(deps.retrieveSession).not.toHaveBeenCalled()
+    const payload = buildMetaPurchasePayload(deps.sendPurchase.mock.calls[0][0])
+    expect(payload.data[0]).toMatchObject({ event_name: 'Purchase', event_id: claim.event_id, custom_data: { value: 488, order_id: order.id } })
+    expect(payload.data[0].user_data.em).toEqual([expect.stringMatching(/^[a-f0-9]{64}$/)])
+    expect(JSON.stringify(payload)).not.toMatch(/purchaser@example|key=private/)
+  })
+  it('rejects a Shopify authorization without capture and a changed event timestamp', () => {
+    expect(() => buildShopifyInitiationMetaPurchase({ ...shopify,
+      shopify_checkout: { ...shopify.shopify_checkout!, capture_id: null } }, claim)).toThrow('binding')
+    expect(() => buildShopifyInitiationMetaPurchase(shopify, { ...claim, event_time: 'invalid' })).toThrow('binding')
+  })
+  it('skips internal Shopify QA purchases', async () => {
+    const deps = dependencies({ ...shopify, analytics_context: { is_internal_qa: true } })
+    expect(await deliverInitiationMetaPurchase(claim, deps)).toBe('skipped')
+    expect(deps.sendPurchase).not.toHaveBeenCalled()
+  })
   it('delivers a distinct $38 Initial Pack Purchase with matching cookies and a stable order ID', async () => {
     const deps = dependencies({ order_kind: 'initial', amount: 3800, pricing_version: 'voyager-bundles-v1' })
     deps.retrieveSession.mockResolvedValue({ ...session, amount_total: 3800, metadata: { ...session.metadata, order_kind: 'initial' } })

@@ -23,14 +23,19 @@ export function useInitiationAnalytics({ kind, userId, internal, environment, el
       context.current = sanitizeInitiationAnalytics({ ...utm, ...adContext, page_visit_id: crypto.randomUUID(),
         is_internal_qa: internal || new URLSearchParams(location.search).get('qa') === '1', disabled: posthog.has_opted_out_capturing() })
     }
-    return context.current
+    // A guest may pay before activation. Preserve the browser identity on the server event.
+    return sanitizeInitiationAnalytics({ ...context.current,
+      posthog_distinct_id: posthog.get_distinct_id(), posthog_session_id: posthog.get_session_id(),
+      disabled: posthog.has_opted_out_capturing(),
+    })
   }
   const capture = (event: string, extra: Record<string, unknown> = {}) => {
     try {
       if (userId && posthog.get_distinct_id() !== userId) posthog.identify(userId)
       else if (!userId && posthog.get_property('$user_id')) posthog.reset()
       posthog.capture(event, { ...initiationAnalyticsProperties(kind, getContext()),
-        is_internal_qa: internal || getContext().is_internal_qa === true, is_test: environment !== 'production', source: 'client', ...extra })
+        is_internal_qa: internal || getContext().is_internal_qa === true, is_test: environment !== 'production', source: 'client', ...extra },
+      event === 'initiation_checkout_redirected' ? { transport: 'sendBeacon' } : undefined)
     } catch { /* Analytics cannot prevent navigation or checkout. */ }
   }
   useEffect(() => {

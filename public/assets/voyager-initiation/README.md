@@ -1,5 +1,13 @@
 # Voyager Initiation imagery
 
+## Current Pack 1 image · 2026-11-17
+
+`pack-1-workbench.webp` (1448 × 1086) is a built-in ImageGen edit. The user-supplied Pack 1 photo (SHA-256 `1a1ed8578c5c918a93b55af79d5c8397a457b5e13f7b32f14145741d742e34ba`) supplies the badge and card design. The [original Pack 1 image](../../voyager-pack/pack-email.png) supplies the lighting, camera angle and workbench. The delivery card, payment options and briefing share the edited image. The payment thumbnail focuses on the badge.
+
+ImageGen prompt:
+
+> Style transfer for a photorealistic Pack 1 product image. Image 1 defines the physical products: preserve the orange circular VOYAGER badge, its thin brass edge, concentric rings and two gold bars, and the matte black card with the original orange border, symbol and exact two-line MULTIVERSE COLLECTIVE lettering. Image 2 is the old Pack 1 style reference: match its dark walnut workbench, oblique high three-quarter camera angle, warm amber sidelight, deep soft shadows and tactile photographic detail. Lay the card flat with a slight diagonal and place the badge in front, both sharp, clearly readable and fully inside the middle square of a landscape 4:3 frame. Leave enough table around the badge for a tight circular crop. Keep the light soft and directional, with enough exposure to read the black card. Show only the badge and card on the bench, with no other props, on-screen text, added markings or synthetic gloss. The result should look like a real product photograph from the same session as image 2.
+
 ## Current Pack 2 illustration · 2026-10-22
 
 `antenna-still-life-v1.jpg` replaces the mysterious-components illustration in current sales pages and briefing. Built-in ImageGen arranged the three user-selected brass, ivory/silver and navy/orange Antenna concept designs on a walnut desk, without the Console. The low umbrella caps retain their concentric detail; insertion stems are mostly obscured. The illustration depicts design studies, not three promised items or selectable finishes. Final appearance and quantity remain unconfirmed. Full reference hashes, prompts and visual review: [generation record](../../../docs/product/antenna-media-20261022.md).

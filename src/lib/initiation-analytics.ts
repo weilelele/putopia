@@ -10,6 +10,8 @@ export type InitiationAnalyticsContext = Partial<Record<typeof INITIATION_UTM_KE
   ad_id?: string
   placement?: string
   page_visit_id?: string
+  posthog_distinct_id?: string
+  posthog_session_id?: string
   is_internal_qa?: boolean
   disabled?: boolean
 }
@@ -29,6 +31,10 @@ export function sanitizeInitiationAnalytics(input: unknown): InitiationAnalytics
   }
   if (typeof source.placement === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(source.placement)) result.placement = source.placement
   if (typeof source.page_visit_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(source.page_visit_id)) result.page_visit_id = source.page_visit_id
+  for (const key of ['posthog_distinct_id', 'posthog_session_id'] as const) {
+    const value = source[key]
+    if (typeof value === 'string' && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value)) result[key] = value
+  }
   if (source.is_internal_qa === true) result.is_internal_qa = true
   if (source.disabled === true) result.disabled = true
   return result
@@ -45,9 +51,13 @@ export function initiationAdContext(incoming: Record<string, unknown>, stored: u
 
 export function initiationAnalyticsProperties(kind: InitiationOrderKind, context: unknown = {}, amount: number = INITIATION_PRICES[kind].amount) {
   const safe = sanitizeInitiationAnalytics(context)
+  const sessionId = safe.posthog_session_id
+  delete safe.posthog_distinct_id
+  delete safe.posthog_session_id
   delete safe.disabled
   return {
-    ...safe, page_version: INITIATION_PAGE_VERSION, batch: 'S26', order_kind: kind,
+    ...safe, ...(sessionId ? { $session_id: sessionId } : {}),
+    analytics_version: 'checkout-providers-v2', page_version: INITIATION_PAGE_VERSION, batch: 'S26', order_kind: kind,
     product_type: 'voyager_initiation', product_name: INITIATION_PRICES[kind].name,
     payable_amount: amount / 100,
     amount_minor: amount, currency: 'USD', pricing_version: INITIATION_PRICING_VERSION,
