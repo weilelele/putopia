@@ -19,3 +19,13 @@ Shopify 当前 Horizon 主题（162070855871）的 `layout/theme.liquid` 在 `<h
 ## Membership 商品图片
 
 使用现有原始品牌资产 `public/icons/icon-512-maskable.png`：512×512、深色底橙色图形 Logo，无新绘制或变形。应用于 Shopify 的 Voyager Membership 商品图片，不改变已选定的 Initiation 权益圆图。
+
+## 实际付款和异步退款
+
+受控 $12 试单经正式 Shopify Payments 授权、捕获及 webhook 对账后，账号实际成为 Voyager，席位由 90 到 91，无 Pack/Console 权益。真实登录页面显示 $26 Initial、$476 Complete 的会员升档报价，390×844 无横向溢出。
+
+已在 Shopify 针对该试单提交全额 $12 原路退款，取消补库存。供应商当前显示 Refund pending；尚未宣称财务退款成功，也未提前回收成功付款的权限或席位。Shopify 说明退款可在处理期间保持 Pending，见 [Shopify Payments refunds](https://help.shopify.com/en/manual/payments/shopify-payments/payouts/refunds)。公开 Membership 入口在最终退款权限验收前仍关闭。
+
+新增 pendingRefund 证据标记，保留原对账队列直到供应商确认 SUCCESS/FAILURE/ERROR，即使后续 webhook 漏送，也由现有每五分钟任务继续读权威订单。已有成功的部分退款先按成功金额同步，其他 Pending 退款继续跟进；未完成的退款不作为成功退款金额。隔离实际路由验证 Pending → SUCCESS 在没有第二条 webhook 时仍会关闭会员并释放席位。
+
+新增两项纯测试后共 1,058 项通过；TypeScript、lint、design:check、实际路由联调和生产构建通过。该补充不改数据库结构，不需要新迁移。
