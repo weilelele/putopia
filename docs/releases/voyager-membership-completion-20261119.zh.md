@@ -28,4 +28,4 @@ Shopify 当前 Horizon 主题（162070855871）的 `layout/theme.liquid` 在 `<h
 
 新增 pendingRefund 证据标记，保留原对账队列直到供应商确认 SUCCESS/FAILURE/ERROR，即使后续 webhook 漏送，也由现有每五分钟任务继续读权威订单。已有成功的部分退款先按成功金额同步，其他 Pending 退款继续跟进；未完成的退款不作为成功退款金额。隔离实际路由验证 Pending → SUCCESS 在没有第二条 webhook 时仍会关闭会员并释放席位。
 
-新增两项纯测试后共 1,058 项通过；TypeScript、lint、design:check、实际路由联调和生产构建通过。该补充不改数据库结构，不需要新迁移。
+同步最新主线的 Shopify 结账诊断后，共 1,085 项纯测试通过；TypeScript、lint、design:check、实际路由联调和生产构建通过。隔离付款联调继续屏蔽诊断传输，不向生产发送测试分析事件。该退款补充不改数据库结构，不需要新迁移。

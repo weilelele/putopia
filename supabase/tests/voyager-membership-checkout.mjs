@@ -132,6 +132,7 @@ registerHooks({
     if(filename?.endsWith('/lib/shopify-bundle-pilot.ts')) source=`export const shopifyApiVersion='2026-10';export const shopifyPilotRequest=(...args)=>${fixture}.provider(...args)`
     if(filename?.endsWith('/lib/initiation-confirmation.ts')) source=`export async function sendInitiationConfirmation(order,email){if(!email)throw Error('Missing email');${fixture}.confirmations.add(order.id)}`
     if(filename?.endsWith('/lib/initiation-analytics-outbox.ts')) source='export async function sendPendingInitiationAnalytics(){};export async function queueInitiationCheckoutAnalytics(){};export function validInitiationAnalyticsSession(){return false}'
+    if(filename?.endsWith('/lib/shopify-transaction-diagnostics.ts')) source='export async function queueShopifyTransactionDiagnostics(){}'
     if(filename?.endsWith('/lib/initiation-meta-purchases.ts')) source='export async function sendPendingInitiationMetaPurchases(){}'
     if(filename?.endsWith('/lib/activation.ts')) source=`export const findAccount=email=>${fixture}.findAccount(email);export const createUnactivatedAccount=email=>${fixture}.createAccount(email);export const sendActivationEmail=async()=>({error:null})`
     if(filename?.endsWith('/lib/stripe.ts')) source="export function getStripe(){throw Error('Stripe must not be called for Membership')}; export const isStripeSecretKey=()=>false"
