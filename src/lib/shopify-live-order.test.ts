@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import {
   shopifyLiveCheckoutAttribute, shopifyLiveReservationReference, verifyShopifyLiveOrder,
-  verifyShopifyLiveWebhook, type ShopifyLiveOrder,
+  verifyShopifyLiveWebhook, withShopifyOrderVariantIdentity, type ShopifyLiveOrder,
 } from './shopify-live-order'
 
 const secret = 'test-secret'
@@ -12,6 +12,27 @@ const reservation = {
 }
 const money = (amount: string) => ({ shopMoney:{amount,currencyCode:'USD'}, presentmentMoney:{amount,currencyCode:'USD'} })
 const authId = 'gid://shopify/OrderTransaction/444'
+
+describe('Shopify order snapshot identity', () => {
+  const digital = () => ({ ...order(), lineItems: { pageInfo: { hasNextPage: false }, nodes: [{
+    id: 'gid://shopify/LineItem/123', sku: 'VOYAGER-MEMBERSHIP-S26', quantity: 1, requiresShipping: false, lineItemGroup: null,
+  }] } })
+  it('uses the order snapshot instead of a product relation and preserves the source response', () => {
+    const source = digital()
+    const result = withShopifyOrderVariantIdentity(source, { order: { id: 886, line_items: [{ id: 123, variant_id: 30 }] } })
+    expect(result.lineItems.nodes[0].variant?.id).toBe('gid://shopify/ProductVariant/30')
+    expect(source.lineItems.nodes[0]).not.toHaveProperty('variant')
+  })
+  it('rejects foreign orders, mismatched items, missing variants and unsafe identifiers', () => {
+    for (const snapshot of [
+      {}, { order: { id: 887, line_items: [{ id: 123, variant_id: 30 }] } },
+      { order: { id: 886, line_items: [{ id: 124, variant_id: 30 }] } },
+      { order: { id: 886, line_items: [{ id: 123, variant_id: null }] } },
+      { order: { id: 886, line_items: [{ id: 123, variant_id: Number.MAX_SAFE_INTEGER + 1 }] } },
+      { order: { id: 886, line_items: [{ id: 123, variant_id: 30 }, { id: 123, variant_id: 31 }] } },
+    ]) expect(() => withShopifyOrderVariantIdentity(digital(), snapshot)).toThrow()
+  })
+})
 
 function order(): ShopifyLiveOrder {
   return {

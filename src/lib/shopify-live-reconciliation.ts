@@ -8,7 +8,8 @@ import { type shopifyLiveConfig } from './shopify-live-config'
 import { sendPendingInitiationAnalytics } from './initiation-analytics-outbox'
 import { sendPendingInitiationMetaPurchases } from './initiation-meta-purchases'
 import {
-  shopifyLiveCheckoutAttribute, shopifyLiveReservationId, verifyShopifyLiveOrder, type ShopifyLiveOrder,
+  shopifyLiveCheckoutAttribute, shopifyLiveReservationId, verifyShopifyLiveOrder, withShopifyOrderVariantIdentity,
+  type ShopifyLiveOrder, type ShopifyOrderIdentitySnapshot,
 } from './shopify-live-order'
 
 type Config = NonNullable<ReturnType<typeof shopifyLiveConfig>>
@@ -22,18 +23,25 @@ async function adminQuery(config: Config) {
     grant_type:'client_credentials',client_id:config.clientId,client_secret:config.clientSecret,
   }))
   if (!token.access_token) throw new Error('Shopify admin token is missing')
-  return async <T>(query:string,variables:Record<string,unknown>) => {
+  const graphql = async <T>(query:string,variables:Record<string,unknown>) => {
     const result = await shopifyPilotRequest<{data?:T;errors?:unknown[]}>(`${root}/admin/api/${shopifyApiVersion}/graphql.json`,{
       'Content-Type':'application/json','X-Shopify-Access-Token':token.access_token!,
     },JSON.stringify({query,variables}))
     if (result.errors?.length || !result.data) throw new Error('Shopify Admin query could not be completed')
     return result.data
   }
+  return { graphql, orderIdentity: async (orderId: string) => {
+    const id = orderId.match(/^gid:\/\/shopify\/Order\/(\d+)$/)?.[1]
+    if (!id) throw new Error('Invalid Shopify order identity')
+    return shopifyPilotRequest<ShopifyOrderIdentitySnapshot>(`${root}/admin/api/${shopifyApiVersion}/orders/${id}.json?fields=id,line_items`, {
+      'X-Shopify-Access-Token':token.access_token!,
+    }, undefined, 'GET')
+  } }
 }
 
 async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof adminQuery>>, admin: ReturnType<typeof createAdminClient>, orderId: string) {
   // Read the current authoritative order instead of relying on webhook delivery order.
-  const { order } = await query<{ order: ShopifyLiveOrder | null }>(INITIAL_PILOT_QUERY,{id:orderId,isComplete:true})
+  let { order } = await query.graphql<{ order: ShopifyLiveOrder | null }>(INITIAL_PILOT_QUERY,{id:orderId,isComplete:true})
   if (!order || order.test) return
   const reference = order.customAttributes.find(field=>field.key===shopifyLiveCheckoutAttribute)?.value
   const reservationId = shopifyLiveReservationId(reference)
@@ -47,13 +55,14 @@ async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof a
   const local = source.data as Source | null
   if (!binding || !local) return
   if (local.status==='canceled' && !binding.authorization_id && (!binding.superseded_by || order.cancelledAt)) return
+  if (local.order_kind === 'membership') order = withShopifyOrderVariantIdentity(order, await query.orderIdentity(orderId))
   const evidence = verifyShopifyLiveOrder(order,{
     id:binding.order_id,shop:config.shop,userId:local.user_id,email:binding.email,kind:local.order_kind,variantId:binding.variant_id,amount:local.amount,pricingVersion:local.pricing_version,
     membershipOrderId:local.membership_order_id,initialOrderId:local.initial_order_id,referenceVersion:binding.reference_version,
   },config.clientSecret)
   if (binding.superseded_by) {
     if (evidence.state!=='authorized') throw new Error('Superseded Shopify checkout has an unexpected capture')
-    const { orderCancel } = await query<{orderCancel:{job:{id:string}|null;orderCancelUserErrors:unknown[]}}>(`
+    const { orderCancel } = await query.graphql<{orderCancel:{job:{id:string}|null;orderCancelUserErrors:unknown[]}}>(`
       mutation VoidSupersededCheckout($orderId:ID!) {
         orderCancel(orderId:$orderId, reason:OTHER, restock:true, notifyCustomer:false,
           refundMethod:{originalPaymentMethodsRefund:false},
@@ -85,7 +94,7 @@ async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof a
     const approved=await admin.rpc('bind_initiation_shopify_authorization' as never,remoteBinding as never)
     if (approved.error) throw new Error('Shopify authorization was not approved for this reservation')
     if (approved.data!==true) throw new Error('Shopify authorization capture is already being reconciled')
-    const { orderCapture } = await query<{orderCapture:{transaction:{status:string}|null;userErrors:unknown[]}}>(`
+    const { orderCapture } = await query.graphql<{orderCapture:{transaction:{status:string}|null;userErrors:unknown[]}}>(`
       mutation CapturePutopiaOrder($input:OrderCaptureInput!){orderCapture(input:$input){transaction{status} userErrors{field}}}
     `,{input:{id:evidence.orderId,parentTransactionId:evidence.authorization,amount:(evidence.amount/100).toFixed(2),currency:'USD'}})
     if (orderCapture.userErrors.length || !['PENDING','SUCCESS'].includes(orderCapture.transaction?.status??'')) {

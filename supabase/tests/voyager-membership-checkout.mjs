@@ -67,9 +67,17 @@ const admin={from:table=>new Query(table),rpc:async(name,args={})=>{
 const money = amount => ({shopMoney:{amount:String(amount),currencyCode:'USD'},presentmentMoney:{amount:String(amount),currencyCode:'USD'}})
 const tx = (id,kind,amount,parent=null) => ({id:`gid://shopify/OrderTransaction/${id}`,kind,status:'SUCCESS',test:false,gateway:'shopify_payments',amountSet:money(amount),processedAt:new Date().toISOString(),parentTransaction:parent?{id:parent}:null})
 const connection = nodes => ({nodes,pageInfo:{hasNextPage:false}})
-async function provider(url, _headers, payload) {
+async function provider(url, _headers, payload, method='POST') {
   assert.ok(url.startsWith(`https://${shop}/`))
   if(url.endsWith('/admin/oauth/access_token')) return {access_token:'fixture-admin-token'}
+  if(method==='GET') {
+    assert.equal(payload,undefined)
+    const match=url.match(/\/orders\/(\d+)\.json\?fields=id,line_items$/)
+    assert.ok(match)
+    const order=remoteOrders.get(`gid://shopify/Order/${match[1]}`)
+    assert.ok(order)
+    return {order:{id:Number(match[1]),line_items:order.lineItems.nodes.map(line=>({id:Number(line.id.split('/').pop()),variant_id:Number(line.variant.id.split('/').pop())}))}}
+  }
   const {query,variables}=JSON.parse(payload)
   if(query.includes('cartCreate')) {
     const id=variables.input.attributes[0].value.split('.')[0]
@@ -93,7 +101,10 @@ async function provider(url, _headers, payload) {
     return {data:{orderCapture:{transaction:{status:'SUCCESS'},userErrors:[]}}}
   }
   assert.ok(query.includes('ShopifyPilotOrder'))
-  return {data:{order:remoteOrders.get(variables.id)}}
+  assert.ok(!query.includes('variant { id }'),'Order query must not require read_products')
+  const order=structuredClone(remoteOrders.get(variables.id))
+  for(const line of order.lineItems.nodes)delete line.variant
+  return {data:{order}}
 }
 globalThis.__membershipFixture={admin,tasks,provider,confirmations,getUser:()=>user,findAccount:async email=>(await db.query('select id,registered_at is not null as activated from voyager_profiles where email=$1',[email])).rows[0]??null,createAccount:async email=>{const id=randomUUID();await db.query("insert into voyager_profiles(id,email,role,account_kind) values($1,$2,'applicant','human')",[id,email]);return {id,created:true}}}
 const stub = source => `data:text/javascript,${encodeURIComponent(source)}`
@@ -155,7 +166,7 @@ try {
     const remote={id:`gid://shopify/Order/${++sequence}`,test:false,email:user.email,updatedAt:new Date().toISOString(),cancelledAt:null,displayFinancialStatus:'AUTHORIZED',customAttributes:input.attributes,
       shippingAddress:positions.length?{name:'Fixture Buyer',address1:'1 Test St',address2:null,city:'Santa Clara',provinceCode:'CA',zip:'95054',countryCodeV2:'US'}:null,
       totalPriceSet:money(amount),currentTotalPriceSet:money(amount),totalShippingPriceSet:money(0),totalDiscountsSet:money(0),
-      lineItems:connection(positions.length?positions.map(n=>({id:`line-${n}`,sku:n<3?`INITIAL-PACK-${n}`:`COMPLETE-PACK-${n}`,quantity:1,requiresShipping:true,lineItemGroup:{id:'group',quantity:1,variantId:variant}})):[{id:'digital',sku:'VOYAGER-MEMBERSHIP-S26',quantity:1,requiresShipping:false,variant:{id:variant},lineItemGroup:null}]),
+      lineItems:connection(positions.length?positions.map(n=>({id:`line-${n}`,sku:n<3?`INITIAL-PACK-${n}`:`COMPLETE-PACK-${n}`,quantity:1,requiresShipping:true,lineItemGroup:{id:'group',quantity:1,variantId:variant}})):[{id:`gid://shopify/LineItem/${++sequence}`,sku:'VOYAGER-MEMBERSHIP-S26',quantity:1,requiresShipping:false,variant:{id:variant},lineItemGroup:null}]),
       transactions:[tx(++sequence,'AUTHORIZATION',amount)],refunds:[],fulfillments:[]}
     remoteOrders.set(remote.id,remote)
     await notify(remote,'orders/create')

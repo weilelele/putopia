@@ -51,6 +51,31 @@ function requireMatch(ok: unknown, message: string): asserts ok {
   if (!ok) throw new ShopifyOrderReview(message)
 }
 
+export type ShopifyOrderIdentitySnapshot = { order?: { id?: unknown; line_items?: { id?: unknown; variant_id?: unknown }[] } }
+
+/** Order snapshots require the existing read_orders scope; live ProductVariant relations require read_products. */
+export function withShopifyOrderVariantIdentity(order: ShopifyLiveOrder, snapshot: ShopifyOrderIdentitySnapshot): ShopifyLiveOrder {
+  const id = snapshot.order?.id
+  const lines = snapshot.order?.line_items
+  requireMatch(typeof id === 'number' && Number.isSafeInteger(id) && id > 0 && order.id === `gid://shopify/Order/${id}`
+    && Array.isArray(lines) && lines.length === order.lineItems.nodes.length && !order.lineItems.pageInfo.hasNextPage,
+  'The Shopify order identity snapshot does not match')
+  const variants = new Map<string, string>()
+  for (const line of lines) {
+    requireMatch(typeof line.id === 'number' && Number.isSafeInteger(line.id) && line.id > 0
+      && typeof line.variant_id === 'number' && Number.isSafeInteger(line.variant_id) && line.variant_id > 0,
+    'The Shopify order snapshot has invalid item identity')
+    const lineId = `gid://shopify/LineItem/${line.id}`
+    requireMatch(!variants.has(lineId), 'The Shopify order snapshot has duplicate items')
+    variants.set(lineId, `gid://shopify/ProductVariant/${line.variant_id}`)
+  }
+  return { ...order, lineItems: { ...order.lineItems, nodes: order.lineItems.nodes.map(line => {
+    const variant = variants.get(line.id)
+    requireMatch(variant, 'The Shopify order snapshot is missing the reserved item')
+    return { ...line, variant: { id: variant } }
+  }) } }
+}
+
 export function shopifyLiveReservationReference(reservation: ShopifyReservation, secret: string) {
   const values: unknown[] = [reservation.shop, reservation.id, reservation.userId, reservation.email.trim().toLowerCase(), reservation.kind, reservation.variantId]
   if (reservation.referenceVersion === 2) values.push(reservation.amount, reservation.pricingVersion, reservation.membershipOrderId ?? null, reservation.initialOrderId ?? null)

@@ -56,8 +56,8 @@ export function pilotBuyerEmail(user: { email?: string; email_confirmed_at?: str
   return user?.email_confirmed_at && email && /^[a-z0-9.-]+@example\.com$/.test(email) ? email : null
 }
 
-export async function shopifyPilotRequest<T>(url: string, headers: Record<string, string>, body: string | URLSearchParams): Promise<T> {
-  const response = await fetch(url, { method: 'POST', headers, body, redirect: 'error', signal: AbortSignal.timeout(12000), cache: 'no-store' })
+export async function shopifyPilotRequest<T>(url: string, headers: Record<string, string>, body: string | URLSearchParams | undefined, method: 'POST' | 'GET' = 'POST'): Promise<T> {
+  const response = await fetch(url, { method, headers, body, redirect: 'error', signal: AbortSignal.timeout(12000), cache: 'no-store' })
   if (!response.ok) throw new Error(`Shopify HTTP ${response.status}`)
   return response.json() as Promise<T>
 }
