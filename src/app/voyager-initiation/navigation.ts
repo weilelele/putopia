@@ -5,13 +5,13 @@ export function deviceSourcePath(value: string | null | undefined): string | nul
   return /^\/devices\/batches\/[a-z0-9][a-z0-9-]*\/?$/.test(value) ? value.replace(/\/$/, '') : null
 }
 
-export function initiationReturnPath(deviceSource: string | null, bundle?: 'initial' | 'standard'): string {
+export function initiationReturnPath(deviceSource: string | null, bundle?: 'membership' | 'initial' | 'standard'): string {
   const source = deviceSourcePath(deviceSource)
   const path = source ? `/voyager-initiation?from=${encodeURIComponent(source)}` : '/voyager-initiation'
   return bundle ? `${path}${source ? '&' : '?'}bundle=${bundle}` : path
 }
 
-export function initiationLoginPath(deviceSource: string | null, bundle?: 'initial' | 'standard'): string {
+export function initiationLoginPath(deviceSource: string | null, bundle?: 'membership' | 'initial' | 'standard'): string {
   return `/login?redirect=${encodeURIComponent(initiationReturnPath(deviceSource, bundle))}`
 }
 

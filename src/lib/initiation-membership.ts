@@ -1,17 +1,18 @@
 import type { InitiationOrderKind, InitiationStatus } from './initiation-types'
 
 /** A newer canceled/pending checkout must not replace the confirmed purchase label. */
-export function initiationPurchaseKind(orders: { id: string; status: string; order_kind: string }[] | null, entitlement: { active: boolean; order_id: string } | null, initialOrderId: string | null): InitiationOrderKind | null {
-  if (!entitlement?.active) return initialOrderId ? 'initial' : null
+export function initiationPurchaseKind(orders: { id: string; status: string; order_kind: string }[] | null, entitlement: { active: boolean; order_id: string } | null, initialOrderId: string | null, membershipOrderId: string | null = null): InitiationOrderKind | null {
+  if (!entitlement?.active) return initialOrderId ? 'initial' : membershipOrderId ? 'membership' : null
   const confirmed = orders?.find(order => order.id === entitlement.order_id && order.status === 'paid')
   return confirmed?.order_kind === 'standard' || confirmed?.order_kind === 'legacy_upgrade' ? confirmed.order_kind : null
 }
 
 /** Roster membership is separate from the paid fulfillment entitlement. */
-export function initiationMemberStatus(paidEntitlementActive: boolean, member: { source: 'paid' | 'granted'; active: boolean } | null, legacyPackPurchased: boolean): InitiationStatus {
+export function initiationMemberStatus(paidEntitlementActive: boolean, member: { source: 'paid' | 'granted'; active: boolean } | null, legacyPackPurchased: boolean, membershipActive = false): InitiationStatus {
   if (paidEntitlementActive) return 'initiated'
   if (member?.active && member.source === 'granted') return 'granted'
   if (legacyPackPurchased) return 'legacy_pack'
+  if (membershipActive) return 'membership'
   if (member?.active && member.source === 'paid') return 'unknown' // inconsistent payment/entitlement read
   return legacyPackPurchased ? 'legacy_pack' : 'unpaid'
 }

@@ -30,6 +30,20 @@ export async function createInitiationCheckout(request: Request, origin: string,
   let previousMark = started
   const timings: string[] = []
   const mark = (name: string) => { const now = performance.now(); timings.push(`${name};dur=${(now - previousMark).toFixed(1)}`); previousMark = now }
+  if (process.env.INITIATION_MEMBERSHIP_ENABLED === 'true') {
+    const target = body?.bundle
+    if (!['membership', 'initial', 'standard'].includes(String(target))) return NextResponse.json({ error: 'Choose a valid option.' }, { status: 400 })
+    const configurationError = initiationConfigurationError(target as 'membership' | 'initial' | 'standard')
+    if (configurationError) return NextResponse.json({ error: configurationError }, { status: 503 })
+    const config = shopifyLiveConfig()
+    if (!config) return NextResponse.json({ error: 'Membership checkout is not configured yet.' }, { status: 503 })
+    const existing = await createAdminClient().from('initiation_orders').select('price_id').eq('user_id', user.id).eq('status', 'pending')
+    if (existing.error) return NextResponse.json({ error: 'Your payment records are temporarily unavailable.' }, { status: 503 })
+    if (target === 'membership' || !(existing.data as { price_id: string }[]).some(order => !order.price_id.startsWith('price_shopify_'))) {
+      try { return await createShopifyLiveCheckout(config, request, origin, user, body, checkoutPath, target as 'membership' | 'initial' | 'standard') }
+      catch { return NextResponse.json({ error: 'Checkout could not be confirmed. Please retry to reuse your existing reservation.' }, { status: 503 }) }
+    }
+  }
   const stripe = getStripe()!
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

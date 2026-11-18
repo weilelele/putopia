@@ -185,3 +185,10 @@
 .bundleCircle img { object-fit: fill; }
 .purchaseTerms { display: grid; gap: var(--s-2); margin-bottom: var(--s-5); font-size: var(--fs-body); line-height: 1.5; }
 .purchaseTerms p { margin: 0; }
+.membershipImages { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.membershipImages .bundleBenefit { font-size: var(--fs-caption); }
+
+@media (max-width: 365px) {
+  .membershipImages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .membershipImages .bundleCircle { max-width: 80px; }
+}

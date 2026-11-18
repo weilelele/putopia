@@ -1,4 +1,4 @@
-import { INITIATION_PRICES, INITIATION_PRICING_VERSION } from './initiation-pricing'
+import { INITIATION_PRICES, INITIATION_PRICING_VERSION, MEMBERSHIP_PRICING_VERSION } from './initiation-pricing'
 import type { InitiationOrderKind, InitiationStatus } from './initiation-types'
 
 export const INITIATION_PAGE_VERSION = 'voyager-post-payment-calibration-v1-20261022'
@@ -60,7 +60,7 @@ export function initiationAnalyticsProperties(kind: InitiationOrderKind, context
     analytics_version: 'checkout-providers-v2', page_version: INITIATION_PAGE_VERSION, batch: 'S26', order_kind: kind,
     product_type: 'voyager_initiation', product_name: INITIATION_PRICES[kind].name,
     payable_amount: amount / 100,
-    amount_minor: amount, currency: 'USD', pricing_version: INITIATION_PRICING_VERSION,
+    amount_minor: amount, currency: 'USD', pricing_version: kind === 'membership' || amount !== INITIATION_PRICES[kind].amount ? MEMBERSHIP_PRICING_VERSION : INITIATION_PRICING_VERSION,
   }
 }
 

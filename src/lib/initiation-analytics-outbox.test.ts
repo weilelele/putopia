@@ -22,6 +22,16 @@ describe('durable PostHog Initiation outcomes', () => {
       checkout_url: 'https://jtuuus-k3.myshopify.com/cart/c/cart-id?key=private-cart-token',
       shopify_order_id: 'gid://shopify/Order/123', authorization_id: 'gid://shopify/OrderTransaction/1', capture_id: 'gid://shopify/OrderTransaction/2' },
   }
+  it.each([
+    ['membership', 1200, null], ['initial', 2600, 'membership-root'], ['standard', 47600, 'membership-root'],
+  ] as const)('reports the actual Shopify %s charge once, including membership credit', async (kind, amount, root) => {
+    const deps = setup({ loadOrder: async () => ({ ...shopifyOrder, order_kind: kind, amount,
+      pricing_version: 'voyager-membership-v1', membership_order_id: root }) })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
+    expect(deps.send).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      properties: expect.objectContaining({ order_kind: kind, payable_amount: amount / 100, payment_status: 'paid' }),
+    }))
+  })
   it('joins a verified Shopify capture to the guest browser and original visit without contacting Stripe', async () => {
     const deps = setup({ loadOrder: async () => shopifyOrder })
     expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })

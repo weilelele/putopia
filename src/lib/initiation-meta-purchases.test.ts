@@ -51,6 +51,16 @@ describe('Initiation paid Purchase payload', () => {
       shopify_order_id: 'gid://shopify/Order/1', authorization_id: 'gid://shopify/OrderTransaction/1',
       capture_id: 'gid://shopify/OrderTransaction/2', email: 'purchaser@example.test' },
   }
+  it.each([
+    ['membership', 1200, null], ['initial', 2600, 'membership-root'], ['standard', 47600, 'membership-root'],
+  ] as const)('attributes the actual %s payment after Membership credit', async (kind, amount, root) => {
+    const deps = dependencies({ ...shopify, order_kind: kind, amount, pricing_version: 'voyager-membership-v1', membership_order_id: root })
+    expect(await deliverInitiationMetaPurchase(claim, deps)).toBe('sent')
+    expect(deps.retrieveSession).not.toHaveBeenCalled()
+    expect(buildMetaPurchasePayload(deps.sendPurchase.mock.calls[0][0]).data[0]).toMatchObject({
+      event_id: claim.event_id, custom_data: { value: amount / 100, order_kind: kind, pricing_version: 'voyager-membership-v1' },
+    })
+  })
   it('sends a captured Shopify purchase once using the existing outbox event identity', async () => {
     const deps = dependencies(shopify)
     expect(await deliverInitiationMetaPurchase(claim, deps)).toBe('sent')

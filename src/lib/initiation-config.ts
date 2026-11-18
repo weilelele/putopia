@@ -4,6 +4,7 @@ import type Stripe from 'stripe'
 import type { InitiationOrderKind } from '@/lib/initiation-types'
 import { initiationPolicyError } from '@/lib/initiation-checkout-policy'
 import { isStripeSecretKey } from '@/lib/stripe'
+import { shopifyLiveConfig } from './shopify-live-config'
 
 type CatalogQuote = { priceId: string; productId: string }
 type VoyagerCheckoutCatalog = {
@@ -38,6 +39,7 @@ export function initiationStripeQuote(
   previous?: { status: string; order_kind: InitiationOrderKind; pricing_version: string | null; price_id: string; product_id: string } | null,
   env: Record<string, string | undefined> = process.env,
 ) {
+  if (kind === 'membership') return { priceId: undefined, productId: undefined }
   // The reservation RPC requires the original quote when a customer retries a pending order.
   if (previous?.status === 'pending' && previous.order_kind === kind && previous.pricing_version === INITIATION_PRICING_VERSION) {
     return { priceId: previous.price_id, productId: previous.product_id }
@@ -55,7 +57,7 @@ export function initiationCheckoutPaymentMethods(
   env: Record<string, string | undefined> = process.env,
 ): Pick<Stripe.Checkout.SessionCreateParams, 'payment_method_types' | 'payment_method_configuration' | 'wallet_options'> {
   const catalog = voyagerCheckoutCatalog(env.STRIPE_INITIATION_CHECKOUT_CATALOG)
-  if (catalog && order.order_kind !== 'legacy_upgrade') {
+  if (catalog && order.order_kind !== 'legacy_upgrade' && order.order_kind !== 'membership') {
     const quote = catalog[order.order_kind]
     // Keep Stripe's idempotent create parameters stable for reservations made before the switch.
     if (order.price_id === quote.priceId && order.product_id === quote.productId) {
@@ -66,12 +68,24 @@ export function initiationCheckoutPaymentMethods(
 }
 
 export function initiationConfigurationError(kind: InitiationOrderKind = 'standard'): string | null {
+  if (process.env.INITIATION_MEMBERSHIP_ENABLED === 'true') {
+    const config = shopifyLiveConfig()
+    const offers = config && [config.membership, config.membershipInitial, config.membershipComplete, config.upgrade, config.initial, config.standard]
+    if (process.env.INITIATION_CHECKOUT_ENABLED !== 'true' || process.env.INITIATION_SHOPIFY_LIVE_ENABLED !== 'true') return 'Initiation checkout is not open yet.'
+    if (!offers || offers.some(id => !/^gid:\/\/shopify\/ProductVariant\/\d+$/.test(id ?? '')) || new Set(offers).size !== offers.length) return 'The Membership and upgrade checkout catalog is incomplete.'
+    return initiationPolicyError({
+      termsApproved: process.env.INITIATION_TERMS_APPROVED, fulfillmentApproved: process.env.INITIATION_FULFILLMENT_POLICY_APPROVED,
+      shippingPolicy: process.env.INITIATION_SHIPPING_POLICY, taxPolicy: process.env.INITIATION_TAX_POLICY,
+      countries: process.env.INITIATION_SHIPPING_COUNTRIES, siteUrl: process.env.NEXT_PUBLIC_SITE_URL, termsUrl: process.env.INITIATION_TERMS_URL,
+    })
+  }
+  if (kind === 'membership') return 'Voyager Membership checkout is not open yet.'
   if (process.env.INITIATION_PRICING_VERSION !== INITIATION_PRICING_VERSION) return 'The current bundle prices are not configured yet.'
   if (process.env.INITIATION_CHECKOUT_ENABLED !== 'true') return 'Initiation checkout is not open yet.'
   if (!isStripeSecretKey(process.env.STRIPE_SECRET_KEY) || !process.env.STRIPE_WEBHOOK_SECRET) return 'Payment configuration is incomplete.'
   const catalogEnv = process.env.STRIPE_INITIATION_CHECKOUT_CATALOG
   if (catalogEnv && !voyagerCheckoutCatalog(catalogEnv)) return 'The Voyager Pack checkout catalog is incomplete.'
-  const configuredPrices = (Object.keys(INITIATION_PRICES) as InitiationOrderKind[]).map(offer => initiationStripeQuote(offer).priceId)
+  const configuredPrices = (['initial', 'standard', 'legacy_upgrade'] as const).map(offer => initiationStripeQuote(offer).priceId)
   if (configuredPrices.some(value => !value?.startsWith('price_')) || new Set(configuredPrices).size !== 3) return 'All three dedicated bundle prices must be configured.'
   const { priceId, productId } = initiationStripeQuote(kind)
   if (!priceId?.startsWith('price_') || !productId?.startsWith('prod_') || priceId === process.env.STRIPE_PRICE_ID) return 'The dedicated Initiation product is not configured.'

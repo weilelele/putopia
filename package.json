@@ -10,7 +10,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "mobile:check": "npm --prefix mobile run check",
-    "appstore:screenshots": "node scripts/appstore-screenshots.mjs"
+    "appstore:screenshots": "node scripts/appstore-screenshots.mjs",
+    "prebuild": "node scripts/shopify/verify-build-catalog.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

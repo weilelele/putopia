@@ -33,3 +33,11 @@ describe('versioned Voyager bundle receipts', () => {
     expect(49800 - INITIATION_PRICES.standard.amount).toBe(1000)
   })
 })
+
+it('validates the $12 Membership and its credited upgrades only with their dedicated pricing version and source', () => {
+  expect(isInitiationOrderAmount({ order_kind: 'membership', amount: 1200, pricing_version: 'voyager-membership-v1' })).toBe(true)
+  expect(isInitiationOrderAmount({ order_kind: 'membership', amount: 1200, pricing_version: 'voyager-bundles-v1' })).toBe(false)
+  expect(isInitiationOrderAmount({ order_kind: 'initial', amount: 2600, pricing_version: 'voyager-membership-v1', membership_order_id: 'paid-source' })).toBe(true)
+  expect(isInitiationOrderAmount({ order_kind: 'standard', amount: 47600, pricing_version: 'voyager-membership-v1', membership_order_id: 'paid-source' })).toBe(true)
+  expect(isInitiationOrderAmount({ order_kind: 'initial', amount: 2600, pricing_version: 'voyager-membership-v1' })).toBe(false)
+})

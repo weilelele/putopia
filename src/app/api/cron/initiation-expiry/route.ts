@@ -26,7 +26,8 @@ export async function GET(request: Request) {
       return { expired: expired.data, pending: await reconcileShopifyLiveQueue(shopifyConfig) }
     })() : Promise.resolve(null),
   ])
-  const failed = expiry.status === 'rejected' || meta.status === 'rejected' || shopify.status === 'rejected'
+  const failed = (shopify.status === 'fulfilled' && !!shopify.value && shopify.value.pending > 0)
+    || expiry.status === 'rejected' || meta.status === 'rejected' || shopify.status === 'rejected'
     || (meta.status === 'fulfilled' && !!meta.value && (meta.value.failed > 0 || meta.value.retried > 0))
     || analytics.status === 'rejected' || (analytics.status === 'fulfilled' && (analytics.value.failed > 0 || analytics.value.retried > 0))
   return NextResponse.json({

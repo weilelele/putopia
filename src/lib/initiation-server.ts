@@ -49,7 +49,7 @@ export async function readInitiationSnapshot(session: ReturnType<typeof getReque
       admin.from('voyager_profiles').select('role').eq('id', user.id).single(),
       admin.from('voyager_intake').select('version').eq('user_id', user.id).maybeSingle(),
       admin.rpc('eligible_legacy_initiation_order', { p_user: user.id }),
-      admin.from('initiation_orders').select('id,status,order_kind,price_id,expires_at').eq('user_id', user.id).order('created_at', { ascending: false }),
+      admin.from('initiation_orders').select('id,status,order_kind,amount,price_id,expires_at').eq('user_id', user.id).order('created_at', { ascending: false }),
       admin.from('initiation_entitlements').select('order_id,active,console_claimed_at,console_order_id').eq('user_id', user.id).maybeSingle(),
       readShipments(),
       admin.from('initiation_members').select('source,active,batch').eq('user_id', user.id).maybeSingle(),
@@ -57,22 +57,35 @@ export async function readInitiationSnapshot(session: ReturnType<typeof getReque
     ])
     if (results.slice(0, 3).some(result => result.error)) throw new Error('Profile or historical orders could not be loaded.')
     const [profile, intake, legacy, orders, entitlement, shipments, member, initial] = results.map(result => result.data)
+    let membershipId: string | null = null
+    if (process.env.INITIATION_MEMBERSHIP_ENABLED === 'true') {
+      const membership = await admin.rpc('eligible_voyager_membership_order', { p_user: user.id })
+      if (membership.error) throw membership.error
+      membershipId = membership.data
+      snapshot.membershipActive = !!membershipId
+      const refunds = await admin.from('initiation_shopify_checkouts').select('order_id,refunded_amount,refund_review').in('order_id', (orders ?? []).map((order: { id: string }) => order.id))
+      if (refunds.error) throw refunds.error
+      snapshot.hasPackRefund = (refunds.data ?? []).some((row: { order_id: string; refunded_amount: number; refund_review: boolean }) => {
+        const order = (orders ?? []).find((item: { id: string }) => item.id === row.order_id)
+        return row.refund_review || (order?.order_kind !== 'membership' && row.refunded_amount > 0 && row.refunded_amount < order?.amount)
+      })
+    }
     snapshot.role = profile.role
     snapshot.calibrated = intake?.version === VOYAGER_PROFILE_VERSION
     snapshot.legacyPackPurchased = !!legacy || !!initial
-    snapshot.ownsSeat = member?.batch === INITIATION_BATCH
+    snapshot.ownsSeat = member?.batch === INITIATION_BATCH && member.active === true
     snapshot.hasCheckoutReservation = hasActiveShopifyReservation(orders ?? [])
     const kind = snapshot.legacyPackPurchased ? 'legacy_upgrade' : 'initial'
     snapshot.offer = { kind, amount: snapshot.legacyPackPurchased ? INITIATION_UPGRADE_AMOUNT : INITIAL_PACK_AMOUNT, currency: 'usd' }
     const offerConfig = initiationConfigurationError(kind)
     if (supply) {
-      const hasCapacity = supply.remaining > 0 || snapshot.hasCheckoutReservation || (snapshot.legacyPackPurchased && snapshot.ownsSeat)
+      const hasCapacity = supply.remaining > 0 || !!snapshot.hasCheckoutReservation || ((!!snapshot.legacyPackPurchased || !!snapshot.membershipActive) && !!snapshot.ownsSeat)
       snapshot.availability.checkoutOpen = supply.open && hasCapacity && !offerConfig
       snapshot.availability.reason = !supply.open ? 'Initiation checkout is not open yet.' : !hasCapacity ? 'All S26 seats are currently allocated or reserved.' : offerConfig
     }
     const newRecordsUnavailable = results.slice(3).some(result => result.error)
-    snapshot.status = newRecordsUnavailable ? 'unknown' : initiationMemberStatus(!!entitlement?.active, member, snapshot.legacyPackPurchased)
-    snapshot.purchaseKind = newRecordsUnavailable ? null : initiationPurchaseKind(orders, entitlement, initial)
+    snapshot.status = newRecordsUnavailable ? 'unknown' : initiationMemberStatus(!!entitlement?.active, member, snapshot.legacyPackPurchased, !!membershipId)
+    snapshot.purchaseKind = newRecordsUnavailable ? null : initiationPurchaseKind(orders, entitlement, initial, membershipId)
     snapshot.membershipSource = newRecordsUnavailable ? null : member?.source ?? null
     const latestStatus = orders?.[0]?.status
     snapshot.paymentStatus = (newRecordsUnavailable ? 'unknown' : snapshot.hasCheckoutReservation ? 'pending'
@@ -102,7 +115,11 @@ export async function readInitiationSnapshot(session: ReturnType<typeof getReque
       snapshot.availability.checkoutOpen = false
       snapshot.availability.reason = 'Your granted S26 membership is already registered. It is not a payment or a Console claim entitlement.'
     }
-    if (entitlement) {
+    if (snapshot.hasPackRefund && snapshot.membershipActive) {
+      snapshot.availability.checkoutOpen = false
+      snapshot.availability.reason = 'Your Pack refund is recorded. Contact support before purchasing additional Packs.'
+    }
+    if (entitlement && (process.env.INITIATION_MEMBERSHIP_ENABLED !== 'true' || entitlement.active || entitlement.console_claimed_at)) {
       snapshot.availability.checkoutOpen = false
       if (!entitlement.active) snapshot.availability.reason = 'Your earlier Console payment needs review. Please contact support before another upgrade.'
     }

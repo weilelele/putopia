@@ -2,7 +2,7 @@ import type { InitiationAnalyticsContext } from './initiation-analytics'
 import { shopifyLiveCheckoutUrl } from './shopify-checkout-url'
 
 export type InitiationCheckoutInput = {
-  bundle: 'initial' | 'standard'
+  bundle: 'membership' | 'initial' | 'standard'
   from: string | null
   analytics: InitiationAnalyticsContext
   afterSignIn: boolean

@@ -1,4 +1,4 @@
-import { INITIATION_PRICES, isInitiationOrderAmount } from './initiation-pricing'
+import { isInitiationOrderAmount } from './initiation-pricing'
 import type Stripe from 'stripe'
 import { initiationAnalyticsProperties, sanitizeInitiationAnalytics } from './initiation-analytics'
 import { shopifyLiveCheckoutUrl, shopifyLiveShop } from './shopify-checkout-url'
@@ -14,6 +14,7 @@ export type InitiationAnalyticsOrder = {
   id: string; user_id: string; status: string; order_kind: InitiationOrderKind; amount: number; currency: string
   stripe_livemode: boolean; stripe_session_id: string | null; stripe_payment_intent: string | null; paid_at: string | null
   pricing_version?: string | null
+  membership_order_id?: string | null
   analytics_context: Record<string, unknown> | null
   meta_attribution?: { disabled?: boolean; fbp?: string; fbc?: string } | null
   shopify_checkout?: {
@@ -48,7 +49,7 @@ export function validShopifyAnalyticsOrder(order: InitiationAnalyticsOrder, purc
   if (!checkout || checkout.order_id !== order.id || checkout.shop !== shopifyLiveShop
     || !checkout.checkout_url || !shopifyLiveCheckoutUrl(checkout.checkout_url)
     || order.stripe_session_id || order.stripe_payment_intent || !order.stripe_livemode
-    || !['initial', 'standard'].includes(order.order_kind) || order.amount !== INITIATION_PRICES[order.order_kind].amount) return false
+    || !isInitiationOrderAmount(order)) return false
   if (!purchase) return true
   return !!(checkout.shopify_order_id && /^gid:\/\/shopify\/Order\/\d+$/.test(checkout.shopify_order_id)
     && checkout.authorization_id && /^gid:\/\/shopify\/OrderTransaction\/\d+$/.test(checkout.authorization_id)
@@ -153,7 +154,7 @@ export function sendPendingInitiationAnalytics(admin: Admin, stripe: Stripe | nu
       return data ?? []
     },
     async loadOrder(id) {
-      const { data, error } = await db.from('initiation_orders').select('id,user_id,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,analytics_context,meta_attribution')
+      const { data, error } = await db.from('initiation_orders').select('id,user_id,status,order_kind,pricing_version,membership_order_id,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,analytics_context,meta_attribution')
         .eq('id', id).maybeSingle().abortSignal(AbortSignal.timeout(5000))
       if (error) throw error
       if (!data || data.stripe_session_id) return data
