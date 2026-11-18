@@ -32,6 +32,16 @@ describe('durable PostHog Initiation outcomes', () => {
         checkout_path: 'email_first', $session_id: browserId, is_test: false }) }))
     expect(JSON.stringify(vi.mocked(deps.send).mock.calls)).not.toMatch(/private-cart-token|never-send|checkout_url/)
   })
+  it('reports Shopify page events as browser observations without paid evidence', async () => {
+    const deps = setup({ loadOrder: async () => shopifyOrder,
+      claim: async () => [{ ...claim, event: 'initiation_checkout_payment_submitted', capture_source: 'shopify_pixel' }] })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
+    const event = vi.mocked(deps.send).mock.calls[0][0]
+    expect(event).toMatchObject({ event: 'initiation_checkout_payment_submitted',
+      properties: { source: 'shopify_pixel', payment_provider: 'shopify', checkout_evidence: 'shopify_customer_event' } })
+    expect(event.properties).not.toHaveProperty('payment_status')
+    expect(event.properties).not.toHaveProperty('meta_event_id')
+  })
   it('records a created Shopify checkout before the buyer has an order or capture', async () => {
     const deps = setup({ claim: async () => [{ ...claim, event: 'initiation_checkout_started' }], loadOrder: async () => ({ ...shopifyOrder,
       status: 'pending', paid_at: null, shopify_checkout: { ...shopifyOrder.shopify_checkout!, shopify_order_id: null, authorization_id: null, capture_id: null } }) })

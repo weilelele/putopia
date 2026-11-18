@@ -4,6 +4,7 @@ import { isIOSNativeApp } from './app-platform'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
 import { sendMetaPurchase, type MetaPurchaseInput } from './meta-capi'
 import type { InitiationMetaAttribution } from './initiation-meta-attribution'
+import { validShopifyAnalyticsOrder, type InitiationAnalyticsOrder } from './initiation-analytics-outbox'
 
 export type InitiationMetaOrder = {
   id: string
@@ -18,6 +19,8 @@ export type InitiationMetaOrder = {
   stripe_payment_intent: string | null
   paid_at: string | null
   meta_attribution: InitiationMetaAttribution | null
+  analytics_context?: Record<string, unknown> | null
+  shopify_checkout?: (NonNullable<InitiationAnalyticsOrder['shopify_checkout']> & { email: string }) | null
 }
 
 export type InitiationMetaClaim = {
@@ -53,6 +56,23 @@ export type InitiationMetaDependencies = {
 }
 
 class PurchaseValidationError extends Error {}
+
+export function buildShopifyInitiationMetaPurchase(order: InitiationMetaOrder, claim: InitiationMetaClaim): MetaPurchaseInput {
+  const eventAt = Date.parse(claim.event_time)
+  if (!validShopifyAnalyticsOrder({ ...order, analytics_context: order.analytics_context ?? null }, true)
+    || claim.order_id !== order.id || claim.event_id !== `initiation_purchase_${order.id}`
+    || !Number.isFinite(eventAt) || eventAt !== Date.parse(order.paid_at ?? '') || order.currency !== 'usd') {
+    throw new PurchaseValidationError('Shopify purchase binding is invalid')
+  }
+  const attribution = order.meta_attribution ?? {}
+  return { eventId: claim.event_id, eventTime: Math.floor(eventAt / 1000), value: order.amount / 100,
+    currency: 'USD', contentId: INITIATION_PRODUCT, contentName: INITIATION_PRICES[order.order_kind].name,
+    orderId: order.id, orderKind: order.order_kind, pricingVersion: order.pricing_version ?? 'legacy-v1',
+    eventSourceUrl: attribution.event_source_url ?? 'https://www.multiverseco.org/voyager-initiation',
+    email: order.shopify_checkout?.email, externalId: order.user_id,
+    clientIpAddress: attribution.client_ip_address, clientUserAgent: attribution.client_user_agent,
+    fbp: attribution.fbp, fbc: attribution.fbc }
+}
 
 /** Paid database state and the freshly retrieved Stripe session must agree. */
 export function buildInitiationMetaPurchase(
@@ -143,19 +163,27 @@ export async function deliverInitiationMetaPurchase(
     const order = await deps.store.loadOrder(claim.order_id)
     if (!order) throw new PurchaseValidationError('Purchase order is unavailable')
     if (order.status !== 'paid') return await finish({ status: 'skipped', last_error: 'Order is no longer paid' })
-    if (order.meta_attribution?.disabled === true || isIOSNativeApp(order.meta_attribution?.client_user_agent ?? '')) {
+    if (order.meta_attribution?.disabled === true || order.analytics_context?.disabled === true
+      || order.analytics_context?.is_internal_qa === true || isIOSNativeApp(order.meta_attribution?.client_user_agent ?? '')) {
       return await finish({ status: 'skipped', last_error: null })
     }
-    if (!order.stripe_session_id) throw new PurchaseValidationError('Stripe purchase binding is invalid')
-    const session = await deps.retrieveSession(order.stripe_session_id)
-    buildInitiationMetaPurchase(order, claim, session)
+    const shopify = !!order.shopify_checkout
+    let session: Stripe.Checkout.Session | null = null
+    if (shopify) buildShopifyInitiationMetaPurchase(order, claim)
+    else {
+      if (!order.stripe_session_id) throw new PurchaseValidationError('Stripe purchase binding is invalid')
+      session = await deps.retrieveSession(order.stripe_session_id)
+      buildInitiationMetaPurchase(order, claim, session)
+    }
     // A refund/review webhook may have arrived while Stripe was being queried.
     const current = await deps.store.loadOrder(claim.order_id)
     if (!current || current.status !== 'paid') return await finish({ status: 'skipped', last_error: 'Order is no longer paid' })
-    if (current.meta_attribution?.disabled === true || isIOSNativeApp(current.meta_attribution?.client_user_agent ?? '')) {
+    if (current.meta_attribution?.disabled === true || current.analytics_context?.disabled === true
+      || current.analytics_context?.is_internal_qa === true || isIOSNativeApp(current.meta_attribution?.client_user_agent ?? '')) {
       return await finish({ status: 'skipped', last_error: null })
     }
-    const input = buildInitiationMetaPurchase(current, claim, session)
+    if (shopify && current.shopify_checkout?.capture_id !== order.shopify_checkout?.capture_id) throw new PurchaseValidationError('Shopify capture changed')
+    const input = shopify ? buildShopifyInitiationMetaPurchase(current, claim) : buildInitiationMetaPurchase(current, claim, session!)
     const result = await deps.sendPurchase(input, { stripeLiveMode: current.stripe_livemode })
     if (result.events_received !== 1) throw new Error('Purchase receipt was not confirmed')
     return await finish({
@@ -203,10 +231,15 @@ export function createInitiationMetaStore(admin: AdminClient): InitiationMetaSto
     },
     async loadOrder(orderId) {
       const { data, error } = await db.from('initiation_orders')
-        .select('id,user_id,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,meta_attribution')
+        .select('id,user_id,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,meta_attribution,analytics_context')
         .eq('id', orderId).maybeSingle().abortSignal(AbortSignal.timeout(5000))
       if (error) throw error
-      return data
+      if (!data || data.stripe_session_id) return data
+      const binding = await db.from('initiation_shopify_checkouts')
+        .select('order_id,shop,checkout_url,shopify_order_id,authorization_id,capture_id,email')
+        .eq('order_id', orderId).maybeSingle().abortSignal(AbortSignal.timeout(5000))
+      if (binding.error) throw binding.error
+      return { ...data, shopify_checkout: binding.data }
     },
     async finish(claim, update) {
       const { data, error } = await db.from('initiation_meta_purchases').update(update)
@@ -220,11 +253,14 @@ export function createInitiationMetaStore(admin: AdminClient): InitiationMetaSto
 
 /** Small parallel batches, finite Stripe/Meta/DB timeouts, persistent failures. */
 export function sendPendingInitiationMetaPurchases(
-  admin: AdminClient, stripe: Stripe, options: { orderId?: string; limit?: number } = {},
+  admin: AdminClient, stripe: Stripe | null, options: { orderId?: string; limit?: number } = {},
 ) {
   return retryInitiationMetaPurchases({
     store: createInitiationMetaStore(admin),
-    retrieveSession: sessionId => stripe.checkout.sessions.retrieve(sessionId, {}, { timeout: 5000, maxNetworkRetries: 0 }),
+    retrieveSession: async sessionId => {
+      if (!stripe) throw new PurchaseValidationError('Stripe is not configured')
+      return stripe.checkout.sessions.retrieve(sessionId, {}, { timeout: 5000, maxNetworkRetries: 0 })
+    },
     sendPurchase: sendMetaPurchase,
     now: Date.now,
   }, options)
