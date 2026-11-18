@@ -19,8 +19,8 @@ import { PostPaymentCalibration } from './post-payment-calibration'
 import { CheckoutSignIn, type CheckoutSignInServices, type EmailCheckoutStep } from './checkout-sign-in'
 import styles from './initiation.module.css'
 import { INITIATION_FAQ_GROUPS, MEMBERSHIP_FAQ_GROUPS } from './faq'
-import { MembershipPreviewPurchase, type MembershipPreview } from './membership-preview-purchase'
-import type { MembershipTarget } from '@/lib/voyager-membership-offers'
+import { MembershipPurchase, type MembershipPreview } from './membership-purchase'
+import { membershipOffers, type MembershipTarget } from '@/lib/voyager-membership-offers'
 import { PACK_ONE_MEDIA } from './pack-one-media'
 import { consoleDevicePath, deviceSourcePath, initiationLoginPath } from './navigation'
 import { useInitiationEngagement } from './use-initiation-engagement'
@@ -100,7 +100,8 @@ function BundleImages({ bundle }: { bundle: MembershipTarget }) {
 }
 
 export type InitiationViewProps = {
-  initialBundle?: 'initial' | 'standard'
+  initialBundle?: MembershipTarget
+  membershipEnabled?: boolean
   members?: InitiationPublicMember[]
   snapshot: InitiationSnapshot
   deviceSource?: string | null
@@ -110,7 +111,7 @@ export type InitiationViewProps = {
   /** Sign-in calls for the Pay dialog; fixtures pass fakes so no email or account is created. */
   signInServices?: CheckoutSignInServices
   /** Guest email checkout; fixtures pass a fake so no account or payment session is created. */
-  startEmailCheckout?: (email: string, bundle: 'initial' | 'standard', options?: { upgrade?: boolean }) => Promise<EmailCheckoutStep>
+  startEmailCheckout?: (email: string, bundle: MembershipTarget, options?: { upgrade?: boolean }) => Promise<EmailCheckoutStep>
   paymentPlacement?: 'top' | 'bottom'
   analyticsEnvironment?: string
   regions?: BriefingRegion[]
@@ -122,8 +123,8 @@ export type InitiationViewProps = {
   membershipPreview?: MembershipPreview
 }
 
-export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam, pilotCheckout, guestPilotUrl, pilotShipmentSync, membershipPreview }: InitiationViewProps) {
-  const faqGroups = membershipPreview ? MEMBERSHIP_FAQ_GROUPS : INITIATION_FAQ_GROUPS
+export function InitiationView({ initialBundle = 'initial', snapshot, members = [], deviceSource = null, checkoutCanceled = false, startCheckout = requestInitiationCheckout, quizServices, signInServices, startEmailCheckout, paymentPlacement = 'bottom', analyticsEnvironment = 'unknown', regions = [], briefingParam, pilotCheckout, guestPilotUrl, pilotShipmentSync, membershipPreview, membershipEnabled = false }: InitiationViewProps) {
+  const faqGroups = membershipPreview || membershipEnabled ? MEMBERSHIP_FAQ_GROUPS : INITIATION_FAQ_GROUPS
   const storedSource = useSyncExternalStore(subscribeToSource, readDeviceSource, emptyDeviceSource)
   const source = deviceSourcePath(deviceSource) ?? storedSource
   useEffect(() => {
@@ -132,7 +133,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     }
   }, [deviceSource])
   const [dialog, setDialog] = useState<'batch' | 'initiated' | 'legacy-discount' | null>(null)
-  const [bundle, setBundle] = useState<'initial' | 'standard'>(initialBundle)
+  const [bundle, setBundle] = useState<MembershipTarget>(initialBundle)
   const [busy, setBusy] = useState(false)
   const [pilotMessage, setPilotMessage] = useState('')
   const [error, setError] = useState('')
@@ -147,7 +148,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   // an activated account signs in with its password and then continues with that bundle.
   const [signInOpen, setSignInOpen] = useState(false)
   const [signedInHere, setSignedInHere] = useState(false)
-  const pendingBundle = useRef<'initial' | 'standard'>(initialBundle)
+  const pendingBundle = useRef<MembershipTarget>(initialBundle)
   const { availability, status, shipments, consoleClaim } = snapshot
   const paymentMessage = paymentMessages[snapshot.paymentStatus]
   const initiated = status === 'initiated'
@@ -156,6 +157,8 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const memberView = initiated || legacy
   const progress = initiationPackProgress(snapshot)
   const kind = legacy ? 'legacy_upgrade' : bundle
+  const membershipOwnership = status === 'membership' ? 'membership' : legacy ? 'initial' : 'none'
+  const selectedAmount = membershipEnabled ? membershipOffers(membershipOwnership).find(offer => offer.target === bundle)?.amount : undefined
   const storedBriefing = useSyncExternalStore(subscribeToSource, readBriefingStore, serverBriefingStore)
   const [briefing, setBriefing] = useState<'idle' | 'replay' | 'link' | 'dismissed'>(() => briefingLinkOpens(snapshot.status, briefingParam) ? 'link' : 'idle')
   const briefingAuto = !membershipPreview && !pilotCheckout && !guestPilotUrl && storedBriefing !== 'server' && storedBriefing !== 'unavailable'
@@ -164,13 +167,12 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
   const fullyClaimed = availability.initiated !== null && availability.initiated >= availability.capacity
   const soldOut = !snapshot.ownsSeat && !snapshot.hasCheckoutReservation && (fullyClaimed || (!!snapshot.userId && availability.remaining === 0))
   const { priceRef, capture: captureAnalytics, getContext: analyticsContext } = useInitiationAnalytics({ kind, userId: snapshot.userId,
-    internal: !!pilotCheckout || !!guestPilotUrl || snapshot.role === 'architect' || analyticsEnvironment === 'fixture', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
+    amount: selectedAmount, internal: !!pilotCheckout || !!guestPilotUrl || snapshot.role === 'architect' || analyticsEnvironment === 'fixture', environment: analyticsEnvironment, eligible: !initiated && !granted && status !== 'unknown', modalOpen: dialog !== null || briefingOpen })
 
   const contentRef = useInitiationEngagement(captureAnalytics, dialog !== null || briefingOpen)
 
-  async function become() {
+  async function become(chosen: MembershipTarget = bundle) {
     if (inFlight.current || initiated || granted || soldOut || status === 'unknown') return
-    const chosen = bundle
     captureAnalytics('initiation_cta_clicked', { next_step: initiationNextStep(status), surface: 'page', bundle: legacy ? 'legacy_upgrade' : chosen })
     setError('')
     if (status === 'guest' && !signedInHere) { pendingBundle.current = chosen; setSignInOpen(true); return }
@@ -212,6 +214,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
         window.location.assign(data.url)
         return { kind: 'redirected' }
       }
+      if (response.ok && data.next === 'membership_upgrade' && [2600, 47600].includes(data.amount)) return { kind: 'membership_upgrade', amount: data.amount }
       if (response.ok && ['password', 'activation_sent', 'already_member', 'upgrade'].includes(data.next)) return { kind: data.next }
       if (response.ok && data.next === 'checkout') { signedIn(); return { kind: 'redirected' } }
       captureAnalytics('initiation_checkout_failed', { checkout_path: 'email_first', stage: 'create_checkout', http_status: response.status })
@@ -222,7 +225,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     }
   }
 
-  async function continueToCheckout(chosen: 'initial' | 'standard', afterSignIn = false) {
+  async function continueToCheckout(chosen: MembershipTarget, afterSignIn = false) {
     if (inFlight.current) return
     inFlight.current = true
     setBusy(true)
@@ -292,8 +295,14 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
     </>}
     <a className={styles.textLink} href="#packs-title">View your packs <ArrowRight size={20} aria-hidden /></a>
   </div>
-  const joinPanel = membershipPreview ? <MembershipPreviewPurchase preview={membershipPreview}
-    renderOfferImages={selection => <BundleImages bundle={selection} />} /> : (
+  const joinPanel = membershipPreview || (membershipEnabled && !initiated && !granted) ? <div ref={paymentRef} tabIndex={-1} data-initiation-section="payment" className={styles.join}>
+    <MembershipPurchase preview={membershipPreview ?? { ownership: membershipOwnership }} initialTarget={bundle}
+      renderOfferImages={selection => <BundleImages bundle={selection} />}
+      priceRef={priceRef} onSelect={setBundle} onCheckout={membershipPreview ? undefined : target => void become(target)} loading={busy}
+      disabled={!membershipPreview && (soldOut || status === 'unknown' || (!availability.checkoutOpen && !!snapshot.userId))}
+      errorRef={checkoutErrorRef} error={error} reason={!membershipPreview && !availability.checkoutOpen ? availability.reason : null} />
+    {!membershipPreview && snapshot.membershipActive && paymentMessage && <p className={styles.notice} role="status">Your upgrade payment has been updated. Your original Voyager Membership remains active.</p>}
+  </div> : (
         <div ref={paymentRef} tabIndex={-1} data-initiation-section="payment" className={styles.join}>
           {!memberView && snapshot.error && <p className={styles.notice} role="alert">{snapshot.error} <button className={styles.textLink} onClick={() => window.location.reload()}>Try again</button></p>}
           {!memberView && snapshot.paymentStatus !== 'pending' && paymentMessage && <p className={styles.notice} role="status">{paymentMessage}</p>}
@@ -363,7 +372,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
       <Link href="/console" className="archive-back-link"><ArrowLeft aria-hidden size={20} />Back to Dashboard</Link>
       <header data-initiation-section="intro" className={styles.hero}>
         <div className={styles.introduction}>
-          <p className={styles.eyebrow}>{memberView || granted || membershipPreview?.ownership === 'membership' ? 'Your membership' : 'Become a Voyager'}</p>
+          <p className={styles.eyebrow}>{memberView || granted || (membershipPreview?.ownership === 'membership' || status === 'membership') ? 'Your membership' : 'Become a Voyager'}</p>
           <h1>Voyager<br />Initiation</h1>
           <p className={styles.lede}>One initiation. A lasting place in the Collective.</p>
           {briefingAudience(status) && <button type="button" className={styles.textLink} aria-haspopup="dialog" onClick={() => setBriefing('replay')}>Watch the briefing <ArrowRight size={18} aria-hidden /></button>}
@@ -373,7 +382,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
 
       <section aria-label={paymentAtBottom ? undefined : 'Voyager benefits'} aria-labelledby={paymentAtBottom ? 'voyager-benefits-title' : undefined}>
       {paymentAtBottom && <h2 id="voyager-benefits-title" className={styles.benefitsTitle}>{memberView ? 'Your Voyager packs.' : <>Your life as<br />a Voyager.</>}</h2>}
-      {membershipPreview?.ownership !== 'membership' && (!granted || shipments.length > 0) && <section className={styles.section} aria-labelledby="packs-title">
+      {membershipPreview?.ownership !== 'membership' && (status !== 'membership' || shipments.length > 0) && (!granted || shipments.length > 0) && <section className={styles.section} aria-labelledby="packs-title">
         <div className={styles.sectionHeading}><BenefitHeading id="packs-title">{paymentAtBottom && <span className={styles.chapter}>01</span>}{paymentAtBottom ? 'Physical Voyager Packs' : 'Voyager Packs'}</BenefitHeading></div>
         <ol className={styles.packs}>
           {packs.map((pack, index) => {

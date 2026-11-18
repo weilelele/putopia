@@ -29,13 +29,14 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
   const email = normalizeSignInEmail(body?.email)
   if (!email) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
-  if (body?.bundle !== undefined && !['initial', 'standard'].includes(body.bundle)) return NextResponse.json({ error: 'Choose a valid bundle.' }, { status: 400 })
+  if (body?.bundle !== undefined && !['initial', 'standard', ...(process.env.INITIATION_MEMBERSHIP_ENABLED === 'true' ? ['membership'] : [])].includes(body.bundle)) return NextResponse.json({ error: 'Choose a valid bundle.' }, { status: 400 })
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const admin = createAdminClient() as any
     const existing = await findAccount(email)
     if (existing?.activated) return NextResponse.json({ next: 'password' })
-    const ownership = existing ? await accountOwnership(admin, existing.id) : 'none'
+    let ownership = existing ? await accountOwnership(admin, existing.id) : 'none'
+    if (ownership === 'membership_upgrade' && body?.bundle === 'membership') ownership = 'already_member'
     const activate = () => sendActivationEmail({ userId: existing!.id, email, purpose: 'initiation', next: INITIATION_ACTIVATION_NEXT })
     if (ownership === 'already_member') {
       const sent = await activate()
@@ -52,12 +53,14 @@ export async function POST(request: Request) {
       : null
     if (previous?.error) throw previous.error
     const hasReservation = hasActiveShopifyReservation(previous?.data ?? [])
-    if (supply.remaining <= 0 && ownership !== 'upgrade' && !hasReservation) return NextResponse.json({ error: 'All S26 seats are currently allocated or reserved.' }, { status: 409 })
-    const confirmedUpgrade = ownership === 'upgrade' && body?.upgrade === true
-    if (ownership === 'upgrade' && !confirmedUpgrade) {
+    if (supply.remaining <= 0 && ownership !== 'upgrade' && ownership !== 'membership_upgrade' && !hasReservation) return NextResponse.json({ error: 'All S26 seats are currently allocated or reserved.' }, { status: 409 })
+    const confirmedUpgrade = (ownership === 'upgrade' || ownership === 'membership_upgrade') && body?.upgrade === true
+    if ((ownership === 'upgrade' || ownership === 'membership_upgrade') && !confirmedUpgrade) {
       const sent = await activate()
       if (sent.error) throw new Error(`Activation email failed: ${sent.error}`)
-      return NextResponse.json({ next: 'upgrade' })
+      return ownership === 'membership_upgrade'
+        ? NextResponse.json({ next: 'membership_upgrade', amount: body?.bundle === 'initial' ? 2600 : 47600 })
+        : NextResponse.json({ next: 'upgrade' })
     }
     const ip = requestClientIp(request.headers)
     const emailOrders = () => admin.from('initiation_orders').select('id', { count: 'exact', head: true }).eq('analytics_context->>checkout_path', 'email_first')
@@ -78,7 +81,7 @@ export async function POST(request: Request) {
       if (sent.error) throw new Error('Activation delivery unconfirmed')
     }, '[initiation-checkout] Activation email deferred; a fresh link can be requested')
     // The server prices an upgrade from ownership; `standard` is the bundle an upgrade continues.
-    return createInitiationCheckout(request, origin, { id: account.id, email }, confirmedUpgrade ? { ...body, bundle: 'standard' } : body, 'email_first')
+    return createInitiationCheckout(request, origin, { id: account.id, email }, confirmedUpgrade && ownership === 'upgrade' ? { ...body, bundle: 'standard' } : body, 'email_first')
   } catch (error) {
     console.error('[initiation-checkout] Email checkout could not start:', error instanceof Error ? error.message : 'unknown')
     return NextResponse.json({ error: 'Checkout is unavailable right now. Please try again.' }, { status: 503 })
@@ -87,13 +90,14 @@ export async function POST(request: Request) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function accountOwnership(admin: any, userId: string) {
-  const [entitlement, member, initial, legacy] = await Promise.all([
-    admin.from('initiation_entitlements').select('user_id').eq('user_id', userId).limit(1),
-    admin.from('initiation_members').select('user_id').eq('user_id', userId).limit(1),
+  const [entitlement, member, initial, legacy, membership] = await Promise.all([
+    admin.from('initiation_entitlements').select('user_id').eq('user_id', userId).eq('active', true).limit(1),
+    admin.from('initiation_members').select('user_id').eq('user_id', userId).eq('active', true).limit(1),
     admin.rpc('eligible_initial_initiation_order', { p_user: userId }),
     admin.rpc('eligible_legacy_initiation_order', { p_user: userId }),
+    process.env.INITIATION_MEMBERSHIP_ENABLED === 'true' ? admin.rpc('eligible_voyager_membership_order', { p_user: userId }) : Promise.resolve({ data: null, error: null }),
   ])
-  const failed = [entitlement, member, initial, legacy].find(result => result.error)
+  const failed = [entitlement, member, initial, legacy, membership].find(result => result.error)
   if (failed) throw failed.error
-  return emailCheckoutOwnership({ entitlement: entitlement.data.length > 0, member: member.data.length > 0, upgradeEligible: !!initial.data || !!legacy.data })
+  return emailCheckoutOwnership({ entitlement: entitlement.data.length > 0, member: member.data.length > 0, upgradeEligible: !!initial.data || !!legacy.data, membershipOnly: !!membership.data })
 }

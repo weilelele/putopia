@@ -18,14 +18,14 @@ export const INITIAL_PILOT_QUERY = `
       totalDiscountsSet { ...PilotMoney }
       lineItems(first: 5) {
         nodes {
-          id sku quantity requiresShipping originalUnitPriceSet { ...PilotMoney }
+          id sku quantity requiresShipping variant { id } originalUnitPriceSet { ...PilotMoney }
           lineItemGroup { id quantity variantId }
         }
         pageInfo { hasNextPage }
       }
       transactions(first: 20) { ...PilotTransaction }
       refunds {
-        refundLineItems(first: 3) {
+        refundLineItems(first: 5) {
           nodes { quantity lineItem { id } }
           pageInfo { hasNextPage }
         }

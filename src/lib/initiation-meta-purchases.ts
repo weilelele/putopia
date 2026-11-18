@@ -11,6 +11,7 @@ export type InitiationMetaOrder = {
   user_id: string
   status: string
   pricing_version?: string | null
+  membership_order_id?: string | null
   order_kind: InitiationOrderKind
   amount: number
   currency: string
@@ -231,7 +232,7 @@ export function createInitiationMetaStore(admin: AdminClient): InitiationMetaSto
     },
     async loadOrder(orderId) {
       const { data, error } = await db.from('initiation_orders')
-        .select('id,user_id,status,order_kind,pricing_version,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,meta_attribution,analytics_context')
+        .select('id,user_id,status,order_kind,pricing_version,membership_order_id,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,meta_attribution,analytics_context')
         .eq('id', orderId).maybeSingle().abortSignal(AbortSignal.timeout(5000))
       if (error) throw error
       if (!data || data.stripe_session_id) return data

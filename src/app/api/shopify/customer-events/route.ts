@@ -1,3 +1,4 @@
+import type { InitiationOrderKind } from '@/lib/initiation-pricing'
 import { timingSafeEqual } from 'node:crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { shopifyLiveConfig } from '@/lib/shopify-live-config'
@@ -27,15 +28,16 @@ export async function POST(request: Request) {
     if (!event) return respond(400)
     const admin = createAdminClient()
     const [bound, order] = await Promise.all([
-      admin.from('initiation_shopify_checkouts' as never).select('shop,email,variant_id').eq('order_id', event.orderId).maybeSingle(),
-      admin.from('initiation_orders').select('user_id,order_kind,created_at,analytics_context').eq('id', event.orderId).maybeSingle(),
+      admin.from('initiation_shopify_checkouts' as never).select('shop,email,variant_id,reference_version').eq('order_id', event.orderId).maybeSingle(),
+      admin.from('initiation_orders').select('user_id,order_kind,amount,pricing_version,membership_order_id,initial_order_id,created_at,analytics_context').eq('id', event.orderId).maybeSingle(),
     ])
     if (bound.error || order.error) return respond(503)
-    const checkout = bound.data as { shop: string; email: string; variant_id: string } | null
-    const source = order.data as { user_id: string; order_kind: 'initial' | 'standard'; created_at: string; analytics_context: Record<string, unknown> } | null
-    if (!checkout || !source || checkout.shop !== config.shop || !['initial', 'standard'].includes(source.order_kind)) return respond(403)
+    const checkout = bound.data as { shop: string; email: string; variant_id: string; reference_version: number } | null
+    const source = order.data as { user_id: string; order_kind: InitiationOrderKind; amount: number; pricing_version: string | null; membership_order_id: string | null; initial_order_id: string | null; created_at: string; analytics_context: Record<string, unknown> } | null
+    if (!checkout || !source || checkout.shop !== config.shop || !['membership', 'initial', 'standard', 'legacy_upgrade'].includes(source.order_kind)) return respond(403)
     const expected = shopifyLiveReservationReference({ id: event.orderId, userId: source.user_id, shop: checkout.shop,
-      email: checkout.email, kind: source.order_kind, variantId: checkout.variant_id }, config.clientSecret)
+      email: checkout.email, kind: source.order_kind, variantId: checkout.variant_id, referenceVersion: checkout.reference_version, amount: source.amount,
+      pricingVersion: source.pricing_version, membershipOrderId: source.membership_order_id, initialOrderId: source.initial_order_id }, config.clientSecret)
     if (!timingSafeEqual(Buffer.from(expected), Buffer.from(event.reference))) return respond(403)
     if (Date.parse(event.timestamp) < Date.parse(source.created_at) - 60000) return respond(400)
     if (source.analytics_context.disabled === true) return respond(204)

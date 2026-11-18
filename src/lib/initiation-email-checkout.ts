@@ -27,9 +27,10 @@ export type EmailCheckoutNext = 'checkout' | 'password' | 'activation_sent' | 'a
  * - `upgrade`: owns Packs 1–2 (Initial Pack or a historical Voyager Pack); only the $460 Console + Pack 4 upgrade.
  * - `none`: may buy either bundle.
  */
-export function emailCheckoutOwnership(input: { entitlement: boolean; member: boolean; upgradeEligible: boolean }): 'already_member' | 'upgrade' | 'none' {
+export function emailCheckoutOwnership(input: { entitlement: boolean; member: boolean; upgradeEligible: boolean; membershipOnly?: boolean }): 'already_member' | 'upgrade' | 'membership_upgrade' | 'none' {
   if (input.entitlement) return 'already_member'
   if (input.upgradeEligible) return 'upgrade'
+  if (input.membershipOnly) return 'membership_upgrade'
   return input.member ? 'already_member' : 'none'
 }
 

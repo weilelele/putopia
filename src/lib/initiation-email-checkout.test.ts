@@ -40,3 +40,8 @@ describe('emailCheckoutOwnership', () => {
     expect(emailCheckoutOwnership({ entitlement: true, member: true, upgradeEligible: true })).toBe('already_member')
   })
 })
+
+it('offers a credited upgrade to an existing digital member and preserves Initial upgrade precedence', () => {
+  expect(emailCheckoutOwnership({ entitlement: false, member: true, upgradeEligible: false, membershipOnly: true })).toBe('membership_upgrade')
+  expect(emailCheckoutOwnership({ entitlement: false, member: true, upgradeEligible: true, membershipOnly: true })).toBe('upgrade')
+})

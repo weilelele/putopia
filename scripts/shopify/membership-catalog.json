@@ -1,0 +1,6 @@
+[
+  {"productId":"gid://shopify/Product/15476488437951","env":"SHOPIFY_LIVE_MEMBERSHIP_VARIANT_ID","amount":1200,"packs":[]},
+  {"productId":"gid://shopify/Product/15476492304575","env":"SHOPIFY_LIVE_MEMBERSHIP_INITIAL_VARIANT_ID","amount":2600,"packs":[1,2]},
+  {"productId":"gid://shopify/Product/15476495548607","env":"SHOPIFY_LIVE_MEMBERSHIP_COMPLETE_VARIANT_ID","amount":47600,"packs":[1,2,3,4]},
+  {"productId":"gid://shopify/Product/15476499251391","env":"SHOPIFY_LIVE_UPGRADE_VARIANT_ID","amount":46000,"packs":[3,4]}
+]

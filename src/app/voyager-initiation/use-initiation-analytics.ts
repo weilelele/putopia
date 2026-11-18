@@ -8,8 +8,8 @@ import { createPriceExposureGate, initiationAnalyticsProperties, sanitizeInitiat
 import { captureInitiationAdAttribution } from '@/lib/initiation-attribution-client'
 import type { InitiationOrderKind } from '@/lib/initiation-types'
 
-export function useInitiationAnalytics({ kind, userId, internal, environment, eligible, modalOpen }: {
-  kind: InitiationOrderKind; userId: string | null; internal: boolean; environment: string; eligible: boolean; modalOpen: boolean
+export function useInitiationAnalytics({ kind, userId, internal, environment, eligible, modalOpen, amount }: {
+  kind: InitiationOrderKind; userId: string | null; internal: boolean; environment: string; eligible: boolean; modalOpen: boolean; amount?: number
 }) {
   const priceRef = useRef<HTMLElement>(null)
   const context = useRef<InitiationAnalyticsContext | null>(null)
@@ -33,7 +33,7 @@ export function useInitiationAnalytics({ kind, userId, internal, environment, el
     try {
       if (userId && posthog.get_distinct_id() !== userId) posthog.identify(userId)
       else if (!userId && posthog.get_property('$user_id')) posthog.reset()
-      posthog.capture(event, { ...initiationAnalyticsProperties(kind, getContext()),
+      posthog.capture(event, { ...initiationAnalyticsProperties(kind, getContext(), amount),
         is_internal_qa: internal || getContext().is_internal_qa === true, is_test: environment !== 'production', source: 'client', ...extra },
       event === 'initiation_checkout_redirected' ? { transport: 'sendBeacon' } : undefined)
     } catch { /* Analytics cannot prevent navigation or checkout. */ }

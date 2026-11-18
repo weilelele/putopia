@@ -1,7 +1,7 @@
 import type { InitiationOrderKind } from './initiation-pricing'
 export { INITIATION_AMOUNT, INITIATION_UPGRADE_AMOUNT, INITIAL_PACK_AMOUNT, type InitiationOrderKind } from './initiation-pricing'
 /** Public, serializable A/B contract. Roles never establish payment. */
-export type InitiationStatus = 'guest' | 'unpaid' | 'legacy_pack' | 'initiated' | 'granted' | 'unknown'
+export type InitiationStatus = 'guest' | 'unpaid' | 'membership' | 'legacy_pack' | 'initiated' | 'granted' | 'unknown'
 export type InitiationPaymentStatus = 'none' | 'pending' | 'paid' | 'payment_failed' | 'canceled' | 'refunded' | 'disputed' | 'payment_review' | 'unknown'
 export interface InitiationShipment {
   position: number
@@ -27,6 +27,8 @@ export interface InitiationSnapshot {
   offer?: { kind: InitiationOrderKind; amount: number; currency: 'usd' }
   ownsSeat?: boolean
   hasCheckoutReservation?: boolean
+  membershipActive?: boolean
+  hasPackRefund?: boolean
   legacyPackPurchased: boolean
   paymentStatus: InitiationPaymentStatus
   error: string | null

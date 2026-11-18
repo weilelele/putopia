@@ -1,6 +1,6 @@
-import { INITIATION_PRICES } from './initiation-pricing'
+import { INITIATION_PRICES, VOYAGER_MEMBERSHIP_AMOUNT } from './initiation-pricing'
 
-export const VOYAGER_MEMBERSHIP_AMOUNT = 1200
+export { VOYAGER_MEMBERSHIP_AMOUNT } from './initiation-pricing'
 export type MembershipOwnership = 'none' | 'membership' | 'initial'
 export type MembershipTarget = 'membership' | 'initial' | 'standard'
 

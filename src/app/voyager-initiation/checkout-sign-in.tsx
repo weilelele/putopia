@@ -10,7 +10,7 @@ import { normalizeSignInEmail, SIGN_IN_MESSAGES, signInFailure } from '@/lib/che
 import { initiationPriceLabel } from '@/lib/initiation-pricing'
 import styles from './checkout-sign-in.module.css'
 
-type Mode = 'email' | 'password' | 'activation_sent' | 'already_member' | 'upgrade'
+type Mode = 'email' | 'password' | 'activation_sent' | 'already_member' | 'upgrade' | 'membership_upgrade'
 type AuthResult = Promise<{ error: { code?: string; status?: number; message?: string } | null }>
 export type CheckoutSignInServices = {
   signInWithPassword: (email: string, password: string) => AuthResult
@@ -24,7 +24,7 @@ const supabaseSignIn: CheckoutSignInServices = {
  * sent an activation link without starting payment (over the per-IP limit), found an unactivated member
  * with nothing to pay, found an owner of Packs 1–2 who can only add the upgrade, or failed.
  */
-export type EmailCheckoutStep = { kind: 'redirected' } | { kind: 'password' } | { kind: 'activation_sent' } | { kind: 'already_member' } | { kind: 'upgrade' } | { kind: 'error'; message: string }
+export type EmailCheckoutStep = { kind: 'redirected' } | { kind: 'password' } | { kind: 'activation_sent' } | { kind: 'already_member' } | { kind: 'upgrade' } | { kind: 'membership_upgrade'; amount: number } | { kind: 'error'; message: string }
 
 /**
  * Email dialog for the Initiation Pay button. An activated account enters its password and continues
@@ -35,6 +35,7 @@ export function CheckoutSignIn({ open, onClose, onSignedIn, onEmail, capture, se
   capture?: (event: string, properties?: Record<string, unknown>) => void; services?: CheckoutSignInServices
 }) {
   const formId = useId()
+  const [upgradeAmount, setUpgradeAmount] = useState(0)
   const [mode, setMode] = useState<Mode>('email')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -60,6 +61,7 @@ export function CheckoutSignIn({ open, onClose, onSignedIn, onEmail, capture, se
     setBusy(false)
     if (step.kind === 'error') { setError(step.message); return }
     setEmail(normalized)
+    if (step.kind === 'membership_upgrade') setUpgradeAmount(step.amount)
     setMode(step.kind)
   }
 
@@ -83,7 +85,7 @@ export function CheckoutSignIn({ open, onClose, onSignedIn, onEmail, capture, se
     event.preventDefault()
     if (busy) return
     if (mode === 'activation_sent' || mode === 'already_member') { onClose(); return }
-    void (mode === 'email' ? submitEmail() : mode === 'upgrade' ? submitEmail(true) : signInWithPassword())
+    void (mode === 'email' ? submitEmail() : mode === 'upgrade' || mode === 'membership_upgrade' ? submitEmail(true) : signInWithPassword())
   }
 
   function close() {
@@ -92,9 +94,9 @@ export function CheckoutSignIn({ open, onClose, onSignedIn, onEmail, capture, se
   }
 
   const upgradePrice = initiationPriceLabel('legacy_upgrade')
-  const primaryLabel = mode === 'email' ? 'CONTINUE TO PAYMENT' : mode === 'password' ? 'SIGN IN AND PAY' : mode === 'upgrade' ? `CONTINUE · ${upgradePrice}` : 'DONE'
+  const primaryLabel = mode === 'email' ? 'CONTINUE TO PAYMENT' : mode === 'password' ? 'SIGN IN AND PAY' : mode === 'membership_upgrade' ? `CONTINUE · $${upgradeAmount / 100}` : mode === 'upgrade' ? `CONTINUE · ${upgradePrice}` : 'DONE'
   const title = { email: 'Where should we send your membership?', password: 'Welcome back, Voyager', activation_sent: 'Check your email',
-    already_member: 'You are already a Voyager', upgrade: 'You already own Packs 1–2' }[mode]
+    already_member: 'You are already a Voyager', upgrade: 'You already own Packs 1–2', membership_upgrade: 'Your membership credit applies' }[mode]
   const footer = <div className="archive-sheet__actions">
     <ArchiveButton type="submit" form={formId} fullWidth loading={busy}>{primaryLabel}</ArchiveButton>
   </div>
@@ -121,6 +123,12 @@ export function CheckoutSignIn({ open, onClose, onSignedIn, onEmail, capture, se
       {mode === 'already_member' && <>
         <p><strong>{email}</strong> already has an S26 membership, so there is nothing to pay. We sent it an activation link: set your password to view your membership and deliveries.</p>
         <button type="button" className={styles.switch} onClick={changeEmail}>Use a different email</button>
+      </>}
+      {mode === 'membership_upgrade' && <>
+        <p><strong>{email}</strong> already has Voyager Membership. Your $12 payment is credited toward this upgrade. The additional payment is ${upgradeAmount / 100}.</p>
+        <p>We sent an activation link so you can view your membership and delivery records.</p>
+        {error && <div className="archive-form-message is-error" role="alert">{error}</div>}
+        <button type="button" className={styles.switch} disabled={busy} onClick={changeEmail}>Use a different email</button>
       </>}
       {mode === 'upgrade' && <>
         <p><strong>{email}</strong> already owns Packs 1–2, so you pay only {upgradePrice} to add Console + Pack 4. We also sent it an activation link to view your records.</p>
