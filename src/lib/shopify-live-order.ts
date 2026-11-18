@@ -25,7 +25,7 @@ type Money = { amount: string; currencyCode: string }
 type MoneyBag = { shopMoney: Money; presentmentMoney: Money }
 type Connection<T> = { nodes: T[]; pageInfo: { hasNextPage: boolean } }
 type Address = { name: string | null; address1: string | null; address2: string | null; city: string | null; provinceCode: string | null; zip: string | null; countryCodeV2: string | null }
-type Transaction = { id: string; kind: string; status: string; test: boolean; gateway: string; amountSet: MoneyBag; processedAt: string | null; parentTransaction: { id: string } | null }
+type Transaction = { id: string; kind: string; status: string; test: boolean; gateway: string; amountSet: MoneyBag; processedAt: string | null; parentTransaction: { id: string } | null; createdAt?: string; errorCode?: string | null }
 type Refund = { refundLineItems: Connection<{ quantity: number; lineItem: { id: string } }>; transactions: Connection<Transaction> }
 export type ShopifyLiveOrder = {
   id: string
