@@ -145,10 +145,12 @@ function orderPositions(order: ShopifyLiveOrder, reservation: ShopifyReservation
 function orderRefunds(order: ShopifyLiveOrder, capture: Transaction, amount: number, positions: Map<string, number>) {
   let refundedAmount = 0
   let review = false
+  let pendingRefund = false
   const refundedPacks = new Set<number>()
   const transactionIds = new Set<string>()
   for (const refund of order.refunds) {
     requireMatch(!refund.transactions.pageInfo.hasNextPage && !refund.refundLineItems.pageInfo.hasNextPage, 'Refund evidence is incomplete')
+    pendingRefund ||= refund.transactions.nodes.some(tx => tx.kind === 'REFUND' && !['SUCCESS','FAILURE','ERROR'].includes(tx.status))
     let refundAmount = 0
     for (const tx of refund.transactions.nodes.filter(tx => tx.kind === 'REFUND' && tx.status === 'SUCCESS')) {
       requireMatch(!tx.test && tx.gateway === 'shopify_payments' && tx.parentTransaction?.id === capture.id
@@ -166,8 +168,8 @@ function orderRefunds(order: ShopifyLiveOrder, capture: Transaction, amount: num
     if (positions.size && refundAmount !== refund.refundLineItems.nodes.length * (amount / positions.size)) review = true
   }
   requireMatch(refundedAmount <= amount, 'Refund exceeds the verified payment')
-  if (refundedAmount === amount) return { refundedAmount, refundedPacks: [...positions.values()], review: false }
-  return { refundedAmount, refundedPacks: [...refundedPacks], review }
+  if (refundedAmount === amount) return { refundedAmount, refundedPacks: [...positions.values()], review: false, pendingRefund }
+  return { refundedAmount, refundedPacks: [...refundedPacks], review, pendingRefund }
 }
 
 export function verifyShopifyLiveOrder(order: ShopifyLiveOrder, reservation: ShopifyReservation, referenceSecret: string) {

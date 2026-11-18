@@ -132,6 +132,7 @@ registerHooks({
     if(filename?.endsWith('/lib/shopify-bundle-pilot.ts')) source=`export const shopifyApiVersion='2026-10';export const shopifyPilotRequest=(...args)=>${fixture}.provider(...args)`
     if(filename?.endsWith('/lib/initiation-confirmation.ts')) source=`export async function sendInitiationConfirmation(order,email){if(!email)throw Error('Missing email');${fixture}.confirmations.add(order.id)}`
     if(filename?.endsWith('/lib/initiation-analytics-outbox.ts')) source='export async function sendPendingInitiationAnalytics(){};export async function queueInitiationCheckoutAnalytics(){};export function validInitiationAnalyticsSession(){return false}'
+    if(filename?.endsWith('/lib/shopify-transaction-diagnostics.ts')) source='export async function queueShopifyTransactionDiagnostics(){}'
     if(filename?.endsWith('/lib/initiation-meta-purchases.ts')) source='export async function sendPendingInitiationMetaPurchases(){}'
     if(filename?.endsWith('/lib/activation.ts')) source=`export const findAccount=email=>${fixture}.findAccount(email);export const createUnactivatedAccount=email=>${fixture}.createAccount(email);export const sendActivationEmail=async()=>({error:null})`
     if(filename?.endsWith('/lib/stripe.ts')) source="export function getStripe(){throw Error('Stripe must not be called for Membership')}; export const isStripeSecretKey=()=>false"
@@ -192,12 +193,13 @@ try {
     assert.ok(confirmations.has(saved.id))
     return remote
   }
-  async function refund(remote,amount,positions=[]) {
-    remote.displayFinancialStatus=amount===Number(remote.totalPriceSet.shopMoney.amount)?'REFUNDED':'PARTIALLY_REFUNDED'
+  async function refund(remote,amount,positions=[],pending=false) {
+    remote.displayFinancialStatus=pending?'PAID':amount===Number(remote.totalPriceSet.shopMoney.amount)?'REFUNDED':'PARTIALLY_REFUNDED'
     remote.updatedAt=new Date().toISOString()
     remote.refunds=[{transactions:connection([tx(++sequence,'REFUND',amount,remote.transactions[1].id)]),refundLineItems:connection(positions.map(n=>({quantity:1,lineItem:{id:`line-${n}`}})))}]
+    if(pending)remote.refunds[0].transactions.nodes[0].status='PENDING'
     await notify(remote,'refunds/create')
-    assert.equal(await scalar('select count(*)::int from initiation_shopify_events'),0)
+    assert.equal(await scalar('select count(*)::int from initiation_shopify_events'),pending?1:0)
   }
   assert.equal((await checkout(new Request(`${origin}/api/initiation-checkout`,{method:'POST',headers:{origin:'https://wrong.invalid'}}))).status,403)
   assert.equal((await checkout(new Request(`${origin}/api/initiation-checkout`,{method:'POST',headers:{origin}}))).status,401)
@@ -230,7 +232,13 @@ try {
   const lateCart=await begin('membership')
   const late=await authorize(lateCart,{expired:true})
   assert.equal(captures,6)
-  await refund(late,12)
+  await refund(late,12,[],true)
+  assert.equal(await scalar('select role from voyager_profiles where id=$1',[user.id]),'voyager')
+  assert.equal(await reconcileShopifyLiveQueue(config,late.id),1)
+  late.refunds[0].transactions.nodes[0].status='SUCCESS';late.displayFinancialStatus='REFUNDED'
+  // The original durable event completes without receiving another webhook.
+  assert.equal(await reconcileShopifyLiveQueue(config,late.id),0)
+  assert.equal(await scalar('select count(*)::int from initiation_shopify_events'),0)
   assert.equal(await scalar('select role from voyager_profiles where id=$1',[user.id]),'applicant')
   await person()
   await authorize(await begin('membership'),{expired:true,unavailable:true})

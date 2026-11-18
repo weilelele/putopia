@@ -134,6 +134,27 @@ describe('Voyager Membership and credited Shopify purchases', () => {
     remote.refunds[0].transactions.nodes[0].parentTransaction!.id = authId
     expect(() => verifyShopifyLiveOrder(remote, source, secret)).toThrow(/reverse the verified/)
   })
+  it('distinguishes a pending refund from successful financial reversal', () => {
+    const { source, remote } = membership()
+    capture(remote)
+    refund(remote, '12', ['digital'])
+    remote.refunds[0].transactions.nodes[0].status = 'PENDING'
+    remote.displayFinancialStatus = 'PAID'
+    remote.currentTotalPriceSet = money('0')
+    expect(verifyShopifyLiveOrder(remote, source, secret)).toMatchObject({ state: 'paid', refundedAmount: 0, pendingRefund: true })
+    remote.refunds[0].transactions.nodes[0].status = 'SUCCESS'
+    remote.displayFinancialStatus = 'REFUNDED'
+    expect(verifyShopifyLiveOrder(remote, source, secret)).toMatchObject({ state: 'reversed', refundedAmount: 1200, pendingRefund: false })
+  })
+  it('preserves already confirmed partial refunds while another refund is pending', () => {
+    const { source, remote } = membership()
+    capture(remote)
+    refund(remote, '6', [])
+    refund(remote, '6', [])
+    remote.refunds[1].transactions.nodes[0].id = 'gid://shopify/OrderTransaction/447'
+    remote.refunds[1].transactions.nodes[0].status = 'PENDING'
+    expect(verifyShopifyLiveOrder(remote, source, secret)).toMatchObject({ state: 'reversed', refundedAmount: 600, pendingRefund: true })
+  })
   it('validates a $26 upgrade and its $13 per-Pack cancellation refund', () => {
     const source = { ...reservation, referenceVersion: 2, amount: 2600, pricingVersion: 'voyager-membership-v1',
       membershipOrderId: reservation.userId, initialOrderId: null }

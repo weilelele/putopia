@@ -90,6 +90,9 @@ async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof a
     return voidAuthorization()
   }
   const remoteBinding = {p_reservation:binding.order_id,p_shop:config.shop,p_order_id:evidence.orderId,p_authorization_id:evidence.authorization}
+  // refunds/create precedes financial settlement. Keep the durable event until the
+  // provider confirms success/failure, even if its later orders/updated delivery is missed.
+  if (evidence.state === 'paid' && evidence.pendingRefund) throw new Error('Awaiting Shopify refund settlement')
   if (evidence.state === 'canceled' || evidence.state === 'reversed') {
     const reversed = await admin.rpc('reconcile_initiation_shopify_reversal' as never, {
       ...remoteBinding, p_capture_id: evidence.state === 'reversed' ? evidence.capture : null,
@@ -101,6 +104,7 @@ async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof a
       p_shipping: evidence.state === 'reversed' ? evidence.shipping : null,
     } as never)
     if (reversed.error) throw new Error('Shopify refund requires reconciliation')
+    if (evidence.state === 'reversed' && evidence.pendingRefund) throw new Error('Awaiting remaining Shopify refund settlement')
     return
   }
   if (evidence.state==='authorized') {
