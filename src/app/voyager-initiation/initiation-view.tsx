@@ -62,17 +62,16 @@ const packs = [
   { title: 'A Fourth Delivery', dispatch: 'Jan 2027', image: '/assets/voyager-initiation/fourth-delivery.png', alt: 'A sealed envelope awaiting its reveal', description: 'Contents to be announced.', planned: true },
 ]
 
-// Reuse the same Mission Board crop in the member benefits and Pack previews.
+// Mission briefings are one of the four digital Membership benefits.
 const missionImage = { image: '/assets/voyager-initiation/mission-board-v10.png', alt: 'Mission Board displayed on a phone', crop: [1536, 1024, 650, 120, 850] } as const
 
 // Square focal regions in the original photographs; no generated mockup is shipped.
 const bundleImages = [
+  { label: 'Membership', image: packs[0].image, alt: 'Welcome letter in its brown Collective folio', crop: [420, 601, 95, 185, 200] },
   { label: 'Pack 1', image: packs[0].image, alt: 'Orange Voyager badge on a desk', crop: [420, 601, 120, 365, 170] },
   { label: 'Pack 2', image: '/assets/voyager-initiation/antenna-still-life-v1.jpg', alt: 'Brass Antenna design study, with its full outline visible', crop: [1536, 1024, 580, -40, 650] },
   { label: 'Pack 3', image: '/assets/kyoto-one-20260910/01-warehouse-hero.png', alt: 'Multiverse Console on a workshop table', crop: [1536, 1024, 240, 0, 1056] },
   { label: 'Pack 4', image: packs[3].image, alt: 'Sealed deep-blue envelope on a desk; contents to be announced', crop: [1536, 1024, 0, -256, 1536] },
-  { ...missionImage, label: 'Mission' },
-  { label: 'Membership', image: packs[0].image, alt: 'Welcome letter in its brown Collective folio', crop: [420, 601, 95, 185, 200] },
 ] as const
 
 const membershipImages = [
