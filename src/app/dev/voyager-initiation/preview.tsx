@@ -46,7 +46,7 @@ export function InitiationPreview({ name, deviceSource, paymentPlacement, briefi
       return { ok: true }
     },
   }
-  const previewHref = (ownership: 'choose' | 'active' | 'initial') => `?membership=${ownership}&layout=payment-first`
+  const previewHref = (ownership: 'choose' | 'active' | 'initial') => `?membership=${ownership}${paymentPlacement === 'top' ? '&layout=payment-first' : ''}`
   const ownership = membershipPreview?.ownership === 'membership' ? 'active' : membershipPreview?.ownership === 'initial' ? 'initial' : 'choose'
   return <>
     <aside className={styles.notice} aria-label="UI preview" data-initiation-large-text={largeText || undefined}>
