@@ -54,27 +54,30 @@ async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof a
   const binding = linked.data as Binding | null
   const local = source.data as Source | null
   if (!binding || !local) return
-  if (local.status==='canceled' && !binding.authorization_id && (!binding.superseded_by || order.cancelledAt)) return
+  if (local.status==='canceled' && !binding.authorization_id && binding.superseded_by && order.cancelledAt) return
   if (local.order_kind === 'membership') order = withShopifyOrderVariantIdentity(order, await query.orderIdentity(orderId))
   const evidence = verifyShopifyLiveOrder(order,{
     id:binding.order_id,shop:config.shop,userId:local.user_id,email:binding.email,kind:local.order_kind,variantId:binding.variant_id,amount:local.amount,pricingVersion:local.pricing_version,
     membershipOrderId:local.membership_order_id,initialOrderId:local.initial_order_id,referenceVersion:binding.reference_version,
   },config.clientSecret)
-  if (binding.superseded_by) {
-    if (evidence.state!=='authorized') throw new Error('Superseded Shopify checkout has an unexpected capture')
+  const voidAuthorization = async () => {
     const { orderCancel } = await query.graphql<{orderCancel:{job:{id:string}|null;orderCancelUserErrors:unknown[]}}>(`
-      mutation VoidSupersededCheckout($orderId:ID!) {
+      mutation VoidUncapturableCheckout($orderId:ID!) {
         orderCancel(orderId:$orderId, reason:OTHER, restock:true, notifyCustomer:false,
           refundMethod:{originalPaymentMethodsRefund:false},
-          staffNote:"An alternate Putopia package was already selected for payment.") {
+          staffNote:"This Putopia checkout no longer holds an eligible seat or package.") {
           job{id}
           orderCancelUserErrors{code}
         }
       }
     `,{orderId:evidence.orderId})
-    if (!orderCancel.job || orderCancel.orderCancelUserErrors.length) throw new Error('Superseded Shopify authorization needs review')
+    if (!orderCancel.job || orderCancel.orderCancelUserErrors.length) throw new Error('Shopify authorization cancellation needs review')
     // The cancellation job is asynchronous. Keep the webhook in the queue until Shopify confirms cancellation.
-    throw new Error('Awaiting Shopify cancellation of the superseded checkout')
+    throw new Error('Awaiting Shopify cancellation of the checkout')
+  }
+  if (binding.superseded_by) {
+    if (evidence.state!=='authorized') throw new Error('Superseded Shopify checkout has an unexpected capture')
+    return voidAuthorization()
   }
   const remoteBinding = {p_reservation:binding.order_id,p_shop:config.shop,p_order_id:evidence.orderId,p_authorization_id:evidence.authorization}
   if (evidence.state === 'canceled' || evidence.state === 'reversed') {
@@ -92,6 +95,7 @@ async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof a
   }
   if (evidence.state==='authorized') {
     const approved=await admin.rpc('bind_initiation_shopify_authorization' as never,remoteBinding as never)
+    if (approved.error?.code === 'P0001' && approved.error.message === 'Expired Shopify checkout cannot reserve a seat') return voidAuthorization()
     if (approved.error) throw new Error('Shopify authorization was not approved for this reservation')
     if (approved.data!==true) throw new Error('Shopify authorization capture is already being reconciled')
     const { orderCapture } = await query.graphql<{orderCapture:{transaction:{status:string}|null;userErrors:unknown[]}}>(`

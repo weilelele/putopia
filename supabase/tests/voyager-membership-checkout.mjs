@@ -14,7 +14,7 @@ const db = await membershipFixture(process.argv[2])
 const scalar = async (sql, values = []) => Object.values((await db.query(sql, values)).rows[0])[0]
 const quote = name => { assert.match(name, /^[a-z_][a-z0-9_]*$/); return `"${name}"` }
 const tasks = [], carts = new Map(), remoteOrders = new Map(), confirmations = new Set()
-let user = null, sequence = 71000, captures = 0
+let user = null, sequence = 71000, captures = 0, voids = 0
 const shop = 'jtuuus-k3.myshopify.com', origin = 'https://membership-fixture.invalid'
 Object.assign(process.env, {
   VERCEL_ENV:'production', INITIATION_MEMBERSHIP_ENABLED:'true', INITIATION_SHOPIFY_LIVE_ENABLED:'true',
@@ -100,6 +100,15 @@ async function provider(url, _headers, payload, method='POST') {
     remote.displayFinancialStatus='PAID'
     return {data:{orderCapture:{transaction:{status:'SUCCESS'},userErrors:[]}}}
   }
+  if(query.includes('VoidUncapturableCheckout')) {
+    const remote=remoteOrders.get(variables.orderId)
+    assert.equal(remote.displayFinancialStatus,'AUTHORIZED')
+    assert.ok(!remote.transactions.some(tx=>tx.kind==='CAPTURE'))
+    assert.ok(query.includes('originalPaymentMethodsRefund:false'))
+    voids++;remote.cancelledAt=new Date().toISOString();remote.updatedAt=remote.cancelledAt
+    remote.displayFinancialStatus='VOIDED'
+    return {data:{orderCancel:{job:{id:'fixture-void'},orderCancelUserErrors:[]}}}
+  }
   assert.ok(query.includes('ShopifyPilotOrder'))
   assert.ok(!query.includes('variant { id }'),'Order query must not require read_products')
   const order=structuredClone(remoteOrders.get(variables.id))
@@ -161,7 +170,7 @@ try {
     assert.equal(result.status,204)
     while(tasks.length) await tasks.shift()()
   }
-  async function authorize(cart) {
+  async function authorize(cart,{expired=false,unavailable=false}={}) {
     const {saved,input,variant}=cart, amount=saved.amount/100, positions=saved.order_kind==='membership'?[]:saved.order_kind==='initial'?[1,2]:saved.order_kind==='legacy_upgrade'?[3,4]:[1,2,3,4]
     const remote={id:`gid://shopify/Order/${++sequence}`,test:false,email:user.email,updatedAt:new Date().toISOString(),cancelledAt:null,displayFinancialStatus:'AUTHORIZED',customAttributes:input.attributes,
       shippingAddress:positions.length?{name:'Fixture Buyer',address1:'1 Test St',address2:null,city:'Santa Clara',provinceCode:'CA',zip:'95054',countryCodeV2:'US'}:null,
@@ -169,7 +178,13 @@ try {
       lineItems:connection(positions.length?positions.map(n=>({id:`line-${n}`,sku:n<3?`INITIAL-PACK-${n}`:`COMPLETE-PACK-${n}`,quantity:1,requiresShipping:true,lineItemGroup:{id:'group',quantity:1,variantId:variant}})):[{id:`gid://shopify/LineItem/${++sequence}`,sku:'VOYAGER-MEMBERSHIP-S26',quantity:1,requiresShipping:false,variant:{id:variant},lineItemGroup:null}]),
       transactions:[tx(++sequence,'AUTHORIZATION',amount)],refunds:[],fulfillments:[]}
     remoteOrders.set(remote.id,remote)
+    if(expired){await db.query("update initiation_orders set expires_at=now()-interval '1 hour' where id=$1",[saved.id]);await scalar('select expire_unbound_initiation_shopify_checkouts()')}
+    let capacityFill=[]
+    if(unavailable){capacityFill=(await db.query(`with people as (insert into voyager_profiles(id,role,account_kind)
+      select gen_random_uuid(),'voyager','human' from generate_series(1,100-initiation_occupied_seats()) returning id)
+      insert into initiation_members(user_id,batch,source,grant_note) select id,'S26','granted','Isolated capacity fixture' from people returning user_id`)).rows.map(row=>row.user_id)}
     await notify(remote,'orders/create')
+    if(unavailable){assert.equal(voids,1);assert.equal(await reconcileShopifyLiveQueue(config,remote.id),0);assert.equal(await scalar('select status from initiation_orders where id=$1',[saved.id]),'canceled');await db.query('delete from initiation_members where user_id=any($1)',[capacityFill]);await db.query('delete from voyager_profiles where id=any($1)',[capacityFill]);return remote}
     assert.equal(await scalar('select status from initiation_orders where id=$1',[saved.id]),'pending')
     assert.equal(await reconcileShopifyLiveQueue(config,remote.id),0)
     await notify(remote)
@@ -211,6 +226,15 @@ try {
   const direct=await begin('standard'); assert.equal(direct.saved.amount,47600)
   await authorize(direct)
   assert.equal(captures,5)
+  await person()
+  const lateCart=await begin('membership')
+  const late=await authorize(lateCart,{expired:true})
+  assert.equal(captures,6)
+  await refund(late,12)
+  assert.equal(await scalar('select role from voyager_profiles where id=$1',[user.id]),'applicant')
+  await person()
+  await authorize(await begin('membership'),{expired:true,unavailable:true})
+  assert.equal(captures,6,'An expired checkout without capacity must be voided without capture')
   // Guest email checkout uses the same server pricing without creating a signed-in session.
   user=null
   const emailRequest=(bundle,upgrade=false)=>emailCheckout(new Request(`${origin}/api/initiation-checkout/email`,{method:'POST',headers:{origin,'content-type':'application/json','x-real-ip':'127.0.0.1'},body:JSON.stringify({email:'guest-fixture@example.com',bundle,upgrade})}))
