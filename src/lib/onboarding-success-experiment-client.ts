@@ -11,13 +11,12 @@ export function getOnboardingSuccessAnalytics() {
   } catch { return {} }
 }
 
-/** Only successful submissions enroll; an old pending-email screen cannot join. */
+/** Call only after a fresh successful submission. Stored assignment is for outcome attribution, not returning UI. */
 export async function evaluateOnboardingSuccessExperiment(input: {
-  environment: string; qa: boolean; internal: boolean; userId?: string; returning?: boolean
+  environment: string; qa: boolean; internal: boolean; userId?: string
 }): Promise<OnboardingSuccessVariant | null> {
   try {
     if (!onboardingExperimentEligible({ ...input, optedOut: posthog.has_opted_out_capturing() })) return null
-    if (input.returning && !getOnboardingSuccessAnalytics().onboarding_success_variant) return null
     // Match the identity policy used by Initiation before measuring enrollment.
     // reset() clears a stale login identity while preserving device-ID bucketing.
     const identity = onboardingSuccessIdentityAction(input.userId, posthog.get_distinct_id(), posthog.get_property('$user_id'))

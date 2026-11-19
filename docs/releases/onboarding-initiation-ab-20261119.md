@@ -21,8 +21,11 @@ enroll. The code calls the native flag API after that success, then captures
 `waitlist_submitted` with the experiment marker and explicit `$feature/` variant
 property. PostHog uses this existing event as custom exposure, independently
 of SDK-specific native exposure event names. Old pending-email screens with
-no enrollment remain control and do not enter. Reloading an enrolled pending
-screen resolves the flag again; disabling the flag restores control. QA,
+no enrollment remain control and do not enter. Returning visits, reloads and
+browser back/forward cache restorations always show the original inbox-first
+screen, including enrolled test browsers. Only the immediate successful-submit
+screen uses the experiment variant; the stored browser assignment is retained
+for later price/purchase attribution. QA,
 previews, internal users and opt-out traffic do not enroll. Unknown flags, SDK
 errors and the 1.5-second timeout fall back without counting a control exposure.
 
@@ -76,3 +79,16 @@ conversion. Allow complete 24-hour/7-day observation windows; the small paid
 baseline needs substantially more data than the price-exposure metric. Multiple
 primary metrics are separate evidence, not a reason to declare a purchase lift
 from a price-exposure lift.
+
+## Return-visit correction · 2026-11-20
+
+The first release also restored the test success UI on later `/new` visits for
+an enrolled browser. The user clarified that the test presentation belongs only
+to the immediate post-submission screen. Return visits now restore control,
+without evaluating the flag or creating another enrollment. Dashboard,
+navigation and login CREATE ACCOUNT links lead to `/new?step=cta` and therefore
+restore this same inbox screen. The separate restricted-content access gate
+retains its existing activation dialog. Browser assignment and the metric
+definitions do not change.
+Record the corrective production deployment time when comparing pre/post data;
+the earlier run includes repeat test-screen presentations.
