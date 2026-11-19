@@ -53,7 +53,7 @@ export function MembershipPurchase({ preview, renderOfferImages, initialTarget, 
               <strong ref={chosen ? priceRef : undefined} id={`${controlId}-membership-price-${offer.target}`}>{dollars(offer.amount)}</strong>
             </span>
             {showDetail && <span className={styles.bundleDetail} id={`${controlId}-membership-detail-${offer.target}`}>
-              {offer.target === 'membership' ? 'No physical packs'
+              {offer.target === 'membership' ? 'Your place in the Collective'
                 : offer.target === 'initial' ? 'Packs 1–2'
                   : ownership === 'initial' ? 'Console + Pack 4' : 'Packs 1–4 · Console included'}
             </span>}
