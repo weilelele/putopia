@@ -3,12 +3,14 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
 import { resolveUserEmail } from './world-confirmed-email'
 import { buildDreamcatcherEmail } from './dreamcatcher-email'
+import { DREAMCATCHER_ROUNDS_ENABLED } from './dispatch-policy'
 
 /** Only publication queues this email. No recall, participant broadcast or backfill. */
 export async function sendDreamcatcherNotifications() {
+  const result = { sent: 0, failed: 0 }
+  if (!DREAMCATCHER_ROUNDS_ENABLED) return result
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = createAdminClient() as any
-  const result = { sent: 0, failed: 0 }
   const deadline = Date.now() + 35_000
   for (let i = 0; i < 3 && Date.now() < deadline; i++) {
     const { data: notice, error } = await admin.rpc('claim_dreamcatcher_notification')

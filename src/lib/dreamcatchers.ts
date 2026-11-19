@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { parallaxArrayName } from './parallax-brand'
 import { createAdminClient } from '@/lib/supabase/server'
 import { publicDreamcatchers } from '@/lib/dreamcatcher-publication'
+import { DREAMCATCHER_ROUNDS_ENABLED } from '@/lib/signal/dispatch-policy'
 
 export type DreamcatcherStatus = 'processing' | 'paused' | 'idle' | 'offline' | 'awaiting_signal'
 export type DreamcatcherJobStatus = 'queued' | 'processing' | 'awaiting_dispatch' | 'awaiting_vote' | 'returning' | 'completed' | 'withdrawn' | 'failed'
@@ -75,7 +76,8 @@ export async function listDreamcatcherRooms(): Promise<DreamcatcherRoom[]> {
     city: room.city as string,
     location: room.location as string,
     timeZone: room.time_zone as string,
-    status: room.status as DreamcatcherStatus,
+    // The stored state freezes mid-work during a pause, so don't show it as live.
+    status: !DREAMCATCHER_ROUNDS_ENABLED && room.status !== 'offline' ? 'paused' : room.status as DreamcatcherStatus,
     roundDurationMinutes: room.round_duration_minutes as number,
     queueCapacity: room.queue_capacity as number,
     cameraImagePath: (room.camera_image_path as string | null) ?? '/assets/concepts/dreamcatcher-live-feed.png',

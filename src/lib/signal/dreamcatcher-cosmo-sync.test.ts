@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { CosmoExpansion } from '@/lib/cosmo'
 const state = vi.hoisted(() => ({ client: null as unknown, bootstrap: vi.fn(), expansions: vi.fn() }))
 vi.mock('server-only', () => ({}))
+vi.mock('./dispatch-policy', () => ({ DREAMCATCHER_ROUNDS_ENABLED: true }))
 vi.mock('@/lib/supabase/server', () => ({ createAdminClient: () => state.client }))
 vi.mock('@/lib/cosmo', () => ({ getWorldBootstraps: state.bootstrap, getWorldExpansions: state.expansions }))
 import { syncDreamcatcherCosmo } from './dreamcatcher-cosmo-sync'

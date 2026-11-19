@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+vi.mock('./signal/dispatch-policy', () => ({ DREAMCATCHER_ROUNDS_ENABLED: true }))
 import { dashboardDispatch, type DispatchWorld, type DispatchRound, type DispatchTask } from './dashboard-dispatch-model'
 
 const opened = '2026-10-29T00:00:00.000Z'

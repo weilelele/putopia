@@ -104,8 +104,8 @@ const TYPE_LABELS: Record<SignalTaskType, string> = {
 
 const VOTE_SCOPE_LABELS: Record<WorldVoteScope, string> = {
   self: 'Owner only (private)',
-  voters: 'Voyagers only',
-  all: 'All registered users',
+  voters: 'Voyagers',
+  all: 'Voyagers (default)',
 }
 
 
