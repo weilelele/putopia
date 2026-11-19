@@ -64,8 +64,10 @@ email succeed. `waitlist_submitted` includes `onboarding_success_experiment`,
 it is the experiment's custom exposure event. Native flag-read events remain
 diagnostic; enrollment does not depend on an SDK-specific native event name.
 QA, previews, internal users, opt-out and unresolved flags are not enrolled.
-Returning pending-email screens need an existing enrollment; merely visiting
-`/new` does not enroll someone.
+Returning pending-email screens always show the original inbox-first UI, even
+for enrolled test browsers; merely visiting `/new` does not enroll someone or
+read the experiment flag. The stored assignment remains available for outcome
+attribution. Only the immediate successful-submission screen uses the variant.
 
 `onboarding_initiation_clicked` records the new success CTA immediately before
 opening `/voyager-initiation?briefing=1`, with the variant and QA/test flags.

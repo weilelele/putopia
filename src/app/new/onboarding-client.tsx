@@ -71,25 +71,24 @@ function OnboardingInner({ variants, analyticsEnvironment }: { variants: Onboard
     try { rememberPostRegisterRedirect(localStorage, params.get('redirect'), window.location.origin, Date.now()) } catch { /* Storage is a convenience only. */ }
   }, [params])
 
-  /* ?preview resets flags; otherwise check registered → console, or pending → inbox screen */
+  /* The experiment is shown only immediately after a successful submission.
+     Returning visits (including browser back/forward cache) always restore the inbox screen. */
   useEffect(() => {
     if (params.get('preview') !== null) {
       localStorage.removeItem('putopia_voyager_registered')
       localStorage.removeItem('putopia_pending_email')
       return
     }
-    const pending = localStorage.getItem('putopia_pending_email')
-    if (pending) {
-      let canceled = false
-      void evaluateOnboardingSuccessExperiment({ environment: analyticsEnvironment, qa: params.get('qa') === '1', internal: user.role === 'architect', userId: user.id, returning: true })
-        .then(variant => {
-          if (canceled) return
-          setSuccessVariant(variant)
-          setPendingEmail(pending)
-        })
-      return () => { canceled = true }
+    function restoreInbox() {
+      setSuccessVariant(null)
+      setPendingEmail(localStorage.getItem('putopia_pending_email'))
     }
-  }, [params, analyticsEnvironment, user.role, user.id])
+    // Hydrate the saved address, without restoring experiment presentation.
+    restoreInbox()
+    const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) restoreInbox() }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [params])
 
   useEffect(() => {
     if (params.get('preview') !== null) return
