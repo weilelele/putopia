@@ -15,7 +15,6 @@ import { ArchiveButton } from '@/components/archive-button'
 import { trackRedditPixelEvent } from '@/lib/reddit-pixel'
 import { DEVICE_REEL } from '@/lib/device-reel'
 import { ONBOARDING_REEL } from '@/lib/onboarding-video'
-import { OnboardingSoundtrack } from '@/components/onboarding-soundtrack'
 import { rememberPostRegisterRedirect } from '@/lib/post-register-redirect'
 import { OnboardingSuccessScreen } from '@/components/onboarding-success-screen'
 import { useAuth } from '@/lib/auth-context'
@@ -36,7 +35,7 @@ type Step = 'q1' | 'q2' | 'q3' | 'cta' | 'success'
 
 /* ─── Root ───────────────────────────────────────── */
 export default function OnboardingClient({ variants, analyticsEnvironment = 'unknown' }: { variants: OnboardingVariantRow[]; analyticsEnvironment?: string }) {
-  return <Suspense><OnboardingSoundtrack><OnboardingInner variants={variants} analyticsEnvironment={analyticsEnvironment} /></OnboardingSoundtrack></Suspense>
+  return <Suspense><OnboardingInner variants={variants} analyticsEnvironment={analyticsEnvironment} /></Suspense>
 }
 
 function OnboardingInner({ variants, analyticsEnvironment }: { variants: OnboardingVariantRow[]; analyticsEnvironment: string }) {

@@ -92,3 +92,14 @@ retains its existing activation dialog. Browser assignment and the metric
 definitions do not change.
 Record the corrective production deployment time when comparing pre/post data;
 the earlier run includes repeat test-screen presentations.
+
+## Audio scope correction · 2026-11-20
+
+Onboarding, including questions, email entry and both success variants, is now
+silent. Its shared soundtrack wrapper and music toggle are removed. Only the
+mounted Initiation briefing owns `useBriefingSound`; its gesture-based start,
+mute preference and cleanup are unchanged. The onboarding films remain muted.
+This applies equally to control and test and does not alter the 50/50 split,
+enrollment, CTA destinations or outcome attribution. Record its production
+deployment time alongside the other experiment changes. Visual redesigns are
+separate concept proposals until the user selects one.
