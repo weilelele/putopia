@@ -1,0 +1,95 @@
+.invitation {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 100svh;
+  background: #000;
+  color: var(--color-star);
+  font-family: var(--font-mono);
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+}
+
+.reveal {
+  position: absolute;
+  inset: 0;
+  background: var(--color-deep);
+  --badge-x: 37.1%;
+  --badge-y: 59.6%;
+}
+
+@supports (width: 1cqw) {
+  .reveal {
+    /* Badge center (316,1100) in the 852×1846 image, cover-fit and center/top crop. */
+    --badge-x: calc(50cqw - max(12.91cqw, 5.96cqh));
+    --badge-y: max(129.11cqw, 59.59cqh);
+  }
+}
+
+.scene img { object-fit: cover; object-position: center top; }
+
+.layout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  padding: max(36px, env(safe-area-inset-top)) 20px max(48px, env(safe-area-inset-bottom));
+}
+
+.label { margin: 0; font-size: var(--fs-caption); font-weight: 700; }
+.copy h2 {
+  margin: 34px 0 16px;
+  font-size: clamp(28px, 8.2vw, 32px);
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--color-nucleus);
+}
+.description { margin: 0; font-size: var(--fs-body); line-height: 1.35; }
+.actions { margin-top: auto; padding-top: 300px; }
+.primary button { min-height: 52px; }
+.emailRow { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+.emailInfo { flex: 1; min-width: 0; }
+.emailInfo p { margin: 0; font-size: var(--fs-caption); line-height: 1.4; }
+.address { display: flex; align-items: center; flex-wrap: wrap; column-gap: 4px; }
+.address strong { font-size: var(--fs-caption); overflow-wrap: anywhere; max-width: 100%; }
+.address button { padding-inline: 4px; }
+.mailbox { flex-shrink: 0; padding: 8px 12px; }
+.emailHint { max-width: 110px; font-size: var(--fs-caption); line-height: 1.4; }
+
+/* Functional scene reveal, requested by the user; no decorative glow or sound. */
+.invitation[data-phase='loading'] .reveal { clip-path: circle(0 at var(--badge-x) var(--badge-y)); }
+.invitation[data-phase='loading'] :is(.copy, .primary, .emailRow) { visibility: hidden; }
+.invitation[data-phase='opening'] .reveal { animation: reveal 2400ms cubic-bezier(.22,.7,.22,1) both; }
+.invitation[data-phase='opening'] .copy { animation: appear 700ms 1300ms both; }
+.invitation[data-phase='opening'] .primary { animation: appear 600ms 2100ms both; }
+.invitation[data-phase='opening'] .emailRow { animation: appear 600ms 2500ms both; }
+
+@keyframes reveal {
+  0%, 12% { clip-path: circle(0 at var(--badge-x) var(--badge-y)); }
+  20% { clip-path: circle(2px at var(--badge-x) var(--badge-y)); }
+  100% { clip-path: circle(150vmax at var(--badge-x) var(--badge-y)); }
+}
+@keyframes appear {
+  0% { opacity: 0; transform: translateY(8px); visibility: hidden; }
+  1% { visibility: visible; }
+  100% { opacity: 1; transform: translateY(0); visibility: visible; }
+}
+
+@media (min-width: 640px) {
+  .invitation { max-width: 480px; margin-inline: auto; }
+  .layout { padding-inline: 24px; }
+  .copy h2 { font-size: 36px; }
+}
+@media (max-height: 700px) {
+  .copy { background: var(--color-deep); margin: calc(-1 * max(36px, env(safe-area-inset-top))) -20px 0; padding: max(36px, env(safe-area-inset-top)) 20px 20px; }
+  .actions { background: var(--color-deep); margin-inline: -20px; padding: 16px 20px 0; }
+  .layout { padding-inline: 20px; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .invitation[data-phase] .reveal { animation: none; clip-path: none; }
+  .invitation[data-phase] :is(.copy, .primary, .emailRow) { animation: none; visibility: visible; opacity: 1; transform: none; }
+}

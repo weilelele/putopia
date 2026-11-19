@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-20",
+  "type": "Precise edit of approved UI mock to extract background photographic asset",
+  "tool": "Built-in image_gen",
+  "selected_ui": "/Users/will/.codex/worktrees/onboarding-initiation-ab/putopia/output/onboarding-success-concepts/20261120/integrated-invitation-v1.png",
+  "input_paths": [
+    "/Users/will/.codex/worktrees/onboarding-initiation-ab/putopia/output/onboarding-success-concepts/20261120/integrated-invitation-v1.png",
+    "/Users/will/.codex/worktrees/onboarding-initiation-ab/putopia/public/assets/voyager-briefing/voyager-badge.jpg",
+    "/Users/will/.codex/worktrees/onboarding-initiation-ab/putopia/public/assets/voyager-briefing/pack-1.jpg"
+  ],
+  "generated_original": "/Users/will/.codex/generated_images/01a1f568-f2e1-7ac0-83d1-80c03e7841ab/exec-3375787d-dfea-4528-94b0-b30e0712aa94.png",
+  "output": "/Users/will/.codex/worktrees/onboarding-initiation-ab/putopia/public/assets/onboarding/invitation-scene-20261120.png",
+  "prompt": "Use case: precise-object-edit / UI background asset extraction.\n\nEDIT IMAGE 1 ONLY. Produce a single clean, full-height portrait photographic BACKGROUND ASSET at exactly the same framing and 390:844 aspect ratio as Image 1 (reference 853x1844 pixels). This is NOT a new UI design and NOT a new still-life arrangement.\n\nRemove ALL app/user-interface overlays from Image 1:\n- top white MULTIVERSE COLLECTIVE interface wordmark near y=5%;\n- orange \"Your initiation starts here.\" heading and white two-line supporting sentence in the upper-left;\n- large orange START INITIATION button across bottom;\n- all email text, Change text and Open Gmail outlined button in footer.\nFill only these removed UI regions with the original scene's dark navy shadow, workbench wood and natural light. No ghosts, traces of letters, boxes, UI strokes or button shapes.\n\nPreserve the physical photographic objects in Image 1 in EXACT positions, scale, crop, orientation and lighting:\n- diagonal off-white paper invitation entering from the right, including its real printed \"MULTIVERSE COLLECTIVE\", thin orange printed rule, and \"AN INVITATION\";\n- large orange/gold Voyager badge centered around x36%, y58%, including its thin circular metal body, engraved concentric-ring/capsule symbol and \"VOYAGER\" engraving;\n- original dark wood table and gentle warm reflection below badge;\n- original deep navy/dark empty background across the upper-left where native UI will be placed later.\nThe native physical printed text on the paper and engraved badge text MUST STAY. Only the app overlays must disappear. Images 2 and 3 are original project badge and paper/workbench reference material, to help preserve authentic surface/markings; don't copy their extra scene items.\n\nDo not move or enlarge the badge to fill areas formerly occupied by UI. Do not reposition the letter to the top. Upper ~0–26% must stay dark/quiet enough for native heading. Bottom ~79–100% should be natural dark workbench/shadow for later native buttons and mailbox footer, no new focal object there.\n\nKeep photo-realistic material, real paper fibers, metallic edge, natural contact shadows and matching camera exposure. No paint/filter look, blur smears, fake texture, added glow, extra objects, robot, Console hardware, screens, border, frame, icon, pattern, date, watermark, new label or additional text. No interface elements whatsoever. The whole result is only the same physical invitation still life after removing UI. Nontransparent full canvas.",
+  "review": {
+    "ui_overlays_removed": true,
+    "physical_invitation_print_preserved": true,
+    "badge_mark_and_engraving_preserved": true,
+    "composition_preserved": true,
+    "upper_negative_space": true,
+    "lower_dark_footer_space": true,
+    "extra_hardware_or_objects": false,
+    "remaining_visual_issues": "No material issues observed in full-image inspection. Photography remains a generated concept-derived asset, not a claim of actual capture."
+  }
+}
