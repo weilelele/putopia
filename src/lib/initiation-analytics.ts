@@ -1,5 +1,6 @@
 import { INITIATION_PRICES, INITIATION_PRICING_VERSION, MEMBERSHIP_PRICING_VERSION } from './initiation-pricing'
 import type { InitiationOrderKind, InitiationStatus } from './initiation-types'
+import { ONBOARDING_SUCCESS_FLAG, onboardingSuccessVariant, type OnboardingSuccessVariant } from './onboarding-success-experiment'
 
 export const INITIATION_PAGE_VERSION = 'voyager-post-payment-calibration-v1-20261022'
 export const INITIATION_UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as const
@@ -12,6 +13,8 @@ export type InitiationAnalyticsContext = Partial<Record<typeof INITIATION_UTM_KE
   page_visit_id?: string
   posthog_distinct_id?: string
   posthog_session_id?: string
+  onboarding_success_variant?: OnboardingSuccessVariant
+  onboarding_success_device_id?: string
   is_internal_qa?: boolean
   disabled?: boolean
 }
@@ -31,10 +34,12 @@ export function sanitizeInitiationAnalytics(input: unknown): InitiationAnalytics
   }
   if (typeof source.placement === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(source.placement)) result.placement = source.placement
   if (typeof source.page_visit_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(source.page_visit_id)) result.page_visit_id = source.page_visit_id
-  for (const key of ['posthog_distinct_id', 'posthog_session_id'] as const) {
+  for (const key of ['posthog_distinct_id', 'posthog_session_id', 'onboarding_success_device_id'] as const) {
     const value = source[key]
     if (typeof value === 'string' && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value)) result[key] = value
   }
+  const variant = onboardingSuccessVariant(source.onboarding_success_variant)
+  if (variant) result.onboarding_success_variant = variant
   if (source.is_internal_qa === true) result.is_internal_qa = true
   if (source.disabled === true) result.disabled = true
   return result
@@ -57,6 +62,8 @@ export function initiationAnalyticsProperties(kind: InitiationOrderKind, context
   delete safe.disabled
   return {
     ...safe, ...(sessionId ? { $session_id: sessionId } : {}),
+    ...(safe.onboarding_success_variant ? { [`$feature/${ONBOARDING_SUCCESS_FLAG}`]: safe.onboarding_success_variant } : {}),
+    ...(safe.onboarding_success_device_id ? { $device_id: safe.onboarding_success_device_id } : {}),
     analytics_version: 'checkout-providers-v2', page_version: INITIATION_PAGE_VERSION, batch: 'S26', order_kind: kind,
     product_type: 'voyager_initiation', product_name: INITIATION_PRICES[kind].name,
     payable_amount: amount / 100,

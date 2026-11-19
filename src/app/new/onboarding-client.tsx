@@ -17,6 +17,10 @@ import { DEVICE_REEL } from '@/lib/device-reel'
 import { ONBOARDING_REEL } from '@/lib/onboarding-video'
 import { OnboardingSoundtrack } from '@/components/onboarding-soundtrack'
 import { rememberPostRegisterRedirect } from '@/lib/post-register-redirect'
+import { OnboardingSuccessScreen } from '@/components/onboarding-success-screen'
+import { useAuth } from '@/lib/auth-context'
+import { evaluateOnboardingSuccessExperiment } from '@/lib/onboarding-success-experiment-client'
+import { ONBOARDING_SUCCESS_FLAG, onboardingSuccessExposureProperties, type OnboardingSuccessVariant } from '@/lib/onboarding-success-experiment'
 
 /* ─── Onboarding Version ─────────────────────────── */
 const ONBOARDING_VERSION = 'v3'
@@ -26,43 +30,17 @@ const ONBOARDING_VERSION = 'v3'
 const DIRECT_AFFIRM_LINE1 = 'Join the Multiverse Collective.'
 const DIRECT_INVITATION   = 'Leave your email below to apply for your seat.'
 
-/* ─── Email Providers ────────────────────────────── */
-const EMAIL_PROVIDERS: Record<string, { name: string; url: string }> = {
-  'gmail.com':      { name: 'Gmail',        url: 'https://mail.google.com/mail/' },
-  'googlemail.com': { name: 'Gmail',        url: 'https://mail.google.com/mail/' },
-  'outlook.com':    { name: 'Outlook',      url: 'https://outlook.live.com/' },
-  'hotmail.com':    { name: 'Outlook',      url: 'https://outlook.live.com/' },
-  'live.com':       { name: 'Outlook',      url: 'https://outlook.live.com/' },
-  'msn.com':        { name: 'Outlook',      url: 'https://outlook.live.com/' },
-  'yahoo.com':      { name: 'Yahoo Mail',   url: 'https://mail.yahoo.com/' },
-  'ymail.com':      { name: 'Yahoo Mail',   url: 'https://mail.yahoo.com/' },
-  'icloud.com':     { name: 'iCloud Mail',  url: 'https://www.icloud.com/mail' },
-  'me.com':         { name: 'iCloud Mail',  url: 'https://www.icloud.com/mail' },
-  'mac.com':        { name: 'iCloud Mail',  url: 'https://www.icloud.com/mail' },
-  'qq.com':         { name: 'QQ 邮箱',      url: 'https://mail.qq.com/' },
-  'foxmail.com':    { name: 'Foxmail',      url: 'https://mail.qq.com/' },
-  '163.com':        { name: '网易邮箱',     url: 'https://mail.163.com/' },
-  '126.com':        { name: '网易邮箱',     url: 'https://mail.126.com/' },
-  'yeah.net':       { name: '网易邮箱',     url: 'https://mail.yeah.net/' },
-  'proton.me':      { name: 'Proton Mail',  url: 'https://mail.proton.me/' },
-  'protonmail.com': { name: 'Proton Mail',  url: 'https://mail.proton.me/' },
-}
-
-function getEmailProvider(email: string) {
-  const domain = email.split('@')[1]?.toLowerCase()
-  return domain ? (EMAIL_PROVIDERS[domain] ?? null) : null
-}
-
 /* ─── Types ──────────────────────────────────────── */
 /* Flow order: q1 Console curiosity → q2 world choice → q3 join-urgency → cta */
 type Step = 'q1' | 'q2' | 'q3' | 'cta' | 'success'
 
 /* ─── Root ───────────────────────────────────────── */
-export default function OnboardingClient({ variants }: { variants: OnboardingVariantRow[] }) {
-  return <Suspense><OnboardingSoundtrack><OnboardingInner variants={variants} /></OnboardingSoundtrack></Suspense>
+export default function OnboardingClient({ variants, analyticsEnvironment = 'unknown' }: { variants: OnboardingVariantRow[]; analyticsEnvironment?: string }) {
+  return <Suspense><OnboardingSoundtrack><OnboardingInner variants={variants} analyticsEnvironment={analyticsEnvironment} /></OnboardingSoundtrack></Suspense>
 }
 
-function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
+function OnboardingInner({ variants, analyticsEnvironment }: { variants: OnboardingVariantRow[]; analyticsEnvironment: string }) {
+  const { user } = useAuth()
   const params   = useSearchParams()
   const initStep = (params.get('step') as Step) ?? 'q1'
   const [step, setStep]                   = useState<Step>(initStep)
@@ -76,6 +54,7 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
   const [submitError, setSubmitError]     = useState('')
   const [showTransition, setShowTransition] = useState(false)
   const [pendingEmail, setPendingEmail]   = useState<string | null>(null)
+  const [successVariant, setSuccessVariant] = useState<OnboardingSuccessVariant | null>(null)
 
   /* ── UTM-driven content variant ──
      Resolved from first-touch utm_content (ad group), with ?variant= override
@@ -100,9 +79,17 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
       return
     }
     const pending = localStorage.getItem('putopia_pending_email')
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrates state from localStorage / query params on mount
-    if (pending) setPendingEmail(pending)
-  }, [params])
+    if (pending) {
+      let canceled = false
+      void evaluateOnboardingSuccessExperiment({ environment: analyticsEnvironment, qa: params.get('qa') === '1', internal: user.role === 'architect', returning: true })
+        .then(variant => {
+          if (canceled) return
+          setSuccessVariant(variant)
+          setPendingEmail(pending)
+        })
+      return () => { canceled = true }
+    }
+  }, [params, analyticsEnvironment, user.role])
 
   useEffect(() => {
     if (params.get('preview') !== null) return
@@ -188,7 +175,14 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
       setSubmitting(false)
       return
     }
+    const experimentVariant = await evaluateOnboardingSuccessExperiment({
+      environment: analyticsEnvironment, qa: sp.get('qa') === '1' || sp.has('preview'), internal: user.role === 'architect',
+    })
+    setSuccessVariant(experimentVariant)
     posthog.capture('waitlist_submitted', {
+      ...onboardingSuccessExposureProperties(experimentVariant),
+      is_test: analyticsEnvironment !== 'production',
+      is_internal_qa: user.role === 'architect' || sp.get('qa') === '1' || sp.has('preview'),
       utm_source:   utm.utm_source   ?? undefined,
       utm_medium:   utm.utm_medium   ?? undefined,
       utm_campaign: utm.utm_campaign ?? undefined,
@@ -235,8 +229,16 @@ function OnboardingInner({ variants }: { variants: OnboardingVariantRow[] }) {
       }}>
         <div className="onboarding-shell" style={{ width: '100%', maxWidth: 480, padding: '0 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           <VideoSection key={v.videoCta} src={v.videoCta} />
-          <PendingInboxScreen
+          <OnboardingSuccessScreen
             email={pendingEmail}
+            variant={successVariant ?? 'control'}
+            onInitiation={() => {
+              try {
+                posthog.capture('onboarding_initiation_clicked', { experiment: ONBOARDING_SUCCESS_FLAG, onboarding_success_variant: successVariant,
+                  is_test: analyticsEnvironment !== 'production', is_internal_qa: user.role === 'architect' || params.get('qa') === '1' }, { transport: 'sendBeacon' })
+              } catch { /* Analytics cannot block the next step. */ }
+              window.location.assign('/voyager-initiation?briefing=1')
+            }}
             onStartOver={() => {
               localStorage.removeItem('putopia_pending_email')
               setPendingEmail(null)
@@ -814,131 +816,6 @@ function SuccessScreen() {
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', letterSpacing: '0.2em', color: 'rgba(242,240,230,0.18)' }}>
         Redirecting...
       </div>
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────────────────
-   PENDING INBOX SCREEN
-   Shown when user returns to / after submitting email
-   but before completing /register.
-───────────────────────────────────────────────────── */
-function PendingInboxScreen({
-  email,
-  onStartOver,
-  onEnter,
-}: {
-  email: string
-  onStartOver: () => void
-  onEnter: () => void
-}) {
-  const [visible, setVisible] = useState(false)
-  const provider = getEmailProvider(email)
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 60)
-    return () => clearTimeout(t)
-  }, [])
-
-  const fadeIn: React.CSSProperties = {
-    opacity:   visible ? 1 : 0,
-    transform: visible ? 'translateY(0)' : 'translateY(12px)',
-    transition: 'opacity 0.5s ease, transform 0.5s ease',
-  }
-
-  /* One goal per zone: confirm where the key went (with its correction right
-     beside it), then a single primary action to go get it, then the bypass. */
-  return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', gap: 'var(--s-5)',
-      ...fadeIn,
-    }}>
-
-      {/* Status + what to do */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontWeight: 700,
-          letterSpacing: '0.04em', color: 'var(--color-nucleus-2)',
-        }}>
-          SIGNAL TRANSMITTED
-        </div>
-        <h2 style={{
-          fontFamily: 'var(--font-body)', fontWeight: 700,
-          fontSize: 'var(--fs-h3)', lineHeight: 1.2,
-          color: 'var(--color-star)', margin: 0,
-        }}>
-          Check your inbox.
-        </h2>
-        <p style={{
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)',
-          color: 'var(--color-star-dim)', lineHeight: 1.5, margin: 0,
-        }}>
-          Open the email from Multiverse Collective to activate your access.
-        </p>
-      </div>
-
-      {/* Where it went — the correction lives next to the address it corrects */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: 'var(--s-3)',
-          borderTop: '1px solid var(--bd-faint)', borderBottom: '1px solid var(--bd-faint)',
-          padding: 'var(--s-1) 0 var(--s-1) 0',
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-1)', minWidth: 0, padding: 'var(--s-2) 0' }}>
-            <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-              color: 'var(--color-star-dim)',
-            }}>
-              Sent to
-            </span>
-            <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', fontWeight: 700,
-              color: 'var(--color-star)', overflowWrap: 'anywhere',
-            }}>
-              {email}
-            </span>
-          </div>
-          <ArchiveButton
-            onClick={onStartOver}
-            variant="ghost"
-            size="compact"
-            aria-label="Change email"
-            style={{ flexShrink: 0, marginRight: '-0.5rem' }}
-          >
-            Change
-          </ArchiveButton>
-        </div>
-        <p style={{
-          fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
-          color: 'var(--color-star-dim)', lineHeight: 1.4, margin: 0,
-        }}>
-          Not there in a minute? Check spam or promotions.
-        </p>
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
-        {provider && (
-          <a
-            href={provider.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="archive-button archive-button--primary archive-button--full"
-          >
-            Open {provider.name} <span aria-hidden>↗</span>
-          </a>
-        )}
-
-        <ArchiveButton
-          onClick={onEnter}
-          variant="secondary"
-          fullWidth
-        >
-          Explore before activating <span aria-hidden>→</span>
-        </ArchiveButton>
-      </div>
-
     </div>
   )
 }

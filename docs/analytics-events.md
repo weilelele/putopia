@@ -55,6 +55,32 @@ strip's behaviour can be segmented by user type.
 
 ## Onboarding & acquisition
 
+### Onboarding success experiment (`onboarding-initiation-success-v1`)
+
+New successful production `/new` submissions resolve this device-bucketed
+PostHog flag (50% `control`, 50% `test`) after the application and activation
+email succeed. `waitlist_submitted` includes `onboarding_success_experiment`,
+`onboarding_success_variant` and `$feature/onboarding-initiation-success-v1`;
+it is the experiment's custom exposure event. Native flag-read events remain
+diagnostic; enrollment does not depend on an SDK-specific native event name.
+QA, previews, internal users, opt-out and unresolved flags are not enrolled.
+Returning pending-email screens need an existing enrollment; merely visiting
+`/new` does not enroll someone.
+
+`onboarding_initiation_clicked` records the new success CTA immediately before
+opening `/voyager-initiation?briefing=1`, with the variant and QA/test flags.
+It is diagnostic, not the success criterion.
+
+The two independent primary metrics are exposure → `initiation_price_viewed`
+within 24 hours and exposure → server `initiation_purchase_completed` with
+`payment_status=paid` within 7 days. Both exclude test/QA events. Briefing page
+9 is not price exposure; purchases do not require intermediate events.
+
+The browser's variant and device ID are allowlisted into checkout attribution;
+verified server outcomes retain `$feature/onboarding-initiation-success-v1`
+and `$device_id`, plus the existing browser distinct ID. No email or question
+answers are added. See `docs/releases/onboarding-initiation-ab-20261119.md`.
+
 | Event | Source | Properties |
 |-------|--------|------------|
 | `onboarding_started` | [`new/onboarding-client.tsx`](../src/app/new/onboarding-client.tsx) | (see source) |
