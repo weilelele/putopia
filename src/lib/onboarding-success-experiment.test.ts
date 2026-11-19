@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { onboardingExperimentEligible, onboardingSuccessExposureProperties, readOnboardingSuccessAssignment, resolveOnboardingSuccessVariant } from './onboarding-success-experiment'
+import { onboardingExperimentEligible, onboardingSuccessExposureProperties, onboardingSuccessIdentityAction, readOnboardingSuccessAssignment, resolveOnboardingSuccessVariant } from './onboarding-success-experiment'
 
 afterEach(() => vi.useRealTimers())
 
 describe('onboarding success experiment eligibility and continuity', () => {
   const production = { environment: 'production', qa: false, internal: false, optedOut: false }
+  it('aligns the enrollment identity with the later Initiation identity without changing browser assignment', () => {
+    expect(onboardingSuccessIdentityAction(undefined, 'old-account', 'old-account')).toBe('reset')
+    expect(onboardingSuccessIdentityAction(undefined, 'anonymous', undefined)).toBe('none')
+    expect(onboardingSuccessIdentityAction('account', 'anonymous', undefined)).toBe('identify')
+    expect(onboardingSuccessIdentityAction('account', 'account', 'account')).toBe('none')
+  })
   it('labels successful-submission exposure only for a real assigned variant', () => {
     expect(onboardingSuccessExposureProperties('test')).toEqual({ onboarding_success_experiment: 'onboarding-initiation-success-v1',
       onboarding_success_variant: 'test', '$feature/onboarding-initiation-success-v1': 'test' })

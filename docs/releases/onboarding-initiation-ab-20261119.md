@@ -11,6 +11,10 @@ activation and login; different browsers can differ. No server flag evaluation
 is used. The existing anonymous-to-user identification and browser checkout
 distinct ID correlate outcomes. PostHog excludes people observed in multiple
 variants, so identified cross-device users can be excluded from its analysis.
+Before enrollment, the browser analytics identity is aligned with the current
+auth user, matching Initiation's existing policy. Stale signed-out identities
+are reset without resetting the device ID, so later page/paid events do not
+start on a different anonymous identity.
 
 Only a successful `/new` submission with a sent access/activation email can
 enroll. The code calls the native flag API after that success, then captures

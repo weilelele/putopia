@@ -17,6 +17,12 @@ export function onboardingExperimentEligible(input: { environment: string; qa: b
   return input.environment === 'production' && !input.qa && !input.internal && !input.optedOut
 }
 
+export function onboardingSuccessIdentityAction(userId: string | undefined, distinctId: unknown, identifiedId: unknown) {
+  if (userId && distinctId !== userId) return 'identify'
+  if (!userId && identifiedId) return 'reset'
+  return 'none'
+}
+
 export function readOnboardingSuccessAssignment(raw: string | null, deviceId: unknown): OnboardingSuccessAssignment | null {
   if (!raw || typeof deviceId !== 'string' || !deviceId) return null
   try {

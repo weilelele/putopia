@@ -81,7 +81,7 @@ function OnboardingInner({ variants, analyticsEnvironment }: { variants: Onboard
     const pending = localStorage.getItem('putopia_pending_email')
     if (pending) {
       let canceled = false
-      void evaluateOnboardingSuccessExperiment({ environment: analyticsEnvironment, qa: params.get('qa') === '1', internal: user.role === 'architect', returning: true })
+      void evaluateOnboardingSuccessExperiment({ environment: analyticsEnvironment, qa: params.get('qa') === '1', internal: user.role === 'architect', userId: user.id, returning: true })
         .then(variant => {
           if (canceled) return
           setSuccessVariant(variant)
@@ -89,7 +89,7 @@ function OnboardingInner({ variants, analyticsEnvironment }: { variants: Onboard
         })
       return () => { canceled = true }
     }
-  }, [params, analyticsEnvironment, user.role])
+  }, [params, analyticsEnvironment, user.role, user.id])
 
   useEffect(() => {
     if (params.get('preview') !== null) return
@@ -176,7 +176,7 @@ function OnboardingInner({ variants, analyticsEnvironment }: { variants: Onboard
       return
     }
     const experimentVariant = await evaluateOnboardingSuccessExperiment({
-      environment: analyticsEnvironment, qa: sp.get('qa') === '1' || sp.has('preview'), internal: user.role === 'architect',
+      environment: analyticsEnvironment, qa: sp.get('qa') === '1' || sp.has('preview'), internal: user.role === 'architect', userId: user.id,
     })
     setSuccessVariant(experimentVariant)
     posthog.capture('waitlist_submitted', {
