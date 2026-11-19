@@ -9,6 +9,7 @@ import { sendDeviceOrderStatusNotification } from '@/lib/device-batch-notificati
 import { sendMetaPurchase } from '@/lib/meta-capi'
 import { isIOSNativeApp } from '@/lib/app-platform'
 import { handleInitiationWebhook } from '@/lib/initiation-webhook'
+import { webhookErrorMessage } from '@/lib/webhook-error'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -70,7 +71,7 @@ async function failWebhookEvent(
   eventId: string,
   error: unknown,
 ) {
-  const message = error instanceof Error ? error.message : 'Unknown webhook failure'
+  const message = webhookErrorMessage(error)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: logError } = await (admin.from('stripe_webhook_events') as any)
     .update({
