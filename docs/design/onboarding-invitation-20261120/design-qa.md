@@ -13,7 +13,7 @@
 - Implementation: [mobile screenshot](mobile-final.png), 390×844 pixels at a 390×844 CSS viewport, 1× screenshot density, local production build at `/dev/onboarding-success?variant=test&presentation=1`.
 - [Combined full-view comparison](comparison.jpg): source normalized to 390×844 next to the equal-size rendered implementation, 780×844 total.
 - [Focused footer comparison](footer-comparison.jpg): actual source and implementation bottom 200px together, confirming action hierarchy, activation wording and mailbox entry.
-- [Entrance filmstrip](entrance-filmstrip.jpg): browser-captured frames show black, a center light point, then the expanding photographic aperture. Final copy and actions were observed after their delayed reveals.
+- [Entrance filmstrip](entrance-filmstrip.jpg): latest browser-captured frames show black, a light point at the badge center, then the aperture expanding around the badge. Final copy and actions were observed after their delayed reveals.
 - [Desktop](desktop-final.png): 1280×900 CSS viewport, centered 480px portrait composition with deep-blue surrounding space. [Short phone](narrow-final.png): 320×568.
 - State: unauthenticated QA fixture, `voyager@gmail.com`, test variant, completed reveal. No production submission, enrollment or payment.
 
@@ -32,7 +32,7 @@
 - Gmail target remains `https://mail.google.com/mail/`, opening in a separate tab. Existing provider mapping preserved.
 - Replay entrance remounts and replays; current/control fixture retains inbox-first guidance.
 - Fresh B production wiring retains the same click event and `/voyager-initiation?briefing=1` destination. Restored pending-email visits retain control presentation; assignment logic unchanged.
-- Image load/error and timeout fallback reviewed in code: slow image skips the reveal after 1200ms; opening has a 2200ms safety timeout. Escape can skip the entrance once focus is within it. Reduced motion makes all content immediately visible via CSS. OS reduced-motion setting and forced image failure were not toggled during browser verification.
+- Image load/error and timeout fallback reviewed in code: slow image skips the reveal after 1200ms; opening has a 4400ms safety timeout. Escape can skip the entrance once focus is within it. Reduced motion makes all content immediately visible via CSS. OS reduced-motion setting and forced image failure were not toggled during browser verification.
 - Browser error log query returned no errors for the final production-built fixture.
 
 **Implementation checklist**
@@ -47,5 +47,12 @@
 **Follow-up polish**
 
 - Real-device Safari acceptance and OS reduced-motion behavior remain device-level checks; no known blocking issue.
+
+**Motion revision — badge origin and half speed**
+
+- Latest user feedback replaces the screen-center origin with the badge center and doubles all animation durations and stagger delays. Scene reveal 1200→2400ms, heading 350/650→700/1300ms duration/delay, primary 300/1050→600/2100ms, mailbox 300/1250→600/2500ms. Full reveal finishes at 3100ms after image readiness.
+- Browser measurement from observed opening to complete: 3135ms in development, 3106ms in the final production build. Captured initial dot is around (145,503) at 390×844, aligning with the badge center. Revised filmstrip shows the badge at the center of the expanding circle. Final composition is unchanged; updated same-size source/render comparison reviewed with no new actionable P0/P1/P2 findings.
+- Source-space badge center is (316,1100) in the 852×1846 image. Container-relative coordinates account for the same center/top cover crop as the photo, keeping the origin aligned on wider/shorter layouts; percentage fallback remains for older browsers.
+- Safety timeout increased alongside the animation, avoiding premature completion. Slow-image fail-open timing and reduced-motion behavior remain immediate/unchanged.
 
 final result: passed

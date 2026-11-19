@@ -11,7 +11,23 @@
 .scene {
   position: absolute;
   inset: 0;
+  container-type: size;
+}
+
+.reveal {
+  position: absolute;
+  inset: 0;
   background: var(--color-deep);
+  --badge-x: 37.1%;
+  --badge-y: 59.6%;
+}
+
+@supports (width: 1cqw) {
+  .reveal {
+    /* Badge center (316,1100) in the 852×1846 image, cover-fit and center/top crop. */
+    --badge-x: calc(50cqw - max(12.91cqw, 5.96cqh));
+    --badge-y: max(129.11cqw, 59.59cqh);
+  }
 }
 
 .scene img { object-fit: cover; object-position: center top; }
@@ -45,17 +61,17 @@
 .emailHint { max-width: 110px; font-size: var(--fs-caption); line-height: 1.4; }
 
 /* Functional scene reveal, requested by the user; no decorative glow or sound. */
-.invitation[data-phase='loading'] .scene { clip-path: circle(0 at 50% 52%); }
+.invitation[data-phase='loading'] .reveal { clip-path: circle(0 at var(--badge-x) var(--badge-y)); }
 .invitation[data-phase='loading'] :is(.copy, .primary, .emailRow) { visibility: hidden; }
-.invitation[data-phase='opening'] .scene { animation: reveal 1200ms cubic-bezier(.22,.7,.22,1) both; }
-.invitation[data-phase='opening'] .copy { animation: appear 350ms 650ms both; }
-.invitation[data-phase='opening'] .primary { animation: appear 300ms 1050ms both; }
-.invitation[data-phase='opening'] .emailRow { animation: appear 300ms 1250ms both; }
+.invitation[data-phase='opening'] .reveal { animation: reveal 2400ms cubic-bezier(.22,.7,.22,1) both; }
+.invitation[data-phase='opening'] .copy { animation: appear 700ms 1300ms both; }
+.invitation[data-phase='opening'] .primary { animation: appear 600ms 2100ms both; }
+.invitation[data-phase='opening'] .emailRow { animation: appear 600ms 2500ms both; }
 
 @keyframes reveal {
-  0%, 12% { clip-path: circle(0 at 50% 52%); }
-  20% { clip-path: circle(2px at 50% 52%); }
-  100% { clip-path: circle(150vmax at 50% 52%); }
+  0%, 12% { clip-path: circle(0 at var(--badge-x) var(--badge-y)); }
+  20% { clip-path: circle(2px at var(--badge-x) var(--badge-y)); }
+  100% { clip-path: circle(150vmax at var(--badge-x) var(--badge-y)); }
 }
 @keyframes appear {
   0% { opacity: 0; transform: translateY(8px); visibility: hidden; }
@@ -74,6 +90,6 @@
   .layout { padding-inline: 20px; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .invitation[data-phase] .scene { animation: none; clip-path: none; }
+  .invitation[data-phase] .reveal { animation: none; clip-path: none; }
   .invitation[data-phase] :is(.copy, .primary, .emailRow) { animation: none; visibility: visible; opacity: 1; transform: none; }
 }

@@ -2,7 +2,7 @@
 
 ## Onboarding invitation preview · 2026-11-20
 
-Latest scoped report: [Invitation reveal QA](docs/design/onboarding-invitation-20261120/design-qa.md). Approved photo composition compared with the 390×844 browser render; black-to-point reveal, staggered controls, inbox editing, Briefing navigation, 320×568 and 1280×900 checked. Short-screen wrapping/contrast findings fixed and recaptured. Local production-built preview only; existing live experiment and schedule unchanged.
+Latest scoped report: [Invitation reveal QA](docs/design/onboarding-invitation-20261120/design-qa.md). Approved photo composition compared with the 390×844 browser render; badge-centered black-to-point reveal, staggered controls, inbox editing, Briefing navigation, 320×568 and 1280×900 checked. Latest revision doubles the original motion durations/delays to 3.1 seconds, verified at 3106ms in the production-built browser preview. Short-screen wrapping/contrast findings fixed and recaptured. Local production-built preview only; existing live experiment and schedule unchanged.
 
 final result: passed
 

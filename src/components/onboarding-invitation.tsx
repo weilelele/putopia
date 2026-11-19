@@ -16,17 +16,19 @@ export function OnboardingInvitation({ email, provider, onInitiation, onStartOve
 
   useEffect(() => {
     if (phase === 'complete') return
-    const timeout = setTimeout(() => setPhase('complete'), phase === 'loading' ? 1200 : 2200)
+    const timeout = setTimeout(() => setPhase('complete'), phase === 'loading' ? 1200 : 4400)
     return () => clearTimeout(timeout)
   }, [phase])
 
   return <section className={s.invitation} data-phase={phase} aria-labelledby="invitation-title"
     onKeyDown={event => { if (event.key === 'Escape') setPhase('complete') }}>
     <div className={s.scene} aria-hidden="true">
-      <Image src="/assets/onboarding/invitation-scene-20261120.png" alt="" fill preload
-        sizes="(min-width: 640px) 480px, 100vw"
-        onLoad={() => setPhase(current => current === 'loading' ? 'opening' : current)}
-        onError={() => setPhase('complete')} />
+      <div className={s.reveal}>
+        <Image src="/assets/onboarding/invitation-scene-20261120.png" alt="" fill preload
+          sizes="(min-width: 640px) 480px, 100vw"
+          onLoad={() => setPhase(current => current === 'loading' ? 'opening' : current)}
+          onError={() => setPhase('complete')} />
+      </div>
     </div>
     <div className={s.layout}>
       <header className={s.copy}>
