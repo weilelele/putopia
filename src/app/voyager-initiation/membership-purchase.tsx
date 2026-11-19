@@ -25,10 +25,11 @@ export function MembershipPurchase({ preview, renderOfferImages, initialTarget, 
   const controlId = useId()
   const { ownership } = preview
   const offers = membershipOffers(ownership)
-  const [localTarget, setTarget] = useState(offers.find(offer => offer.target === initialTarget)?.target ?? offers[0].target)
+  const defaultOffer = offers.find(offer => offer.target === initialTarget) ?? offers.find(offer => offer.target === 'initial') ?? offers[0]
+  const [localTarget, setTarget] = useState(defaultOffer.target)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const target = onSelect ? initialTarget : localTarget
-  const selected = offers.find(offer => offer.target === target) ?? offers[0]
+  const selected = offers.find(offer => offer.target === target) ?? defaultOffer
   const digital = selected.target === 'membership'
 
   return <div className={styles.join} data-membership-purchase>
@@ -53,7 +54,7 @@ export function MembershipPurchase({ preview, renderOfferImages, initialTarget, 
               <strong ref={chosen ? priceRef : undefined} id={`${controlId}-membership-price-${offer.target}`}>{dollars(offer.amount)}</strong>
             </span>
             {showDetail && <span className={styles.bundleDetail} id={`${controlId}-membership-detail-${offer.target}`}>
-              {offer.target === 'membership' ? 'No physical packs'
+              {offer.target === 'membership' ? 'Your place in the Collective'
                 : offer.target === 'initial' ? 'Packs 1–2'
                   : ownership === 'initial' ? 'Console + Pack 4' : 'Packs 1–4 · Console included'}
             </span>}

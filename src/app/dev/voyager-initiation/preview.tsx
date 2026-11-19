@@ -78,7 +78,7 @@ export function InitiationPreview({ name, deviceSource, paymentPlacement, briefi
       </nav>}
     </aside>
     <InitiationView key={membershipPreview?.ownership}
-      membershipEnabled={exerciseCheckout} initialBundle={membershipPreview?.ownership === 'membership' ? 'initial' : membershipPreview?.ownership === 'initial' ? 'standard' : 'membership'} membershipPreview={exerciseCheckout ? undefined : membershipPreview} snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS}
+      membershipEnabled={exerciseCheckout} initialBundle={membershipPreview?.ownership === 'initial' ? 'standard' : 'initial'} membershipPreview={exerciseCheckout ? undefined : membershipPreview} snapshot={snapshot} members={PREVIEW_MEMBERS} regions={PREVIEW_REGIONS}
       briefingParam={briefingParam} paymentPlacement={paymentPlacement} deviceSource={deviceSource}
       quizServices={services} signInServices={PREVIEW_SIGN_IN} startEmailCheckout={PREVIEW_EMAIL_CHECKOUT}
       analyticsEnvironment="fixture"
