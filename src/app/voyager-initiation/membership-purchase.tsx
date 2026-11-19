@@ -25,10 +25,11 @@ export function MembershipPurchase({ preview, renderOfferImages, initialTarget, 
   const controlId = useId()
   const { ownership } = preview
   const offers = membershipOffers(ownership)
-  const [localTarget, setTarget] = useState(offers.find(offer => offer.target === initialTarget)?.target ?? offers[0].target)
+  const defaultOffer = offers.find(offer => offer.target === initialTarget) ?? offers.find(offer => offer.target === 'initial') ?? offers[0]
+  const [localTarget, setTarget] = useState(defaultOffer.target)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const target = onSelect ? initialTarget : localTarget
-  const selected = offers.find(offer => offer.target === target) ?? offers[0]
+  const selected = offers.find(offer => offer.target === target) ?? defaultOffer
   const digital = selected.target === 'membership'
 
   return <div className={styles.join} data-membership-purchase>
