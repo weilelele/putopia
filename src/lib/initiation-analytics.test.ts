@@ -40,6 +40,14 @@ describe('Initiation price exposure', () => {
   })
 })
 describe('Initiation analytics facts', () => {
+  it('preserves experiment assignment and device attribution on client and paid server events', () => {
+    const id = '82000000-0000-4000-8000-000000000001'
+    expect(initiationAnalyticsProperties('initial', { onboarding_success_variant: 'test', onboarding_success_device_id: id }))
+      .toMatchObject({ onboarding_success_variant: 'test', '$feature/onboarding-initiation-success-v1': 'test', $device_id: id })
+    expect(sanitizeInitiationAnalytics({ onboarding_success_variant: 'other', onboarding_success_device_id: 'private@example.com' }))
+      .toEqual({})
+    expect(initiationAnalyticsProperties('initial')).not.toHaveProperty('$feature/onboarding-initiation-success-v1')
+  })
   it('keeps only opaque browser identifiers for checkout correlation', () => {
     const id = '82000000-0000-4000-8000-000000000001'
     expect(sanitizeInitiationAnalytics({ posthog_distinct_id: id, posthog_session_id: id }))

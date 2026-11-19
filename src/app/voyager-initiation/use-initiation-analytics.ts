@@ -7,6 +7,7 @@ import { getRouteScrollContainer } from '@/lib/route-scroll-container'
 import { createPriceExposureGate, initiationAnalyticsProperties, sanitizeInitiationAnalytics, visiblePriceRatio, type InitiationAnalyticsContext } from '@/lib/initiation-analytics'
 import { captureInitiationAdAttribution } from '@/lib/initiation-attribution-client'
 import type { InitiationOrderKind } from '@/lib/initiation-types'
+import { getOnboardingSuccessAnalytics } from '@/lib/onboarding-success-experiment-client'
 
 export function useInitiationAnalytics({ kind, userId, internal, environment, eligible, modalOpen, amount }: {
   kind: InitiationOrderKind; userId: string | null; internal: boolean; environment: string; eligible: boolean; modalOpen: boolean; amount?: number
@@ -25,6 +26,7 @@ export function useInitiationAnalytics({ kind, userId, internal, environment, el
     }
     // A guest may pay before activation. Preserve the browser identity on the server event.
     return sanitizeInitiationAnalytics({ ...context.current,
+      ...getOnboardingSuccessAnalytics(),
       posthog_distinct_id: posthog.get_distinct_id(), posthog_session_id: posthog.get_session_id(),
       disabled: posthog.has_opted_out_capturing(),
     })

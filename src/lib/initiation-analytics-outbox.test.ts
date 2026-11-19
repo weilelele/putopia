@@ -32,6 +32,15 @@ describe('durable PostHog Initiation outcomes', () => {
       properties: expect.objectContaining({ order_kind: kind, payable_amount: amount / 100, payment_status: 'paid' }),
     }))
   })
+  it('preserves the onboarding experiment on a verified paid purchase', async () => {
+    const deps = setup({ loadOrder: async () => ({ ...shopifyOrder, analytics_context: {
+      ...shopifyOrder.analytics_context, onboarding_success_variant: 'test', onboarding_success_device_id: browserId,
+    } }) })
+    expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })
+    expect(deps.send).toHaveBeenCalledWith(expect.objectContaining({ distinct_id: browserId,
+      properties: expect.objectContaining({ payment_status: 'paid', onboarding_success_variant: 'test',
+        '$feature/onboarding-initiation-success-v1': 'test', $device_id: browserId }) }))
+  })
   it('joins a verified Shopify capture to the guest browser and original visit without contacting Stripe', async () => {
     const deps = setup({ loadOrder: async () => shopifyOrder })
     expect(await retryInitiationAnalytics(deps)).toMatchObject({ sent: 1 })

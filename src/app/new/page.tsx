@@ -8,5 +8,5 @@ export const dynamic = 'force-dynamic'
 
 export default async function NewPage() {
   const variants = await getOnboardingVariants()
-  return <OnboardingClient variants={variants} />
+  return <OnboardingClient variants={variants} analyticsEnvironment={process.env.VERCEL_ENV ?? 'unknown'} />
 }

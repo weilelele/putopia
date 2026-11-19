@@ -1,0 +1,73 @@
+.preview {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow-y: auto;
+  background: var(--color-deep);
+  color: var(--color-star);
+  font-family: var(--font-mono);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--bd-faint);
+  color: var(--color-star-dim);
+  font-size: var(--fs-caption);
+}
+
+.toolbar nav {
+  display: flex;
+  gap: var(--s-4);
+}
+
+.toolbar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.toolbar a[aria-current='page'] {
+  color: var(--color-nucleus-2);
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+
+.stage {
+  display: flex;
+  justify-content: center;
+  padding: var(--s-5) var(--s-5) calc(var(--s-6) + env(safe-area-inset-bottom));
+}
+
+.shell,
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.shell {
+  width: 100%;
+  max-width: 432px;
+}
+
+.shell video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+  object-fit: cover;
+}
+
+.form input {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .stage {
+    padding-top: var(--s-7);
+  }
+}
