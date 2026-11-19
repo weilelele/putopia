@@ -1,0 +1,79 @@
+.invitation {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 100svh;
+  background: #000;
+  color: var(--color-star);
+  font-family: var(--font-mono);
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  background: var(--color-deep);
+}
+
+.scene img { object-fit: cover; object-position: center top; }
+
+.layout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  padding: max(36px, env(safe-area-inset-top)) 20px max(48px, env(safe-area-inset-bottom));
+}
+
+.label { margin: 0; font-size: var(--fs-caption); font-weight: 700; }
+.copy h2 {
+  margin: 34px 0 16px;
+  font-size: clamp(28px, 8.2vw, 32px);
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--color-nucleus);
+}
+.description { margin: 0; font-size: var(--fs-body); line-height: 1.35; }
+.actions { margin-top: auto; padding-top: 300px; }
+.primary button { min-height: 52px; }
+.emailRow { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+.emailInfo { flex: 1; min-width: 0; }
+.emailInfo p { margin: 0; font-size: var(--fs-caption); line-height: 1.4; }
+.address { display: flex; align-items: center; flex-wrap: wrap; column-gap: 4px; }
+.address strong { font-size: var(--fs-caption); overflow-wrap: anywhere; max-width: 100%; }
+.address button { padding-inline: 4px; }
+.mailbox { flex-shrink: 0; padding: 8px 12px; }
+.emailHint { max-width: 110px; font-size: var(--fs-caption); line-height: 1.4; }
+
+/* Functional scene reveal, requested by the user; no decorative glow or sound. */
+.invitation[data-phase='loading'] .scene { clip-path: circle(0 at 50% 52%); }
+.invitation[data-phase='loading'] :is(.copy, .primary, .emailRow) { visibility: hidden; }
+.invitation[data-phase='opening'] .scene { animation: reveal 1200ms cubic-bezier(.22,.7,.22,1) both; }
+.invitation[data-phase='opening'] .copy { animation: appear 350ms 650ms both; }
+.invitation[data-phase='opening'] .primary { animation: appear 300ms 1050ms both; }
+.invitation[data-phase='opening'] .emailRow { animation: appear 300ms 1250ms both; }
+
+@keyframes reveal {
+  0%, 12% { clip-path: circle(0 at 50% 52%); }
+  20% { clip-path: circle(2px at 50% 52%); }
+  100% { clip-path: circle(150vmax at 50% 52%); }
+}
+@keyframes appear {
+  0% { opacity: 0; transform: translateY(8px); visibility: hidden; }
+  1% { visibility: visible; }
+  100% { opacity: 1; transform: translateY(0); visibility: visible; }
+}
+
+@media (min-width: 640px) {
+  .invitation { max-width: 480px; margin-inline: auto; }
+  .layout { padding-inline: 24px; }
+  .copy h2 { font-size: 36px; }
+}
+@media (max-height: 700px) {
+  .copy { background: var(--color-deep); margin: calc(-1 * max(36px, env(safe-area-inset-top))) -20px 0; padding: max(36px, env(safe-area-inset-top)) 20px 20px; }
+  .actions { background: var(--color-deep); margin-inline: -20px; padding: 16px 20px 0; }
+  .layout { padding-inline: 20px; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .invitation[data-phase] .scene { animation: none; clip-path: none; }
+  .invitation[data-phase] :is(.copy, .primary, .emailRow) { animation: none; visibility: visible; opacity: 1; transform: none; }
+}

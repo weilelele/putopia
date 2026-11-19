@@ -22,8 +22,12 @@
 
 .toolbar nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--s-4);
 }
+
+.invitationStage { width: 100%; }
+.invitationShell { width: 100%; }
 
 .toolbar a {
   display: inline-flex;

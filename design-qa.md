@@ -1,5 +1,11 @@
 # Device scene QA — 2026-09-18
 
+## Onboarding invitation preview · 2026-11-20
+
+Latest scoped report: [Invitation reveal QA](docs/design/onboarding-invitation-20261120/design-qa.md). Approved photo composition compared with the 390×844 browser render; black-to-point reveal, staggered controls, inbox editing, Briefing navigation, 320×568 and 1280×900 checked. Short-screen wrapping/contrast findings fixed and recaptured. Local production-built preview only; existing live experiment and schedule unchanged.
+
+final result: passed
+
 ## Activation welcome release · 2026-10-27
 
 Latest scoped report: [Activation welcome QA](docs/design/activation-welcome-20261027/design-qa.md). Source and implementation compared at 390×844, with 320px and desktop checks. Default completed registration opens the verified welcome; explicit task return paths remain intact. Image/main action opens `/voyager-initiation?briefing=1`. No production data was mutated during verification.

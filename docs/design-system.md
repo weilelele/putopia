@@ -389,3 +389,7 @@ Feed 分享入口修订（用户确认）：右下浮动入口使用「＋ Share
 用户确认的局部影像动效例外：`/register/complete` 使用四块现有／扩景 Pack 照片，单一柔边聚光灯在照片内移动并平滑改变半径。Console 停留 4 秒，其他图各 1.82 秒，转场 1.1 秒；不增加 Pause 控件、背景音乐或 UI 光晕。离屏／隐藏页暂停，减少动态时显示静态照片。左下欢迎 Pack 边界最终为 60.45%，右侧保留压缩后的斜切；不留缩图黑条。原始设备与品牌资产不被覆盖。
 
 这是独立注册完成页，不显示全局导航；照片和 EXPLORE INITIATION 都进入现有 `/voyager-initiation?briefing=1` onboarding 简报，BACK TO DASHBOARD 到 `/console`。使用共享按钮、Courier Prime 和现有字号／配色。完整合同、素材来源和验收见 [激活完成引导](design/activation-welcome-20261027/README.md)。
+
+### 留资完成 B 组邀请函 · 2026-11-20
+
+用户确认的局部入场动效：仅 B 组本次成功留资后使用邀请函照片；先黑屏，再从画面中心附近的一个亮点向外揭开照片，随后出现标题、START INITIATION 和紧凑邮箱入口。单次约 1.55 秒，静音，不增加光晕或装饰 HUD。减少动态时直接显示完整页面；图片失败或加载超时也须显示可用操作。标题为 “Your initiation starts here.”，邮箱说明保留 “Activation email sent to”。短屏以实色深蓝承载文案和操作以确保可读；移动竖屏为主要验收对象。返回访问继续使用原邮箱引导；分组、指标和购买路径不变。实现与验收见 [邀请函 QA](design/onboarding-invitation-20261120/design-qa.md)。

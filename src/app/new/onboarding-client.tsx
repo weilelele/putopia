@@ -215,7 +215,7 @@ function OnboardingInner({ variants, analyticsEnvironment }: { variants: Onboard
     setPendingEmail(normalizedEmail)
   }
 
-  /* ── Returning user: already submitted email, hasn't completed /register ── */
+  /* Fresh success may show B; restored pending-email visits always show control. */
   if (pendingEmail) {
     return (
       <div className="onboarding-archive" style={{
@@ -223,10 +223,10 @@ function OnboardingInner({ variants, analyticsEnvironment }: { variants: Onboard
         background: 'var(--color-deep-2)',
         overflowY: 'auto',
         display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
+        alignItems: 'center', justifyContent: successVariant === 'test' ? 'flex-start' : 'center',
       }}>
-        <div className="onboarding-shell" style={{ width: '100%', maxWidth: 480, padding: '0 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-          <VideoSection key={v.videoCta} src={v.videoCta} />
+        <div className="onboarding-shell" style={{ width: '100%', maxWidth: successVariant === 'test' ? undefined : 480, padding: successVariant === 'test' ? 0 : '0 1.5rem', flexShrink: successVariant === 'test' ? 0 : undefined, display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          {successVariant !== 'test' && <VideoSection key={v.videoCta} src={v.videoCta} />}
           <OnboardingSuccessScreen
             email={pendingEmail}
             variant={successVariant ?? 'control'}

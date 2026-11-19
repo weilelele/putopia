@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { ArchiveButton } from './archive-button'
+import { OnboardingInvitation } from './onboarding-invitation'
 import type { OnboardingSuccessVariant } from '@/lib/onboarding-success-experiment'
 
 /* ─── Email Providers ────────────────────────────── */
@@ -59,7 +60,9 @@ export function OnboardingSuccessScreen({
     transition: 'opacity 0.5s ease, transform 0.5s ease',
   }
 
-  // Control preserves the inbox-first layout; test makes Initiation the next step.
+  if (test) return <OnboardingInvitation email={email} provider={provider} onInitiation={onInitiation} onStartOver={onStartOver} />
+
+  // Preserve the inbox-first control, including return visits from either group.
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', gap: 'var(--s-5)',
@@ -79,17 +82,15 @@ export function OnboardingSuccessScreen({
           fontSize: 'var(--fs-h3)', lineHeight: 1.2,
           color: 'var(--color-star)', margin: 0,
         }}>
-          {test ? 'Your initiation starts here.' : 'Check your inbox.'}
+          Check your inbox.
         </h2>
         <p style={{
           fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)',
           color: 'var(--color-star-dim)', lineHeight: 1.5, margin: 0,
         }}>
-          {test ? 'Discover the Collective, your Voyager packs, and how to join.' : 'Open the email from Multiverse Collective to activate your access.'}
+          Open the email from Multiverse Collective to activate your access.
         </p>
       </div>
-
-      {test && <ArchiveButton onClick={onInitiation} fullWidth>START INITIATION</ArchiveButton>}
 
       {/* Where it went — the correction lives next to the address it corrects */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-2)' }}>
@@ -104,7 +105,7 @@ export function OnboardingSuccessScreen({
               fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
               color: 'var(--color-star-dim)',
             }}>
-              {test ? 'Activation email sent to' : 'Sent to'}
+              Sent to
             </span>
             <span style={{
               fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', fontWeight: 700,
@@ -123,12 +124,12 @@ export function OnboardingSuccessScreen({
             Change
           </ArchiveButton>
         </div>
-        {!test && <p style={{
+        <p style={{
           fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)',
           color: 'var(--color-star-dim)', lineHeight: 1.4, margin: 0,
         }}>
           Not there in a minute? Check spam or promotions.
-        </p>}
+        </p>
       </div>
 
       {/* Actions */}
@@ -138,19 +139,19 @@ export function OnboardingSuccessScreen({
             href={provider.url}
             target="_blank"
             rel="noopener noreferrer"
-            className={`archive-button archive-button--${test ? 'secondary' : 'primary'} archive-button--full`}
+            className="archive-button archive-button--primary archive-button--full"
           >
-            Open {provider.name} {!test && <span aria-hidden>↗</span>}
+            Open {provider.name} <span aria-hidden>↗</span>
           </a>
         )}
 
-        {!test && <ArchiveButton
+        <ArchiveButton
           onClick={onEnter}
           variant="secondary"
           fullWidth
         >
           Explore before activating <span aria-hidden>→</span>
-        </ArchiveButton>}
+        </ArchiveButton>
       </div>
 
     </div>
