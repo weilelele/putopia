@@ -2,6 +2,12 @@ import { initiationPriceLabel } from '@/lib/initiation-pricing'
 import { ArchiveCard } from '@/components/archive-card'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import { ArchivePageHeader } from '@/components/archive-page-header'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Initial Voyager Pack · Multiverse Collective',
+  description: `The Initial Voyager Pack (${initiationPriceLabel('initial')}) includes Voyager member access, a welcome letter, badge and Antenna for the Multiverse Console, the retro sci-fi device at the heart of Multiverse Collective. The Console is not included.`,
+}
 export default function VoyagerPackPage() {
   return <main className="main join-success-page"><div className="join-success-shell"><ArchiveCard>
     <ArchivePageHeader title="INITIAL VOYAGER PACK" accent={initiationPriceLabel('initial')} />
