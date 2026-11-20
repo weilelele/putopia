@@ -74,7 +74,7 @@
 
 - 首段：Multiverse Console 是 Multiverse Collective 的实体设备，外形像复古收音机/电视；两只旋钮 + 一个能量按钮；包含在 $488 Complete Voyager Pack 里（Pack 3，计划 2026-12 发出），Initial 用户可加 $460。不单独出售。
 - 节：How it works（Frequency / Band / Remarks Band / Quantum Energy Button / 语音）、What you see（附近频率模糊画面、无信号雪花；能量可能让画面更清晰或影响世界，但不保证）、What is still being defined（3 秒、10 点为当前设定可调整；部分能力随 Voyager 探索解锁）、How to get one。
-- 图片：`/assets/device-console.jpg`（受保护原图，标注为 rendering）。
+- 图片：`/assets/voyager-initiation/console-multiview-portrait.png`（`/voyager-initiation` Pack 3 当前使用的现款 Console 图）。不用 `device-console.jpg` 做正文配图：它标注的是旧称 "Channel Control Dial" 等，与 Frequency / Band 术语冲突；它仍是 PR #337 的站点默认分享图。
 - 不写：尺寸、重量、供电、联网方式、屏幕规格（待确认）。
 
 ### 3. `/about/sci-fi-gifts` — A gift for sci-fi fans

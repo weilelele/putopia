@@ -56,12 +56,13 @@ const savings = `$${(INITIATION_PRICES.initial.amount + INITIATION_PRICES.legacy
 const DISPATCHES = INITIATION_FAQ_GROUPS[2].items[0].dispatches
 const month = (pack: number) => DISPATCHES[pack - 1].month
 
+/** The current Console model, as shown for Pack 3 on /voyager-initiation. */
 const CONSOLE_IMAGE: GeoImage = {
-  src: '/assets/device-console.jpg',
-  alt: 'Rendering of the Multiverse Console, a retro sci-fi device with tuning dials',
-  width: 1280,
-  height: 1023,
-  caption: 'Multiverse Console rendering.',
+  src: '/assets/voyager-initiation/console-multiview-portrait.png',
+  alt: 'Multiverse Console in the Kyoto workshop: front, rear, side display and control dial views',
+  width: 1122,
+  height: 1402,
+  caption: 'The Multiverse Console: front, rear, display and dial views.',
 }
 
 const SHIPPING = 'Physical Packs ship to the 48 contiguous US states and Washington, DC. Shipping and taxes are included.'
