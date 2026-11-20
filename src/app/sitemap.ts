@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { getPublicIntel } from '@/lib/actions/intel'
 import { getAllWorlds } from '@/lib/actions/worlds'
 import { SITE_URL } from '@/lib/site-seo'
+import { GEO_PATHS } from '@/lib/geo-pages'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +14,7 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: Metadata
   { path: '/devices', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/voyagers', priority: 0.6, changeFrequency: 'daily' },
   { path: '/worlds/live', priority: 0.6, changeFrequency: 'daily' },
+  ...GEO_PATHS.map((path) => ({ path, priority: path === '/about' ? 0.9 : 0.7, changeFrequency: 'monthly' as const })),
   { path: '/voyager-pack', priority: 0.5, changeFrequency: 'monthly' },
   { path: '/terms/initiation', priority: 0.2, changeFrequency: 'monthly' },
   { path: '/privacy', priority: 0.2, changeFrequency: 'yearly' },
