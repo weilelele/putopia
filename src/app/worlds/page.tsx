@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Suspense, cache } from 'react'
 import { getAllWorlds, getDiscovererAvatars } from '@/lib/actions/worlds'
 import { SectionTracker } from '@/components/section-tracker'
@@ -11,6 +12,10 @@ import { RootBrandHeader } from '@/components/root-brand-header'
 import WorldsLivePage from './live/page'
 
 export const dynamic = 'force-dynamic'
+export const metadata: Metadata = {
+  title: 'World Records · Multiverse Collective',
+  description: 'The archive of parallel worlds discovered by Voyagers in Multiverse Collective, a hardware-based sci-fi game. Follow each world from first signal to confirmed record.',
+}
 
 // Per-request memoised loaders, so sections that share a query don't re-run it
 // (React.cache dedupes within a single render). Each section awaits only what it

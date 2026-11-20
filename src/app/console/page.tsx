@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getDashboardIdentity, getDashboardOverview, getDashboardUpdates, getDashboardEvents } from '@/lib/actions/dashboard'
 import { getArchivedMissionPreview, getPublicMissionEdition } from '@/lib/mission-board'
 import { getMyDigitalAccessRole } from '@/lib/actions/digital-access'
@@ -6,6 +7,10 @@ import { MissionBoard } from '@/components/mission-board'
 import ConsoleClient from './console-client'
 
 export const dynamic = 'force-dynamic'
+export const metadata: Metadata = {
+  title: 'Console · Multiverse Collective',
+  description: 'Mission briefings, live signals and Collective updates for Voyagers in Multiverse Collective, a hardware-based sci-fi game about looking into parallel worlds.',
+}
 
 export default async function ConsolePage({ searchParams }: {
   searchParams: Promise<{ mission?: string | string[] }>
