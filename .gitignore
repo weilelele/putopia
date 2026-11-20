@@ -57,3 +57,6 @@ AuthKey_*.p8
 # Local working output and separately versioned demo sites
 /output/
 /sites/
+
+# GEO prompt-set runs (raw model answers; reviewed CSVs go to docs/marketing/geo/scorecards/)
+/geo-runs/

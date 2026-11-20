@@ -2,6 +2,7 @@ import posthog from 'posthog-js'
 import { captureFirstTouch, getFirstTouch } from '@/lib/utm'
 import { captureInitiationAdAttribution } from '@/lib/initiation-attribution-client'
 import { minimizeRegistrationErrorEvent } from '@/lib/registration-errors'
+import { aiReferralProperties, classifyAiReferral } from '@/lib/ai-referrer'
 
 if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
   posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
@@ -10,6 +11,16 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
     capture_pageleave: true,
     capture_exceptions: true,
     before_send: minimizeRegistrationErrorEvent,
+    // `loaded` runs before the initial $pageview is sent, so the AI-referral
+    // super properties land on the landing pageview and every later event.
+    loaded: (ph) => {
+      const aiReferral = classifyAiReferral(document.referrer, window.location.search)
+      if (aiReferral) {
+        const props = aiReferralProperties(aiReferral)
+        ph.register_for_session(props.session)
+        ph.register_once(props.firstTouch)
+      }
+    },
   })
 
   captureFirstTouch()

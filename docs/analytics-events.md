@@ -88,6 +88,21 @@ strip's behaviour can be segmented by user type.
 | `$pageview` | [`instrumentation-client.ts`](../src/instrumentation-client.ts) | Fired on every route change |
 | `section_viewed` | [`section-tracker.tsx`](../src/components/section-tracker.tsx) | `section` — section impression |
 
+### AI-assistant referral (super properties)
+
+Registered in `instrumentation-client.ts` before the landing `$pageview`, from
+[`lib/ai-referrer.ts`](../src/lib/ai-referrer.ts) (`utm_source` first, then
+`document.referrer`). Absent on visits that did not come from an AI assistant.
+Google AI Overviews / AI Mode look like ordinary `google.com` and are not tagged.
+How to read them: [`marketing/geo/07-measurement.zh.md`](marketing/geo/07-measurement.zh.md) §7.
+
+| Property | Scope | Values |
+|----------|-------|--------|
+| `ai_referrer` | Session (`register_for_session`) — every client event in that browser session | `chatgpt`, `perplexity`, `gemini`, `copilot`, `claude`, `grok`, `deepseek`, `meta_ai`, `mistral`, `you`, `phind`, `poe` |
+| `ai_referrer_match` | Session | Matched host, Android package or `utm_source` value |
+| `ai_referrer_signal` | Session | `utm_source` \| `referrer` |
+| `first_touch_ai_referrer` | Persistent (`register_once`) | First AI engine that referred this browser |
+
 ## Android PWA
 
 | Event | Trigger | Properties |
