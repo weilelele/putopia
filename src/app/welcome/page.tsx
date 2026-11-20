@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { FlipWordmark } from '@/components/flip-wordmark'
+import { welcomeFactLine } from '@/lib/geo-welcome'
 /** A launch surface, not a route guard: deep links retain their destination. */
 export default function WelcomePage() {
   const router = useRouter()
@@ -20,6 +21,7 @@ export default function WelcomePage() {
     <div className="startup-wordmark"><FlipWordmark maxWidth={520} fill={0.82} playbackRate={2} replayable={false} onPlaybackComplete={animationFinished} /></div>
     <Image className="startup-symbol" src="/assets/vi-icon.png" alt="" width={881} height={492} sizes="140px" priority />
     <p className="startup-tagline">We own devices looking into parallel worlds.</p>
+    <p className="startup-fact">{welcomeFactLine()}</p>
     <p className="startup-hint">Tap anywhere to enter</p>
   </main>
 }
