@@ -10,6 +10,7 @@ import { ScrollRestorer } from '@/components/scroll-restorer'
 import { PwaProvider } from '@/components/pwa-provider'
 import { AdPixels } from '@/components/ad-pixels'
 import { SiteCalibrationReminder } from '@/components/site-calibration-reminder'
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_SHARE_DESCRIPTION, SITE_URL, organizationJsonLd, serializeJsonLd } from '@/lib/site-seo'
 
 const courierPrime = localFont({
   src: [
@@ -31,9 +32,19 @@ const courierPrime = localFont({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'MULTIVERSE COLLECTIVE — Explore Parallel Worlds',
-  description: 'Classified internal workspace. Authorized personnel only.',
+  description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
   applicationName: 'Multiverse Collective',
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    title: 'Multiverse Collective — Explore Parallel Worlds',
+    description: SITE_SHARE_DESCRIPTION,
+    images: [{ url: '/assets/device-console.jpg', width: 1280, height: 1023, alt: 'Rendering of the Multiverse Console, a retro sci-fi device with tuning dials' }],
+  },
+  twitter: { card: 'summary_large_image' },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -55,6 +66,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${courierPrime.variable} h-full`}>
       <body className="starfield flex h-full">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationJsonLd()) }} />
         <AdPixels />
         <PwaProvider>
           <AuthProvider>
