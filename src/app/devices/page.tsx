@@ -4,6 +4,8 @@ import consoleStyles from '@/components/mc-console-panel.module.css'
 import type { Metadata } from 'next'
 import { DeviceRooms } from './_components/device-rooms'
 import { listPublicDeviceBatches } from '@/lib/device-batch-repository'
+import { serializeJsonLd } from '@/lib/site-seo'
+import { devicesPageVideosJsonLd } from '@/lib/video-seo'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,8 +17,11 @@ export const metadata: Metadata = {
 export default async function DevicesPage() {
   const batches = await listPublicDeviceBatches()
   const batch = batches[0]
+  // Without a batch the panel shows its slideshow instead of the hero reel.
+  const videos = <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(devicesPageVideosJsonLd({ heroVideo: !!batch })) }} />
   if (!batch) return (
     <main className="main">
+      {videos}
       <h1 className="sr-only">Devices</h1>
       <RootBrandHeader />
       <McConsolePanel />
@@ -24,5 +29,8 @@ export default async function DevicesPage() {
       <p className="mt-4">No device batches have been published yet. Check back for recovery updates.</p>
     </main>
   )
-  return <DeviceRooms batches={batches} initialSlug={batch.slug} />
+  return <>
+    {videos}
+    <DeviceRooms batches={batches} initialSlug={batch.slug} />
+  </>
 }
