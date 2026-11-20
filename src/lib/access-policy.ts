@@ -20,6 +20,8 @@ export function allowsUnregisteredViewer(pathname: string): boolean {
     || /^\/intel\/[^/]+$/.test(path)
     || (/^\/worlds\/[^/]+$/.test(path) && path !== '/worlds/submit')
     || /^\/devices\/batches\/[^/]+(?:\/discussion)?$/.test(path)
+    // Plain-language explainers for buyers and answer engines.
+    || /^\/about(?:\/[^/]+)?$/.test(path)
 }
 
 export function requiresRegistration(pathname: string): boolean {
