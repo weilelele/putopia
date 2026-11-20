@@ -6,11 +6,12 @@ import { ArrowRight } from 'lucide-react'
 import { ArchiveButton } from './archive-button'
 import { ArchiveSheet } from './archive-sheet'
 import { CONSOLE_HERO } from '@/lib/console-hero'
+import { CONSOLE_GUIDE_FILM } from '@/lib/console-guide-film'
 import SmartImage from './smart-image'
 import styles from './mc-console-panel.module.css'
 
-/** Reel 01 without its Collective introduction, cut from ~/Sites/orientation-reel (composition ReelHowItWorks). `at` is where each control starts. */
-const GUIDE_FILM = { src: '/assets/how-it-works-20261106.mp4', poster: '/assets/how-it-works-20261106-poster.jpg' }
+/** `at` is where each control starts in the guide film. */
+const GUIDE_FILM = CONSOLE_GUIDE_FILM
 const GUIDE_STEPS = [
   { title: 'Frequency', body: 'Turn the left knob to find a world.', at: 22.8 },
   { title: 'Band', body: 'Turn the right knob to choose a view.', at: 42.2 },
