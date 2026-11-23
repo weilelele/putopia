@@ -120,5 +120,5 @@
 6. **Membership 的地区**：$12 Membership 不需要地址，是否全球可买？页面目前只写实体 Pack 的配送区域。
 7. **Antenna 的设计稿说明**（"final appearance and quantity to be confirmed"）在 Pack 2 已计划 11 月发出的今天是否仍然准确？
 8. **S26 之后**：后续批次的时间、价格是否会变、故事会持续多久？页面只写"later batches may open"。
-9. **站内入口**：是否允许在游客 Dashboard 介绍文字下、以及 `/voyager-initiation` FAQ 中各加一个 "What is Multiverse Collective?" 文字链接？目前新页面只能通过 sitemap 被发现，内部链接会显著提高被抓取和引用的概率。本 PR 未改这两处已确认的设计。
+9. ~~**站内入口**~~ 已确认（2026-11-23）：游客 Dashboard 两个入口下方、`/voyager-initiation` FAQ 末尾各加一个 "What is Multiverse Collective?" 文字链接，指向 `/about`。
 10. **隐私政策用词**：`/privacy` 把产品称为 "an alternate reality game"，与规范定义 "hardware-based sci-fi game" 不一致。是否统一？（本 PR 未改。）

@@ -457,6 +457,7 @@ export function InitiationView({ initialBundle = 'initial', snapshot, members = 
             {'paragraphs' in item && item.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
           </details>)}
         </section>)}
+        <Link className={`${styles.textLink} ${styles.faqAbout}`} href="/about">What is Multiverse Collective? <ArrowRight size={18} aria-hidden /></Link>
       </section>
     </div>
 
