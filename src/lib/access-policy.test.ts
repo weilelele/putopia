@@ -35,6 +35,14 @@ describe('primary route access policy', () => {
     expect(allowsUnregisteredViewer('/recruit/social-applications')).toBe(false)
   })
 
+  it('keeps the /about explainers public, one level deep', () => {
+    for (const path of ['/about', '/about/', '/about/multiverse-console', '/about/how-it-compares/']) {
+      expect(allowsUnregisteredViewer(path)).toBe(true)
+    }
+    expect(allowsUnregisteredViewer('/about/multiverse-console/edit')).toBe(false)
+    expect(allowsUnregisteredViewer('/aboutx')).toBe(false)
+  })
+
   it('retains the separate registration gate on supporting listings', () => {
     for (const route of ['/vote', '/logs']) expect(requiresRegistration(route)).toBe(true)
   })

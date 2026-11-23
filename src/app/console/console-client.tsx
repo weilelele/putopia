@@ -5,6 +5,7 @@ import { DashboardStats } from '@/components/dashboard-stats'
 import type { getDashboardIdentity, getDashboardOverview, getDashboardUpdates, getDashboardEvents } from '@/lib/actions/dashboard'
 import { DashboardOverview, DashboardSummary, DashboardUpdates, DashboardEvents, DashboardSectionLoading } from './dashboard-sections'
 import { ArchivePageHeader } from '@/components/archive-page-header'
+import Link from 'next/link'
 import { ArchiveLinkButton } from '@/components/archive-link-button'
 import styles from './guest-intro.module.css'
 import SmartImage from '@/components/smart-image'
@@ -29,6 +30,7 @@ export default function ConsoleClient({ initial: data, overview, updates, events
         <ArchiveLinkButton href={REQUEST_ACCESS_HREF} variant="primary">CREATE ACCOUNT</ArchiveLinkButton>
         <ArchiveLinkButton href="/login" variant="secondary">LOG IN</ArchiveLinkButton>
       </div>
+      <Link className={styles.about} href="/about">What is Multiverse Collective?</Link>
     </section>}
     {data.voyager ? <DashboardSummary voyager={data.voyager} events={events} /> : <Suspense fallback={<DashboardStats stats={null} />}><DashboardOverview initial={overview} /></Suspense>}
     {children}

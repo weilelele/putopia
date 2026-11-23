@@ -4,6 +4,8 @@
 
 > **2026-09-29 最新更正：** 游客 Dashboard 采用原始大字标 → 140px 图形 Logo → 介绍 → 两个入口的居中纵向布局，取代该页游客态的左上紧凑品牌区；原品牌图片完整等比显示。其他一级页及登录态保留紧凑品牌区。登录态欢迎语按身份区分：Voyager / Architect 显示 WELCOME, VOYAGER，Applicant 及尚未取得成员身份的账户显示 WELCOME, APPLICANT，且不显示已被选中探索的说明。本条取代下方统一 VOYAGER 的旧规则。
 
+> **2026-11-23 游客入口补充（用户已确认）：** 游客 Dashboard 在 CREATE ACCOUNT / LOG IN 两个入口下方，居中显示一个无框文字链接 “What is Multiverse Collective?”（品牌橙、`--fs-label`、下划线、命中 44px），指向 `/about` 平实说明页；`/voyager-initiation` 的 FAQ 末尾显示同名文字链接。两处只增加入口，不改变原介绍、按钮或数字看板顺序。来源：[GEO 内容页计划](marketing/geo/01-content-pages.zh.md)。
+
 > **2026-09-29 Dashboard 游客入口恢复：** 未登录用户在紧凑品牌区下、数字看板前显示原介绍 “We own devices looking into parallel worlds.”，随后并排显示 REQUEST ACCESS（主按钮，`/new`）与 LOG IN（次按钮，`/login`）。窄屏及放大字体允许自然换行。登录后保留 WELCOME, VOYAGER 与身份状态，不显示这组游客入口。原数字看板、Updates、Events 顺序不变。
 
 > **2026-09-10 最新展示规则：游客与登录态头部互斥。** 游客显示原三个数字指标，登录后统一显示 WELCOME, VOYAGER 欢迎与个人身份状态（实际身份在角色标签显示）；两块不叠加。五个一级 Tab 在移动端恢复紧凑原图形＋文字 Logo；二级及更深页面无 Logo；桌面/横屏统一侧栏保留品牌，内容区不重复。Intel 列表、新闻详情及 Updates 中的新闻条目保留作者头像（紧邻昵称）和图片。Updates 只收录 Intel、Voyager Activated、Established World、Device Update；Events 只收录开放 Vote 与 Signal Tuning。
