@@ -5,7 +5,7 @@ import { FlipWordmark } from '@/components/flip-wordmark'
 import { briefingReceiveOutcome, type BriefingReceiveOutcome } from '@/lib/initiation-briefing'
 import { useScene } from './briefing-kit'
 import { clipReady, clipSettled, prefetchClip } from './briefing-media'
-import { OPENING_FILM } from './briefing-pages'
+import { OPENING_FILM, OPENING_POSTER } from './briefing-pages'
 import s from './briefing.module.css'
 
 export type BriefingReceived = { outcome: BriefingReceiveOutcome; wait_ms: number; cached: boolean }
@@ -28,6 +28,7 @@ export function ReceivingScreen({ leaving, onReceived }: { leaving: boolean; onR
   useScene(true, scene => {
     const cached = clipReady(OPENING_FILM)
     void prefetchClip(OPENING_FILM)
+    new Image().src = OPENING_POSTER
     let done = false
     scene.loop(t => {
       if (done) return
