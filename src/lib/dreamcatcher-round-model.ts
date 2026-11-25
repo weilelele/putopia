@@ -5,12 +5,14 @@ export type RoundViewer = { id: string; role: string } | null
 export function roundVoteAccess(input: {
   status: RoundStatus; openedAt: string | null; closesAt: string | null; participantCount: number
   initiatorId: string; discovererId: string | null; voteScope: string; viewer: RoundViewer; now: number
+  /** Nothing settles while paused, so the settling fallback vote stays shut. */
+  paused?: boolean
 }): { canVote: boolean; initiatorOnly: boolean; publicOpen: boolean } {
   const active = ['voting_open', 'awaiting_initiator_feedback'].includes(input.status)
   const opened = !!input.openedAt && Date.parse(input.openedAt) <= input.now
   const deadline = input.closesAt ? Date.parse(input.closesAt) : NaN
   const publicOpen = active && opened && input.now < deadline
-  const initiatorOnly = active && opened && input.now >= deadline && input.participantCount === 0
+  const initiatorOnly = !input.paused && active && opened && input.now >= deadline && input.participantCount === 0
   const me = input.viewer
   const member = !!me && hasVoyagerAccess(me.role)
   const eligible = member && (me.role === 'architect' || input.voteScope === 'all' || input.voteScope === 'voters' ||

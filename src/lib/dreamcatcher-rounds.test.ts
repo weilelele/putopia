@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 const state = vi.hoisted(() => ({ client: null as unknown }))
 vi.mock('server-only', () => ({}))
+vi.mock('./signal/dispatch-policy', () => ({ DREAMCATCHER_ROUNDS_ENABLED: true }))
 vi.mock('@/lib/supabase/server', () => ({ createAdminClient: () => state.client }))
 import { getRoundInvestigations } from './dreamcatcher-rounds'
 

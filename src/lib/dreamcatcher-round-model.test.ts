@@ -28,4 +28,8 @@ describe('round participation',()=>{
     }
     expect(roundVoteAccess({...input,openedAt:null}).canVote).toBe(false)
   })
+  it('keeps open windows votable during a pause but shuts the settling fallback',()=>{
+    expect(roundVoteAccess({...input,paused:true}).canVote).toBe(true)
+    expect(roundVoteAccess({...input,paused:true,now:Date.parse(closesAt)+1,viewer:{id:'original',role:'voyager'},initiatorId:'original'})).toEqual({canVote:false,initiatorOnly:false,publicOpen:false})
+  })
 })

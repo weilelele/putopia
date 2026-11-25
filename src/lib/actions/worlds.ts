@@ -7,6 +7,7 @@ import { rollScanUntil } from '@/lib/signal/scan'
 import { logActivity } from './activity-events'
 import { requirePublishingArchitect, resolvePublishingIdentity } from '@/lib/publishing-identity'
 import { hasVoyagerAccess } from '@/lib/digital-access'
+import { DREAMCATCHER_ROUNDS_ENABLED } from '@/lib/signal/dispatch-policy'
 
 /** Stable / verified worlds (the main archive). Public + identical for everyone,
  *  so cached 60 s to cut DB load on the console; edits self-heal within the window. */
@@ -535,7 +536,7 @@ export async function getDreamcatcherProgress(worldId: string) {
   if (error) throw new Error('Round progress unavailable')
   if (!round) return null
   const generation = round.dreamcatcher_generation_requests
-  return { roundNumber: round.round_number as number, status: round.status as string,
+  return { paused: !DREAMCATCHER_ROUNDS_ENABLED, roundNumber: round.round_number as number, status: round.status as string,
     generationStatus: (Array.isArray(generation) ? generation[0]?.status : generation?.status) as string | undefined,
     canStop: user?.id === round.initiator_id && !['settled','cancelled'].includes(round.status) }
 }

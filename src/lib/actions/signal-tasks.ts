@@ -14,6 +14,7 @@ import { getRequestIdentity } from '@/lib/request-auth'
 import { getRoundInvestigations } from '@/lib/dreamcatcher-rounds'
 import { getMyDigitalAccessRole } from './digital-access'
 import { hasVoyagerAccess } from '@/lib/digital-access'
+import { DREAMCATCHER_ROUNDS_ENABLED } from '@/lib/signal/dispatch-policy'
 import { createAdminClient } from '@/lib/supabase/server'
 import { listFrequencies as cosmoListFrequencies, sampleBandAssets, getBandAssets as cosmoGetBandAssets } from '@/lib/cosmo'
 import type { CosmoFrequency } from '@/lib/cosmo'
@@ -782,6 +783,11 @@ export async function submitSignalResponse(
   if (!task?.is_published) return { ok: false, error: 'Task is not published' }
   if (task.dreamcatcher_round_id) {
     if (!hasVoyagerAccess((await parallaxViewer(me))?.role)) return { ok: false, error: 'Only Voyagers can respond to Parallax Array signals.' }
+    if (!DREAMCATCHER_ROUNDS_ENABLED) {
+      // A vote past the deadline settles the round, which must wait for the pause to lift.
+      const { data: round } = await admin.from('dreamcatcher_rounds').select('closes_at').eq('id', task.dreamcatcher_round_id).maybeSingle()
+      if (!round?.closes_at || Date.parse(round.closes_at) <= Date.now()) return { ok: false, error: 'This vote has closed.' }
+    }
     const { error } = await admin.rpc('respond_dreamcatcher_round', { p_task: taskId, p_asset: assetId, p_user: me.id })
     return error ? { ok: false, error: error.message } : { ok: true }
   }
