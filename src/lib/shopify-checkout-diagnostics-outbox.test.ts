@@ -57,4 +57,21 @@ describe('durable checkout observations', () => {
       expect(deps.send).not.toHaveBeenCalled()
     }
   })
+  it('retries a verified payment-method snapshot and exports only its normalized classification', async () => {
+    const syncPaymentMethod = vi.fn(async () => {})
+    const methodClaim: ShopifyDiagnosticClaim = { ...claim, event: 'initiation_checkout_payment_method_observed',
+      capture_source: 'shopify_transaction', properties: { payment_method: 'shop_pay', checkout_flow: 'forged', wallet: 'private' } }
+    const deps = setup({ claim: async () => [methodClaim], syncPaymentMethod })
+    expect(await retryShopifyCheckoutDiagnostics(deps)).toMatchObject({ sent: 1 })
+    expect(syncPaymentMethod).toHaveBeenCalledWith(methodClaim, order)
+    expect(deps.send).toHaveBeenCalledWith(expect.objectContaining({ event: methodClaim.event,
+      properties: expect.objectContaining({ payment_method: 'shop_pay', checkout_flow: 'shop_pay', payment_method_evidence: 'shopify_admin_transaction' }) }))
+    expect(JSON.stringify(vi.mocked(deps.send).mock.calls)).not.toMatch(/forged|private/)
+    const unavailable = setup({ claim: async () => [methodClaim], syncPaymentMethod: async () => { throw new Error('private failure') } })
+    expect(await retryShopifyCheckoutDiagnostics(unavailable)).toMatchObject({ retried: 1 })
+    expect(unavailable.send).not.toHaveBeenCalled()
+    const forged = setup({ claim: async () => [{ ...methodClaim, capture_source: 'shopify_pixel' }] })
+    expect(await retryShopifyCheckoutDiagnostics(forged)).toMatchObject({ retried: 1 })
+    expect(forged.send).not.toHaveBeenCalled()
+  })
 })

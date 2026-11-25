@@ -1,6 +1,7 @@
 import { shopifyLiveReservationReference, type ShopifyReservation, type ShopifyLiveOrder } from './shopify-live-order'
 import { diagnosticProperties } from './shopify-checkout-diagnostics'
 import { shopifyDiagnosticKey } from './shopify-checkout-diagnostics-outbox'
+import { shopifyOrderPaymentMethod, shopifyPaymentProperties } from './shopify-payment-method'
 
 /** Admin API evidence only. These observations never authorize payment or activate membership. */
 export function shopifyTransactionDiagnostics(order: ShopifyLiveOrder, reservation: ShopifyReservation, secret: string) {
@@ -8,7 +9,7 @@ export function shopifyTransactionDiagnostics(order: ShopifyLiveOrder, reservati
     || order.customAttributes.filter(a => a.key === '_putopia_live_reservation').length !== 1
     || order.customAttributes.find(a => a.key === '_putopia_live_reservation')?.value !== shopifyLiveReservationReference(reservation, secret)
     || order.email?.trim().toLowerCase() !== reservation.email.trim().toLowerCase()) return []
-  return order.transactions.flatMap(tx => {
+  const observations = order.transactions.flatMap(tx => {
     if (tx.test || tx.gateway !== 'shopify_payments' || !/^gid:\/\/shopify\/OrderTransaction\/\d+$/.test(tx.id)
       || !['AUTHORIZATION', 'CAPTURE', 'SALE', 'VOID', 'REFUND'].includes(tx.kind)) return []
     const time = tx.processedAt ?? tx.createdAt
@@ -21,6 +22,14 @@ export function shopifyTransactionDiagnostics(order: ShopifyLiveOrder, reservati
       event_key: shopifyDiagnosticKey('initiation_checkout_transaction_observed', JSON.stringify([tx.id, properties])),
       event_time: new Date(time).toISOString(), capture_source: 'shopify_transaction', properties }]
   })
+  const method = shopifyOrderPaymentMethod(order)
+  if (method !== 'unknown' && Number.isFinite(Date.parse(order.updatedAt))) observations.push({
+    order_id: reservation.id, event: 'initiation_checkout_payment_method_observed',
+    event_key: shopifyDiagnosticKey('initiation_checkout_payment_method_observed', JSON.stringify([order.id, order.updatedAt, method])),
+    event_time: new Date(order.updatedAt).toISOString(), capture_source: 'shopify_transaction',
+    properties: shopifyPaymentProperties(method),
+  })
+  return observations
 }
 
 export async function queueShopifyTransactionDiagnostics(admin: ReturnType<typeof import('./supabase/server').createAdminClient>,

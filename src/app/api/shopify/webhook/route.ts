@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { shopifyLiveConfig } from '@/lib/shopify-live-config'
 import { verifyShopifyLiveWebhook } from '@/lib/shopify-live-order'
 import { reconcileShopifyLiveQueue } from '@/lib/shopify-live-reconciliation'
+import { retryShopifyPaymentMetadata } from '@/lib/shopify-payment-metadata-queue'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
   if (queued.error) return new Response(null,{status:503})
   after(async()=>{
     try { await reconcileShopifyLiveQueue(config,gid) } catch { console.error('[shopify] Webhook order will retry from the queue') }
+    try { await retryShopifyPaymentMetadata(config) } catch { console.warn('[shopify-observation] Payment metadata will retry independently') }
   })
   return new Response(null,{status:204})
 }

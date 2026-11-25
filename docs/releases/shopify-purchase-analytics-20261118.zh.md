@@ -1,5 +1,7 @@
 # Shopify 支付漏斗埋点调整
 
+后续付款方式、Shop Pay 缺失步骤及关联失败诊断的实现和发布状态，见 [2026-11-26 结账观测覆盖](shopify-checkout-coverage-20261126.zh.md)。缺失的页面步骤不得直接计为流失；实付以服务端核验为准。
+
 PR #326 已合并上线，v125 已应用生产。后续分支 `codex/shopify-checkout-stages` 接入 Shopify 页面步骤和 Meta Purchase；v126 也已应用生产，应用代码按同一发布流程验收。
 
 ## 漏斗与事件

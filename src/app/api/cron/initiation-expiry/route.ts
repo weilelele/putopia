@@ -8,6 +8,7 @@ import { sendPendingInitiationAnalytics } from '@/lib/initiation-analytics-outbo
 import { shopifyLiveConfig } from '@/lib/shopify-live-config'
 import { reconcileShopifyLiveQueue } from '@/lib/shopify-live-reconciliation'
 import { sendPendingShopifyCheckoutDiagnostics } from '@/lib/shopify-checkout-diagnostics-outbox'
+import { retryShopifyPaymentMetadata } from '@/lib/shopify-payment-metadata-queue'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 export async function GET(request: Request) {
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
   const shopifyConfig = shopifyLiveConfig()
   if (!stripe && !shopifyConfig) return NextResponse.json({ error: 'Payments are not configured' }, { status: 503 })
   // Always retry the outbox even if an unrelated expiry record needs review.
-  const [expiry, meta, analytics, shopify, diagnostics] = await Promise.allSettled([
+  const [expiry, meta, analytics, shopify, diagnostics, paymentMetadata] = await Promise.allSettled([
     stripe ? Promise.resolve().then(() => reconcileInitiationExpiry(stripe)) : Promise.resolve(null),
     Promise.resolve().then(() => sendPendingInitiationMetaPurchases(createAdminClient(), stripe)),
     Promise.resolve().then(() => sendPendingInitiationAnalytics(createAdminClient(), stripe)),
@@ -27,17 +28,20 @@ export async function GET(request: Request) {
       return { expired: expired.data, pending: await reconcileShopifyLiveQueue(shopifyConfig) }
     })() : Promise.resolve(null),
     Promise.resolve().then(() => sendPendingShopifyCheckoutDiagnostics(createAdminClient(), { limit: 20 })),
+    shopifyConfig ? retryShopifyPaymentMetadata(shopifyConfig) : Promise.resolve(null),
   ])
   const failed = (shopify.status === 'fulfilled' && !!shopify.value && shopify.value.pending > 0)
     || expiry.status === 'rejected' || meta.status === 'rejected' || shopify.status === 'rejected'
     || (meta.status === 'fulfilled' && !!meta.value && (meta.value.failed > 0 || meta.value.retried > 0))
     || analytics.status === 'rejected' || (analytics.status === 'fulfilled' && (analytics.value.failed > 0 || analytics.value.retried > 0))
     || diagnostics.status === 'rejected' || (diagnostics.status === 'fulfilled' && (diagnostics.value.failed > 0 || diagnostics.value.retried > 0))
+    || paymentMetadata.status === 'rejected'
   return NextResponse.json({
     released: expiry.status === 'fulfilled' ? expiry.value : null,
     meta: meta.status === 'fulfilled' ? meta.value : { error: 'Purchase retry is unavailable' },
     analytics: analytics.status === 'fulfilled' ? analytics.value : { error: 'Analytics retry is unavailable' },
     diagnostics: diagnostics.status === 'fulfilled' ? diagnostics.value : { error: 'Checkout observation retry is unavailable' },
+    paymentMetadata: paymentMetadata.status === 'fulfilled' ? paymentMetadata.value : { error: 'Payment method observation retry is unavailable' },
     ...(shopifyConfig ? { shopify: shopify.status === 'fulfilled' ? shopify.value : null } : {}),
     ...(failed ? { error: 'Some reconciliation tasks need retry; reservations remain protected.' } : {}),
   }, { status: failed ? 503 : 200 })
