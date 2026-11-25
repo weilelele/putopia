@@ -18,7 +18,7 @@ type EventRow = { order_gid:string; event_id:string }
 type Binding = { order_id:string; email:string; variant_id:string; shopify_order_id:string|null; authorization_id:string|null; superseded_by:string|null; reference_version:number }
 type Source = { id: string; user_id:string; order_kind:InitiationOrderKind; status:string; amount:number; pricing_version:string|null; membership_order_id:string|null; initial_order_id:string|null; analytics_context: Record<string, unknown> }
 
-async function adminQuery(config: Config) {
+export async function shopifyLiveAdminQuery(config: Config) {
   const root = `https://${config.shop}`
   const token = await shopifyPilotRequest<{access_token?:string}>(`${root}/admin/oauth/access_token`,{},new URLSearchParams({
     grant_type:'client_credentials',client_id:config.clientId,client_secret:config.clientSecret,
@@ -40,7 +40,7 @@ async function adminQuery(config: Config) {
   } }
 }
 
-async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof adminQuery>>, admin: ReturnType<typeof createAdminClient>, orderId: string) {
+async function reconcileOrder(config: Config, query: Awaited<ReturnType<typeof shopifyLiveAdminQuery>>, admin: ReturnType<typeof createAdminClient>, orderId: string) {
   // Read the current authoritative order instead of relying on webhook delivery order.
   let { order } = await query.graphql<{ order: ShopifyLiveOrder | null }>(INITIAL_PILOT_QUERY,{id:orderId,isComplete:true})
   if (!order || order.test) return
@@ -146,7 +146,7 @@ export async function reconcileShopifyLiveQueue(config: Config, onlyOrder?: stri
   if (result.error) throw new Error('Shopify order queue cannot be read')
   const pending=result.data as EventRow[]
   if (!pending.length) return 0
-  const query=await adminQuery(config)
+  const query=await shopifyLiveAdminQuery(config)
   let failures=0
   for (const event of pending) {
     try {

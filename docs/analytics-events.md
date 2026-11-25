@@ -242,3 +242,20 @@ analysed as one group.
 
 Events only appear in PostHog after the change is deployed and a real user
 triggers them; the first capture auto-registers the event name.
+
+## Shopify payment-method and observation coverage
+
+`initiation_checkout_payment_method_observed` is a server-only, signed-order transaction observation. It adds
+`payment_method`, `checkout_flow=standard|shop_pay|other_express|unknown` and
+`payment_method_evidence=shopify_admin_transaction|unobserved`. The same normalized properties accompany
+subsequently delivered Shopify checkout, purchase and diagnostic events. A failed or pending transaction cannot
+classify the final payment method. Never infer Shop Pay from the `shopify_payments` gateway alone.
+
+Missing intermediate steps mean **unobserved**, including for a successfully paid Shop Pay order. They are not
+dropout events and must not be turned into adjacent-step conversion rates. Unknown methods stay separate;
+method evidence often arrives only after authorization, so known-method groups alone cannot compare conversion.
+
+Unbound Pixel reports and ingestion rejections are anonymous hourly counters in `shopify_observation_health`,
+separate from people, orders and PostHog conversion events. Counts measure reports/requests, not affected users.
+The implemented rollout, privacy contract and read-only aggregate queries are documented in
+[Shopify checkout coverage](releases/shopify-checkout-coverage-20261126.zh.md).

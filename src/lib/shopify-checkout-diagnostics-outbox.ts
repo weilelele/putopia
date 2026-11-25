@@ -3,6 +3,7 @@ import { initiationAnalyticsProperties, sanitizeInitiationAnalytics } from './in
 import { sendInitiationPostHog, validShopifyAnalyticsOrder, type InitiationAnalyticsOrder, type InitiationAnalyticsUpdate,
   type InitiationAnalyticsDependencies } from './initiation-analytics-outbox'
 import { diagnosticProperties, type ShopifyDiagnosticName } from './shopify-checkout-diagnostics'
+import { shopifyPaymentProperties } from './shopify-payment-method'
 
 export type ShopifyDiagnosticClaim = {
   order_id: string; event_key: string; event_uuid: string; event: ShopifyDiagnosticName; event_time: string
@@ -15,6 +16,7 @@ export type ShopifyDiagnosticDependencies = {
   finish(claim: ShopifyDiagnosticClaim, update: Update): Promise<boolean>
   send: InitiationAnalyticsDependencies['send']
   now(): number
+  syncPaymentMethod?(claim: ShopifyDiagnosticClaim, order: InitiationAnalyticsOrder): Promise<void>
 }
 
 /** Stable deduplication per Shopify occurrence, not per event name. No client token is retained. */
@@ -31,17 +33,19 @@ export async function retryShopifyCheckoutDiagnostics(deps: ShopifyDiagnosticDep
       const order = await deps.loadOrder(claim.order_id)
       if (!order || order.id !== claim.order_id || order.currency !== 'usd' || !validShopifyAnalyticsOrder(order, false)
         || !Number.isFinite(Date.parse(claim.event_time)) || !/^[0-9a-f-]{36}$/i.test(claim.event_uuid)
-        || (claim.capture_source === 'shopify_transaction') !== (claim.event === 'initiation_checkout_transaction_observed')) {
+        || (claim.capture_source === 'shopify_transaction') !== ['initiation_checkout_transaction_observed', 'initiation_checkout_payment_method_observed'].includes(claim.event)) {
         throw new Error('Invalid checkout observation binding')
       }
       if (order.analytics_context?.disabled === true) return await finish({ status: 'skipped', last_error: null })
+      if (claim.event === 'initiation_checkout_payment_method_observed') await deps.syncPaymentMethod?.(claim, order)
       const context = sanitizeInitiationAnalytics(order.analytics_context)
       await deps.send({ uuid: claim.event_uuid, event: claim.event, timestamp: claim.event_time,
         distinct_id: context.posthog_distinct_id ?? order.user_id,
         properties: {
           ...initiationAnalyticsProperties(order.order_kind, order.analytics_context, order.amount),
+          ...shopifyPaymentProperties(order.shopify_checkout?.payment_method),
           ...diagnosticProperties(claim.event, claim.properties),
-          analytics_version: 'shopify-checkout-diagnostics-v1', pricing_version: order.pricing_version ?? 'legacy-v1',
+          analytics_version: 'shopify-checkout-diagnostics-v2', pricing_version: order.pricing_version ?? 'legacy-v1',
           source: claim.capture_source, payment_provider: 'shopify', order_id: order.id,
           checkout_path: ['email_first', 'signed_in'].includes(String(order.analytics_context?.checkout_path))
             ? order.analytics_context?.checkout_path : 'unknown',
@@ -77,7 +81,7 @@ export function sendPendingShopifyCheckoutDiagnostics(admin: Admin, options: { o
       const [order, binding] = await Promise.all([
         db.from('initiation_orders').select('id,user_id,status,order_kind,amount,currency,stripe_livemode,stripe_session_id,stripe_payment_intent,paid_at,pricing_version,membership_order_id,analytics_context')
           .eq('id', id).maybeSingle().abortSignal(AbortSignal.timeout(5000)),
-        db.from('initiation_shopify_checkouts').select('order_id,shop,checkout_url,shopify_order_id,authorization_id,capture_id')
+        db.from('initiation_shopify_checkouts').select('order_id,shop,checkout_url,shopify_order_id,authorization_id,capture_id,payment_method')
           .eq('order_id', id).maybeSingle().abortSignal(AbortSignal.timeout(5000)),
       ])
       if (order.error || binding.error) throw new Error('Checkout observation lookup failed')
@@ -89,6 +93,15 @@ export function sendPendingShopifyCheckoutDiagnostics(admin: Admin, options: { o
         .eq('claim_token', claim.claim_token).select('order_id').abortSignal(AbortSignal.timeout(5000))
       if (error) throw error
       return data?.length === 1
+    },
+    async syncPaymentMethod(claim, order) {
+      const properties = diagnosticProperties(claim.event, claim.properties)
+      if (!order.shopify_checkout?.shopify_order_id || properties.payment_method === 'unknown') throw new Error('Payment method binding not ready')
+      const { error } = await db.rpc('record_initiation_shopify_payment_method', {
+        p_order: order.id, p_shop: order.shopify_checkout.shop, p_shopify_order: order.shopify_checkout.shopify_order_id,
+        p_method: properties.payment_method, p_updated_at: claim.event_time,
+      }).abortSignal(AbortSignal.timeout(5000))
+      if (error) throw error
     },
     send: sendInitiationPostHog, now: Date.now,
   }, options)

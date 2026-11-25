@@ -8,6 +8,8 @@ import { afterCheckout } from '@/lib/checkout-after'
 import { sendPendingInitiationAnalytics } from '@/lib/initiation-analytics-outbox'
 import { parseShopifyCheckoutDiagnostic } from '@/lib/shopify-checkout-diagnostics'
 import { sendPendingShopifyCheckoutDiagnostics, shopifyDiagnosticKey } from '@/lib/shopify-checkout-diagnostics-outbox'
+import { observationEventName, parseShopifyObservationFailure, recordShopifyObservationFailure, shopifyObservationRejection,
+  type ObservationFailureReason } from '@/lib/shopify-observation-health'
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type', 'Cache-Control': 'no-store' }
@@ -18,46 +20,62 @@ export function OPTIONS() { return new Response(null, { status: 204, headers: co
 /** A buyer-held, signed checkout reference authorizes observation of that checkout only. */
 export async function POST(request: Request) {
   const respond = (status: number) => new Response(null, { status, headers: cors })
+  let observedEvent = 'unknown'
+  const reject = (status: number, reason: ObservationFailureReason) => {
+    // Fixed categories only. Never log the body, signature, account, DOM values or raw exception.
+    console.warn('[shopify-observation]', JSON.stringify({ reason, event: observedEvent, status }))
+    afterCheckout(() => recordShopifyObservationFailure(createAdminClient(), 'server', reason, observedEvent),
+      '[shopify-observation] Health counter deferred')
+    return respond(status)
+  }
   const config = shopifyLiveConfig()
   if (!config) return respond(404)
   try {
-    if (Number(request.headers.get('content-length')) > 2048) return respond(413)
+    if (Number(request.headers.get('content-length')) > 2048) return reject(413, 'invalid_payload')
     const body = await request.text()
-    if (body.length > 2048) return respond(413)
+    if (body.length > 2048) return reject(413, 'invalid_payload')
     let value: unknown
-    try { value = JSON.parse(body) } catch { return respond(400) }
+    try { value = JSON.parse(body) } catch { return reject(400, 'invalid_payload') }
+    observedEvent = observationEventName(value)
+    const failure = parseShopifyObservationFailure(value)
+    if (failure) {
+      // No order binding is claimed. This never writes the per-order outboxes or PostHog identities.
+      afterCheckout(() => recordShopifyObservationFailure(createAdminClient(), 'pixel_unverified', failure.reason, failure.observedEvent),
+        '[shopify-observation] Pixel health counter deferred')
+      return respond(204)
+    }
     const stage = parseShopifyCustomerEvent(value, Date.now())
     const diagnostic = parseShopifyCheckoutDiagnostic(value, Date.now())
     const event = stage ?? diagnostic
-    if (!event) return respond(400)
+    if (!event) return reject(400, shopifyObservationRejection(value, Date.now()))
     const admin = createAdminClient()
     const [bound, order] = await Promise.all([
       admin.from('initiation_shopify_checkouts' as never).select('shop,email,variant_id,reference_version').eq('order_id', event.orderId).maybeSingle(),
       admin.from('initiation_orders').select('user_id,order_kind,amount,pricing_version,membership_order_id,initial_order_id,created_at,analytics_context').eq('id', event.orderId).maybeSingle(),
     ])
-    if (bound.error || order.error) return respond(503)
+    if (bound.error || order.error) return reject(503, 'storage_unavailable')
     const checkout = bound.data as { shop: string; email: string; variant_id: string; reference_version: number } | null
     const source = order.data as { user_id: string; order_kind: InitiationOrderKind; amount: number; pricing_version: string | null; membership_order_id: string | null; initial_order_id: string | null; created_at: string; analytics_context: Record<string, unknown> } | null
-    if (!checkout || !source || checkout.shop !== config.shop || !['membership', 'initial', 'standard', 'legacy_upgrade'].includes(source.order_kind)) return respond(403)
+    if (!checkout || !source || checkout.shop !== config.shop || !['membership', 'initial', 'standard', 'legacy_upgrade'].includes(source.order_kind)) return reject(403, 'binding_not_found')
     const expected = shopifyLiveReservationReference({ id: event.orderId, userId: source.user_id, shop: checkout.shop,
       email: checkout.email, kind: source.order_kind, variantId: checkout.variant_id, referenceVersion: checkout.reference_version, amount: source.amount,
       pricingVersion: source.pricing_version, membershipOrderId: source.membership_order_id, initialOrderId: source.initial_order_id }, config.clientSecret)
-    if (!timingSafeEqual(Buffer.from(expected), Buffer.from(event.reference))) return respond(403)
-    if (Date.parse(event.timestamp) < Date.parse(source.created_at) - 60000) return respond(400)
+    if (!timingSafeEqual(Buffer.from(expected), Buffer.from(event.reference))) return reject(403, 'reference_mismatch')
+    if (Date.parse(event.timestamp) < Date.parse(source.created_at) - 60000) return reject(400, 'event_time_rejected')
     if (source.analytics_context.disabled === true) return respond(204)
     // Preserve the first-stage funnel while separately retaining each repeated Shopify occurrence.
     if (stage) {
       const saved = await admin.from('initiation_analytics_outbox' as never).upsert({ order_id: event.orderId,
         event: stage.event, event_time: event.timestamp, capture_source: 'shopify_pixel',
       } as never, { onConflict: 'order_id,event', ignoreDuplicates: true })
-      if (saved.error) return respond(503)
+      if (saved.error) return reject(503, 'storage_unavailable')
     }
     if (diagnostic) {
       const saved = await admin.from('initiation_checkout_diagnostics' as never).upsert({ order_id: event.orderId,
         event_key: shopifyDiagnosticKey(diagnostic.event, diagnostic.eventId), event: diagnostic.event,
         event_time: diagnostic.timestamp, capture_source: 'shopify_pixel', properties: diagnostic.properties,
       } as never, { onConflict: 'order_id,event_key', ignoreDuplicates: true })
-      if (saved.error) return respond(503)
+      if (saved.error) return reject(503, 'storage_unavailable')
     }
     afterCheckout(() => Promise.all([
       ...(stage ? [sendPendingInitiationAnalytics(admin, null, { orderId: event.orderId, limit: 5 })] : []),
@@ -65,5 +83,5 @@ export async function POST(request: Request) {
     ]).then(() => {}),
       '[initiation-analytics] Shopify customer event deferred to the outbox')
     return respond(204)
-  } catch { return respond(503) }
+  } catch { return reject(503, 'storage_unavailable') }
 }

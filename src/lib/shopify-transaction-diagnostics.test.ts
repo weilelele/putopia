@@ -29,4 +29,15 @@ describe('Shopify transaction diagnostic facts', () => {
     expect(shopifyTransactionDiagnostics({ ...order, email: 'other@example.com' }, reservation, secret)).toEqual([])
     expect(shopifyTransactionDiagnostics({ ...order, transactions: [{ ...order.transactions[0], test: true }] }, reservation, secret)).toEqual([])
   })
+  it('durably queues only a signed successful payment method and deduplicates the provider snapshot', () => {
+    const paid = { ...order, updatedAt: '2026-11-23T19:20:05Z', transactions: [{ ...order.transactions[0], status: 'SUCCESS',
+      paymentDetails: { __typename: 'CardPaymentDetails', wallet: 'SHOPIFY_PAY' } }] }
+    const rows = shopifyTransactionDiagnostics(paid, reservation, secret)
+    const method = rows.find(row => row.event === 'initiation_checkout_payment_method_observed')
+    expect(method).toMatchObject({ capture_source: 'shopify_transaction',
+      properties: { payment_method: 'shop_pay', checkout_flow: 'shop_pay' } })
+    expect(shopifyTransactionDiagnostics(paid, reservation, secret).find(row => row.event === method?.event)?.event_key).toBe(method?.event_key)
+    expect(shopifyTransactionDiagnostics(paid, reservation, 'wrong')).toEqual([])
+    expect(JSON.stringify(rows)).not.toMatch(/private|SHOPIFY_PAY|test-only|paymentDetails/)
+  })
 })

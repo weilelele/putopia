@@ -4,6 +4,7 @@ import { initiationAnalyticsProperties, sanitizeInitiationAnalytics } from './in
 import { shopifyLiveCheckoutUrl, shopifyLiveShop } from './shopify-checkout-url'
 import { INITIATION_PRODUCT, type InitiationOrderKind } from './initiation-types'
 import type { ShopifyCheckoutStage } from './shopify-customer-events'
+import { shopifyPaymentProperties } from './shopify-payment-method'
 
 export type InitiationAnalyticsClaim = {
   order_id: string; event: 'initiation_checkout_started' | 'initiation_purchase_completed' | ShopifyCheckoutStage
@@ -20,6 +21,7 @@ export type InitiationAnalyticsOrder = {
   shopify_checkout?: {
     order_id: string; shop: string; checkout_url: string | null
     shopify_order_id: string | null; authorization_id: string | null; capture_id: string | null
+    payment_method?: string
   } | null
 }
 export type InitiationAnalyticsUpdate = {
@@ -108,6 +110,7 @@ export async function retryInitiationAnalytics(deps: InitiationAnalyticsDependen
             ? order.analytics_context?.checkout_path : 'unknown',
           ...(!purchase ? { checkout_evidence: pixel ? 'shopify_customer_event' : 'server_checkout_created' } : {}),
           ...(provider === 'shopify' ? { shopify_order_id: order.shopify_checkout?.shopify_order_id,
+            ...shopifyPaymentProperties(order.shopify_checkout?.payment_method),
             ...(purchase ? { payment_evidence: 'verified_shopify_capture' } : {}) } : {}),
           is_test: !order.stripe_livemode || order.analytics_context?.environment !== 'production',
           ...(purchase ? {
@@ -159,7 +162,7 @@ export function sendPendingInitiationAnalytics(admin: Admin, stripe: Stripe | nu
       if (error) throw error
       if (!data || data.stripe_session_id) return data
       const binding = await db.from('initiation_shopify_checkouts')
-        .select('order_id,shop,checkout_url,shopify_order_id,authorization_id,capture_id')
+        .select('order_id,shop,checkout_url,shopify_order_id,authorization_id,capture_id,payment_method')
         .eq('order_id', id).maybeSingle().abortSignal(AbortSignal.timeout(5000))
       if (binding.error) throw binding.error
       return { ...data, shopify_checkout: binding.data }

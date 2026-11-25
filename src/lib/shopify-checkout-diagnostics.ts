@@ -1,4 +1,5 @@
 import { shopifyCheckoutStages } from './shopify-customer-events'
+import { shopifyPaymentProperties, type ShopifyPaymentMethod, type ShopifyCheckoutFlow } from './shopify-payment-method'
 
 export const shopifyDiagnosticEvents = {
   clicked: 'initiation_checkout_clicked',
@@ -26,7 +27,7 @@ export const transactionErrors = ['AMAZON_PAYMENTS_INVALID_PAYMENT_METHOD', 'AMA
   'RETRY_DECLINED', 'TEST_MODE_LIVE_CARD', 'TRANSACTION_LIMIT_EXCEEDED', 'UNSUPPORTED_FEATURE', 'NONE', 'UNKNOWN'] as const
 
 export type ShopifyDiagnosticName = typeof shopifyDiagnosticEvents[keyof typeof shopifyDiagnosticEvents]
-  | 'initiation_checkout_stage_observed' | 'initiation_checkout_transaction_observed'
+  | 'initiation_checkout_stage_observed' | 'initiation_checkout_transaction_observed' | 'initiation_checkout_payment_method_observed'
 export type ShopifyDiagnosticProperties = Partial<{
   field_category: typeof fields[number]
   control: typeof controls[number]
@@ -38,6 +39,9 @@ export type ShopifyDiagnosticProperties = Partial<{
   transaction_status: 'SUCCESS' | 'FAILURE' | 'PENDING' | 'ERROR' | 'AWAITING_RESPONSE' | 'UNKNOWN'
   transaction_error_code: typeof transactionErrors[number]
   transaction_time_source: 'processed_at' | 'created_at'
+  payment_method: ShopifyPaymentMethod
+  checkout_flow: ShopifyCheckoutFlow
+  payment_method_evidence: 'unobserved' | 'shopify_admin_transaction'
 }>
 
 function member<T extends string>(value: unknown, values: readonly T[], fallback: T): T {
@@ -47,6 +51,7 @@ function member<T extends string>(value: unknown, values: readonly T[], fallback
 /** Defense in depth: re-project saved payloads before delivery. Never send raw DOM, messages or values. */
 export function diagnosticProperties(event: ShopifyDiagnosticName, value: unknown): ShopifyDiagnosticProperties {
   const p = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+  if (event === 'initiation_checkout_payment_method_observed') return shopifyPaymentProperties(p.payment_method)
   if (event === 'initiation_checkout_transaction_observed') return {
     transaction_kind: member(p.transaction_kind, ['AUTHORIZATION', 'CAPTURE', 'SALE', 'VOID', 'REFUND'] as const, 'AUTHORIZATION'),
     transaction_status: member(p.transaction_status, ['SUCCESS', 'FAILURE', 'PENDING', 'ERROR', 'AWAITING_RESPONSE', 'UNKNOWN'] as const, 'UNKNOWN'),

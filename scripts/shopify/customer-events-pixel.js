@@ -1,11 +1,26 @@
 /* global analytics */
-// Custom Pixel v2. Fixed categories only: never input values, text, URLs or error messages.
+// Custom Pixel v3. Fixed categories only: never input values, text, URLs or error messages.
 const putopiaStages = new Set(['checkout_started', 'checkout_contact_info_submitted', 'checkout_address_info_submitted',
   'checkout_shipping_info_submitted', 'payment_info_submitted', 'checkout_completed'])
 const putopiaAlertTypes = new Set(['CHECKOUT_ERROR', 'CONTACT_ERROR', 'DELIVERY_ERROR', 'DISCOUNT_ERROR', 'INPUT_INVALID',
   'INPUT_REQUIRED', 'INVENTORY_ERROR', 'MERCHANDISE_ERROR', 'PAYMENT_ERROR'])
 let putopiaReference = null
 let putopiaCompleted = false
+const putopiaReportedFailures = new Set()
+
+async function putopiaReportFailure(reason, observedEvent) {
+  const key = `${reason}:${observedEvent}`
+  if (putopiaReportedFailures.has(key)) return
+  putopiaReportedFailures.add(key)
+  // These unsigned reports count observation health only; they never claim a buyer or an order.
+  try {
+    await fetch('https://www.multiverseco.org/api/shopify/customer-events', {
+      method: 'POST', headers: { 'Content-Type': 'text/plain' }, credentials: 'omit', keepalive: true,
+      body: JSON.stringify({ event: 'putopia_observation_failed', pixel_version: 3,
+        properties: { reason, observed_event: observedEvent } }),
+    })
+  } catch { /* Health observation must never interrupt checkout or recursively report itself. */ }
+}
 
 function putopiaFieldCategory(identifier) {
   const key = typeof identifier === 'string' ? identifier.toLowerCase() : ''
@@ -47,8 +62,16 @@ async function putopiaSend(payload) {
   const send = () => fetch('https://www.multiverseco.org/api/shopify/customer-events', {
     method: 'POST', headers: { 'Content-Type': 'text/plain' }, credentials: 'omit', keepalive: true, body,
   })
-  try { const result = await send(); if (result.status >= 500) await send() }
-  catch { try { await send() } catch { /* Observation must never block the buyer. */ } }
+  try {
+    let result = await send()
+    if (result.status >= 500) result = await send()
+    if (!result.ok) await putopiaReportFailure('ingest_rejected', payload.event)
+  } catch {
+    try {
+      const result = await send()
+      if (!result.ok) await putopiaReportFailure('ingest_rejected', payload.event)
+    } catch { await putopiaReportFailure('network_failure', payload.event) }
+  }
 }
 
 async function putopiaCheckoutEvent(event) {
@@ -62,11 +85,18 @@ async function putopiaCheckoutEvent(event) {
     putopiaReference = null
   }
   if (!stage && putopiaCompleted) return
-  if (typeof event.id !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(event.id) || typeof event.timestamp !== 'string') return
+  if (typeof event.id !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(event.id) || typeof event.timestamp !== 'string') {
+    await putopiaReportFailure('invalid_payload', event.name)
+    return
+  }
   const payload = { event: event.name, event_id: event.id, timestamp: event.timestamp,
     properties: putopiaInteractionProperties(event) }
   // DOM events have no checkout object. Never guess a binding or replay storefront interactions.
-  if (!putopiaReference) return
+  if (!putopiaReference) {
+    // Preserve the boundary: never reuse a previous checkout's reference or infer one from DOM.
+    if (stage) await putopiaReportFailure(reference ? 'invalid_reference' : 'missing_reference', event.name)
+    return
+  }
   if (event.name === 'checkout_completed') putopiaCompleted = true
   await putopiaSend({ ...payload, reference: putopiaReference })
 }
