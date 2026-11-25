@@ -1,0 +1,12 @@
+{
+  "source": [
+    "scene-detector-B2.png",
+    "scene-detector-B2-off.png"
+  ],
+  "bulb": {
+    "x": 0.4912,
+    "y": 0.1797,
+    "rx": 0.1179,
+    "ry": 0.0713
+  }
+}
