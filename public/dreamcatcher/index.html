@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#080C20">
+  <title>Dreamcatcher · Scenes prototype</title>
+  <link rel="preload" as="image" href="/dreamcatcher/scenes/tv.webp">
+  <style>
+    @font-face{font-family:'Courier Prime';src:url('/dreamcatcher/fonts/courier-prime-regular-latin.woff2') format('woff2');font-weight:400;font-display:swap}
+    @font-face{font-family:'Courier Prime';src:url('/dreamcatcher/fonts/courier-prime-bold-latin.woff2') format('woff2');font-weight:700;font-display:swap}
+    :root{
+      color-scheme:dark;
+      --color-deep:#080C20;--color-void:#10162D;--color-star:#F5F5F5;--color-nucleus:#E35205;
+      --color-star-dim:rgba(245,245,245,.55);--bd-faint:rgba(245,245,245,.10);--bd-line:rgba(245,245,245,.28);
+      --fs-h2:32px;--fs-h3:24px;--fs-title:20px;--fs-body:16px;--fs-compact:14px;--fs-label:13px;--fs-caption:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--color-deep);color:var(--color-star);font:var(--fs-body)/1.5 'Courier Prime',ui-monospace,monospace;overflow:hidden}
+    button,textarea{font:inherit;color:inherit}
+    button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+    button:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,summary:focus-visible,input:focus-visible+.switch-track{outline:2px solid var(--color-nucleus);outline-offset:3px}
+    [hidden]{display:none!important}
+    .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+    /* Two scenes side by side; the track slides one viewport per scene */
+    .track{position:fixed;inset:0;display:flex;width:200vw;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+    .track[data-at="detector"]{transform:translateX(-100vw)}
+    @media (prefers-reduced-motion:reduce){.track{transition:none}}
+    .scene{position:relative;width:100vw;height:100%;overflow:hidden;flex:none;background:var(--floor)}
+    /* the photo's own floor colour, so the page continues the floor below a width-fitted photo */
+    #tv{--floor:#070B0E} #detector{--floor:#060809}
+    #detector .frame{top:calc(env(safe-area-inset-top) + 40px)}
+    /* the case spans the phone's width and the form sits under the crate: the door goes on the empty wall beside the bulb */
+    #detector .door{top:calc(min(100%,180vw) * .13 + 40px)}
+
+    /* ---------- the photo and everything that lives inside it (media layer, not UI) */
+    /* phones: fit by width (a little wider than the viewport, the side walls crop); wide screens: fit the height */
+    .frame{position:absolute;left:50%;top:0;height:min(100%,180vw);aspect-ratio:2/3;transform:translateX(-50%);isolation:isolate}
+    .photo{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;pointer-events:none;user-select:none}
+    /* light the room receives: added on top of the photo, like real light (lit = unlit + light) */
+    .light{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;mix-blend-mode:plus-lighter;opacity:0}
+    @supports not (mix-blend-mode:plus-lighter){.light{mix-blend-mode:screen}}
+    /* the screen's own light falling on the cabinet, stand and floor: tinted live from the picture */
+    .screenlight{background:radial-gradient(ellipse calc(var(--rw)*100%) calc(var(--rh)*100%) at calc(var(--cx)*100%) calc(var(--cy)*100%),rgb(var(--rgb,90 110 140)) 0%,rgb(var(--rgb,90 110 140) / .35) 38%,transparent 72%)}
+    .dust{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+    /* the video sits over the opaque photo, clipped to the screen shape by a small PNG mask */
+    .hole{position:absolute;z-index:4;overflow:hidden;background:#05070C;-webkit-mask-image:var(--mask);mask-image:var(--mask);-webkit-mask-size:100% 100%;mask-size:100% 100%;left:calc(var(--x)*100%);top:calc(var(--y)*100%);width:calc(var(--w)*100%);height:calc(var(--h)*100%)}
+    .hole video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.86) contrast(1.06)}
+    /* CRT glass darkens toward its edges */
+    .hole::after{content:'';position:absolute;inset:0;z-index:4;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 58%,rgba(0,0,0,.5) 100%)}
+    .hole .static{opacity:0}
+
+    /* Readout inside the detector's round window: a smaller dark disc, like an inset display */
+    .readout{position:absolute;z-index:3;inset:0;display:grid;place-items:center;pointer-events:none}
+    .readout .disc{width:66%;aspect-ratio:1;border-radius:50%;display:grid;place-content:center;justify-items:center;gap:2px;background:rgb(8 12 32 / .78);text-align:center}
+    .readout .phase{font-size:var(--fs-caption);font-weight:700;letter-spacing:.1em;color:var(--color-nucleus)}
+    .readout .elapsed{font-size:var(--fs-title);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+    .readout .unit{font-size:var(--fs-caption);color:var(--color-star-dim);letter-spacing:.06em}
+
+    /* ---------- UI: flat instrument parts in brand colours (no boxes, no glow) */
+    .brand{position:fixed;z-index:20;top:0;left:0;display:flex;align-items:center;gap:10px;min-height:56px;padding:calc(env(safe-area-inset-top) + 8px) 16px 0;pointer-events:none}
+    .brand img{width:40px;height:auto;display:block}
+    .brand span{font-size:var(--fs-label);font-weight:700;letter-spacing:.08em}
+
+    /* side doors: round, like a panel button */
+    .door{position:absolute;z-index:10;top:calc(min(100%,180vw) * .62);display:grid;justify-items:center;gap:4px;padding:8px;border:0;background:transparent}
+    .door b{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid var(--bd-line);background:var(--color-deep);font-size:var(--fs-title);font-weight:400;line-height:1}
+    .door small{font-size:var(--fs-caption);letter-spacing:.08em;color:var(--color-star-dim)}
+    .door.right{right:4px}
+    .door.left{left:4px}
+
+    .dock{position:absolute;z-index:10;left:0;right:0;bottom:0;padding:0 16px calc(16px + env(safe-area-inset-bottom))}
+    .dock .inner{max-width:440px;margin:0 auto;display:grid;gap:14px}
+
+    /* Tuning console: a radio dial band with an orange needle, and a round knob */
+    .console{display:grid;grid-template-columns:1fr 72px;align-items:center;gap:16px;touch-action:none;user-select:none;-webkit-user-select:none}
+    .band{position:relative;height:64px;cursor:ew-resize;border-top:1px solid var(--bd-line);border-bottom:1px solid var(--bd-line)}
+    .band .ticks{position:absolute;left:12px;right:12px;top:0;height:14px}
+    .band .ticks i{position:absolute;top:0;width:1px;height:8px;background:var(--bd-line)}
+    .band .ticks i.major{height:14px;background:var(--color-star-dim)}
+    .band .marks{position:absolute;left:12px;right:12px;bottom:10px;height:18px}
+    .band .marks span{position:absolute;transform:translateX(-50%);font-size:var(--fs-caption);letter-spacing:.04em;color:var(--color-star-dim);font-variant-numeric:tabular-nums}
+    .band .marks span.on{color:var(--color-star);font-weight:700}
+    .band .needle{position:absolute;top:-6px;bottom:-6px;width:2px;margin-left:-1px;background:var(--color-nucleus);left:calc(12px + var(--p) * (100% - 24px))}
+    .knob{position:relative;width:72px;height:72px;border-radius:50%;border:1px solid var(--bd-line);background:var(--color-deep);padding:0;cursor:grab}
+    .knob::before{content:'';position:absolute;inset:10px;border-radius:50%;border:1px solid var(--bd-faint)}
+    .knob .pointer{position:absolute;left:50%;top:50%;width:2px;height:30px;margin-left:-1px;transform-origin:50% 0;background:var(--color-nucleus);transform:rotate(calc(180deg + var(--a)))}
+    .knob .pointer::after{content:'';position:absolute;left:-1px;bottom:-1px;width:4px;height:4px;border-radius:50%;background:var(--color-nucleus)}
+    .knob .dent{position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px;border-radius:50%;background:var(--bd-line);transform:rotate(var(--a)) translateY(-41px)}
+    .knob .dent.on{background:var(--color-star)}
+    .console-label{display:flex;justify-content:space-between;font-size:var(--fs-caption);letter-spacing:.1em;color:var(--color-star-dim)}
+    .console-label b{color:var(--color-star);font-weight:700;font-variant-numeric:tabular-nums}
+
+    /* Round push button (the one action on a panel) */
+    .push{width:72px;height:72px;flex:none;border-radius:50%;border:0;padding:0;background:var(--color-nucleus);color:var(--color-void);font-size:var(--fs-label);font-weight:700;letter-spacing:.08em;line-height:1.2;display:grid;place-content:center}
+    .push:active:not(:disabled){transform:translateY(1px)}
+    .push:disabled{background:transparent;border:1px solid var(--bd-line);color:var(--color-star-dim);cursor:default}
+    .push.done:disabled{border-color:var(--color-nucleus);color:var(--color-nucleus)}
+    .push small{display:block;font-size:var(--fs-caption);font-weight:400}
+
+    /* Writing a thought: on a ruled line, like a slip fed into the machine */
+    .slip-label{font-size:var(--fs-caption);letter-spacing:.1em;color:var(--color-star-dim)}
+    textarea{width:100%;min-height:76px;resize:none;padding:6px 0 8px;border:0;border-bottom:1px solid var(--bd-line);border-radius:0;background:transparent;font-size:var(--fs-body);line-height:1.5}
+    textarea:focus{outline:none;border-bottom-color:var(--color-nucleus)}
+    textarea::placeholder{color:var(--color-star-dim)}
+    .panel-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .switch{display:inline-flex;align-items:center;gap:10px;min-height:44px;font-size:var(--fs-caption);letter-spacing:.1em;color:var(--color-star-dim);cursor:pointer}
+    .switch input{position:absolute;opacity:0;width:1px;height:1px}
+    .switch-track{position:relative;width:40px;height:22px;border-radius:11px;border:1px solid var(--bd-line)}
+    .switch-track::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--color-star-dim);transition:transform .15s}
+    .switch input:checked+.switch-track{border-color:var(--color-nucleus)}
+    .switch input:checked+.switch-track::after{transform:translateX(18px);background:var(--color-nucleus)}
+    .count{font-size:var(--fs-caption);color:var(--color-star-dim);font-variant-numeric:tabular-nums}
+    .quote{margin:0;font-size:var(--fs-compact);line-height:1.5;max-height:4.5em;overflow:hidden}
+    .note{margin:0;font-size:var(--fs-caption);letter-spacing:.04em;color:var(--color-star-dim)}
+
+    details.proto{font-size:var(--fs-caption);color:var(--color-star-dim)}
+    details.proto summary{min-height:32px;display:flex;align-items:center;cursor:pointer;letter-spacing:.04em}
+    details.proto .links{display:flex;flex-wrap:wrap;gap:0 16px}
+    details.proto button{background:none;border:0;padding:0;min-height:44px;color:var(--color-star);text-decoration:underline;font-size:var(--fs-caption)}
+
+    @media (min-width:900px){
+      /* wide: photo left of centre with soft side edges (photo treatment), controls in a column to its right */
+      .frame,#detector .frame{left:calc(50% - 180px);top:0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)}
+      .dock{left:calc(50% + 140px);right:auto;top:50%;bottom:auto;transform:translateY(-50%);width:380px;padding:0}
+      .door,#detector .door{top:calc(50% - 44px)}
+      .door.right{right:24px}
+      .door.left{left:24px}
+    }
+  </style>
+</head>
+<body>
+  <div class="brand"><img src="/dreamcatcher/brand/vi-icon.png" alt=""><span>DREAMCATCHER</span></div>
+  <h1 class="sr-only">Dreamcatcher</h1>
+  <p class="sr-only" id="live" role="status" aria-live="polite"></p>
+
+  <main class="track" id="track" data-at="tv">
+    <!-- Scene 1: the television -->
+    <section class="scene" id="tv" aria-label="Television">
+      <div class="frame" id="tv-frame">
+        <img class="photo" id="tv-photo" src="/dreamcatcher/scenes/tv.webp" alt="An old wooden television on a thin metal stand in an empty hall, moonlight from a high window">
+        <div class="light screenlight" id="tv-glow"></div>
+        <canvas class="dust" aria-hidden="true"></canvas>
+        <div class="hole" id="tv-hole" style="--mask:url(/dreamcatcher/scenes/tv-mask.png)">
+          <video id="tv-video" muted playsinline loop preload="auto"></video>
+          <video class="static" id="tv-static" muted playsinline loop preload="auto" src="/dreamcatcher/signals/tuning.mp4"></video>
+        </div>
+      </div>
+      <button type="button" class="door right" id="to-detector" aria-label="Go to the dream signal detector"><b aria-hidden="true">›</b><small>DETECTOR</small></button>
+      <div class="dock">
+        <div class="inner">
+          <div class="console-label" aria-hidden="true"><span>TUNING</span><b id="ch">CH 01</b></div>
+          <div class="console" id="tv-tuner" role="slider" tabindex="0" aria-label="Channel tuning" aria-valuemin="1">
+            <div class="band"><div class="ticks"></div><div class="marks"></div><span class="needle"></span></div>
+            <div class="knob" aria-hidden="true"><span class="pointer"></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scene 2: the dream signal detector -->
+    <section class="scene" id="detector" aria-label="Dream signal detector">
+      <div class="frame" id="det-frame">
+        <img class="photo" id="det-off" src="/dreamcatcher/scenes/detector-off.webp" alt="A dream signal detector on a wooden crate in the same hall, a caged amber bulb on top">
+        <img class="light" id="lamp-spill" src="/dreamcatcher/scenes/detector-light-spill.webp" alt="">
+        <img class="light" id="lamp-core" src="/dreamcatcher/scenes/detector-light-core.webp" alt="">
+        <div class="light screenlight" id="det-glow"></div>
+        <canvas class="dust" aria-hidden="true"></canvas>
+        <div class="hole" id="det-hole" style="--mask:url(/dreamcatcher/scenes/detector-off-mask.png)">
+          <video id="det-video" muted playsinline loop preload="none"></video>
+          <video class="static" id="det-static" muted playsinline loop preload="none"></video>
+          <div class="readout" id="readout" hidden>
+            <div class="disc"><span class="phase">SEARCHING</span><span class="elapsed" id="elapsed">00:00:00</span><span class="unit">ELAPSED</span></div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="door left" id="to-tv" aria-label="Back to the television"><b aria-hidden="true">‹</b><small>TV</small></button>
+
+      <div class="dock">
+        <!-- idle: write a thought -->
+        <form class="inner" id="form-idle">
+          <label class="slip-label" for="thought">WHAT DID YOU SEE?</label>
+          <textarea id="thought" maxlength="600" placeholder="A dream, a place, a half-formed thought…"></textarea>
+          <div class="panel-row">
+            <label class="switch"><input type="checkbox" role="switch" id="private"><span class="switch-track"></span>PRIVATE</label>
+            <span class="count" id="chars">0 / 600</span>
+            <button type="submit" class="push" id="start" disabled>SEARCH</button>
+          </div>
+        </form>
+
+        <!-- searching -->
+        <div class="inner" id="panel-search" hidden>
+          <p class="quote" id="search-idea"></p>
+          <p class="note">Usually 8–10 hours. We'll email you when a signal comes in.</p>
+          <details class="proto"><summary>Prototype controls</summary>
+            <div class="links"><button type="button" id="skip-found">Skip to signals found</button><button type="button" class="reset">Start over</button></div>
+          </details>
+        </div>
+
+        <!-- found: tune through the signals in the window, choose one -->
+        <div class="inner" id="panel-found" hidden>
+          <div class="console-label" aria-hidden="true"><span>SIGNALS FOUND</span><b id="sig">SIGNAL 01</b></div>
+          <div class="panel-row">
+            <div class="console" id="sig-tuner" role="slider" tabindex="0" aria-label="Signal tuning" aria-valuemin="1" style="grid-template-columns:1fr;flex:1">
+              <div class="band"><div class="ticks"></div><div class="marks"></div><span class="needle"></span></div>
+            </div>
+            <button type="button" class="push" id="choose">CHOOSE</button>
+          </div>
+          <details class="proto"><summary>Prototype controls</summary>
+            <div class="links"><button type="button" class="reset">Start over</button></div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const $ = id => document.getElementById(id)
+const SIG = '/dreamcatcher/signals/'
+const reduced = matchMedia('(prefers-reduced-motion: reduce)')
+const saveData = !!navigator.connection?.saveData
+const store = { get: k => { try { return localStorage.getItem(k) } catch { return null } }, set: (k, v) => { try { localStorage.setItem(k, v) } catch {} }, del: k => { try { localStorage.removeItem(k) } catch {} } }
+const pad = n => String(n).padStart(2, '0')
+const clock = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}` }
+const say = t => { $('live').textContent = t }
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
+const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t) }
+const at = () => $('track').dataset.at
+
+// Sample channels: real WorldLab signal clips. The thoughts are kept as data for later; the TV no longer shows them.
+const CHANNELS = ['vid_6cadff7b2b03', 'vid_a24a16811032', 'vid_f0e7b12cf256', 'vid_55807745b299', 'vid_cd983c37a3a8', 'vid_beefe7665327']
+const FOUND = ['vid_01d8cd5ecf89', 'vid_983902f4bc31', 'vid_7dea9d7655d6', 'vid_6150cca9f4c3']
+
+// ---------- look-dev: the default room is B (empty hall, chosen 2026-11-25).
+// ?look=A|C|B1|v1 swaps in an earlier candidate. Those have no light layers, so their bulb stays dark.
+const cand = (l, d = l) => ({ tv: `cand/tv-${l}`, off: `cand/detector-${d}-off` })
+const LOOKS = {
+  A: { ...cand('A'), floor: ['#080C10', '#05070B'] },
+  C: { ...cand('C'), floor: ['#080D17', '#0E0F11'] },
+  B1: { ...cand('B'), floor: ['#070B0E', '#070B0F'] },
+  v1: { tv: 'v1/tv', off: 'v1/detector-off', floor: ['#01040A', '#040608'] },
+}
+const lookName = new URLSearchParams(location.search).get('look') ?? ''
+const look = Object.hasOwn(LOOKS, lookName) && lookName
+const SCENE = look ? LOOKS[look] : { tv: 'tv', off: 'detector-off' }
+if (look) {
+  $('tv-photo').src = `/dreamcatcher/scenes/${SCENE.tv}.webp`
+  $('det-off').src = `/dreamcatcher/scenes/${SCENE.off}.webp`
+  $('lamp-core').remove(); $('lamp-spill').remove()
+  $('tv-hole').style.setProperty('--mask', `url(/dreamcatcher/scenes/${SCENE.tv}-mask.png)`)
+  $('det-hole').style.setProperty('--mask', `url(/dreamcatcher/scenes/${SCENE.off}-mask.png)`)
+  $('tv').style.setProperty('--floor', LOOKS[look].floor[0])
+  $('detector').style.setProperty('--floor', LOOKS[look].floor[1])
+}
+
+// ---------- video: remember what should be playing, and keep asking.
+// Autoplay can be refused (iPhone Low Power Mode, some Safari settings); the old page gave up and left a still poster.
+const wanted = new Set()
+function want(v, on) {
+  if (on) { wanted.add(v); if (v.paused) v.play().catch(() => {}) }
+  else { wanted.delete(v); v.pause() }
+}
+function kick() {
+  if (document.hidden) return
+  for (const v of wanted) if (v.paused && v.getAttribute('src') && v.closest('.scene').id === at()) v.play().catch(() => {})
+}
+for (const ev of ['pointerdown', 'touchend', 'keydown']) addEventListener(ev, kick, { capture: true, passive: true })
+addEventListener('pageshow', kick)
+setInterval(kick, 1500)
+
+// ---------- place the video holes (and the screen light) from the keyed screen boxes
+const boxes = {}
+Promise.all([SCENE.tv, SCENE.off].map(n => fetch(`/dreamcatcher/scenes/${n}.json`).then(r => r.json()))).then(([tv, det]) => {
+  boxes.tv = tv.screen; boxes.det = det.screen
+  for (const [el, box] of [[$('tv-hole'), tv.screen], [$('det-hole'), det.screen]]) {
+    for (const k of ['x', 'y', 'w', 'h']) el.style.setProperty(`--${k}`, box[k])
+  }
+  // the screen lights the cabinet around it and the floor in front: centred a little low, wider than the screen
+  const place = (el, b, sx, sy) => { el.style.setProperty('--cx', b.x + b.w / 2); el.style.setProperty('--cy', b.y + b.h * .62); el.style.setProperty('--rw', b.w * sx); el.style.setProperty('--rh', b.h * sy) }
+  place($('tv-glow'), tv.screen, 1.25, 2.4)
+  place($('det-glow'), det.screen, .95, 1.5)
+})
+
+// ---------- screen light: the picture's average colour, sampled a few times a second
+function screenLight(glow, sources, gain) {
+  const c = document.createElement('canvas'); c.width = c.height = 6
+  const g = c.getContext('2d', { willReadFrequently: true })
+  let rgb = [70, 90, 120], lvl = 0
+  return () => {
+    let r = 0, gg = 0, b = 0, w = 0
+    for (const [v, weight] of sources()) {
+      if (!weight || v.readyState < 2) continue
+      try { g.drawImage(v, 0, 0, 6, 6) } catch { continue }
+      const d = g.getImageData(0, 0, 6, 6).data
+      let sr = 0, sg = 0, sb = 0
+      for (let i = 0; i < d.length; i += 4) { sr += d[i]; sg += d[i + 1]; sb += d[i + 2] }
+      const n = d.length / 4
+      r += sr / n * weight; gg += sg / n * weight; b += sb / n * weight; w += weight
+    }
+    const target = w ? [r / w, gg / w, b / w] : [0, 0, 0]
+    const k = reduced.matches ? .15 : .45
+    rgb = rgb.map((x, i) => x + (target[i] - x) * k)
+    const lum = (rgb[0] * .3 + rgb[1] * .55 + rgb[2] * .15) / 255
+    lvl += ((w ? .35 + lum * .9 : 0) - lvl) * k
+    // normalise the colour to full brightness, let opacity carry the strength
+    const m = Math.max(...rgb, 1)
+    glow.style.setProperty('--rgb', rgb.map(x => Math.round(x / m * 255)).join(' '))
+    glow.style.opacity = clamp(lvl * gain, 0, .5)
+  }
+}
+const tvLight = screenLight($('tv-glow'), () => [[$('tv-video'), 1 - noiseTv], [$('tv-static'), noiseTv]], .32)
+const detLight = screenLight($('det-glow'), () => !det ? [[$('det-static'), .25]] : !det.found ? [[$('det-static'), .7]] : [[$('det-video'), 1 - noiseSig], [$('det-static'), noiseSig]], .26)
+setInterval(() => { if (document.hidden) return; at() === 'tv' ? tvLight() : detLight() }, 90)
+
+// ---------- the bulb: two additive light layers (glass, room) driven like a filament
+const lamp = { target: 0, core: 0, spill: 0, ignitedAt: 0, nextDip: 0, dipUntil: 0, raf: 0, last: 0 }
+const IGNITE = [[0, 0], [60, .85], [120, .1], [240, .75], [310, .25], [480, 1]]
+function lampLevel(now) {
+  if (!lamp.target) return 0
+  const t = now - lamp.ignitedAt
+  if (t < IGNITE.at(-1)[0]) {
+    const k = IGNITE.findIndex(([ms]) => ms > t)
+    const [t0, v0] = IGNITE[k - 1], [t1, v1] = IGNITE[k]
+    return v0 + (v1 - v0) * (t - t0) / (t1 - t0)
+  }
+  // steady: an old filament is never quite still, and now and then the contact catches
+  const s = now / 1000
+  let v = .95 + .035 * Math.sin(s * 1.7) * Math.sin(s * 2.9 + 1.3) + .015 * Math.sin(s * 7.3)
+  if (now > lamp.nextDip) { lamp.dipUntil = now + 70 + Math.random() * 90; lamp.nextDip = now + 7000 + Math.random() * 9000 }
+  if (now < lamp.dipUntil) v *= .72
+  return v
+}
+function lampFrame(now) {
+  const dt = Math.min(64, now - (lamp.last || now)); lamp.last = now
+  const c = lampLevel(now)
+  // glass follows the current at once (and cools a little slower); the room fills a beat later
+  lamp.core = c > lamp.core ? c : lamp.core + (c - lamp.core) * (1 - Math.exp(-dt / 45))
+  lamp.spill += (lamp.core - lamp.spill) * (1 - Math.exp(-dt / 90))
+  if ($('lamp-core')) { $('lamp-core').style.opacity = lamp.core.toFixed(3); $('lamp-spill').style.opacity = lamp.spill.toFixed(3) }
+  const settled = !lamp.target && lamp.spill < .002
+  lamp.raf = settled || document.hidden || at() !== 'detector' ? 0 : requestAnimationFrame(lampFrame)
+}
+function lampRun() { if (!lamp.raf && !document.hidden) { lamp.last = 0; lamp.raf = requestAnimationFrame(lampFrame) } }
+function setLamp(on, { ignite = false } = {}) {
+  lamp.target = on ? 1 : 0
+  if (reduced.matches) {
+    lamp.core = lamp.spill = lamp.target
+    if ($('lamp-core')) { $('lamp-core').style.opacity = lamp.core; $('lamp-spill').style.opacity = lamp.spill }
+    return
+  }
+  lamp.ignitedAt = ignite ? performance.now() : -1e6
+  lamp.nextDip = performance.now() + 5000
+  if (!ignite && on) lamp.core = lamp.spill = 1
+  lampRun()
+}
+
+// ---------- dust: drifting motes, visible only where light falls on them
+// The light map is read from the photo itself (moonlit = blue and bright), plus the bulb when it's on.
+function Dust(frame, photo, warmAt) {
+  const canvas = frame.querySelector('.dust'), ctx = canvas.getContext('2d')
+  const MW = 40, MH = 60
+  let map = null, W = 0, H = 0, raf = 0, last = 0
+  const motes = Array.from({ length: 80 }, () => ({ x: Math.random(), y: Math.random(), z: Math.random(), ph: Math.random() * 6.28, sp: .5 + Math.random() }))
+  function buildMap() {
+    const c = document.createElement('canvas'); c.width = MW; c.height = MH
+    const g = c.getContext('2d', { willReadFrequently: true })
+    g.filter = 'blur(1.5px)'; g.drawImage(photo, 0, 0, MW, MH)
+    const d = g.getImageData(0, 0, MW, MH).data
+    map = new Float32Array(MW * MH)
+    for (let i = 0; i < map.length; i++) {
+      const r = d[i * 4], gg = d[i * 4 + 1], b = d[i * 4 + 2]
+      map[i] = clamp((b - r * .55 - 16) / 80, 0, 1) * clamp((r * .3 + gg * .55 + b * .15 - 14) / 70, 0, 1)
+    }
+  }
+  const light = (x, y) => {
+    if (!map) return 0
+    const fx = clamp(x * (MW - 1), 0, MW - 1), fy = clamp(y * (MH - 1), 0, MH - 1)
+    const x0 = fx | 0, y0 = fy | 0, x1 = Math.min(x0 + 1, MW - 1), y1 = Math.min(y0 + 1, MH - 1), tx = fx - x0, ty = fy - y0
+    const a = map[y0 * MW + x0] * (1 - tx) + map[y0 * MW + x1] * tx, b = map[y1 * MW + x0] * (1 - tx) + map[y1 * MW + x1] * tx
+    return a * (1 - ty) + b * ty
+  }
+  function size() {
+    const dpr = Math.min(devicePixelRatio || 1, 2), r = canvas.getBoundingClientRect()
+    W = canvas.width = Math.round(r.width * dpr); H = canvas.height = Math.round(r.height * dpr)
+  }
+  function frameFn(now) {
+    raf = 0
+    if (document.hidden || reduced.matches || frame.closest('.scene').id !== at()) return
+    raf = requestAnimationFrame(frameFn)
+    if (now - last < 33) return
+    const dt = Math.min(.1, (now - last) / 1000); last = now
+    ctx.clearRect(0, 0, W, H)
+    const t = now / 1000, s = W / 390
+    for (const m of motes) {
+      // slow convection: a lazy upward drift with a wandering side-to-side
+      m.x += (Math.sin(t * .23 * m.sp + m.ph) * .006 + .002) * dt * (.4 + m.z)
+      m.y += (Math.cos(t * .17 * m.sp + m.ph * 1.3) * .005 - .0035) * dt * (.4 + m.z)
+      if (m.y < -.02) { m.y = 1.02; m.x = Math.random() } else if (m.y > 1.02) m.y = -.02
+      if (m.x < -.02) m.x = 1.02; else if (m.x > 1.02) m.x = -.02
+      const moon = light(m.x, m.y), warm = warmAt ? warmAt(m.x, m.y) : 0
+      const a = clamp(moon * .9 + warm, 0, 1) * (.25 + .6 * m.z) * (.6 + .4 * Math.sin(t * 1.1 * m.sp + m.ph))
+      if (a < .02) continue
+      const rr = (.5 + m.z * 1.3) * s
+      const k = warm / (moon + warm + 1e-3)
+      ctx.fillStyle = `rgba(${Math.round(205 + 50 * k)},${Math.round(222 - 40 * k)},${Math.round(255 - 140 * k)},${a.toFixed(3)})`
+      ctx.beginPath(); ctx.arc(m.x * W, m.y * H, rr, 0, 6.283); ctx.fill()
+      if (m.z > .75) { ctx.globalAlpha = .25; ctx.beginPath(); ctx.arc(m.x * W, m.y * H, rr * 2.4, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1 }
+    }
+  }
+  const start = () => { if (!raf && !reduced.matches) { last = performance.now(); raf = requestAnimationFrame(frameFn) } }
+  const ready = () => { try { buildMap() } catch {} size(); start() }
+  if (photo.complete && photo.naturalWidth) ready(); else photo.addEventListener('load', ready, { once: true })
+  new ResizeObserver(size).observe(canvas)
+  return { start }
+}
+let bulbPos = null
+fetch('/dreamcatcher/scenes/detector-light.json').then(r => r.json()).then(j => { bulbPos = j.bulb }).catch(() => {})
+const dustTv = Dust($('tv-frame'), $('tv-photo'))
+const dustDet = Dust($('det-frame'), $('det-off'), (x, y) => {
+  if (!bulbPos || !lamp.spill) return 0
+  const dx = (x - bulbPos.x) / .3, dy = (y - bulbPos.y) / .2
+  return lamp.spill * .9 * Math.exp(-(dx * dx + dy * dy))
+})
+
+// ---------- tuning console: a dial band with a needle (and a knob), dragged continuously.
+// Between stations there is only static; the picture comes in as the needle reaches a station.
+function Tuner(root, n, labelFn, { onStation, onNoise }) {
+  const band = root.querySelector('.band'), knob = root.querySelector('.knob')
+  band.querySelector('.ticks').replaceChildren(...Array.from({ length: (n - 1) * 5 + 1 }, (_, i) => {
+    const t = document.createElement('i'); t.style.left = `${i / ((n - 1) * 5) * 100}%`; if (i % 5 === 0) t.className = 'major'; return t
+  }))
+  const marks = Array.from({ length: n }, (_, i) => { const s = document.createElement('span'); s.textContent = pad(i + 1); s.style.left = `${i / (n - 1) * 100}%`; return s })
+  band.querySelector('.marks').replaceChildren(...marks)
+  const dents = knob ? Array.from({ length: n }, (_, i) => { const d = document.createElement('i'); d.className = 'dent'; d.style.setProperty('--a', `${-135 + i / (n - 1) * 270}deg`); knob.append(d); return d }) : []
+  root.setAttribute('aria-valuemax', n)
+  let p = 0, station = -1, anim = 0
+  function set(v) {
+    p = clamp(v, 0, n - 1)
+    const near = Math.round(p), d = Math.abs(p - near)
+    root.style.setProperty('--p', p / (n - 1))
+    if (knob) knob.style.setProperty('--a', `${-135 + p / (n - 1) * 270}deg`)
+    marks.forEach((m, i) => m.classList.toggle('on', i === near && d < .12))
+    dents.forEach((m, i) => m.classList.toggle('on', i === near && d < .12))
+    root.setAttribute('aria-valuenow', near + 1); root.setAttribute('aria-valuetext', labelFn(near))
+    if (near !== station) { station = near; onStation(near) }
+    onNoise(smooth(.04, .26, d))
+  }
+  function glide(to, wrap = false) {
+    if (wrap) to = (to + n) % n
+    to = clamp(Math.round(to), 0, n - 1)
+    cancelAnimationFrame(anim)
+    if (reduced.matches) { set(to); return done(to) }
+    const from = p, dur = 220 + 150 * Math.abs(to - from), t0 = performance.now()
+    const step = now => {
+      const k = clamp((now - t0) / dur, 0, 1), e = k < .5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2
+      set(from + (to - from) * e)
+      if (k < 1) anim = requestAnimationFrame(step); else done(to)
+    }
+    anim = requestAnimationFrame(step)
+  }
+  function done(i) { say(labelFn(i)) }
+  // drag anywhere on the console; a tap on the band jumps to that station, a tap on the knob turns one click
+  let drag = null
+  root.addEventListener('pointerdown', e => {
+    cancelAnimationFrame(anim)
+    drag = { x: e.clientX, y: e.clientY, p, moved: false, onKnob: !!e.target.closest('.knob'), id: e.pointerId }
+    root.setPointerCapture(e.pointerId)
+  })
+  root.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y
+    if (!drag.moved && Math.hypot(dx, dy) < 5) return
+    drag.moved = true
+    const span = band.getBoundingClientRect().width - 24
+    set(drag.p + (drag.onKnob ? (dx - dy) * 1.4 : dx) / span * (n - 1))
+  })
+  const end = e => {
+    if (!drag || e.pointerId !== drag.id) return
+    const d = drag; drag = null
+    if (d.moved) return glide(p)
+    if (d.onKnob) return glide(Math.round(p) + 1, true)
+    const r = band.getBoundingClientRect()
+    glide((e.clientX - r.left - 12) / (r.width - 24) * (n - 1))
+  }
+  root.addEventListener('pointerup', end); root.addEventListener('pointercancel', end)
+  root.addEventListener('keydown', e => {
+    const k = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.key]
+    if (k) { e.preventDefault(); glide(Math.round(p) + k) }
+    if (e.key === 'Home') { e.preventDefault(); glide(0) }
+    if (e.key === 'End') { e.preventDefault(); glide(n - 1) }
+  })
+  return { set, glide, get: () => Math.round(p) }
+}
+
+// static and picture follow the needle: noise 1 = only static, 0 = the station's picture
+function noiseInto(staticEl, video, sceneId) {
+  return v => {
+    staticEl.style.opacity = v
+    video.style.opacity = 1 - v * .7
+    video.style.transform = v > .02 && v < .98 && !reduced.matches ? `translateX(${((Math.random() - .5) * 6 * v).toFixed(1)}px)` : ''
+    if (!staticEl.getAttribute('src')) staticEl.src = SIG + 'tuning.mp4'
+    if (at() === sceneId) want(staticEl, v > .01)
+  }
+}
+function loadClip(v, clip) {
+  v.poster = SIG + clip + '-current-poster.webp'
+  if (saveData) { v.removeAttribute('src'); v.load(); return }
+  v.src = SIG + clip + '-current.mp4'
+  want(v, true)
+}
+
+// ---------- scene 1: TV
+let noiseTv = 0
+const tvNoise = noiseInto($('tv-static'), $('tv-video'), 'tv')
+const tvTuner = Tuner($('tv-tuner'), CHANNELS.length, i => `Channel ${i + 1}`, {
+  onStation: i => { $('ch').textContent = `CH ${pad(i + 1)}`; loadClip($('tv-video'), CHANNELS[i]) },
+  onNoise: v => { noiseTv = v; tvNoise(v) },
+})
+// swipe on the picture turns the dial one station
+let down = null
+$('tv-frame').addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY } })
+$('tv-frame').addEventListener('pointerup', e => {
+  if (!down) return
+  const dx = e.clientX - down.x, dy = e.clientY - down.y; down = null
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) tvTuner.glide(tvTuner.get() + (dx < 0 ? 1 : -1), true)
+})
+
+// ---------- scene switching (hash so it can be linked: #detector)
+function go(where) {
+  $('track').dataset.at = where
+  history.replaceState(null, '', where === 'tv' ? location.pathname + location.search : location.pathname + location.search + '#detector')
+  const tvOn = where === 'tv'
+  $('tv').inert = !tvOn; $('detector').inert = tvOn
+  for (const v of document.querySelectorAll('video')) if (v.closest('.scene').id !== where) v.pause()
+  kick()
+  if (tvOn) dustTv.start(); else { renderDetector(); dustDet.start(); lampRun() }
+}
+$('to-detector').onclick = () => go('detector')
+$('to-tv').onclick = () => go('tv')
+addEventListener('keydown', e => {
+  if (e.target.matches('textarea')) return
+  if (at() === 'tv' && e.key === 'ArrowRight' && e.shiftKey) go('detector')
+  if (at() === 'detector' && e.key === 'ArrowLeft' && e.shiftKey) go('tv')
+})
+
+// ---------- scene 2: the detector
+// state lives in this browser only: { thought, private, startedAt, found, chosen }
+const KEY = 'dc-detector-v1'
+let det = (() => { try { return JSON.parse(store.get(KEY)) } catch { return null } })()
+let noiseSig = 0, sig = 0
+const saveDet = () => det ? store.set(KEY, JSON.stringify(det)) : store.del(KEY)
+
+$('thought').addEventListener('input', () => {
+  $('chars').textContent = `${$('thought').value.length} / 600`
+  $('start').disabled = $('thought').value.trim().length < 12
+})
+$('form-idle').addEventListener('submit', e => {
+  e.preventDefault()
+  det = { thought: $('thought').value.trim(), private: $('private').checked, startedAt: Date.now(), found: false, chosen: null }
+  saveDet(); setLamp(true, { ignite: true }); renderDetector()
+  say('Search started. The bulb is on.')
+})
+$('skip-found').onclick = () => { det.found = true; saveDet(); renderDetector(); say('Four signals found.') }
+document.querySelectorAll('.reset').forEach(b => b.onclick = () => { det = null; saveDet(); setLamp(false); $('thought').value = ''; $('thought').dispatchEvent(new Event('input')); renderDetector() })
+
+const sigNoise = noiseInto($('det-static'), $('det-video'), 'detector')
+const sigTuner = Tuner($('sig-tuner'), FOUND.length, i => `Signal ${i + 1}`, {
+  onStation: i => { sig = i; $('sig').textContent = `SIGNAL ${pad(i + 1)}`; renderChoose(); if (det?.found) loadClip($('det-video'), FOUND[i]) },
+  onNoise: v => { noiseSig = v; if (det?.found) sigNoise(v) },
+})
+function renderChoose() {
+  if (!det) return
+  const mine = det.chosen === sig
+  const b = $('choose')
+  b.disabled = mine; b.classList.toggle('done', mine)
+  b.innerHTML = mine ? 'CHOSEN<small>✓</small>' : `${det.chosen == null ? 'CHOOSE' : 'SWITCH'}<small>${pad(sig + 1)}</small>`
+  b.setAttribute('aria-label', mine ? `Signal ${sig + 1} chosen` : `${det.chosen == null ? 'Choose' : 'Switch to'} signal ${sig + 1}`)
+}
+$('choose').onclick = () => { const first = det.chosen == null; det.chosen = sig; saveDet(); renderChoose(); say(first ? `Signal ${sig + 1} chosen.` : `Changed to signal ${sig + 1}.`) }
+
+function renderDetector() {
+  const idle = !det, searching = det && !det.found, found = det && det.found
+  $('form-idle').hidden = !idle; $('panel-search').hidden = !searching; $('panel-found').hidden = !found
+  $('readout').hidden = !searching
+  const st = $('det-static'), v = $('det-video')
+  if (!st.getAttribute('src')) st.src = SIG + 'tuning.mp4'
+  if (!found) {
+    // listening (faint) or searching (strong): static in the window
+    want(v, false); v.removeAttribute('src'); v.style.opacity = ''
+    st.style.opacity = idle ? .25 : .55
+    want(st, at() === 'detector')
+    if (searching) $('search-idea').textContent = `“${det.thought}”`
+  } else {
+    sigTuner.set(sig); sigNoise(noiseSig); renderChoose()
+    if (!v.getAttribute('src')) loadClip(v, FOUND[sig])
+    if (at() !== 'detector') want(v, false)
+  }
+}
+
+setInterval(() => { if (det && !det.found) $('elapsed').textContent = clock(Date.now() - det.startedAt) }, 500)
+
+// ---------- boot
+tvTuner.set(0)
+if (det) setLamp(true)
+go(location.hash === '#detector' ? 'detector' : 'tv')
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { for (const v of document.querySelectorAll('video')) v.pause(); return }
+  go(at())
+})
+reduced.addEventListener('change', () => go(at()))
+</script>
+</body>
+</html>

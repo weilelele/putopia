@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  async rewrites() {
+    return [
+      // Dreamcatcher scenes prototype: a static page exported into
+      // public/dreamcatcher from the standalone dreamcatcher project.
+      { source: '/dreamcatcher', destination: '/dreamcatcher/index.html' },
+    ]
+  },
   async headers() {
     return [
       {

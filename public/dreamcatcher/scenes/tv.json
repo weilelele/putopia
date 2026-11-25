@@ -1,0 +1,12 @@
+{
+  "source": "scene-tv-B.png",
+  "width": 1024,
+  "height": 1536,
+  "screen": {
+    "x": 0.25,
+    "y": 0.2181,
+    "w": 0.3896,
+    "h": 0.194
+  },
+  "coverage": 0.96
+}

@@ -1,0 +1,12 @@
+{
+  "source": "scene-detector-B2-off.png",
+  "width": 1024,
+  "height": 1536,
+  "screen": {
+    "x": 0.3242,
+    "y": 0.3099,
+    "w": 0.3447,
+    "h": 0.2298
+  },
+  "coverage": 0.782
+}

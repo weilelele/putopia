@@ -167,6 +167,8 @@ export const config = {
     // Skip static assets and endpoints that carry their own auth
     // (Stripe webhook verifies signatures, cron routes check CRON_SECRET) —
     // every match below pays a Supabase auth roundtrip.
-    '/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|mp4|webm|mp3|woff2?|ttf|txt|xml|map)$).*)',
+    // /dreamcatcher is a static public prototype (public/dreamcatcher): no
+    // session, no registration gate, for the page and its JSON alike.
+    '/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/cron|dreamcatcher(?:/|$)|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|mp4|webm|mp3|woff2?|ttf|txt|xml|map)$).*)',
   ],
 }
