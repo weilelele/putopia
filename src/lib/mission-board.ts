@@ -117,6 +117,18 @@ const additionalMissions: Record<Series, Scenario> = {
 }
 
 const weeklyMedia: Partial<Record<string, MissionImage>> = {
+  'REC-124': {
+    src: '/assets/mission-board/rec-124-console.webp',
+    alt: 'The Console shows two hazy lighthouse beams pointing across land beside a dark shoreline.',
+    width: 1080,
+    height: 810,
+  },
+  'CNT-080': {
+    src: '/assets/mission-board/cnt-080-console.webp',
+    alt: 'The Console shows a dark ridge-like shape over water with several faint amber lights along its back.',
+    width: 1080,
+    height: 810,
+  },
   'CNT-076': {
     src: '/assets/mission-board/cnt-076-console-film-soft.webp',
     alt: 'The Console’s round screen shows a fuzzy amber light over the dark outline of a bridge.',
